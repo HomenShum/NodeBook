@@ -1,0 +1,21 @@
+.Bullet {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.indent {
+  width: 30px;
+}
+
+.bulletChar {
+  flex-shrink: 0;
+  width: 10px;
+  margin-right: 10px;
+  font-size: 1.5em;
+}
+
+.bulletChar:hover {
+  cursor: pointer;
+}

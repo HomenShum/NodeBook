@@ -1,0 +1,8 @@
+.EditorWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.EditorWrapper p {
+  margin: 0;
+}
