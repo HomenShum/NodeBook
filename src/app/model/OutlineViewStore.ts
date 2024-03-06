@@ -1,91 +1,8 @@
 import { GraphStore } from "./GraphStore";
-import { GraphRelation } from "./GraphStore";
-import { GraphNode } from "./GraphStore";
 import { makeAutoObservable } from "mobx";
-import { uuid } from "../util";
-
-export class Bullet {
-  private treeStore: OutlineViewStore;
-  // we need this in addition to the relation because the root node has no relation
-  // (maybe we should just special case the root node?)
-  public graphNode: GraphNode;
-  // TODO I should make this not nullable somehow
-  public graphRelation: GraphRelation | null;
-  public parent: Bullet | null;
-  public isExpanded: boolean;
-  public childrenByRelationId: Map<string, Bullet>;
-  public id: string;
-  constructor(
-    store: OutlineViewStore,
-    node: GraphNode,
-    relation: GraphRelation | null = null,
-    parent: Bullet | null = null,
-    {
-      isExpanded,
-      childrenByRelationId,
-      id,
-    }: {
-      isExpanded?: boolean;
-      childrenByRelationId?: Map<string, Bullet>;
-      id?: string;
-    } = {}
-  ) {
-    this.treeStore = store;
-    this.graphNode = node;
-    this.graphRelation = relation;
-    this.parent = parent;
-    this.isExpanded = isExpanded ?? false;
-    this.childrenByRelationId = childrenByRelationId ?? new Map();
-    this.id = id ?? uuid();
-    makeAutoObservable(this);
-  }
-
-  insertGraphNode(node: GraphNode, relation: GraphRelation) {
-    return this.treeStore.insertGraphNodeToTree(node, relation, this);
-  }
-
-  createChild() {
-    return this.treeStore.createNode(this);
-  }
-
-  delete() {
-    this.treeStore.deleteNode(this);
-  }
-
-  toggleExpanded() {
-    this.isExpanded = !this.isExpanded;
-  }
-
-  get isFocused() {
-    return this.treeStore.focusedNode?.id === this.id;
-  }
-
-  get parents() {
-    const parents: Bullet[] = [];
-    let current: Bullet = this;
-    while (current.parent) {
-      parents.unshift(current.parent);
-      current = current.parent;
-    }
-    return parents;
-  }
-
-  get children() {
-    const newChildren: Bullet[] = [];
-    this.graphNode.relations.forEach((relation) => {
-      const existing = this.childrenByRelationId.get(relation.id);
-      if (existing) {
-        newChildren.push(existing);
-      } else {
-        const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
-        const newTreeNode = new Bullet(this.treeStore, relatedNode, relation, this);
-        newChildren.push(newTreeNode);
-        this.childrenByRelationId.set(relation.id, newTreeNode);
-      }
-    });
-    return newChildren;
-  }
-}
+import { GraphNode } from "./GraphNode";
+import { GraphRelation } from "./GraphRelation";
+import { Bullet } from "./OutlineBullet";
 
 /**
  * The store for the tree view of the graph.
@@ -106,16 +23,20 @@ export class OutlineViewStore {
     makeAutoObservable(this);
   }
 
-  insertGraphNodeToTree(node: GraphNode, relation: GraphRelation, parent: Bullet) {
+  insertGraphNodeToOutline(
+    node: GraphNode,
+    relation: GraphRelation,
+    parent: Bullet
+  ) {
     if (relation.from.id !== parent.graphNode.id) {
       throw new Error("Relation's from node is not the parent node");
     }
     if (relation.to.id !== node.id) {
       throw new Error("Relation's 'to' property is not the node being created");
     }
-    const treeNode = new Bullet(this, node, relation, parent);
-    parent.childrenByRelationId.set(relation.id, treeNode);
-    return treeNode;
+    const bullet = new Bullet(this, node, relation, parent);
+    parent.childrenByRelationId.set(relation.id, bullet);
+    return bullet;
   }
 
   createNode(parent: Bullet) {
@@ -125,28 +46,31 @@ export class OutlineViewStore {
       to: graphNode,
       type: this.graphStore.relationTypes.child,
     });
-    return this.insertGraphNodeToTree(graphNode, relation, parent);
+    return this.insertGraphNodeToOutline(graphNode, relation, parent);
   }
 
-  updateNodeToParent(treeNode: Bullet, newParent: Bullet, after?: Bullet) {
-    const currentParent = treeNode.parent;
+  updateNodeToParent(bullet: Bullet, newParent: Bullet, after?: Bullet) {
+    const currentParent = bullet.parent;
     if (!currentParent) throw new Error("Node has no parent");
     // Remove the tree node from the old parent
-    const oldParent = treeNode.parent;
-    oldParent?.childrenByRelationId.delete(treeNode.graphRelation?.id ?? "");
+    const oldParent = bullet.parent;
+    oldParent?.childrenByRelationId.delete(bullet.graphRelation?.id ?? "");
     // Set the new parent
-    newParent.childrenByRelationId.set(treeNode.graphRelation?.id ?? "", treeNode);
-    treeNode.parent = newParent;
+    newParent.childrenByRelationId.set(bullet.graphRelation?.id ?? "", bullet);
+    bullet.parent = newParent;
     // Update the graph
     // TODO remove !
-    this.graphStore.updateRelationFrom(treeNode.graphRelation!, newParent.graphNode);
+    this.graphStore.updateRelationFrom(
+      bullet.graphRelation!,
+      newParent.graphNode
+    );
   }
 
-  deleteNode(treeNode: Bullet) {
-    const parent = treeNode.parent;
+  deleteNode(bullet: Bullet) {
+    const parent = bullet.parent;
     if (!parent) throw new Error("Node has no parent");
-    parent.childrenByRelationId.delete(treeNode.graphRelation?.id ?? "");
-    this.graphStore.deleteNode(treeNode.graphNode.id);
+    parent.childrenByRelationId.delete(bullet.graphRelation?.id ?? "");
+    this.graphStore.deleteNode(bullet.graphNode.id);
   }
 
   setCurrentViewRoot(node: Bullet) {

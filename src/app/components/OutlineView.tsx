@@ -3,8 +3,8 @@ import { useOutlineViewStore } from "../store/outline";
 import { BulletView } from "./BulletView/BulletView";
 
 export const OutlineView = observer(() => {
-  const treeViewStore = useOutlineViewStore();
-  const root = treeViewStore.currentViewRoot;
+  const outlineViewStore = useOutlineViewStore();
+  const root = outlineViewStore.currentViewRoot;
   const parents = root.parents;
   const children = root.children;
 
@@ -15,7 +15,7 @@ export const OutlineView = observer(() => {
           key={parent.id}
           style={{ cursor: "pointer" }}
           onClick={() => {
-            treeViewStore.setCurrentViewRoot(parent);
+            outlineViewStore.setCurrentViewRoot(parent);
           }}
         >
           {parent.graphNode.text} /{" "}

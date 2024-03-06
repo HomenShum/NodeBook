@@ -1,89 +1,10 @@
 import { makeAutoObservable } from "mobx";
-import { uuid } from "../util";
-
-export type GraphNodeProps = {
-  id?: string;
-  text?: string;
-};
-
-export type GraphRelationProps = {
-  from: GraphNode;
-  to: GraphNode;
-  type: GraphRelationType;
-};
-
-export class GraphNode {
-  public id: string;
-  public text: string = "";
-  public relations: GraphRelation[] = [];
-
-  constructor(private store: GraphStore, { id, text = "" }: GraphNodeProps = {}) {
-    this.id = id || uuid();
-    this.text = text;
-    makeAutoObservable(this);
-  }
-
-  setText(text: string) {
-    this.text = text;
-  }
-
-  createChild() {
-    const child = this.store.createNode();
-    const relation = this.store.insertRelation(
-      new GraphRelation(this.store, { from: this, to: child, type: this.store.relationTypes.child })
-    );
-    return { child, relation };
-  }
-
-  delete() {
-    this.store.deleteNode(this.id);
-  }
-
-  get children(): GraphNode[] {
-    return this.relations
-      .filter((r) => r.type.id === this.store.relationTypes.child.id && r.from === this)
-      .map((r) => r.to);
-  }
-
-  get parents(): GraphNode[] {
-    return this.relations
-      .filter((r) => r.type.id === this.store.relationTypes.child.id && r.to === this)
-      .map((r) => r.from);
-  }
-
-  get relatedNodes(): GraphNode[] {
-    return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
-  }
-
-  toString() {
-    return `Node(${this.id.slice(0, 8)}: ${this.text.slice(0, 8)})`;
-  }
-}
-
-export class GraphRelation {
-  public id: string;
-  public from: GraphNode;
-  public to: GraphNode;
-  public type: GraphRelationType;
-  private store: GraphStore;
-
-  constructor(store: GraphStore, { from, to, type }: GraphRelationProps) {
-    this.id = uuid();
-    this.from = from;
-    this.to = to;
-    this.type = type;
-    this.store = store;
-    makeAutoObservable(this);
-  }
-
-  delete() {
-    this.store.deleteRelation(this);
-  }
-
-  updateFrom(newFrom: GraphNode) {
-    this.store.updateRelationFrom(this, newFrom);
-  }
-}
+import { GraphNode, GraphNodeProps } from "./GraphNode";
+import {
+  GraphRelation,
+  GraphRelationProps,
+  GraphRelationType,
+} from "./GraphRelation";
 
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
@@ -152,7 +73,10 @@ export class GraphStore {
     this.relationsById.delete(relation.id);
   }
 
-  updateRelationFrom(relation: GraphRelation, newFrom: GraphNode): GraphRelation | undefined {
+  updateRelationFrom(
+    relation: GraphRelation,
+    newFrom: GraphNode
+  ): GraphRelation | undefined {
     this.assertNodeExists(newFrom, relation.to);
     const oldFrom = relation.from;
     oldFrom.relations = oldFrom.relations.filter((r) => r.id !== relation.id);
@@ -161,7 +85,10 @@ export class GraphStore {
     return relation;
   }
 
-  updateRelationType(relation: GraphRelation, newType: GraphRelationType): GraphRelation {
+  updateRelationType(
+    relation: GraphRelation,
+    newType: GraphRelationType
+  ): GraphRelation {
     relation.type = newType;
     return relation;
   }
@@ -175,9 +102,3 @@ export class GraphStore {
     });
   }
 }
-
-export type GraphRelationType = {
-  id: string;
-  label: string;
-  reverseLabel?: string;
-};

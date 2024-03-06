@@ -1,18 +1,22 @@
-import { useEffect } from "react";
-import { $createParagraphNode, $createTextNode, $getRoot, EditorState } from "lexical";
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  EditorState,
+} from "lexical";
 
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { KeyboardOverridesPlugin } from "./KeyboardOverridesPlugin";
 import { ContentEditable } from "./ui/ContentEditable";
 
 import styles from "./Editor.module.css";
-import { Bullet } from "../model/OutlineViewStore";
 import { useOutlineViewStore } from "../store/outline";
+import { OnChangePlugin } from "./OnChangePlugin";
+import { Bullet } from "../model/OutlineBullet";
 
 const theme = {
   // Theme styling goes here
@@ -23,17 +27,6 @@ const theme = {
 // try to recover gracefully without losing user data.
 const onError = (error: any) => {
   console.error(error);
-};
-
-const OnChangePlugin = ({ onChange }: { onChange: (newState: EditorState) => void }) => {
-  const [editor] = useLexicalComposerContext();
-  useEffect(() => {
-    const unsubscribe = editor.registerUpdateListener(({ editorState }) => {
-      onChange(editorState);
-    });
-    return unsubscribe;
-  }, [editor, onChange]);
-  return null;
 };
 
 export type EditorContext = {
@@ -50,7 +43,7 @@ interface Props {
 }
 
 export const Editor = ({ node, onChange, context }: Props) => {
-  const treeViewStore = useOutlineViewStore();
+  const outlineViewStore = useOutlineViewStore();
   const initialConfig = {
     namespace: "MyEditor",
     theme,
@@ -72,7 +65,10 @@ export const Editor = ({ node, onChange, context }: Props) => {
   };
 
   return (
-    <div className={styles.EditorWrapper} onFocus={() => treeViewStore.setFocusedNode(node)}>
+    <div
+      className={styles.EditorWrapper}
+      onFocus={() => outlineViewStore.setFocusedNode(node)}
+    >
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
@@ -83,7 +79,7 @@ export const Editor = ({ node, onChange, context }: Props) => {
         {node.isFocused && <AutoFocusPlugin />}
         <HistoryPlugin />
         <OnChangePlugin onChange={editorOnChange} />
-        <KeyboardOverridesPlugin treeNode={node} context={context} />
+        <KeyboardOverridesPlugin bullet={node} context={context} />
       </LexicalComposer>
     </div>
   );
