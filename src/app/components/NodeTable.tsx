@@ -1,7 +1,7 @@
 import { useContext } from "react";
 import { observer } from "mobx-react-lite";
 import { GraphStoreContext } from "../store/graph";
-import { GraphNode } from "../model/GraphStore";
+import { GraphNode } from "../model/GraphNode";
 
 function relationsFromNodesPerspective(node: GraphNode) {
   return node.relations.map((relation) => {

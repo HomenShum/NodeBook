@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { observer } from "mobx-react-lite";
-import { GraphNode } from "../model/GraphStore";
+import { GraphNode } from "../model/GraphNode";
 import { GraphStoreContext } from "../store/graph";
 
 const nodeToString = (node: GraphNode) => {
