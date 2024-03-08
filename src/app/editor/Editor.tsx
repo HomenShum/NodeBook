@@ -16,6 +16,7 @@ import { ContentEditable } from "./ui/ContentEditable";
 import styles from "./Editor.module.css";
 import { useOutlineViewStore } from "../store/outline";
 import { OnChangePlugin } from "./OnChangePlugin";
+import { MentionPlugin } from "./MentionPlugin";
 import { Bullet } from "../model/OutlineBullet";
 
 const theme = {
@@ -80,6 +81,7 @@ export const Editor = ({ node, onChange, context }: Props) => {
         <HistoryPlugin />
         <OnChangePlugin onChange={editorOnChange} />
         <KeyboardOverridesPlugin bullet={node} context={context} />
+        <MentionPlugin />
       </LexicalComposer>
     </div>
   );

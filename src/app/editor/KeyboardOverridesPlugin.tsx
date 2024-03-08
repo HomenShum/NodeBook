@@ -3,7 +3,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { mergeRegister } from "@lexical/utils";
 import {
   KEY_ENTER_COMMAND,
-  COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_LOW,
   KEY_TAB_COMMAND,
   KEY_BACKSPACE_COMMAND,
   KEY_ARROW_DOWN_COMMAND,
@@ -69,7 +69,7 @@ export const KeyboardOverridesPlugin = ({ bullet, context }: Props) => {
           outlineViewStore.setFocusedNode(newBullet);
           return true;
         },
-        COMMAND_PRIORITY_HIGH
+        COMMAND_PRIORITY_LOW
       ),
       editor.registerCommand(
         KEY_TAB_COMMAND,
@@ -100,7 +100,7 @@ export const KeyboardOverridesPlugin = ({ bullet, context }: Props) => {
             return true;
           }
         },
-        COMMAND_PRIORITY_HIGH
+        COMMAND_PRIORITY_LOW
       ),
       editor.registerCommand(
         KEY_BACKSPACE_COMMAND,
@@ -122,7 +122,7 @@ export const KeyboardOverridesPlugin = ({ bullet, context }: Props) => {
           }
           return false;
         },
-        COMMAND_PRIORITY_HIGH
+        COMMAND_PRIORITY_LOW
       ),
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
@@ -131,7 +131,7 @@ export const KeyboardOverridesPlugin = ({ bullet, context }: Props) => {
           focusNextEditor(event);
           return true;
         },
-        COMMAND_PRIORITY_HIGH
+        COMMAND_PRIORITY_LOW
       ),
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
@@ -140,7 +140,7 @@ export const KeyboardOverridesPlugin = ({ bullet, context }: Props) => {
           focusPrevEditor(event);
           return true;
         },
-        COMMAND_PRIORITY_HIGH
+        COMMAND_PRIORITY_LOW
       )
     );
     return removeListener;
