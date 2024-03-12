@@ -13,6 +13,7 @@ export class OutlineViewStore {
   public currentViewRoot: Bullet;
   public focusedNode: Bullet | null = null;
   public hoveredNode: Bullet | null = null;
+  public showBulletDetails = false;
   private graphStore: GraphStore;
   constructor(graphStore: GraphStore) {
     this.graphStore = graphStore;
@@ -23,11 +24,11 @@ export class OutlineViewStore {
     makeAutoObservable(this);
   }
 
-  insertGraphNodeToOutline(
-    node: GraphNode,
-    relation: GraphRelation,
-    parent: Bullet
-  ) {
+  toggleBulletDetails() {
+    this.showBulletDetails = !this.showBulletDetails;
+  }
+
+  insertGraphNodeToOutline(node: GraphNode, relation: GraphRelation, parent: Bullet) {
     if (relation.from.id !== parent.graphNode.id) {
       throw new Error("Relation's from node is not the parent node");
     }
@@ -60,10 +61,7 @@ export class OutlineViewStore {
     bullet.parent = newParent;
     // Update the graph
     // TODO remove !
-    this.graphStore.updateRelationFrom(
-      bullet.graphRelation!,
-      newParent.graphNode
-    );
+    this.graphStore.updateRelationFrom(bullet.graphRelation!, newParent.graphNode);
   }
 
   deleteNode(bullet: Bullet) {

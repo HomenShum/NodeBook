@@ -9,7 +9,7 @@ export const OutlineView = observer(() => {
   const children = root.children;
 
   return (
-    <div>
+    <div style={{ width: "100%" }}>
       {parents.map((parent) => (
         <span
           key={parent.id}

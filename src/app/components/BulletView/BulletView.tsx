@@ -1,9 +1,9 @@
-import { Editor } from "../../editor/Editor";
-import styles from "./BulletView.module.css";
 import { observer } from "mobx-react-lite";
+import { Editor } from "../../editor/Editor";
 import { Bullet } from "../../model/OutlineBullet";
-import { useOutlineViewStore } from "../../store/outline";
 import { useGraphStore } from "../../store/graph";
+import { useOutlineViewStore } from "../../store/outline";
+import styles from "./BulletView.module.css";
 
 export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
   const outlineViewStore = useOutlineViewStore();
@@ -14,10 +14,7 @@ export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
         border: "none",
         width: "1rem",
         fontSize: "0.75rem",
-        color:
-          outlineViewStore.hoveredNode?.id === bullet.id
-            ? "black"
-            : "transparent",
+        color: outlineViewStore.hoveredNode?.id === bullet.id ? "black" : "transparent",
         cursor: "pointer",
       }}
       onClick={() => bullet.toggleExpanded()}
@@ -45,8 +42,7 @@ export const BulletView = observer(
     const outlineViewStore = useOutlineViewStore();
     const children = bullet.children;
 
-    const isForward =
-      bullet.graphRelation?.from.id === bullet.parent?.graphNode.id;
+    const isForward = bullet.graphRelation?.from.id === bullet.parent?.graphNode.id;
 
     return (
       <>
@@ -69,29 +65,18 @@ export const BulletView = observer(
               onChange={(e) => {
                 // TODO
                 const selectedRelationType =
-                  graphStore.relationTypes[
-                    e.target.value as keyof typeof graphStore.relationTypes
-                  ];
+                  graphStore.relationTypes[e.target.value as keyof typeof graphStore.relationTypes];
                 if (!selectedRelationType || !bullet.graphRelation) return; // TODO
-                graphStore.updateRelationType(
-                  bullet.graphRelation,
-                  selectedRelationType
-                );
+                graphStore.updateRelationType(bullet.graphRelation, selectedRelationType);
               }}
             >
-              {Object.values(graphStore.relationTypes).map(
-                ({ id, label, reverseLabel }) => (
-                  <option key={id} value={id}>
-                    {label}
-                  </option>
-                )
-              )}
+              {Object.values(graphStore.relationTypes).map(({ id, label, reverseLabel }) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
             </select>
-            {isForward ? (
-              <span>↳</span>
-            ) : (
-              <span style={{ transform: "rotate(90deg)" }}>↲</span>
-            )}
+            {isForward ? <span>↳</span> : <span style={{ transform: "rotate(90deg)" }}>↲</span>}
           </div>
           <Toggle bullet={bullet} />
           <span
@@ -104,25 +89,19 @@ export const BulletView = observer(
             {"\u2022"}
           </span>
           {/* relation type */}
-          <div
-            style={{ gap: "5px", display: "flex", alignItems: "flex-start" }}
-          >
-            <div>
+          <div style={{ gap: "5px", display: "flex", alignItems: "flex-start", flex: 1 }}>
+            <div style={{ flex: 1 }}>
               <Editor
                 node={bullet}
                 onChange={(v) => bullet.graphNode.setText(v ?? "")}
                 context={{ node: bullet, parents, siblingAbove, siblingBelow }}
               />
-              <div
-                style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}
-              >
-                <span style={{ color: "gray" }}>
-                  bulletId: {bullet.id.slice(0, 8)}
-                </span>
-                <span style={{ color: "gray" }}>
-                  nodeId: {bullet.graphNode.id.slice(0, 8)}
-                </span>
-              </div>
+              {outlineViewStore.showBulletDetails && (
+                <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
+                  <span style={{ color: "gray" }}>bulletId: {bullet.id.slice(0, 8)}</span>
+                  <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id.slice(0, 8)}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -141,5 +120,5 @@ export const BulletView = observer(
           })}
       </>
     );
-  }
+  },
 );

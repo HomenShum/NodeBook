@@ -4,7 +4,9 @@ import { OutlineViewStore } from "../model/OutlineViewStore";
 import { graphStore } from "./graph";
 
 export const outlineViewStore = new OutlineViewStore(graphStore);
-// (window as any).outlineViewStore = outlineViewStore; // for debugging
+if (typeof window !== "undefined") {
+  (window as any).outlineViewStore = outlineViewStore; // for debugging
+}
 
 export const OutlineViewStoreContext = createContext(outlineViewStore);
 
