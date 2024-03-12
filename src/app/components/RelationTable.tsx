@@ -17,9 +17,11 @@ export const RelationTable = observer(() => {
       <h1>Relation Table</h1>
       <table>
         <thead>
-          {headers.map((header) => (
-            <th key={header}>{header}</th>
-          ))}
+          <tr>
+            {headers.map((header) => (
+              <th key={header}>{header}</th>
+            ))}
+          </tr>
         </thead>
         <tbody>
           {relations.map((relation) => (
@@ -28,7 +30,9 @@ export const RelationTable = observer(() => {
               <td>{nodeToString(relation.from)}</td>
               <td>{nodeToString(relation.to)}</td>
               <td>{relation.type.label}</td>
-              <button onClick={() => relation.delete()}>x</button>
+              <td>
+                <button onClick={() => relation.delete()}>x</button>
+              </td>
             </tr>
           ))}
         </tbody>

@@ -33,9 +33,11 @@ export const NodeTable = observer(() => {
       <h1>Node Table</h1>
       <table>
         <thead>
-          {headers.map((header) => (
-            <th key={header}>{header}</th>
-          ))}
+          <tr>
+            {headers.map((header) => (
+              <th key={header}>{header}</th>
+            ))}
+          </tr>
         </thead>
         <tbody>
           {nodes.map((node) => (
@@ -56,13 +58,15 @@ export const NodeTable = observer(() => {
                   })
                   .join(", ")}
               </td>
-              <button
-                onClick={() => {
-                  node.delete();
-                }}
-              >
-                x
-              </button>
+              <td>
+                <button
+                  onClick={() => {
+                    node.delete();
+                  }}
+                >
+                  x
+                </button>
+              </td>
             </tr>
           ))}
         </tbody>
