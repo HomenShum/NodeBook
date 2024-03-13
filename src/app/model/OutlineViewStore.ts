@@ -9,19 +9,21 @@ import { Bullet } from "./OutlineBullet";
  * Methods which add or move a node in the tree view also update the graph to reflect the change.
  */
 export class OutlineViewStore {
-  public root: Bullet;
-  public currentViewRoot: Bullet;
+  public root: Bullet | null = null;
+  public currentViewRoot: Bullet | null = null;
   public focusedNode: Bullet | null = null;
   public hoveredNode: Bullet | null = null;
   public showBulletDetails = false;
   private graphStore: GraphStore;
   constructor(graphStore: GraphStore) {
     this.graphStore = graphStore;
-    const root = graphStore.getNode("root");
-    if (!root) throw new Error("Root node not found");
-    this.root = new Bullet(this, root);
     this.currentViewRoot = this.root;
     makeAutoObservable(this);
+  }
+
+  setRoot(root: GraphNode) {
+    this.root = new Bullet(this, root);
+    this.currentViewRoot = this.root;
   }
 
   toggleBulletDetails() {

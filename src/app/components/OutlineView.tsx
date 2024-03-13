@@ -5,6 +5,9 @@ import { BulletView } from "./BulletView/BulletView";
 export const OutlineView = observer(() => {
   const outlineViewStore = useOutlineViewStore();
   const root = outlineViewStore.currentViewRoot;
+  if (!root) {
+    return <div>Loading...</div>;
+  }
   const parents = root.parents;
   const children = root.children;
 

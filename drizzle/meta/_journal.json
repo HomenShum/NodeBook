@@ -1,0 +1,48 @@
+{
+  "version": "5",
+  "dialect": "pg",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1709814333997,
+      "tag": "0000_serious_silhouette",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1709815586773,
+      "tag": "0001_yellow_nextwave",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1709815672840,
+      "tag": "0002_gray_exiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1709817121291,
+      "tag": "0003_warm_kylun",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1709829659826,
+      "tag": "0004_remarkable_betty_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1709829694126,
+      "tag": "0005_fair_abomination",
+      "breakpoints": true
+    }
+  ]
+}

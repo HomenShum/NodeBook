@@ -2,35 +2,36 @@
 
 ## Getting Started
 
-First, run the development server:
+Prerequisites
+
+- [Node.js](https://nodejs.org/en/download)
+- [Yarn](https://yarnpkg.com/getting-started/install)
+
+Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+yarn
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Link the vercel project then pull the `.env` file from vercel:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+yarn vercel:link
+yarn vercel env pull --environment=development .env.local
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+(Optional) By default, persistence is enabled. To disable persistence, set the `NEXT_PUBLIC_PERSISTENCE_ENABLED` environment variable to `false` in `.env.local`.
 
-## Learn More
+Start the development server:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+yarn dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Set up a database for testing
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- Go to `mew-postgres` database in vercel: https://vercel.com/ideaflowco/mew/stores/postgres/store_lxFSgFAtApzk0tud/data
+- In the data tab, run `create database <db-name>` to create a new database for your local development
+- Update the `POSTGRES_CUSTOM_URL` in `.env.local` with the new database name. For example, if the current url ends with `/development`, change it to `/<db-name>`
+- Run `yarn db:migrate` to create the tables in the new database
+- When you're done, you can delete the database by running `drop database <db-name>` in the [vercel data tab](https://vercel.com/ideaflowco/mew/stores/postgres/store_lxFSgFAtApzk0tud/data)
