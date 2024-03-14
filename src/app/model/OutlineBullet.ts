@@ -1,14 +1,14 @@
 import { makeAutoObservable } from "mobx";
 import { uuid } from "../util";
 import { GraphNode } from "./GraphNode";
-import { GraphRelation } from "./GraphRelation";
-import { ViewStore } from "./ViewStore";
 import { GraphNodeView, GraphNodeViewType } from "./GraphNodeView";
+import { GraphRelation } from "./GraphRelation";
+import { OutlineViewStore } from "./OutlineViewStore";
 
 export class Bullet implements GraphNodeView {
   public type: GraphNodeViewType = "bullet";
 
-  private viewStore: ViewStore;
+  private viewStore: OutlineViewStore;
 
   public id: string;
 
@@ -22,7 +22,7 @@ export class Bullet implements GraphNodeView {
   public childrenByRelationId: Map<string, Bullet>;
 
   constructor(
-    store: ViewStore,
+    store: OutlineViewStore,
     node: GraphNode,
     relation: GraphRelation | null = null,
     parent: Bullet | null = null,
@@ -34,7 +34,7 @@ export class Bullet implements GraphNodeView {
       isExpanded?: boolean;
       childrenByRelationId?: Map<string, Bullet>;
       id?: string;
-    } = {}
+    } = {},
   ) {
     this.viewStore = store;
     this.graphNode = node;
@@ -84,14 +84,8 @@ export class Bullet implements GraphNodeView {
       if (existing) {
         newChildren.push(existing);
       } else {
-        const relatedNode =
-          relation.to.id === this.graphNode.id ? relation.from : relation.to;
-        const newBullet = new Bullet(
-          this.viewStore,
-          relatedNode,
-          relation,
-          this
-        );
+        const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
+        const newBullet = new Bullet(this.viewStore, relatedNode, relation, this);
         newChildren.push(newBullet);
         this.childrenByRelationId.set(relation.id, newBullet);
       }

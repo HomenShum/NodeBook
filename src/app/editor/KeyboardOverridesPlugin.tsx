@@ -1,37 +1,34 @@
-import { useContext, useEffect } from "react";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
-  KEY_ENTER_COMMAND,
   COMMAND_PRIORITY_LOW,
-  KEY_TAB_COMMAND,
-  KEY_BACKSPACE_COMMAND,
   KEY_ARROW_DOWN_COMMAND,
   KEY_ARROW_UP_COMMAND,
+  KEY_BACKSPACE_COMMAND,
+  KEY_ENTER_COMMAND,
+  KEY_TAB_COMMAND,
   LexicalEditor,
 } from "lexical";
-import { EditorContext } from "./Editor";
-import { ViewStoreContext } from "../store/outline";
-import { GraphStoreContext } from "../store/graph";
-import { Bullet } from "../model/OutlineBullet";
+import { useContext, useEffect } from "react";
 import { GraphNodeView } from "../model/GraphNodeView";
-import { ViewStore } from "../model/ViewStore";
 import { GraphStore } from "../model/GraphStore";
+import { Bullet } from "../model/OutlineBullet";
+import { OutlineViewStore } from "../model/OutlineViewStore";
 import { Note } from "../model/ThoughtstreamNote";
+import { ThoughtstreamViewStore } from "../model/ThoughtstreamViewStore";
+import { GraphStoreContext } from "../store/graph";
+import { ViewStoreContext } from "../store/outline";
+import { EditorContext } from "./Editor";
 
 const getEdiitorPosition = (event: KeyboardEvent) => {
   const target = event?.target as HTMLElement;
-  const allEditors = Array.from(
-    document.querySelectorAll('div[contenteditable="true"]')
-  );
+  const allEditors = Array.from(document.querySelectorAll('div[contenteditable="true"]'));
   const curInex = allEditors.indexOf(target);
   return curInex;
 };
 
 const focusEditor = (index: number) => {
-  const allEditors = Array.from(
-    document.querySelectorAll('div[contenteditable="true"]')
-  );
+  const allEditors = Array.from(document.querySelectorAll('div[contenteditable="true"]'));
   const editor = allEditors[index] as HTMLElement;
   if (editor) {
     editor.focus();
@@ -55,10 +52,10 @@ interface Props {
 
 const makeBulletKeyCommands = (
   graphStore: GraphStore,
-  viewStore: ViewStore,
+  viewStore: OutlineViewStore,
   editor: LexicalEditor,
   bullet: Bullet,
-  siblingAbove: Bullet
+  siblingAbove: Bullet,
 ) => {
   return mergeRegister(
     editor.registerCommand(
@@ -74,7 +71,7 @@ const makeBulletKeyCommands = (
         viewStore.setFocusedNode(newBullet);
         return true;
       },
-      COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_LOW,
     ),
     editor.registerCommand(
       KEY_TAB_COMMAND,
@@ -105,7 +102,7 @@ const makeBulletKeyCommands = (
           return true;
         }
       },
-      COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_LOW,
     ),
     editor.registerCommand(
       KEY_BACKSPACE_COMMAND,
@@ -127,7 +124,7 @@ const makeBulletKeyCommands = (
         }
         return false;
       },
-      COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_LOW,
     ),
     editor.registerCommand(
       KEY_ARROW_DOWN_COMMAND,
@@ -136,7 +133,7 @@ const makeBulletKeyCommands = (
         focusNextEditor(event);
         return true;
       },
-      COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_LOW,
     ),
     editor.registerCommand(
       KEY_ARROW_UP_COMMAND,
@@ -145,16 +142,16 @@ const makeBulletKeyCommands = (
         focusPrevEditor(event);
         return true;
       },
-      COMMAND_PRIORITY_LOW
-    )
+      COMMAND_PRIORITY_LOW,
+    ),
   );
 };
 
 const makeNoteKeyCommands = (
   graphStore: GraphStore,
-  viewStore: ViewStore,
+  viewStore: ThoughtstreamViewStore,
   editor: LexicalEditor,
-  note: Note
+  note: Note,
 ) => {
   return mergeRegister(
     editor.registerCommand(
@@ -164,7 +161,7 @@ const makeNoteKeyCommands = (
         focusNextEditor(event);
         return true;
       },
-      COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_LOW,
     ),
     editor.registerCommand(
       KEY_ARROW_UP_COMMAND,
@@ -173,8 +170,8 @@ const makeNoteKeyCommands = (
         focusPrevEditor(event);
         return true;
       },
-      COMMAND_PRIORITY_LOW
-    )
+      COMMAND_PRIORITY_LOW,
+    ),
   );
 };
 
@@ -188,16 +185,10 @@ export const KeyboardOverridesPlugin = ({ nodeView, context }: Props) => {
     switch (nodeView.type) {
       case "bullet":
         const bullet = nodeView as Bullet;
-        return makeBulletKeyCommands(
-          graphStore,
-          viewStore,
-          editor,
-          bullet,
-          siblingAbove as Bullet
-        );
+        return makeBulletKeyCommands(graphStore, viewStore.outlineViewStore, editor, bullet, siblingAbove as Bullet);
       case "note":
         const note = nodeView as Note;
-        return makeNoteKeyCommands(graphStore, viewStore, editor, note);
+        return makeNoteKeyCommands(graphStore, viewStore.thoughtstreamViewStore, editor, note);
     }
   }, [editor, graphStore, viewStore, node, nodeView, context]);
   return null;

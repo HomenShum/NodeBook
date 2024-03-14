@@ -1,14 +1,14 @@
 import { makeAutoObservable } from "mobx";
 import { uuid } from "../util";
 import { GraphNode } from "./GraphNode";
-import { ViewStore } from "./ViewStore";
 import { GraphNodeView, GraphNodeViewType } from "./GraphNodeView";
 import { GraphRelation } from "./GraphRelation";
+import { ThoughtstreamViewStore } from "./ThoughtstreamViewStore";
 
 export class Note implements GraphNodeView {
   public type: GraphNodeViewType = "note";
 
-  private viewStore: ViewStore;
+  private viewStore: ThoughtstreamViewStore;
 
   public id: string;
 
@@ -18,13 +18,13 @@ export class Note implements GraphNodeView {
   private childrenIds: Set<string>;
 
   constructor(
-    store: ViewStore,
+    store: ThoughtstreamViewStore,
     node: GraphNode,
     {
       id,
     }: {
       id?: string;
-    } = {}
+    } = {},
   ) {
     this.viewStore = store;
     this.graphNode = node;
@@ -65,7 +65,6 @@ export class Note implements GraphNodeView {
   }
 
   get children() {
-    console.log("children");
     const children: Note[] = [];
     this.graphNode.relations.forEach((relation) => {
       children.push(...this.gatherChildrenFromRelation(relation));

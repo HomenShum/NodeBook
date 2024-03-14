@@ -1,10 +1,9 @@
-import { GraphStore } from "./GraphStore";
 import { makeAutoObservable } from "mobx";
 import { GraphNode } from "./GraphNode";
-import { GraphRelation } from "./GraphRelation";
-import { Bullet } from "./OutlineBullet";
 import { GraphNodeView } from "./GraphNodeView";
-import { Note } from "./ThoughtstreamNote";
+import { GraphStore } from "./GraphStore";
+import { OutlineViewStore } from "./OutlineViewStore";
+import { ThoughtstreamViewStore } from "./ThoughtstreamViewStore";
 
 export enum ViewType {
   OUTLINE = "outline",
@@ -16,7 +15,11 @@ export class ViewStore {
 
   private graphStore: GraphStore;
 
-  public currentViewRoot: GraphNodeView | null = null;
+  public outlineViewStore: OutlineViewStore;
+  public thoughtstreamViewStore: ThoughtstreamViewStore;
+
+  private rootNode: GraphNode | null = null;
+
   public focusedNode: GraphNodeView | null = null;
   public hoveredNode: GraphNodeView | null = null;
 
@@ -25,30 +28,29 @@ export class ViewStore {
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;
     this.graphStore = graphStore;
+    this.outlineViewStore = new OutlineViewStore(graphStore, this);
+    this.thoughtstreamViewStore = new ThoughtstreamViewStore(graphStore, this);
     makeAutoObservable(this);
   }
 
   setView(view: ViewType) {
     this.curView = view;
-    const rootNode = this.currentViewRoot!.graphNode;
-    switch (this.curView) {
-      case "outline":
-        this.currentViewRoot = new Bullet(this, rootNode);
-        break;
-      case "thoughtstream":
-        this.currentViewRoot = new Note(this, rootNode);
-        break;
-    }
   }
 
   setRoot(node: GraphNode) {
+    this.rootNode = node;
+  }
+
+  get currentViewRoot(): GraphNodeView | null {
+    if (!this.rootNode) return null;
+
     switch (this.curView) {
       case "outline":
-        this.currentViewRoot = new Bullet(this, node);
-        break;
+        return this.outlineViewStore.viewForNode(this.rootNode);
       case "thoughtstream":
-        this.currentViewRoot = new Note(this, node);
-        break;
+        return this.thoughtstreamViewStore.viewForNode(this.rootNode);
+      default:
+        throw new Error(`Unknown view type ${this.curView}`);
     }
   }
 
@@ -58,45 +60,5 @@ export class ViewStore {
 
   setHoveredNode(node: GraphNodeView | null) {
     this.hoveredNode = node;
-  }
-
-  insertGraphNodeToOutline(
-    node: GraphNode,
-    relation: GraphRelation,
-    parent: Bullet
-  ) {
-    if (relation.from.id !== parent.graphNode.id) {
-      throw new Error("Relation's from node is not the parent node");
-    }
-    if (relation.to.id !== node.id) {
-      throw new Error("Relation's 'to' property is not the node being created");
-    }
-    const bullet = new Bullet(this, node, relation, parent);
-    parent.childrenByRelationId.set(relation.id, bullet);
-    return bullet;
-  }
-
-  updateNodeToParent(bullet: Bullet, newParent: Bullet, after?: Bullet) {
-    const currentParent = bullet.parent;
-    if (!currentParent) throw new Error("Node has no parent");
-    // Remove the tree node from the old parent
-    const oldParent = bullet.parent;
-    oldParent?.childrenByRelationId.delete(bullet.graphRelation?.id ?? "");
-    // Set the new parent
-    newParent.childrenByRelationId.set(bullet.graphRelation?.id ?? "", bullet);
-    bullet.parent = newParent;
-    // Update the graph
-    // TODO remove !
-    this.graphStore.updateRelationFrom(
-      bullet.graphRelation!,
-      newParent.graphNode
-    );
-  }
-
-  deleteNode(bullet: Bullet) {
-    const parent = bullet.parent;
-    if (!parent) throw new Error("Node has no parent");
-    parent.childrenByRelationId.delete(bullet.graphRelation?.id ?? "");
-    this.graphStore.deleteNode(bullet.graphNode.id);
   }
 }
