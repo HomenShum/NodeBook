@@ -1,21 +1,13 @@
-import {
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  ReactPortal,
-  Ref,
-} from "react";
-import * as ReactDOM from "react-dom";
-import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
   MenuOption,
-  MenuTextMatch,
   MenuRenderFn,
+  MenuTextMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
+import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import * as ReactDOM from "react-dom";
 import { GraphNode } from "../model/GraphNode";
 import { useGraphStore } from "../store/graph";
 import { useViewStore } from "../store/outline";
@@ -42,11 +34,7 @@ export function MentionPlugin(): JSX.Element | null {
   const graphStore = useGraphStore();
   const outlineViewStore = useViewStore();
   const onSelectOption = useCallback(
-    (
-      selectedOption: MentionTypeaheadOption,
-      nodeToReplace: TextNode | null,
-      closeMenu: () => void
-    ) => {
+    (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
       editor.update(() => {
         const mentionNode = new TextNode(selectedOption.name);
         mentionNode.setStyle("color: red;");
@@ -56,13 +44,13 @@ export function MentionPlugin(): JSX.Element | null {
         graphStore.createRelation({
           from: selectedOption.graphNode,
           to: outlineViewStore.focusedNode!.graphNode,
-          type: graphStore.relationTypes.child,
+          type: graphStore.relationTypesById.child,
         });
         mentionNode.select();
         closeMenu();
       });
     },
-    [editor, graphStore, outlineViewStore]
+    [editor, graphStore, outlineViewStore],
   );
 
   const options: Array<MentionTypeaheadOption> = useMemo(() => {
@@ -72,7 +60,7 @@ export function MentionPlugin(): JSX.Element | null {
       .filter(
         (node) =>
           node.text.toLowerCase().includes(queryString.toLowerCase()) &&
-          node.id !== outlineViewStore.focusedNode?.graphNode.id
+          node.id !== outlineViewStore.focusedNode?.graphNode.id,
       )
       .map((node) => new MentionTypeaheadOption(node.text, node))
       .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
@@ -110,17 +98,7 @@ function checkForMentionMatch(text: string): MenuTextMatch | null {
     ")";
   const LENGTH_LIMIT = 75;
   const AtSignMentionsRegex = new RegExp(
-    "(^|\\s|\\()(" +
-      "[" +
-      TRIGGERS +
-      "]" +
-      "((?:" +
-      VALID_CHARS +
-      VALID_JOINS +
-      "){0," +
-      LENGTH_LIMIT +
-      "})" +
-      ")$"
+    "(^|\\s|\\()(" + "[" + TRIGGERS + "]" + "((?:" + VALID_CHARS + VALID_JOINS + "){0," + LENGTH_LIMIT + "})" + ")$",
   );
 
   // 50 is the longest alias length limit.
@@ -128,16 +106,7 @@ function checkForMentionMatch(text: string): MenuTextMatch | null {
 
   // Regex used to match alias.
   const AtSignMentionsRegexAliasRegex = new RegExp(
-    "(^|\\s|\\()(" +
-      "[" +
-      TRIGGERS +
-      "]" +
-      "((?:" +
-      VALID_CHARS +
-      "){0," +
-      ALIAS_LENGTH_LIMIT +
-      "})" +
-      ")$"
+    "(^|\\s|\\()(" + "[" + TRIGGERS + "]" + "((?:" + VALID_CHARS + "){0," + ALIAS_LENGTH_LIMIT + "})" + ")$",
   );
 
   const minMatchLength = 1;
@@ -161,12 +130,10 @@ function checkForMentionMatch(text: string): MenuTextMatch | null {
   return null;
 }
 
-function getMenuRenderFn(
-  options: MentionTypeaheadOption[]
-): MenuRenderFn<MentionTypeaheadOption> {
+function getMenuRenderFn(options: MentionTypeaheadOption[]): MenuRenderFn<MentionTypeaheadOption> {
   return (
     anchorElementRef,
-    { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }
+    { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
   ): ReactPortal | JSX.Element | null => {
     // enable closing the autocomplete menu when clicking elsewhere
     const ref: Ref<HTMLDivElement> = useRef(null);
@@ -206,7 +173,7 @@ function getMenuRenderFn(
               ))}
             </ul>
           </div>,
-          anchorElementRef.current
+          anchorElementRef.current,
         )
       : null;
   };

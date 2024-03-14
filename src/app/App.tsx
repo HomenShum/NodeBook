@@ -15,7 +15,7 @@ function App() {
   useEffect(() => {
     graphStore.loadFromServer().then(() => {
       setIsLoading(false);
-      const root = graphStore.getNode("root") ?? graphStore.createNode({ id: "root", text: "Root" });
+      const root = graphStore.getNode("root") ?? graphStore.createNode({ id: "root", text: "My thoughtstream" });
       viewStore.setRoot(root);
     });
   }, []);
