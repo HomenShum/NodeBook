@@ -25,6 +25,7 @@
     "cmdk": "0.2.1",
     "drizzle-orm": "^0.29.5",
     "drizzle-zod": "^0.5.1",
+    "fractional-indexing": "^3.2.0",
     "lexical": "^0.13.1",
     "lucide-react": "^0.357.0",
     "mobx": "^6.12.0",

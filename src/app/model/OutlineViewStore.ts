@@ -1,4 +1,4 @@
-import { GraphNode } from "./GraphNode";
+import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 import { Bullet } from "./OutlineBullet";
@@ -33,27 +33,46 @@ export class OutlineViewStore {
     return bullet;
   }
 
-  insertGraphNodeToOutline(node: GraphNode, relation: GraphRelation, parent: Bullet) {
+  insertGraphNodeToOutline({
+    graphNode,
+    relation,
+    parent,
+    position,
+  }: {
+    graphNode: GraphNode;
+    relation: GraphRelation;
+    parent: Bullet;
+    position?: string;
+  }) {
     if (relation.from.id !== parent.graphNode.id) {
       throw new Error("Relation's from node is not the parent node");
     }
-    if (relation.to.id !== node.id) {
+    if (relation.to.id !== graphNode.id) {
       throw new Error("Relation's 'to' property is not the node being created");
     }
-    const bullet = new Bullet(this, node, relation, parent);
+    position = position || parent.lastChild.position;
+    const bullet = new Bullet(this, graphNode, relation, parent, { position });
     parent.childrenByRelationId.set(relation.id, bullet);
-    this.viewsByNodeId.set(node.id, bullet);
+    this.viewsByNodeId.set(graphNode.id, bullet);
     return bullet;
   }
 
-  createNode(parent: Bullet) {
-    const graphNode = this.graphStore.createNode();
+  createNode({
+    parent,
+    graphNodeProps = {},
+    position,
+  }: {
+    parent: Bullet;
+    graphNodeProps: GraphNodeProps;
+    position?: string;
+  }) {
+    const graphNode = this.graphStore.createNode(graphNodeProps);
     const relation = this.graphStore.createRelation({
       from: parent.graphNode,
       to: graphNode,
       type: this.graphStore.relationTypesById.child,
     });
-    return this.insertGraphNodeToOutline(graphNode, relation, parent);
+    return this.insertGraphNodeToOutline({ graphNode, relation, parent, position });
   }
 
   updateNodeToParent(bullet: Bullet, newParent: Bullet, after?: Bullet) {

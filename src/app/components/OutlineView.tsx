@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
+import { Bullet, sortBullets } from "../model/OutlineBullet";
 import { useViewStore } from "../store/outline";
 import { BulletView } from "./BulletView/BulletView";
-import { Bullet } from "../model/OutlineBullet";
 
 export const OutlineView = observer(() => {
   const viewStore = useViewStore();
@@ -10,7 +10,7 @@ export const OutlineView = observer(() => {
     return <div>Loading...</div>;
   }
   const ancestors = root.ancestors;
-  const children = root.children;
+  const children = root.children.sort(sortBullets);
 
   return (
     <div style={{ width: "100%" }}>
@@ -26,7 +26,7 @@ export const OutlineView = observer(() => {
         </span>
       ))}
       <h1>{root.graphNode.text}</h1>
-      {root.children.map((child, i) => (
+      {children.map((child, i) => (
         <BulletView
           key={child.id}
           bullet={child}

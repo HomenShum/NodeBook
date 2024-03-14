@@ -1,6 +1,9 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
+import { generateKeyBetween } from "fractional-indexing";
 import {
+  $getRoot,
+  $getSelection,
   COMMAND_PRIORITY_LOW,
   KEY_ARROW_DOWN_COMMAND,
   KEY_ARROW_UP_COMMAND,
@@ -56,6 +59,7 @@ const makeBulletKeyCommands = (
   editor: LexicalEditor,
   bullet: Bullet,
   siblingAbove: Bullet,
+  siblingBelow: Bullet,
 ) => {
   return mergeRegister(
     editor.registerCommand(
@@ -67,7 +71,17 @@ const makeBulletKeyCommands = (
           console.log("Parent not found");
           return false;
         }
-        const newBullet = bullet.parent.createChild();
+        // Get text before and after the cursor
+        const root = $getRoot();
+        const points = $getSelection()?.getStartEndPoints();
+        if (!points) return false;
+        const textBefore = root.getTextContent().slice(0, points[0].offset);
+        const textAfter = root.getTextContent().slice(points[1].offset);
+        // Set the text of the current node to the text before the cursor
+        bullet.graphNode.setText(textBefore);
+        // Create a new node below, with the text after the cursor
+        const position = generateKeyBetween(bullet.position, siblingBelow?.position ?? null);
+        const newBullet = bullet.parent.createChild({ text: textAfter }, position);
         viewStore.setFocusedNode(newBullet);
         return true;
       },
@@ -181,11 +195,18 @@ export const KeyboardOverridesPlugin = ({ nodeView, context }: Props) => {
   const [editor] = useLexicalComposerContext();
   const node = nodeView.graphNode;
   useEffect(() => {
-    const { siblingAbove } = context;
+    const { siblingAbove, siblingBelow } = context;
     switch (nodeView.type) {
       case "bullet":
         const bullet = nodeView as Bullet;
-        return makeBulletKeyCommands(graphStore, viewStore.outlineViewStore, editor, bullet, siblingAbove as Bullet);
+        return makeBulletKeyCommands(
+          graphStore,
+          viewStore.outlineViewStore,
+          editor,
+          bullet,
+          siblingAbove as Bullet,
+          siblingBelow as Bullet,
+        );
       case "note":
         const note = nodeView as Note;
         return makeNoteKeyCommands(graphStore, viewStore.thoughtstreamViewStore, editor, note);

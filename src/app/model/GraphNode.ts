@@ -1,7 +1,7 @@
 import { makeAutoObservable } from "mobx";
 import { uuid } from "../util";
-import { GraphStore } from "./GraphStore";
 import { GraphRelation } from "./GraphRelation";
+import { GraphStore } from "./GraphStore";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
 export type GraphNodeProps = {
@@ -14,11 +14,7 @@ export class GraphNode {
   public text: string = "";
   public relations: GraphRelation[] = [];
 
-  constructor(
-    private store: GraphStore,
-    private remote?: RemoteGraphStore,
-    { id, text = "" }: GraphNodeProps = {}
-  ) {
+  constructor(private store: GraphStore, private remote?: RemoteGraphStore, { id, text = "" }: GraphNodeProps = {}) {
     this.id = id || uuid();
     this.text = text;
     makeAutoObservable(this);
@@ -31,14 +27,14 @@ export class GraphNode {
     }
   }
 
-  createChild() {
-    const child = this.store.createNode();
+  createChild(props: GraphNodeProps = {}) {
+    const child = this.store.createNode(props);
     const relation = this.store.insertRelation(
       new GraphRelation(this.store, {
         from: this,
         to: child,
         type: this.store.relationTypesById.child,
-      })
+      }),
     );
     return { child, relation };
   }

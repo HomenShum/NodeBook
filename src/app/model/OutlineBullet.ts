@@ -1,6 +1,7 @@
+import { generateNKeysBetween } from "fractional-indexing";
 import { makeAutoObservable } from "mobx";
 import { uuid } from "../util";
-import { GraphNode } from "./GraphNode";
+import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphNodeView, GraphNodeViewType } from "./GraphNodeView";
 import { GraphRelation } from "./GraphRelation";
 import { OutlineViewStore } from "./OutlineViewStore";
@@ -20,6 +21,7 @@ export class Bullet implements GraphNodeView {
   public parent: Bullet | null;
   public isExpanded: boolean;
   public childrenByRelationId: Map<string, Bullet>;
+  public position: string;
 
   constructor(
     store: OutlineViewStore,
@@ -28,12 +30,12 @@ export class Bullet implements GraphNodeView {
     parent: Bullet | null = null,
     {
       isExpanded,
-      childrenByRelationId,
       id,
+      position,
     }: {
       isExpanded?: boolean;
-      childrenByRelationId?: Map<string, Bullet>;
       id?: string;
+      position?: string;
     } = {},
   ) {
     this.viewStore = store;
@@ -41,7 +43,9 @@ export class Bullet implements GraphNodeView {
     this.graphRelation = relation;
     this.parent = parent;
     this.isExpanded = isExpanded ?? false;
-    this.childrenByRelationId = childrenByRelationId ?? new Map();
+    this.position = position ?? "a0"; // TODO
+    this.childrenByRelationId = new Map();
+
     this.id = id ?? uuid();
     makeAutoObservable(this);
   }
@@ -54,13 +58,22 @@ export class Bullet implements GraphNodeView {
     this.graphRelation = relation;
   }
 
-  insertGraphNode(node: GraphNode, relation: GraphRelation) {
-    return this.viewStore.insertGraphNodeToOutline(node, relation, this);
+  insertGraphNode(graphNode: GraphNode, relation: GraphRelation) {
+    return this.viewStore.insertGraphNodeToOutline({
+      graphNode,
+      relation,
+      parent: this,
+    });
   }
 
-  createChild() {
-    const { child, relation } = this.graphNode.createChild();
-    return this.viewStore.insertGraphNodeToOutline(child, relation, this);
+  createChild(props: GraphNodeProps = {}, position?: string) {
+    const { child, relation } = this.graphNode.createChild(props);
+    return this.viewStore.insertGraphNodeToOutline({
+      graphNode: child,
+      relation,
+      parent: this,
+      position,
+    });
   }
 
   delete() {
@@ -86,18 +99,36 @@ export class Bullet implements GraphNodeView {
   }
 
   get children() {
+    const children: Bullet[] = [];
     const newChildren: Bullet[] = [];
+
     this.graphNode.relations.forEach((relation) => {
       const existing = this.childrenByRelationId.get(relation.id);
       if (existing) {
-        newChildren.push(existing);
+        children.push(existing);
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
         const newBullet = new Bullet(this.viewStore, relatedNode, relation, this);
         newChildren.push(newBullet);
-        this.childrenByRelationId.set(relation.id, newBullet);
       }
     });
-    return newChildren;
+    // Add the new children positioned after the last existing child
+    const lastPosition = children[children.length - 1]?.position ?? null;
+    const positions = generateNKeysBetween(null, lastPosition, newChildren.length);
+    newChildren.forEach((child, i) => {
+      child.position = positions[i];
+      children.push(child);
+      this.childrenByRelationId.set(child.graphRelation!.id, child);
+    });
+    return children;
   }
+
+  get lastChild() {
+    const sortedChildren = this.children.sort(sortBullets);
+    return sortedChildren[sortedChildren.length - 1];
+  }
+}
+
+export function sortBullets(a: Bullet, b: Bullet) {
+  return a.position < b.position ? -1 : 1;
 }
