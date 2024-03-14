@@ -9,7 +9,7 @@ export class GraphStore {
   relationsById: Map<string, GraphRelation> = new Map();
   isLoading = false;
   remote?: RemoteGraphStore;
-  public relationTypes = {
+  public relationTypesById = {
     child: { id: "child", label: "child", reverseLabel: "parent" },
     link: { id: "link", label: "link", reverseLabel: "backlink" },
   };
@@ -24,6 +24,10 @@ export class GraphStore {
 
   get relations(): GraphRelation[] {
     return Array.from(this.relationsById.values());
+  }
+
+  get relationTypes(): GraphRelationType[] {
+    return Object.values(this.relationTypesById);
   }
 
   createNode(
@@ -132,7 +136,8 @@ export class GraphStore {
   addRelationFromServer(persistedRelation: PersistedGraphRelation) {
     const from = this.getNode(persistedRelation.fromId);
     const to = this.getNode(persistedRelation.toId);
-    const type = this.relationTypes[persistedRelation.typeId as keyof typeof this.relationTypes]; // TODO
+    const type =
+      this.relationTypesById[persistedRelation.typeId as keyof typeof this.relationTypesById]; // TODO
     if (!from || !to || !type) {
       throw new Error("Invalid persisted relation");
     }

@@ -46,6 +46,14 @@ export class Bullet implements GraphNodeView {
     makeAutoObservable(this);
   }
 
+  isRelationToThis() {
+    return this.graphRelation?.to.id === this.graphNode.id;
+  }
+
+  setRelation(relation: GraphRelation) {
+    this.graphRelation = relation;
+  }
+
   insertGraphNode(node: GraphNode, relation: GraphRelation) {
     return this.viewStore.insertGraphNodeToOutline(node, relation, this);
   }

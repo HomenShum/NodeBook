@@ -37,7 +37,7 @@ export class GraphNode {
       new GraphRelation(this.store, {
         from: this,
         to: child,
-        type: this.store.relationTypes.child,
+        type: this.store.relationTypesById.child,
       })
     );
     return { child, relation };
@@ -49,13 +49,13 @@ export class GraphNode {
 
   get children(): GraphNode[] {
     return this.relations
-      .filter((r) => r.type.id === this.store.relationTypes.child.id && r.from === this)
+      .filter((r) => r.type.id === this.store.relationTypesById.child.id && r.from === this)
       .map((r) => r.to);
   }
 
   get parents(): GraphNode[] {
     return this.relations
-      .filter((r) => r.type.id === this.store.relationTypes.child.id && r.to === this)
+      .filter((r) => r.type.id === this.store.relationTypesById.child.id && r.to === this)
       .map((r) => r.from);
   }
 

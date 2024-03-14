@@ -46,6 +46,16 @@ export class OutlineViewStore {
     return bullet;
   }
 
+  createNode(parent: Bullet) {
+    const graphNode = this.graphStore.createNode();
+    const relation = this.graphStore.createRelation({
+      from: parent.graphNode,
+      to: graphNode,
+      type: this.graphStore.relationTypesById.child,
+    });
+    return this.insertGraphNodeToOutline(graphNode, relation, parent);
+  }
+
   updateNodeToParent(bullet: Bullet, newParent: Bullet, after?: Bullet) {
     const currentParent = bullet.parent;
     if (!currentParent) throw new Error("Node has no parent");
