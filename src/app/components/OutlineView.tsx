@@ -38,9 +38,9 @@ export const OutlineView = observer(() => {
       ))}
       <button
         onClick={() => {
-          const { child } = root.graphNode.createChild();
+          const bullet = root.createChild();
           setTimeout(() => {
-            const el = document.querySelector(`[data-nodeid="${child.id}"]`);
+            const el = document.querySelector(`[data-nodeid="${bullet.graphNode.id}"]`);
             if (el instanceof HTMLElement) el.focus();
           }, 0);
         }}

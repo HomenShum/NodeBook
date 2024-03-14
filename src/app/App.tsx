@@ -1,4 +1,5 @@
 "use client";
+import { Sidebar } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
 import { NodeTable } from "./components/NodeTable";
@@ -38,9 +39,13 @@ const Main = observer(() => {
   return (
     <div className="flex flex-col h-full">
       <header className="flex justify-center items-center h-8 border-b">
-        <button onClick={() => viewStore.toggleLeftSidebar()}>Toggle left sidebar</button>
+        <button onClick={() => viewStore.toggleLeftSidebar()}>
+          <Sidebar size={20} />
+        </button>
         <div className="flex-1"></div>
-        <button onClick={() => viewStore.toggleRightSidebar()}>Toggle right sidebar</button>
+        <button onClick={() => viewStore.toggleRightSidebar()}>
+          <Sidebar size={20} className="transform rotate-180" />
+        </button>
       </header>
       <div className="flex flex-row flex-1">
         {viewStore.leftSidebarOpen && (

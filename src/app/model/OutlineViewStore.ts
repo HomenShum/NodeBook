@@ -1,3 +1,4 @@
+import { generateKeyBetween } from "fractional-indexing";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
@@ -50,7 +51,7 @@ export class OutlineViewStore {
     if (relation.to.id !== graphNode.id) {
       throw new Error("Relation's 'to' property is not the node being created");
     }
-    position = position || parent.lastChild.position;
+    position = position || generateKeyBetween(parent.lastChild.position, null);
     const bullet = new Bullet(this, graphNode, relation, parent, { position });
     parent.childrenByRelationId.set(relation.id, bullet);
     this.viewsByNodeId.set(graphNode.id, bullet);
