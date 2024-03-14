@@ -27,14 +27,14 @@ function App() {
     <div className="App">
       <GraphStoreContext.Provider value={graphStore}>
         <ViewStoreContext.Provider value={viewStore}>
-          <Main />
+          <AppView />
         </ViewStoreContext.Provider>
       </GraphStoreContext.Provider>
     </div>
   );
 }
 
-const Main = observer(() => {
+const AppView = observer(() => {
   const viewStore = useViewStore();
   return (
     <div className="flex flex-col h-full">
