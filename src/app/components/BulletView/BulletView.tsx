@@ -6,6 +6,15 @@ import { useViewStore } from "../../store/outline";
 import { RelationCombobox } from "../RelationCombobox";
 import styles from "./BulletView.module.css";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu";
+
 export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
   const viewStore = useViewStore();
   return (
@@ -38,6 +47,10 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
   const viewStore = useViewStore();
   const children = bullet.children;
 
+  const onDelete = (event: Event) => {
+    graphStore.deleteNode(bullet.graphNode.id);
+  };
+
   return (
     <>
       <div
@@ -51,6 +64,18 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
           </span>
         ))}
         <div style={{ display: "flex", gap: "5px" }}>
+          <DropdownMenu>
+            <DropdownMenuTrigger>...</DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              {/* <DropdownMenuSeparator /> */}
+              {/* <DropdownMenuItem>Mirror To</DropdownMenuItem> */}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={onDelete}>Delete</DropdownMenuItem>
+              {/* <DropdownMenuSeparator /> */}
+              {/* <DropdownMenuItem>Mark as Bundle</DropdownMenuItem> */}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <RelationCombobox bullet={bullet} />
           <span>↳</span>
         </div>

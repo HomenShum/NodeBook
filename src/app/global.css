@@ -205,15 +205,3 @@ body[data-theme="dark"] {
 
   letter-spacing: 0.007em;
 }
-
-button {
-  cursor: pointer;
-  color: var(--color-button-text);
-  font-size: 16px;
-  border-radius: 4px;
-  background: var(--color-button-bg);
-  border: 0;
-  padding: 4px 6px;
-  display: block;
-  transition-duration: 0.1s;
-}
