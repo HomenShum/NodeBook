@@ -1,22 +1,35 @@
-import { useEffect, useCallback, useMemo, useRef, useState, ReactPortal, Ref, } from "react";
+import {
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  ReactPortal,
+  Ref,
+} from "react";
 import * as ReactDOM from "react-dom";
 import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { LexicalTypeaheadMenuPlugin, MenuOption, MenuTextMatch, MenuRenderFn } from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import {
+  LexicalTypeaheadMenuPlugin,
+  MenuOption,
+  MenuTextMatch,
+  MenuRenderFn,
+} from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { GraphNode } from "../model/GraphNode";
 import { useGraphStore } from "../store/graph";
-import { useOutlineViewStore } from "../store/outline";
+import { useViewStore } from "../store/outline";
 import styles from "./MentionPlugin.module.css";
 
 // Much of this implementation is copied from:
-// 
+//
 // https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/plugins/MentionsPlugin/index.tsx#L23
 
 class MentionTypeaheadOption extends MenuOption {
   name: string;
   graphNode: GraphNode;
-  constructor(name: string, graphNode: GraphNode, ) {
-    super(name)
+  constructor(name: string, graphNode: GraphNode) {
+    super(name);
     this.name = name;
     this.graphNode = graphNode;
   }
@@ -27,7 +40,7 @@ export function MentionPlugin(): JSX.Element | null {
 
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  const outlineViewStore = useOutlineViewStore();
+  const outlineViewStore = useViewStore();
   const onSelectOption = useCallback(
     (
       selectedOption: MentionTypeaheadOption,
@@ -52,15 +65,17 @@ export function MentionPlugin(): JSX.Element | null {
     [editor, graphStore, outlineViewStore]
   );
 
-  const options : Array<MentionTypeaheadOption> = useMemo(() => {
+  const options: Array<MentionTypeaheadOption> = useMemo(() => {
     const SUGGESTION_LIST_LENGTH_LIMIT = 5;
     if (queryString === null) return [];
-    return graphStore.nodes.filter(
-      (node) => node.text.toLowerCase().includes(queryString.toLowerCase()) &&
-        node.id !== outlineViewStore.focusedNode?.graphNode.id
-    )
-    .map((node) => new MentionTypeaheadOption(node.text, node))
-    .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
+    return graphStore.nodes
+      .filter(
+        (node) =>
+          node.text.toLowerCase().includes(queryString.toLowerCase()) &&
+          node.id !== outlineViewStore.focusedNode?.graphNode.id
+      )
+      .map((node) => new MentionTypeaheadOption(node.text, node))
+      .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
   }, [queryString, graphStore.nodes, outlineViewStore.focusedNode]);
 
   const menuRenderFn = getMenuRenderFn(options);
@@ -77,35 +92,35 @@ export function MentionPlugin(): JSX.Element | null {
 }
 
 function checkForMentionMatch(text: string): MenuTextMatch | null {
-  const PUNC = '\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%\'"~=<>_:;';
-  const TRIGGERS = '@';
+  const PUNC = "\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
+  const TRIGGERS = "@";
 
   // Chars we expect to see in a mention (non-space, non-punctuation).
-  const VALID_CHARS = '[^' + TRIGGERS + PUNC + '\\s]';
+  const VALID_CHARS = "[^" + TRIGGERS + PUNC + "\\s]";
 
   // Non-standard series of chars. Each series must be preceded and followed by
   // a valid char.
   const VALID_JOINS =
-    '(?:' +
-    '\\.[ |$]|' + // E.g. "r. " in "Mr. Smith"
-    ' |' + // E.g. " " in "Josh Duck"
-    '[' +
+    "(?:" +
+    "\\.[ |$]|" + // E.g. "r. " in "Mr. Smith"
+    " |" + // E.g. " " in "Josh Duck"
+    "[" +
     PUNC +
-    ']|' + // E.g. "-' in "Salier-Hellendag"
-    ')';
+    "]|" + // E.g. "-' in "Salier-Hellendag"
+    ")";
   const LENGTH_LIMIT = 75;
   const AtSignMentionsRegex = new RegExp(
-    '(^|\\s|\\()(' +
-    '[' +
-    TRIGGERS +
-    ']' +
-    '((?:' +
-    VALID_CHARS +
-    VALID_JOINS +
-    '){0,' +
-    LENGTH_LIMIT +
-    '})' +
-    ')$',
+    "(^|\\s|\\()(" +
+      "[" +
+      TRIGGERS +
+      "]" +
+      "((?:" +
+      VALID_CHARS +
+      VALID_JOINS +
+      "){0," +
+      LENGTH_LIMIT +
+      "})" +
+      ")$"
   );
 
   // 50 is the longest alias length limit.
@@ -113,16 +128,16 @@ function checkForMentionMatch(text: string): MenuTextMatch | null {
 
   // Regex used to match alias.
   const AtSignMentionsRegexAliasRegex = new RegExp(
-    '(^|\\s|\\()(' +
-    '[' +
-    TRIGGERS +
-    ']' +
-    '((?:' +
-    VALID_CHARS +
-    '){0,' +
-    ALIAS_LENGTH_LIMIT +
-    '})' +
-    ')$',
+    "(^|\\s|\\()(" +
+      "[" +
+      TRIGGERS +
+      "]" +
+      "((?:" +
+      VALID_CHARS +
+      "){0," +
+      ALIAS_LENGTH_LIMIT +
+      "})" +
+      ")$"
   );
 
   const minMatchLength = 1;
@@ -146,17 +161,19 @@ function checkForMentionMatch(text: string): MenuTextMatch | null {
   return null;
 }
 
-function getMenuRenderFn(options: MentionTypeaheadOption[]): MenuRenderFn<MentionTypeaheadOption> {
+function getMenuRenderFn(
+  options: MentionTypeaheadOption[]
+): MenuRenderFn<MentionTypeaheadOption> {
   return (
     anchorElementRef,
     { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex }
   ): ReactPortal | JSX.Element | null => {
     // enable closing the autocomplete menu when clicking elsewhere
-    const ref : Ref<HTMLDivElement> = useRef(null);
+    const ref: Ref<HTMLDivElement> = useRef(null);
     const [show, setShow] = useState(true);
     useEffect(() => {
       const id = +new Date();
-      const handleClickOutside = (event : MouseEvent) => {
+      const handleClickOutside = (event: MouseEvent) => {
         const target = event.target as Node;
         if (ref.current && !ref.current.contains(target)) {
           setShow(false);
@@ -165,30 +182,33 @@ function getMenuRenderFn(options: MentionTypeaheadOption[]): MenuRenderFn<Mentio
       document.addEventListener("mousedown", handleClickOutside);
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
-      }
+      };
     });
 
-    return anchorElementRef.current && options.length && show ? ReactDOM.createPortal(
-      <div ref={ref} className={styles.TypeaheadPopover}>
-        <ul>
-          {options.map((option, i: number) => (
-            <MentionsTypeaheadMenuItem
-              index={i}
-              isSelected={selectedIndex === i}
-              onClick={() => {
-                setHighlightedIndex(i);
-                selectOptionAndCleanUp(option);
-              } }
-              onMouseEnter={() => {
-                setHighlightedIndex(i);
-              } }
-              key={option.key}
-              option={option} />
-          ))}
-        </ul>
-      </div>,
-      anchorElementRef.current
-    ) : null
+    return anchorElementRef.current && options.length && show
+      ? ReactDOM.createPortal(
+          <div ref={ref} className={styles.TypeaheadPopover}>
+            <ul>
+              {options.map((option, i: number) => (
+                <MentionsTypeaheadMenuItem
+                  index={i}
+                  isSelected={selectedIndex === i}
+                  onClick={() => {
+                    setHighlightedIndex(i);
+                    selectOptionAndCleanUp(option);
+                  }}
+                  onMouseEnter={() => {
+                    setHighlightedIndex(i);
+                  }}
+                  key={option.key}
+                  option={option}
+                />
+              ))}
+            </ul>
+          </div>,
+          anchorElementRef.current
+        )
+      : null;
   };
 }
 
@@ -205,7 +225,7 @@ function MentionsTypeaheadMenuItem({
   onMouseEnter: () => void;
   option: MentionTypeaheadOption;
 }) {
-  let className = '';
+  let className = "";
   if (isSelected) {
     className = styles.Selected;
   }
@@ -217,9 +237,10 @@ function MentionsTypeaheadMenuItem({
       ref={option.setRefElement}
       role="option"
       aria-selected={isSelected}
-      id={'typeahead-item-' + index}
+      id={"typeahead-item-" + index}
       onMouseEnter={onMouseEnter}
-      onClick={onClick}>
+      onClick={onClick}
+    >
       <span className="text">{option.name}</span>
     </li>
   );

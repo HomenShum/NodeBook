@@ -14,10 +14,10 @@ import { KeyboardOverridesPlugin } from "./KeyboardOverridesPlugin";
 import { ContentEditable } from "./ui/ContentEditable";
 
 import styles from "./Editor.module.css";
-import { useOutlineViewStore } from "../store/outline";
+import { useViewStore } from "../store/outline";
 import { OnChangePlugin } from "./OnChangePlugin";
 import { MentionPlugin } from "./MentionPlugin";
-import { Bullet } from "../model/OutlineBullet";
+import { GraphNodeView } from "../model/GraphNodeView";
 
 const theme = {
   // Theme styling goes here
@@ -31,20 +31,19 @@ const onError = (error: any) => {
 };
 
 export type EditorContext = {
-  node: Bullet;
-  parents: Bullet[];
-  siblingAbove?: Bullet;
-  siblingBelow?: Bullet;
+  node: GraphNodeView;
+  siblingAbove?: GraphNodeView;
+  siblingBelow?: GraphNodeView;
 };
 
 interface Props {
-  node: Bullet;
+  node: GraphNodeView;
   onChange: (newValue: string) => void;
   context: EditorContext;
 }
 
 export const Editor = ({ node, onChange, context }: Props) => {
-  const outlineViewStore = useOutlineViewStore();
+  const outlineViewStore = useViewStore();
   const initialConfig = {
     namespace: "MyEditor",
     theme,
@@ -80,7 +79,7 @@ export const Editor = ({ node, onChange, context }: Props) => {
         {node.isFocused && <AutoFocusPlugin />}
         <HistoryPlugin />
         <OnChangePlugin onChange={editorOnChange} />
-        <KeyboardOverridesPlugin bullet={node} context={context} />
+        <KeyboardOverridesPlugin nodeView={node} context={context} />
         <MentionPlugin />
       </LexicalComposer>
     </div>

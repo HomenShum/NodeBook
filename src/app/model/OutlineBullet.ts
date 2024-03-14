@@ -2,10 +2,16 @@ import { makeAutoObservable } from "mobx";
 import { uuid } from "../util";
 import { GraphNode } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
-import { OutlineViewStore } from "./OutlineViewStore";
+import { ViewStore } from "./ViewStore";
+import { GraphNodeView, GraphNodeViewType } from "./GraphNodeView";
 
-export class Bullet {
-  private outlineViewStore: OutlineViewStore;
+export class Bullet implements GraphNodeView {
+  public type: GraphNodeViewType = "bullet";
+
+  private viewStore: ViewStore;
+
+  public id: string;
+
   // we need this in addition to the relation because the root node has no relation
   // (maybe we should just special case the root node?)
   public graphNode: GraphNode;
@@ -14,9 +20,9 @@ export class Bullet {
   public parent: Bullet | null;
   public isExpanded: boolean;
   public childrenByRelationId: Map<string, Bullet>;
-  public id: string;
+
   constructor(
-    store: OutlineViewStore,
+    store: ViewStore,
     node: GraphNode,
     relation: GraphRelation | null = null,
     parent: Bullet | null = null,
@@ -30,7 +36,7 @@ export class Bullet {
       id?: string;
     } = {}
   ) {
-    this.outlineViewStore = store;
+    this.viewStore = store;
     this.graphNode = node;
     this.graphRelation = relation;
     this.parent = parent;
@@ -41,15 +47,16 @@ export class Bullet {
   }
 
   insertGraphNode(node: GraphNode, relation: GraphRelation) {
-    return this.outlineViewStore.insertGraphNodeToOutline(node, relation, this);
+    return this.viewStore.insertGraphNodeToOutline(node, relation, this);
   }
 
   createChild() {
-    return this.outlineViewStore.createNode(this);
+    const { child, relation } = this.graphNode.createChild();
+    return this.viewStore.insertGraphNodeToOutline(child, relation, this);
   }
 
   delete() {
-    this.outlineViewStore.deleteNode(this);
+    this.viewStore.deleteNode(this);
   }
 
   toggleExpanded() {
@@ -57,10 +64,10 @@ export class Bullet {
   }
 
   get isFocused() {
-    return this.outlineViewStore.focusedNode?.id === this.id;
+    return this.viewStore.focusedNode?.id === this.id;
   }
 
-  get parents() {
+  get ancestors() {
     const parents: Bullet[] = [];
     let current: Bullet = this;
     while (current.parent) {
@@ -80,7 +87,7 @@ export class Bullet {
         const relatedNode =
           relation.to.id === this.graphNode.id ? relation.from : relation.to;
         const newBullet = new Bullet(
-          this.outlineViewStore,
+          this.viewStore,
           relatedNode,
           relation,
           this

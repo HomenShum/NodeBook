@@ -1,24 +1,25 @@
 import { observer } from "mobx-react-lite";
-import { useOutlineViewStore } from "../store/outline";
+import { useViewStore } from "../store/outline";
 import { BulletView } from "./BulletView/BulletView";
+import { Bullet } from "../model/OutlineBullet";
 
 export const OutlineView = observer(() => {
-  const outlineViewStore = useOutlineViewStore();
-  const root = outlineViewStore.currentViewRoot;
+  const viewStore = useViewStore();
+  const root = viewStore.currentViewRoot as Bullet;
   if (!root) {
     return <div>Loading...</div>;
   }
-  const parents = root.parents;
+  const ancestors = root.ancestors;
   const children = root.children;
 
   return (
     <div style={{ width: "100%" }}>
-      {parents.map((parent) => (
+      {ancestors.map((parent) => (
         <span
           key={parent.id}
           style={{ cursor: "pointer" }}
           onClick={() => {
-            outlineViewStore.setCurrentViewRoot(parent);
+            viewStore.setRoot(parent.graphNode);
           }}
         >
           {parent.graphNode.text} /{" "}
@@ -30,7 +31,7 @@ export const OutlineView = observer(() => {
           key={child.id}
           bullet={child}
           depth={1}
-          parents={[...parents, root]}
+          parents={[...ancestors, root]}
           siblingAbove={children[i - 1]}
           siblingBelow={children[i + 1]}
         />

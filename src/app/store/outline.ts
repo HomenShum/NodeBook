@@ -1,15 +1,15 @@
 "use client";
 import { createContext, useContext } from "react";
-import { OutlineViewStore } from "../model/OutlineViewStore";
+import { ViewStore } from "../model/ViewStore";
 import { graphStore } from "./graph";
 
-export const outlineViewStore = new OutlineViewStore(graphStore);
+export const viewStore = new ViewStore(graphStore);
 if (typeof window !== "undefined") {
-  (window as any).outlineViewStore = outlineViewStore; // for debugging
+  (window as any).outlineViewStore = viewStore; // for debugging
 }
 
-export const OutlineViewStoreContext = createContext(outlineViewStore);
+export const ViewStoreContext = createContext(viewStore);
 
-export const useOutlineViewStore = () => {
-  return useContext(OutlineViewStoreContext);
+export const useViewStore = () => {
+  return useContext(ViewStoreContext);
 };

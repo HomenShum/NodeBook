@@ -3,34 +3,68 @@ import { makeAutoObservable } from "mobx";
 import { GraphNode } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
 import { Bullet } from "./OutlineBullet";
+import { GraphNodeView } from "./GraphNodeView";
+import { Note } from "./ThoughtstreamNote";
 
-/**
- * The store for the tree view of the graph.
- * Methods which add or move a node in the tree view also update the graph to reflect the change.
- */
-export class OutlineViewStore {
-  public root: Bullet | null = null;
-  public currentViewRoot: Bullet | null = null;
-  public focusedNode: Bullet | null = null;
-  public hoveredNode: Bullet | null = null;
-  public showBulletDetails = false;
+export enum ViewType {
+  OUTLINE = "outline",
+  THOUGHTSTREAM = "thoughtstream",
+}
+
+export class ViewStore {
+  public curView: ViewType;
+
   private graphStore: GraphStore;
+
+  public currentViewRoot: GraphNodeView | null = null;
+  public focusedNode: GraphNodeView | null = null;
+  public hoveredNode: GraphNodeView | null = null;
+
+  public showNodeDetails = true;
+
   constructor(graphStore: GraphStore) {
+    this.curView = ViewType.OUTLINE;
     this.graphStore = graphStore;
-    this.currentViewRoot = this.root;
     makeAutoObservable(this);
   }
 
-  setRoot(root: GraphNode) {
-    this.root = new Bullet(this, root);
-    this.currentViewRoot = this.root;
+  setView(view: ViewType) {
+    this.curView = view;
+    const rootNode = this.currentViewRoot!.graphNode;
+    switch (this.curView) {
+      case "outline":
+        this.currentViewRoot = new Bullet(this, rootNode);
+        break;
+      case "thoughtstream":
+        this.currentViewRoot = new Note(this, rootNode);
+        break;
+    }
   }
 
-  toggleBulletDetails() {
-    this.showBulletDetails = !this.showBulletDetails;
+  setRoot(node: GraphNode) {
+    switch (this.curView) {
+      case "outline":
+        this.currentViewRoot = new Bullet(this, node);
+        break;
+      case "thoughtstream":
+        this.currentViewRoot = new Note(this, node);
+        break;
+    }
   }
 
-  insertGraphNodeToOutline(node: GraphNode, relation: GraphRelation, parent: Bullet) {
+  setFocusedNode(node: GraphNodeView | null) {
+    this.focusedNode = node;
+  }
+
+  setHoveredNode(node: GraphNodeView | null) {
+    this.hoveredNode = node;
+  }
+
+  insertGraphNodeToOutline(
+    node: GraphNode,
+    relation: GraphRelation,
+    parent: Bullet
+  ) {
     if (relation.from.id !== parent.graphNode.id) {
       throw new Error("Relation's from node is not the parent node");
     }
@@ -40,16 +74,6 @@ export class OutlineViewStore {
     const bullet = new Bullet(this, node, relation, parent);
     parent.childrenByRelationId.set(relation.id, bullet);
     return bullet;
-  }
-
-  createNode(parent: Bullet) {
-    const graphNode = this.graphStore.createNode();
-    const relation = this.graphStore.createRelation({
-      from: parent.graphNode,
-      to: graphNode,
-      type: this.graphStore.relationTypes.child,
-    });
-    return this.insertGraphNodeToOutline(graphNode, relation, parent);
   }
 
   updateNodeToParent(bullet: Bullet, newParent: Bullet, after?: Bullet) {
@@ -63,7 +87,10 @@ export class OutlineViewStore {
     bullet.parent = newParent;
     // Update the graph
     // TODO remove !
-    this.graphStore.updateRelationFrom(bullet.graphRelation!, newParent.graphNode);
+    this.graphStore.updateRelationFrom(
+      bullet.graphRelation!,
+      newParent.graphNode
+    );
   }
 
   deleteNode(bullet: Bullet) {
@@ -71,17 +98,5 @@ export class OutlineViewStore {
     if (!parent) throw new Error("Node has no parent");
     parent.childrenByRelationId.delete(bullet.graphRelation?.id ?? "");
     this.graphStore.deleteNode(bullet.graphNode.id);
-  }
-
-  setCurrentViewRoot(node: Bullet) {
-    this.currentViewRoot = node;
-  }
-
-  setFocusedNode(node: Bullet | null) {
-    this.focusedNode = node;
-  }
-
-  setHoveredNode(node: Bullet | null) {
-    this.hoveredNode = node;
   }
 }

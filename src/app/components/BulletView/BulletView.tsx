@@ -2,11 +2,11 @@ import { observer } from "mobx-react-lite";
 import { Editor } from "../../editor/Editor";
 import { Bullet } from "../../model/OutlineBullet";
 import { useGraphStore } from "../../store/graph";
-import { useOutlineViewStore } from "../../store/outline";
+import { useViewStore } from "../../store/outline";
 import styles from "./BulletView.module.css";
 
 export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
-  const outlineViewStore = useOutlineViewStore();
+  const viewStore = useViewStore();
   return (
     <button
       style={{
@@ -14,7 +14,8 @@ export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
         border: "none",
         width: "1rem",
         fontSize: "0.75rem",
-        color: outlineViewStore.hoveredNode?.id === bullet.id ? "black" : "transparent",
+        color:
+          viewStore.hoveredNode?.id === bullet.id ? "black" : "transparent",
         cursor: "pointer",
       }}
       onClick={() => bullet.toggleExpanded()}
@@ -24,32 +25,29 @@ export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
   );
 });
 
+interface Props {
+  bullet: Bullet;
+  depth?: number;
+  parents?: Bullet[];
+  siblingAbove?: Bullet;
+  siblingBelow?: Bullet;
+}
+
 export const BulletView = observer(
-  ({
-    bullet,
-    depth = 0,
-    parents = [],
-    siblingAbove,
-    siblingBelow,
-  }: {
-    bullet: Bullet;
-    depth?: number;
-    parents?: Bullet[];
-    siblingAbove?: Bullet;
-    siblingBelow?: Bullet;
-  }) => {
+  ({ bullet, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
     const graphStore = useGraphStore();
-    const outlineViewStore = useOutlineViewStore();
+    const viewStore = useViewStore();
     const children = bullet.children;
 
-    const isForward = bullet.graphRelation?.from.id === bullet.parent?.graphNode.id;
+    const isForward =
+      bullet.graphRelation?.from.id === bullet.parent?.graphNode.id;
 
     return (
       <>
         <div
           className={styles.Bullet}
-          onMouseEnter={() => outlineViewStore.setHoveredNode(bullet)}
-          onMouseLeave={() => outlineViewStore.setHoveredNode(null)}
+          onMouseEnter={() => viewStore.setHoveredNode(bullet)}
+          onMouseLeave={() => viewStore.setHoveredNode(null)}
         >
           {Array.from({ length: depth }).map((_, i) => (
             <span key={i} className={styles.indent}>
@@ -65,41 +63,65 @@ export const BulletView = observer(
               onChange={(e) => {
                 // TODO
                 const selectedRelationType =
-                  graphStore.relationTypes[e.target.value as keyof typeof graphStore.relationTypes];
+                  graphStore.relationTypes[
+                    e.target.value as keyof typeof graphStore.relationTypes
+                  ];
                 if (!selectedRelationType || !bullet.graphRelation) return; // TODO
-                graphStore.updateRelationType(bullet.graphRelation, selectedRelationType);
+                graphStore.updateRelationType(
+                  bullet.graphRelation,
+                  selectedRelationType
+                );
               }}
             >
-              {Object.values(graphStore.relationTypes).map(({ id, label, reverseLabel }) => (
-                <option key={id} value={id}>
-                  {label}
-                </option>
-              ))}
+              {Object.values(graphStore.relationTypes).map(
+                ({ id, label, reverseLabel }) => (
+                  <option key={id} value={id}>
+                    {label}
+                  </option>
+                )
+              )}
             </select>
-            {isForward ? <span>↳</span> : <span style={{ transform: "rotate(90deg)" }}>↲</span>}
+            {isForward ? (
+              <span>↳</span>
+            ) : (
+              <span style={{ transform: "rotate(90deg)" }}>↲</span>
+            )}
           </div>
           <Toggle bullet={bullet} />
           <span
             className={styles.bulletChar}
             onClick={() => {
               console.log("clicked bullet");
-              outlineViewStore.setCurrentViewRoot(bullet);
+              viewStore.setRoot(bullet.graphNode);
             }}
           >
             {"\u2022"}
           </span>
           {/* relation type */}
-          <div style={{ gap: "5px", display: "flex", alignItems: "flex-start", flex: 1 }}>
+          <div
+            style={{
+              gap: "5px",
+              display: "flex",
+              alignItems: "flex-start",
+              flex: 1,
+            }}
+          >
             <div style={{ flex: 1 }}>
               <Editor
                 node={bullet}
                 onChange={(v) => bullet.graphNode.setText(v ?? "")}
-                context={{ node: bullet, parents, siblingAbove, siblingBelow }}
+                context={{ node: bullet, siblingAbove, siblingBelow }}
               />
-              {outlineViewStore.showBulletDetails && (
-                <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
-                  <span style={{ color: "gray" }}>bulletId: {bullet.id.slice(0, 8)}</span>
-                  <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id.slice(0, 8)}</span>
+              {viewStore.showNodeDetails && (
+                <div
+                  style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}
+                >
+                  <span style={{ color: "gray" }}>
+                    bulletId: {bullet.id.slice(0, 8)}
+                  </span>
+                  <span style={{ color: "gray" }}>
+                    nodeId: {bullet.graphNode.id.slice(0, 8)}
+                  </span>
                 </div>
               )}
             </div>
@@ -120,5 +142,5 @@ export const BulletView = observer(
           })}
       </>
     );
-  },
+  }
 );
