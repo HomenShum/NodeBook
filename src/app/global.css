@@ -205,3 +205,8 @@ body[data-theme="dark"] {
 
   letter-spacing: 0.007em;
 }
+
+button {
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-medium);
+}

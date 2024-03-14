@@ -1,23 +1,21 @@
 "use client";
-import "./App.css";
-import { OutlineView } from "./components/OutlineView";
-import { NodeTable } from "./components/NodeTable";
-import { RelationTable } from "./components/RelationTable";
-import { ViewStoreContext, useViewStore, viewStore } from "./store/outline";
-import { GraphStoreContext, graphStore } from "./store/graph";
-import { useState, useEffect } from "react";
-import { ViewType } from "./model/ViewStore";
 import { observer } from "mobx-react-lite";
+import { useEffect, useState } from "react";
+import "./App.css";
+import { NodeTable } from "./components/NodeTable";
+import { OutlineView } from "./components/OutlineView";
+import { RelationTable } from "./components/RelationTable";
 import { ThoughtstreamView } from "./components/ThoughtstreamView";
+import { ViewType } from "./model/ViewStore";
+import { GraphStoreContext, graphStore } from "./store/graph";
+import { ViewStoreContext, useViewStore, viewStore } from "./store/outline";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
     graphStore.loadFromServer().then(() => {
       setIsLoading(false);
-      const root =
-        graphStore.getNode("root") ??
-        graphStore.createNode({ id: "root", text: "Root" });
+      const root = graphStore.getNode("root") ?? graphStore.createNode({ id: "root", text: "Root" });
       viewStore.setRoot(root);
     });
   }, []);
@@ -66,13 +64,9 @@ const AppView = observer(() => {
 
   return (
     <>
-      <div style={{ display: "block" }}>
-        <button onClick={() => viewStore.setView(ViewType.OUTLINE)}>
-          Outline view
-        </button>
-        <button onClick={() => viewStore.setView(ViewType.THOUGHTSTREAM)}>
-          Thoughtstream view
-        </button>
+      <div style={{ display: "flex", gap: "10px" }}>
+        <button onClick={() => viewStore.setView(ViewType.OUTLINE)}>Outline view</button>
+        <button onClick={() => viewStore.setView(ViewType.THOUGHTSTREAM)}>Thoughtstream view</button>
       </div>
       {view}
     </>

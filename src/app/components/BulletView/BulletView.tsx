@@ -77,7 +77,6 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
             </DropdownMenuContent>
           </DropdownMenu>
           <RelationCombobox bullet={bullet} />
-          <span>↳</span>
         </div>
         <Toggle bullet={bullet} />
         <span
