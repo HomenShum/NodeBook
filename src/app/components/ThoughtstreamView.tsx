@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite";
-import { useViewStore } from "../store/outline";
 import { Note } from "../model/ThoughtstreamNote";
+import { useViewStore } from "../store/outline";
 import { NoteView } from "./NoteView/NoteView";
 
 export const ThoughtstreamView = observer(() => {

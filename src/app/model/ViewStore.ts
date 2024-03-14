@@ -25,12 +25,23 @@ export class ViewStore {
 
   public showNodeDetails = true;
 
+  public leftSidebarOpen = true;
+  public rightSidebarOpen = true;
+
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;
     this.graphStore = graphStore;
     this.outlineViewStore = new OutlineViewStore(graphStore, this);
     this.thoughtstreamViewStore = new ThoughtstreamViewStore(graphStore, this);
     makeAutoObservable(this);
+  }
+
+  toggleLeftSidebar() {
+    this.leftSidebarOpen = !this.leftSidebarOpen;
+  }
+
+  toggleRightSidebar() {
+    this.rightSidebarOpen = !this.rightSidebarOpen;
   }
 
   setView(view: ViewType) {

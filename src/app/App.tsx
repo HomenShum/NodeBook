@@ -1,7 +1,6 @@
 "use client";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
-import "./App.css";
 import { NodeTable } from "./components/NodeTable";
 import { OutlineView } from "./components/OutlineView";
 import { RelationTable } from "./components/RelationTable";
@@ -27,49 +26,53 @@ function App() {
     <div className="App">
       <GraphStoreContext.Provider value={graphStore}>
         <ViewStoreContext.Provider value={viewStore}>
-          <div style={{ display: "flex" }}>
-            <div
-              style={{
-                width: "50%",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-start",
-              }}
-            >
-              <AppView />
-            </div>
-            <div style={{ width: "50%" }}>
-              <NodeTable />
-              <RelationTable />
-            </div>
-          </div>
+          <Main />
         </ViewStoreContext.Provider>
       </GraphStoreContext.Provider>
     </div>
   );
 }
 
-const AppView = observer(() => {
+const Main = observer(() => {
   const viewStore = useViewStore();
-
-  let view = <div>Loading...</div>;
-  switch (viewStore.curView) {
-    case ViewType.OUTLINE:
-      view = <OutlineView />;
-      break;
-    case ViewType.THOUGHTSTREAM:
-      view = <ThoughtstreamView />;
-      break;
-  }
-
   return (
-    <>
-      <div style={{ display: "flex", gap: "10px" }}>
-        <button onClick={() => viewStore.setView(ViewType.OUTLINE)}>Outline view</button>
-        <button onClick={() => viewStore.setView(ViewType.THOUGHTSTREAM)}>Thoughtstream view</button>
+    <div className="flex flex-col h-full">
+      <header className="flex justify-center items-center h-8 border-b">
+        <button onClick={() => viewStore.toggleLeftSidebar()}>Toggle left sidebar</button>
+        <div className="flex-1"></div>
+        <button onClick={() => viewStore.toggleRightSidebar()}>Toggle right sidebar</button>
+      </header>
+      <div className="flex flex-row flex-1">
+        {viewStore.leftSidebarOpen && (
+          <aside className="flex flex-col w-1/6 bg-gray-100 border-r">
+            <div className="flex flex-col p-4 align-left">
+              {/* highlight if active */}
+              <button
+                className={`text-left ${viewStore.curView === ViewType.OUTLINE ? "bg-blue-100" : ""}`}
+                onClick={() => viewStore.setView(ViewType.OUTLINE)}
+              >
+                Outline view
+              </button>
+              <button
+                className={`text-left ${viewStore.curView === ViewType.THOUGHTSTREAM ? "bg-blue-100" : ""}`}
+                onClick={() => viewStore.setView(ViewType.THOUGHTSTREAM)}
+              >
+                Thoughtstream view
+              </button>
+            </div>
+          </aside>
+        )}
+        <main className="flex flex-1">
+          <div className="m-4">{viewStore.curView === ViewType.OUTLINE ? <OutlineView /> : <ThoughtstreamView />}</div>
+        </main>
+        {viewStore.rightSidebarOpen && (
+          <aside className="w-1/3 bg-gray-100 border-l">
+            <NodeTable />
+            <RelationTable />
+          </aside>
+        )}
       </div>
-      {view}
-    </>
+    </div>
   );
 });
 
