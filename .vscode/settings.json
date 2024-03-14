@@ -3,7 +3,8 @@
   "editor.codeActionsOnSave": [
     "source.fixAll.eslint",
     "source.addMissingImports",
-    "source.removeUnusedImports"
+    "source.removeUnusedImports",
+    "source.organizeImports"
   ],
   "editor.formatOnSave": true,
   "editor.tabSize": 2
