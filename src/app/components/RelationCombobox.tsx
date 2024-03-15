@@ -7,10 +7,11 @@ import { Button } from "@/app/components/ui/button";
 import { Command, CommandGroup, CommandInput, CommandItem } from "@/app/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { observer } from "mobx-react-lite";
 import { Bullet } from "../model/OutlineBullet";
 import { useGraphStore } from "../store/graph";
 
-export function RelationCombobox({ bullet }: { bullet: Bullet }) {
+export const RelationCombobox = observer(({ bullet }: { bullet: Bullet }) => {
   const graphStore = useGraphStore();
   const [open, setOpen] = React.useState(false);
 
@@ -77,4 +78,4 @@ export function RelationCombobox({ bullet }: { bullet: Bullet }) {
       </PopoverContent>
     </Popover>
   );
-}
+});
