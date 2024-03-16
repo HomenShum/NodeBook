@@ -1,13 +1,13 @@
 import { observer } from "mobx-react-lite";
-import { Bullet, sortBullets } from "../model/OutlineBullet";
+import { sortBullets } from "../model/OutlineBullet";
 import { useViewStore } from "../store/outline";
 import { BulletView } from "./BulletView/BulletView";
 
 export const OutlineView = observer(() => {
   const viewStore = useViewStore();
-  const root = viewStore.currentViewRoot as Bullet;
+  const root = viewStore.outlineViewStore.root;
   if (!root) {
-    return <div>Loading...</div>;
+    return <div>Missing root node</div>;
   }
   const ancestors = root.ancestors;
   const children = root.children.sort(sortBullets);
@@ -19,7 +19,7 @@ export const OutlineView = observer(() => {
           key={parent.id}
           style={{ cursor: "pointer" }}
           onClick={() => {
-            viewStore.setRoot(parent.graphNode);
+            viewStore.outlineViewStore.setRoot(parent);
           }}
         >
           {parent.graphNode.text} /{" "}

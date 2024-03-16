@@ -48,23 +48,6 @@ export class ViewStore {
     this.curView = view;
   }
 
-  setRoot(node: GraphNode) {
-    this.rootNode = node;
-  }
-
-  get currentViewRoot(): GraphNodeView | null {
-    if (!this.rootNode) return null;
-
-    switch (this.curView) {
-      case "outline":
-        return this.outlineViewStore.viewForNode(this.rootNode);
-      case "thoughtstream":
-        return this.thoughtstreamViewStore.viewForNode(this.rootNode);
-      default:
-        throw new Error(`Unknown view type ${this.curView}`);
-    }
-  }
-
   setFocusedNode(node: GraphNodeView | null) {
     this.focusedNode = node;
   }

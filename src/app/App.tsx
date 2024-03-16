@@ -6,6 +6,7 @@ import { NodeTable } from "./components/NodeTable";
 import { OutlineView } from "./components/OutlineView";
 import { RelationTable } from "./components/RelationTable";
 import { ThoughtstreamView } from "./components/ThoughtstreamView";
+import { Bullet } from "./model/OutlineBullet";
 import { ViewType } from "./model/ViewStore";
 import { GraphStoreContext, graphStore } from "./store/graph";
 import { ViewStoreContext, useViewStore, viewStore } from "./store/outline";
@@ -15,8 +16,10 @@ function App() {
   useEffect(() => {
     graphStore.loadFromServer().then(() => {
       setIsLoading(false);
+      // I'm not sure if we should call this "root". it's more like the "user node" or "home node".
+      // It's not a root cause graphs don't have roots.
       const root = graphStore.getNode("root") ?? graphStore.createNode({ id: "root", text: "My thoughtstream" });
-      viewStore.setRoot(root);
+      viewStore.outlineViewStore.setRoot(new Bullet(viewStore.outlineViewStore, root));
     });
   }, []);
   if (isLoading) {

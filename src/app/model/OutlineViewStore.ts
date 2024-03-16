@@ -1,4 +1,5 @@
 import { generateKeyBetween } from "fractional-indexing";
+import { makeAutoObservable } from "mobx";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
@@ -8,13 +9,18 @@ import { ViewStore } from "./ViewStore";
 export class OutlineViewStore {
   private graphStore: GraphStore;
   private viewStore: ViewStore;
-
   private viewsByNodeId: Map<string, Bullet>;
+  public root: Bullet | null = null;
 
   constructor(graphStore: GraphStore, viewStore: ViewStore) {
     this.graphStore = graphStore;
     this.viewStore = viewStore;
     this.viewsByNodeId = new Map();
+    makeAutoObservable(this);
+  }
+
+  setRoot(node: Bullet) {
+    this.root = node;
   }
 
   setFocusedNode(node: Bullet | null) {

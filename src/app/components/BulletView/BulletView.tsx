@@ -83,7 +83,7 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
           className={styles.bulletChar}
           onClick={() => {
             console.log("clicked bullet");
-            viewStore.setRoot(bullet.graphNode);
+            viewStore.outlineViewStore.setRoot(bullet);
           }}
         >
           {"\u2022"}
