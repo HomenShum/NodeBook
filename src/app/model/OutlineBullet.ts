@@ -76,6 +76,10 @@ export class Bullet implements GraphNodeView {
     });
   }
 
+  setGraphNode(graphNode: GraphNode) {
+    this.viewStore.setGraphNodeOnBullet(this, graphNode);
+  }
+
   delete() {
     this.viewStore.deleteNode(this);
   }

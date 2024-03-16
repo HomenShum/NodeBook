@@ -1,7 +1,7 @@
+import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { makeAutoObservable } from "mobx";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
-import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
 export class GraphStore {
@@ -30,10 +30,7 @@ export class GraphStore {
     return Object.values(this.relationTypesById);
   }
 
-  createNode(
-    props: GraphNodeProps = {},
-    { fromServer = false }: { fromServer?: boolean } = {}
-  ): GraphNode {
+  createNode(props: GraphNodeProps = {}, { fromServer = false }: { fromServer?: boolean } = {}): GraphNode {
     const node = new GraphNode(this, this.remote, props);
     this.nodesById.set(node.id, node);
     if (!fromServer && this.remote) {
@@ -65,10 +62,7 @@ export class GraphStore {
     return this.insertRelation(new GraphRelation(this, props));
   }
 
-  insertRelation(
-    relation: GraphRelation,
-    { fromServer = false }: { fromServer?: boolean } = {}
-  ): GraphRelation {
+  insertRelation(relation: GraphRelation, { fromServer = false }: { fromServer?: boolean } = {}): GraphRelation {
     if (this.relationsById.has(relation.id)) {
       throw new Error(`Relation with id ${relation.id} already exists`);
     }
@@ -88,6 +82,7 @@ export class GraphStore {
     fromNode.relations = fromNode.relations.filter((r) => r.id !== relation.id);
     toNode.relations = toNode.relations.filter((r) => r.id !== relation.id);
     this.relationsById.delete(relation.id);
+    this.deleteNodeIfEmptyAndUnrelated(fromNode, toNode);
   }
 
   updateRelationFrom(relation: GraphRelation, newFrom: GraphNode): GraphRelation | undefined {
@@ -96,6 +91,17 @@ export class GraphStore {
     oldFrom.relations = oldFrom.relations.filter((r) => r.id !== relation.id);
     newFrom.relations.push(relation);
     relation.from = newFrom;
+    this.deleteNodeIfEmptyAndUnrelated(oldFrom);
+    return relation;
+  }
+
+  updateRelationTo(relation: GraphRelation, newTo: GraphNode): GraphRelation | undefined {
+    this.assertNodeExists(relation.from, newTo);
+    const oldTo = relation.to;
+    oldTo.relations = oldTo.relations.filter((r) => r.id !== relation.id);
+    newTo.relations.push(relation);
+    relation.to = newTo;
+    this.deleteNodeIfEmptyAndUnrelated(oldTo);
     return relation;
   }
 
@@ -109,6 +115,14 @@ export class GraphStore {
       const id = typeof node === "string" ? node : node.id;
       if (!this.nodesById.has(id)) {
         throw new Error(`Node with id ${id} does not exist`);
+      }
+    });
+  }
+
+  private deleteNodeIfEmptyAndUnrelated(...nodes: GraphNode[]) {
+    nodes.forEach((node) => {
+      if (node.text === "" && node.relations.length === 0) {
+        this.deleteNode(node.id);
       }
     });
   }
@@ -136,8 +150,7 @@ export class GraphStore {
   addRelationFromServer(persistedRelation: PersistedGraphRelation) {
     const from = this.getNode(persistedRelation.fromId);
     const to = this.getNode(persistedRelation.toId);
-    const type =
-      this.relationTypesById[persistedRelation.typeId as keyof typeof this.relationTypesById]; // TODO
+    const type = this.relationTypesById[persistedRelation.typeId as keyof typeof this.relationTypesById]; // TODO
     if (!from || !to || !type) {
       throw new Error("Invalid persisted relation");
     }

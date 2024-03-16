@@ -102,4 +102,13 @@ export class OutlineViewStore {
     parent.childrenByRelationId.delete(bullet.graphRelation?.id ?? "");
     this.graphStore.deleteNode(bullet.graphNode.id);
   }
+
+  setGraphNodeOnBullet(bullet: Bullet, graphNode: GraphNode) {
+    if (bullet.isRelationToThis()) {
+      this.graphStore.updateRelationTo(bullet.graphRelation!, graphNode);
+    } else {
+      this.graphStore.updateRelationFrom(bullet.graphRelation!, graphNode);
+    }
+    bullet.graphNode = graphNode;
+  }
 }
