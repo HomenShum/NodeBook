@@ -223,7 +223,7 @@ function SearchNodes({
   }, [cancel, onSelect, selected, options]);
 
   return (
-    <div ref={ref} className="relative flex flex-col">
+    <div ref={ref} className="relative flex flex-col z-10">
       <input
         placeholder="Search nodes..."
         autoFocus
