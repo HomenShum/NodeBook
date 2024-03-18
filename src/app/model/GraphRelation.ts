@@ -6,7 +6,7 @@ import { GraphStore } from "./GraphStore";
 export type GraphRelationType = {
   id: string;
   label: string;
-  reverseLabel?: string;
+  reverseLabel: string;
 };
 
 export type GraphRelationProps = {
@@ -33,6 +33,10 @@ export class GraphRelation {
 
   delete() {
     this.store.deleteRelation(this);
+  }
+
+  updateType(newType: GraphRelationType) {
+    this.store.updateRelationsType(this, newType);
   }
 
   updateFrom(newFrom: GraphNode) {

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { NodeTable } from "./components/NodeTable";
 import { OutlineView } from "./components/OutlineView";
 import { RelationTable } from "./components/RelationTable";
+import { RelationTypeTable } from "./components/RelationTypeTable";
 import { ThoughtstreamView } from "./components/ThoughtstreamView";
 import { Bullet } from "./model/OutlineBullet";
 import { ViewType } from "./model/ViewStore";
@@ -74,9 +75,10 @@ const AppView = observer(() => {
           <div className="m-4">{viewStore.curView === ViewType.OUTLINE ? <OutlineView /> : <ThoughtstreamView />}</div>
         </main>
         {viewStore.rightSidebarOpen && (
-          <aside className="w-1/3 bg-gray-100 border-l">
+          <aside className="w-1/3 bg-gray-100 border-l overflow-y-auto">
             <NodeTable />
             <RelationTable />
+            <RelationTypeTable />
           </aside>
         )}
       </div>

@@ -9,7 +9,7 @@ export class GraphStore {
   relationsById: Map<string, GraphRelation> = new Map();
   isLoading = false;
   remote?: RemoteGraphStore;
-  public relationTypesById = {
+  public relationTypesById: Record<string, GraphRelationType> = {
     child: { id: "child", label: "child", reverseLabel: "parent" },
     link: { id: "link", label: "link", reverseLabel: "backlink" },
   };
@@ -105,9 +105,40 @@ export class GraphStore {
     return relation;
   }
 
-  updateRelationType(relation: GraphRelation, newType: GraphRelationType): GraphRelation {
+  reverseRelation(relation: GraphRelation): GraphRelation {
+    const { from, to } = relation;
+    relation.from = to;
+    relation.to = from;
+    return relation;
+  }
+
+  updateRelationsType(relation: GraphRelation, newType: GraphRelationType): GraphRelation {
     relation.type = newType;
     return relation;
+  }
+
+  createRelationType(props: GraphRelationType): GraphRelationType {
+    if (this.relationTypesById[props.id]) {
+      throw new Error(`Relation type with id ${props.id} already exists`);
+    }
+    this.relationTypesById[props.id] = { ...props };
+    return this.relationTypesById[props.id];
+  }
+
+  updateRelationType(id: string, props: Partial<Omit<GraphRelationType, "id">>): GraphRelationType {
+    if (!this.relationTypesById[id]) {
+      throw new Error(`Relation type with id ${id} does not exist`);
+    }
+    Object.assign(this.relationTypesById[id], { ...props, id });
+    return this.relationTypesById[id];
+  }
+
+  deleteRelationType(id: string) {
+    // find all relations with this type and set them to a default type
+    this.relations.forEach((r) => {
+      r.updateType(this.relationTypesById.child);
+    });
+    delete this.relationTypesById[id];
   }
 
   private assertNodeExists(...nodes: (GraphNode | string)[]): void {
