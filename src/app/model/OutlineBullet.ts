@@ -67,11 +67,9 @@ export class Bullet implements GraphNodeView {
   }
 
   createChild(props: GraphNodeProps = {}, position?: string) {
-    const { child, relation } = this.graphNode.createChild(props);
-    return this.viewStore.insertGraphNodeToOutline({
-      graphNode: child,
-      relation,
+    return this.viewStore.createNode({
       parent: this,
+      graphNodeProps: props,
       position,
     });
   }
@@ -113,6 +111,7 @@ export class Bullet implements GraphNodeView {
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
         const newBullet = new Bullet(this.viewStore, relatedNode, relation, this);
+        this.childrenByRelationId.set(relation.id, newBullet);
         newChildren.push(newBullet);
       }
     });
@@ -127,8 +126,11 @@ export class Bullet implements GraphNodeView {
     return children;
   }
 
-  get lastChild() {
-    const sortedChildren = this.children.sort(sortBullets);
+  /**
+   * Provides the last positioned bullet
+   */
+  get lastPositionedBullet(): Bullet | undefined {
+    const sortedChildren = Array.from(this.childrenByRelationId.values()).sort(sortBullets);
     return sortedChildren[sortedChildren.length - 1];
   }
 }

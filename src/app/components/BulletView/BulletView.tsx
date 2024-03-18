@@ -111,9 +111,10 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
                 />
                 {viewStore.showNodeDetails && (
                   <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
-                    <span style={{ color: "gray" }}>bulletId: {bullet.id.slice(0, 8)}</span>
+                    <span style={{ color: "gray" }}>bulletId: {bullet.id}</span>
                     <span style={{ color: "gray" }}>position: {bullet.position}</span>
-                    <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id.slice(0, 8)}</span>
+                    <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id}</span>
+                    <span style={{ color: "gray" }}>relationId: {bullet.graphRelation!.id}</span>
                   </div>
                 )}
               </div>
