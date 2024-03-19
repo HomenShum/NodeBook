@@ -52,6 +52,9 @@ export class GraphStore {
     if (!node) return;
     node.relations.forEach((r) => r.delete());
     this.nodesById.delete(node.id);
+    if (this.remote) {
+      this.remote.deleteNode(id);
+    }
   }
 
   getNode(id: string): GraphNode | undefined {
@@ -82,6 +85,9 @@ export class GraphStore {
     fromNode.relations = fromNode.relations.filter((r) => r.id !== relation.id);
     toNode.relations = toNode.relations.filter((r) => r.id !== relation.id);
     this.relationsById.delete(relation.id);
+    if (this.remote) {
+      this.remote.deleteRelation(relation.id);
+    }
     this.deleteNodeIfEmptyAndUnrelated(fromNode, toNode);
   }
 
@@ -92,6 +98,9 @@ export class GraphStore {
     newFrom.relations.push(relation);
     relation.from = newFrom;
     this.deleteNodeIfEmptyAndUnrelated(oldFrom);
+    if (this.remote) {
+      this.remote.upsertRelation(relation.id, newFrom.id, relation.to.id, relation.type.id);
+    }
     return relation;
   }
 
@@ -102,6 +111,9 @@ export class GraphStore {
     newTo.relations.push(relation);
     relation.to = newTo;
     this.deleteNodeIfEmptyAndUnrelated(oldTo);
+    if (this.remote) {
+      this.remote.upsertRelation(relation.id, relation.from.id, newTo.id, relation.type.id);
+    }
     return relation;
   }
 
@@ -109,11 +121,17 @@ export class GraphStore {
     const { from, to } = relation;
     relation.from = to;
     relation.to = from;
+    if (this.remote) {
+      this.remote.upsertRelation(relation.id, relation.from.id, relation.to.id, relation.type.id);
+    }
     return relation;
   }
 
   updateRelationsType(relation: GraphRelation, newType: GraphRelationType): GraphRelation {
     relation.type = newType;
+    if (this.remote) {
+      this.remote.upsertRelation(relation.id, relation.from.id, relation.to.id, relation.type.id);
+    }
     return relation;
   }
 
