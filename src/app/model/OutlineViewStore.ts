@@ -50,7 +50,6 @@ export class OutlineViewStore {
     parent: Bullet;
     position?: string;
   }) {
-    console.log("insertGraphNodeToOutline");
     if (relation.from.id !== parent.graphNode.id) {
       throw new Error("Relation's from node is not the parent node");
     }
@@ -72,7 +71,6 @@ export class OutlineViewStore {
     graphNodeProps: GraphNodeProps;
     position?: string;
   }) {
-    console.log("createNode");
     const graphNode = this.graphStore.createNode(graphNodeProps);
     const relation = this.graphStore.createRelation({
       from: parent.graphNode,
