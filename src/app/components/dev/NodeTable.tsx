@@ -1,7 +1,7 @@
-import { useContext } from "react";
 import { observer } from "mobx-react-lite";
-import { GraphStoreContext } from "../store/graph";
-import { GraphNode } from "../model/GraphNode";
+import { useContext } from "react";
+import { GraphNode } from "../../model/GraphNode";
+import { GraphStoreContext } from "../../store/graph";
 
 function relationsFromNodesPerspective(node: GraphNode) {
   return node.relations.map((relation) => {
@@ -29,8 +29,8 @@ export const NodeTable = observer(() => {
   const nodes = nodeStore?.nodes || [];
 
   return (
-    <div className="p-2">
-      <h1>Node Table</h1>
+    <div className="p-2 mb-4 max-h-96 overflow-y-auto">
+      <h1 className="text-xl font-bold">Node Table</h1>
       <table>
         <thead>
           <tr>

@@ -2,11 +2,11 @@
 import { Sidebar } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useState } from "react";
-import { NodeTable } from "./components/NodeTable";
 import { OutlineView } from "./components/OutlineView";
-import { RelationTable } from "./components/RelationTable";
-import { RelationTypeTable } from "./components/RelationTypeTable";
 import { ThoughtstreamView } from "./components/ThoughtstreamView";
+import { NodeTable } from "./components/dev/NodeTable";
+import { RelationTable } from "./components/dev/RelationTable";
+import { RelationTypeTable } from "./components/dev/RelationTypeTable";
 import { Bullet } from "./model/OutlineBullet";
 import { ViewType } from "./model/ViewStore";
 import { GraphStoreContext, graphStore } from "./store/graph";

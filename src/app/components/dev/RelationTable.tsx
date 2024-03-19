@@ -1,7 +1,7 @@
-import { useContext } from "react";
 import { observer } from "mobx-react-lite";
-import { GraphNode } from "../model/GraphNode";
-import { GraphStoreContext } from "../store/graph";
+import { useContext } from "react";
+import { GraphNode } from "../../model/GraphNode";
+import { GraphStoreContext } from "../../store/graph";
 
 const nodeToString = (node: GraphNode) => {
   return `"${node.text}" (${node.id.slice(0, 8)})`;
@@ -13,8 +13,8 @@ export const RelationTable = observer(() => {
   const relations = nodeStore.relations;
 
   return (
-    <div className="p-2">
-      <h1>Relation Table</h1>
+    <div className="p-2 mb-4 max-h-96 overflow-y-auto">
+      <h1 className="text-xl font-bold">Relation Table</h1>
       <table>
         <thead>
           <tr>

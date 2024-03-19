@@ -1,4 +1,4 @@
-import { generateNKeysBetween } from "fractional-indexing";
+import { generateKeyBetween, generateNKeysBetween } from "fractional-indexing";
 import { makeAutoObservable } from "mobx";
 import { uuid } from "../util";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
@@ -26,13 +26,15 @@ export class Bullet implements GraphNodeView {
   constructor(
     store: OutlineViewStore,
     node: GraphNode,
-    relation: GraphRelation | null = null,
-    parent: Bullet | null = null,
     {
+      relation,
+      parent,
       isExpanded,
       id,
       position,
     }: {
+      relation?: GraphRelation;
+      parent?: Bullet;
       isExpanded?: boolean;
       id?: string;
       position?: string;
@@ -40,14 +42,25 @@ export class Bullet implements GraphNodeView {
   ) {
     this.viewStore = store;
     this.graphNode = node;
-    this.graphRelation = relation;
-    this.parent = parent;
+    this.graphRelation = relation ?? null;
+    this.parent = parent ?? null;
     this.isExpanded = isExpanded ?? false;
-    this.position = position ?? "a0"; // TODO
+    this.id = id ?? uuid();
+
+    if (position) {
+      this.position = position;
+    } else if (this.parent) {
+      // Position after the last child of parent
+      this.position = generateKeyBetween(this.parent?.lastPositionedBullet?.position ?? null, null);
+    } else {
+      this.position = generateKeyBetween(null, null);
+    }
+
     this.childrenByRelationId = new Map();
 
-    this.id = id ?? uuid();
-    makeAutoObservable(this);
+    makeAutoObservable(this, {
+      childrenByRelationId: false,
+    });
   }
 
   isRelationToThis() {
@@ -110,7 +123,7 @@ export class Bullet implements GraphNodeView {
         children.push(existing);
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
-        const newBullet = new Bullet(this.viewStore, relatedNode, relation, this);
+        const newBullet = new Bullet(this.viewStore, relatedNode, { relation, parent: this });
         this.childrenByRelationId.set(relation.id, newBullet);
         newChildren.push(newBullet);
       }

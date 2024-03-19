@@ -1,4 +1,3 @@
-import { generateKeyBetween } from "fractional-indexing";
 import { makeAutoObservable } from "mobx";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
@@ -51,14 +50,14 @@ export class OutlineViewStore {
     parent: Bullet;
     position?: string;
   }) {
+    console.log("insertGraphNodeToOutline");
     if (relation.from.id !== parent.graphNode.id) {
       throw new Error("Relation's from node is not the parent node");
     }
     if (relation.to.id !== graphNode.id) {
       throw new Error("Relation's 'to' property is not the node being created");
     }
-    position = position || generateKeyBetween(parent.lastPositionedBullet?.position ?? null, null);
-    const bullet = new Bullet(this, graphNode, relation, parent, { position });
+    const bullet = new Bullet(this, graphNode, { relation, parent, position });
     parent.childrenByRelationId.set(relation.id, bullet);
     this.viewsByNodeId.set(graphNode.id, bullet);
     return bullet;
@@ -73,6 +72,7 @@ export class OutlineViewStore {
     graphNodeProps: GraphNodeProps;
     position?: string;
   }) {
+    console.log("createNode");
     const graphNode = this.graphStore.createNode(graphNodeProps);
     const relation = this.graphStore.createRelation({
       from: parent.graphNode,
