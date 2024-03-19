@@ -82,17 +82,8 @@ export class OutlineViewStore {
     return this.insertGraphNodeToOutline({ graphNode, relation, parent, position });
   }
 
-  updateNodeToParent(bullet: Bullet, newParent: Bullet, after?: Bullet) {
-    const currentParent = bullet.parent;
-    if (!currentParent) throw new Error("Node has no parent");
-    // Remove the tree node from the old parent
-    const oldParent = bullet.parent;
-    oldParent?.childrenByRelationId.delete(bullet.graphRelation?.id ?? "");
-    // Set the new parent
-    newParent.childrenByRelationId.set(bullet.graphRelation?.id ?? "", bullet);
-    bullet.parent = newParent;
-    // Update the graph
-    // TODO remove !
+  updateBulletsParent(bullet: Bullet, newParent: Bullet) {
+    // // TODO remove !
     this.graphStore.updateRelationFrom(bullet.graphRelation!, newParent.graphNode);
   }
 

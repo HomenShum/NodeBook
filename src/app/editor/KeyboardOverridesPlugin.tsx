@@ -98,7 +98,7 @@ const makeBulletKeyCommands = (
             console.log("Can't shift tab because no grandparent to move to");
             return false;
           }
-          viewStore.updateNodeToParent(bullet, grandparent);
+          viewStore.updateBulletsParent(bullet, grandparent);
           return true;
         } else {
           if (!siblingAbove || !(siblingAbove instanceof Bullet)) {
@@ -109,7 +109,7 @@ const makeBulletKeyCommands = (
             console.log("Parent not found");
             return false;
           }
-          viewStore.updateNodeToParent(bullet, siblingAbove);
+          viewStore.updateBulletsParent(bullet, siblingAbove);
           if (!siblingAbove.isExpanded) {
             siblingAbove.toggleExpanded();
           }
