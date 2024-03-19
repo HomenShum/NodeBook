@@ -1,13 +1,13 @@
 import { observer } from "mobx-react-lite";
-import { useGraphStore } from "../store/graph";
+import { useGraphStore } from "../../store/graph";
 
 export const RelationTypeTable = observer(() => {
   const graph = useGraphStore();
   const headers = ["id", "label", "reverseLabel"];
 
   return (
-    <div className="p-2">
-      <h1>Relation Type Table</h1>
+    <div className="p-2 mb-4 max-h-96 overflow-y-auto">
+      <h1 className="text-xl font-bold">Relation Type Table</h1>
       <table>
         <thead>
           <tr>
