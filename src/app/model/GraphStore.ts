@@ -61,18 +61,44 @@ export class GraphStore {
     return this.nodesById.get(id);
   }
 
-  createRelation(props: GraphRelationProps): GraphRelation {
-    return this.insertRelation(new GraphRelation(this, props));
+  createRelation(
+    props: GraphRelationProps,
+    insertRelationProps: {
+      fromTarget?: GraphRelation;
+      fromSide?: "above" | "below";
+      toTarget?: GraphRelation;
+      toSide?: "above" | "below";
+      fromServer?: boolean; // TODO: need better naming which doesn't conflate the "from" usage here
+    } = {},
+  ): GraphRelation {
+    return this.insertRelation(new GraphRelation(this, props), insertRelationProps);
   }
 
-  insertRelation(relation: GraphRelation, { fromServer = false }: { fromServer?: boolean } = {}): GraphRelation {
+  insertRelation(
+    relation: GraphRelation,
+    {
+      fromTarget,
+      fromSide = "above",
+      toTarget,
+      toSide = "above",
+      fromServer = false,
+    }: {
+      fromTarget?: GraphRelation;
+      fromSide?: "above" | "below";
+      toTarget?: GraphRelation;
+      toSide?: "above" | "below";
+      fromServer?: boolean; // TODO: need better naming which doesn't conflate the "from" usage here
+    } = {},
+  ): GraphRelation {
     if (this.relationsById.has(relation.id)) {
       throw new Error(`Relation with id ${relation.id} already exists`);
     }
     this.assertNodeExists(relation.from, relation.to);
     this.relationsById.set(relation.id, relation);
-    relation.from.relations.push(relation);
-    relation.to.relations.push(relation);
+
+    relation.from.insertRelation({ target: fromTarget, side: fromSide }, relation);
+    relation.to.insertRelation({ target: toTarget, side: toSide }, relation);
+
     if (!fromServer && this.remote) {
       this.remote.upsertRelation(relation.id, relation.from.id, relation.to.id, relation.type.id);
     }
@@ -81,9 +107,8 @@ export class GraphStore {
 
   deleteRelation(relation: GraphRelation) {
     const { from: fromNode, to: toNode } = relation;
-    // why do we need to compare the ids instead of the objects?
-    fromNode.relations = fromNode.relations.filter((r) => r.id !== relation.id);
-    toNode.relations = toNode.relations.filter((r) => r.id !== relation.id);
+    fromNode.removeRelation(relation);
+    toNode.removeRelation(relation);
     this.relationsById.delete(relation.id);
     if (this.remote) {
       this.remote.deleteRelation(relation.id);
@@ -91,30 +116,68 @@ export class GraphStore {
     this.deleteNodeIfEmptyAndUnrelated(fromNode, toNode);
   }
 
-  updateRelationFrom(relation: GraphRelation, newFrom: GraphNode): GraphRelation | undefined {
-    this.assertNodeExists(newFrom, relation.to);
-    const oldFrom = relation.from;
-    oldFrom.relations = oldFrom.relations.filter((r) => r.id !== relation.id);
-    newFrom.relations.push(relation);
-    relation.from = newFrom;
-    this.deleteNodeIfEmptyAndUnrelated(oldFrom);
-    if (this.remote) {
-      this.remote.upsertRelation(relation.id, newFrom.id, relation.to.id, relation.type.id);
-    }
-    return relation;
+  updateRelationFrom(
+    {
+      newFrom,
+      target,
+      side = "above",
+    }: {
+      newFrom: GraphNode;
+      target?: GraphRelation;
+      side?: "above" | "below";
+    },
+    ...relations: GraphRelation[]
+  ): GraphRelation[] {
+    this.assertNodeExists(newFrom, ...relations.map((r) => r.to));
+    // remove the relations from their old from nodes
+    const oldFroms = relations.map((r) => {
+      const oldFrom = r.from;
+      oldFrom.removeRelation(r);
+      return oldFrom;
+    });
+    // update the relations from property
+    relations.forEach((r) => {
+      r.from = newFrom;
+    });
+    // add the relations to the new from node
+    newFrom.insertRelation({ target, side }, ...relations);
+    this.deleteNodeIfEmptyAndUnrelated(...oldFroms);
+    relations.forEach((r) => {
+      this.remote?.upsertRelation(r.id, newFrom.id, r.to.id, r.type.id);
+    });
+    return relations;
   }
 
-  updateRelationTo(relation: GraphRelation, newTo: GraphNode): GraphRelation | undefined {
-    this.assertNodeExists(relation.from, newTo);
-    const oldTo = relation.to;
-    oldTo.relations = oldTo.relations.filter((r) => r.id !== relation.id);
-    newTo.relations.push(relation);
-    relation.to = newTo;
-    this.deleteNodeIfEmptyAndUnrelated(oldTo);
-    if (this.remote) {
-      this.remote.upsertRelation(relation.id, relation.from.id, newTo.id, relation.type.id);
-    }
-    return relation;
+  updateRelationTo(
+    {
+      newTo,
+      target,
+      side = "above",
+    }: {
+      newTo: GraphNode;
+      target?: GraphRelation;
+      side?: "above" | "below";
+    },
+    ...relations: GraphRelation[]
+  ): GraphRelation[] {
+    this.assertNodeExists(newTo, ...relations.map((r) => r.from));
+    // remove the relations from their old to nodes
+    const oldTos = relations.map((r) => {
+      const oldTo = r.to;
+      oldTo.removeRelation(r);
+      return oldTo;
+    });
+    // update the relations to property
+    relations.forEach((r) => {
+      r.to = newTo;
+    });
+    // add the relations to the new to node
+    newTo.insertRelation({ target, side }, ...relations);
+    this.deleteNodeIfEmptyAndUnrelated(...oldTos);
+    relations.forEach((r) => {
+      this.remote?.upsertRelation(r.id, r.from.id, newTo.id, r.type.id);
+    });
+    return relations;
   }
 
   reverseRelation(relation: GraphRelation): GraphRelation {

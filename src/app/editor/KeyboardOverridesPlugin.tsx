@@ -1,8 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
-import { generateKeyBetween } from "fractional-indexing";
 import {
-  $getRoot,
   $getSelection,
   COMMAND_PRIORITY_LOW,
   KEY_ARROW_DOWN_COMMAND,
@@ -72,16 +70,10 @@ const makeBulletKeyCommands = (
           return false;
         }
         // Get text before and after the cursor
-        const root = $getRoot();
         const points = $getSelection()?.getStartEndPoints();
         if (!points) return false;
-        const textBefore = root.getTextContent().slice(0, points[0].offset);
-        const textAfter = root.getTextContent().slice(points[1].offset);
-        // Set the text of the current node to the text before the cursor
-        bullet.graphNode.setText(textBefore);
-        // Create a new node below, with the text after the cursor
-        const position = generateKeyBetween(bullet.position, siblingBelow?.position ?? null);
-        const newBullet = bullet.parent.createChild({ text: textAfter }, position);
+        const newBullet = viewStore.splitBullet(bullet, points[0].offset, points[1].offset);
+        console.log("New bullet", { id: newBullet.id, text: newBullet.graphNode.text });
         viewStore.setFocusedNode(newBullet);
         return true;
       },
@@ -98,7 +90,7 @@ const makeBulletKeyCommands = (
             console.log("Can't shift tab because no grandparent to move to");
             return false;
           }
-          viewStore.updateBulletsParent(bullet, grandparent);
+          viewStore.moveBulletToNewParent({ parent: grandparent, target: bullet.parent! }, bullet);
           return true;
         } else {
           if (!siblingAbove || !(siblingAbove instanceof Bullet)) {
@@ -109,10 +101,11 @@ const makeBulletKeyCommands = (
             console.log("Parent not found");
             return false;
           }
-          viewStore.updateBulletsParent(bullet, siblingAbove);
+          viewStore.moveBulletToNewParent({ parent: siblingAbove }, bullet);
           if (!siblingAbove.isExpanded) {
             siblingAbove.toggleExpanded();
           }
+          viewStore.setFocusedNode(bullet);
           return true;
         }
       },

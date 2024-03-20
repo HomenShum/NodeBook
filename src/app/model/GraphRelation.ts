@@ -38,8 +38,4 @@ export class GraphRelation {
   updateType(newType: GraphRelationType) {
     this.store.updateRelationsType(this, newType);
   }
-
-  updateFrom(newFrom: GraphNode) {
-    this.store.updateRelationFrom(this, newFrom);
-  }
 }

@@ -1,6 +1,7 @@
 .EditorWrapper {
   position: relative;
   width: 100%;
+  flex: 1;
 }
 
 .EditorWrapper p {

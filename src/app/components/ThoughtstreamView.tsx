@@ -26,9 +26,9 @@ export const ThoughtstreamView = observer(() => {
       ))}
       <button
         onClick={() => {
-          const { child } = graphRoot.createChild();
+          const { node } = graphRoot.createRelatedNode();
           setTimeout(() => {
-            const el = document.querySelector(`[data-nodeid="${child.id}"]`);
+            const el = document.querySelector(`[data-nodeid="${node.id}"]`);
             if (el instanceof HTMLElement) el.focus();
           }, 0);
         }}

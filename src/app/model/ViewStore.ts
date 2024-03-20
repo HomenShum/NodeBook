@@ -26,7 +26,7 @@ export class ViewStore {
   public showNodeDetails = true;
 
   public leftSidebarOpen = true;
-  public rightSidebarOpen = true;
+  public rightSidebarOpen = false;
 
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;

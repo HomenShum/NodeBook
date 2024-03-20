@@ -1,7 +1,6 @@
 import { observer } from "mobx-react-lite";
-import { sortBullets } from "../model/OutlineBullet";
 import { useViewStore } from "../store/outline";
-import { BulletView } from "./BulletView/BulletView";
+import { BulletChildren } from "./BulletChildren";
 
 export const OutlineView = observer(() => {
   const viewStore = useViewStore();
@@ -10,7 +9,6 @@ export const OutlineView = observer(() => {
     return <div>Missing root node</div>;
   }
   const ancestors = root.ancestors;
-  const children = root.children.sort(sortBullets);
 
   return (
     <div style={{ width: "100%" }}>
@@ -26,23 +24,11 @@ export const OutlineView = observer(() => {
         </span>
       ))}
       <h1>{root.graphNode.text}</h1>
-      {children.map((child, i) => (
-        <BulletView
-          key={child.id}
-          bullet={child}
-          depth={1}
-          parents={[...ancestors, root]}
-          siblingAbove={children[i - 1]}
-          siblingBelow={children[i + 1]}
-        />
-      ))}
+      <BulletChildren bullet={root} depth={1} parents={[...ancestors, root]} />
       <button
         onClick={() => {
-          const bullet = root.createChild();
-          setTimeout(() => {
-            const el = document.querySelector(`[data-nodeid="${bullet.graphNode.id}"]`);
-            if (el instanceof HTMLElement) el.focus();
-          }, 0);
+          const bullet = root.createRelatedBullet();
+          viewStore.setFocusedNode(bullet);
         }}
       >
         +

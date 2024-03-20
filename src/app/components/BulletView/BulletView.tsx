@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { Editor } from "../../editor/Editor";
-import { Bullet, sortBullets } from "../../model/OutlineBullet";
+import { Bullet } from "../../model/OutlineBullet";
 import { useGraphStore } from "../../store/graph";
 import { useViewStore } from "../../store/outline";
 import { RelationCombobox } from "../RelationCombobox";
@@ -10,12 +10,11 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { GraphNode } from "@/app/model/GraphNode";
 import { useEffect, useRef, useState } from "react";
+import { BulletChildren } from "../BulletChildren";
 
 export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
   const viewStore = useViewStore();
@@ -47,7 +46,7 @@ interface Props {
 export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
-  const children = bullet.children.sort(sortBullets);
+
   const [replacing, setReplacing] = useState(false);
 
   const onDelete = () => {
@@ -57,95 +56,74 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
   return (
     <>
       <div
-        className={styles.Bullet}
+        className="flex flex-col align-start"
         onMouseEnter={() => viewStore.setHoveredNode(bullet)}
         onMouseLeave={() => viewStore.setHoveredNode(null)}
       >
-        {Array.from({ length: depth }).map((_, i) => (
-          <span key={i} className={styles.indent}>
-            &nbsp;
-          </span>
-        ))}
-        <div style={{ display: "flex", gap: "5px" }}>
-          <DropdownMenu>
-            <DropdownMenuTrigger>...</DropdownMenuTrigger>
-            <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              {/* <DropdownMenuSeparator /> */}
-              {/* <DropdownMenuItem>Mirror To</DropdownMenuItem> */}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={onDelete}>Delete relation</DropdownMenuItem>
-              {/* <DropdownMenuSeparator /> */}
-              <DropdownMenuItem onSelect={() => setReplacing(true)}>Replace related node</DropdownMenuItem>
-              {/* <DropdownMenuItem>Mark as Bundle</DropdownMenuItem> */}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <RelationCombobox bullet={bullet} />
-        </div>
-        {!replacing ? (
-          <>
-            <Toggle bullet={bullet} />
-            <span
-              className={styles.bulletChar}
-              onClick={() => {
-                console.log("clicked bullet");
-                viewStore.outlineViewStore.setRoot(bullet);
-              }}
-            >
-              {"\u2022"}
-            </span>
-            {/* relation type */}
-            <div
-              style={{
-                gap: "5px",
-                display: "flex",
-                alignItems: "flex-start",
-                flex: 1,
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <Editor
-                  node={bullet}
-                  onChange={(v) => bullet.graphNode.setText(v ?? "")}
-                  context={{ node: bullet, siblingAbove, siblingBelow }}
-                />
-                {viewStore.showNodeDetails && (
-                  <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
-                    <span style={{ color: "gray" }}>bulletId: {bullet.id}</span>
-                    <span style={{ color: "gray" }}>position: {bullet.position}</span>
-                    <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id}</span>
-                    <span style={{ color: "gray" }}>relationId: {bullet.graphRelation!.id}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="ml-4 flex-1">
-            <SearchNodes
-              currentNode={bullet.graphNode}
-              onSelect={(graphNode) => {
-                bullet.setGraphNode(graphNode);
-                setReplacing(false);
-              }}
-              cancel={() => setReplacing(false)}
-            />
+        <div className="flex items-center">
+          <div style={{ display: "flex", gap: "5px" }}>
+            <DropdownMenu>
+              <DropdownMenuTrigger>...</DropdownMenuTrigger>
+              <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
+                <DropdownMenuItem onSelect={onDelete}>Delete relation</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setReplacing(true)}>Replace related node</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <RelationCombobox bullet={bullet} />
           </div>
-        )}
+          {!replacing ? (
+            <>
+              <Toggle bullet={bullet} />
+              <span
+                className={styles.bulletChar}
+                onClick={() => {
+                  console.log("clicked bullet");
+                  viewStore.outlineViewStore.setRoot(bullet);
+                }}
+              >
+                {"\u2022"}
+              </span>
+              {/* relation type */}
+              <div
+                style={{
+                  gap: "5px",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  flex: 1,
+                }}
+              >
+                <div className="flex flex-col flex-1">
+                  <Editor
+                    node={bullet}
+                    onChange={(v) => bullet.graphNode.setText(v ?? "")}
+                    context={{ node: bullet, siblingAbove, siblingBelow }}
+                  />
+                  {viewStore.showNodeDetails && (
+                    <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
+                      <span style={{ color: "gray" }}>bulletId: {bullet.id}</span>
+                      <span style={{ color: "gray" }}>position: {bullet.position}</span>
+                      <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id}</span>
+                      <span style={{ color: "gray" }}>relationId: {bullet.graphRelation!.id}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="ml-4 flex-1">
+              <SearchNodes
+                currentNode={bullet.graphNode}
+                onSelect={(graphNode) => {
+                  bullet.setGraphNode(graphNode);
+                  setReplacing(false);
+                }}
+                cancel={() => setReplacing(false)}
+              />
+            </div>
+          )}
+        </div>
+        {bullet.isExpanded && <BulletChildren bullet={bullet} depth={depth + 1} parents={[...parents, bullet]} />}
       </div>
-      {bullet.isExpanded &&
-        children.map((node, i) => {
-          return (
-            <BulletView
-              key={node.id}
-              bullet={node}
-              depth={depth + 1}
-              parents={[...parents, node]}
-              siblingAbove={children[i - 1]}
-              siblingBelow={children[i + 1]}
-            />
-          );
-        })}
     </>
   );
 });

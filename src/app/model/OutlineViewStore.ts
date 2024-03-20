@@ -1,6 +1,5 @@
 import { makeAutoObservable } from "mobx";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
-import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 import { Bullet } from "./OutlineBullet";
 import { ViewStore } from "./ViewStore";
@@ -39,50 +38,66 @@ export class OutlineViewStore {
     return bullet;
   }
 
-  insertGraphNodeToOutline({
-    graphNode,
-    relation,
+  createBullet({
+    graphNodeProps = {},
     parent,
-    position,
+    target,
+    side = "above",
   }: {
-    graphNode: GraphNode;
-    relation: GraphRelation;
+    graphNodeProps: GraphNodeProps;
     parent: Bullet;
-    position?: string;
+    target?: Bullet;
+    side?: "above" | "below";
   }) {
-    if (relation.from.id !== parent.graphNode.id) {
-      throw new Error("Relation's from node is not the parent node");
-    }
-    if (relation.to.id !== graphNode.id) {
-      throw new Error("Relation's 'to' property is not the node being created");
-    }
-    const bullet = new Bullet(this, graphNode, { relation, parent, position });
+    const graphNode = this.graphStore.createNode(graphNodeProps);
+    const relation = this.graphStore.createRelation(
+      {
+        from: parent.graphNode,
+        to: graphNode,
+        type: this.graphStore.relationTypesById.child,
+      },
+      {
+        fromTarget: target?.graphRelation!,
+        fromSide: side,
+      },
+    );
+    const bullet = new Bullet(this, graphNode, { relation, parent });
     parent.childrenByRelationId.set(relation.id, bullet);
-    this.viewsByNodeId.set(graphNode.id, bullet);
     return bullet;
   }
 
-  createNode({
-    parent,
-    graphNodeProps = {},
-    position,
-  }: {
-    parent: Bullet;
-    graphNodeProps: GraphNodeProps;
-    position?: string;
-  }) {
-    const graphNode = this.graphStore.createNode(graphNodeProps);
-    const relation = this.graphStore.createRelation({
-      from: parent.graphNode,
-      to: graphNode,
-      type: this.graphStore.relationTypesById.child,
+  moveBulletToNewParent(
+    { parent, target, side }: { parent: Bullet; target?: Bullet; side?: "above" | "below" },
+    ...bullets: Bullet[]
+  ) {
+    this.graphStore.updateRelationFrom(
+      { newFrom: parent.graphNode, target: target?.graphRelation!, side },
+      ...bullets.map((b) => b.graphRelation!),
+    );
+    bullets.forEach((b) => {
+      parent.childrenByRelationId.set(b.graphRelation!.id, b);
+      b.parent = parent;
     });
-    return this.insertGraphNodeToOutline({ graphNode, relation, parent, position });
   }
 
-  updateBulletsParent(bullet: Bullet, newParent: Bullet) {
-    // // TODO remove !
-    this.graphStore.updateRelationFrom(bullet.graphRelation!, newParent.graphNode);
+  splitBullet(bullet: Bullet, start: number, end?: number): Bullet {
+    if (!bullet.parent) {
+      throw new Error("Can't split bullet with no parent");
+      // TODO this shouldn't be possible?
+    }
+    const text = bullet.graphNode.text;
+    end = end ?? start;
+    // Update the existing node with the text before the cursor
+    const textBefore = text.slice(0, start);
+    bullet.graphNode.setText(textBefore);
+    // Create a new node below, with the text after the cursor
+    const textAfter = text.slice(end);
+    return this.createBullet({
+      graphNodeProps: { text: textAfter },
+      parent: bullet.parent!,
+      target: bullet,
+      side: "below",
+    });
   }
 
   deleteNode(bullet: Bullet) {
@@ -94,10 +109,11 @@ export class OutlineViewStore {
 
   setGraphNodeOnBullet(bullet: Bullet, graphNode: GraphNode) {
     if (bullet.isRelationToThis()) {
-      this.graphStore.updateRelationTo(bullet.graphRelation!, graphNode);
+      this.graphStore.updateRelationTo({ newTo: graphNode }, bullet.graphRelation!);
     } else {
-      this.graphStore.updateRelationFrom(bullet.graphRelation!, graphNode);
+      this.graphStore.updateRelationFrom({ newFrom: graphNode }, bullet.graphRelation!);
     }
     bullet.graphNode = graphNode;
+    bullet.childrenByRelationId = new Map(); // TODO sketch
   }
 }
