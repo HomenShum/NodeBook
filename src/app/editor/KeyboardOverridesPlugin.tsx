@@ -6,6 +6,7 @@ import {
   KEY_ARROW_DOWN_COMMAND,
   KEY_ARROW_UP_COMMAND,
   KEY_BACKSPACE_COMMAND,
+  KEY_DOWN_COMMAND,
   KEY_ENTER_COMMAND,
   KEY_TAB_COMMAND,
   LexicalEditor,
@@ -78,6 +79,23 @@ const makeBulletKeyCommands = (
         return true;
       },
       COMMAND_PRIORITY_LOW,
+    ),
+    editor.registerCommand(
+      KEY_DOWN_COMMAND,
+      (event) => {
+        if (!event.metaKey && !event.ctrlKey) return false;
+        if (event.key !== 'k') return false;
+        event?.preventDefault();
+        const root = viewStore.root;
+        if (!root) return false;
+        const newBullet = root.createChild();
+        setTimeout(() => {
+          const el = document.querySelector(`[data-nodeid="${newBullet.graphNode.id}"]`);
+          if (el instanceof HTMLElement) el.focus();
+        }, 0);
+        return true
+      },
+      COMMAND_PRIORITY_LOW
     ),
     editor.registerCommand(
       KEY_TAB_COMMAND,
@@ -178,6 +196,23 @@ const makeNoteKeyCommands = (
         return true;
       },
       COMMAND_PRIORITY_LOW,
+    ),
+    editor.registerCommand(
+      KEY_DOWN_COMMAND,
+      (event) => {
+        if (!event.metaKey && !event.ctrlKey) return false;
+        if (event.key !== 'k') return false;
+        event?.preventDefault();
+        const graphRoot = graphStore.getNode("root");
+        if (!graphRoot) return false;
+        const { child } = graphRoot.createChild();
+        setTimeout(() => {
+          const el = document.querySelector(`[data-nodeid="${child.id}"]`);
+          if (el instanceof HTMLElement) el.focus();
+        }, 0);
+        return true
+      },
+      COMMAND_PRIORITY_LOW
     ),
   );
 };

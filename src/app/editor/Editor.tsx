@@ -60,7 +60,7 @@ export const Editor = ({ node, context }: Props) => {
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable key={node.id} nodeId={node.id} />}
+          contentEditable={<ContentEditable key={node.id} nodeId={node.graphNode.id} bulletId={node.id} />}
           placeholder={null}
           // placeholder={<EditorPlaceholder />}
         />
