@@ -1,4 +1,5 @@
 import { makeAutoObservable } from "mobx";
+import { makeAutoSaving } from "../util";
 import { GraphNode } from "./GraphNode";
 import { GraphNodeView } from "./GraphNodeView";
 import { GraphStore } from "./GraphStore";
@@ -26,9 +27,8 @@ export class ViewStore {
 
   private editorsByViewId: Map<string, any> = new Map();
 
-  public showNodeDetails = true;
-
-  public leftSidebarOpen = true;
+  public showNodeDetails = false;
+  public leftSidebarOpen = false;
   public rightSidebarOpen = false;
 
   constructor(graphStore: GraphStore) {
@@ -37,6 +37,11 @@ export class ViewStore {
     this.outlineViewStore = new OutlineViewStore(graphStore, this);
     this.thoughtstreamViewStore = new ThoughtstreamViewStore(graphStore, this);
     makeAutoObservable(this);
+    makeAutoSaving(this, {
+      showNodeDetails: true,
+      leftSidebarOpen: true,
+      rightSidebarOpen: true,
+    });
   }
 
   toggleLeftSidebar() {

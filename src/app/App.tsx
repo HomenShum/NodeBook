@@ -23,6 +23,9 @@ function App() {
       // It's not a root cause graphs don't have roots.
       const root = graphStore.getNode("root") ?? graphStore.createNode({ id: "root", text: "Root" });
       viewStore.outlineViewStore.setRoot(new Bullet(viewStore.outlineViewStore, root));
+      // root.createRelatedNode();
+      // root.createRelatedNode();
+      // root.createRelatedNode();
     });
   }, []);
   if (isLoading) {
@@ -46,7 +49,11 @@ const AppView = observer(() => {
   let viewComponent = <div>View</div>;
   switch (viewStore.curView) {
     case ViewType.OUTLINE:
-      viewComponent = <OutlineView />;
+      viewComponent = (
+        <div className="flex flex-col h-full items-center">
+          <OutlineView />
+        </div>
+      );
       break;
     case ViewType.THOUGHTSTREAM:
       viewComponent = <ThoughtstreamView />;
@@ -90,15 +97,6 @@ const AppView = observer(() => {
               >
                 Split view
               </button>
-              <hr className="my-4" />
-              <label>Relation view:</label>
-              <select
-                value={viewStore.outlineViewStore.relatedNodesViewType}
-                onChange={(e) => viewStore.outlineViewStore.setRelatedNodesViewType(e.target.value as any)} // TODO "as any" bad
-              >
-                <option value="all">All related nodes only</option>
-                <option value="pinned">Pinned and all nodes</option>
-              </select>
             </div>
           </aside>
         )}

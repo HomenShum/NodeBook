@@ -89,6 +89,10 @@ export const RelationCombobox = observer(({ bullet }: { bullet: Bullet }) => {
   const type = bullet.graphRelation?.type;
   const label = bullet.isRelationToThis() ? type?.label : type?.reverseLabel;
 
+  // If the bullet is a child, we don't want to show the relation type combobox
+  if (type === graphStore.relationTypesById.child && bullet.isRelationToThis()) {
+    return null;
+  }
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -96,9 +100,9 @@ export const RelationCombobox = observer(({ bullet }: { bullet: Bullet }) => {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="justify-between p-1 m-0 h-5 w-16 text-black border-black"
+          className="justify-between p-1 m-0 h-5 text-black border-black"
         >
-          {label}
+          {label}:
         </Button>
       </PopoverTrigger>
       <PopoverContent

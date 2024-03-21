@@ -11,20 +11,24 @@ export const OutlineView = observer(() => {
   const ancestors = root.ancestors;
 
   return (
-    <div style={{ width: "100%" }}>
-      {ancestors.map((parent) => (
-        <span
-          key={parent.id}
-          style={{ cursor: "pointer" }}
-          onClick={() => {
-            viewStore.outlineViewStore.setRoot(parent);
-          }}
-        >
-          {parent.graphNode.text} /{" "}
-        </span>
-      ))}
-      <h1>{root.graphNode.text}</h1>
-      <BulletChildren bullet={root} depth={1} parents={[...ancestors, root]} />
+    <div style={{ width: "100%", maxWidth: 1000 }}>
+      <div className="ml-12">
+        <div className="h-6">
+          {ancestors.map((parent) => (
+            <span
+              key={parent.id}
+              style={{ cursor: "pointer" }}
+              onClick={() => {
+                viewStore.outlineViewStore.setRoot(parent);
+              }}
+            >
+              {parent.graphNode.text} /{" "}
+            </span>
+          ))}
+        </div>
+        <h1 className="text-2xl font-bold">{root.graphNode.text}</h1>
+      </div>
+      <BulletChildren bullet={root} depth={0} parents={[...ancestors, root]} />
       <button
         onClick={() => {
           const bullet = root.createRelatedBullet();
