@@ -19,7 +19,10 @@ export class Bullet implements GraphNodeView {
   public graphRelation: GraphRelation | null;
   public parent: Bullet | null;
   public isExpanded: boolean;
-  public childrenByRelationId: Map<string, Bullet>;
+  public isPinnedExpanded: boolean;
+  public isAllRelationsExpanded: boolean;
+  public childrenByRelationId: Map<string, Bullet>; // TODO rename
+  public pinnedByRelationId: Map<string, Bullet>;
 
   constructor(
     store: OutlineViewStore,
@@ -42,12 +45,22 @@ export class Bullet implements GraphNodeView {
     this.parent = parent ?? null;
     this.isExpanded = isExpanded ?? false;
     this.id = id ?? uuid();
-
     this.childrenByRelationId = new Map();
+    this.pinnedByRelationId = new Map();
+    this.isPinnedExpanded = true;
+    this.isAllRelationsExpanded = true;
 
     makeAutoObservable(this, {
       childrenByRelationId: false,
     });
+  }
+
+  togglePinnedExpanded() {
+    this.isPinnedExpanded = !this.isPinnedExpanded;
+  }
+
+  toggleAllRelationsExpanded() {
+    this.isAllRelationsExpanded = !this.isAllRelationsExpanded;
   }
 
   createRelatedBullet(props: Parameters<typeof GraphNode.prototype.createRelatedNode>[0] = {}): Bullet {
@@ -105,9 +118,41 @@ export class Bullet implements GraphNodeView {
     });
   }
 
+  get pinnedChildren(): Bullet[] {
+    return this.graphNode.pinnedRelationsWithPositions.map(({ relation }) => {
+      const existingBullet = this.pinnedByRelationId.get(relation.id);
+      if (existingBullet) {
+        return existingBullet;
+      } else {
+        const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
+        const newBullet = new Bullet(this.viewStore, relatedNode, { relation, parent: this });
+        this.pinnedByRelationId.set(relation.id, newBullet);
+        return newBullet;
+      }
+    });
+  }
+
   get position(): string | null {
     const relationId = this.graphRelation?.id;
     if (!relationId) return null;
     return this.parent?.graphNode.allRelationsById.get(relationId)?.position ?? null;
+  }
+
+  get pinnedPosition(): string | null {
+    const relationId = this.graphRelation?.id;
+    if (!relationId) return null;
+    return this.parent?.graphNode.pinnedRelationsById.get(relationId)?.position ?? null;
+  }
+
+  get isPinned() {
+    return this.parent?.graphNode.pinnedRelationsById.has(this.graphRelation!.id) ?? false;
+  }
+
+  pin() {
+    this.parent?.graphNode.pinRelation({}, this.graphRelation!);
+  }
+
+  unpin() {
+    this.parent?.graphNode.unpinRelation(this.graphRelation!);
   }
 }

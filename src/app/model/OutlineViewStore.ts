@@ -9,12 +9,17 @@ export class OutlineViewStore {
   private viewStore: ViewStore;
   private viewsByNodeId: Map<string, Bullet>;
   public root: Bullet | null = null;
+  public relatedNodesViewType: "all" | "pinned" = "all";
 
   constructor(graphStore: GraphStore, viewStore: ViewStore) {
     this.graphStore = graphStore;
     this.viewStore = viewStore;
     this.viewsByNodeId = new Map();
     makeAutoObservable(this);
+  }
+
+  setRelatedNodesViewType(type: "all" | "pinned") {
+    this.relatedNodesViewType = type;
   }
 
   setRoot(node: Bullet) {
@@ -66,17 +71,33 @@ export class OutlineViewStore {
     return bullet;
   }
 
+  createPinnedBullet(bullet: Bullet, { target, side }: { target: Bullet; side: "above" | "below" }) {
+    bullet.parent?.graphNode.pinRelation({ target: target.graphRelation!, side }, bullet.graphRelation!);
+    const newBullet = new Bullet(this, bullet.graphNode, { relation: bullet.graphRelation!, parent: bullet.parent! });
+    bullet.parent?.pinnedByRelationId.set(newBullet.graphRelation!.id, newBullet);
+    return newBullet;
+  }
+
   moveBulletToNewParent(
-    { parent, target, side }: { parent: Bullet; target?: Bullet; side?: "above" | "below" },
+    { parent, target, side = "below" }: { parent: Bullet; target?: Bullet; side?: "above" | "below" },
     ...bullets: Bullet[]
   ) {
     this.graphStore.updateRelationFrom(
       { newFrom: parent.graphNode, target: target?.graphRelation!, side },
       ...bullets.map((b) => b.graphRelation!),
     );
+    // We need to manually add the bullets to the respective maps because otherwise new bullets
+    // will be created to reflect the new relations, and we'll lose things like the expanded states
+    // underneath and focus state.
+    // (TODO: This seems more complicated than it should be though. It's worth revisiting.)
     bullets.forEach((b) => {
-      parent.childrenByRelationId.set(b.graphRelation!.id, b);
       b.parent = parent;
+      if (target?.isPinned) {
+        parent.graphNode.pinRelation({ target: target.graphRelation!, side }, b.graphRelation!);
+        parent.pinnedByRelationId.set(b.graphRelation!.id, b);
+      } else {
+        parent.childrenByRelationId.set(b.graphRelation!.id, b);
+      }
     });
   }
 
@@ -92,12 +113,23 @@ export class OutlineViewStore {
     bullet.graphNode.setText(textBefore);
     // Create a new node below, with the text after the cursor
     const textAfter = text.slice(end);
-    return this.createBullet({
-      graphNodeProps: { text: textAfter },
-      parent: bullet.parent!,
-      target: bullet,
-      side: "below",
-    });
+
+    if (bullet.isPinned) {
+      const bulletInAllRelationsSection = this.createBullet({
+        graphNodeProps: { text: textAfter },
+        parent: bullet.parent!,
+        target: bullet,
+        side: "below",
+      });
+      return this.createPinnedBullet(bulletInAllRelationsSection, { target: bullet, side: "below" });
+    } else {
+      return this.createBullet({
+        graphNodeProps: { text: textAfter },
+        parent: bullet.parent!,
+        target: bullet,
+        side: "below",
+      });
+    }
   }
 
   deleteNode(bullet: Bullet) {

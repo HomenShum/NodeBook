@@ -67,6 +67,11 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
               <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
                 <DropdownMenuItem onSelect={onDelete}>Delete relation</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setReplacing(true)}>Replace related node</DropdownMenuItem>
+                {bullet.isPinned ? (
+                  <DropdownMenuItem onSelect={() => bullet.unpin()}>Unpin</DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onSelect={() => bullet.pin()}>Pin</DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
             <RelationCombobox bullet={bullet} />

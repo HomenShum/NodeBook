@@ -68,6 +68,15 @@ const AppView = observer(() => {
               >
                 Thoughtstream view
               </button>
+              <hr className="my-4" />
+              <label>Relation view:</label>
+              <select
+                value={viewStore.outlineViewStore.relatedNodesViewType}
+                onChange={(e) => viewStore.outlineViewStore.setRelatedNodesViewType(e.target.value as any)} // TODO "as any" bad
+              >
+                <option value="all">All related nodes only</option>
+                <option value="pinned">Pinned and all nodes</option>
+              </select>
             </div>
           </aside>
         )}

@@ -24,6 +24,7 @@ export class GraphNode {
   public id: string;
   public text: string = "";
   public allRelationsById = new Map<string, PositionedRelation>();
+  public pinnedRelationsById = new Map<string, PositionedRelation>();
 
   constructor(private store: GraphStore, private remote?: RemoteGraphStore, { id, text = "" }: GraphNodeProps = {}) {
     this.id = id || uuid();
@@ -43,6 +44,10 @@ export class GraphNode {
 
   get relationsWithPositions(): PositionedRelation[] {
     return Array.from(this.allRelationsById.values());
+  }
+
+  get pinnedRelationsWithPositions(): PositionedRelation[] {
+    return Array.from(this.pinnedRelationsById.values());
   }
 
   setText(text: string) {
@@ -73,7 +78,7 @@ export class GraphNode {
     return { node, relation };
   }
 
-  insertRelation({ target, side = "above" }: RelativePositionProps, ...relations: GraphRelation[]) {
+  insertRelation({ target, side = "below" }: RelativePositionProps, ...relations: GraphRelation[]) {
     relations.forEach((r) => this.assertValidRelation(r)); // TODO can you have multiple relations with the same id?
     let positionBefore: string | null = null;
     let positionAfter: string | null = null;
@@ -88,11 +93,11 @@ export class GraphNode {
     } else if (side === "above") {
       // insert relations above all other relations
       positionBefore = null;
-      positionBefore = this.getFirstPosition();
+      positionAfter = this.getFirstPosition();
     } else if (side === "below") {
       // insert relations below all other relations
+      positionBefore = this.getLastPosition();
       positionAfter = null;
-      positionAfter = this.getLastPosition();
     }
     const newPositions = generateNKeysBetween(positionBefore, positionAfter, relations.length);
     relations.forEach((relation, i) => {
@@ -102,6 +107,39 @@ export class GraphNode {
 
   removeRelation(relation: GraphRelation) {
     this.allRelationsById.delete(relation.id);
+    this.pinnedRelationsById.delete(relation.id);
+  }
+
+  pinRelation({ target, side = "below" }: RelativePositionProps, ...relations: GraphRelation[]) {
+    relations.forEach((r) => {
+      if (!this.allRelationsById.has(r.id)) {
+        throw new Error(`Cannot pin relation that is not attached to node`);
+      }
+    });
+    let positionBefore: string | null = null;
+    let positionAfter: string | null = null;
+    if (target) {
+      const positionedRelations = Array.from(this.pinnedRelationsById.values()).sort((a, b) =>
+        compareFractionIndices(a.position, b.position),
+      );
+      const index = positionedRelations.findIndex((r) => r.relation.id === target.id);
+      positionBefore = positionedRelations[index]?.position ?? null;
+      positionAfter = positionedRelations[index + 1]?.position ?? null;
+    } else if (side === "above") {
+      positionBefore = null;
+      positionBefore = this.getFirstPinnedPosition();
+    } else if (side === "below") {
+      positionAfter = null;
+      positionAfter = this.getLastPinnedPosition();
+    }
+    const newPositions = generateNKeysBetween(positionBefore, positionAfter, relations.length);
+    relations.forEach((relation, i) => {
+      this.pinnedRelationsById.set(relation.id, { position: newPositions[i], relation });
+    });
+  }
+
+  unpinRelation(...relations: GraphRelation[]) {
+    relations.forEach((r) => this.pinnedRelationsById.delete(r.id));
   }
 
   delete() {
@@ -136,6 +174,23 @@ export class GraphNode {
   getFirstPosition() {
     return (
       Array.from(this.allRelationsById.values())
+        .sort((a, b) => compareFractionIndices(a.position, b.position))
+        .map((r) => r.position)[0] ?? null
+    );
+  }
+
+  getLastPinnedPosition() {
+    return (
+      Array.from(this.pinnedRelationsById.values())
+        .sort((a, b) => compareFractionIndices(a.position, b.position))
+        .map((r) => r.position)
+        .splice(-1)[0] ?? null
+    );
+  }
+
+  getFirstPinnedPosition() {
+    return (
+      Array.from(this.pinnedRelationsById.values())
         .sort((a, b) => compareFractionIndices(a.position, b.position))
         .map((r) => r.position)[0] ?? null
     );
