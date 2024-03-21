@@ -196,6 +196,8 @@ function MentionsTypeaheadMenuItem({
   if (isSelected) {
     className = styles.Selected;
   }
+
+  const path = getTopMostParentPath(option.graphNode);
   return (
     <li
       key={option.key}
@@ -208,7 +210,38 @@ function MentionsTypeaheadMenuItem({
       onMouseEnter={onMouseEnter}
       onClick={onClick}
     >
-      <span className="text">{option.name}</span>
+      <div className="flex flex-col">
+        <div>{option.name}</div>
+        <div className="flex text-sm text-gray-500">
+          <span>/</span>
+          {path.map(({ key, text }) => (
+            <span key={key}>{text}/</span>
+          ))}
+        </div>
+      </div>
     </li>
   );
+}
+
+/**
+ * Traverses up parent nodes, always going up the first parent we hit, and
+ * returns the path of nodes.
+ *
+ * If we find a cycle, hit the root, or hit a limit, we return the current path.
+ */
+function getTopMostParentPath(node: GraphNode): { key: string; text: string }[] {
+  const path: GraphNode[] = [];
+  let current: GraphNode | undefined = node;
+
+  for (let i = 0; i < 10 && current; i++) {
+    const parent: GraphNode | undefined = current.relationsSortedByPosition.find(
+      (r) => r.type.id === "child" && r.to === current,
+    )?.from;
+    if (!parent || path.some((p) => p.id === parent.id)) {
+      return path.map((p) => ({ key: p.id, text: p.text }));
+    }
+    path.unshift(parent);
+    current = parent;
+  }
+  return [{ key: "ellipses", text: "..." }, ...path.map((p) => ({ key: p.id, text: p.text }))];
 }
