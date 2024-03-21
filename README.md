@@ -35,3 +35,10 @@ yarn dev
 - Update the `POSTGRES_CUSTOM_URL` in `.env.local` with the new database name. For example, if the current url ends with `/development`, change it to `/<db-name>`
 - Run `yarn db:migrate` to create the tables in the new database
 - When you're done, you can delete the database by running `drop database <db-name>` in the [vercel data tab](https://vercel.com/ideaflowco/mew/stores/postgres/store_lxFSgFAtApzk0tud/data)
+
+## Migrate the database
+
+- Update the schema in `src/db/schema.ts`
+- Run `yarn db:generate-migration` to create a new migration file
+- Apply the migration with `yarn db:migrate` (to the database specified in your .env file)
+- Commit and push the schema change and the migration file
