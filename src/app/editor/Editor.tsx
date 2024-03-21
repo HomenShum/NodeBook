@@ -16,6 +16,7 @@ import { useViewStore } from "../store/outline";
 import styles from "./Editor.module.css";
 import { MentionPlugin } from "./MentionPlugin";
 import { OnChangePlugin } from "./OnChangePlugin";
+import { ViewStoreRegistryPlugin } from "./ViewStoreRegistryPlugin";
 
 const theme = {
   // Theme styling goes here
@@ -69,6 +70,7 @@ export const Editor = ({ node, context }: Props) => {
         <SyncEditorAndGraphNode node={node} />
         <KeyboardOverridesPlugin nodeView={node} context={context} />
         <MentionPlugin />
+        <ViewStoreRegistryPlugin nodeView={node} />
       </LexicalComposer>
     </div>
   );

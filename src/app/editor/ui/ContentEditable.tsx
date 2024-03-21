@@ -6,5 +6,5 @@ interface Props {
 }
 
 export const ContentEditable = ({ nodeId, bulletId }: Props) => {
-  return <LexicalContentEditable data-nodeid={nodeId} data-bulletid={bulletId} />;
+  return <LexicalContentEditable style={{ maxWidth: "400px" }} data-nodeid={nodeId} data-bulletid={bulletId} />;
 };

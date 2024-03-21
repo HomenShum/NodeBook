@@ -89,10 +89,7 @@ const makeBulletKeyCommands = (
         const root = viewStore.root;
         if (!root) return false;
         const newBullet = root.createRelatedBullet();
-        setTimeout(() => {
-          const el = document.querySelector(`[data-nodeid="${newBullet.graphNode.id}"]`);
-          if (el instanceof HTMLElement) el.focus();
-        }, 0);
+        viewStore.setFocusedNode(newBullet);
         return true;
       },
       COMMAND_PRIORITY_LOW,
@@ -203,13 +200,8 @@ const makeNoteKeyCommands = (
         if (!event.metaKey && !event.ctrlKey) return false;
         if (event.key !== "k") return false;
         event?.preventDefault();
-        const graphRoot = graphStore.getNode("root");
-        if (!graphRoot) return false;
-        const { node } = graphRoot.createRelatedNode();
-        setTimeout(() => {
-          const el = document.querySelector(`[data-nodeid="${node.id}"]`);
-          if (el instanceof HTMLElement) el.focus();
-        }, 0);
+        const newNote = viewStore.createNote();
+        viewStore.setFocusedNode(newNote);
         return true;
       },
       COMMAND_PRIORITY_LOW,

@@ -29,21 +29,12 @@ export const NoteView = observer(({ note }: Props) => {
           }}
         >
           <div style={{ flex: 1 }}>
-            <Editor
-              node={note}
-              onChange={(v) => note.graphNode.setText(v ?? "")}
-              context={{ node: note }}
-            />
+            <Editor node={note} onChange={(v) => note.graphNode.setText(v ?? "")} context={{ node: note }} />
             {viewStore.showNodeDetails && (
-              <div
-                style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}
-              >
-                <span style={{ color: "gray" }}>
-                  noteId: {note.id.slice(0, 8)}
-                </span>
-                <span style={{ color: "gray" }}>
-                  nodeId: {note.graphNode.id.slice(0, 8)}
-                </span>
+              <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
+                <span style={{ color: "gray" }}>noteId: {note.id.slice(0, 8)}</span>
+                <span style={{ color: "gray" }}>nodeId: {note.graphNode.id.slice(0, 8)}</span>
+                <span style={{ color: "gray" }}>thoughtstreamPosition: {note.graphNode.thoughtstreamPosition}</span>
               </div>
             )}
           </div>

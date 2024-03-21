@@ -8,6 +8,7 @@ import { RemoteGraphStore } from "./RemoteGraphStore";
 export type GraphNodeProps = {
   id?: string;
   text?: string;
+  thoughtstreamPosition?: string;
 };
 
 export type RelativePositionProps = {
@@ -25,9 +26,15 @@ export class GraphNode {
   public text: string = "";
   public allRelationsById = new Map<string, PositionedRelation>();
   public pinnedRelationsById = new Map<string, PositionedRelation>();
+  public thoughtstreamPosition?: string;
 
-  constructor(private store: GraphStore, private remote?: RemoteGraphStore, { id, text = "" }: GraphNodeProps = {}) {
+  constructor(
+    private store: GraphStore,
+    private remote?: RemoteGraphStore,
+    { id, thoughtstreamPosition, text = "" }: GraphNodeProps = {},
+  ) {
     this.id = id || uuid();
+    this.thoughtstreamPosition = thoughtstreamPosition;
     this.text = text;
     makeAutoObservable(this);
   }
