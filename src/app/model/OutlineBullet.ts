@@ -132,10 +132,17 @@ export class Bullet implements GraphNodeView {
     });
   }
 
-  get position(): string | null {
-    const relationId = this.graphRelation?.id;
-    if (!relationId) return null;
-    return this.parent?.graphNode.allRelationsById.get(relationId)?.position ?? null;
+  get position(): string {
+    const relationId = this.graphRelation?.id ?? "";
+    const position = this.parent?.graphNode.allRelationsById.get(relationId)?.position;
+    if (!position) throw new Error(`Relation not found in parent's allRelationsById map`);
+    return position;
+  }
+
+  set position(position: string) {
+    const positionedRelation = this.parent?.graphNode.allRelationsById.get(this.graphRelation!.id);
+    if (!positionedRelation) throw new Error(`Relation not found in parent's allRelationsById map`);
+    positionedRelation.position = position;
   }
 
   get pinnedPosition(): string | null {

@@ -83,14 +83,31 @@ const makeBulletKeyCommands = (
     editor.registerCommand(
       KEY_DOWN_COMMAND,
       (event) => {
-        if (!event.metaKey && !event.ctrlKey) return false;
-        if (event.key !== "k") return false;
-        event?.preventDefault();
-        const root = viewStore.root;
-        if (!root) return false;
-        const newBullet = root.createRelatedBullet();
-        viewStore.setFocusedNode(newBullet);
-        return true;
+        if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
+          event.preventDefault();
+          const root = viewStore.root;
+          if (!root) return false;
+          const newBullet = root.createRelatedBullet();
+          viewStore.setFocusedNode(newBullet);
+          return true;
+          // TODO: should be ctrl on windows?
+        } else if (event.key === "ArrowUp" && event.shiftKey && event.metaKey) {
+          if (!siblingAbove) return false;
+          // TODO: is this sketchy?
+          event.preventDefault();
+          const pos = siblingAbove.position;
+          siblingAbove.position = bullet.position;
+          bullet.position = pos;
+          return true;
+        } else if (event.key === "ArrowDown" && event.shiftKey && event.metaKey) {
+          if (!siblingBelow) return false;
+          event.preventDefault();
+          const pos = siblingBelow.position;
+          siblingBelow.position = bullet.position;
+          bullet.position = pos;
+          return true;
+        }
+        return false;
       },
       COMMAND_PRIORITY_LOW,
     ),
