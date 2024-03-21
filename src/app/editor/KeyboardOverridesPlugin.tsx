@@ -84,18 +84,18 @@ const makeBulletKeyCommands = (
       KEY_DOWN_COMMAND,
       (event) => {
         if (!event.metaKey && !event.ctrlKey) return false;
-        if (event.key !== 'k') return false;
+        if (event.key !== "k") return false;
         event?.preventDefault();
         const root = viewStore.root;
         if (!root) return false;
-        const newBullet = root.createChild();
+        const newBullet = root.createRelatedBullet();
         setTimeout(() => {
           const el = document.querySelector(`[data-nodeid="${newBullet.graphNode.id}"]`);
           if (el instanceof HTMLElement) el.focus();
         }, 0);
-        return true
+        return true;
       },
-      COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_LOW,
     ),
     editor.registerCommand(
       KEY_TAB_COMMAND,
@@ -201,18 +201,18 @@ const makeNoteKeyCommands = (
       KEY_DOWN_COMMAND,
       (event) => {
         if (!event.metaKey && !event.ctrlKey) return false;
-        if (event.key !== 'k') return false;
+        if (event.key !== "k") return false;
         event?.preventDefault();
         const graphRoot = graphStore.getNode("root");
         if (!graphRoot) return false;
-        const { child } = graphRoot.createChild();
+        const { node } = graphRoot.createRelatedNode();
         setTimeout(() => {
-          const el = document.querySelector(`[data-nodeid="${child.id}"]`);
+          const el = document.querySelector(`[data-nodeid="${node.id}"]`);
           if (el instanceof HTMLElement) el.focus();
         }, 0);
-        return true
+        return true;
       },
-      COMMAND_PRIORITY_LOW
+      COMMAND_PRIORITY_LOW,
     ),
   );
 };
