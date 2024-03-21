@@ -39,6 +39,14 @@ export class ThoughtstreamViewStore {
     return nodes.map((node) => this.viewForNode(node));
   }
 
+  registerNodeView(view: Note) {
+    this.viewStore.registerNodeView(view);
+  }
+
+  removeNodeView(view: Note) {
+    this.viewStore.removeNodeView(view);
+  }
+
   viewForNode(node: GraphNode) {
     const existing = this.viewsByNodeId.get(node.id);
     if (existing) return existing;
@@ -54,5 +62,10 @@ export class ThoughtstreamViewStore {
     node.thoughtstreamPosition = generateKeyBetween(null, this.topNodePosition);
     this.topNodePosition = node.thoughtstreamPosition;
     return this.viewForNode(node);
+  }
+
+  deleteNote(note: Note) {
+    this.viewsByNodeId.delete(note.graphNode.id);
+    this.graphStore.deleteNode(note.graphNode.id);
   }
 }

@@ -53,6 +53,8 @@ export class Bullet implements GraphNodeView {
     makeAutoObservable(this, {
       childrenByRelationId: false,
     });
+
+    this.viewStore.registerNodeView(this);
   }
 
   togglePinnedExpanded() {

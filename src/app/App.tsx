@@ -1,7 +1,7 @@
 "use client";
 import { Sidebar } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { OutlineView } from "./components/OutlineView";
 import { SplitView } from "./components/SplitView";
 import { ThoughtstreamView } from "./components/ThoughtstreamView";
@@ -11,8 +11,10 @@ import { RelationTable } from "./components/dev/RelationTable";
 import { RelationTypeTable } from "./components/dev/RelationTypeTable";
 import { Bullet } from "./model/OutlineBullet";
 import { ViewType } from "./model/ViewStore";
+import { MouseSelection } from "./selection/MouseSelection";
 import { GraphStoreContext, graphStore } from "./store/graph";
 import { ViewStoreContext, useViewStore, viewStore } from "./store/outline";
+import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -44,6 +46,9 @@ function App() {
 }
 
 const AppView = observer(() => {
+  const appContainerRef = useRef<HTMLDivElement>(null);
+  useKeyboardShortcuts();
+
   const viewStore = useViewStore();
 
   let viewComponent = <div>View</div>;
@@ -64,7 +69,7 @@ const AppView = observer(() => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div ref={appContainerRef} className="flex flex-col h-full relative">
       <header className="flex justify-center items-center h-8 border-b">
         <button onClick={() => viewStore.toggleLeftSidebar()}>
           <Sidebar size={20} />
@@ -112,6 +117,7 @@ const AppView = observer(() => {
           </aside>
         )}
       </div>
+      <MouseSelection appContainerRef={appContainerRef} />
     </div>
   );
 });

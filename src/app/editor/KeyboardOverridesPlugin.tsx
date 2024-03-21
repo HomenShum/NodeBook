@@ -22,31 +22,6 @@ import { GraphStoreContext } from "../store/graph";
 import { ViewStoreContext } from "../store/outline";
 import { EditorContext } from "./Editor";
 
-const getEdiitorPosition = (event: KeyboardEvent) => {
-  const target = event?.target as HTMLElement;
-  const allEditors = Array.from(document.querySelectorAll('div[contenteditable="true"]'));
-  const curInex = allEditors.indexOf(target);
-  return curInex;
-};
-
-const focusEditor = (index: number) => {
-  const allEditors = Array.from(document.querySelectorAll('div[contenteditable="true"]'));
-  const editor = allEditors[index] as HTMLElement;
-  if (editor) {
-    editor.focus();
-  }
-};
-
-const focusNextEditor = (event: KeyboardEvent) => {
-  const curPosition = getEdiitorPosition(event);
-  focusEditor(curPosition + 1);
-};
-
-const focusPrevEditor = (event: KeyboardEvent) => {
-  const curPosition = getEdiitorPosition(event);
-  focusEditor(curPosition - 1);
-};
-
 interface Props {
   nodeView: GraphNodeView;
   context: EditorContext;
@@ -74,7 +49,6 @@ const makeBulletKeyCommands = (
         const points = $getSelection()?.getStartEndPoints();
         if (!points) return false;
         const newBullet = viewStore.splitBullet(bullet, points[0].offset, points[1].offset);
-        console.log("New bullet", { id: newBullet.id, text: newBullet.graphNode.text });
         viewStore.setFocusedNode(newBullet);
         return true;
       },
@@ -83,15 +57,16 @@ const makeBulletKeyCommands = (
     editor.registerCommand(
       KEY_DOWN_COMMAND,
       (event) => {
-        if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
+        const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
+        if (metaOrCtrl && event.key === "k") {
           event.preventDefault();
+          event.stopPropagation();
           const root = viewStore.root;
           if (!root) return false;
           const newBullet = root.createRelatedBullet();
           viewStore.setFocusedNode(newBullet);
           return true;
-          // TODO: should be ctrl on windows?
-        } else if (event.key === "ArrowUp" && event.shiftKey && event.metaKey) {
+        } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
           if (!siblingAbove) return false;
           // TODO: is this sketchy?
           event.preventDefault();
@@ -99,7 +74,7 @@ const makeBulletKeyCommands = (
           siblingAbove.position = bullet.position;
           bullet.position = pos;
           return true;
-        } else if (event.key === "ArrowDown" && event.shiftKey && event.metaKey) {
+        } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowDown") {
           if (!siblingBelow) return false;
           event.preventDefault();
           const pos = siblingBelow.position;
@@ -115,7 +90,7 @@ const makeBulletKeyCommands = (
       KEY_TAB_COMMAND,
       (event) => {
         if (!graphStore) return false;
-        event?.preventDefault();
+        event.preventDefault();
         if (event.shiftKey) {
           const grandparent = bullet.parent?.parent;
           if (!grandparent) {
@@ -147,7 +122,7 @@ const makeBulletKeyCommands = (
       KEY_BACKSPACE_COMMAND,
       (event) => {
         if (!graphStore) return false;
-        event?.preventDefault();
+        event.preventDefault();
         if (bullet.graphNode.text === "") {
           if (bullet.parent) {
             bullet.delete();
@@ -169,7 +144,7 @@ const makeBulletKeyCommands = (
       KEY_ARROW_DOWN_COMMAND,
       (event) => {
         event.preventDefault();
-        focusNextEditor(event);
+        viewStore.setFocusedNode(siblingBelow);
         return true;
       },
       COMMAND_PRIORITY_LOW,
@@ -178,7 +153,7 @@ const makeBulletKeyCommands = (
       KEY_ARROW_UP_COMMAND,
       (event) => {
         event.preventDefault();
-        focusPrevEditor(event);
+        viewStore.setFocusedNode(siblingAbove);
         return true;
       },
       COMMAND_PRIORITY_LOW,
@@ -191,13 +166,31 @@ const makeNoteKeyCommands = (
   viewStore: ThoughtstreamViewStore,
   editor: LexicalEditor,
   note: Note,
+  siblingAbove: Note,
+  siblingBelow: Note,
 ) => {
   return mergeRegister(
+    editor.registerCommand(
+      KEY_BACKSPACE_COMMAND,
+      (event) => {
+        if (!graphStore) return false;
+        event.preventDefault();
+        if (note.graphNode.text === "") {
+          if (siblingAbove) {
+            note.delete();
+            viewStore.setFocusedNode(siblingAbove);
+            return true;
+          }
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    ),
     editor.registerCommand(
       KEY_ARROW_DOWN_COMMAND,
       (event) => {
         event.preventDefault();
-        focusNextEditor(event);
+        viewStore.setFocusedNode(siblingBelow);
         return true;
       },
       COMMAND_PRIORITY_LOW,
@@ -206,7 +199,7 @@ const makeNoteKeyCommands = (
       KEY_ARROW_UP_COMMAND,
       (event) => {
         event.preventDefault();
-        focusPrevEditor(event);
+        viewStore.setFocusedNode(siblingAbove);
         return true;
       },
       COMMAND_PRIORITY_LOW,
@@ -214,12 +207,30 @@ const makeNoteKeyCommands = (
     editor.registerCommand(
       KEY_DOWN_COMMAND,
       (event) => {
-        if (!event.metaKey && !event.ctrlKey) return false;
-        if (event.key !== "k") return false;
-        event?.preventDefault();
-        const newNote = viewStore.createNote();
-        viewStore.setFocusedNode(newNote);
-        return true;
+        const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
+        if (metaOrCtrl && event.key === "k") {
+          event.preventDefault();
+          event.stopPropagation();
+          const newNote = viewStore.createNote();
+          viewStore.setFocusedNode(newNote);
+          return true;
+        } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
+          if (!siblingAbove) return false;
+          // TODO: is this sketchy?
+          event.preventDefault();
+          const pos = siblingAbove.position;
+          siblingAbove.position = note.position;
+          note.position = pos;
+          return true;
+        } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowDown") {
+          if (!siblingBelow) return false;
+          event.preventDefault();
+          const pos = siblingBelow.position;
+          siblingBelow.position = note.position;
+          note.position = pos;
+          return true;
+        }
+        return false;
       },
       COMMAND_PRIORITY_LOW,
     ),
@@ -246,7 +257,14 @@ export const KeyboardOverridesPlugin = ({ nodeView, context }: Props) => {
         );
       case "note":
         const note = nodeView as Note;
-        return makeNoteKeyCommands(graphStore, viewStore.thoughtstreamViewStore, editor, note);
+        return makeNoteKeyCommands(
+          graphStore,
+          viewStore.thoughtstreamViewStore,
+          editor,
+          note,
+          siblingAbove as Note,
+          siblingBelow as Note,
+        );
     }
   }, [editor, graphStore, viewStore, node, nodeView, context]);
   return null;

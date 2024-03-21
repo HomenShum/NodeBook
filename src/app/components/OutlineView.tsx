@@ -17,7 +17,7 @@ export const OutlineView = observer(() => {
           {ancestors.map((parent) => (
             <span
               key={parent.id}
-              style={{ cursor: "pointer" }}
+              style={{ cursor: "pointer", userSelect: "none" }}
               onClick={() => {
                 viewStore.outlineViewStore.setRoot(parent);
               }}
@@ -26,10 +26,11 @@ export const OutlineView = observer(() => {
             </span>
           ))}
         </div>
-        <h1 className="text-2xl font-bold">{root.graphNode.text}</h1>
+        <h1 className="text-2xl font-bold select-none">{root.graphNode.text}</h1>
       </div>
       <BulletChildren bullet={root} depth={0} parents={[...ancestors, root]} />
       <button
+        className="select-none"
         onClick={() => {
           const bullet = root.createRelatedBullet();
           viewStore.setFocusedNode(bullet);

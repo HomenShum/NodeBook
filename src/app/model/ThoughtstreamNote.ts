@@ -32,6 +32,8 @@ export class Note implements GraphNodeView {
     this.childrenByRelationId = new Map();
     this.childrenIds = new Set();
     makeAutoObservable(this);
+
+    this.viewStore.registerNodeView(this);
   }
 
   gatherChildrenFromRelation(relation: GraphRelation): Note[] {
@@ -74,5 +76,17 @@ export class Note implements GraphNodeView {
 
   get isFocused() {
     return this.viewStore.focusedNode?.id === this.id;
+  }
+
+  delete() {
+    this.viewStore.deleteNote(this);
+  }
+
+  get position() {
+    return this.graphNode.thoughtstreamPosition ?? "";
+  }
+
+  set position(value: string) {
+    this.graphNode.thoughtstreamPosition = value;
   }
 }

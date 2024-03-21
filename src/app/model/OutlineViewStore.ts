@@ -34,6 +34,14 @@ export class OutlineViewStore {
     return this.viewStore.focusedNode;
   }
 
+  registerNodeView(view: Bullet) {
+    this.viewStore.registerNodeView(view);
+  }
+
+  removeNodeView(view: Bullet) {
+    this.viewStore.removeNodeView(view);
+  }
+
   viewForNode(node: GraphNode) {
     const existing = this.viewsByNodeId.get(node.id);
     if (existing) return existing;
@@ -44,13 +52,13 @@ export class OutlineViewStore {
   }
 
   createBullet({
-    graphNodeProps = {},
     parent,
+    graphNodeProps,
     target,
     side = "above",
   }: {
-    graphNodeProps: GraphNodeProps;
     parent: Bullet;
+    graphNodeProps?: GraphNodeProps;
     target?: Bullet;
     side?: "above" | "below";
   }) {
@@ -137,6 +145,7 @@ export class OutlineViewStore {
     if (!parent) throw new Error("Node has no parent");
     parent.childrenByRelationId.delete(bullet.graphRelation?.id ?? "");
     this.graphStore.deleteNode(bullet.graphNode.id);
+    this.removeNodeView(bullet);
   }
 
   setGraphNodeOnBullet(bullet: Bullet, graphNode: GraphNode) {

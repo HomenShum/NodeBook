@@ -4,7 +4,6 @@ import { Editor } from "../../editor/Editor";
 import { Bullet } from "../../model/OutlineBullet";
 import { useGraphStore } from "../../store/graph";
 import { useViewStore } from "../../store/outline";
-import { RelationCombobox } from "../RelationCombobox";
 
 import {
   DropdownMenu,
@@ -16,6 +15,7 @@ import { GraphNode } from "@/app/model/GraphNode";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { BulletChildren } from "../BulletChildren";
+import { RelationCombobox } from "../RelationCombobox";
 
 export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
   const viewStore = useViewStore();
@@ -28,6 +28,7 @@ export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
         fontSize: "0.75rem",
         color: viewStore.hoveredNode?.id === bullet.id ? "black" : "transparent",
         cursor: "pointer",
+        userSelect: "none",
       }}
       onClick={() => bullet.toggleExpanded()}
     >
@@ -53,9 +54,11 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
     graphStore.deleteRelation(bullet.graphRelation!);
   };
 
+  const isSelected = viewStore.selectedNodes.has(bullet);
+
   return (
     <>
-      <div className="flex flex-col align-start">
+      <div className={cn("flex flex-col align-start", isSelected ? "bg-sky-200" : "")}>
         <div
           className="flex items-center gap-1"
           onMouseEnter={() => viewStore.setHoveredNode(bullet)}

@@ -11,10 +11,12 @@ export const ThoughtstreamView = observer(() => {
     return <div>Missing root node</div>;
   }
 
+  const notes = viewStore.notes;
+
   return (
     <div style={{ width: "100%" }}>
-      {viewStore.notes.map((note) => (
-        <NoteView key={note.id} note={note} />
+      {notes.map((note, i) => (
+        <NoteView key={note.id} note={note} siblingAbove={notes[i - 1]} siblingBelow={notes[i + 1]} />
       ))}
       <button
         onClick={() => {

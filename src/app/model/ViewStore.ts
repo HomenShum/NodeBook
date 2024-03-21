@@ -1,4 +1,6 @@
+import { LexicalEditor } from "lexical";
 import { makeAutoObservable } from "mobx";
+import { Box, boxesIntersect } from "../selection/utils";
 import { makeAutoSaving } from "../util";
 import { GraphNode } from "./GraphNode";
 import { GraphNodeView } from "./GraphNodeView";
@@ -25,7 +27,10 @@ export class ViewStore {
   public focusedNode: GraphNodeView | null = null;
   public hoveredNode: GraphNodeView | null = null;
 
-  private editorsByViewId: Map<string, any> = new Map();
+  private nodeViewsById: Map<string, GraphNodeView> = new Map();
+  private editorsByViewId: Map<string, LexicalEditor> = new Map();
+
+  public selectedNodes: Set<GraphNodeView> = new Set();
 
   public showNodeDetails = false;
   public leftSidebarOpen = false;
@@ -53,7 +58,6 @@ export class ViewStore {
   }
 
   setView(view: ViewType) {
-    this.editorsByViewId.clear();
     this.curView = view;
   }
 
@@ -75,11 +79,50 @@ export class ViewStore {
     this.showNodeDetails = show;
   }
 
-  registerEditor(view: GraphNodeView, editor: any) {
+  registerNodeView(view: GraphNodeView) {
+    this.nodeViewsById.set(view.id, view);
+  }
+
+  removeNodeView(view: GraphNodeView) {
+    this.nodeViewsById.delete(view.id);
+  }
+
+  registerEditor(view: GraphNodeView, editor: LexicalEditor) {
     this.editorsByViewId.set(view.id, editor);
   }
 
   removeEditor(view: GraphNodeView) {
     this.editorsByViewId.delete(view.id);
+  }
+
+  private selectionBoxToEvaluate: Box | null = null;
+
+  private evaluateSelectionBox() {
+    const selectionBox = this.selectionBoxToEvaluate;
+    if (!selectionBox) return;
+
+    this.selectedNodes.clear();
+
+    // Assume user didn't mean to select anything if the selection area is very small
+    if (selectionBox.height * selectionBox.width < 25) return;
+
+    for (const [viewId, editor] of this.editorsByViewId.entries()) {
+      const editorBox = editor.getRootElement()?.getBoundingClientRect();
+      if (!editorBox) continue;
+      if (boxesIntersect(selectionBox, editorBox)) {
+        const view = this.nodeViewsById.get(viewId);
+        this.selectedNodes.add(view!);
+      }
+    }
+
+    this.selectionBoxToEvaluate = null;
+  }
+
+  maybeSelectNodes(selectionBox: Box) {
+    this.selectionBoxToEvaluate = selectionBox;
+    // Use setTimeout to effectively throttle the selection box evaluation to no more than once every 100ms
+    setTimeout(() => {
+      this.evaluateSelectionBox();
+    }, 100);
   }
 }
