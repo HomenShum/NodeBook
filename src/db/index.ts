@@ -1,7 +1,7 @@
-import { drizzle, VercelPgDatabase } from "drizzle-orm/vercel-postgres";
 import { createPool } from "@vercel/postgres";
+import { drizzle, VercelPgDatabase } from "drizzle-orm/vercel-postgres";
+import { env } from "../envBackend";
 import * as schema from "./schema";
-import { env } from "process";
 
 // Originally, I just instantiated and exported the db here instead of using a getter function.
 // But that was causing the build to fail. I think cause during the build, the env variables

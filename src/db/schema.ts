@@ -5,6 +5,7 @@ import { z } from "zod";
 export const graphNodeTable = pgTable("graph_node", {
   id: text("id").primaryKey(),
   text: text("text").notNull().default(""),
+  thoughtstreamPosition: text("thoughtstream_position"),
 });
 
 export const graphRelationTable = pgTable("graph_relation", {
