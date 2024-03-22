@@ -14,7 +14,7 @@ export const BulletChildren = observer(
     const pinned = bullet.pinnedChildren.sort((a, b) => compareFractionIndices(a.position, b.position));
 
     return (
-      <div className={bullet.type === "bullet" ? "ml-8" : ""}>
+      <div className={bullet.type === "bullet" && depth > 0 ? "ml-8" : ""}>
         {viewType === "all" ? (
           <BulletList bullets={children} parents={parents} depth={depth} />
         ) : (
