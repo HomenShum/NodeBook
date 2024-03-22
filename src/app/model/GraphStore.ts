@@ -11,7 +11,9 @@ export class GraphStore {
   remote?: RemoteGraphStore;
   public relationTypesById: Record<string, GraphRelationType> = {
     child: { id: "child", label: "child", reverseLabel: "parent" },
-    link: { id: "link", label: "link", reverseLabel: "backlink" },
+    author: { id: "author", label: "author", reverseLabel: "authored" },
+    reference: { id: "reference", label: "reference", reverseLabel: "referenced by" },
+    relatesTo: { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
   };
   constructor(remote?: RemoteGraphStore) {
     this.remote = remote;
