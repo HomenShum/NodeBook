@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 import { Editor } from "../../editor/Editor";
 import { Bullet } from "../../model/OutlineBullet";
 import { useGraphStore } from "../../store/graph";
-import { useViewStore } from "../../store/outline";
+import { useViewStore, viewStore } from "../../store/outline";
 
 import {
   DropdownMenu,
@@ -46,13 +46,8 @@ interface Props {
 }
 
 export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
-  const graphStore = useGraphStore();
   const viewStore = useViewStore();
   const [replacing, setReplacing] = useState(false);
-
-  const onDelete = () => {
-    graphStore.deleteRelation(bullet.graphRelation!);
-  };
 
   const isSelected = viewStore.selectedNodes.has(bullet);
 
@@ -60,82 +55,39 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
     <>
       <div className={cn("flex flex-col align-start", isSelected ? "bg-sky-200" : "")}>
         <div
-          className="flex items-center gap-1"
+          className="flex items-center gap-1 my-1"
           onMouseEnter={() => viewStore.setHoveredNode(bullet)}
           onMouseLeave={() => viewStore.setHoveredNode(null)}
         >
           {/* toggle, bullet, menu */}
           <div className="flex items-center gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Ellipsis
-                  className={cn(viewStore.hoveredNode?.id === bullet.id ? "text-grey-800" : "text-transparent")}
-                />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
-                <DropdownMenuItem onSelect={onDelete}>Delete relation</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setReplacing(true)}>Replace related node</DropdownMenuItem>
-                {bullet.isPinned ? (
-                  <DropdownMenuItem onSelect={() => bullet.unpin()}>Unpin</DropdownMenuItem>
-                ) : (
-                  <DropdownMenuItem onSelect={() => bullet.pin()}>Pin</DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <BulletMenu bullet={bullet} setReplacing={setReplacing} />
             <Toggle bullet={bullet} />
             <Dot
               strokeWidth={7}
-              className="cursor-pointer w-4 h-full"
+              className={cn(
+                "cursor-pointer w-4 h-full",
+                // When the parent is a bundle, only show bullets on hover
+                bullet.parent!.type === "bundle"
+                  ? viewStore.hoveredNode?.id === bullet.id
+                    ? "text-grey-800"
+                    : "text-transparent"
+                  : "",
+              )}
               onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
             />
           </div>
           {/* relation and node */}
           <div className="flex flex-col flex-1">
             <div className="flex gap-2">
-              {/* relation */}
               <RelationCombobox bullet={bullet} />
-              {/* node */}
               {!replacing ? (
-                <>
-                  {/* relation type */}
-                  <div
-                    style={{
-                      gap: "5px",
-                      display: "flex",
-                      alignItems: "flex-start",
-                      flex: 1,
-                    }}
-                  >
-                    <div className="flex flex-col flex-1">
-                      <Editor
-                        node={bullet}
-                        onChange={(v) => bullet.graphNode.setText(v ?? "")}
-                        context={{ node: bullet, siblingAbove, siblingBelow }}
-                      />
-                    </div>
-                  </div>
-                </>
+                <BulletEditor bullet={bullet} siblingAbove={siblingAbove} siblingBelow={siblingBelow} />
               ) : (
-                <div className="ml-4 flex-1">
-                  <SearchNodes
-                    currentNode={bullet.graphNode}
-                    onSelect={(graphNode) => {
-                      bullet.setGraphNode(graphNode);
-                      setReplacing(false);
-                    }}
-                    cancel={() => setReplacing(false)}
-                  />
-                </div>
+                <ReplacingNodeView bullet={bullet} setReplacing={setReplacing} />
               )}
             </div>
-            {viewStore.showNodeDetails && !replacing && (
-              <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
-                <span style={{ color: "gray" }}>bulletId: {bullet.id}</span>
-                <span style={{ color: "gray" }}>position: {bullet.position}</span>
-                <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id}</span>
-                <span style={{ color: "gray" }}>relationId: {bullet.graphRelation!.id}</span>
-              </div>
-            )}
+            {viewStore.showNodeDetails && !replacing && <BulletDetails bullet={bullet} />}
           </div>
         </div>
         {bullet.isExpanded && <BulletChildren bullet={bullet} depth={depth + 1} parents={[...parents, bullet]} />}
@@ -143,6 +95,84 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
     </>
   );
 });
+
+const BulletMenu = observer(({ bullet, setReplacing }: { bullet: Bullet; setReplacing: (v: boolean) => void }) => {
+  const graphStore = useGraphStore();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <Ellipsis className={cn(viewStore.hoveredNode?.id === bullet.id ? "text-grey-800" : "text-transparent")} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
+        <DropdownMenuItem onSelect={() => graphStore.deleteRelation(bullet.graphRelation!)}>
+          Delete relation
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setReplacing(true)}>Replace related node</DropdownMenuItem>
+        {bullet.isPinned ? (
+          <DropdownMenuItem onSelect={() => bullet.unpin()}>Unpin</DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onSelect={() => bullet.pin()}>Pin</DropdownMenuItem>
+        )}
+        {bullet.type === "bullet" ? (
+          <DropdownMenuItem onSelect={() => bullet.setType("bundle")}>Convert to bundle</DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onSelect={() => bullet.setType("bullet")}>Convert to bullet</DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+});
+
+const BulletEditor = observer(
+  ({ bullet, siblingAbove, siblingBelow }: { bullet: Bullet; siblingAbove?: Bullet; siblingBelow?: Bullet }) => {
+    return (
+      <div
+        style={{
+          gap: "5px",
+          display: "flex",
+          alignItems: "flex-start",
+          flex: 1,
+        }}
+      >
+        <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}>
+          <Editor
+            node={bullet}
+            onChange={(v) => bullet.graphNode.setText(v ?? "")}
+            context={{ node: bullet, siblingAbove, siblingBelow }}
+          />
+        </div>
+      </div>
+    );
+  },
+);
+
+const BulletDetails = observer(({ bullet }: { bullet: Bullet }) => {
+  return (
+    <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
+      <span style={{ color: "gray" }}>bulletId: {bullet.id}</span>
+      <span style={{ color: "gray" }}>position: {bullet.position}</span>
+      <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id}</span>
+      <span style={{ color: "gray" }}>relationId: {bullet.graphRelation!.id}</span>
+    </div>
+  );
+});
+
+const ReplacingNodeView = observer(
+  ({ bullet, setReplacing }: { bullet: Bullet; setReplacing: (v: boolean) => void }) => {
+    return (
+      <div className="ml-4 flex-1">
+        <SearchNodes
+          currentNode={bullet.graphNode}
+          onSelect={(graphNode) => {
+            bullet.setGraphNode(graphNode);
+            setReplacing(false);
+          }}
+          cancel={() => {}}
+        />
+      </div>
+    );
+  },
+);
 
 function SearchNodes({
   currentNode,

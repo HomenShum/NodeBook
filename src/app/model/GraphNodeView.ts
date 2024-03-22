@@ -1,6 +1,6 @@
 import { GraphNode } from "./GraphNode";
 
-export type GraphNodeViewType = "bullet" | "note";
+export type GraphNodeViewType = "bullet" | "note" | "bundle";
 
 export interface GraphNodeView {
   type: GraphNodeViewType;

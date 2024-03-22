@@ -76,6 +76,10 @@ export class Bullet implements GraphNodeView {
     return this.graphRelation?.to.id === this.graphNode.id;
   }
 
+  setType(type: GraphNodeViewType) {
+    this.type = type;
+  }
+
   setRelation(relation: GraphRelation) {
     this.graphRelation = relation;
   }
