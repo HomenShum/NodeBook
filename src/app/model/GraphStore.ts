@@ -196,7 +196,7 @@ export class GraphStore {
   }
 
   createRelationType(props: GraphRelationType, fromServer = false): GraphRelationType {
-    if (this.relationTypesById[props.id]) {
+    if (this.relationTypesById[props.id] && !fromServer) {
       throw new Error(`Relation type with id ${props.id} already exists`);
     }
     this.relationTypesById[props.id] = { ...props };
