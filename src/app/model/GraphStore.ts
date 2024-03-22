@@ -9,12 +9,7 @@ export class GraphStore {
   relationsById: Map<string, GraphRelation> = new Map();
   isLoading = false;
   remote?: RemoteGraphStore;
-  public relationTypesById: Record<string, GraphRelationType> = {
-    child: { id: "child", label: "child", reverseLabel: "parent" },
-    author: { id: "author", label: "author", reverseLabel: "authored" },
-    reference: { id: "reference", label: "reference", reverseLabel: "referenced by" },
-    relatesTo: { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
-  };
+  public relationTypesById: Record<string, GraphRelationType> = {};
   constructor(remote?: RemoteGraphStore) {
     this.remote = remote;
     makeAutoObservable(this);
@@ -36,7 +31,7 @@ export class GraphStore {
     const node = new GraphNode(this, this.remote, props);
     this.nodesById.set(node.id, node);
     if (!fromServer && this.remote) {
-      this.remote.upsertNode(node.id, node.text);
+      this.remote.upsertNode(node.id, node.text, node.thoughtstreamPosition ?? null);
     }
     return node;
   }
@@ -200,11 +195,14 @@ export class GraphStore {
     return relation;
   }
 
-  createRelationType(props: GraphRelationType): GraphRelationType {
+  createRelationType(props: GraphRelationType, fromServer = false): GraphRelationType {
     if (this.relationTypesById[props.id]) {
       throw new Error(`Relation type with id ${props.id} already exists`);
     }
     this.relationTypesById[props.id] = { ...props };
+    if (this.remote && !fromServer) {
+      this.remote.upsertRelationType(props.id, props.label, props.reverseLabel);
+    }
     return this.relationTypesById[props.id];
   }
 
@@ -213,6 +211,9 @@ export class GraphStore {
       throw new Error(`Relation type with id ${id} does not exist`);
     }
     Object.assign(this.relationTypesById[id], { ...props, id });
+    if (this.remote) {
+      this.remote.upsertRelationType(id, this.relationTypesById[id].label, this.relationTypesById[id].reverseLabel);
+    }
     return this.relationTypesById[id];
   }
 
@@ -222,6 +223,9 @@ export class GraphStore {
       r.updateType(this.relationTypesById.child);
     });
     delete this.relationTypesById[id];
+    if (this.remote) {
+      this.remote.deleteRelationType(id);
+    }
   }
 
   private assertNodeExists(...nodes: (GraphNode | string)[]): void {
@@ -245,10 +249,21 @@ export class GraphStore {
     this.isLoading = true;
     if (!this.remote) {
       console.warn("No remote store");
+      this.relationTypesById = {
+        child: { id: "child", label: "child", reverseLabel: "parent" },
+        author: { id: "author", label: "author", reverseLabel: "authored" },
+        reference: { id: "reference", label: "reference", reverseLabel: "referenced by" },
+        relatesTo: { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
+      };
     } else {
       try {
-        const { nodes, relations } = await this.remote.load();
+        const { nodes, relationTypes, relations } = await this.remote.load();
         nodes.forEach((n: PersistedGraphNode) => this.addNodeFromServer(n));
+        relationTypes.forEach((rt: GraphRelationType) => this.createRelationType(rt, true));
+        // TODO: clean up logic elsewhere so "child" type isn't hardcoded
+        if (!this.relationTypesById.child) {
+          this.createRelationType({ id: "child", label: "child", reverseLabel: "parent" });
+        }
         relations.forEach((r: PersistedGraphRelation) => this.addRelationFromServer(r));
       } catch (e) {
         console.error(e);

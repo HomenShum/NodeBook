@@ -68,7 +68,7 @@ export const MouseSelection = ({ appContainerRef }: Props) => {
       containerEl.removeEventListener("mousemove", handleMouseMove);
       containerEl.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [appContainerRef, handleMouseUp]);
+  }, [appContainerRef, handleMouseMove, handleMouseUp]);
 
   return (
     <div

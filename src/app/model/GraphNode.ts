@@ -60,7 +60,7 @@ export class GraphNode {
   setText(text: string) {
     this.text = text;
     if (this.remote) {
-      this.remote.upsertNode(this.id, text);
+      this.remote.upsertNode(this.id, text, this.thoughtstreamPosition ?? null);
     }
   }
 

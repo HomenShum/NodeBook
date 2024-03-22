@@ -1,6 +1,5 @@
+import { GetGraphResponse, GetGraphResponseSchema, PostGraphResponseSchema } from "@/app/api/graph/types";
 import axios, { AxiosInstance } from "axios";
-import { PostGraphResponseSchema } from "@/app/api/graph/types";
-import { GetGraphResponse, GetGraphResponseSchema } from "@/app/api/graph/types";
 
 export class RemoteGraphStore {
   private client: AxiosInstance;
@@ -15,8 +14,11 @@ export class RemoteGraphStore {
     return GetGraphResponseSchema.parse(res.data);
   }
 
-  async upsertNode(id: string, text: string): Promise<void> {
-    const res = await this.client.post("/", { type: "upsert", nodes: [{ id, text }] });
+  async upsertNode(id: string, text: string, thoughtstreamPosition: string | null): Promise<void> {
+    const res = await this.client.post("/", {
+      type: "upsert",
+      nodes: [{ id, text, thoughtstreamPosition }],
+    });
     const { success, message } = PostGraphResponseSchema.parse(res.data);
     if (!success) {
       throw new Error(message);
@@ -43,6 +45,25 @@ export class RemoteGraphStore {
   }
 
   async deleteRelation(id: string): Promise<void> {
+    const res = await this.client.post("/", { type: "delete", relations: [{ id }] });
+    const { success, message } = PostGraphResponseSchema.parse(res.data);
+    if (!success) {
+      throw new Error(message);
+    }
+  }
+
+  async upsertRelationType(id: string, label: string, reverseLabel: string): Promise<void> {
+    const res = await this.client.post("/", {
+      type: "upsert",
+      relationTypes: [{ id, label, reverseLabel }],
+    });
+    const { success, message } = PostGraphResponseSchema.parse(res.data);
+    if (!success) {
+      throw new Error(message);
+    }
+  }
+
+  async deleteRelationType(id: string): Promise<void> {
     const res = await this.client.post("/", { type: "delete", relations: [{ id }] });
     const { success, message } = PostGraphResponseSchema.parse(res.data);
     if (!success) {

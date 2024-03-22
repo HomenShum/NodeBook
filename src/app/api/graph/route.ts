@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
 import { getDb } from "@/db";
-import { graphNodeTable, graphRelationTable } from "@/db/schema";
+import { graphNodeTable, graphRelationTable, graphRelationTypeTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { GetGraphResponse } from "./types";
-import { PostGraphRequestSchema, PostGraphResponse } from "./types";
+import { NextRequest, NextResponse } from "next/server";
+import { GetGraphResponse, PostGraphRequestSchema, PostGraphResponse } from "./types";
 
 export async function GET() {
   const db = getDb();
   const nodes = await db.select().from(graphNodeTable);
+  const relationTypes = await db.select().from(graphRelationTypeTable);
   const relations = await db.select().from(graphRelationTable);
-  const response: GetGraphResponse = { nodes, relations };
+  const response: GetGraphResponse = { nodes, relationTypes, relations };
   return NextResponse.json(response);
 }
 
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   let response: PostGraphResponse;
   try {
     if (data.type === "upsert") {
-      const { nodes, relations } = data;
+      const { nodes, relationTypes, relations } = data;
       await db.transaction(async (trx) => {
         await Promise.all(
           nodes?.map((node) => {
@@ -28,7 +28,18 @@ export async function POST(request: NextRequest) {
               .insert(graphNodeTable)
               .values(node)
               .onConflictDoUpdate({ target: graphNodeTable.id, set: { text: node.text } });
-          }) ?? []
+          }) ?? [],
+        );
+        await Promise.all(
+          relationTypes?.map((relationType) => {
+            return db
+              .insert(graphRelationTypeTable)
+              .values(relationType)
+              .onConflictDoUpdate({
+                target: graphRelationTypeTable.id,
+                set: { label: relationType.label, reverseLabel: relationType.reverseLabel },
+              });
+          }) ?? [],
         );
         await Promise.all(
           relations?.map((relation) => {
@@ -39,22 +50,27 @@ export async function POST(request: NextRequest) {
                 target: graphRelationTable.id,
                 set: { fromId: relation.fromId, toId: relation.toId, typeId: relation.typeId },
               });
-          }) ?? []
+          }) ?? [],
         );
       });
       response = { success: true, message: "success" };
     } else if (data.type === "delete") {
-      const { nodes, relations } = data;
+      const { nodes, relations, relationTypes } = data;
       await db.transaction(async (trx) => {
-        await Promise.all(
-          nodes?.map((node) => {
-            return db.delete(graphNodeTable).where(eq(graphNodeTable.id, node.id));
-          }) ?? []
-        );
         await Promise.all(
           relations?.map((relation) => {
             return db.delete(graphRelationTable).where(eq(graphRelationTable.id, relation.id));
-          }) ?? []
+          }) ?? [],
+        );
+        await Promise.all(
+          nodes?.map((node) => {
+            return db.delete(graphNodeTable).where(eq(graphNodeTable.id, node.id));
+          }) ?? [],
+        );
+        await Promise.all(
+          relationTypes?.map((relationType) => {
+            return db.delete(graphRelationTypeTable).where(eq(graphRelationTypeTable.id, relationType.id));
+          }) ?? [],
         );
       });
       response = { success: true, message: "success" };
@@ -74,12 +90,13 @@ export async function DELETE() {
   try {
     await db.delete(graphNodeTable);
     await db.delete(graphRelationTable);
+    await db.delete(graphRelationTypeTable);
     return NextResponse.json({ success: true, message: "success" });
   } catch (e) {
     console.error(e);
     return NextResponse.json(
       { success: false, message: e instanceof Error ? e.message : "unknown error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
