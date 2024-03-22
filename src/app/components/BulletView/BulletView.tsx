@@ -2,7 +2,7 @@ import { Dot, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { Editor } from "../../editor/Editor";
 import { Bullet } from "../../model/OutlineBullet";
-import { useGraphStore } from "../../store/graph";
+import { graphStore, useGraphStore } from "../../store/graph";
 import { useViewStore, viewStore } from "../../store/outline";
 
 import {
@@ -48,8 +48,13 @@ interface Props {
 export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
   const viewStore = useViewStore();
   const [replacing, setReplacing] = useState(false);
+  // TODO: this was really shoehorned in here for demo day and should be refactored
+  const [updatingRelationType, setUpdatingRelationType] = useState(false);
 
   const isSelected = viewStore.selectedNodes.has(bullet);
+  const isChild =
+    bullet.graphRelation?.type === graphStore.relationTypesById.child &&
+    bullet.graphRelation?.to.id === bullet.graphNode.id;
 
   return (
     <>
@@ -61,7 +66,7 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
         >
           {/* toggle, bullet, menu */}
           <div className="flex items-center gap-1">
-            <BulletMenu bullet={bullet} setReplacing={setReplacing} />
+            <BulletMenu bullet={bullet} setReplacing={setReplacing} setUpdatingRelationType={setUpdatingRelationType} />
             <Toggle bullet={bullet} />
             <Dot
               strokeWidth={7}
@@ -80,7 +85,9 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
           {/* relation and node */}
           <div className="flex flex-col flex-1">
             <div className="flex gap-2">
-              <RelationCombobox bullet={bullet} />
+              {!isChild || updatingRelationType ? (
+                <RelationCombobox bullet={bullet} setUpdatingRelationType={setUpdatingRelationType} />
+              ) : null}
               {!replacing ? (
                 <BulletEditor bullet={bullet} siblingAbove={siblingAbove} siblingBelow={siblingBelow} />
               ) : (
@@ -96,32 +103,43 @@ export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAb
   );
 });
 
-const BulletMenu = observer(({ bullet, setReplacing }: { bullet: Bullet; setReplacing: (v: boolean) => void }) => {
-  const graphStore = useGraphStore();
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Ellipsis className={cn(viewStore.hoveredNode?.id === bullet.id ? "text-grey-800" : "text-transparent")} />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
-        <DropdownMenuItem onSelect={() => graphStore.deleteRelation(bullet.graphRelation!)}>
-          Delete relation
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setReplacing(true)}>Replace related node</DropdownMenuItem>
-        {bullet.isPinned ? (
-          <DropdownMenuItem onSelect={() => bullet.unpin()}>Unpin</DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem onSelect={() => bullet.pin()}>Pin</DropdownMenuItem>
-        )}
-        {bullet.type === "bullet" ? (
-          <DropdownMenuItem onSelect={() => bullet.setType("bundle")}>Convert to bundle</DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem onSelect={() => bullet.setType("bullet")}>Convert to bullet</DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-});
+const BulletMenu = observer(
+  ({
+    bullet,
+    setReplacing,
+    setUpdatingRelationType,
+  }: {
+    bullet: Bullet;
+    setReplacing: (v: boolean) => void;
+    setUpdatingRelationType: (v: boolean) => void;
+  }) => {
+    const graphStore = useGraphStore();
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <Ellipsis className={cn(viewStore.hoveredNode?.id === bullet.id ? "text-grey-800" : "text-transparent")} />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
+          <DropdownMenuItem onSelect={() => graphStore.deleteRelation(bullet.graphRelation!)}>
+            Delete relation
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setReplacing(true)}>Replace related node</DropdownMenuItem>
+          {bullet.isPinned ? (
+            <DropdownMenuItem onSelect={() => bullet.unpin()}>Unpin</DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onSelect={() => bullet.pin()}>Pin</DropdownMenuItem>
+          )}
+          {bullet.type === "bullet" ? (
+            <DropdownMenuItem onSelect={() => bullet.setType("bundle")}>Convert to bundle</DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onSelect={() => bullet.setType("bullet")}>Convert to bullet</DropdownMenuItem>
+          )}
+          <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>Change relation type</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  },
+);
 
 const BulletEditor = observer(
   ({ bullet, siblingAbove, siblingBelow }: { bullet: Bullet; siblingAbove?: Bullet; siblingBelow?: Bullet }) => {
@@ -202,7 +220,6 @@ function SearchNodes({
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        console.log("click outside");
         cancel();
       }
     };
