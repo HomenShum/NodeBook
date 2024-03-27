@@ -21,6 +21,8 @@ type PositionedRelation = {
   relation: GraphRelation;
 };
 
+export const ROOT_ID = "root";
+
 export class GraphNode {
   public id: string;
   public text: string = "";
@@ -37,6 +39,10 @@ export class GraphNode {
     this.thoughtstreamPosition = thoughtstreamPosition;
     this.text = text;
     makeAutoObservable(this);
+  }
+
+  get isRoot() {
+    return this.id === ROOT_ID;
   }
 
   get relations(): GraphRelation[] {

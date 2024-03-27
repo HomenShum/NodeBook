@@ -1,6 +1,6 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { makeAutoObservable } from "mobx";
-import { GraphNode, GraphNodeProps } from "./GraphNode";
+import { GraphNode, GraphNodeProps, ROOT_ID } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
@@ -13,6 +13,14 @@ export class GraphStore {
   constructor(remote?: RemoteGraphStore) {
     this.remote = remote;
     makeAutoObservable(this);
+  }
+
+  getRoot() {
+    return this.nodesById.get(ROOT_ID);
+  }
+
+  createRoot() {
+    return this.createNode({ id: ROOT_ID, text: "Root" });
   }
 
   get nodes(): GraphNode[] {

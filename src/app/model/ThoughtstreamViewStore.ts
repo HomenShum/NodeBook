@@ -19,6 +19,10 @@ export class ThoughtstreamViewStore {
     makeAutoObservable(this);
   }
 
+  getNote(id: string) {
+    return this.viewsByNodeId.get(id);
+  }
+
   setFocusedNode(node: Note | null) {
     this.viewStore.setFocusedNode(node);
   }
@@ -29,7 +33,7 @@ export class ThoughtstreamViewStore {
 
   get notes() {
     const nodes = this.graphStore.nodes
-      .filter((note) => note.id !== "root")
+      .filter((note) => !note.isRoot)
       .filter((node) => node.thoughtstreamPosition !== undefined)
       .sort((a, b) => (a.thoughtstreamPosition! < b.thoughtstreamPosition! ? -1 : 1));
 
@@ -57,7 +61,7 @@ export class ThoughtstreamViewStore {
   }
 
   createNote() {
-    const graphRoot = this.graphStore.getNode("root");
+    const graphRoot = this.graphStore.getRoot();
     const { node } = graphRoot!.createRelatedNode();
     node.thoughtstreamPosition = generateKeyBetween(null, this.topNodePosition);
     this.topNodePosition = node.thoughtstreamPosition;

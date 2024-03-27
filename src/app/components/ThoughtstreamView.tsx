@@ -6,7 +6,7 @@ import { NoteView } from "./NoteView/NoteView";
 export const ThoughtstreamView = observer(() => {
   const graphStore = useGraphStore();
   const viewStore = useViewStore().thoughtstreamViewStore;
-  const graphRoot = graphStore.getNode("root");
+  const graphRoot = graphStore.getRoot();
   if (!graphRoot) {
     return <div>Missing root node</div>;
   }

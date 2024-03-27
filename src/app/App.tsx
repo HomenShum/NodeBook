@@ -23,7 +23,7 @@ function App() {
       setIsLoading(false);
       // I'm not sure if we should call this "root". it's more like the "user node" or "home node".
       // It's not a root cause graphs don't have roots.
-      const root = graphStore.getNode("root") ?? graphStore.createNode({ id: "root", text: "Root" });
+      const root = graphStore.getRoot() ?? graphStore.createRoot();
       viewStore.outlineViewStore.setRoot(new Bullet(viewStore.outlineViewStore, root));
       // root.createRelatedNode();
       // root.createRelatedNode();
