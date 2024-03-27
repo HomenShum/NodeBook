@@ -1,5 +1,5 @@
-import { generateKeyBetween } from "fractional-indexing";
 import { makeAutoObservable } from "mobx";
+import { compareFractionIndices } from "../util";
 import { GraphNode } from "./GraphNode";
 import { GraphStore } from "./GraphStore";
 import { Note } from "./ThoughtstreamNote";
@@ -9,13 +9,11 @@ export class ThoughtstreamViewStore {
   private graphStore: GraphStore;
   private viewStore: ViewStore;
   private viewsByNodeId: Map<string, Note>;
-  private topNodePosition: string | null;
 
   constructor(graphStore: GraphStore, viewStore: ViewStore) {
     this.graphStore = graphStore;
     this.viewStore = viewStore;
     this.viewsByNodeId = new Map();
-    this.topNodePosition = null;
     makeAutoObservable(this);
   }
 
@@ -32,15 +30,10 @@ export class ThoughtstreamViewStore {
   }
 
   get notes() {
-    const nodes = this.graphStore.nodes
-      .filter((note) => !note.isRoot)
-      .filter((node) => node.thoughtstreamPosition !== undefined)
-      .sort((a, b) => (a.thoughtstreamPosition! < b.thoughtstreamPosition! ? -1 : 1));
-
-    if (!nodes.length) return [];
-
-    this.topNodePosition = nodes[0].thoughtstreamPosition!;
-    return nodes.map((node) => this.viewForNode(node));
+    return this.graphStore.nodes
+      .filter((node) => !node.isRoot)
+      .sort((a, b) => compareFractionIndices(a.thoughtstreamPosition, b.thoughtstreamPosition))
+      .map((node) => this.viewForNode(node));
   }
 
   registerNodeView(view: Note) {
@@ -51,7 +44,7 @@ export class ThoughtstreamViewStore {
     this.viewStore.removeNodeView(view);
   }
 
-  viewForNode(node: GraphNode) {
+  viewForNode(node: GraphNode): Note {
     const existing = this.viewsByNodeId.get(node.id);
     if (existing) return existing;
 
@@ -63,8 +56,6 @@ export class ThoughtstreamViewStore {
   createNote() {
     const graphRoot = this.graphStore.getRoot();
     const { node } = graphRoot!.createRelatedNode();
-    node.thoughtstreamPosition = generateKeyBetween(null, this.topNodePosition);
-    this.topNodePosition = node.thoughtstreamPosition;
     return this.viewForNode(node);
   }
 

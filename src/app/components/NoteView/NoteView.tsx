@@ -37,6 +37,17 @@ export const NoteView = observer(({ note, siblingAbove, siblingBelow }: Props) =
               onChange={(v) => note.graphNode.setText(v ?? "")}
               context={{ node: note, siblingAbove, siblingBelow }}
             />
+            <div className="flex gap-1">
+              {note.graphNode.parents
+                .filter((p) => !p.isRoot)
+                .map((parent) => {
+                  return (
+                    <div key={parent.id} className="flex text-xs border-black border border-gray-300 rounded px-1">
+                      {parent.text}
+                    </div>
+                  );
+                })}
+            </div>
             {viewStore.showNodeDetails && (
               <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px", userSelect: "none" }}>
                 <span style={{ color: "gray" }}>noteId: {note.id.slice(0, 8)}</span>

@@ -1,3 +1,4 @@
+import { Dot } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useGraphStore } from "../store/graph";
 import { useViewStore } from "../store/outline";
@@ -16,7 +17,10 @@ export const ThoughtstreamView = observer(() => {
   return (
     <div style={{ width: "100%" }}>
       {notes.map((note, i) => (
-        <NoteView key={note.id} note={note} siblingAbove={notes[i - 1]} siblingBelow={notes[i + 1]} />
+        <div key={note.id} className="flex">
+          <Dot strokeWidth={4} />
+          <NoteView note={note} siblingAbove={notes[i - 1]} siblingBelow={notes[i + 1]} />
+        </div>
       ))}
       <button
         onClick={() => {

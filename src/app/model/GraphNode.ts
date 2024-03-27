@@ -1,6 +1,6 @@
 import { generateNKeysBetween } from "fractional-indexing";
 import { makeAutoObservable } from "mobx";
-import { compareFractionIndices, uuid } from "../util";
+import { compareFractionIndices } from "../util";
 import { GraphRelation, GraphRelationType } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 import { RemoteGraphStore } from "./RemoteGraphStore";
@@ -28,14 +28,14 @@ export class GraphNode {
   public text: string = "";
   public allRelationsById = new Map<string, PositionedRelation>();
   public pinnedRelationsById = new Map<string, PositionedRelation>();
-  public thoughtstreamPosition?: string;
+  public thoughtstreamPosition: string;
 
   constructor(
     private store: GraphStore,
-    private remote?: RemoteGraphStore,
-    { id, thoughtstreamPosition, text = "" }: GraphNodeProps = {},
+    private remote: RemoteGraphStore | null,
+    { id, thoughtstreamPosition, text = "" }: { id: string; thoughtstreamPosition: string; text?: string },
   ) {
-    this.id = id || uuid();
+    this.id = id;
     this.thoughtstreamPosition = thoughtstreamPosition;
     this.text = text;
     makeAutoObservable(this);
