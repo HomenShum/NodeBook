@@ -20,7 +20,7 @@ yarn vercel:link
 yarn vercel env pull --environment=development .env.local
 ```
 
-(Optional) By default, persistence is enabled. To disable persistence, set the `NEXT_PUBLIC_PERSISTENCE_ENABLED` environment variable to `false` in `.env.local`.
+(Optional) By default, persistence is enabled. To enable persistence, set the `NEXT_PUBLIC_PERSISTENCE_ENABLED` environment variable to `true` in `.env.local`.
 
 Start the development server:
 
