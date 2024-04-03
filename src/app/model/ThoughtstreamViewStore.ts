@@ -54,8 +54,7 @@ export class ThoughtstreamViewStore {
   }
 
   createNote() {
-    const graphRoot = this.graphStore.getRoot();
-    const { node } = graphRoot!.createRelatedNode();
+    const { node } = this.graphStore.root.createRelatedNode();
     return this.viewForNode(node);
   }
 

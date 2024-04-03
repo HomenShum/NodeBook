@@ -11,15 +11,15 @@ import {
   KEY_TAB_COMMAND,
   LexicalEditor,
 } from "lexical";
-import { useContext, useEffect } from "react";
+import { useEffect } from "react";
 import { GraphNodeView } from "../model/GraphNodeView";
 import { GraphStore } from "../model/GraphStore";
 import { Bullet } from "../model/OutlineBullet";
 import { OutlineViewStore } from "../model/OutlineViewStore";
 import { Note } from "../model/ThoughtstreamNote";
 import { ThoughtstreamViewStore } from "../model/ThoughtstreamViewStore";
-import { GraphStoreContext } from "../store/graph";
-import { ViewStoreContext } from "../store/outline";
+import { useGraphStore } from "../store/useGraphStore";
+import { useViewStore } from "../store/useViewStore";
 import { EditorContext } from "./Editor";
 
 interface Props {
@@ -238,8 +238,8 @@ const makeNoteKeyCommands = (
 };
 
 export const KeyboardOverridesPlugin = ({ nodeView, context }: Props) => {
-  const graphStore = useContext(GraphStoreContext);
-  const viewStore = useContext(ViewStoreContext);
+  const graphStore = useGraphStore();
+  const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
   const node = nodeView.graphNode;
   useEffect(() => {

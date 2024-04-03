@@ -1,6 +1,6 @@
 import { Editor } from "@/app/editor/Editor";
 import { Note } from "@/app/model/ThoughtstreamNote";
-import { useViewStore } from "@/app/store/outline";
+import { useViewStore } from "@/app/store/useViewStore";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import styles from "./NoteView.module.css";

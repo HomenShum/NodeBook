@@ -1,12 +1,12 @@
-import { useCallback, useContext, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { Bullet } from "./model/OutlineBullet";
 import { Note } from "./model/ThoughtstreamNote";
 import { ViewType } from "./model/ViewStore";
-import { ViewStoreContext } from "./store/outline";
+import { useViewStore } from "./store/useViewStore";
 
 // Hook for app-level keyboard shortcuts, NOT for keyboard shortcuts triggered within editor. Those are handled in KeyboardOverridesPlugin
 export const useKeyboardShortcuts = () => {
-  const viewStore = useContext(ViewStoreContext);
+  const viewStore = useViewStore();
 
   const createNode = useCallback(() => {
     if (viewStore.curView === ViewType.OUTLINE) {

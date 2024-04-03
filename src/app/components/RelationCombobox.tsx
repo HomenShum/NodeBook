@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { GraphRelationType } from "../model/GraphRelation";
 import { Bullet } from "../model/OutlineBullet";
-import { useGraphStore } from "../store/graph";
+import { useGraphStore } from "../store/useGraphStore";
 
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
   `${relationType.id}-${isForward ? "forward" : "reverse"}`;
@@ -20,7 +20,7 @@ export const RelationCombobox = observer(
     const [isOpen, setIsOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
     const [selected, setSelected] = React.useState(
-      `${bullet.graphRelation?.type.id}-${bullet.isRelationToThis() ? "forward" : "reverse"}`,
+      `${bullet.graphRelation?.type?.id}-${bullet.isRelationToThis() ? "forward" : "reverse"}`,
     );
     const graphNode = bullet.graphNode;
     const open = () => {

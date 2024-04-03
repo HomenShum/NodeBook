@@ -6,19 +6,25 @@ import { GraphNode, GraphNodeProps, ROOT_ID } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
+export const defaultRelationTypes = [
+  { id: "child", label: "child", reverseLabel: "parent" },
+  { id: "author", label: "author", reverseLabel: "authored" },
+  { id: "reference", label: "reference", reverseLabel: "referenced by" },
+  { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
+];
+
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
   isLoading = false;
   remote?: RemoteGraphStore;
   public relationTypesById: Record<string, GraphRelationType> = {};
+  root: GraphNode;
   constructor(remote?: RemoteGraphStore) {
     this.remote = remote;
+    defaultRelationTypes.forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
-  }
-
-  getRoot() {
-    return this.nodesById.get(ROOT_ID);
+    this.root = this.createRoot();
   }
 
   createRoot() {
@@ -271,34 +277,31 @@ export class GraphStore {
   }
 
   async loadFromServer() {
-    this.isLoading = true;
     if (!this.remote) {
-      console.warn("No remote store");
-      this.relationTypesById = {
-        child: { id: "child", label: "child", reverseLabel: "parent" },
-        author: { id: "author", label: "author", reverseLabel: "authored" },
-        reference: { id: "reference", label: "reference", reverseLabel: "referenced by" },
-        relatesTo: { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
-      };
-    } else {
-      try {
-        const { nodes, relationTypes, relations } = await this.remote.load();
-        nodes.forEach((n: PersistedGraphNode) => this.addNodeFromServer(n));
-        relationTypes.forEach((rt: GraphRelationType) => this.createRelationType(rt, true));
-        // TODO: clean up logic elsewhere so "child" type isn't hardcoded
-        if (!this.relationTypesById.child) {
-          this.createRelationType({ id: "child", label: "child", reverseLabel: "parent" });
-        }
-        relations.forEach((r: PersistedGraphRelation) => this.addRelationFromServer(r));
-      } catch (e) {
-        console.error(e);
+      console.warn("Tried to load from server without remote store");
+      return;
+    }
+    this.isLoading = true;
+    try {
+      const { nodes, relationTypes, relations } = await this.remote.load();
+      nodes.forEach((n: PersistedGraphNode) => this.addNodeFromServer(n));
+      relationTypes.forEach((rt: GraphRelationType) => this.createRelationType(rt, true));
+      // TODO: clean up logic elsewhere so "child" type isn't hardcoded
+      if (!this.relationTypesById.child) {
+        this.createRelationType({ id: "child", label: "child", reverseLabel: "parent" });
       }
+      relations.forEach((r: PersistedGraphRelation) => this.addRelationFromServer(r));
+    } catch (e) {
+      console.error(e);
     }
     this.isLoading = false;
   }
 
   addNodeFromServer(persistedNode: PersistedGraphNode) {
-    this.createNode({ id: persistedNode.id, text: persistedNode.text }, { fromServer: true });
+    const node = this.createNode({ id: persistedNode.id, text: persistedNode.text }, { fromServer: true });
+    if (node.id === ROOT_ID) {
+      this.root = node;
+    }
   }
 
   addRelationFromServer(persistedRelation: PersistedGraphRelation) {

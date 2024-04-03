@@ -1,5 +1,5 @@
-import { RefObject, useCallback, useContext, useEffect, useRef } from "react";
-import { ViewStoreContext } from "../store/outline";
+import { RefObject, useCallback, useEffect, useRef } from "react";
+import { useViewStore } from "../store/useViewStore";
 import { Coordinate } from "./utils";
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 }
 
 export const MouseSelection = ({ appContainerRef }: Props) => {
-  const viewStore = useContext(ViewStoreContext);
+  const viewStore = useViewStore();
 
   const isSelecting = useRef(false);
   const selectionBoxRef = useRef<HTMLDivElement>(null);

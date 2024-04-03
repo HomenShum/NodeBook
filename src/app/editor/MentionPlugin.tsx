@@ -9,8 +9,8 @@ import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { GraphNode } from "../model/GraphNode";
-import { useGraphStore } from "../store/graph";
-import { useViewStore } from "../store/outline";
+import { useGraphStore } from "../store/useGraphStore";
+import { useViewStore } from "../store/useViewStore";
 import styles from "./MentionPlugin.module.css";
 
 // Much of this implementation is copied from:

@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useViewStore } from "../store/outline";
+import { useViewStore } from "../store/useViewStore";
 import { BulletChildren } from "./BulletChildren";
 
 export const OutlineView = observer(() => {

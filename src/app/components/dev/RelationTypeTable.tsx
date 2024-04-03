@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useGraphStore } from "../../store/graph";
+import { useGraphStore } from "../../store/useGraphStore";
 
 export const RelationTypeTable = observer(() => {
   const graph = useGraphStore();

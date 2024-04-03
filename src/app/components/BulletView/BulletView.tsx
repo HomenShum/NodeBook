@@ -2,8 +2,8 @@ import { Dot, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { Editor } from "../../editor/Editor";
 import { Bullet } from "../../model/OutlineBullet";
-import { graphStore, useGraphStore } from "../../store/graph";
-import { useViewStore, viewStore } from "../../store/outline";
+import { useGraphStore } from "../../store/useGraphStore";
+import { useViewStore } from "../../store/useViewStore";
 
 import {
   DropdownMenu,
@@ -47,6 +47,7 @@ interface Props {
 
 export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
   const viewStore = useViewStore();
+  const graphStore = useGraphStore();
   const [replacing, setReplacing] = useState(false);
   // TODO: this was really shoehorned in here for demo day and should be refactored
   const [updatingRelationType, setUpdatingRelationType] = useState(false);
@@ -113,6 +114,7 @@ const BulletMenu = observer(
     setReplacing: (v: boolean) => void;
     setUpdatingRelationType: (v: boolean) => void;
   }) => {
+    const viewStore = useViewStore();
     const graphStore = useGraphStore();
     return (
       <DropdownMenu>

@@ -1,12 +1,11 @@
-import { GraphStoreContext } from "@/app/store/graph";
-import { ViewStoreContext } from "@/app/store/outline";
+import { useGraphStore } from "@/app/store/useGraphStore";
+import { useViewStore } from "@/app/store/useViewStore";
 import { observer } from "mobx-react-lite";
-import { useContext } from "react";
 import { Button } from "../ui/button";
 
 export const DevTools = observer(() => {
-  const graphStore = useContext(GraphStoreContext);
-  const viewStore = useContext(ViewStoreContext);
+  const graphStore = useGraphStore();
+  const viewStore = useViewStore();
 
   return (
     <div className="p-2 mb-4 max-h-96 overflow-y-auto flex flex-col">

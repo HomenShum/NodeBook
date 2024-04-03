@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { Bullet } from "../model/OutlineBullet";
-import { useViewStore } from "../store/outline";
+import { useViewStore } from "../store/useViewStore";
 import { compareFractionIndices } from "../util";
 import { BulletView } from "./BulletView/BulletView";
 

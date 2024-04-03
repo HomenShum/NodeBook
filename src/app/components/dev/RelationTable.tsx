@@ -1,16 +1,15 @@
+import { useGraphStore } from "@/app/store/useGraphStore";
 import { observer } from "mobx-react-lite";
-import { useContext } from "react";
 import { GraphNode } from "../../model/GraphNode";
-import { GraphStoreContext } from "../../store/graph";
 
 const nodeToString = (node: GraphNode) => {
   return `"${node.text}" (${node.id.slice(0, 8)})`;
 };
 
 export const RelationTable = observer(() => {
-  const nodeStore = useContext(GraphStoreContext);
+  const graphStore = useGraphStore();
   const headers = ["id", "from", "to", "type"];
-  const relations = nodeStore.relations;
+  const relations = graphStore.relations;
 
   return (
     <div className="p-2 mb-4 max-h-96 overflow-y-auto">

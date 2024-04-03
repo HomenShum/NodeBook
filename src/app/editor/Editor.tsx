@@ -2,21 +2,20 @@ import { $createParagraphNode, $createTextNode, $getRoot, $setSelection, EditorS
 
 import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { KeyboardOverridesPlugin } from "./KeyboardOverridesPlugin";
-import { ContentEditable } from "./ui/ContentEditable";
-
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect } from "react";
 import { GraphNodeView } from "../model/GraphNodeView";
-import { useViewStore } from "../store/outline";
+import { useViewStore } from "../store/useViewStore";
 import styles from "./Editor.module.css";
+import { KeyboardOverridesPlugin } from "./KeyboardOverridesPlugin";
 import { MentionPlugin } from "./MentionPlugin";
 import { OnChangePlugin } from "./OnChangePlugin";
 import { ViewStoreRegistryPlugin } from "./ViewStoreRegistryPlugin";
+import { ContentEditable } from "./ui/ContentEditable";
 
 const theme = {
   // Theme styling goes here
