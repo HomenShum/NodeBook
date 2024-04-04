@@ -1,5 +1,5 @@
 import { generateNKeysBetween } from "fractional-indexing";
-import { makeAutoObservable, toJS } from "mobx";
+import { makeAutoObservable } from "mobx";
 import { Position, comparePositions } from "../util";
 import { GraphRelation, GraphRelationType } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
@@ -112,13 +112,11 @@ export class GraphNode {
       posBefore = positionedRelations[positionedRelations.length - 1]?.position ?? null;
       posAfter = null;
     }
-    console.log("before generating pos", JSON.stringify(toJS({ posBefore, posAfter })));
     const newFractionalPositions = generateNKeysBetween(
       posBefore?.frac ?? null,
       posAfter?.frac ?? null,
       relations.length,
     );
-    console.log("after generateing pos", JSON.stringify(toJS({ posBefore, posAfter })));
     relations.forEach((relation, i) => {
       this.allRelationsById.set(relation.id, {
         position: { int: posBefore?.int ?? relation.createdAt.getTime(), frac: newFractionalPositions[i] },
