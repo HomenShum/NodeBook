@@ -116,6 +116,5 @@ export class OutlineViewStore {
       this.graphStore.updateRelationFrom({ newFrom: graphNode }, bullet.graphRelation!);
     }
     bullet.graphNode = graphNode;
-    this.deleteBullet(bullet);
   }
 }
