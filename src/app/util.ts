@@ -23,7 +23,7 @@ export function comparePositions(a: Position | null, b: Position | null) {
   if (a.int === b.int) {
     return a.frac < b.frac ? -1 : 1;
   } else {
-    return a.int < b.int ? -1 : 1;
+    return a.int > b.int ? -1 : 1;
   }
 }
 

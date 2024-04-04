@@ -37,7 +37,7 @@ export const BulletChildren = observer(
   },
 );
 
-const BulletList = ({
+export const BulletList = ({
   bullets,
   parents,
   depth,

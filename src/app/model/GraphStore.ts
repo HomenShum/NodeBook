@@ -1,7 +1,6 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
-import { generateKeyBetween } from "fractional-indexing";
 import { makeAutoObservable } from "mobx";
-import { compareFractionIndices, uuid } from "../util";
+import { comparePositions, uuid } from "../util";
 import { GraphNode, GraphNodeProps, ROOT_ID } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { RemoteGraphStore } from "./RemoteGraphStore";
@@ -32,13 +31,9 @@ export class GraphStore {
   }
 
   getTopNode(): GraphNode | undefined {
-    let top: GraphNode | undefined = undefined;
-    this.nodesById.forEach((node) => {
-      if (!top || compareFractionIndices(top.thoughtstreamPosition, node.thoughtstreamPosition) > 0) {
-        top = node;
-      }
-    });
-    return top;
+    return this.nodes.reduce((top, node) => {
+      return comparePositions(top.thoughtstreamPosition, node.thoughtstreamPosition) > 0 ? top : node;
+    }, this.root);
   }
 
   get nodes(): GraphNode[] {
@@ -56,14 +51,12 @@ export class GraphStore {
   createNode(props: GraphNodeProps = {}, { fromServer = false }: { fromServer?: boolean } = {}): GraphNode {
     const node = new GraphNode(this, this.remote ?? null, {
       id: props.id || uuid(),
-      thoughtstreamPosition:
-        props.thoughtstreamPosition ?? generateKeyBetween(null, this.getTopNode()?.thoughtstreamPosition ?? null),
       text: props.text,
     });
     this.nodesById.set(node.id, node);
-    if (!fromServer && this.remote) {
-      this.remote.upsertNode(node.id, node.text, node.thoughtstreamPosition);
-    }
+    // if (!fromServer && this.remote) {
+    //   this.remote.upsertNode(node.id, node.text, node.thoughtstreamPosition);
+    // }
     return node;
   }
 

@@ -1,6 +1,6 @@
 import { generateNKeysBetween } from "fractional-indexing";
 import { makeAutoObservable } from "mobx";
-import { Position, comparePositions } from "../util";
+import { Position, comparePositions, generateDefaultPosition } from "../util";
 import { GraphRelation, GraphRelationType } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 import { RemoteGraphStore } from "./RemoteGraphStore";
@@ -8,7 +8,7 @@ import { RemoteGraphStore } from "./RemoteGraphStore";
 export type GraphNodeProps = {
   id?: string;
   text?: string;
-  thoughtstreamPosition?: string;
+  thoughtstreamPosition?: Position;
 };
 
 export type RelativePositionProps = {
@@ -28,16 +28,17 @@ export class GraphNode {
   public text: string = "";
   public allRelationsById = new Map<string, PositionedRelation>();
   public pinnedRelationsById = new Map<string, PositionedRelation>();
-  public thoughtstreamPosition: string;
+  public thoughtstreamPosition: Position;
+  public createdAt = new Date();
 
   constructor(
     private store: GraphStore,
     private remote: RemoteGraphStore | null,
-    { id, thoughtstreamPosition, text = "" }: { id: string; thoughtstreamPosition: string; text?: string },
+    { id, thoughtstreamPosition, text = "" }: { id: string; thoughtstreamPosition?: Position; text?: string },
   ) {
     this.id = id;
-    this.thoughtstreamPosition = thoughtstreamPosition;
     this.text = text;
+    this.thoughtstreamPosition = thoughtstreamPosition ?? generateDefaultPosition(this.createdAt);
     makeAutoObservable(this);
   }
 
@@ -65,9 +66,9 @@ export class GraphNode {
 
   setText(text: string) {
     this.text = text;
-    if (this.remote) {
-      this.remote.upsertNode(this.id, text, this.thoughtstreamPosition ?? null);
-    }
+    // if (this.remote) {
+    //   this.remote.upsertNode(this.id, text, this.thoughtstreamPosition ?? null);
+    // }
   }
 
   createRelatedNode({

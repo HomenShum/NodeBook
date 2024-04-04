@@ -82,11 +82,11 @@ export class Note implements GraphNodeView {
     this.viewStore.deleteNote(this);
   }
 
-  get position() {
-    return this.graphNode.thoughtstreamPosition ?? "";
-  }
+  // get position() {
+  //   return this.graphNode.thoughtstreamPosition ?? "";
+  // }
 
-  set position(value: string) {
-    this.graphNode.thoughtstreamPosition = value;
-  }
+  // set position(value: string) {
+  //   this.graphNode.thoughtstreamPosition = value;
+  // }
 }

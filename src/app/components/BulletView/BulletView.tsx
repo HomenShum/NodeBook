@@ -173,6 +173,7 @@ const BulletDetails = observer(({ bullet, position }: { bullet: Bullet; position
       )}
       <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id}</span>
       <span style={{ color: "gray" }}>relationId: {bullet.graphRelation!.id}</span>
+      <span style={{ color: "gray" }}>createdAt: {bullet.graphNode.createdAt.toISOString()}</span>
     </div>
   );
 });
