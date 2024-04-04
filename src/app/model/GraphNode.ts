@@ -1,6 +1,6 @@
 import { generateNKeysBetween } from "fractional-indexing";
-import { makeAutoObservable } from "mobx";
-import { compareFractionIndices } from "../util";
+import { makeAutoObservable, toJS } from "mobx";
+import { Position, comparePositions } from "../util";
 import { GraphRelation, GraphRelationType } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 import { RemoteGraphStore } from "./RemoteGraphStore";
@@ -16,8 +16,8 @@ export type RelativePositionProps = {
   side?: "above" | "below";
 };
 
-type PositionedRelation = {
-  position: string;
+export type PositionedRelation = {
+  position: Position;
   relation: GraphRelation;
 };
 
@@ -51,7 +51,7 @@ export class GraphNode {
 
   get relationsSortedByPosition(): GraphRelation[] {
     return Array.from(this.allRelationsById.values())
-      .sort((a, b) => compareFractionIndices(a.position, b.position))
+      .sort((a, b) => comparePositions(a.position, b.position))
       .map((r) => r.relation);
   }
 
@@ -93,61 +93,68 @@ export class GraphNode {
 
   insertRelation({ target, side = "below" }: RelativePositionProps, ...relations: GraphRelation[]) {
     relations.forEach((r) => this.assertValidRelation(r)); // TODO can you have multiple relations with the same id?
-    let positionBefore: string | null = null;
-    let positionAfter: string | null = null;
+    let posBefore: Position | null = null;
+    let posAfter: Position | null = null;
+    const positionedRelations = Array.from(this.allRelationsById.values()).sort((a, b) =>
+      comparePositions(a.position, b.position),
+    );
     if (target) {
       // insert relations beside target
-      const positionedRelations = Array.from(this.allRelationsById.values()).sort((a, b) =>
-        compareFractionIndices(a.position, b.position),
-      );
       const index = positionedRelations.findIndex((r) => r.relation.id === target.id);
-      positionBefore = positionedRelations[index]?.position ?? null;
-      positionAfter = positionedRelations[index + 1]?.position ?? null;
+      posBefore = positionedRelations[index]?.position ?? null;
+      posAfter = positionedRelations[index + 1]?.position ?? null;
     } else if (side === "above") {
       // insert relations above all other relations
-      positionBefore = null;
-      positionAfter = this.getFirstPosition();
+      posBefore = null;
+      posAfter = positionedRelations[0]?.position ?? null;
     } else if (side === "below") {
       // insert relations below all other relations
-      positionBefore = this.getLastPosition();
-      positionAfter = null;
+      posBefore = positionedRelations[positionedRelations.length - 1]?.position ?? null;
+      posAfter = null;
     }
-    const newPositions = generateNKeysBetween(positionBefore, positionAfter, relations.length);
+    console.log("before generating pos", JSON.stringify(toJS({ posBefore, posAfter })));
+    const newFractionalPositions = generateNKeysBetween(
+      posBefore?.frac ?? null,
+      posAfter?.frac ?? null,
+      relations.length,
+    );
+    console.log("after generateing pos", JSON.stringify(toJS({ posBefore, posAfter })));
     relations.forEach((relation, i) => {
-      this.allRelationsById.set(relation.id, { position: newPositions[i], relation });
+      this.allRelationsById.set(relation.id, {
+        position: { int: posBefore?.int ?? relation.createdAt.getTime(), frac: newFractionalPositions[i] },
+        relation,
+      });
     });
   }
 
-  removeRelation(relation: GraphRelation) {
-    this.allRelationsById.delete(relation.id);
-    this.pinnedRelationsById.delete(relation.id);
-  }
-
-  pinRelation({ target, side = "below" }: RelativePositionProps, ...relations: GraphRelation[]) {
-    relations.forEach((r) => {
-      if (!this.allRelationsById.has(r.id)) {
-        throw new Error(`Cannot pin relation that is not attached to node`);
-      }
-    });
-    let positionBefore: string | null = null;
-    let positionAfter: string | null = null;
+  pinRelation({ target, side = "below" }: RelativePositionProps, ...insertingRelations: GraphRelation[]) {
+    insertingRelations.forEach((r) => this.assertValidRelation(r));
+    let posBefore: Position | null = null;
+    let posAfter: Position | null = null;
+    const pinnedRelations = Array.from(this.pinnedRelationsById.values()).sort((a, b) =>
+      comparePositions(a.position, b.position),
+    );
     if (target) {
-      const positionedRelations = Array.from(this.pinnedRelationsById.values()).sort((a, b) =>
-        compareFractionIndices(a.position, b.position),
-      );
-      const index = positionedRelations.findIndex((r) => r.relation.id === target.id);
-      positionBefore = positionedRelations[index]?.position ?? null;
-      positionAfter = positionedRelations[index + 1]?.position ?? null;
+      const index = pinnedRelations.findIndex((r) => r.relation.id === target.id);
+      posBefore = pinnedRelations[index]?.position ?? null;
+      posAfter = pinnedRelations[index + 1]?.position ?? null;
     } else if (side === "above") {
-      positionBefore = null;
-      positionBefore = this.getFirstPinnedPosition();
+      posBefore = null;
+      posAfter = pinnedRelations[0]?.position ?? null;
     } else if (side === "below") {
-      positionAfter = null;
-      positionAfter = this.getLastPinnedPosition();
+      posBefore = pinnedRelations[pinnedRelations.length - 1]?.position ?? null;
+      posAfter = null;
     }
-    const newPositions = generateNKeysBetween(positionBefore, positionAfter, relations.length);
-    relations.forEach((relation, i) => {
-      this.pinnedRelationsById.set(relation.id, { position: newPositions[i], relation });
+    const newFractionalPositions = generateNKeysBetween(
+      posBefore?.frac ?? null,
+      posAfter?.frac ?? null,
+      insertingRelations.length,
+    );
+    insertingRelations.forEach((relation, i) => {
+      this.pinnedRelationsById.set(relation.id, {
+        position: { int: posBefore?.int ?? relation.createdAt.getTime(), frac: newFractionalPositions[i] },
+        relation,
+      });
     });
   }
 
@@ -173,40 +180,6 @@ export class GraphNode {
 
   get relatedNodes(): GraphNode[] {
     return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
-  }
-
-  getLastPosition() {
-    return (
-      Array.from(this.allRelationsById.values())
-        .sort((a, b) => compareFractionIndices(a.position, b.position))
-        .map((r) => r.position)
-        .splice(-1)[0] ?? null
-    );
-  }
-
-  getFirstPosition() {
-    return (
-      Array.from(this.allRelationsById.values())
-        .sort((a, b) => compareFractionIndices(a.position, b.position))
-        .map((r) => r.position)[0] ?? null
-    );
-  }
-
-  getLastPinnedPosition() {
-    return (
-      Array.from(this.pinnedRelationsById.values())
-        .sort((a, b) => compareFractionIndices(a.position, b.position))
-        .map((r) => r.position)
-        .splice(-1)[0] ?? null
-    );
-  }
-
-  getFirstPinnedPosition() {
-    return (
-      Array.from(this.pinnedRelationsById.values())
-        .sort((a, b) => compareFractionIndices(a.position, b.position))
-        .map((r) => r.position)[0] ?? null
-    );
   }
 
   toString() {

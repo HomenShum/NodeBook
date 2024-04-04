@@ -32,7 +32,7 @@ export const OutlineView = observer(() => {
       <button
         className="select-none"
         onClick={() => {
-          const bullet = root.createRelatedBullet();
+          const bullet = root.createChild();
           viewStore.setFocusedNode(bullet);
         }}
       >

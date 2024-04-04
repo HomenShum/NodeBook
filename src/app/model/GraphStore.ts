@@ -6,12 +6,12 @@ import { GraphNode, GraphNodeProps, ROOT_ID } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
-export const defaultRelationTypes = [
-  { id: "child", label: "child", reverseLabel: "parent" },
-  { id: "author", label: "author", reverseLabel: "authored" },
-  { id: "reference", label: "reference", reverseLabel: "referenced by" },
-  { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
-];
+export const defaultRelationTypes = {
+  child: { id: "child", label: "child", reverseLabel: "parent" },
+  author: { id: "author", label: "author", reverseLabel: "authored" },
+  reference: { id: "reference", label: "reference", reverseLabel: "referenced by" },
+  relatesTo: { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
+};
 
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
@@ -22,7 +22,7 @@ export class GraphStore {
   root: GraphNode;
   constructor(remote?: RemoteGraphStore) {
     this.remote = remote;
-    defaultRelationTypes.forEach((rt) => this.createRelationType(rt, true));
+    Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
     this.root = this.createRoot();
   }
@@ -78,7 +78,7 @@ export class GraphStore {
   deleteNode(id: string) {
     const node = this.nodesById.get(id);
     if (!node) return;
-    node.relations.forEach((r) => r.delete());
+    node.relations.forEach((r) => this.deleteRelation(r));
     this.nodesById.delete(node.id);
     if (this.remote) {
       this.remote.deleteNode(id);
@@ -135,9 +135,11 @@ export class GraphStore {
 
   deleteRelation(relation: GraphRelation) {
     const { from: fromNode, to: toNode } = relation;
-    fromNode.removeRelation(relation);
-    toNode.removeRelation(relation);
     this.relationsById.delete(relation.id);
+    fromNode.allRelationsById.delete(relation.id);
+    fromNode.pinnedRelationsById.delete(relation.id);
+    toNode.allRelationsById.delete(relation.id);
+    toNode.pinnedRelationsById.delete(relation.id);
     if (this.remote) {
       this.remote.deleteRelation(relation.id);
     }
@@ -160,7 +162,8 @@ export class GraphStore {
     // remove the relations from their old from nodes
     const oldFroms = relations.map((r) => {
       const oldFrom = r.from;
-      oldFrom.removeRelation(r);
+      oldFrom.allRelationsById.delete(r.id);
+      oldFrom.pinnedRelationsById.delete(r.id);
       return oldFrom;
     });
     // update the relations from property
@@ -192,7 +195,8 @@ export class GraphStore {
     // remove the relations from their old to nodes
     const oldTos = relations.map((r) => {
       const oldTo = r.to;
-      oldTo.removeRelation(r);
+      oldTo.allRelationsById.delete(r.id);
+      oldTo.pinnedRelationsById.delete(r.id);
       return oldTo;
     });
     // update the relations to property

@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { Bullet } from "../model/OutlineBullet";
 import { useViewStore } from "../store/useViewStore";
-import { compareFractionIndices } from "../util";
+import { Position, comparePositions } from "../util";
 import { BulletView } from "./BulletView/BulletView";
 
 export const BulletChildren = observer(
@@ -9,9 +9,8 @@ export const BulletChildren = observer(
     const viewStore = useViewStore();
     const viewType = viewStore.outlineViewStore.relatedNodesViewType;
 
-    const children = bullet.children.sort((a, b) => compareFractionIndices(a.position, b.position));
-
-    const pinned = bullet.pinnedChildren.sort((a, b) => compareFractionIndices(a.position, b.position));
+    const children = bullet.childrenWithPositions.sort((a, b) => comparePositions(a.position, b.position));
+    const pinnedChildren = bullet.pinnedChildrenWithPositions.sort((a, b) => comparePositions(a.position, b.position));
 
     return (
       <div className={bullet.type === "bullet" && depth > 0 ? "ml-8" : ""}>
@@ -23,7 +22,7 @@ export const BulletChildren = observer(
               <button onClick={() => bullet.togglePinnedExpanded()}>{bullet.isPinnedExpanded ? "▼" : "▶"}</button>
               <span>Pinned:</span>
             </div>
-            {bullet.isPinnedExpanded && <BulletList bullets={pinned} parents={parents} depth={depth} />}
+            {bullet.isPinnedExpanded && <BulletList bullets={pinnedChildren} parents={parents} depth={depth} />}
             <div className="flex align-center">
               <button onClick={() => bullet.toggleAllRelationsExpanded()}>
                 {bullet.isAllRelationsExpanded ? "▼" : "▶"}
@@ -38,18 +37,27 @@ export const BulletChildren = observer(
   },
 );
 
-const BulletList = ({ bullets, parents, depth }: { bullets: Bullet[]; parents: Bullet[]; depth: number }) => {
+const BulletList = ({
+  bullets,
+  parents,
+  depth,
+}: {
+  bullets: { position: Position; bullet: Bullet }[];
+  parents: Bullet[];
+  depth: number;
+}) => {
   return (
     <div>
-      {bullets.map((bullet, i) => {
+      {bullets.map(({ bullet, position }, i) => {
         return (
           <BulletView
             key={bullet.id}
+            position={position}
             bullet={bullet}
             depth={depth}
             parents={parents}
-            siblingAbove={bullets[i - 1]}
-            siblingBelow={bullets[i + 1]}
+            siblingAbove={bullets[i - 1]?.bullet}
+            siblingBelow={bullets[i + 1]?.bullet}
           />
         );
       })}

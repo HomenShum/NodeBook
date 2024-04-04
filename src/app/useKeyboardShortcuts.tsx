@@ -11,9 +11,7 @@ export const useKeyboardShortcuts = () => {
   const createNode = useCallback(() => {
     if (viewStore.curView === ViewType.OUTLINE) {
       // For outline view, we create a new bullet
-      const newBullet = viewStore.outlineViewStore.createBullet({
-        parent: viewStore.outlineViewStore.root!,
-      });
+      const newBullet = viewStore.outlineViewStore.root!.createChild();
       viewStore.setFocusedNode(newBullet);
       return;
     } else {
@@ -27,7 +25,7 @@ export const useKeyboardShortcuts = () => {
   const deleteNodes = useCallback(() => {
     for (const node of viewStore.selectedNodes) {
       if (node.type === "bullet") {
-        viewStore.outlineViewStore.deleteNode(node as Bullet);
+        viewStore.outlineViewStore.deleteBullet(node as Bullet);
       } else if (node.type === "note") {
         viewStore.thoughtstreamViewStore.deleteNote(node as Note);
       }

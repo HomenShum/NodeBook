@@ -1,8 +1,9 @@
 import { makeAutoObservable } from "mobx";
-import { uuid } from "../util";
+import { comparePositions, generateDefaultPosition, generatePositionBetween, uuid } from "../util";
 import { GraphNode } from "./GraphNode";
 import { GraphNodeView, GraphNodeViewType } from "./GraphNodeView";
 import { GraphRelation } from "./GraphRelation";
+import { defaultRelationTypes } from "./GraphStore";
 import { OutlineViewStore } from "./OutlineViewStore";
 
 export class Bullet implements GraphNodeView {
@@ -30,7 +31,7 @@ export class Bullet implements GraphNodeView {
     {
       relation,
       parent,
-      isExpanded,
+      isExpanded = false,
       id,
     }: {
       relation?: GraphRelation;
@@ -43,7 +44,7 @@ export class Bullet implements GraphNodeView {
     this.graphNode = node;
     this.graphRelation = relation ?? null;
     this.parent = parent ?? null;
-    this.isExpanded = isExpanded ?? false;
+    this.isExpanded = isExpanded;
     this.id = id ?? uuid();
     this.childrenByRelationId = new Map();
     this.pinnedByRelationId = new Map();
@@ -65,11 +66,14 @@ export class Bullet implements GraphNodeView {
     this.isAllRelationsExpanded = !this.isAllRelationsExpanded;
   }
 
-  createRelatedBullet(props: Parameters<typeof GraphNode.prototype.createRelatedNode>[0] = {}): Bullet {
-    const { node, relation } = this.graphNode.createRelatedNode(props);
-    const bullet = new Bullet(this.viewStore, node, { relation, parent: this });
-    this.childrenByRelationId.set(relation.id, bullet);
-    return bullet;
+  createChild(): Bullet {
+    const node = this.viewStore.graphStore.createNode();
+    const relation = this.viewStore.graphStore.createRelation({
+      from: this.graphNode,
+      to: node,
+      type: defaultRelationTypes.child,
+    });
+    return this.viewStore.createBullet({ parent: this, node, relation });
   }
 
   isRelationToThis() {
@@ -89,7 +93,7 @@ export class Bullet implements GraphNodeView {
   }
 
   delete() {
-    this.viewStore.deleteNode(this);
+    this.viewStore.deleteBullet(this);
   }
 
   toggleExpanded() {
@@ -110,55 +114,101 @@ export class Bullet implements GraphNodeView {
     return parents;
   }
 
-  get children(): Bullet[] {
-    return this.graphNode.relationsWithPositions.map(({ relation }) => {
-      const existingBullet = this.childrenByRelationId.get(relation.id);
-      if (existingBullet) {
-        return existingBullet;
+  get childrenWithPositions() {
+    return this.graphNode.relationsWithPositions.map(({ relation, position }) => {
+      const bullet = this.childrenByRelationId.get(relation.id);
+      if (bullet) {
+        return { bullet, position };
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
+        // TODO should use createBullet
         const newBullet = new Bullet(this.viewStore, relatedNode, { relation, parent: this });
         this.childrenByRelationId.set(relation.id, newBullet);
-        return newBullet;
+        return { bullet: newBullet, position };
       }
     });
   }
 
-  get pinnedChildren(): Bullet[] {
-    return this.graphNode.pinnedRelationsWithPositions.map(({ relation }) => {
-      const existingBullet = this.pinnedByRelationId.get(relation.id);
-      if (existingBullet) {
-        return existingBullet;
+  get childrenSortedByPosition(): Bullet[] {
+    return this.childrenWithPositions
+      .sort((a, b) => comparePositions(a.position, b.position))
+      .map(({ bullet }) => bullet);
+  }
+
+  get pinnedChildrenWithPositions() {
+    return this.graphNode.pinnedRelationsWithPositions.map(({ relation, position }) => {
+      const bullet = this.pinnedByRelationId.get(relation.id);
+      if (bullet) {
+        return { bullet, position };
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
         const newBullet = new Bullet(this.viewStore, relatedNode, { relation, parent: this });
         this.pinnedByRelationId.set(relation.id, newBullet);
-        return newBullet;
+        return { bullet: newBullet, position };
       }
     });
   }
 
-  get position(): string {
-    const relationId = this.graphRelation?.id ?? "";
-    const position = this.parent?.graphNode.allRelationsById.get(relationId)?.position;
-    if (!position) throw new Error(`Relation not found in parent's allRelationsById map`);
-    return position;
+  get pinnedChildrenSortedByPosition(): Bullet[] {
+    return this.pinnedChildrenWithPositions
+      .sort((a, b) => comparePositions(a.position, b.position))
+      .map(({ bullet }) => bullet);
   }
 
-  set position(position: string) {
-    const positionedRelation = this.parent?.graphNode.allRelationsById.get(this.graphRelation!.id);
-    if (!positionedRelation) throw new Error(`Relation not found in parent's allRelationsById map`);
-    positionedRelation.position = position;
+  moveAfterSibling(sibling: Bullet) {
+    const parent = this.parent;
+    if (!parent) {
+      throw new Error("Bullet has no parent");
+    }
+    const graphRelation = this.graphRelation;
+    if (!graphRelation) {
+      throw new Error("Bullet has no relation");
+    }
+    if (this.isPinned) {
+      const relations =
+        parent.graphNode.pinnedRelationsWithPositions.sort((a, b) => comparePositions(a.position, b.position)) ?? [];
+      const index = relations.findIndex((r) => r.relation.id === sibling.graphRelation?.id);
+      if (index === -1) {
+        throw new Error("Bullet is not a sibling");
+      }
+      const relationAfter = relations[index + 1];
+      const posBefore = relations[index]?.position;
+      const posAfter = relationAfter?.position ?? null;
+      const newPosition = posBefore
+        ? generatePositionBetween(posBefore, posAfter)
+        : generateDefaultPosition(graphRelation.createdAt);
+      const positionedRelation = parent.graphNode.pinnedRelationsById.get(graphRelation.id);
+      if (!positionedRelation) {
+        throw new Error("Relation not found");
+      }
+      positionedRelation.position = newPosition;
+    } else {
+      const relations = parent.graphNode.relationsWithPositions.sort((a, b) =>
+        comparePositions(a.position, b.position),
+      );
+      const index = relations.findIndex((r) => r.relation.id === sibling.graphRelation?.id);
+      if (index === -1) {
+        throw new Error("Bullet is not a sibling");
+      }
+      const relationAfter = relations[index + 1];
+      const posBefore = relations[index].position;
+      const posAfter = relationAfter?.position ?? null;
+      const newPosition = posBefore
+        ? generatePositionBetween(posBefore, posAfter)
+        : generateDefaultPosition(graphRelation.createdAt);
+      const positionedRelation = parent.graphNode.allRelationsById.get(graphRelation.id);
+      if (!positionedRelation) {
+        throw new Error("Relation not found");
+      }
+      positionedRelation.position = newPosition;
+    }
   }
 
-  get pinnedPosition(): string | null {
-    const relationId = this.graphRelation?.id;
-    if (!relationId) return null;
-    return this.parent?.graphNode.pinnedRelationsById.get(relationId)?.position ?? null;
-  }
-
+  // TODO this feels awkward, and like it shouldn't be necessary
   get isPinned() {
-    return this.parent?.graphNode.pinnedRelationsById.has(this.graphRelation!.id) ?? false;
+    return Array.from(this.parent?.pinnedByRelationId.values() ?? [])
+      .map((b) => b.id)
+      .includes(this.id);
   }
 
   pin() {

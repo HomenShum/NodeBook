@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { GraphNode } from "@/app/model/GraphNode";
+import { defaultRelationTypes } from "@/app/model/GraphStore";
+import { Position } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { BulletChildren } from "../BulletChildren";
@@ -43,66 +45,73 @@ interface Props {
   parents?: Bullet[];
   siblingAbove?: Bullet;
   siblingBelow?: Bullet;
+  position?: Position;
 }
 
-export const BulletView = observer(({ bullet, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
-  const viewStore = useViewStore();
-  const graphStore = useGraphStore();
-  const [replacing, setReplacing] = useState(false);
-  // TODO: this was really shoehorned in here for demo day and should be refactored
-  const [updatingRelationType, setUpdatingRelationType] = useState(false);
+export const BulletView = observer(
+  ({ bullet, position, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
+    const viewStore = useViewStore();
+    const graphStore = useGraphStore();
+    const [replacing, setReplacing] = useState(false);
+    // TODO: this was really shoehorned in here for demo day and should be refactored
+    const [updatingRelationType, setUpdatingRelationType] = useState(false);
 
-  const isSelected = viewStore.selectedNodes.has(bullet);
-  const isChild =
-    bullet.graphRelation?.type === graphStore.relationTypesById.child &&
-    bullet.graphRelation?.to.id === bullet.graphNode.id;
+    const isSelected = viewStore.selectedNodes.has(bullet);
+    const isChild =
+      bullet.graphRelation?.type.id === defaultRelationTypes.child.id &&
+      bullet.graphRelation?.to.id === bullet.graphNode.id;
 
-  return (
-    <>
-      <div className={cn("flex flex-col align-start", isSelected ? "bg-sky-200" : "")}>
-        <div
-          className="flex items-center gap-1 my-1"
-          onMouseEnter={() => viewStore.setHoveredNode(bullet)}
-          onMouseLeave={() => viewStore.setHoveredNode(null)}
-        >
-          {/* toggle, bullet, menu */}
-          <div className="flex items-center gap-1">
-            <BulletMenu bullet={bullet} setReplacing={setReplacing} setUpdatingRelationType={setUpdatingRelationType} />
-            <Toggle bullet={bullet} />
-            <Dot
-              strokeWidth={7}
-              className={cn(
-                "cursor-pointer w-4 h-full",
-                // When the parent is a bundle, only show bullets on hover
-                bullet.parent!.type === "bundle"
-                  ? viewStore.hoveredNode?.id === bullet.id
-                    ? "text-grey-800"
-                    : "text-transparent"
-                  : "",
-              )}
-              onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
-            />
-          </div>
-          {/* relation and node */}
-          <div className="flex flex-col flex-1">
-            <div className="flex gap-2">
-              {!isChild || updatingRelationType ? (
-                <RelationCombobox bullet={bullet} setUpdatingRelationType={setUpdatingRelationType} />
-              ) : null}
-              {!replacing ? (
-                <BulletEditor bullet={bullet} siblingAbove={siblingAbove} siblingBelow={siblingBelow} />
-              ) : (
-                <ReplacingNodeView bullet={bullet} setReplacing={setReplacing} />
-              )}
+    return (
+      <>
+        <div className={cn("flex flex-col align-start", isSelected ? "bg-sky-200" : "")}>
+          <div
+            className="flex items-center gap-1 my-1"
+            onMouseEnter={() => viewStore.setHoveredNode(bullet)}
+            onMouseLeave={() => viewStore.setHoveredNode(null)}
+          >
+            {/* toggle, bullet, menu */}
+            <div className="flex items-center gap-1">
+              <BulletMenu
+                bullet={bullet}
+                setReplacing={setReplacing}
+                setUpdatingRelationType={setUpdatingRelationType}
+              />
+              <Toggle bullet={bullet} />
+              <Dot
+                strokeWidth={7}
+                className={cn(
+                  "cursor-pointer w-4 h-full",
+                  // When the parent is a bundle, only show bullets on hover
+                  bullet.parent!.type === "bundle"
+                    ? viewStore.hoveredNode?.id === bullet.id
+                      ? "text-grey-800"
+                      : "text-transparent"
+                    : "",
+                )}
+                onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
+              />
             </div>
-            {viewStore.showNodeDetails && !replacing && <BulletDetails bullet={bullet} />}
+            {/* relation and node */}
+            <div className="flex flex-col flex-1">
+              <div className="flex gap-2">
+                {!isChild || updatingRelationType ? (
+                  <RelationCombobox bullet={bullet} setUpdatingRelationType={setUpdatingRelationType} />
+                ) : null}
+                {!replacing ? (
+                  <BulletEditor bullet={bullet} siblingAbove={siblingAbove} siblingBelow={siblingBelow} />
+                ) : (
+                  <ReplacingNodeView bullet={bullet} setReplacing={setReplacing} />
+                )}
+              </div>
+              {viewStore.showNodeDetails && !replacing && <BulletDetails bullet={bullet} position={position} />}
+            </div>
           </div>
+          {bullet.isExpanded && <BulletChildren bullet={bullet} depth={depth + 1} parents={[...parents, bullet]} />}
         </div>
-        {bullet.isExpanded && <BulletChildren bullet={bullet} depth={depth + 1} parents={[...parents, bullet]} />}
-      </div>
-    </>
-  );
-});
+      </>
+    );
+  },
+);
 
 const BulletMenu = observer(
   ({
@@ -166,11 +175,15 @@ const BulletEditor = observer(
   },
 );
 
-const BulletDetails = observer(({ bullet }: { bullet: Bullet }) => {
+const BulletDetails = observer(({ bullet, position }: { bullet: Bullet; position?: Position }) => {
   return (
     <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
       <span style={{ color: "gray" }}>bulletId: {bullet.id}</span>
-      <span style={{ color: "gray" }}>position: {bullet.position}</span>
+      {position && (
+        <span style={{ color: "gray" }}>
+          position: {position.int}-{position.frac}
+        </span>
+      )}
       <span style={{ color: "gray" }}>nodeId: {bullet.graphNode.id}</span>
       <span style={{ color: "gray" }}>relationId: {bullet.graphRelation!.id}</span>
     </div>

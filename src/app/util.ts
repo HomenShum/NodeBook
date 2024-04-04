@@ -1,4 +1,5 @@
 "use client";
+import { generateKeyBetween } from "fractional-indexing";
 import { autorun, toJS } from "mobx";
 import { v4 as uuidv4 } from "uuid";
 
@@ -14,6 +15,24 @@ export function compareFractionIndices(a: string | null, b: string | null) {
   if (a === null) return -1;
   if (b === null) return 1;
   return a < b ? -1 : 1;
+}
+
+export function comparePositions(a: Position | null, b: Position | null) {
+  if (a === null) return -1;
+  if (b === null) return 1;
+  if (a.int === b.int) {
+    return a.frac < b.frac ? -1 : 1;
+  } else {
+    return a.int < b.int ? -1 : 1;
+  }
+}
+
+export function generatePositionBetween(a: Position, b: Position | null) {
+  return { int: a.int, frac: generateKeyBetween(a.frac, a.int === b?.int ? b.frac : null) };
+}
+
+export function generateDefaultPosition(createdAt: Date) {
+  return { int: createdAt.getTime(), frac: generateKeyBetween(null, null) };
 }
 
 // probably sketch but fun for now
@@ -32,3 +51,4 @@ export function makeAutoSaving<T>(store: T, propertiesToSave: { [K in keyof T]?:
     }
   });
 }
+export type Position = { int: number; frac: string };

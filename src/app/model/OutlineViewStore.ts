@@ -1,20 +1,20 @@
 import { makeAutoObservable } from "mobx";
-import { GraphNode, GraphNodeProps } from "./GraphNode";
-import { GraphStore } from "./GraphStore";
+import { GraphNode } from "./GraphNode";
+import { GraphRelation } from "./GraphRelation";
+import { GraphStore, defaultRelationTypes } from "./GraphStore";
 import { Bullet } from "./OutlineBullet";
 import { ViewStore } from "./ViewStore";
 
 export class OutlineViewStore {
-  private graphStore: GraphStore;
+  public graphStore: GraphStore;
   private viewStore: ViewStore;
-  private viewsByNodeId: Map<string, Bullet>;
   public root: Bullet | null = null;
   public relatedNodesViewType: "all" | "pinned" = "all";
+  public bulletsById: Map<string, Bullet> = new Map();
 
   constructor(graphStore: GraphStore, viewStore: ViewStore) {
     this.graphStore = graphStore;
     this.viewStore = viewStore;
-    this.viewsByNodeId = new Map();
     makeAutoObservable(this);
   }
 
@@ -42,48 +42,21 @@ export class OutlineViewStore {
     this.viewStore.removeNodeView(view);
   }
 
-  viewForNode(node: GraphNode) {
-    const existing = this.viewsByNodeId.get(node.id);
-    if (existing) return existing;
-
-    const bullet = new Bullet(this, node);
-    this.viewsByNodeId.set(node.id, bullet);
-    return bullet;
-  }
-
-  createBullet({
-    parent,
-    graphNodeProps,
-    target,
-    side = "above",
-  }: {
-    parent: Bullet;
-    graphNodeProps?: GraphNodeProps;
-    target?: Bullet;
-    side?: "above" | "below";
-  }) {
-    const graphNode = this.graphStore.createNode(graphNodeProps);
-    const relation = this.graphStore.createRelation(
-      {
-        from: parent.graphNode,
-        to: graphNode,
-        type: this.graphStore.relationTypesById.child,
-      },
-      {
-        fromTarget: target?.graphRelation!,
-        fromSide: side,
-      },
-    );
-    const bullet = new Bullet(this, graphNode, { relation, parent });
+  createBullet({ parent, node, relation }: { parent: Bullet; node: GraphNode; relation: GraphRelation }) {
+    const bullet = new Bullet(this, node, { parent, relation });
+    this.bulletsById.set(bullet.id, bullet);
     parent.childrenByRelationId.set(relation.id, bullet);
     return bullet;
   }
 
-  createPinnedBullet(bullet: Bullet, { target, side }: { target: Bullet; side: "above" | "below" }) {
-    bullet.parent?.graphNode.pinRelation({ target: target.graphRelation!, side }, bullet.graphRelation!);
-    const newBullet = new Bullet(this, bullet.graphNode, { relation: bullet.graphRelation!, parent: bullet.parent! });
-    bullet.parent?.pinnedByRelationId.set(newBullet.graphRelation!.id, newBullet);
-    return newBullet;
+  deleteBullet(bullet: Bullet) {
+    this.graphStore.deleteRelation(bullet.graphRelation!);
+    // TODO: ideally all this happens in reaction to the above
+    this.bulletsById.delete(bullet.id);
+    if (bullet.graphRelation) {
+      bullet.parent?.childrenByRelationId.delete(bullet.graphRelation.id);
+      bullet.parent?.pinnedByRelationId.delete(bullet.graphRelation.id);
+    }
   }
 
   moveBulletToNewParent(
@@ -114,6 +87,9 @@ export class OutlineViewStore {
       throw new Error("Can't split bullet with no parent");
       // TODO this shouldn't be possible?
     }
+    if (!bullet.graphRelation) {
+      throw new Error("Can't split bullet with no relation");
+    }
     const text = bullet.graphNode.text;
     end = end ?? start;
     // Update the existing node with the text before the cursor
@@ -122,30 +98,15 @@ export class OutlineViewStore {
     // Create a new node below, with the text after the cursor
     const textAfter = text.slice(end);
 
-    if (bullet.isPinned) {
-      const bulletInAllRelationsSection = this.createBullet({
-        graphNodeProps: { text: textAfter },
-        parent: bullet.parent!,
-        target: bullet,
-        side: "below",
-      });
-      return this.createPinnedBullet(bulletInAllRelationsSection, { target: bullet, side: "below" });
-    } else {
-      return this.createBullet({
-        graphNodeProps: { text: textAfter },
-        parent: bullet.parent!,
-        target: bullet,
-        side: "below",
-      });
-    }
-  }
-
-  deleteNode(bullet: Bullet) {
-    const parent = bullet.parent;
-    if (!parent) throw new Error("Node has no parent");
-    parent.childrenByRelationId.delete(bullet.graphRelation?.id ?? "");
-    this.graphStore.deleteNode(bullet.graphNode.id);
-    this.removeNodeView(bullet);
+    const graphNode = this.graphStore.createNode({ text: textAfter });
+    const relation = this.graphStore.createRelation({
+      from: bullet.parent.graphNode,
+      to: graphNode,
+      type: defaultRelationTypes.child,
+    });
+    const newBullet = this.createBullet({ parent: bullet.parent, node: graphNode, relation });
+    newBullet.moveAfterSibling(bullet);
+    return newBullet;
   }
 
   setGraphNodeOnBullet(bullet: Bullet, graphNode: GraphNode) {
@@ -155,6 +116,6 @@ export class OutlineViewStore {
       this.graphStore.updateRelationFrom({ newFrom: graphNode }, bullet.graphRelation!);
     }
     bullet.graphNode = graphNode;
-    bullet.childrenByRelationId = new Map(); // TODO sketch
+    this.deleteBullet(bullet);
   }
 }

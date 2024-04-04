@@ -20,6 +20,7 @@ export class GraphRelation {
   public from: GraphNode;
   public to: GraphNode;
   public type: GraphRelationType;
+  public createdAt: Date = new Date();
   private store: GraphStore;
 
   constructor(store: GraphStore, { from, to, type }: GraphRelationProps) {

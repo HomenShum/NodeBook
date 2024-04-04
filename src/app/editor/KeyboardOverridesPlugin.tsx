@@ -63,23 +63,19 @@ const makeBulletKeyCommands = (
           event.stopPropagation();
           const root = viewStore.root;
           if (!root) return false;
-          const newBullet = root.createRelatedBullet();
+          const newBullet = root.createChild();
           viewStore.setFocusedNode(newBullet);
           return true;
         } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
           if (!siblingAbove) return false;
           // TODO: is this sketchy?
           event.preventDefault();
-          const pos = siblingAbove.position;
-          siblingAbove.position = bullet.position;
-          bullet.position = pos;
+          bullet.moveAfterSibling(siblingAbove);
           return true;
         } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowDown") {
           if (!siblingBelow) return false;
           event.preventDefault();
-          const pos = siblingBelow.position;
-          siblingBelow.position = bullet.position;
-          bullet.position = pos;
+          siblingBelow.moveAfterSibling(bullet);
           return true;
         }
         return false;
