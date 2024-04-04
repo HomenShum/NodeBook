@@ -52,7 +52,6 @@ export const BulletView = observer(
   ({ bullet, position, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
     const viewStore = useViewStore();
     const graphStore = useGraphStore();
-    const [replacing, setReplacing] = useState(false);
     // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
 
@@ -71,11 +70,7 @@ export const BulletView = observer(
           >
             {/* toggle, bullet, menu */}
             <div className="flex items-center gap-1">
-              <BulletMenu
-                bullet={bullet}
-                setReplacing={setReplacing}
-                setUpdatingRelationType={setUpdatingRelationType}
-              />
+              <BulletMenu bullet={bullet} setUpdatingRelationType={setUpdatingRelationType} />
               <Toggle bullet={bullet} />
               <Dot
                 strokeWidth={7}
@@ -97,13 +92,13 @@ export const BulletView = observer(
                 {!isChild || updatingRelationType ? (
                   <RelationCombobox bullet={bullet} setUpdatingRelationType={setUpdatingRelationType} />
                 ) : null}
-                {!replacing ? (
+                {!bullet.replacing ? (
                   <BulletEditor bullet={bullet} siblingAbove={siblingAbove} siblingBelow={siblingBelow} />
                 ) : (
-                  <ReplacingNodeView bullet={bullet} setReplacing={setReplacing} />
+                  <ReplacingNodeView bullet={bullet} />
                 )}
               </div>
-              {viewStore.showNodeDetails && !replacing && <BulletDetails bullet={bullet} position={position} />}
+              {viewStore.showNodeDetails && !bullet.replacing && <BulletDetails bullet={bullet} position={position} />}
             </div>
           </div>
           {bullet.isExpanded && <BulletChildren bullet={bullet} depth={depth + 1} parents={[...parents, bullet]} />}
@@ -114,15 +109,7 @@ export const BulletView = observer(
 );
 
 const BulletMenu = observer(
-  ({
-    bullet,
-    setReplacing,
-    setUpdatingRelationType,
-  }: {
-    bullet: Bullet;
-    setReplacing: (v: boolean) => void;
-    setUpdatingRelationType: (v: boolean) => void;
-  }) => {
+  ({ bullet, setUpdatingRelationType }: { bullet: Bullet; setUpdatingRelationType: (v: boolean) => void }) => {
     const viewStore = useViewStore();
     const graphStore = useGraphStore();
     return (
@@ -134,7 +121,7 @@ const BulletMenu = observer(
           <DropdownMenuItem onSelect={() => graphStore.deleteRelation(bullet.graphRelation!)}>
             Delete relation
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setReplacing(true)}>Replace related node</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => bullet.setReplacing(true)}>Replace related node</DropdownMenuItem>
           {bullet.isPinned ? (
             <DropdownMenuItem onSelect={() => bullet.unpin()}>Unpin</DropdownMenuItem>
           ) : (
@@ -190,22 +177,20 @@ const BulletDetails = observer(({ bullet, position }: { bullet: Bullet; position
   );
 });
 
-const ReplacingNodeView = observer(
-  ({ bullet, setReplacing }: { bullet: Bullet; setReplacing: (v: boolean) => void }) => {
-    return (
-      <div className="ml-4 flex-1">
-        <SearchNodes
-          currentNode={bullet.graphNode}
-          onSelect={(graphNode) => {
-            bullet.setGraphNode(graphNode);
-            setReplacing(false);
-          }}
-          cancel={() => {}}
-        />
-      </div>
-    );
-  },
-);
+const ReplacingNodeView = observer(({ bullet }: { bullet: Bullet }) => {
+  return (
+    <div className="ml-4 flex-1">
+      <SearchNodes
+        currentNode={bullet.graphNode}
+        onSelect={(graphNode) => {
+          bullet.setGraphNode(graphNode);
+          bullet.setReplacing(false);
+        }}
+        cancel={() => {}}
+      />
+    </div>
+  );
+});
 
 function SearchNodes({
   currentNode,

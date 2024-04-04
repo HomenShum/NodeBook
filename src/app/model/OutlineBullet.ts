@@ -24,6 +24,7 @@ export class Bullet implements GraphNodeView {
   public isAllRelationsExpanded: boolean;
   public childrenByRelationId: Map<string, Bullet>; // TODO rename
   public pinnedByRelationId: Map<string, Bullet>;
+  public replacing = false;
 
   constructor(
     store: OutlineViewStore,
@@ -56,6 +57,10 @@ export class Bullet implements GraphNodeView {
     });
 
     this.viewStore.registerNodeView(this);
+  }
+
+  setReplacing(replacing: boolean) {
+    this.replacing = replacing;
   }
 
   togglePinnedExpanded() {

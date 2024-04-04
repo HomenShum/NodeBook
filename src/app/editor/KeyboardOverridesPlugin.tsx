@@ -66,6 +66,13 @@ const makeBulletKeyCommands = (
           const newBullet = root.createChild();
           viewStore.setFocusedNode(newBullet);
           return true;
+        } else if (event.key === "@" && bullet.graphNode.text === "") {
+          // When user types "@" at the beginning of a bullet, we set it to
+          // replacing mode, where you can select a different node for the
+          // bullet to represent.
+          event.preventDefault();
+          bullet.setReplacing(true);
+          return true;
         } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
           if (!siblingAbove) return false;
           // TODO: is this sketchy?
