@@ -56,7 +56,9 @@ export const BulletView = observer(
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
 
     const hasChildren =
-      bullet.childrenWithPositions.filter((x) => x.bullet.graphRelation?.id !== bullet.graphRelation?.id).length > 0;
+      bullet.childrenWithPositions.filter(
+        (x) => x.bullet.graphRelation?.id !== bullet.graphRelation?.id && !x.bullet.graphNode.isRoot,
+      ).length > 0;
 
     const isSelected = viewStore.selectedNodes.has(bullet);
     const isChild =
