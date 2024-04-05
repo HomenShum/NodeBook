@@ -17,18 +17,20 @@ export const ThoughtstreamView = observer(() => {
       }}
     >
       <div className="ml-12">
-        <h1 className="text-2xl font-bold select-none">{root.graphNode.text}</h1>
+        <div className="flex align-center gap-2">
+          <h1 className="text-2xl font-bold select-none">{root.graphNode.text}</h1>
+          <button
+            className="select-none"
+            onClick={() => {
+              const bullet = root.createChild({});
+              viewStore.setFocusedNode(bullet);
+            }}
+          >
+            +
+          </button>
+        </div>
       </div>
       <BulletChildren bullet={root} depth={0} parents={[]} />
-      <button
-        className="select-none"
-        onClick={() => {
-          const bullet = root.createChild({});
-          viewStore.setFocusedNode(bullet);
-        }}
-      >
-        +
-      </button>
     </div>
   );
 });
