@@ -77,7 +77,7 @@ export const BulletView = observer(
                 className={cn(
                   "cursor-pointer w-4 h-full",
                   // When the parent is a bundle, only show bullets on hover
-                  bullet.parent!.type === "bundle"
+                  bullet.parent?.type === "bundle"
                     ? viewStore.hoveredNode?.id === bullet.id
                       ? "text-grey-800"
                       : "text-transparent"

@@ -73,7 +73,8 @@ export const RelationCombobox = observer(
       ])
       .flat()
       .filter(({ label }) => label.toLowerCase().includes(search.toLowerCase()));
-    if (search.length > 0) {
+    const parent = bullet.parent;
+    if (search.length > 0 && parent !== null) {
       items.push({
         key: "new",
         label: `Create "${search}" relation type`,
@@ -85,7 +86,7 @@ export const RelationCombobox = observer(
           });
           graphStore.deleteRelation(bullet.graphRelation!);
           const rel = graphStore.createRelation({
-            from: bullet.parent!.graphNode,
+            from: parent.graphNode,
             to: graphNode,
             type: relationType,
           });

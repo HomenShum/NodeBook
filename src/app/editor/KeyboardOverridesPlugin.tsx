@@ -100,7 +100,11 @@ const makeBulletKeyCommands = (
             console.log("Can't shift tab because no grandparent to move to");
             return false;
           }
-          viewStore.moveBulletToNewParent({ parent: grandparent, target: bullet.parent! }, bullet);
+          if (!bullet.parent) {
+            console.log("Can't shift tab because no parent to move to");
+            return false;
+          }
+          viewStore.moveBulletToNewParent({ parent: grandparent, target: bullet.parent }, bullet);
           return true;
         } else {
           if (!siblingAbove || !(siblingAbove instanceof Bullet)) {

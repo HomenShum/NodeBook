@@ -12,18 +12,38 @@ export const defaultRelationTypes = {
   relatesTo: { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
 };
 
+export const USER_ROOT_ID = "user-root-id";
+export const OUTLINE_ROOT_ID = "outline-root-id";
+export const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
+
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
   isLoading = false;
   remote?: RemoteGraphStore;
   public relationTypesById: Record<string, GraphRelationType> = {};
-  root: GraphNode;
+  userRoot: GraphNode;
+  outlineRoot: GraphNode;
+  thoughtstreamRoot: GraphNode;
+  outlineRootRelationToUserRoot: GraphRelation;
+  thoughtstreamRootRelationToUserRoot: GraphRelation;
   constructor(remote?: RemoteGraphStore) {
     this.remote = remote;
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
-    this.root = this.createRoot();
+    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, text: "Root" });
+    this.userRoot = this.createNode({ id: USER_ROOT_ID, text: "User" });
+    this.thoughtstreamRoot = this.createNode({ id: THOUGHTSTREAM_ROOT_ID, text: "Thoughtstream" });
+    this.outlineRootRelationToUserRoot = this.createRelation({
+      from: this.userRoot,
+      to: this.outlineRoot,
+      type: this.relationTypesById.child,
+    });
+    this.thoughtstreamRootRelationToUserRoot = this.createRelation({
+      from: this.userRoot,
+      to: this.thoughtstreamRoot,
+      type: this.relationTypesById.child,
+    });
   }
 
   createRoot() {
@@ -297,7 +317,7 @@ export class GraphStore {
   addNodeFromServer(persistedNode: PersistedGraphNode) {
     const node = this.createNode({ id: persistedNode.id, text: persistedNode.text }, { fromServer: true });
     if (node.id === ROOT_ID) {
-      this.root = node;
+      this.outlineRoot = node;
     }
   }
 

@@ -16,6 +16,10 @@ export class OutlineViewStore {
     this.graphStore = graphStore;
     this.viewStore = viewStore;
     makeAutoObservable(this);
+    this.root = this.createBullet({
+      node: this.graphStore.outlineRoot,
+      relation: this.graphStore.outlineRootRelationToUserRoot,
+    });
   }
 
   setRelatedNodesViewType(type: "all" | "pinned") {
@@ -42,10 +46,10 @@ export class OutlineViewStore {
     this.viewStore.removeNodeView(view);
   }
 
-  createBullet({ parent, node, relation }: { parent: Bullet; node: GraphNode; relation: GraphRelation }) {
-    const bullet = new Bullet(this, node, { parent, relation });
+  createBullet({ parent, node, relation }: { parent?: Bullet; node: GraphNode; relation: GraphRelation }) {
+    const bullet = new Bullet(this, node, relation, { parent });
     this.bulletsById.set(bullet.id, bullet);
-    parent.childrenByRelationId.set(relation.id, bullet);
+    parent?.childrenByRelationId.set(relation.id, bullet);
     return bullet;
   }
 
