@@ -9,7 +9,7 @@ import { OutlineViewStore } from "./OutlineViewStore";
 export class Bullet implements GraphNodeView {
   public type: GraphNodeViewType = "bullet";
 
-  private viewStore: OutlineViewStore;
+  private outlineStore: OutlineViewStore;
 
   public id: string;
 
@@ -40,7 +40,7 @@ export class Bullet implements GraphNodeView {
       id?: string;
     } = {},
   ) {
-    this.viewStore = store;
+    this.outlineStore = store;
     this.graphNode = node;
     this.graphRelation = relation;
     this.parent = parent ?? null;
@@ -55,7 +55,7 @@ export class Bullet implements GraphNodeView {
       childrenByRelationId: false,
     });
 
-    this.viewStore.registerNodeView(this);
+    this.outlineStore.registerNodeView(this);
   }
 
   setReplacing(replacing: boolean) {
@@ -71,8 +71,8 @@ export class Bullet implements GraphNodeView {
   }
 
   createChild(props: GraphNodeProps = {}): Bullet {
-    const node = this.viewStore.graphStore.createNode(props);
-    const relation = this.viewStore.graphStore.createRelation({
+    const node = this.outlineStore.graphStore.createNode(props);
+    const relation = this.outlineStore.graphStore.createRelation({
       from: this.graphNode,
       to: node,
       type: defaultRelationTypes.child,
@@ -81,19 +81,19 @@ export class Bullet implements GraphNodeView {
     // in lot of different places but this is the only place where it'd add
     // to the outline / thoughtstream view
     if (this.graphNode.id === THOUGHTSTREAM_ROOT_ID) {
-      this.viewStore.graphStore.createRelation({
-        from: this.viewStore.graphStore.outlineRoot,
+      this.outlineStore.graphStore.createRelation({
+        from: this.outlineStore.graphStore.outlineRoot,
         to: node,
         type: defaultRelationTypes.child,
       });
     } else {
-      this.viewStore.graphStore.createRelation({
-        from: this.viewStore.graphStore.thoughtstreamRoot,
+      this.outlineStore.graphStore.createRelation({
+        from: this.outlineStore.graphStore.thoughtstreamRoot,
         to: node,
         type: defaultRelationTypes.child,
       });
     }
-    return this.viewStore.createBullet({ parent: this, node, relation });
+    return this.outlineStore.createBullet({ parent: this, node, relation });
   }
 
   isRelationToThis() {
@@ -109,11 +109,11 @@ export class Bullet implements GraphNodeView {
   }
 
   setGraphNode(graphNode: GraphNode) {
-    this.viewStore.setGraphNodeOnBullet(this, graphNode);
+    this.outlineStore.setGraphNodeOnBullet(this, graphNode);
   }
 
   delete() {
-    this.viewStore.deleteBullet(this);
+    this.outlineStore.deleteBullet(this);
   }
 
   toggleExpanded() {
@@ -121,7 +121,7 @@ export class Bullet implements GraphNodeView {
   }
 
   get isFocused() {
-    return this.viewStore.focusedNode?.id === this.id;
+    return this.outlineStore.focusedNode?.id === this.id;
   }
 
   get ancestors() {
@@ -142,7 +142,7 @@ export class Bullet implements GraphNodeView {
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
         // TODO should use createBullet
-        const newBullet = new Bullet(this.viewStore, relatedNode, relation, { parent: this });
+        const newBullet = new Bullet(this.outlineStore, relatedNode, relation, { parent: this });
         this.childrenByRelationId.set(relation.id, newBullet);
         return { bullet: newBullet, position };
       }
@@ -162,7 +162,7 @@ export class Bullet implements GraphNodeView {
         return { bullet, position };
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
-        const newBullet = new Bullet(this.viewStore, relatedNode, relation, { parent: this });
+        const newBullet = new Bullet(this.outlineStore, relatedNode, relation, { parent: this });
         this.pinnedByRelationId.set(relation.id, newBullet);
         return { bullet: newBullet, position };
       }
@@ -228,6 +228,10 @@ export class Bullet implements GraphNodeView {
     return Array.from(this.parent?.pinnedByRelationId.values() ?? [])
       .map((b) => b.id)
       .includes(this.id);
+  }
+
+  get isParent() {
+    return this.graphRelation.type.id === defaultRelationTypes.child.id && !this.isRelationToThis();
   }
 
   pin() {

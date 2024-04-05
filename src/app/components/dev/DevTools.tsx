@@ -23,11 +23,20 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewStore.showDirectParent}
-            onChange={(e) => viewStore.setShowDirectParent(e.target.checked)}
+            checked={viewStore.hideDirectParent}
+            onChange={(e) => viewStore.setHideDirectParent(e.target.checked)}
             className="mr-2 mb-2"
           />
-          Show direct parent of node
+          Hide direct parent of node
+        </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={viewStore.hideAllRootParents}
+            onChange={(e) => viewStore.setHideDirectParent(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Hide all root parents
         </label>
         <div className="flex gap-2">
           <label>Relation view:</label>

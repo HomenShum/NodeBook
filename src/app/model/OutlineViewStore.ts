@@ -7,7 +7,7 @@ import { ViewStore } from "./ViewStore";
 
 export class OutlineViewStore {
   public graphStore: GraphStore;
-  private viewStore: ViewStore;
+  public viewStore: ViewStore;
   public root: Bullet | null = null;
   public thoughtstream: Bullet;
   public relatedNodesViewType: "all" | "pinned" = "all";

@@ -35,7 +35,8 @@ export class ViewStore {
   public showNodeDetails = false;
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
-  public showDirectParent = false;
+  public hideDirectParent = false;
+  public hideAllRootParents = true;
 
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;
@@ -47,7 +48,7 @@ export class ViewStore {
       showNodeDetails: true,
       leftSidebarOpen: true,
       rightSidebarOpen: true,
-      showDirectParent: true,
+      hideDirectParent: true,
     });
   }
 
@@ -81,8 +82,12 @@ export class ViewStore {
     this.showNodeDetails = show;
   }
 
-  setShowDirectParent(show: boolean) {
-    this.showDirectParent = show;
+  setHideDirectParent(show: boolean) {
+    this.hideDirectParent = show;
+  }
+
+  setHideAllRootParents(show: boolean) {
+    this.hideAllRootParents = show;
   }
 
   registerNodeView(view: GraphNodeView) {

@@ -69,39 +69,25 @@ export const BulletView = observer(
       <>
         <div className={cn("flex flex-col align-start", isSelected ? "bg-sky-200" : "")}>
           <div
-            className="flex items-center gap-1 my-1"
+            className="flex items-center gap-1 my-1 relative"
             onMouseEnter={() => viewStore.setHoveredNode(bullet)}
             onMouseLeave={() => viewStore.setHoveredNode(null)}
           >
             {/* toggle, bullet, menu */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 absolute right-full">
               <BulletMenu bullet={bullet} setUpdatingRelationType={setUpdatingRelationType} />
-              <Toggle bullet={bullet} />
-              <div className="w-4 relative h-4 mr-1">
-                {hasChildren && !bullet.isExpanded && (
-                  <Dot
-                    stroke="#ddd"
-                    height={16}
-                    strokeWidth={18}
-                    className={cn(
-                      "cursor-pointer absolute top-0",
-                      // When the parent is a bundle, only show bullets on hover
-                      bullet.parent?.type === "bundle"
-                        ? viewStore.hoveredNode?.id === bullet.id
-                          ? "text-grey-800"
-                          : "text-transparent"
-                        : "",
-                    )}
-                    onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
-                  />
-                )}
+              {hasChildren && <Toggle bullet={bullet} />}
+            </div>
+            <div className="w-4 relative h-4 mr-1">
+              {hasChildren && !bullet.isExpanded && (
                 <Dot
-                  strokeWidth={7}
+                  stroke="#ddd"
                   height={16}
+                  strokeWidth={18}
                   className={cn(
                     "cursor-pointer absolute top-0",
                     // When the parent is a bundle, only show bullets on hover
-                    bullet.parent!.type === "bundle"
+                    bullet.parent?.type === "bundle"
                       ? viewStore.hoveredNode?.id === bullet.id
                         ? "text-grey-800"
                         : "text-transparent"
@@ -109,7 +95,21 @@ export const BulletView = observer(
                   )}
                   onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
                 />
-              </div>
+              )}
+              <Dot
+                strokeWidth={7}
+                height={16}
+                className={cn(
+                  "cursor-pointer absolute top-0",
+                  // When the parent is a bundle, only show bullets on hover
+                  bullet.parent!.type === "bundle"
+                    ? viewStore.hoveredNode?.id === bullet.id
+                      ? "text-grey-800"
+                      : "text-transparent"
+                    : "",
+                )}
+                onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
+              />
             </div>
             {/* relation and node */}
             <div className="flex flex-col flex-1">

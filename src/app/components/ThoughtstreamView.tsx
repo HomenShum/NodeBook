@@ -7,7 +7,7 @@ export const ThoughtstreamView = observer(() => {
   const root = viewStore.outlineViewStore.thoughtstream;
   return (
     <div
-      style={{ width: "100%" }}
+      className="w-full px-8"
       onKeyDown={(e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
           console.log("create node");

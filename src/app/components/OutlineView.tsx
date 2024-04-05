@@ -12,7 +12,8 @@ export const OutlineView = observer(() => {
 
   return (
     <div
-      style={{ width: "100%", maxWidth: 1000 }}
+      className="w-full px-8"
+      style={{ maxWidth: 1000 }}
       onKeyDown={(e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
           console.log("create node");
