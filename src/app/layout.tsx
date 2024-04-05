@@ -13,9 +13,6 @@ import { ViewStoreProvider } from "./store/useViewStore";
 // Initialize stores
 const graphStore = new GraphStore(env.isPersistenceEnabled ? new RemoteGraphStore() : undefined);
 const loadedPromise = env.isPersistenceEnabled ? graphStore.loadFromServer() : Promise.resolve();
-if (!env.isPersistenceEnabled) {
-  graphStore.createRoot();
-}
 const appViewStore = new ViewStore(graphStore);
 const outlineViewStore = appViewStore.outlineViewStore;
 outlineViewStore.setRoot(

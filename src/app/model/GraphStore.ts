@@ -1,7 +1,7 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { makeAutoObservable } from "mobx";
 import { comparePositions, uuid } from "../util";
-import { GraphNode, GraphNodeProps, ROOT_ID } from "./GraphNode";
+import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
@@ -46,14 +46,10 @@ export class GraphStore {
     });
   }
 
-  createRoot() {
-    return this.createNode({ id: ROOT_ID, text: "Root" });
-  }
-
   getTopNode(): GraphNode | undefined {
     return this.nodes.reduce((top, node) => {
       return comparePositions(top.thoughtstreamPosition, node.thoughtstreamPosition) > 0 ? top : node;
-    }, this.root);
+    }, this.outlineRoot);
   }
 
   get nodes(): GraphNode[] {
