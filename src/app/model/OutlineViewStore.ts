@@ -1,7 +1,7 @@
 import { makeAutoObservable } from "mobx";
 import { GraphNode } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
-import { GraphStore, defaultRelationTypes } from "./GraphStore";
+import { GraphStore } from "./GraphStore";
 import { Bullet } from "./OutlineBullet";
 import { ViewStore } from "./ViewStore";
 
@@ -107,13 +107,7 @@ export class OutlineViewStore {
     // Create a new node below, with the text after the cursor
     const textAfter = text.slice(end);
 
-    const graphNode = this.graphStore.createNode({ text: textAfter });
-    const relation = this.graphStore.createRelation({
-      from: bullet.parent.graphNode,
-      to: graphNode,
-      type: defaultRelationTypes.child,
-    });
-    const newBullet = this.createBullet({ parent: bullet.parent, node: graphNode, relation });
+    const newBullet = bullet.parent.createChild({ text: textAfter });
     newBullet.moveAfterSibling(bullet);
     return newBullet;
   }

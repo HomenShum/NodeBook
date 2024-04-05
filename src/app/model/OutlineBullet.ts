@@ -1,9 +1,9 @@
 import { makeAutoObservable } from "mobx";
 import { comparePositions, generateDefaultPosition, generatePositionBetween, uuid } from "../util";
-import { GraphNode } from "./GraphNode";
+import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphNodeView, GraphNodeViewType } from "./GraphNodeView";
 import { GraphRelation } from "./GraphRelation";
-import { defaultRelationTypes } from "./GraphStore";
+import { THOUGHTSTREAM_ROOT_ID, defaultRelationTypes } from "./GraphStore";
 import { OutlineViewStore } from "./OutlineViewStore";
 
 export class Bullet implements GraphNodeView {
@@ -70,13 +70,29 @@ export class Bullet implements GraphNodeView {
     this.isAllRelationsExpanded = !this.isAllRelationsExpanded;
   }
 
-  createChild(): Bullet {
-    const node = this.viewStore.graphStore.createNode();
+  createChild(props: GraphNodeProps = {}): Bullet {
+    const node = this.viewStore.graphStore.createNode(props);
     const relation = this.viewStore.graphStore.createRelation({
       from: this.graphNode,
       to: node,
       type: defaultRelationTypes.child,
     });
+    // TODO: this doesn't belong here. like you can create nodes and relations
+    // in lot of different places but this is the only place where it'd add
+    // to the outline / thoughtstream view
+    if (this.graphNode.id === THOUGHTSTREAM_ROOT_ID) {
+      this.viewStore.graphStore.createRelation({
+        from: this.viewStore.graphStore.outlineRoot,
+        to: node,
+        type: defaultRelationTypes.child,
+      });
+    } else {
+      this.viewStore.graphStore.createRelation({
+        from: this.viewStore.graphStore.thoughtstreamRoot,
+        to: node,
+        type: defaultRelationTypes.child,
+      });
+    }
     return this.viewStore.createBullet({ parent: this, node, relation });
   }
 
