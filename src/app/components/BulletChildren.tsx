@@ -9,8 +9,11 @@ export const BulletChildren = observer(
     const viewStore = useViewStore();
     const viewType = viewStore.outlineViewStore.relatedNodesViewType;
 
-    const children = bullet.childrenWithPositions.sort((a, b) => comparePositions(a.position, b.position));
+    let children = bullet.childrenWithPositions.sort((a, b) => comparePositions(a.position, b.position));
     const pinnedChildren = bullet.pinnedChildrenWithPositions.sort((a, b) => comparePositions(a.position, b.position));
+    if (!viewStore.showDirectParent) {
+      children = children.filter((x) => x.bullet.graphRelation?.id !== bullet.graphRelation?.id);
+    }
 
     return (
       <div className={bullet.type === "bullet" && depth > 0 ? "ml-8" : ""}>

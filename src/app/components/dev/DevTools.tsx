@@ -11,7 +11,7 @@ export const DevTools = observer(() => {
     <div className="p-2 mb-4 max-h-96 overflow-y-auto flex flex-col">
       <h1 className="text-xl font-bold mb-2">Dev Tools</h1>
       <div className="flex flex-col gap-2">
-        <label className="cursor-pointer mb-2">
+        <label className="cursor-pointer">
           <input
             type="checkbox"
             checked={viewStore.showNodeDetails}
@@ -19,6 +19,15 @@ export const DevTools = observer(() => {
             className="mr-2 mb-2"
           />
           Show node details in view
+        </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={viewStore.showDirectParent}
+            onChange={(e) => viewStore.setShowDirectParent(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Show direct parent of node
         </label>
         <div className="flex gap-2">
           <label>Relation view:</label>

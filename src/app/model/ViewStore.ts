@@ -35,6 +35,7 @@ export class ViewStore {
   public showNodeDetails = false;
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
+  public showDirectParent = true;
 
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;
@@ -46,6 +47,7 @@ export class ViewStore {
       showNodeDetails: true,
       leftSidebarOpen: true,
       rightSidebarOpen: true,
+      showDirectParent: true,
     });
   }
 
@@ -77,6 +79,10 @@ export class ViewStore {
 
   setShowNodeDetails(show: boolean) {
     this.showNodeDetails = show;
+  }
+
+  setShowDirectParent(show: boolean) {
+    this.showDirectParent = show;
   }
 
   registerNodeView(view: GraphNodeView) {
