@@ -9,6 +9,7 @@ export class OutlineViewStore {
   public graphStore: GraphStore;
   private viewStore: ViewStore;
   public root: Bullet | null = null;
+  public thoughtstream: Bullet;
   public relatedNodesViewType: "all" | "pinned" = "all";
   public bulletsById: Map<string, Bullet> = new Map();
 
@@ -19,6 +20,10 @@ export class OutlineViewStore {
     this.root = this.createBullet({
       node: this.graphStore.outlineRoot,
       relation: this.graphStore.outlineRootRelationToUserRoot,
+    });
+    this.thoughtstream = this.createBullet({
+      node: this.graphStore.thoughtstreamRoot,
+      relation: this.graphStore.thoughtstreamRootRelationToUserRoot,
     });
   }
 

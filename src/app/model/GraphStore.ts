@@ -1,6 +1,6 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { makeAutoObservable } from "mobx";
-import { comparePositions, uuid } from "../util";
+import { comparePositions, generateDefaultPosition, uuid } from "../util";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { RemoteGraphStore } from "./RemoteGraphStore";
@@ -70,6 +70,15 @@ export class GraphStore {
       text: props.text,
     });
     this.nodesById.set(node.id, node);
+    const relation = this.createRelation({
+      from: this.thoughtstreamRoot,
+      to: node,
+      type: this.relationTypesById.child,
+    });
+    this.thoughtstreamRoot.allRelationsById.set(relation.id, {
+      relation,
+      position: generateDefaultPosition(node.createdAt),
+    });
     // if (!fromServer && this.remote) {
     //   this.remote.upsertNode(node.id, node.text, node.thoughtstreamPosition);
     // }

@@ -1,31 +1,23 @@
 import { observer } from "mobx-react-lite";
 import { useViewStore } from "../store/useViewStore";
-import { comparePositions } from "../util";
-import { BulletList } from "./BulletChildren";
+import { BulletChildren } from "./BulletChildren";
 
 export const ThoughtstreamView = observer(() => {
   const viewStore = useViewStore();
 
-  const bullets = Array.from(viewStore.outlineViewStore.bulletsById.values())
-    .map((bullet) => ({
-      position: bullet.graphNode.thoughtstreamPosition,
-      bullet,
-    }))
-    .sort((a, b) => comparePositions(a.position, b.position));
+  const root = viewStore.outlineViewStore.thoughtstream;
 
   return (
     <div style={{ width: "100%" }}>
-      <BulletList bullets={bullets} parents={[]} depth={0} />
-      {/* {notes.map((note, i) => (
-        <div key={note.id} className="flex">
-          <Dot strokeWidth={4} />
-          <NoteView note={note} siblingAbove={notes[i - 1]} siblingBelow={notes[i + 1]} />
-        </div>
-      ))} */}
+      <div className="ml-12">
+        <h1 className="text-2xl font-bold select-none">{root.graphNode.text}</h1>
+      </div>
+      <BulletChildren bullet={root} depth={0} parents={[]} />
       <button
+        className="select-none"
         onClick={() => {
-          const newNote = viewStore.thoughtstreamViewStore.createNote();
-          viewStore.setFocusedNode(newNote);
+          const bullet = root.createChild();
+          viewStore.setFocusedNode(bullet);
         }}
       >
         +
