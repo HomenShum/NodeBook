@@ -1,7 +1,7 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { generateKeyBetween } from "fractional-indexing";
 import { makeAutoObservable } from "mobx";
-import { compareFractionIndices, uuid } from "../util";
+import { comparePositions, uuid } from "../util";
 import { GraphNode, GraphNodeProps, ROOT_ID } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { RemoteGraphStore } from "./RemoteGraphStore";
@@ -13,18 +13,38 @@ export const defaultRelationTypes = {
   relatesTo: { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
 };
 
+export const USER_ROOT_ID = "user-root-id";
+export const OUTLINE_ROOT_ID = "outline-root-id";
+export const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
+
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
   isLoading = false;
   remote?: RemoteGraphStore;
   public relationTypesById: Record<string, GraphRelationType> = {};
-  root: GraphNode;
+  userRoot: GraphNode;
+  outlineRoot: GraphNode;
+  thoughtstreamRoot: GraphNode;
+  outlineRootRelationToUserRoot: GraphRelation;
+  thoughtstreamRootRelationToUserRoot: GraphRelation;
   constructor(remote?: RemoteGraphStore) {
     this.remote = remote;
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
-    this.root = this.createRoot();
+    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, text: "Root" });
+    this.userRoot = this.createNode({ id: USER_ROOT_ID, text: "User" });
+    this.thoughtstreamRoot = this.createNode({ id: THOUGHTSTREAM_ROOT_ID, text: "Thoughtstream" });
+    this.outlineRootRelationToUserRoot = this.createRelation({
+      from: this.userRoot,
+      to: this.outlineRoot,
+      type: this.relationTypesById.child,
+    });
+    this.thoughtstreamRootRelationToUserRoot = this.createRelation({
+      from: this.userRoot,
+      to: this.thoughtstreamRoot,
+      type: this.relationTypesById.child,
+    });
   }
 
   createRoot() {
@@ -32,13 +52,9 @@ export class GraphStore {
   }
 
   getTopNode(): GraphNode | undefined {
-    let top: GraphNode | undefined = undefined;
-    this.nodesById.forEach((node) => {
-      if (!top || compareFractionIndices(top.thoughtstreamPosition, node.thoughtstreamPosition) > 0) {
-        top = node;
-      }
-    });
-    return top;
+    return this.nodes.reduce((top, node) => {
+      return comparePositions(top.thoughtstreamPosition, node.thoughtstreamPosition) > 0 ? top : node;
+    }, this.outlineRoot);
   }
 
   get nodes(): GraphNode[] {
@@ -304,7 +320,7 @@ export class GraphStore {
   addNodeFromServer(persistedNode: PersistedGraphNode) {
     const node = this.createNode({ id: persistedNode.id, text: persistedNode.text }, { fromServer: true });
     if (node.id === ROOT_ID) {
-      this.root = node;
+      this.outlineRoot = node;
     }
   }
 

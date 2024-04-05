@@ -17,7 +17,7 @@ export class Bullet implements GraphNodeView {
   // (maybe we should just special case the root node?)
   public graphNode: GraphNode;
   // TODO I should make this not nullable somehow
-  public graphRelation: GraphRelation | null;
+  public graphRelation: GraphRelation;
   public parent: Bullet | null;
   public isExpanded: boolean;
   public isPinnedExpanded: boolean;
@@ -29,13 +29,12 @@ export class Bullet implements GraphNodeView {
   constructor(
     store: OutlineViewStore,
     node: GraphNode,
+    relation: GraphRelation,
     {
-      relation,
       parent,
       isExpanded = false,
       id,
     }: {
-      relation?: GraphRelation;
       parent?: Bullet;
       isExpanded?: boolean;
       id?: string;
@@ -43,7 +42,7 @@ export class Bullet implements GraphNodeView {
   ) {
     this.viewStore = store;
     this.graphNode = node;
-    this.graphRelation = relation ?? null;
+    this.graphRelation = relation;
     this.parent = parent ?? null;
     this.isExpanded = isExpanded;
     this.id = id ?? uuid();
@@ -127,7 +126,7 @@ export class Bullet implements GraphNodeView {
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
         // TODO should use createBullet
-        const newBullet = new Bullet(this.viewStore, relatedNode, { relation, parent: this });
+        const newBullet = new Bullet(this.viewStore, relatedNode, relation, { parent: this });
         this.childrenByRelationId.set(relation.id, newBullet);
         return { bullet: newBullet, position };
       }
@@ -147,7 +146,7 @@ export class Bullet implements GraphNodeView {
         return { bullet, position };
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
-        const newBullet = new Bullet(this.viewStore, relatedNode, { relation, parent: this });
+        const newBullet = new Bullet(this.viewStore, relatedNode, relation, { parent: this });
         this.pinnedByRelationId.set(relation.id, newBullet);
         return { bullet: newBullet, position };
       }

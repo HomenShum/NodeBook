@@ -2,7 +2,7 @@ import { generateNKeysBetween } from "fractional-indexing";
 import { makeAutoObservable } from "mobx";
 import { Position, comparePositions } from "../util";
 import { GraphRelation, GraphRelationType } from "./GraphRelation";
-import { GraphStore } from "./GraphStore";
+import { GraphStore, OUTLINE_ROOT_ID } from "./GraphStore";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
 export type GraphNodeProps = {
@@ -20,8 +20,6 @@ export type PositionedRelation = {
   position: Position;
   relation: GraphRelation;
 };
-
-export const ROOT_ID = "root";
 
 export class GraphNode {
   public id: string;
@@ -42,7 +40,7 @@ export class GraphNode {
   }
 
   get isRoot() {
-    return this.id === ROOT_ID;
+    return this.id === OUTLINE_ROOT_ID;
   }
 
   get relations(): GraphRelation[] {

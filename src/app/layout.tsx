@@ -18,7 +18,9 @@ if (!env.isPersistenceEnabled) {
 }
 const appViewStore = new ViewStore(graphStore);
 const outlineViewStore = appViewStore.outlineViewStore;
-outlineViewStore.setRoot(new Bullet(outlineViewStore, graphStore.root));
+outlineViewStore.setRoot(
+  new Bullet(outlineViewStore, graphStore.outlineRoot, graphStore.outlineRootRelationToUserRoot),
+);
 
 // Expose stores to the window for debugging
 if (typeof window !== "undefined" && env.env !== "production") {
