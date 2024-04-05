@@ -51,11 +51,15 @@ interface Props {
 
 export function getFilteredChildren(bullet: Bullet, viewStore: ViewStore) {
   let children = bullet.childrenWithPositions.sort((a, b) => comparePositions(a.position, b.position));
-  if (viewStore.hideAllRootParents) {
-    children = children.filter((x) => !(x.bullet.isParent && x.bullet.graphNode.isRoot));
-  }
-  if (viewStore.hideDirectParent) {
-    children = children.filter((x) => x.bullet.graphRelation?.id !== bullet.graphRelation?.id);
+  if (viewStore.hideAllParents) {
+    children = children.filter((x) => !x.bullet.isParent);
+  } else {
+    if (viewStore.hideAllRootParents) {
+      children = children.filter((x) => !(x.bullet.isParent && x.bullet.graphNode.isRoot));
+    }
+    if (viewStore.hideDirectParent) {
+      children = children.filter((x) => x.bullet.graphRelation?.id !== bullet.graphRelation?.id);
+    }
   }
   return children;
 }
