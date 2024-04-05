@@ -16,7 +16,7 @@ export const ThoughtstreamView = observer(() => {
         }
       }}
     >
-      <div className="ml-12">
+      <div className="ml-2">
         <div className="flex align-center gap-2">
           <h1 className="text-2xl font-bold select-none">{root.graphNode.text}</h1>
           <button

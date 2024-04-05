@@ -22,7 +22,7 @@ export const OutlineView = observer(() => {
         }
       }}
     >
-      <div className="ml-12">
+      <div className="ml-2">
         <div>
           {ancestors.map((parent) => (
             <span
