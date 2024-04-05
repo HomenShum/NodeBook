@@ -1,6 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useViewStore } from "../store/useViewStore";
-import { BulletChildren } from "./BulletChildren";
+import { BulletList } from "./BulletChildren";
+import { getFilteredChildren } from "./BulletView/BulletView";
 
 export const OutlineView = observer(() => {
   const viewStore = useViewStore();
@@ -8,6 +9,7 @@ export const OutlineView = observer(() => {
   if (!root) {
     return <div>Missing root node</div>;
   }
+  const children = getFilteredChildren(root, viewStore);
   const ancestors = root.ancestors;
 
   return (
@@ -49,8 +51,8 @@ export const OutlineView = observer(() => {
           </button>
         </div>
       </div>
-
-      <BulletChildren bullet={root} depth={0} parents={[...ancestors, root]} />
+      {/* <BulletChildren bullet={root} depth={0} parents={[...ancestors, root]} /> */}
+      <BulletList bullets={children} parents={[...ancestors, root]} depth={0} />
     </div>
   );
 });

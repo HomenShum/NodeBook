@@ -1,10 +1,12 @@
 import { observer } from "mobx-react-lite";
 import { useViewStore } from "../store/useViewStore";
-import { BulletChildren } from "./BulletChildren";
+import { BulletList } from "./BulletChildren";
+import { getFilteredChildren } from "./BulletView/BulletView";
 
 export const ThoughtstreamView = observer(() => {
   const viewStore = useViewStore();
   const root = viewStore.outlineViewStore.thoughtstream;
+  const children = getFilteredChildren(root, viewStore);
   return (
     <div
       className="w-full px-8"
@@ -30,7 +32,8 @@ export const ThoughtstreamView = observer(() => {
           </button>
         </div>
       </div>
-      <BulletChildren bullet={root} depth={0} parents={[]} />
+      {/* <BulletChildren bullet={root} depth={0} parents={[]} /> */}
+      <BulletList bullets={children} depth={0} />
     </div>
   );
 });

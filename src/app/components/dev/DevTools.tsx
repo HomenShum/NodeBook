@@ -33,12 +33,12 @@ export const DevTools = observer(() => {
           <input
             type="checkbox"
             checked={viewStore.hideAllRootParents}
-            onChange={(e) => viewStore.setHideDirectParent(e.target.checked)}
+            onChange={(e) => viewStore.setHideAllRootParents(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide all root parents
         </label>
-        <div className="flex gap-2">
+        {/* <div className="flex gap-2">
           <label>Relation view:</label>
           <select
             value={viewStore.outlineViewStore.relatedNodesViewType}
@@ -47,7 +47,7 @@ export const DevTools = observer(() => {
             <option value="all">All related nodes only</option>
             <option value="pinned">Pinned and all nodes</option>
           </select>
-        </div>
+        </div> */}
         <Button
           size={"sm"}
           variant={"destructive"}

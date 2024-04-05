@@ -13,10 +13,11 @@ import {
 } from "@/app/components/ui/dropdown-menu";
 import { GraphNode } from "@/app/model/GraphNode";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
-import { Position } from "@/app/util";
+import { ViewStore } from "@/app/model/ViewStore";
+import { Position, comparePositions } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
-import { BulletChildren } from "../BulletChildren";
+import { BulletList } from "../BulletChildren";
 import { RelationCombobox } from "../RelationCombobox";
 
 export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
@@ -48,6 +49,17 @@ interface Props {
   position?: Position;
 }
 
+export function getFilteredChildren(bullet: Bullet, viewStore: ViewStore) {
+  let children = bullet.childrenWithPositions.sort((a, b) => comparePositions(a.position, b.position));
+  if (viewStore.hideAllRootParents) {
+    children = children.filter((x) => !(x.bullet.isParent && x.bullet.graphNode.isRoot));
+  }
+  if (viewStore.hideDirectParent) {
+    children = children.filter((x) => x.bullet.graphRelation?.id !== bullet.graphRelation?.id);
+  }
+  return children;
+}
+
 export const BulletView = observer(
   ({ bullet, position, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
     const viewStore = useViewStore();
@@ -55,10 +67,8 @@ export const BulletView = observer(
     // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
 
-    const hasChildren =
-      bullet.childrenWithPositions.filter(
-        (x) => x.bullet.graphRelation?.id !== bullet.graphRelation?.id && !x.bullet.graphNode.isRoot,
-      ).length > 0;
+    const children = getFilteredChildren(bullet, viewStore);
+    const hasChildren = children.length > 0;
 
     const isSelected = viewStore.selectedNodes.has(bullet);
     const isChild =
@@ -126,7 +136,12 @@ export const BulletView = observer(
               {viewStore.showNodeDetails && !bullet.replacing && <BulletDetails bullet={bullet} position={position} />}
             </div>
           </div>
-          {bullet.isExpanded && <BulletChildren bullet={bullet} depth={depth + 1} parents={[...parents, bullet]} />}
+          {/* {bullet.isExpanded && <BulletChildren bullet={bullet} depth={depth + 1} parents={[...parents, bullet]} />} */}
+          {bullet.isExpanded && (
+            <div className={bullet.type === "bullet" && depth + 1 > 0 ? "ml-8" : ""}>
+              <BulletList bullets={children} depth={depth + 1} parents={[...parents, bullet]} />
+            </div>
+          )}
         </div>
       </>
     );
