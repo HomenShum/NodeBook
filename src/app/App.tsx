@@ -12,11 +12,10 @@ import { RelationTypeTable } from "./components/dev/RelationTypeTable";
 import { ViewType } from "./model/ViewStore";
 import { MouseSelection } from "./selection/MouseSelection";
 import { useViewStore } from "./store/useViewStore";
-import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
 
 const App = observer(() => {
   const appContainerRef = useRef<HTMLDivElement>(null);
-  useKeyboardShortcuts();
+  // useKeyboardShortcuts();
   const viewStore = useViewStore();
 
   return (

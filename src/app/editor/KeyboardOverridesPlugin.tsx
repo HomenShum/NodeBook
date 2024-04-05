@@ -58,15 +58,7 @@ const makeBulletKeyCommands = (
       KEY_DOWN_COMMAND,
       (event) => {
         const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
-        if (metaOrCtrl && event.key === "k") {
-          event.preventDefault();
-          event.stopPropagation();
-          const root = viewStore.root;
-          if (!root) return false;
-          const newBullet = root.createChild();
-          viewStore.setFocusedNode(newBullet);
-          return true;
-        } else if (event.key === "@" && bullet.graphNode.text === "") {
+        if (event.key === "@" && bullet.graphNode.text === "") {
           // When user types "@" at the beginning of a bullet, we set it to
           // replacing mode, where you can select a different node for the
           // bullet to represent.
@@ -215,13 +207,7 @@ const makeNoteKeyCommands = (
       KEY_DOWN_COMMAND,
       (event) => {
         const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
-        if (metaOrCtrl && event.key === "k") {
-          event.preventDefault();
-          event.stopPropagation();
-          const newNote = viewStore.createNote();
-          viewStore.setFocusedNode(newNote);
-          return true;
-        } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
+        if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
           if (!siblingAbove) return false;
           // TODO: is this sketchy?
           event.preventDefault();

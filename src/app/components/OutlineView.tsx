@@ -11,7 +11,16 @@ export const OutlineView = observer(() => {
   const ancestors = root.ancestors;
 
   return (
-    <div style={{ width: "100%", maxWidth: 1000 }}>
+    <div
+      style={{ width: "100%", maxWidth: 1000 }}
+      onKeyDown={(e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+          console.log("create node");
+          const bullet = root.createChild();
+          viewStore.setFocusedNode(bullet);
+        }
+      }}
+    >
       <div className="ml-12">
         <div className="h-6">
           {ancestors.map((parent) => (
