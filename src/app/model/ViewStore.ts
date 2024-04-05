@@ -37,6 +37,7 @@ export class ViewStore {
   public rightSidebarOpen = false;
   public hideDirectParent = false;
   public hideAllRootParents = true;
+  public hideAllParents = false;
 
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;
@@ -88,6 +89,10 @@ export class ViewStore {
 
   setHideAllRootParents(show: boolean) {
     this.hideAllRootParents = show;
+  }
+
+  setHideAllParents(show: boolean) {
+    this.hideAllParents = show;
   }
 
   registerNodeView(view: GraphNodeView) {

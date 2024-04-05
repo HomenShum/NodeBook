@@ -38,6 +38,15 @@ export const DevTools = observer(() => {
           />
           Hide all root parents
         </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={viewStore.hideAllParents}
+            onChange={(e) => viewStore.setHideAllParents(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Hide all parents
+        </label>
         {/* <div className="flex gap-2">
           <label>Relation view:</label>
           <select
