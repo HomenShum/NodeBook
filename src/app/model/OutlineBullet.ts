@@ -176,9 +176,8 @@ export class Bullet implements GraphNodeView {
       if (index === -1) {
         throw new Error("Bullet is not a sibling");
       }
-      const relationAfter = relations[index + 1];
       const posBefore = relations[index]?.position;
-      const posAfter = relationAfter?.position ?? null;
+      const posAfter = relations[index + 1]?.position ?? null;
       const newPosition = posBefore
         ? generatePositionBetween(posBefore, posAfter)
         : generateDefaultPosition(graphRelation.createdAt);

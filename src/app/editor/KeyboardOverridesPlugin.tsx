@@ -77,12 +77,12 @@ const makeBulletKeyCommands = (
           if (!siblingAbove) return false;
           // TODO: is this sketchy?
           event.preventDefault();
-          bullet.moveAfterSibling(siblingAbove);
+          siblingAbove.moveAfterSibling(bullet);
           return true;
         } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowDown") {
           if (!siblingBelow) return false;
           event.preventDefault();
-          siblingBelow.moveAfterSibling(bullet);
+          bullet.moveAfterSibling(siblingBelow);
           return true;
         }
         return false;
