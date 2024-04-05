@@ -203,30 +203,30 @@ const makeNoteKeyCommands = (
       },
       COMMAND_PRIORITY_LOW,
     ),
-    editor.registerCommand(
-      KEY_DOWN_COMMAND,
-      (event) => {
-        const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
-        if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
-          if (!siblingAbove) return false;
-          // TODO: is this sketchy?
-          event.preventDefault();
-          const pos = siblingAbove.position;
-          siblingAbove.position = note.position;
-          note.position = pos;
-          return true;
-        } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowDown") {
-          if (!siblingBelow) return false;
-          event.preventDefault();
-          const pos = siblingBelow.position;
-          siblingBelow.position = note.position;
-          note.position = pos;
-          return true;
-        }
-        return false;
-      },
-      COMMAND_PRIORITY_LOW,
-    ),
+    // editor.registerCommand(
+    //   KEY_DOWN_COMMAND,
+    //   (event) => {
+    //     const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
+    //     if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
+    //       if (!siblingAbove) return false;
+    //       // TODO: is this sketchy?
+    //       event.preventDefault();
+    //       const pos = siblingAbove.position;
+    //       siblingAbove.position = note.position;
+    //       note.position = pos;
+    //       return true;
+    //     } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowDown") {
+    //       if (!siblingBelow) return false;
+    //       event.preventDefault();
+    //       const pos = siblingBelow.position;
+    //       siblingBelow.position = note.position;
+    //       note.position = pos;
+    //       return true;
+    //     }
+    //     return false;
+    //   },
+    //   COMMAND_PRIORITY_LOW,
+    // ),
   );
 };
 

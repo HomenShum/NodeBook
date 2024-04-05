@@ -306,8 +306,12 @@ export class GraphStore {
 
   addNodeFromServer(persistedNode: PersistedGraphNode) {
     const node = this.createNode({ id: persistedNode.id, text: persistedNode.text }, { fromServer: true });
-    if (node.id === ROOT_ID) {
+    if (node.id === OUTLINE_ROOT_ID) {
       this.outlineRoot = node;
+    } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
+      this.thoughtstreamRoot = node;
+    } else if (node.id === USER_ROOT_ID) {
+      this.userRoot = node;
     }
   }
 

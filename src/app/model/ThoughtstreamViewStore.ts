@@ -1,5 +1,4 @@
 import { makeAutoObservable } from "mobx";
-import { compareFractionIndices } from "../util";
 import { GraphNode } from "./GraphNode";
 import { GraphStore } from "./GraphStore";
 import { Note } from "./ThoughtstreamNote";
@@ -29,12 +28,12 @@ export class ThoughtstreamViewStore {
     return this.viewStore.focusedNode;
   }
 
-  get notes() {
-    return this.graphStore.nodes
-      .filter((node) => !node.isRoot)
-      .sort((a, b) => compareFractionIndices(a.thoughtstreamPosition, b.thoughtstreamPosition))
-      .map((node) => this.viewForNode(node));
-  }
+  // get notes() {
+  //   return this.graphStore.nodes
+  //     .filter((node) => !node.isRoot)
+  //     .sort((a, b) => compareFractionIndices(a.thoughtstreamPosition, b.thoughtstreamPosition))
+  //     .map((node) => this.viewForNode(node));
+  // }
 
   registerNodeView(view: Note) {
     this.viewStore.registerNodeView(view);
