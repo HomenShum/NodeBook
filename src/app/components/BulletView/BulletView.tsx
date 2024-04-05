@@ -55,6 +55,9 @@ export const BulletView = observer(
     // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
 
+    const hasChildren =
+      bullet.childrenWithPositions.filter((x) => x.bullet.graphRelation?.id !== bullet.graphRelation?.id).length > 0;
+
     const isSelected = viewStore.selectedNodes.has(bullet);
     const isChild =
       bullet.graphRelation?.type.id === defaultRelationTypes.child.id &&
@@ -72,19 +75,39 @@ export const BulletView = observer(
             <div className="flex items-center gap-1">
               <BulletMenu bullet={bullet} setUpdatingRelationType={setUpdatingRelationType} />
               <Toggle bullet={bullet} />
-              <Dot
-                strokeWidth={7}
-                className={cn(
-                  "cursor-pointer w-4 h-full",
-                  // When the parent is a bundle, only show bullets on hover
-                  bullet.parent?.type === "bundle"
-                    ? viewStore.hoveredNode?.id === bullet.id
-                      ? "text-grey-800"
-                      : "text-transparent"
-                    : "",
+              <div className="w-4 relative h-4 mr-1">
+                {hasChildren && !bullet.isExpanded && (
+                  <Dot
+                    stroke="#ddd"
+                    height={16}
+                    strokeWidth={18}
+                    className={cn(
+                      "cursor-pointer absolute top-0",
+                      // When the parent is a bundle, only show bullets on hover
+                      bullet.parent?.type === "bundle"
+                        ? viewStore.hoveredNode?.id === bullet.id
+                          ? "text-grey-800"
+                          : "text-transparent"
+                        : "",
+                    )}
+                    onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
+                  />
                 )}
-                onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
-              />
+                <Dot
+                  strokeWidth={7}
+                  height={16}
+                  className={cn(
+                    "cursor-pointer absolute top-0",
+                    // When the parent is a bundle, only show bullets on hover
+                    bullet.parent!.type === "bundle"
+                      ? viewStore.hoveredNode?.id === bullet.id
+                        ? "text-grey-800"
+                        : "text-transparent"
+                      : "",
+                  )}
+                  onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
+                />
+              </div>
             </div>
             {/* relation and node */}
             <div className="flex flex-col flex-1">
