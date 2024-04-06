@@ -45,7 +45,7 @@ export const NodeTable = observer(() => {
                 <input
                   value={node.text}
                   onChange={(e) => {
-                    node.setText(e.target.value);
+                    node.setContent([{type: "text", value: e.target.value}] ?? [])
                   }}
                 />
               </td>

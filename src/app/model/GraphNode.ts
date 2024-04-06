@@ -5,9 +5,14 @@ import { GraphRelation, GraphRelationType } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
+export type Chip = {
+  type: "text" | "mention",
+  value: string
+}
+
 export type GraphNodeProps = {
   id?: string;
-  text?: string;
+  content?: Chip[]
 };
 
 export type RelativePositionProps = {
@@ -22,7 +27,7 @@ export type PositionedRelation = {
 
 export class GraphNode {
   public id: string;
-  public text: string = "";
+  public content: Chip[] = [];
   public allRelationsById = new Map<string, PositionedRelation>();
   public pinnedRelationsById = new Map<string, PositionedRelation>();
   public createdAt = new Date();
@@ -30,10 +35,10 @@ export class GraphNode {
   constructor(
     private store: GraphStore,
     private remote: RemoteGraphStore | null,
-    { id, text = "" }: { id: string; text?: string },
+    { id, content = [] }: { id: string; content?: Chip[] },
   ) {
     this.id = id;
-    this.text = text;
+    this.content = content;
     makeAutoObservable(this);
   }
 
@@ -63,13 +68,16 @@ export class GraphNode {
     return Array.from(this.pinnedRelationsById.values());
   }
 
-  setText(text: string) {
-    this.text = text;
-    // if (this.remote) {
-    //   this.remote.upsertNode(this.id, text, this.thoughtstreamPosition ?? null);
-    // }
+  setContent(newContent: Chip[]) {
+    this.content = newContent;
   }
 
+  get text(): string {
+    return this.content.map(chip => {
+      return chip.type == "mention" ?  this.store.getNode(chip.value)?.text || "[Deleted node]" : chip.value
+    }).join()
+  }
+  
   createRelatedNode({
     graphNodeProps,
     relationType = this.store.relationTypesById.child,

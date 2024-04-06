@@ -31,9 +31,10 @@ export class GraphStore {
     this.remote = remote;
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
-    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, text: "Root" });
-    this.userRoot = this.createNode({ id: USER_ROOT_ID, text: "User" });
-    this.thoughtstreamRoot = this.createNode({ id: THOUGHTSTREAM_ROOT_ID, text: "Thoughtstream" });
+    
+    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{type: "text", value: "Root"}] });
+    this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{type: "text", value: "User"}] });
+    this.thoughtstreamRoot = this.createNode({ id: THOUGHTSTREAM_ROOT_ID, content: [{type: "text", value: "Thoughtstream"}] });
     this.outlineRootRelationToUserRoot = this.createRelation({
       from: this.userRoot,
       to: this.outlineRoot,
@@ -61,7 +62,7 @@ export class GraphStore {
   createNode(props: GraphNodeProps = {}, { fromServer = false }: { fromServer?: boolean } = {}): GraphNode {
     const node = new GraphNode(this, this.remote ?? null, {
       id: props.id || uuid(),
-      text: props.text,
+      content: props.content,
     });
     this.nodesById.set(node.id, node);
     // if (!fromServer && this.remote) {
@@ -305,7 +306,7 @@ export class GraphStore {
   }
 
   addNodeFromServer(persistedNode: PersistedGraphNode) {
-    const node = this.createNode({ id: persistedNode.id, text: persistedNode.text }, { fromServer: true });
+    const node = this.createNode({ id: persistedNode.id, content: [{type: "text", value: persistedNode.text}] }, { fromServer: true });
     if (node.id === OUTLINE_ROOT_ID) {
       this.outlineRoot = node;
     } else if (node.id === THOUGHTSTREAM_ROOT_ID) {

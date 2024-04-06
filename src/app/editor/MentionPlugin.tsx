@@ -9,6 +9,7 @@ import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { GraphNode } from "../model/GraphNode";
+import { $createMentionNode } from "../model/MentionNode";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
 import styles from "./MentionPlugin.module.css";
@@ -35,17 +36,22 @@ export function MentionPlugin(): JSX.Element | null {
   const outlineViewStore = useViewStore();
   const onSelectOption = useCallback(
     (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
-      editor.update(() => {
-        const mentionNode = new TextNode(selectedOption.name);
-        mentionNode.setStyle("color: red;");
+      editor.update(() => {        
+        const mentionNode = $createMentionNode(selectedOption.graphNode.id, selectedOption.graphNode.text)
         if (nodeToReplace) {
           nodeToReplace.replace(mentionNode);
         }
-        graphStore.createRelation({
-          from: selectedOption.graphNode,
-          to: outlineViewStore.focusedNode!.graphNode,
-          type: graphStore.relationTypesById.child,
-        });
+        if (!outlineViewStore.focusedNode!.graphNode.relations.some((relation) => 
+          relation.type == graphStore.relationTypesById.child 
+            && relation.from == selectedOption.graphNode 
+            && relation.to == outlineViewStore.focusedNode!.graphNode
+        )) {
+          graphStore.createRelation({
+            from: selectedOption.graphNode,
+            to: outlineViewStore.focusedNode!.graphNode,
+            type: graphStore.relationTypesById.child,
+          });
+        }
         mentionNode.select();
         closeMenu();
       });

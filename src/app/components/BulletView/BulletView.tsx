@@ -197,7 +197,7 @@ const BulletEditor = observer(
         <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}>
           <Editor
             node={bullet}
-            onChange={(v) => bullet.graphNode.setText(v ?? "")}
+            onChange={(v) => bullet.graphNode.setContent([{type: "text", value: v}] ?? [])}
             context={{ node: bullet, siblingAbove, siblingBelow }}
           />
         </div>

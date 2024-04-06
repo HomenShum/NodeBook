@@ -45,10 +45,9 @@ const makeBulletKeyCommands = (
           console.log("Parent not found");
           return false;
         }
-        // Get text before and after the cursor
-        const points = $getSelection()?.getStartEndPoints();
-        if (!points) return false;
-        const newBullet = viewStore.splitBullet(bullet, points[0].offset, points[1].offset);
+        const selection = $getSelection()
+        if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
+        const newBullet = viewStore.splitBullet(bullet, selection);
         viewStore.setFocusedNode(newBullet);
         return true;
       },
