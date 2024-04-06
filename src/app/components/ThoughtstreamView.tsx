@@ -1,11 +1,13 @@
 import { observer } from "mobx-react-lite";
+import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
 import { BulletList } from "./BulletChildren";
 import { getFilteredChildren } from "./BulletView/BulletView";
 
 export const ThoughtstreamView = observer(() => {
   const viewStore = useViewStore();
-  const root = viewStore.outlineViewStore.thoughtstream;
+  const graphStore = useGraphStore();
+  const root = graphStore.thoughtstreamBulletRoot;
   const children = getFilteredChildren(root, viewStore);
   return (
     <div

@@ -1,8 +1,10 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
+import { BaseSelection, LexicalNode } from "lexical";
 import { makeAutoObservable } from "mobx";
 import { uuid } from "../util";
-import { GraphNode, GraphNodeProps } from "./GraphNode";
+import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
+import { Bullet } from "./OutlineBullet";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
 export const defaultRelationTypes = {
@@ -19,22 +21,32 @@ export const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
+  bulletsById: Map<string, Bullet> = new Map();
+  // TODO: do we need this? feels like there could be multiple
+  outlineBulletRoot: Bullet | null = null;
+  thoughtstreamBulletRoot: Bullet;
+
   isLoading = false;
   remote?: RemoteGraphStore;
   public relationTypesById: Record<string, GraphRelationType> = {};
+
   userRoot: GraphNode;
   outlineRoot: GraphNode;
+
   thoughtstreamRoot: GraphNode;
   outlineRootRelationToUserRoot: GraphRelation;
   thoughtstreamRootRelationToUserRoot: GraphRelation;
+
   constructor(remote?: RemoteGraphStore) {
     this.remote = remote;
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
-    
-    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{type: "text", value: "Root"}] });
-    this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{type: "text", value: "User"}] });
-    this.thoughtstreamRoot = this.createNode({ id: THOUGHTSTREAM_ROOT_ID, content: [{type: "text", value: "Thoughtstream"}] });
+    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "Root" }] });
+    this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
+    this.thoughtstreamRoot = this.createNode({
+      id: THOUGHTSTREAM_ROOT_ID,
+      content: [{ type: "text", value: "Thoughtstream" }],
+    });
     this.outlineRootRelationToUserRoot = this.createRelation({
       from: this.userRoot,
       to: this.outlineRoot,
@@ -44,6 +56,14 @@ export class GraphStore {
       from: this.userRoot,
       to: this.thoughtstreamRoot,
       type: this.relationTypesById.child,
+    });
+    this.outlineBulletRoot = this.createBullet({
+      node: this.outlineRoot,
+      relation: this.outlineRootRelationToUserRoot,
+    });
+    this.thoughtstreamBulletRoot = this.createBullet({
+      node: this.thoughtstreamRoot,
+      relation: this.thoughtstreamRootRelationToUserRoot,
     });
   }
 
@@ -306,7 +326,10 @@ export class GraphStore {
   }
 
   addNodeFromServer(persistedNode: PersistedGraphNode) {
-    const node = this.createNode({ id: persistedNode.id, content: [{type: "text", value: persistedNode.text}] }, { fromServer: true });
+    const node = this.createNode(
+      { id: persistedNode.id, content: [{ type: "text", value: persistedNode.text }] },
+      { fromServer: true },
+    );
     if (node.id === OUTLINE_ROOT_ID) {
       this.outlineRoot = node;
     } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
@@ -325,5 +348,126 @@ export class GraphStore {
     }
     const relation = new GraphRelation(this, { from, to, type });
     this.insertRelation(relation, { fromServer: true });
+  }
+
+  setCurrentOutlineViewRoot(bullet: Bullet) {
+    this.outlineBulletRoot = bullet;
+  }
+
+  createBullet({ parent, node, relation }: { parent?: Bullet; node: GraphNode; relation: GraphRelation }) {
+    const bullet = new Bullet(this, node, relation, { parent });
+    this.bulletsById.set(bullet.id, bullet);
+    parent?.childrenByRelationId.set(relation.id, bullet);
+    return bullet;
+  }
+
+  deleteBullet(bullet: Bullet) {
+    this.deleteRelation(bullet.graphRelation!);
+    // TODO: ideally all this happens in reaction to the above
+    this.bulletsById.delete(bullet.id);
+    if (bullet.graphRelation) {
+      bullet.parent?.childrenByRelationId.delete(bullet.graphRelation.id);
+      bullet.parent?.pinnedByRelationId.delete(bullet.graphRelation.id);
+    }
+  }
+
+  moveBulletToNewParent(
+    { parent, target, side = "below" }: { parent: Bullet; target?: Bullet; side?: "above" | "below" },
+    ...bullets: Bullet[]
+  ) {
+    this.updateRelationFrom(
+      { newFrom: parent.graphNode, target: target?.graphRelation!, side },
+      ...bullets.map((b) => b.graphRelation!),
+    );
+    // We need to manually add the bullets to the respective maps because otherwise new bullets
+    // will be created to reflect the new relations, and we'll lose things like the expanded states
+    // underneath and focus state.
+    // (TODO: This seems more complicated than it should be though. It's worth revisiting.)
+    bullets.forEach((b) => {
+      b.parent = parent;
+      if (target?.isPinned) {
+        parent.graphNode.pinRelation({ target: target.graphRelation!, side }, b.graphRelation!);
+        parent.pinnedByRelationId.set(b.graphRelation!.id, b);
+      } else {
+        parent.childrenByRelationId.set(b.graphRelation!.id, b);
+      }
+    });
+  }
+
+  splitBullet(bullet: Bullet, selection: BaseSelection): Bullet | null {
+    if (!bullet.parent) {
+      throw new Error("Can't split bullet with no parent");
+      // TODO this shouldn't be possible?
+    }
+
+    // Get text before and after the cursor
+    const points = selection?.getStartEndPoints();
+    if (!points) return null;
+    const start = points[0].offset;
+    const end = points[1].offset;
+
+    const selectionNodes = selection.getNodes();
+    const firstNode = selectionNodes[0];
+    const lastNode = selectionNodes[selectionNodes.length - 1];
+
+    const paragraphNode = firstNode.getParent();
+    const paragraphChildren: LexicalNode[] = paragraphNode.getChildren();
+
+    const firstNodeIndexInParagraph = paragraphChildren.findIndex((node) => node === firstNode);
+    const lastNodeIndexInParagraph = paragraphChildren.findIndex((node) => node === lastNode);
+
+    const startIndex = selection.isBackward() ? lastNodeIndexInParagraph : firstNodeIndexInParagraph;
+    const endIndex = selection.isBackward() ? firstNodeIndexInParagraph : lastNodeIndexInParagraph;
+
+    let chipsBefore: Chip[] = [];
+    let chipsAfter: Chip[] = [];
+    bullet.graphNode.content.forEach((chip, idx) => {
+      if (idx < startIndex) {
+        // All chips before the start index are part of chipsBefore
+        chipsBefore.push({ type: chip.type, value: chip.value });
+      } else if (idx > endIndex) {
+        // All chips after the end index are part of chipsAfter
+        chipsAfter.push({ type: chip.type, value: chip.value });
+      } else {
+        // For chips within the selection range, split based on start and end offsets
+        if (idx === startIndex) {
+          // For the first node in the selection, add the text after the start offset to chipsAfter
+          if (start < chip.value.length) {
+            if (chip.type === "text") {
+              chipsAfter.push({ type: "text", value: chip.value.substring(start) });
+            } else {
+              const mentionText = paragraphChildren[idx]?.getTextContent() || "";
+              chipsAfter.push({ type: "text", value: mentionText.substring(start) });
+            }
+          }
+        }
+        if (idx === endIndex) {
+          // For the last node in the selection, add the text before the end offset to chipsBefore
+          if (end > 0) {
+            if (chip.type === "text") {
+              chipsBefore.push({ type: "text", value: chip.value.substring(0, end) });
+            } else {
+              const mentionText = paragraphChildren[idx]?.getTextContent() || "";
+              chipsBefore.push({ type: "text", value: mentionText.substring(0, end) });
+            }
+          }
+        }
+        // Nodes between the start and end nodes are deleted by ignoring them
+      }
+    });
+
+    bullet.graphNode.setContent(chipsBefore);
+    const newBullet = bullet.parent.createChild({ content: chipsAfter });
+    newBullet.moveAfterSibling(bullet);
+    return newBullet;
+  }
+
+  setGraphNodeOnBullet(bullet: Bullet, graphNode: GraphNode) {
+    if (bullet.isRelationToThis()) {
+      this.updateRelationTo({ newTo: graphNode }, bullet.graphRelation!);
+    } else {
+      this.updateRelationFrom({ newFrom: graphNode }, bullet.graphRelation!);
+    }
+    bullet.graphNode = graphNode;
   }
 }

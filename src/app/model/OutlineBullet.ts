@@ -1,15 +1,13 @@
 import { makeAutoObservable } from "mobx";
 import { comparePositions, generateDefaultPosition, generatePositionBetween, uuid } from "../util";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
-import { GraphNodeView, GraphNodeViewType } from "./GraphNodeView";
 import { GraphRelation } from "./GraphRelation";
-import { THOUGHTSTREAM_ROOT_ID, defaultRelationTypes } from "./GraphStore";
-import { OutlineViewStore } from "./OutlineViewStore";
+import { GraphStore, THOUGHTSTREAM_ROOT_ID, defaultRelationTypes } from "./GraphStore";
 
-export class Bullet implements GraphNodeView {
-  public type: GraphNodeViewType = "bullet";
+export class Bullet {
+  public type: "bullet" | "bundle" = "bullet";
 
-  private outlineStore: OutlineViewStore;
+  private graphStore: GraphStore;
 
   public id: string;
 
@@ -27,7 +25,7 @@ export class Bullet implements GraphNodeView {
   public replacing = false;
 
   constructor(
-    store: OutlineViewStore,
+    graphStore: GraphStore,
     node: GraphNode,
     relation: GraphRelation,
     {
@@ -40,7 +38,7 @@ export class Bullet implements GraphNodeView {
       id?: string;
     } = {},
   ) {
-    this.outlineStore = store;
+    this.graphStore = graphStore;
     this.graphNode = node;
     this.graphRelation = relation;
     this.parent = parent ?? null;
@@ -50,12 +48,9 @@ export class Bullet implements GraphNodeView {
     this.pinnedByRelationId = new Map();
     this.isPinnedExpanded = true;
     this.isAllRelationsExpanded = true;
-
     makeAutoObservable(this, {
       childrenByRelationId: false,
     });
-
-    this.outlineStore.registerNodeView(this);
   }
 
   setReplacing(replacing: boolean) {
@@ -71,8 +66,8 @@ export class Bullet implements GraphNodeView {
   }
 
   createChild(props: GraphNodeProps = {}): Bullet {
-    const node = this.outlineStore.graphStore.createNode(props);
-    const relation = this.outlineStore.graphStore.createRelation({
+    const node = this.graphStore.createNode(props);
+    const relation = this.graphStore.createRelation({
       from: this.graphNode,
       to: node,
       type: defaultRelationTypes.child,
@@ -81,26 +76,26 @@ export class Bullet implements GraphNodeView {
     // in lot of different places but this is the only place where it'd add
     // to the outline / thoughtstream view
     if (this.graphNode.id === THOUGHTSTREAM_ROOT_ID) {
-      this.outlineStore.graphStore.createRelation({
-        from: this.outlineStore.graphStore.outlineRoot,
+      this.graphStore.createRelation({
+        from: this.graphStore.outlineRoot,
         to: node,
         type: defaultRelationTypes.child,
       });
     } else {
-      this.outlineStore.graphStore.createRelation({
-        from: this.outlineStore.graphStore.thoughtstreamRoot,
+      this.graphStore.createRelation({
+        from: this.graphStore.thoughtstreamRoot,
         to: node,
         type: defaultRelationTypes.child,
       });
     }
-    return this.outlineStore.createBullet({ parent: this, node, relation });
+    return this.graphStore.createBullet({ parent: this, node, relation });
   }
 
   isRelationToThis() {
     return this.graphRelation?.to.id === this.graphNode.id;
   }
 
-  setType(type: GraphNodeViewType) {
+  setType(type: "bullet" | "bundle") {
     this.type = type;
   }
 
@@ -109,19 +104,15 @@ export class Bullet implements GraphNodeView {
   }
 
   setGraphNode(graphNode: GraphNode) {
-    this.outlineStore.setGraphNodeOnBullet(this, graphNode);
+    this.graphStore.setGraphNodeOnBullet(this, graphNode);
   }
 
   delete() {
-    this.outlineStore.deleteBullet(this);
+    this.graphStore.deleteBullet(this);
   }
 
   toggleExpanded() {
     this.isExpanded = !this.isExpanded;
-  }
-
-  get isFocused() {
-    return this.outlineStore.focusedNode?.id === this.id;
   }
 
   get ancestors() {
@@ -142,7 +133,7 @@ export class Bullet implements GraphNodeView {
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
         // TODO should use createBullet
-        const newBullet = new Bullet(this.outlineStore, relatedNode, relation, { parent: this });
+        const newBullet = new Bullet(this.graphStore, relatedNode, relation, { parent: this });
         this.childrenByRelationId.set(relation.id, newBullet);
         return { bullet: newBullet, position };
       }
@@ -162,7 +153,7 @@ export class Bullet implements GraphNodeView {
         return { bullet, position };
       } else {
         const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
-        const newBullet = new Bullet(this.outlineStore, relatedNode, relation, { parent: this });
+        const newBullet = new Bullet(this.graphStore, relatedNode, relation, { parent: this });
         this.pinnedByRelationId.set(relation.id, newBullet);
         return { bullet: newBullet, position };
       }

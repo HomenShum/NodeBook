@@ -1,12 +1,9 @@
 import { LexicalEditor } from "lexical";
 import { makeAutoObservable } from "mobx";
-import { Box, boxesIntersect } from "../selection/utils";
+import { Box } from "../selection/utils";
 import { makeAutoSaving } from "../util";
-import { GraphNode } from "./GraphNode";
-import { GraphNodeView } from "./GraphNodeView";
 import { GraphStore } from "./GraphStore";
-import { OutlineViewStore } from "./OutlineViewStore";
-import { ThoughtstreamViewStore } from "./ThoughtstreamViewStore";
+import { Bullet } from "./OutlineBullet";
 
 export enum ViewType {
   OUTLINE = "outline",
@@ -16,21 +13,14 @@ export enum ViewType {
 
 export class ViewStore {
   public curView: ViewType;
-
   private graphStore: GraphStore;
 
-  public outlineViewStore: OutlineViewStore;
-  public thoughtstreamViewStore: ThoughtstreamViewStore;
+  public focusedNode: Bullet | null = null;
+  public hoveredNode: Bullet | null = null;
 
-  private rootNode: GraphNode | null = null;
-
-  public focusedNode: GraphNodeView | null = null;
-  public hoveredNode: GraphNodeView | null = null;
-
-  private nodeViewsById: Map<string, GraphNodeView> = new Map();
   private editorsByViewId: Map<string, LexicalEditor> = new Map();
 
-  public selectedNodes: Set<GraphNodeView> = new Set();
+  public selectedNodes: Set<Bullet> = new Set();
 
   public showNodeDetails = false;
   public leftSidebarOpen = false;
@@ -39,11 +29,12 @@ export class ViewStore {
   public hideAllRootParents = true;
   public hideAllParents = false;
 
+  // TODO do we need this right now?
+  public relatedNodesViewType: "all" | "pinned" = "all";
+
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;
     this.graphStore = graphStore;
-    this.outlineViewStore = new OutlineViewStore(graphStore, this);
-    this.thoughtstreamViewStore = new ThoughtstreamViewStore(graphStore, this);
     makeAutoObservable(this);
     makeAutoSaving(this, {
       showNodeDetails: true,
@@ -65,7 +56,7 @@ export class ViewStore {
     this.curView = view;
   }
 
-  setFocusedNode(nodeView: GraphNodeView | null) {
+  setFocusedNode(nodeView: Bullet | null) {
     this.focusedNode = nodeView;
     setTimeout(() => {
       const editor = this.editorsByViewId.get(nodeView?.id ?? "");
@@ -75,7 +66,11 @@ export class ViewStore {
     }, 0);
   }
 
-  setHoveredNode(node: GraphNodeView | null) {
+  isFocused(nodeView: Bullet) {
+    return this.focusedNode?.id === nodeView.id;
+  }
+
+  setHoveredNode(node: Bullet | null) {
     this.hoveredNode = node;
   }
 
@@ -95,43 +90,37 @@ export class ViewStore {
     this.hideAllParents = show;
   }
 
-  registerNodeView(view: GraphNodeView) {
-    this.nodeViewsById.set(view.id, view);
-  }
-
-  removeNodeView(view: GraphNodeView) {
-    this.nodeViewsById.delete(view.id);
-  }
-
-  registerEditor(view: GraphNodeView, editor: LexicalEditor) {
+  registerEditor(view: Bullet, editor: LexicalEditor) {
     this.editorsByViewId.set(view.id, editor);
   }
 
-  removeEditor(view: GraphNodeView) {
+  removeEditor(view: Bullet) {
     this.editorsByViewId.delete(view.id);
   }
 
   private selectionBoxToEvaluate: Box | null = null;
 
+  // todo can we do this without editorsByViewId?
   private evaluateSelectionBox() {
-    const selectionBox = this.selectionBoxToEvaluate;
-    if (!selectionBox) return;
+    throw new Error("Method not implemented.");
+    // const selectionBox = this.selectionBoxToEvaluate;
+    // if (!selectionBox) return;
 
-    this.selectedNodes.clear();
+    // this.selectedNodes.clear();
 
-    // Assume user didn't mean to select anything if the selection area is very small
-    if (selectionBox.height * selectionBox.width < 25) return;
+    // // Assume user didn't mean to select anything if the selection area is very small
+    // if (selectionBox.height * selectionBox.width < 25) return;
 
-    for (const [viewId, editor] of this.editorsByViewId.entries()) {
-      const editorBox = editor.getRootElement()?.getBoundingClientRect();
-      if (!editorBox) continue;
-      if (boxesIntersect(selectionBox, editorBox)) {
-        const view = this.nodeViewsById.get(viewId);
-        this.selectedNodes.add(view!);
-      }
-    }
+    // for (const [viewId, editor] of this.editorsByViewId.entries()) {
+    //   const editorBox = editor.getRootElement()?.getBoundingClientRect();
+    //   if (!editorBox) continue;
+    //   if (boxesIntersect(selectionBox, editorBox)) {
+    //     const view = this.graphStore.bulletsById.get(viewId);
+    //     this.selectedNodes.add(view!);
+    //   }
+    // }
 
-    this.selectionBoxToEvaluate = null;
+    // this.selectionBoxToEvaluate = null;
   }
 
   maybeSelectNodes(selectionBox: Box) {

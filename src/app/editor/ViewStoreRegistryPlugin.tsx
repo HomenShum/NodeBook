@@ -1,20 +1,16 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useEffect } from "react";
-import { GraphNodeView } from "../model/GraphNodeView";
+import { Bullet } from "../model/OutlineBullet";
 import { useViewStore } from "../store/useViewStore";
 
-interface Props {
-  nodeView: GraphNodeView;
-}
-
-export const ViewStoreRegistryPlugin = ({ nodeView }: Props) => {
+export const ViewStoreRegistryPlugin = ({ bullet }: { bullet: Bullet }) => {
   const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
-    viewStore.registerEditor(nodeView, editor);
+    viewStore.registerEditor(bullet, editor);
     return () => {
-      viewStore.removeEditor(nodeView);
+      viewStore.removeEditor(bullet);
     };
-  }, [nodeView, editor, viewStore]);
+  }, [bullet, editor, viewStore]);
   return null;
 };

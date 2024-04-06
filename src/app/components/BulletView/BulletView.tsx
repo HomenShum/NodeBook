@@ -107,7 +107,7 @@ export const BulletView = observer(
                         : "text-transparent"
                       : "",
                   )}
-                  onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
+                  onClick={() => graphStore.setCurrentOutlineViewRoot(bullet)}
                 />
               )}
               <Dot
@@ -122,7 +122,7 @@ export const BulletView = observer(
                       : "text-transparent"
                     : "",
                 )}
-                onClick={() => viewStore.outlineViewStore.setRoot(bullet)}
+                onClick={() => graphStore.setCurrentOutlineViewRoot(bullet)}
               />
             </div>
             {/* relation and node */}
@@ -196,9 +196,9 @@ const BulletEditor = observer(
       >
         <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}>
           <Editor
-            node={bullet}
-            onChange={(v) => bullet.graphNode.setContent([{type: "text", value: v}] ?? [])}
-            context={{ node: bullet, siblingAbove, siblingBelow }}
+            bullet={bullet}
+            onChange={(v) => bullet.graphNode.setContent([{ type: "text", value: v }] ?? [])}
+            context={{ bullet: bullet, siblingAbove, siblingBelow }}
           />
         </div>
       </div>

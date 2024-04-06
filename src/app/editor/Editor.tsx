@@ -9,9 +9,9 @@ import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect } from "react";
 import { Chip, GraphNode } from "../model/GraphNode";
-import { GraphNodeView } from "../model/GraphNodeView";
 import { GraphStore } from "../model/GraphStore";
 import { $createMentionNode, $isMentionNode, MentionNode } from "../model/MentionNode";
+import { Bullet } from "../model/OutlineBullet";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
 import styles from "./Editor.module.css";
@@ -33,19 +33,20 @@ const onError = (error: any) => {
 };
 
 export type EditorContext = {
-  node: GraphNodeView;
-  siblingAbove?: GraphNodeView;
-  siblingBelow?: GraphNodeView;
+  bullet: Bullet;
+  // TODO shouldn't be necessary
+  siblingAbove?: Bullet;
+  siblingBelow?: Bullet;
 };
 
 interface Props {
-  node: GraphNodeView;
+  bullet: Bullet;
   onChange: (newValue: string) => void;
   context: EditorContext;
 }
 
-export const Editor = ({ node, context }: Props) => {
-  const outlineViewStore = useViewStore();
+export const Editor = ({ bullet, context }: Props) => {
+  const viewStore = useViewStore();
   const initialConfig = {
     namespace: "MyEditor",
     theme,
@@ -53,7 +54,7 @@ export const Editor = ({ node, context }: Props) => {
     nodes: [MentionNode],
     editorState: () => {
       const paragraph = $createParagraphNode();
-      const text = $createTextNode(node.graphNode.text);
+      const text = $createTextNode(bullet.graphNode.text);
       paragraph.append(text);
       $getRoot().append(paragraph);
       $getRoot().selectEnd();
@@ -61,20 +62,20 @@ export const Editor = ({ node, context }: Props) => {
   };
 
   return (
-    <div className={styles.EditorWrapper} onFocus={() => outlineViewStore.setFocusedNode(node)}>
+    <div className={styles.EditorWrapper} onFocus={() => viewStore.setFocusedNode(bullet)}>
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable key={node.id} nodeId={node.graphNode.id} bulletId={node.id} />}
+          contentEditable={<ContentEditable key={bullet.id} nodeId={bullet.graphNode.id} bulletId={bullet.id} />}
           placeholder={null}
           // placeholder={<EditorPlaceholder />}
         />
-        {node.isFocused && <AutoFocusPlugin />}
+        {viewStore.isFocused(bullet) && <AutoFocusPlugin />}
         <HistoryPlugin />
-        <SyncEditorAndGraphNode node={node} />
-        <KeyboardOverridesPlugin nodeView={node} context={context} />
+        <SyncEditorAndGraphNode bullet={bullet} />
+        <KeyboardOverridesPlugin bullet={bullet} context={context} />
         <MentionPlugin />
-        <ViewStoreRegistryPlugin nodeView={node} />
+        <ViewStoreRegistryPlugin bullet={bullet} />
       </LexicalComposer>
     </div>
   );
@@ -98,28 +99,28 @@ const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphNode, gr
   return match;
 };
 
-
 const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: GraphStore): ParagraphNode => {
   const paragraph = $createParagraphNode();
   node.content.forEach((chip) => {
     if (chip.type == "mention") {
-      const mentionNodeText = graphStore.getNode(chip.value)?.text || ""
+      const mentionNodeText = graphStore.getNode(chip.value)?.text || "";
       paragraph.append($createMentionNode(chip.value, mentionNodeText));
     } else {
       paragraph.append($createTextNode(chip.value));
     }
-
-  })
-  return paragraph
-}
+  });
+  return paragraph;
+};
 
 const createContentMatchingParagraph = (paragraph: ParagraphNode): Chip[] => {
-  return paragraph.getChildren().map(child =>
-    $isMentionNode(child) ? 
-    {type: "mention", value: child.mentionedGraphNodeId} : 
-    {type: "text", value: child.getTextContent()}
- )
-}
+  return paragraph
+    .getChildren()
+    .map((child) =>
+      $isMentionNode(child)
+        ? { type: "mention", value: child.mentionedGraphNodeId }
+        : { type: "text", value: child.getTextContent() },
+    );
+};
 
 /**
  * This component is responsible for keeping the Lexical editor state in sync
@@ -131,35 +132,35 @@ const createContentMatchingParagraph = (paragraph: ParagraphNode): Chip[] => {
  * (TODO: This way of avoiding infinite loops feels a bit sketchy, but it works
  * for now)
  */
-const SyncEditorAndGraphNode = observer(({ node }: { node: GraphNodeView }) => {
+const SyncEditorAndGraphNode = observer(({ bullet }: { bullet: Bullet }) => {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  
+
   const setGraphNodeTextToEditorState = useCallback(
     (editorState: EditorState) => {
-      let referencingNodes: GraphNode[] = []
+      let referencingNodes: GraphNode[] = [];
       editorState.read(() => {
         const paragraph = $getRoot().getChildren()[0] as ParagraphNode;
-        if (graphNodeMatchesParagraph(node.graphNode, paragraph, graphStore)) {
+        if (graphNodeMatchesParagraph(bullet.graphNode, paragraph, graphStore)) {
           return;
         }
-        referencingNodes = node.graphNode.relations.filter(relation => {
-          if (relation.from.id !== node.graphNode.id) return false;
+        referencingNodes = bullet.graphNode.relations
+          .filter((relation) => {
+            if (relation.from.id !== bullet.graphNode.id) return false;
 
-          return relation.to.content.some(item => 
-              item.type === "mention" && item.value === node.graphNode.id
-          );
-        }).map(relation => relation.to);
+            return relation.to.content.some((item) => item.type === "mention" && item.value === bullet.graphNode.id);
+          })
+          .map((relation) => relation.to);
         const newContent = createContentMatchingParagraph(paragraph);
-        node.graphNode.setContent(newContent)
+        bullet.graphNode.setContent(newContent);
       });
       editor.update(() => {
-        referencingNodes.map(refNode => {
-          refNode.setContent(createContentMatchingParagraph(createParagraphMatchingGraphNode(refNode, graphStore)))
-        })
-      })
+        referencingNodes.map((refNode) => {
+          refNode.setContent(createContentMatchingParagraph(createParagraphMatchingGraphNode(refNode, graphStore)));
+        });
+      });
     },
-    [node],
+    [bullet, editor, graphStore],
   );
 
   const setEditorToGraphNodeText = useCallback(
@@ -187,11 +188,11 @@ const SyncEditorAndGraphNode = observer(({ node }: { node: GraphNodeView }) => {
         $setSelection(null);
       });
     },
-    [editor],
+    [editor, graphStore],
   );
 
   useEffect(() => {
-    setEditorToGraphNodeText(node.graphNode);
-  }, [setEditorToGraphNodeText, node.graphNode, node.graphNode.content]);
+    setEditorToGraphNodeText(bullet.graphNode);
+  }, [setEditorToGraphNodeText, bullet.graphNode, bullet.graphNode.content]);
   return <OnChangePlugin onChange={setGraphNodeTextToEditorState} />;
 });

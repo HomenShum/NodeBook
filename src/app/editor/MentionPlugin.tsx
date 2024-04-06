@@ -33,22 +33,25 @@ export function MentionPlugin(): JSX.Element | null {
 
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  const outlineViewStore = useViewStore();
+  const viewStore = useViewStore();
   const onSelectOption = useCallback(
     (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
-      editor.update(() => {        
-        const mentionNode = $createMentionNode(selectedOption.graphNode.id, selectedOption.graphNode.text)
+      editor.update(() => {
+        const mentionNode = $createMentionNode(selectedOption.graphNode.id, selectedOption.graphNode.text);
         if (nodeToReplace) {
           nodeToReplace.replace(mentionNode);
         }
-        if (!outlineViewStore.focusedNode!.graphNode.relations.some((relation) => 
-          relation.type == graphStore.relationTypesById.child 
-            && relation.from == selectedOption.graphNode 
-            && relation.to == outlineViewStore.focusedNode!.graphNode
-        )) {
+        if (
+          !viewStore.focusedNode?.graphNode.relations.some(
+            (relation) =>
+              relation.type == graphStore.relationTypesById.child &&
+              relation.from == selectedOption.graphNode &&
+              relation.to == viewStore.focusedNode!.graphNode,
+          )
+        ) {
           graphStore.createRelation({
             from: selectedOption.graphNode,
-            to: outlineViewStore.focusedNode!.graphNode,
+            to: viewStore.focusedNode!.graphNode,
             type: graphStore.relationTypesById.child,
           });
         }
@@ -56,7 +59,7 @@ export function MentionPlugin(): JSX.Element | null {
         closeMenu();
       });
     },
-    [editor, graphStore, outlineViewStore],
+    [editor, graphStore, viewStore],
   );
 
   const options: Array<MentionTypeaheadOption> = useMemo(() => {
@@ -66,11 +69,11 @@ export function MentionPlugin(): JSX.Element | null {
       .filter(
         (node) =>
           node.text.toLowerCase().includes(queryString.toLowerCase()) &&
-          node.id !== outlineViewStore.focusedNode?.graphNode.id,
+          node.id !== viewStore.focusedNode?.graphNode.id,
       )
       .map((node) => new MentionTypeaheadOption(node.text, node))
       .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
-  }, [queryString, graphStore.nodes, outlineViewStore.focusedNode]);
+  }, [queryString, graphStore.nodes, viewStore.focusedNode]);
 
   const menuRenderFn = getMenuRenderFn(options);
   return (

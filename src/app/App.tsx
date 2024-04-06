@@ -10,7 +10,6 @@ import { NodeTable } from "./components/dev/NodeTable";
 import { RelationTable } from "./components/dev/RelationTable";
 import { RelationTypeTable } from "./components/dev/RelationTypeTable";
 import { ViewType } from "./model/ViewStore";
-import { MouseSelection } from "./selection/MouseSelection";
 import { useViewStore } from "./store/useViewStore";
 
 const App = observer(() => {
@@ -78,7 +77,7 @@ const App = observer(() => {
             </aside>
           )}
         </div>
-        <MouseSelection appContainerRef={appContainerRef} />
+        {/* <MouseSelection appContainerRef={appContainerRef} /> */}
       </div>
     </div>
   );
