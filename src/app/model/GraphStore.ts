@@ -350,23 +350,34 @@ export class GraphStore {
     this.bulletsById.delete(bullet.id);
   }
 
-  moveBulletToNewParent(
-    { parent, target, side = "below" }: { parent: Bullet; target?: Bullet; side?: "above" | "below" },
-    ...bullets: Bullet[]
-  ) {
+  moveBulletToNewParent({
+    parent,
+    bullets,
+    target,
+  }: {
+    parent: Bullet;
+    bullets: Bullet[];
+    target?: Bullet | "top" | "bottom";
+  }) {
     const parentBullet = parent;
     const parentGraphNode = parentBullet.graphNode;
     this.updateRelationFrom(
       bullets.map((b) => b.graphRelation),
       parentGraphNode,
     );
+    if (target) {
+      parentGraphNode.allRelationsList.move(
+        bullets.map((b) => b.graphRelation),
+        typeof target === "string" ? target : target.graphRelation,
+      );
+    }
     // We need to manually add the bullets to the respective maps because otherwise new bullets
     // will be created to reflect the new relations, and we'll lose things like the expanded states
     // underneath and focus state.
     // (TODO: This seems more complicated than it should be though. It's worth revisiting.)
     bullets.forEach((b) => {
       b.parent = parentBullet;
-      if (target?.isPinned) {
+      if (target instanceof Bullet && target.isPinned) {
         parentGraphNode.pinnedRelationsList.add(b.graphRelation);
         parentBullet.pinnedByRelationId.set(b.graphRelation!.id, b);
       } else {

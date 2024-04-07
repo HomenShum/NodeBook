@@ -92,7 +92,7 @@ const makeBulletKeyCommands = (
             console.log("Can't shift tab because no parent to move to");
             return false;
           }
-          graphStore.moveBulletToNewParent({ parent: grandparent, target: bullet.parent }, bullet);
+          graphStore.moveBulletToNewParent({ parent: grandparent, target: bullet.parent, bullets: [bullet] });
           return true;
         } else {
           if (!siblingAbove || !(siblingAbove instanceof Bullet)) {
@@ -103,7 +103,7 @@ const makeBulletKeyCommands = (
             console.log("Parent not found");
             return false;
           }
-          graphStore.moveBulletToNewParent({ parent: siblingAbove }, bullet);
+          graphStore.moveBulletToNewParent({ bullets: [bullet], parent: siblingAbove, target: "bottom" });
           if (!siblingAbove.isExpanded) {
             siblingAbove.toggleExpanded();
           }

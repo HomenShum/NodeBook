@@ -20,7 +20,7 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
       map: observable,
       add: action,
       delete: action,
-      moveAfter: action,
+      move: action,
     });
   }
 
@@ -45,11 +45,7 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
     this.map.delete(id);
   }
 
-  moveAfter(items: T[], after: T) {
-    this.move(items, after);
-  }
-
-  private move(items: T[], to: T | "top" | "bottom") {
+  move(items: T[], to: T | "top" | "bottom") {
     let posInt: number;
     let posFracBefore: string | null = null;
     let posFracAfter: string | null = null;
