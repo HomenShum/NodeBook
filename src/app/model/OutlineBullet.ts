@@ -120,7 +120,22 @@ export class Bullet {
    * graph can represent.
    */
   updateChildren() {
-    this.graphNode.relations.forEach((relation) => {
+    const relations = this.graphNode.relations;
+    // remove children that are no longer in the relations
+    const relationIds = new Set(relations.map((r) => r.id));
+    this.childrenByRelationId.forEach((child, id) => {
+      if (!relationIds.has(id)) {
+        this.childrenByRelationId.delete(id);
+        this.graphStore.deleteBullet(child);
+      }
+    });
+    this.pinnedByRelationId.forEach((child, id) => {
+      if (!relationIds.has(id)) {
+        this.pinnedByRelationId.delete(id);
+      }
+    });
+    // add children that are in the relations but not in the children
+    relations.forEach((relation) => {
       if (this.childrenByRelationId.has(relation.id)) return;
       this.childrenByRelationId.set(
         relation.id,
@@ -166,7 +181,7 @@ export class Bullet {
         const position = this.graphNode.allRelationsList.get(bullet.graphRelation.id)?.position;
         // TODO: weird that this can every happen, and that we need to do this
         if (!position) {
-          console.error("missing position for relation", bullet.graphRelation);
+          console.error("missing position for relation", { parent: this, bullet });
         }
         return { bullet, position };
       })
