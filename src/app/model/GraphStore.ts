@@ -62,11 +62,9 @@ export class GraphStore {
       type: this.relationTypesById.child,
     });
     this.outlineBulletRoot = this.createBullet({
-      node: this.outlineRoot,
       relation: this.outlineRootRelationToUserRoot,
     });
     this.thoughtstreamBulletRoot = this.createBullet({
-      node: this.thoughtstreamRoot,
       relation: this.thoughtstreamRootRelationToUserRoot,
     });
   }
@@ -322,9 +320,9 @@ export class GraphStore {
     this.outlineBulletRoot = bullet;
   }
 
-  createBullet({ parent, node, relation }: { parent?: Bullet; node: GraphNode; relation: GraphRelation }) {
+  createBullet({ parent, relation }: { parent?: Bullet; relation: GraphRelation }) {
     // Create bullet
-    const bullet = new Bullet(this, node, relation, { parent });
+    const bullet = new Bullet(this, relation, { parent });
     this.bulletsById.set(bullet.id, bullet);
 
     // Add to index by relation id

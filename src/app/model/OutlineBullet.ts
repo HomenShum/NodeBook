@@ -11,10 +11,6 @@ export class Bullet {
 
   public id: string;
 
-  // we need this in addition to the relation because the root node has no relation
-  // (maybe we should just special case the root node?)
-  public graphNode: GraphNode;
-  // TODO I should make this not nullable somehow
   public graphRelation: GraphRelation;
   public parent: Bullet | null;
   public isExpanded: boolean;
@@ -26,7 +22,6 @@ export class Bullet {
 
   constructor(
     graphStore: GraphStore,
-    node: GraphNode,
     relation: GraphRelation,
     {
       parent,
@@ -39,7 +34,6 @@ export class Bullet {
     } = {},
   ) {
     this.graphStore = graphStore;
-    this.graphNode = node;
     this.graphRelation = relation;
     this.parent = parent ?? null;
     this.isExpanded = isExpanded;
@@ -51,6 +45,11 @@ export class Bullet {
     makeAutoObservable(this, {
       setIsExpanded: action,
     });
+  }
+
+  get graphNode(): GraphNode {
+    if (!this.parent) return this.graphRelation.to;
+    return this.graphRelation.from.id === this.parent.graphNode.id ? this.graphRelation.to : this.graphRelation.from;
   }
 
   setReplacing(replacing: boolean) {
@@ -88,7 +87,7 @@ export class Bullet {
         type: defaultRelationTypes.child,
       });
     }
-    return this.graphStore.createBullet({ parent: this, node, relation });
+    return this.graphStore.createBullet({ parent: this, relation });
   }
 
   isRelationToThis() {
@@ -141,7 +140,6 @@ export class Bullet {
         relation.id,
         this.graphStore.createBullet({
           parent: this,
-          node: relation.to.id === this.graphNode.id ? relation.from : relation.to,
           relation,
         }),
       );
@@ -200,8 +198,7 @@ export class Bullet {
       if (bullet) {
         return { bullet, position };
       } else {
-        const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
-        const newBullet = new Bullet(this.graphStore, relatedNode, relation, { parent: this });
+        const newBullet = new Bullet(this.graphStore, relation, { parent: this });
         this.pinnedByRelationId.set(relation.id, newBullet);
         return { bullet: newBullet, position };
       }
