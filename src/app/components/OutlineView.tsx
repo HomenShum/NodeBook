@@ -1,8 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
-import { BulletList } from "./BulletChildren";
-import { getFilteredChildren } from "./BulletView/BulletView";
+import { BulletChildren } from "./BulletChildren";
 
 export const OutlineView = observer(() => {
   const graphStore = useGraphStore();
@@ -11,8 +10,8 @@ export const OutlineView = observer(() => {
   if (!root) {
     return <div>Missing root node</div>;
   }
-  const children = getFilteredChildren(root, viewStore);
   const ancestors = root.ancestors;
+  root.setIsExpanded(true);
 
   return (
     <div
@@ -53,8 +52,7 @@ export const OutlineView = observer(() => {
           </button>
         </div>
       </div>
-      {/* <BulletChildren bullet={root} depth={0} parents={[...ancestors, root]} /> */}
-      <BulletList bullets={children} parents={[...ancestors, root]} depth={0} />
+      <BulletChildren bullet={root} depth={0} parents={[...ancestors, root]} />
     </div>
   );
 });

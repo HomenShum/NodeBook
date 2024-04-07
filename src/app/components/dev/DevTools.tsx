@@ -27,7 +27,7 @@ export const DevTools = observer(() => {
             onChange={(e) => viewStore.setHideDirectParent(e.target.checked)}
             className="mr-2 mb-2"
           />
-          Hide direct parent of node
+          Hide relations to direct parent
         </label>
         <label className="cursor-pointer mb-2">
           <input
@@ -46,6 +46,15 @@ export const DevTools = observer(() => {
             className="mr-2 mb-2"
           />
           Hide all parents
+        </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={viewStore.hideBackrelations}
+            onChange={(e) => viewStore.setHideBackrelations(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Hide backrelations
         </label>
         {/* <div className="flex gap-2">
           <label>Relation view:</label>

@@ -21,7 +21,11 @@ export const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
+
   bulletsById: Map<string, Bullet> = new Map();
+
+  bulletsByRelationId: Map<string, Map<string, Bullet>> = new Map();
+
   // TODO: do we need this? feels like there could be multiple
   outlineBulletRoot: Bullet | null = null;
   thoughtstreamBulletRoot: Bullet;
@@ -159,11 +163,23 @@ export class GraphStore {
 
   deleteRelation(relation: GraphRelation) {
     const { from: fromNode, to: toNode } = relation;
-    this.relationsById.delete(relation.id);
+
+    // Remove the relation from the nodes
     fromNode.allRelationsById.delete(relation.id);
     fromNode.pinnedRelationsById.delete(relation.id);
     toNode.allRelationsById.delete(relation.id);
     toNode.pinnedRelationsById.delete(relation.id);
+
+    // Delete all bullets in subtrees rooted at this relation
+    const bullets = this.bulletsByRelationId.get(relation.id);
+    bullets?.forEach((b) => {
+      b.childrenByRelationId.forEach((child) => this.deleteBullet(child));
+      b.pinnedByRelationId.forEach((child) => this.deleteBullet(child));
+    });
+
+    // Delete the relation itself
+    this.relationsById.delete(relation.id);
+
     if (this.remote) {
       this.remote.deleteRelation(relation.id);
     }
@@ -355,20 +371,31 @@ export class GraphStore {
   }
 
   createBullet({ parent, node, relation }: { parent?: Bullet; node: GraphNode; relation: GraphRelation }) {
+    // Create bullet
     const bullet = new Bullet(this, node, relation, { parent });
     this.bulletsById.set(bullet.id, bullet);
+
+    // Add to index by relation id
+    const bullets = this.bulletsByRelationId.get(bullet.graphRelation.id) || new Map();
+    bullets.set(bullet.id, bullet);
+    this.bulletsByRelationId.set(bullet.graphRelation.id, bullets);
+
+    // Add to parent's children
     parent?.childrenByRelationId.set(relation.id, bullet);
+
     return bullet;
   }
 
   deleteBullet(bullet: Bullet) {
-    this.deleteRelation(bullet.graphRelation!);
-    // TODO: ideally all this happens in reaction to the above
+    // Remove reference to bullet from their parent
+    bullet.parent?.childrenByRelationId.delete(bullet.graphRelation.id);
+    bullet.parent?.pinnedByRelationId.delete(bullet.graphRelation.id);
+
+    // Remove bullets from index by relation id
+    this.bulletsByRelationId.delete(bullet.graphRelation.id);
+
+    // Delete the bullet itself
     this.bulletsById.delete(bullet.id);
-    if (bullet.graphRelation) {
-      bullet.parent?.childrenByRelationId.delete(bullet.graphRelation.id);
-      bullet.parent?.pinnedByRelationId.delete(bullet.graphRelation.id);
-    }
   }
 
   moveBulletToNewParent(

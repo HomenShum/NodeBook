@@ -28,6 +28,7 @@ export class ViewStore {
   public hideDirectParent = false;
   public hideAllRootParents = true;
   public hideAllParents = false;
+  public hideBackrelations = false;
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -88,6 +89,10 @@ export class ViewStore {
 
   setHideAllParents(show: boolean) {
     this.hideAllParents = show;
+  }
+
+  setHideBackrelations(show: boolean) {
+    this.hideBackrelations = show;
   }
 
   registerEditor(view: Bullet, editor: LexicalEditor) {

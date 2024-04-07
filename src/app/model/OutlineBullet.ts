@@ -1,5 +1,5 @@
-import { makeAutoObservable } from "mobx";
-import { comparePositions, generateDefaultPosition, generatePositionBetween, uuid } from "../util";
+import { action, makeAutoObservable } from "mobx";
+import { Position, comparePositions, generateDefaultPosition, generatePositionBetween, uuid } from "../util";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore, THOUGHTSTREAM_ROOT_ID, defaultRelationTypes } from "./GraphStore";
@@ -49,7 +49,7 @@ export class Bullet {
     this.isPinnedExpanded = true;
     this.isAllRelationsExpanded = true;
     makeAutoObservable(this, {
-      childrenByRelationId: false,
+      setIsExpanded: action,
     });
   }
 
@@ -108,11 +108,40 @@ export class Bullet {
   }
 
   delete() {
+    this.graphStore.deleteRelation(this.graphRelation);
     this.graphStore.deleteBullet(this);
   }
 
+  /**
+   * Update children to match the relations of the graph node.
+   *
+   * We do this lazily when the bullet is expanded, to avoid needing to
+   * create and maintain every possible tree of bullets that the current
+   * graph can represent.
+   */
+  updateChildren() {
+    this.graphNode.relations.forEach((relation) => {
+      if (this.childrenByRelationId.has(relation.id)) return;
+      this.childrenByRelationId.set(
+        relation.id,
+        this.graphStore.createBullet({
+          parent: this,
+          node: relation.to.id === this.graphNode.id ? relation.from : relation.to,
+          relation,
+        }),
+      );
+    });
+  }
+
   toggleExpanded() {
-    this.isExpanded = !this.isExpanded;
+    this.setIsExpanded(!this.isExpanded);
+  }
+
+  setIsExpanded(expanded: boolean) {
+    if (expanded) {
+      this.updateChildren();
+    }
+    this.isExpanded = expanded;
   }
 
   get ancestors() {
@@ -126,18 +155,22 @@ export class Bullet {
   }
 
   get childrenWithPositions() {
-    return this.graphNode.relationsWithPositions.map(({ relation, position }) => {
-      const bullet = this.childrenByRelationId.get(relation.id);
-      if (bullet) {
+    if (!this.isExpanded) {
+      // TODO add more comments explaining, and referring to https://mobx.js.org/computeds.html#rules
+      throw new Error(
+        `Can't access children of unexpanded bullet. Children are lazily updated when you expand a bullet, so expand the bullet first, then access the children.`,
+      );
+    }
+    return Array.from(this.childrenByRelationId.values())
+      .map((bullet) => {
+        const position = this.graphNode.allRelationsById.get(bullet.graphRelation.id)?.position;
+        // TODO: weird that this can every happen, and that we need to do this
+        if (!position) {
+          console.error("missing position for relation", bullet.graphRelation);
+        }
         return { bullet, position };
-      } else {
-        const relatedNode = relation.to.id === this.graphNode.id ? relation.from : relation.to;
-        // TODO should use createBullet
-        const newBullet = new Bullet(this.graphStore, relatedNode, relation, { parent: this });
-        this.childrenByRelationId.set(relation.id, newBullet);
-        return { bullet: newBullet, position };
-      }
-    });
+      })
+      .filter(({ position }) => position) as { bullet: Bullet; position: Position }[];
   }
 
   get childrenSortedByPosition(): Bullet[] {

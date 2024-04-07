@@ -1,14 +1,13 @@
 import { observer } from "mobx-react-lite";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
-import { BulletList } from "./BulletChildren";
-import { getFilteredChildren } from "./BulletView/BulletView";
+import { BulletChildren } from "./BulletChildren";
 
 export const ThoughtstreamView = observer(() => {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const root = graphStore.thoughtstreamBulletRoot;
-  const children = getFilteredChildren(root, viewStore);
+  root.setIsExpanded(true);
   return (
     <div
       className="w-full px-8"
@@ -34,8 +33,7 @@ export const ThoughtstreamView = observer(() => {
           </button>
         </div>
       </div>
-      {/* <BulletChildren bullet={root} depth={0} parents={[]} /> */}
-      <BulletList bullets={children} depth={0} />
+      <BulletChildren bullet={root} depth={0} parents={[]} />
     </div>
   );
 });

@@ -12,12 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { GraphNode } from "@/app/model/GraphNode";
+import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { ViewStore } from "@/app/model/ViewStore";
-import { Position, comparePositions } from "@/app/util";
+import { Position } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
-import { BulletList } from "../BulletChildren";
+import { BulletChildren } from "../BulletChildren";
 import { RelationCombobox } from "../RelationCombobox";
 
 export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
@@ -49,21 +50,6 @@ interface Props {
   position?: Position;
 }
 
-export function getFilteredChildren(bullet: Bullet, viewStore: ViewStore) {
-  let children = bullet.childrenWithPositions.sort((a, b) => comparePositions(a.position, b.position));
-  if (viewStore.hideAllParents) {
-    children = children.filter((x) => !x.bullet.isParent);
-  } else {
-    if (viewStore.hideAllRootParents) {
-      children = children.filter((x) => !(x.bullet.isParent && x.bullet.graphNode.isRoot));
-    }
-    if (viewStore.hideDirectParent) {
-      children = children.filter((x) => x.bullet.graphRelation?.id !== bullet.graphRelation?.id);
-    }
-  }
-  return children;
-}
-
 export const BulletView = observer(
   ({ bullet, position, depth = 0, parents = [], siblingAbove, siblingBelow }: Props) => {
     const viewStore = useViewStore();
@@ -71,8 +57,7 @@ export const BulletView = observer(
     // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
 
-    const children = getFilteredChildren(bullet, viewStore);
-    const hasChildren = children.length > 0;
+    const hasChildren = getFilteredRelationsCount(viewStore, bullet);
 
     const isSelected = viewStore.selectedNodes.has(bullet);
     const isChild =
@@ -140,12 +125,7 @@ export const BulletView = observer(
               {viewStore.showNodeDetails && !bullet.replacing && <BulletDetails bullet={bullet} position={position} />}
             </div>
           </div>
-          {/* {bullet.isExpanded && <BulletChildren bullet={bullet} depth={depth + 1} parents={[...parents, bullet]} />} */}
-          {bullet.isExpanded && (
-            <div className={bullet.type === "bullet" && depth + 1 > 0 ? "ml-8" : ""}>
-              <BulletList bullets={children} depth={depth + 1} parents={[...parents, bullet]} />
-            </div>
-          )}
+          {bullet.isExpanded && <BulletChildren bullet={bullet} depth={depth + 1} parents={[...parents, bullet]} />}
         </div>
       </>
     );
@@ -229,6 +209,7 @@ const ReplacingNodeView = observer(({ bullet }: { bullet: Bullet }) => {
         currentNode={bullet.graphNode}
         onSelect={(graphNode) => {
           bullet.setGraphNode(graphNode);
+          bullet.updateChildren();
           bullet.setReplacing(false);
         }}
         cancel={() => {}}
@@ -332,5 +313,84 @@ function SearchNodes({
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * TODO: This is still conceptually messy imo
+ *
+ * You've traversed a path from the root to a particular node. That node has a
+ * list of relation it's involved in. Filter those relations according to the
+ * view settings.
+ *
+ * ## Example:
+ *
+ * - Projects                   // pathParentOfFocusedNode
+ *   - Mew                      // focusedNode
+ *     - Features               // relatedNode
+ *     - Bugs                   // relatedNode
+ *     - parent: Projects       // relatedNode
+ *     - parent: Root           // relatedNode
+ *
+ * ### Filter all parents
+ * Filter all relations which are parent/child, where the parent is the related
+ * node
+ *
+ * - Projects
+ *   - Mew
+ *     - Features
+ *     - Bugs
+ *
+ * ### Filter all root parents
+ * Filter all relations which are parent/child, where the parent is the related
+ * node and the parent is a special root node
+ *
+ * - Projects
+ *   - Mew
+ *     - Features
+ *     - Bugs
+ *     - parent: Projects
+ *
+ * ### Filter direct parent
+ * Filter all relations which are parent/child, where the parent is the related
+ * node and the node directly precedes the focused node in the current path
+ *
+ * - Projects
+ *   - Mew
+ *     - Features
+ *     - Bugs
+ *     - parent: Root
+ *
+ */
+export function filterFocusedNodesRelations(
+  viewStore: ViewStore,
+  r: GraphRelation,
+  relatedNode: GraphNode,
+  precedingFocusedNodeInPath?: GraphNode,
+) {
+  /** The relation points from the related node to the focused node */
+  const isBackwards = r.from.id === relatedNode.id;
+  if (viewStore.hideBackrelations && isBackwards) {
+    return false;
+  }
+  /** Parent from the perspective of the graph, not the current tree */
+  const isGraphParent = isBackwards && r.type.id === defaultRelationTypes.child.id;
+  if (viewStore.hideAllParents && isGraphParent) {
+    return false;
+  } else if (viewStore.hideAllRootParents && isGraphParent && relatedNode.isRoot) {
+    return false;
+  } else if (viewStore.hideDirectParent && relatedNode.id === precedingFocusedNodeInPath?.id) {
+    return false;
+  }
+  return true;
+}
+
+export function getFilteredRelationsCount(viewStore: ViewStore, bullet: Bullet) {
+  return (
+    bullet.graphNode.relations.filter((r) => {
+      const relatedNode = r.from.id === bullet.graphNode.id ? r.to : r.from;
+      const grandparentNode = bullet.parent?.graphNode!;
+      return filterFocusedNodesRelations(viewStore, r, relatedNode, grandparentNode);
+    }).length > 0
   );
 }
