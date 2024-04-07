@@ -117,47 +117,20 @@ export class GraphStore {
     return this.nodesById.get(id);
   }
 
-  createRelation(
-    props: GraphRelationProps,
-    insertRelationProps: {
-      fromTarget?: GraphRelation;
-      fromSide?: "above" | "below";
-      toTarget?: GraphRelation;
-      toSide?: "above" | "below";
-      fromServer?: boolean; // TODO: need better naming which doesn't conflate the "from" usage here
-    } = {},
-  ): GraphRelation {
-    return this.insertRelation(new GraphRelation(this, props), insertRelationProps);
+  createRelation(props: GraphRelationProps): GraphRelation {
+    return this.insertRelation(new GraphRelation(this, props));
   }
 
-  insertRelation(
-    relation: GraphRelation,
-    {
-      fromTarget,
-      fromSide = "above",
-      toTarget,
-      toSide = "above",
-      fromServer = false,
-    }: {
-      fromTarget?: GraphRelation;
-      fromSide?: "above" | "below";
-      toTarget?: GraphRelation;
-      toSide?: "above" | "below";
-      fromServer?: boolean; // TODO: need better naming which doesn't conflate the "from" usage here
-    } = {},
-  ): GraphRelation {
+  insertRelation(relation: GraphRelation): GraphRelation {
     if (this.relationsById.has(relation.id)) {
       throw new Error(`Relation with id ${relation.id} already exists`);
     }
     this.assertNodeExists(relation.from, relation.to);
     this.relationsById.set(relation.id, relation);
 
-    relation.from.insertRelation({ target: fromTarget, side: fromSide }, relation);
-    relation.to.insertRelation({ target: toTarget, side: toSide }, relation);
+    relation.from.allRelationsList.add(relation);
+    relation.to.allRelationsList.add(relation);
 
-    if (!fromServer && this.remote) {
-      this.remote.upsertRelation(relation.id, relation.from.id, relation.to.id, relation.type.id);
-    }
     return relation;
   }
 
@@ -165,10 +138,10 @@ export class GraphStore {
     const { from: fromNode, to: toNode } = relation;
 
     // Remove the relation from the nodes
-    fromNode.allRelationsById.delete(relation.id);
-    fromNode.pinnedRelationsById.delete(relation.id);
-    toNode.allRelationsById.delete(relation.id);
-    toNode.pinnedRelationsById.delete(relation.id);
+    fromNode.allRelationsList.delete(relation.id);
+    fromNode.pinnedRelationsList.delete(relation.id);
+    toNode.allRelationsList.delete(relation.id);
+    toNode.pinnedRelationsList.delete(relation.id);
 
     // Delete all bullets in subtrees rooted at this relation
     const bullets = this.bulletsByRelationId.get(relation.id);
@@ -186,24 +159,13 @@ export class GraphStore {
     this.deleteNodeIfEmptyAndUnrelated(fromNode, toNode);
   }
 
-  updateRelationFrom(
-    {
-      newFrom,
-      target,
-      side = "above",
-    }: {
-      newFrom: GraphNode;
-      target?: GraphRelation;
-      side?: "above" | "below";
-    },
-    ...relations: GraphRelation[]
-  ): GraphRelation[] {
+  updateRelationFrom(relations: GraphRelation[], newFrom: GraphNode): GraphRelation[] {
     this.assertNodeExists(newFrom, ...relations.map((r) => r.to));
     // remove the relations from their old from nodes
     const oldFroms = relations.map((r) => {
       const oldFrom = r.from;
-      oldFrom.allRelationsById.delete(r.id);
-      oldFrom.pinnedRelationsById.delete(r.id);
+      oldFrom.allRelationsList.delete(r.id);
+      oldFrom.pinnedRelationsList.delete(r.id);
       return oldFrom;
     });
     // update the relations from property
@@ -211,7 +173,7 @@ export class GraphStore {
       r.from = newFrom;
     });
     // add the relations to the new from node
-    newFrom.insertRelation({ target, side }, ...relations);
+    newFrom.allRelationsList.add(...relations);
     this.deleteNodeIfEmptyAndUnrelated(...oldFroms);
     relations.forEach((r) => {
       this.remote?.upsertRelation(r.id, newFrom.id, r.to.id, r.type.id);
@@ -219,24 +181,13 @@ export class GraphStore {
     return relations;
   }
 
-  updateRelationTo(
-    {
-      newTo,
-      target,
-      side = "above",
-    }: {
-      newTo: GraphNode;
-      target?: GraphRelation;
-      side?: "above" | "below";
-    },
-    ...relations: GraphRelation[]
-  ): GraphRelation[] {
+  updateRelationTo(relations: GraphRelation[], newTo: GraphNode): GraphRelation[] {
     this.assertNodeExists(newTo, ...relations.map((r) => r.from));
     // remove the relations from their old to nodes
     const oldTos = relations.map((r) => {
       const oldTo = r.to;
-      oldTo.allRelationsById.delete(r.id);
-      oldTo.pinnedRelationsById.delete(r.id);
+      oldTo.allRelationsList.delete(r.id);
+      oldTo.pinnedRelationsList.delete(r.id);
       return oldTo;
     });
     // update the relations to property
@@ -244,7 +195,7 @@ export class GraphStore {
       r.to = newTo;
     });
     // add the relations to the new to node
-    newTo.insertRelation({ target, side }, ...relations);
+    newTo.allRelationsList.add(...relations);
     this.deleteNodeIfEmptyAndUnrelated(...oldTos);
     relations.forEach((r) => {
       this.remote?.upsertRelation(r.id, r.from.id, newTo.id, r.type.id);
@@ -356,14 +307,15 @@ export class GraphStore {
   }
 
   addRelationFromServer(persistedRelation: PersistedGraphRelation) {
-    const from = this.getNode(persistedRelation.fromId);
-    const to = this.getNode(persistedRelation.toId);
-    const type = this.relationTypesById[persistedRelation.typeId as keyof typeof this.relationTypesById]; // TODO
-    if (!from || !to || !type) {
-      throw new Error("Invalid persisted relation");
-    }
-    const relation = new GraphRelation(this, { from, to, type });
-    this.insertRelation(relation, { fromServer: true });
+    throw new Error("Method not implemented.");
+    // const from = this.getNode(persistedRelation.fromId);
+    // const to = this.getNode(persistedRelation.toId);
+    // const type = this.relationTypesById[persistedRelation.typeId as keyof typeof this.relationTypesById]; // TODO
+    // if (!from || !to || !type) {
+    //   throw new Error("Invalid persisted relation");
+    // }
+    // const relation = new GraphRelation(this, { from, to, type });
+    // this.insertRelation(relation, { fromServer: true });
   }
 
   setCurrentOutlineViewRoot(bullet: Bullet) {
@@ -402,21 +354,23 @@ export class GraphStore {
     { parent, target, side = "below" }: { parent: Bullet; target?: Bullet; side?: "above" | "below" },
     ...bullets: Bullet[]
   ) {
+    const parentBullet = parent;
+    const parentGraphNode = parentBullet.graphNode;
     this.updateRelationFrom(
-      { newFrom: parent.graphNode, target: target?.graphRelation!, side },
-      ...bullets.map((b) => b.graphRelation!),
+      bullets.map((b) => b.graphRelation),
+      parentGraphNode,
     );
     // We need to manually add the bullets to the respective maps because otherwise new bullets
     // will be created to reflect the new relations, and we'll lose things like the expanded states
     // underneath and focus state.
     // (TODO: This seems more complicated than it should be though. It's worth revisiting.)
     bullets.forEach((b) => {
-      b.parent = parent;
+      b.parent = parentBullet;
       if (target?.isPinned) {
-        parent.graphNode.pinRelation({ target: target.graphRelation!, side }, b.graphRelation!);
-        parent.pinnedByRelationId.set(b.graphRelation!.id, b);
+        parentGraphNode.pinnedRelationsList.add(b.graphRelation);
+        parentBullet.pinnedByRelationId.set(b.graphRelation!.id, b);
       } else {
-        parent.childrenByRelationId.set(b.graphRelation!.id, b);
+        parentBullet.childrenByRelationId.set(b.graphRelation!.id, b);
       }
     });
   }
@@ -491,9 +445,9 @@ export class GraphStore {
 
   setGraphNodeOnBullet(bullet: Bullet, graphNode: GraphNode) {
     if (bullet.isRelationToThis()) {
-      this.updateRelationTo({ newTo: graphNode }, bullet.graphRelation!);
+      this.updateRelationTo([bullet.graphRelation], graphNode);
     } else {
-      this.updateRelationFrom({ newFrom: graphNode }, bullet.graphRelation!);
+      this.updateRelationFrom([bullet.graphRelation], graphNode);
     }
     bullet.graphNode = graphNode;
   }

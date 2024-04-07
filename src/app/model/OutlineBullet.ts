@@ -163,7 +163,7 @@ export class Bullet {
     }
     return Array.from(this.childrenByRelationId.values())
       .map((bullet) => {
-        const position = this.graphNode.allRelationsById.get(bullet.graphRelation.id)?.position;
+        const position = this.graphNode.allRelationsList.get(bullet.graphRelation.id)?.position;
         // TODO: weird that this can every happen, and that we need to do this
         if (!position) {
           console.error("missing position for relation", bullet.graphRelation);
@@ -220,13 +220,13 @@ export class Bullet {
       const newPosition = posBefore
         ? generatePositionBetween(posBefore, posAfter)
         : generateDefaultPosition(graphRelation.createdAt);
-      const positionedRelation = parent.graphNode.pinnedRelationsById.get(graphRelation.id);
+      const positionedRelation = parent.graphNode.pinnedRelationsList.get(graphRelation.id);
       if (!positionedRelation) {
         throw new Error("Relation not found");
       }
       positionedRelation.position = newPosition;
     } else {
-      parent.graphNode.allRelationsById.moveAfter([graphRelation], sibling.graphRelation);
+      parent.graphNode.allRelationsList.moveAfter([graphRelation], sibling.graphRelation);
       // const relations = parent.graphNode.relationsWithPositions.sort((a, b) =>
       //   comparePositions(a.position, b.position),
       // );
@@ -260,10 +260,10 @@ export class Bullet {
   }
 
   pin() {
-    this.parent?.graphNode.pinRelation({}, this.graphRelation!);
+    this.parent?.graphNode.pinnedRelationsList.add(this.graphRelation);
   }
 
   unpin() {
-    this.parent?.graphNode.unpinRelation(this.graphRelation!);
+    this.parent?.graphNode.pinnedRelationsList.delete(this.graphRelation.id);
   }
 }
