@@ -56,6 +56,15 @@ export const DevTools = observer(() => {
           />
           Hide backrelations
         </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={graphStore.disableAutoRelateToRoots}
+            onChange={(e) => graphStore.setDisableAutoRelateToRoots(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Disable auto-relate to roots
+        </label>
         {/* <div className="flex gap-2">
           <label>Relation view:</label>
           <select

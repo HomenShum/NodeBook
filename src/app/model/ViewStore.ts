@@ -26,7 +26,7 @@ export class ViewStore {
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
   public hideDirectParent = false;
-  public hideAllRootParents = true;
+  public hideAllRootParents = false;
   public hideAllParents = false;
   public hideBackrelations = false;
 

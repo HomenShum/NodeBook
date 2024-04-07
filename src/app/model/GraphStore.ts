@@ -41,6 +41,8 @@ export class GraphStore {
   outlineRootRelationToUserRoot: GraphRelation;
   thoughtstreamRootRelationToUserRoot: GraphRelation;
 
+  disableAutoRelateToRoots = true;
+
   constructor(remote?: RemoteGraphStore) {
     this.remote = remote;
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
@@ -69,6 +71,10 @@ export class GraphStore {
       node: this.thoughtstreamRoot,
       relation: this.thoughtstreamRootRelationToUserRoot,
     });
+  }
+
+  setDisableAutoRelateToRoots(disable: boolean) {
+    this.disableAutoRelateToRoots = disable;
   }
 
   get nodes(): GraphNode[] {
