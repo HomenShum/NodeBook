@@ -17,6 +17,7 @@ import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { ViewStore } from "@/app/model/ViewStore";
 import { Position } from "@/app/util";
 import { cn } from "@/lib/utils";
+import { action } from "mobx";
 import { useEffect, useRef, useState } from "react";
 import { BulletChildren } from "../BulletChildren";
 import { RelationCombobox } from "../RelationCombobox";
@@ -207,11 +208,11 @@ const ReplacingNodeView = observer(({ bullet }: { bullet: Bullet }) => {
     <div className="ml-4 flex-1">
       <SearchNodes
         currentNode={bullet.graphNode}
-        onSelect={(graphNode) => {
+        onSelect={action((graphNode) => {
           bullet.setGraphNode(graphNode);
           bullet.updateChildren();
           bullet.setReplacing(false);
-        }}
+        })}
         cancel={() => {}}
       />
     </div>
