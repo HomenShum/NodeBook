@@ -226,24 +226,25 @@ export class Bullet {
       }
       positionedRelation.position = newPosition;
     } else {
-      const relations = parent.graphNode.relationsWithPositions.sort((a, b) =>
-        comparePositions(a.position, b.position),
-      );
-      const index = relations.findIndex((r) => r.relation.id === sibling.graphRelation?.id);
-      if (index === -1) {
-        throw new Error("Bullet is not a sibling");
-      }
-      const relationAfter = relations[index + 1];
-      const posBefore = relations[index].position;
-      const posAfter = relationAfter?.position ?? null;
-      const newPosition = posBefore
-        ? generatePositionBetween(posBefore, posAfter)
-        : generateDefaultPosition(graphRelation.createdAt);
-      const positionedRelation = parent.graphNode.allRelationsById.get(graphRelation.id);
-      if (!positionedRelation) {
-        throw new Error("Relation not found");
-      }
-      positionedRelation.position = newPosition;
+      parent.graphNode.allRelationsById.moveAfter([graphRelation], sibling.graphRelation);
+      // const relations = parent.graphNode.relationsWithPositions.sort((a, b) =>
+      //   comparePositions(a.position, b.position),
+      // );
+      // const index = relations.findIndex((r) => r.relation.id === sibling.graphRelation?.id);
+      // if (index === -1) {
+      //   throw new Error("Bullet is not a sibling");
+      // }
+      // const relationAfter = relations[index + 1];
+      // const posBefore = relations[index].position;
+      // const posAfter = relationAfter?.position ?? null;
+      // const newPosition = posBefore
+      //   ? generatePositionBetween(posBefore, posAfter)
+      //   : generateDefaultPosition(graphRelation.createdAt);
+      // const positionedRelation = parent.graphNode.allRelationsById.get(graphRelation.id);
+      // if (!positionedRelation) {
+      //   throw new Error("Relation not found");
+      // }
+      // positionedRelation.position = newPosition;
     }
   }
 
