@@ -74,18 +74,20 @@ export class Bullet {
     // TODO: this doesn't belong here. like you can create nodes and relations
     // in lot of different places but this is the only place where it'd add
     // to the outline / thoughtstream view
-    if (this.graphNode.id === THOUGHTSTREAM_ROOT_ID) {
-      this.graphStore.createRelation({
-        from: this.graphStore.outlineRoot,
-        to: node,
-        type: defaultRelationTypes.child,
-      });
-    } else {
-      this.graphStore.createRelation({
-        from: this.graphStore.thoughtstreamRoot,
-        to: node,
-        type: defaultRelationTypes.child,
-      });
+    if (!this.graphStore.disableAutoRelateToRoots) {
+      if (this.graphNode.id === THOUGHTSTREAM_ROOT_ID) {
+        this.graphStore.createRelation({
+          from: this.graphStore.outlineRoot,
+          to: node,
+          type: defaultRelationTypes.child,
+        });
+      } else {
+        this.graphStore.createRelation({
+          from: this.graphStore.thoughtstreamRoot,
+          to: node,
+          type: defaultRelationTypes.child,
+        });
+      }
     }
     return this.graphStore.createBullet({ parent: this, relation });
   }
