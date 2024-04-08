@@ -54,6 +54,7 @@ export class Bullet {
 
   setReplacing(replacing: boolean) {
     this.replacing = replacing;
+    this.isExpanded = false;
   }
 
   togglePinnedExpanded() {
@@ -102,11 +103,6 @@ export class Bullet {
 
   setRelation(relation: GraphRelation) {
     this.graphRelation = relation;
-  }
-
-  delete() {
-    this.graphStore.deleteRelation(this.graphRelation);
-    this.graphStore.deleteBulletAndChildren(this.id);
   }
 
   /**
@@ -207,6 +203,25 @@ export class Bullet {
     return this.pinnedChildrenWithPositions
       .sort((a, b) => comparePositions(a.position, b.position))
       .map(({ bullet }) => bullet);
+  }
+
+  clearChildrenAndCollapse() {
+    this.childrenByRelationId.forEach((child) => this.graphStore.deleteBulletAndChildren(child.id));
+    this.childrenByRelationId.clear();
+    this.pinnedByRelationId.forEach((child) => this.graphStore.deleteBulletAndChildren(child.id));
+    this.pinnedByRelationId.clear();
+    this.isExpanded = false;
+  }
+
+  setGraphNode(graphNode: GraphNode) {
+    if (!this.isRelationToThis()) {
+      console.error("Can't set graph node on backrelation bullet");
+      return;
+    }
+    this.graphStore.updateRelationTo([this.graphRelation], graphNode);
+    this.graphStore.bulletsByRelationId.get(this.graphRelation.id)?.forEach((b) => {
+      b.clearChildrenAndCollapse();
+    });
   }
 
   moveAfterSibling(sibling: Bullet) {

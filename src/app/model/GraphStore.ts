@@ -468,21 +468,4 @@ export class GraphStore {
     newBullet.moveAfterSibling(bullet);
     return newBullet;
   }
-
-  setGraphNodeOnBullet(bullet: Bullet, graphNode: GraphNode) {
-    if (!bullet.isRelationToThis()) {
-      console.error("Can't set graph node on backrelation bullet", { bullet, graphNode });
-      return;
-    }
-    this.updateRelationTo([bullet.graphRelation], graphNode);
-    this.bulletsByRelationId.get(bullet.graphRelation.id)?.forEach((b) => {
-      if (b.id === bullet.id) {
-        b.childrenByRelationId.clear();
-        b.pinnedByRelationId.clear();
-      } else {
-        this.deleteBulletAndChildren(b.id);
-      }
-    });
-    bullet.updateChildren();
-  }
 }

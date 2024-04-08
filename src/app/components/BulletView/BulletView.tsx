@@ -204,13 +204,12 @@ const BulletDetails = observer(({ bullet, position }: { bullet: Bullet; position
 });
 
 const ReplacingNodeView = observer(({ bullet }: { bullet: Bullet }) => {
-  const graphStore = useGraphStore();
   return (
     <div className="ml-4 flex-1">
       <SearchNodes
         currentNode={bullet.graphNode}
         onSelect={action((graphNode) => {
-          graphStore.setGraphNodeOnBullet(bullet, graphNode);
+          bullet.setGraphNode(graphNode);
           bullet.setReplacing(false);
         })}
         cancel={() => {
