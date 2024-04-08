@@ -213,7 +213,9 @@ const ReplacingNodeView = observer(({ bullet }: { bullet: Bullet }) => {
           graphStore.setGraphNodeOnBullet(bullet, graphNode);
           bullet.setReplacing(false);
         })}
-        cancel={() => {}}
+        cancel={() => {
+          bullet.setReplacing(false);
+        }}
       />
     </div>
   );

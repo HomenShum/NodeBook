@@ -471,7 +471,8 @@ export class GraphStore {
 
   setGraphNodeOnBullet(bullet: Bullet, graphNode: GraphNode) {
     if (!bullet.isRelationToThis()) {
-      throw new Error("Can't set graph node on backrelation bullet");
+      console.error("Can't set graph node on backrelation bullet", { bullet, graphNode });
+      return;
     }
     this.updateRelationTo([bullet.graphRelation], graphNode);
     this.bulletsByRelationId.get(bullet.graphRelation.id)?.forEach((b) => {
@@ -482,5 +483,6 @@ export class GraphStore {
         this.deleteBulletAndChildren(b.id);
       }
     });
+    bullet.updateChildren();
   }
 }
