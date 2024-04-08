@@ -108,10 +108,11 @@ export const DevTools = observer(() => {
           variant={"destructive"}
           style={{ maxWidth: "fit-content" }}
           onClick={() => {
-            if (!confirm("Really delete all data?")) {
-              return;
-            }
-            graphStore.remote?.deleteAll();
+            throw new Error("Not implemented");
+            // if (!confirm("Really delete all data?")) {
+            //   return;
+            // }
+            // graphStore.remote?.deleteAll();
           }}
         >
           Delete all remote data
