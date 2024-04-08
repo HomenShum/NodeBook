@@ -1,12 +1,10 @@
 import { observer } from "mobx-react-lite";
-import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
 import { BulletChildren } from "./BulletChildren";
 
 export const OutlineView = observer(() => {
-  const graphStore = useGraphStore();
   const viewStore = useViewStore();
-  const root = graphStore.outlineBulletRoot;
+  const root = viewStore.currentOutlineViewRoot;
   if (!root) {
     return <div>Missing root node</div>;
   }
@@ -32,7 +30,7 @@ export const OutlineView = observer(() => {
               key={parent.id}
               style={{ cursor: "pointer", userSelect: "none" }}
               onClick={() => {
-                graphStore.setCurrentOutlineViewRoot(parent);
+                viewStore.setCurrentOutlineViewRoot(parent);
               }}
             >
               {parent.graphNode.text} /{" "}

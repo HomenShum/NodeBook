@@ -93,7 +93,7 @@ export const BulletView = observer(
                         : "text-transparent"
                       : "",
                   )}
-                  onClick={() => graphStore.setCurrentOutlineViewRoot(bullet)}
+                  onClick={() => viewStore.setCurrentOutlineViewRoot(bullet)}
                 />
               )}
               <Dot
@@ -108,7 +108,7 @@ export const BulletView = observer(
                       : "text-transparent"
                     : "",
                 )}
-                onClick={() => graphStore.setCurrentOutlineViewRoot(bullet)}
+                onClick={() => viewStore.setCurrentOutlineViewRoot(bullet)}
               />
             </div>
             {/* relation and node */}

@@ -1,4 +1,6 @@
+import { reaction } from "mobx";
 import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
 import { Bullet } from "../model/OutlineBullet";
 import { useViewStore } from "../store/useViewStore";
 import { Position, comparePositions } from "../util";
@@ -8,20 +10,31 @@ export const BulletChildren = observer(
   ({ bullet, parents, depth }: { bullet: Bullet; parents: Bullet[]; depth: number }) => {
     const viewStore = useViewStore();
 
-    let children = bullet.childrenWithPositions
-      .sort((a, b) => comparePositions(a.position, b.position))
-      .filter(({ bullet: childBullet }) =>
-        filterFocusedNodesRelations(
-          viewStore,
-          childBullet.graphRelation,
-          childBullet.graphNode,
-          bullet.parent?.graphNode,
+    useEffect(
+      () =>
+        reaction(
+          () => bullet.graphNode.allRelationsList.keys,
+          () => bullet.updateChildren(),
         ),
-      );
+      [bullet],
+    );
 
     return (
       <div className={bullet.type === "bullet" && depth > 0 ? "ml-8" : ""}>
-        <BulletList bullets={children} parents={parents} depth={depth} />
+        <BulletList
+          bullets={bullet.childrenWithPositions
+            .sort((a, b) => comparePositions(a.position, b.position))
+            .filter(({ bullet: childBullet }) =>
+              filterFocusedNodesRelations(
+                viewStore,
+                childBullet.graphRelation,
+                childBullet.graphNode,
+                bullet.parent?.graphNode,
+              ),
+            )}
+          parents={parents}
+          depth={depth}
+        />
       </div>
     );
   },

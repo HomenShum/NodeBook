@@ -168,16 +168,17 @@ export class Bullet {
         `Can't access children of unexpanded bullet. Children are lazily updated when you expand a bullet, so expand the bullet first, then access the children.`,
       );
     }
-    return Array.from(this.childrenByRelationId.values())
-      .map((bullet) => {
-        const position = this.graphNode.allRelationsList.get(bullet.graphRelation.id)?.position;
+    return this.graphNode.relationsWithPositions
+      .map(({ relation, position }) => {
+        const bullet = this.childrenByRelationId.get(relation.id);
         // TODO: weird that this can every happen, and that we need to do this
-        if (!position) {
-          console.error("missing position for relation", { parent: this, bullet });
+        if (!bullet) {
+          console.error("missing bullet for relation", { parent: this, relation });
+          return;
         }
         return { bullet, position };
       })
-      .filter(({ position }) => position) as { bullet: Bullet; position: Position }[];
+      .filter((x) => x) as { bullet: Bullet; position: Position }[];
   }
 
   get childrenSortedByPosition(): Bullet[] {

@@ -161,6 +161,11 @@ export class GraphStore {
     this.deleteNodeIfEmptyAndUnrelated(fromNode, toNode);
   }
 
+  /**
+   * Update the `from` node of the given relations to the new node, and
+   * also updates the list of relations on the old and new `from` nodes
+   * to reflect the changes.
+   */
   updateRelationFrom(relations: GraphRelation[], newFrom: GraphNode): GraphRelation[] {
     this.assertNodeExists(newFrom, ...relations.map((r) => r.to));
     // remove the relations from their old from nodes
@@ -183,6 +188,11 @@ export class GraphStore {
     return relations;
   }
 
+  /**
+   * Update the `to` node of the given relations to the new node, and
+   * also updates the list of relations on the old and new `to` nodes
+   * to reflect the changes.
+   */
   updateRelationTo(relations: GraphRelation[], newTo: GraphNode): GraphRelation[] {
     this.assertNodeExists(newTo, ...relations.map((r) => r.from));
     // remove the relations from their old to nodes
@@ -320,10 +330,6 @@ export class GraphStore {
     // this.insertRelation(relation, { fromServer: true });
   }
 
-  setCurrentOutlineViewRoot(bullet: Bullet) {
-    this.outlineBulletRoot = bullet;
-  }
-
   createBullet({ parent, relation }: { parent?: Bullet; relation: GraphRelation }) {
     // Create bullet
     const bullet = new Bullet(this, relation, { parent });
@@ -391,6 +397,11 @@ export class GraphStore {
     // underneath and focus state.
     // (TODO: This seems more complicated than it should be though. It's worth revisiting.)
     bullets.forEach((b) => {
+      // Remove from old parent
+      b.parent?.childrenByRelationId.delete(b.graphRelation.id);
+      b.parent?.pinnedByRelationId.delete(b.graphRelation.id);
+
+      // Add to new parent
       b.parent = parentBullet;
       if (target instanceof Bullet && target.isPinned) {
         parentGraphNode.pinnedRelationsList.add(b.graphRelation);

@@ -33,9 +33,12 @@ export class ViewStore {
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
 
+  public currentOutlineViewRoot: Bullet | null = null;
+
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;
     this.graphStore = graphStore;
+    this.currentOutlineViewRoot = graphStore.outlineBulletRoot;
     makeAutoObservable(this);
     makeAutoSaving(this, {
       showNodeDetails: true,
@@ -43,6 +46,10 @@ export class ViewStore {
       rightSidebarOpen: true,
       hideDirectParent: true,
     });
+  }
+
+  setCurrentOutlineViewRoot(root: Bullet) {
+    this.currentOutlineViewRoot = root;
   }
 
   toggleLeftSidebar() {

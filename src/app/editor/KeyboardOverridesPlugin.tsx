@@ -11,6 +11,7 @@ import {
   KEY_TAB_COMMAND,
   LexicalEditor,
 } from "lexical";
+import { action } from "mobx";
 import { useEffect } from "react";
 import { GraphStore } from "../model/GraphStore";
 import { Bullet } from "../model/OutlineBullet";
@@ -79,7 +80,7 @@ const makeBulletKeyCommands = (
     ),
     editor.registerCommand(
       KEY_TAB_COMMAND,
-      (event) => {
+      action((event) => {
         if (!graphStore) return false;
         event.preventDefault();
         if (event.shiftKey) {
@@ -103,14 +104,15 @@ const makeBulletKeyCommands = (
             console.log("Parent not found");
             return false;
           }
-          graphStore.moveBulletToNewParent({ bullets: [bullet], parent: siblingAbove, target: "bottom" });
+          const parent = siblingAbove;
+          graphStore.moveBulletToNewParent({ bullets: [bullet], parent, target: "bottom" });
           if (!siblingAbove.isExpanded) {
             siblingAbove.toggleExpanded();
           }
           viewStore.setFocusedNode(bullet);
           return true;
         }
-      },
+      }),
       COMMAND_PRIORITY_LOW,
     ),
     editor.registerCommand(

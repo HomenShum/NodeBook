@@ -1,5 +1,5 @@
 import { generateNKeysBetween } from "fractional-indexing";
-import { action, makeObservable, observable } from "mobx";
+import { action, computed, makeObservable, observable } from "mobx";
 import { Position, comparePositions, generateDefaultPosition } from "../util";
 
 type ItemWithPosition<T> = {
@@ -18,6 +18,7 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
     });
     makeObservable<FractionalPositionedList<T>, "map">(this, {
       map: observable,
+      keys: computed,
       add: action,
       delete: action,
       move: action,
@@ -30,6 +31,10 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
 
   values(): ItemWithPosition<T>[] {
     return Array.from(this.map.values());
+  }
+
+  get keys() {
+    return Array.from(this.map.keys());
   }
 
   add(...items: T[]) {
