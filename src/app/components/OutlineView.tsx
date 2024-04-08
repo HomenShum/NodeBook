@@ -17,8 +17,7 @@ export const OutlineView = observer(() => {
       style={{ maxWidth: 1000 }}
       onKeyDown={(e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-          console.log("create node");
-          const bullet = root.createChild();
+          const { bullet } = root.createChild();
           viewStore.setFocusedNode(bullet);
         }
       }}
@@ -42,7 +41,7 @@ export const OutlineView = observer(() => {
           <button
             className="select-none"
             onClick={() => {
-              const bullet = root.createChild();
+              const { bullet } = root.createChild();
               viewStore.setFocusedNode(bullet);
             }}
           >

@@ -65,7 +65,7 @@ export class Bullet {
     this.isAllRelationsExpanded = !this.isAllRelationsExpanded;
   }
 
-  createChild(props: GraphNodeProps = {}): Bullet {
+  createChild(props: GraphNodeProps = {}) {
     const node = this.graphStore.createNode(props);
     const relation = this.graphStore.createRelation({
       from: this.graphNode,
@@ -73,22 +73,39 @@ export class Bullet {
       type: defaultRelationTypes.child,
     });
     const bullet = this.graphStore.createBullet({ parent: this, relation });
+    const result: {
+      bullet: Bullet;
+      bundleRelations: GraphRelation[];
+      outlineRelation?: GraphRelation;
+      thoughtstreamRelation?: GraphRelation;
+    } = { bullet, bundleRelations: [] };
     // TODO: this doesn't belong here. like you can create nodes and relations
     // in lot of different places but this is the only place where it'd add
     // to the outline / thoughtstream view
+    this.children
+      .filter((c) => c.type === "bundle")
+      .forEach((bundle) => {
+        const relation = this.graphStore.createRelation({
+          from: bundle.graphNode,
+          to: bullet.graphNode,
+          type: defaultRelationTypes.child,
+        });
+        result.bundleRelations.push(relation);
+      });
+
     const rootAncestor = bullet.ancestors[0]?.id;
     const directAncestor = bullet.parent?.id;
     if (rootAncestor === this.graphStore.thoughtstreamBulletRoot.id) {
       // Inside thoughtstream
       const isDirectChild = directAncestor === this.graphStore.thoughtstreamBulletRoot.id;
       if (isDirectChild && this.graphStore.addThoughstreamDirectChildrenToOutline) {
-        this.graphStore.createRelation({
+        result.outlineRelation = this.graphStore.createRelation({
           from: this.graphStore.outlineRoot,
           to: node,
           type: defaultRelationTypes.child,
         });
       } else if (!isDirectChild && this.graphStore.addThoughtstreamNestedChildrenToThoughtstream) {
-        this.graphStore.createRelation({
+        result.thoughtstreamRelation = this.graphStore.createRelation({
           from: this.graphStore.thoughtstreamRoot,
           to: node,
           type: defaultRelationTypes.child,
@@ -97,14 +114,14 @@ export class Bullet {
     } else if (rootAncestor === this.graphStore.outlineBulletRoot.id) {
       // Inside outline
       if (this.graphStore.addAllOutlineDescendantsToThoughtstream) {
-        this.graphStore.createRelation({
+        result.thoughtstreamRelation = this.graphStore.createRelation({
           from: this.graphStore.thoughtstreamRoot,
           to: node,
           type: defaultRelationTypes.child,
         });
       }
     }
-    return bullet;
+    return result;
   }
 
   isRelationToThis() {
@@ -113,6 +130,9 @@ export class Bullet {
 
   setType(type: "bullet" | "bundle") {
     this.type = type;
+    if (type === "bullet" && this.isExpanded) {
+      this.updateChildren();
+    }
   }
 
   setRelation(relation: GraphRelation) {
@@ -187,12 +207,20 @@ export class Bullet {
         const bullet = this.childrenByRelationId.get(relation.id);
         // TODO: weird that this can every happen, and that we need to do this
         if (!bullet) {
-          console.error("missing bullet for relation", { parent: this, relation });
+          console.error("missing bullet for relation", {
+            parentBulletId: this.id,
+            parentGraphNodeId: this.graphNode.id,
+            parentText: this.graphNode.text,
+          });
           return;
         }
         return { bullet, position };
       })
       .filter((x) => x) as { bullet: Bullet; position: Position }[];
+  }
+
+  get children() {
+    return this.childrenWithPositions.map(({ bullet }) => bullet);
   }
 
   get childrenSortedByPosition(): Bullet[] {

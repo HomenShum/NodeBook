@@ -14,8 +14,8 @@ export const ThoughtstreamView = observer(() => {
       onKeyDown={(e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
           console.log("create node");
-          const note = root.createChild({});
-          viewStore.setFocusedNode(note);
+          const { bullet } = root.createChild();
+          viewStore.setFocusedNode(bullet);
         }
       }}
     >
@@ -25,7 +25,7 @@ export const ThoughtstreamView = observer(() => {
           <button
             className="select-none"
             onClick={() => {
-              const bullet = root.createChild({});
+              const { bullet } = root.createChild();
               viewStore.setFocusedNode(bullet);
             }}
           >

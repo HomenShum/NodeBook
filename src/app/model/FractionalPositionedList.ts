@@ -50,7 +50,7 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
     this.map.delete(id);
   }
 
-  move(items: T[], to: T | "top" | "bottom") {
+  move(items: T[], to: T | "top" | "bottom" | ((v: ItemWithPosition<T>) => boolean)) {
     let posInt: number;
     let posFracBefore: string | null = null;
     let posFracAfter: string | null = null;
@@ -65,7 +65,8 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
       posFracAfter = null;
     } else {
       // Move item after the specified item
-      const index = positionedRelations.findIndex(({ item }) => item.id === to.id);
+      const predicate = typeof to === "function" ? to : (v: ItemWithPosition<T>) => v.item.id === to.id;
+      const index = positionedRelations.findIndex(predicate);
       const itemBefore = positionedRelations[index];
       const itemAfter = positionedRelations[index + 1];
       posInt = itemBefore?.position.int ?? items[0].createdAt.getTime();
