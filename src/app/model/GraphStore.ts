@@ -21,26 +21,22 @@ export const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
-
+  relationTypesById: Record<string, GraphRelationType> = {};
   bulletsById: Map<string, Bullet> = new Map();
-
   bulletsByRelationId: Map<string, Map<string, Bullet>> = new Map();
 
+  // Default nodes and relations
   // TODO: do we need this? feels like there could be multiple
   outlineBulletRoot: Bullet | null = null;
   thoughtstreamBulletRoot: Bullet;
-
-  isLoading = false;
-  remote?: RemoteGraphStore;
-  public relationTypesById: Record<string, GraphRelationType> = {};
-
   userRoot: GraphNode;
   outlineRoot: GraphNode;
-
   thoughtstreamRoot: GraphNode;
   outlineRootRelationToUserRoot: GraphRelation;
   thoughtstreamRootRelationToUserRoot: GraphRelation;
 
+  isLoading = false;
+  remote?: RemoteGraphStore;
   disableAutoRelateToRoots = true;
 
   constructor(remote?: RemoteGraphStore) {
