@@ -4,14 +4,13 @@ import { useEffect, useState } from "react";
 import { env } from "./envFrontend";
 import "./global.css";
 import { GraphStore } from "./model/GraphStore";
-import { RemoteGraphStore } from "./model/RemoteGraphStore";
 import { ViewStore } from "./model/ViewStore";
 import { GraphStoreProvider } from "./store/useGraphStore";
 import { ViewStoreProvider } from "./store/useViewStore";
 
 // Initialize stores
-const graphStore = new GraphStore(env.isPersistenceEnabled ? new RemoteGraphStore() : undefined);
-const loadedPromise = env.isPersistenceEnabled ? graphStore.loadFromServer() : Promise.resolve();
+const graphStore = new GraphStore();
+const loadedPromise = Promise.resolve();
 const viewStore = new ViewStore(graphStore);
 
 // Expose stores to the window for debugging

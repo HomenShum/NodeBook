@@ -36,11 +36,9 @@ export class GraphStore {
   thoughtstreamRootRelationToUserRoot: GraphRelation;
 
   isLoading = false;
-  remote?: RemoteGraphStore;
   disableAutoRelateToRoots = true;
 
-  constructor(remote?: RemoteGraphStore) {
-    this.remote = remote;
+  constructor() {
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
     this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "Root" }] });
@@ -83,15 +81,19 @@ export class GraphStore {
     return Object.values(this.relationTypesById);
   }
 
-  createNode(props: GraphNodeProps = {}, { fromServer = false }: { fromServer?: boolean } = {}): GraphNode {
-    const node = new GraphNode(this, this.remote ?? null, {
+  createNode(props: GraphNodeProps = {}): GraphNode {
+    const node = new GraphNode(this, {
       id: props.id || uuid(),
       content: props.content,
     });
     this.nodesById.set(node.id, node);
-    // if (!fromServer && this.remote) {
-    //   this.remote.upsertNode(node.id, node.text, node.thoughtstreamPosition);
-    // }
+    if (node.id === OUTLINE_ROOT_ID) {
+      this.outlineRoot = node;
+    } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
+      this.thoughtstreamRoot = node;
+    } else if (node.id === USER_ROOT_ID) {
+      this.userRoot = node;
+    }
     return node;
   }
 
@@ -108,9 +110,6 @@ export class GraphStore {
     if (!node) return;
     node.relations.forEach((r) => this.deleteRelation(r));
     this.nodesById.delete(node.id);
-    if (this.remote) {
-      this.remote.deleteNode(id);
-    }
   }
 
   getNode(id: string): GraphNode | undefined {
@@ -151,9 +150,6 @@ export class GraphStore {
     // Delete the relation itself
     this.relationsById.delete(relation.id);
 
-    if (this.remote) {
-      this.remote.deleteRelation(relation.id);
-    }
     this.deleteNodeIfEmptyAndUnrelated(fromNode, toNode);
   }
 
@@ -178,9 +174,6 @@ export class GraphStore {
     // add the relations to the new from node
     newFrom.allRelationsList.add(...relations);
     this.deleteNodeIfEmptyAndUnrelated(...oldFroms);
-    relations.forEach((r) => {
-      this.remote?.upsertRelation(r.id, newFrom.id, r.to.id, r.type.id);
-    });
     return relations;
   }
 
@@ -205,9 +198,6 @@ export class GraphStore {
     // add the relations to the new to node
     newTo.allRelationsList.add(...relations);
     this.deleteNodeIfEmptyAndUnrelated(...oldTos);
-    relations.forEach((r) => {
-      this.remote?.upsertRelation(r.id, r.from.id, newTo.id, r.type.id);
-    });
     return relations;
   }
 
@@ -215,17 +205,11 @@ export class GraphStore {
     const { from, to } = relation;
     relation.from = to;
     relation.to = from;
-    if (this.remote) {
-      this.remote.upsertRelation(relation.id, relation.from.id, relation.to.id, relation.type.id);
-    }
     return relation;
   }
 
   updateRelationsType(relation: GraphRelation, newType: GraphRelationType): GraphRelation {
     relation.type = newType;
-    if (this.remote) {
-      this.remote.upsertRelation(relation.id, relation.from.id, relation.to.id, relation.type.id);
-    }
     return relation;
   }
 
@@ -234,9 +218,6 @@ export class GraphStore {
       throw new Error(`Relation type with id ${props.id} already exists`);
     }
     this.relationTypesById[props.id] = { ...props };
-    if (this.remote && !fromServer) {
-      this.remote.upsertRelationType(props.id, props.label, props.reverseLabel);
-    }
     return this.relationTypesById[props.id];
   }
 
@@ -245,9 +226,6 @@ export class GraphStore {
       throw new Error(`Relation type with id ${id} does not exist`);
     }
     Object.assign(this.relationTypesById[id], { ...props, id });
-    if (this.remote) {
-      this.remote.upsertRelationType(id, this.relationTypesById[id].label, this.relationTypesById[id].reverseLabel);
-    }
     return this.relationTypesById[id];
   }
 
@@ -257,9 +235,6 @@ export class GraphStore {
       r.updateType(this.relationTypesById.child);
     });
     delete this.relationTypesById[id];
-    if (this.remote) {
-      this.remote.deleteRelationType(id);
-    }
   }
 
   private assertNodeExists(...nodes: (GraphNode | string)[]): void {
@@ -279,51 +254,31 @@ export class GraphStore {
     });
   }
 
-  async loadFromServer() {
-    if (!this.remote) {
-      console.warn("Tried to load from server without remote store");
-      return;
-    }
+  loadFromServer(data: Awaited<ReturnType<RemoteGraphStore["load"]>>) {
     this.isLoading = true;
     try {
-      const { nodes, relationTypes, relations } = await this.remote.load();
-      nodes.forEach((n: PersistedGraphNode) => this.addNodeFromServer(n));
+      const { nodes, relationTypes, relations } = data;
+      nodes.forEach((n: PersistedGraphNode) => {
+        this.createNode({ id: n.id, content: [{ type: "text", value: n.text }] });
+      });
       relationTypes.forEach((rt: GraphRelationType) => this.createRelationType(rt, true));
       // TODO: clean up logic elsewhere so "child" type isn't hardcoded
       if (!this.relationTypesById.child) {
         this.createRelationType({ id: "child", label: "child", reverseLabel: "parent" });
       }
-      relations.forEach((r: PersistedGraphRelation) => this.addRelationFromServer(r));
+      relations.forEach((r: PersistedGraphRelation) => {
+        const from = this.getNode(r.fromId);
+        const to = this.getNode(r.toId);
+        const type = this.relationTypesById[r.typeId as keyof typeof this.relationTypesById]; // TODO
+        if (!from || !to || !type) {
+          throw new Error("Invalid persisted relation");
+        }
+        this.createRelation({ from, to, type });
+      });
     } catch (e) {
       console.error(e);
     }
     this.isLoading = false;
-  }
-
-  addNodeFromServer(persistedNode: PersistedGraphNode) {
-    const node = this.createNode(
-      { id: persistedNode.id, content: [{ type: "text", value: persistedNode.text }] },
-      { fromServer: true },
-    );
-    if (node.id === OUTLINE_ROOT_ID) {
-      this.outlineRoot = node;
-    } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
-      this.thoughtstreamRoot = node;
-    } else if (node.id === USER_ROOT_ID) {
-      this.userRoot = node;
-    }
-  }
-
-  addRelationFromServer(persistedRelation: PersistedGraphRelation) {
-    throw new Error("Method not implemented.");
-    // const from = this.getNode(persistedRelation.fromId);
-    // const to = this.getNode(persistedRelation.toId);
-    // const type = this.relationTypesById[persistedRelation.typeId as keyof typeof this.relationTypesById]; // TODO
-    // if (!from || !to || !type) {
-    //   throw new Error("Invalid persisted relation");
-    // }
-    // const relation = new GraphRelation(this, { from, to, type });
-    // this.insertRelation(relation, { fromServer: true });
   }
 
   createBullet({ parent, relation }: { parent?: Bullet; relation: GraphRelation }) {

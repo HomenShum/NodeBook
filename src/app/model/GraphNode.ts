@@ -3,7 +3,6 @@ import { Position, comparePositions } from "../util";
 import { FractionalPositionedList } from "./FractionalPositionedList";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
-import { RemoteGraphStore } from "./RemoteGraphStore";
 
 export type Chip = {
   type: "text" | "mention";
@@ -32,11 +31,7 @@ export class GraphNode {
   public pinnedRelationsList = new FractionalPositionedList<GraphRelation>([]);
   public createdAt = new Date();
 
-  constructor(
-    private store: GraphStore,
-    private remote: RemoteGraphStore | null,
-    { id, content = [] }: { id: string; content?: Chip[] },
-  ) {
+  constructor(private store: GraphStore, { id, content = [] }: { id: string; content?: Chip[] }) {
     this.id = id;
     this.content = content;
     makeAutoObservable(this);
