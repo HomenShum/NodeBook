@@ -104,13 +104,9 @@ export class Bullet {
     this.graphRelation = relation;
   }
 
-  setGraphNode(graphNode: GraphNode) {
-    this.graphStore.setGraphNodeOnBullet(this, graphNode);
-  }
-
   delete() {
     this.graphStore.deleteRelation(this.graphRelation);
-    this.graphStore.deleteBullet(this);
+    this.graphStore.deleteBulletAndChildren(this.id);
   }
 
   /**
@@ -127,7 +123,7 @@ export class Bullet {
     this.childrenByRelationId.forEach((child, id) => {
       if (!relationIds.has(id)) {
         this.childrenByRelationId.delete(id);
-        this.graphStore.deleteBullet(child);
+        this.graphStore.deleteBulletAndChildren(child.id);
       }
     });
     this.pinnedByRelationId.forEach((child, id) => {

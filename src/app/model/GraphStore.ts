@@ -149,10 +149,8 @@ export class GraphStore {
 
     // Delete all bullets in subtrees rooted at this relation
     const bullets = this.bulletsByRelationId.get(relation.id);
-    bullets?.forEach((b) => {
-      b.childrenByRelationId.forEach((child) => this.deleteBullet(child));
-      b.pinnedByRelationId.forEach((child) => this.deleteBullet(child));
-    });
+    bullets?.forEach((b) => this.deleteBulletAndChildren(b.id));
+    this.bulletsByRelationId.delete(relation.id);
 
     // Delete the relation itself
     this.relationsById.delete(relation.id);
@@ -342,13 +340,26 @@ export class GraphStore {
     return bullet;
   }
 
-  deleteBullet(bullet: Bullet) {
+  deleteBulletAndChildren(bulletId: string) {
+    const bullet = this.bulletsById.get(bulletId);
+    if (!bullet) return;
+
+    // Delete all children
+    bullet.childrenByRelationId.forEach((child) => this.deleteBulletAndChildren(child.id));
+    bullet.pinnedByRelationId.forEach((child) => this.deleteBulletAndChildren(child.id));
+    bullet.childrenByRelationId.clear();
+    bullet.pinnedByRelationId.clear();
+
     // Remove reference to bullet from their parent
     bullet.parent?.childrenByRelationId.delete(bullet.graphRelation.id);
     bullet.parent?.pinnedByRelationId.delete(bullet.graphRelation.id);
 
     // Remove bullets from index by relation id
-    this.bulletsByRelationId.delete(bullet.graphRelation.id);
+    const bulletsOfSameRelation = this.bulletsByRelationId.get(bullet.graphRelation.id);
+    bulletsOfSameRelation?.delete(bullet.id);
+    if (bulletsOfSameRelation?.size === 0) {
+      this.bulletsByRelationId.delete(bullet.graphRelation.id);
+    }
 
     // Delete the bullet itself
     this.bulletsById.delete(bullet.id);
@@ -463,5 +474,13 @@ export class GraphStore {
       throw new Error("Can't set graph node on backrelation bullet");
     }
     this.updateRelationTo([bullet.graphRelation], graphNode);
+    this.bulletsByRelationId.get(bullet.graphRelation.id)?.forEach((b) => {
+      if (b.id === bullet.id) {
+        b.childrenByRelationId.clear();
+        b.pinnedByRelationId.clear();
+      } else {
+        this.deleteBulletAndChildren(b.id);
+      }
+    });
   }
 }
