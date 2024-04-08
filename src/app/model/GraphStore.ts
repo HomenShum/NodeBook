@@ -27,7 +27,7 @@ export class GraphStore {
 
   // Default nodes and relations
   // TODO: do we need this? feels like there could be multiple
-  outlineBulletRoot: Bullet | null = null;
+  outlineBulletRoot: Bullet;
   thoughtstreamBulletRoot: Bullet;
   userRoot: GraphNode;
   outlineRoot: GraphNode;
@@ -36,7 +36,13 @@ export class GraphStore {
   thoughtstreamRootRelationToUserRoot: GraphRelation;
 
   isLoading = false;
-  disableAutoRelateToRoots = true;
+
+  /** Add outline descendants which are direct children of outline to outline */
+  addThoughstreamDirectChildrenToOutline = true;
+  /** Add thoughtstream descendants which are direct children of thoughtstream to thoughtstream */
+  addAllOutlineDescendantsToThoughtstream = true;
+  /** Add thoughtstream descendants which are not direct children of thoughtstream as direct children of thoughtstream */
+  addThoughtstreamNestedChildrenToThoughtstream = false;
 
   constructor() {
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
@@ -65,8 +71,16 @@ export class GraphStore {
     });
   }
 
-  setDisableAutoRelateToRoots(disable: boolean) {
-    this.disableAutoRelateToRoots = disable;
+  setAddThoughtstreamDirectChildrenToOutline(value: boolean) {
+    this.addThoughstreamDirectChildrenToOutline = value;
+  }
+
+  setAddAllOutlineDescendantsToThoughtstream(value: boolean) {
+    this.addAllOutlineDescendantsToThoughtstream = value;
+  }
+
+  setAddThoughtstreamNestedChildrenToThoughstream(value: boolean) {
+    this.addThoughtstreamNestedChildrenToThoughtstream = value;
   }
 
   get nodes(): GraphNode[] {

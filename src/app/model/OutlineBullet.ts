@@ -2,7 +2,7 @@ import { action, makeAutoObservable } from "mobx";
 import { Position, comparePositions, generateDefaultPosition, generatePositionBetween, uuid } from "../util";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
-import { GraphStore, THOUGHTSTREAM_ROOT_ID, defaultRelationTypes } from "./GraphStore";
+import { GraphStore, defaultRelationTypes } from "./GraphStore";
 
 export class Bullet {
   public type: "bullet" | "bundle" = "bullet";
@@ -72,17 +72,31 @@ export class Bullet {
       to: node,
       type: defaultRelationTypes.child,
     });
+    const bullet = this.graphStore.createBullet({ parent: this, relation });
     // TODO: this doesn't belong here. like you can create nodes and relations
     // in lot of different places but this is the only place where it'd add
     // to the outline / thoughtstream view
-    if (!this.graphStore.disableAutoRelateToRoots) {
-      if (this.graphNode.id === THOUGHTSTREAM_ROOT_ID) {
+    const rootAncestor = bullet.ancestors[0]?.id;
+    const directAncestor = bullet.parent?.id;
+    if (rootAncestor === this.graphStore.thoughtstreamBulletRoot.id) {
+      // Inside thoughtstream
+      const isDirectChild = directAncestor === this.graphStore.thoughtstreamBulletRoot.id;
+      if (isDirectChild && this.graphStore.addThoughstreamDirectChildrenToOutline) {
         this.graphStore.createRelation({
           from: this.graphStore.outlineRoot,
           to: node,
           type: defaultRelationTypes.child,
         });
-      } else {
+      } else if (!isDirectChild && this.graphStore.addThoughtstreamNestedChildrenToThoughtstream) {
+        this.graphStore.createRelation({
+          from: this.graphStore.thoughtstreamRoot,
+          to: node,
+          type: defaultRelationTypes.child,
+        });
+      }
+    } else if (rootAncestor === this.graphStore.outlineBulletRoot.id) {
+      // Inside outline
+      if (this.graphStore.addAllOutlineDescendantsToThoughtstream) {
         this.graphStore.createRelation({
           from: this.graphStore.thoughtstreamRoot,
           to: node,
@@ -90,7 +104,7 @@ export class Bullet {
         });
       }
     }
-    return this.graphStore.createBullet({ parent: this, relation });
+    return bullet;
   }
 
   isRelationToThis() {

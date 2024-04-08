@@ -59,12 +59,31 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={graphStore.disableAutoRelateToRoots}
-            onChange={(e) => graphStore.setDisableAutoRelateToRoots(e.target.checked)}
+            checked={graphStore.addAllOutlineDescendantsToThoughtstream}
+            onChange={(e) => graphStore.setAddAllOutlineDescendantsToThoughtstream(e.target.checked)}
             className="mr-2 mb-2"
           />
-          Disable auto-relate to roots
+          Add all outline descendants to thoughtstream
         </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={graphStore.addThoughstreamDirectChildrenToOutline}
+            onChange={(e) => graphStore.setAddThoughtstreamDirectChildrenToOutline(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Add thoughtstream direct children to outline
+        </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={graphStore.addThoughtstreamNestedChildrenToThoughtstream}
+            onChange={(e) => graphStore.setAddThoughtstreamNestedChildrenToThoughstream(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Add thoughtstream nested children as direct children of thoughtstream
+        </label>
+
         {/* <div className="flex gap-2">
           <label>Relation view:</label>
           <select

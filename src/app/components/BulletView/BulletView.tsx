@@ -158,6 +158,14 @@ const BulletMenu = observer(
             <DropdownMenuItem onSelect={() => bullet.setType("bullet")}>Convert to bullet</DropdownMenuItem>
           )}
           <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>Change relation type</DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={action(() => {
+              bullet.createChild();
+              bullet.setIsExpanded(true);
+            })}
+          >
+            Add child
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );
