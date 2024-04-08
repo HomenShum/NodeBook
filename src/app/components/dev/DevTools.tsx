@@ -83,6 +83,15 @@ export const DevTools = observer(() => {
           />
           Add thoughtstream nested children as direct children of thoughtstream
         </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={graphStore.removingNodeAsDirectChildOfThoughtstreamDeletesIt}
+            onChange={(e) => graphStore.setRemovingNodeAsDirectChildOfThoughtstreamDeletesIt(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          On removing node as direct child of thoughtstream, delete the node everywhere
+        </label>
 
         {/* <div className="flex gap-2">
           <label>Relation view:</label>

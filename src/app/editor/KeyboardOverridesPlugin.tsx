@@ -122,7 +122,7 @@ const makeBulletKeyCommands = (
         event.preventDefault();
         if (bullet.graphNode.text === "") {
           if (bullet.parent) {
-            graphStore.deleteRelation(bullet.graphRelation);
+            graphStore.deleteBulletByDeletingRelationOrNode(bullet.id);
             if (siblingAbove) {
               viewStore.setFocusedNode(siblingAbove);
             } else if (bullet.parent) {

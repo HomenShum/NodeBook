@@ -43,6 +43,8 @@ export class GraphStore {
   addAllOutlineDescendantsToThoughtstream = true;
   /** Add thoughtstream descendants which are not direct children of thoughtstream as direct children of thoughtstream */
   addThoughtstreamNestedChildrenToThoughtstream = false;
+  /** When enabled, removing a node as a direct child of a thoughtstream will delete it */
+  removingNodeAsDirectChildOfThoughtstreamDeletesIt = false;
 
   constructor() {
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
@@ -81,6 +83,10 @@ export class GraphStore {
 
   setAddThoughtstreamNestedChildrenToThoughstream(value: boolean) {
     this.addThoughtstreamNestedChildrenToThoughtstream = value;
+  }
+
+  setRemovingNodeAsDirectChildOfThoughtstreamDeletesIt(value: boolean) {
+    this.removingNodeAsDirectChildOfThoughtstreamDeletesIt = value;
   }
 
   get nodes(): GraphNode[] {
@@ -158,7 +164,7 @@ export class GraphStore {
 
     // Delete all bullets in subtrees rooted at this relation
     const bullets = this.bulletsByRelationId.get(relation.id);
-    bullets?.forEach((b) => this.deleteBulletAndChildren(b.id));
+    bullets?.forEach((b) => this.deleteBulletAndDescendantsOnly(b.id));
     this.bulletsByRelationId.delete(relation.id);
 
     // Delete the relation itself
@@ -311,13 +317,17 @@ export class GraphStore {
     return bullet;
   }
 
-  deleteBulletAndChildren(bulletId: string) {
+  /**
+   * Delete a bullet and all descendent bullets recursively.
+   * Does not delete the node or relation it represents.
+   */
+  deleteBulletAndDescendantsOnly(bulletId: string) {
     const bullet = this.bulletsById.get(bulletId);
     if (!bullet) return;
 
     // Delete all children
-    bullet.childrenByRelationId.forEach((child) => this.deleteBulletAndChildren(child.id));
-    bullet.pinnedByRelationId.forEach((child) => this.deleteBulletAndChildren(child.id));
+    bullet.childrenByRelationId.forEach((child) => this.deleteBulletAndDescendantsOnly(child.id));
+    bullet.pinnedByRelationId.forEach((child) => this.deleteBulletAndDescendantsOnly(child.id));
     bullet.childrenByRelationId.clear();
     bullet.pinnedByRelationId.clear();
 
@@ -334,6 +344,25 @@ export class GraphStore {
 
     // Delete the bullet itself
     this.bulletsById.delete(bullet.id);
+  }
+
+  /**
+   * By default, deletes a bullet by deleting the relation it represents.
+   * If {@link removingNodeAsDirectChildOfThoughtstreamDeletesIt} is enabled,
+   * and the bullet is a direct child of the thoughtstream, delete node
+   * entirely (which deletes all relations and bullets associated with it).
+   */
+  deleteBulletByDeletingRelationOrNode(bulletId: string) {
+    const bullet = this.bulletsById.get(bulletId);
+    if (!bullet) return;
+    if (
+      this.removingNodeAsDirectChildOfThoughtstreamDeletesIt &&
+      bullet.parent?.id === this.thoughtstreamBulletRoot.id
+    ) {
+      this.deleteNode(bullet.graphNode.id);
+    } else {
+      this.deleteRelation(bullet.graphRelation);
+    }
   }
 
   moveBulletToNewParent({

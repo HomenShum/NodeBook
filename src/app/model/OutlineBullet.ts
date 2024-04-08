@@ -133,7 +133,7 @@ export class Bullet {
     this.childrenByRelationId.forEach((child, id) => {
       if (!relationIds.has(id)) {
         this.childrenByRelationId.delete(id);
-        this.graphStore.deleteBulletAndChildren(child.id);
+        this.graphStore.deleteBulletAndDescendantsOnly(child.id);
       }
     });
     this.pinnedByRelationId.forEach((child, id) => {
@@ -221,9 +221,9 @@ export class Bullet {
   }
 
   clearChildrenAndCollapse() {
-    this.childrenByRelationId.forEach((child) => this.graphStore.deleteBulletAndChildren(child.id));
+    this.childrenByRelationId.forEach((child) => this.graphStore.deleteBulletAndDescendantsOnly(child.id));
     this.childrenByRelationId.clear();
-    this.pinnedByRelationId.forEach((child) => this.graphStore.deleteBulletAndChildren(child.id));
+    this.pinnedByRelationId.forEach((child) => this.graphStore.deleteBulletAndDescendantsOnly(child.id));
     this.pinnedByRelationId.clear();
     this.isExpanded = false;
   }

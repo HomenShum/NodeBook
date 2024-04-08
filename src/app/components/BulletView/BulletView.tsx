@@ -143,8 +143,8 @@ const BulletMenu = observer(
           <Ellipsis className={cn(viewStore.hoveredNode?.id === bullet.id ? "text-grey-800" : "text-transparent")} />
         </DropdownMenuTrigger>
         <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
-          <DropdownMenuItem onSelect={() => graphStore.deleteRelation(bullet.graphRelation!)}>
-            Delete relation
+          <DropdownMenuItem onSelect={() => graphStore.deleteBulletByDeletingRelationOrNode(bullet.id)}>
+            Delete bullet
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => bullet.setReplacing(true)}>Replace related node</DropdownMenuItem>
           {bullet.isPinned ? (
