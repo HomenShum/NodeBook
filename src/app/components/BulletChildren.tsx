@@ -90,6 +90,7 @@ export const BulletListWithBundles = ({
   return (
     <div>
       {bullets.map(({ bullet, position }, i) => {
+        if (bullet.type === "bundle") return null;
         const bundleIdsWithBullet = bundles
           .filter((bundle) => bundle.graphNode.children.map((c) => c.id).includes(bullet.graphNode.id))
           .map((b) => b.id);
@@ -112,16 +113,14 @@ export const BulletListWithBundles = ({
                 );
               }
             })}
-            {bullet.type === "bullet" && (
-              <BulletView
-                bullet={bullet}
-                position={position}
-                depth={depth}
-                parents={parents}
-                siblingAbove={bullets[i - 1]?.bullet}
-                siblingBelow={bullets[i + 1]?.bullet}
-              />
-            )}
+            <BulletView
+              bullet={bullet}
+              position={position}
+              depth={depth}
+              parents={parents}
+              siblingAbove={bullets[i - 1]?.bullet}
+              siblingBelow={bullets[i + 1]?.bullet}
+            />
           </div>
         );
       })}
