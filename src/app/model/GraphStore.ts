@@ -469,12 +469,20 @@ export class GraphStore {
     });
 
     bullet.graphNode.setContent(chipsBefore);
-    const { bullet: newBullet, bundleRelations } = bullet.parent.createChild({ content: chipsAfter });
-    // Move new bullet after the current bullet
+    // Create a new bullet below the current bullet with the text after the cursor
+    const { bullet: newBullet } = bullet.parent.createChild({ content: chipsAfter });
     newBullet.moveAfterSibling(bullet);
-    // If the node was added to any bundles, try to position it below the sibling
-    bundleRelations.forEach((rel) => {
-      rel.from.allRelationsList.move([rel], ({ item }) => item.to.id === bullet.graphNode.id);
+    // Add to same bundles as the original bullet
+    bullet.siblingBundlesThisNodeIsChildOf().map((bundle) => {
+      // Create a new relation between the bundle and the new bullet
+      const rel = this.createRelation({
+        from: bundle.graphNode,
+        to: newBullet.graphNode,
+        type: defaultRelationTypes.child,
+      });
+      // Move the relation under the sibling we split from
+      rel.from.allRelationsList.move([rel], ({ item }) => item.to.id === newBullet.graphNode.id);
+      return rel;
     });
     return newBullet;
   }

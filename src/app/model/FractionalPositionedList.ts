@@ -37,13 +37,25 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
     return Array.from(this.map.keys());
   }
 
+  /** Add items to the top of the list */
   add(...items: T[]) {
-    items.forEach((item) => {
-      this.map.set(item.id, {
-        position: generateDefaultPosition(item.createdAt),
-        item,
+    if (this.map.size === 0) {
+      const int = Math.max(...Array.from(items).map((item) => item.createdAt.getTime()));
+      const fracs = generateNKeysBetween(null, null, items.length);
+      items.forEach((item, i) => {
+        this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
       });
-    });
+    } else {
+      const positionedRelations = Array.from(this.map.values()).sort((a, b) =>
+        comparePositions(a.position, b.position),
+      );
+      const topPosition = positionedRelations[0].position;
+      const int = Math.max(topPosition.int, ...items.map((item) => item.createdAt.getTime()));
+      const fracs = generateNKeysBetween(null, topPosition.int === int ? topPosition.frac : null, items.length);
+      items.forEach((item, i) => {
+        this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
+      });
+    }
   }
 
   delete(id: string) {

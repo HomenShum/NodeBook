@@ -1,7 +1,7 @@
 import { makeAutoObservable } from "mobx";
 import { uuid } from "../util";
 import { GraphNode } from "./GraphNode";
-import { GraphStore } from "./GraphStore";
+import { GraphStore, defaultRelationTypes } from "./GraphStore";
 
 export type GraphRelationType = {
   id: string;
@@ -12,7 +12,7 @@ export type GraphRelationType = {
 export type GraphRelationProps = {
   from: GraphNode;
   to: GraphNode;
-  type: GraphRelationType;
+  type?: GraphRelationType;
 };
 
 export class GraphRelation {
@@ -23,7 +23,7 @@ export class GraphRelation {
   public createdAt: Date = new Date();
   private store: GraphStore;
 
-  constructor(store: GraphStore, { from, to, type }: GraphRelationProps) {
+  constructor(store: GraphStore, { from, to, type = defaultRelationTypes.child }: GraphRelationProps) {
     this.id = uuid();
     this.from = from;
     this.to = to;

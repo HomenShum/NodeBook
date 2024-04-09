@@ -1,5 +1,5 @@
 import { action, makeAutoObservable } from "mobx";
-import { Position, comparePositions, generateDefaultPosition, generatePositionBetween, uuid } from "../util";
+import { Position, comparePositions, uuid } from "../util";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
@@ -82,17 +82,6 @@ export class Bullet {
     // TODO: this doesn't belong here. like you can create nodes and relations
     // in lot of different places but this is the only place where it'd add
     // to the outline / thoughtstream view
-    this.children
-      .filter((c) => c.type === "bundle")
-      .forEach((bundle) => {
-        const relation = this.graphStore.createRelation({
-          from: bundle.graphNode,
-          to: bullet.graphNode,
-          type: defaultRelationTypes.child,
-        });
-        result.bundleRelations.push(relation);
-      });
-
     const rootAncestor = bullet.ancestors[0]?.id;
     const directAncestor = bullet.parent?.id;
     if (rootAncestor === this.graphStore.thoughtstreamBulletRoot.id) {
@@ -268,33 +257,10 @@ export class Bullet {
   }
 
   moveAfterSibling(sibling: Bullet) {
-    const parent = this.parent;
-    if (!parent) {
-      throw new Error("Bullet has no parent");
-    }
-    const graphRelation = this.graphRelation;
-    if (!graphRelation) {
-      throw new Error("Bullet has no relation");
-    }
     if (this.isPinned) {
-      const relations =
-        parent.graphNode.pinnedRelationsWithPositions.sort((a, b) => comparePositions(a.position, b.position)) ?? [];
-      const index = relations.findIndex((r) => r.relation.id === sibling.graphRelation?.id);
-      if (index === -1) {
-        throw new Error("Bullet is not a sibling");
-      }
-      const posBefore = relations[index]?.position;
-      const posAfter = relations[index + 1]?.position ?? null;
-      const newPosition = posBefore
-        ? generatePositionBetween(posBefore, posAfter)
-        : generateDefaultPosition(graphRelation.createdAt);
-      const positionedRelation = parent.graphNode.pinnedRelationsList.get(graphRelation.id);
-      if (!positionedRelation) {
-        throw new Error("Relation not found");
-      }
-      positionedRelation.position = newPosition;
+      this.parent?.graphNode.pinnedRelationsList.move([this.graphRelation], sibling.graphRelation);
     } else {
-      parent.graphNode.allRelationsList.move([graphRelation], sibling.graphRelation);
+      this.parent?.graphNode.allRelationsList.move([this.graphRelation], sibling.graphRelation);
     }
   }
 
@@ -315,5 +281,10 @@ export class Bullet {
 
   unpin() {
     this.parent?.graphNode.pinnedRelationsList.delete(this.graphRelation.id);
+  }
+
+  siblingBundlesThisNodeIsChildOf() {
+    const siblingBundles = this.parent?.children.filter((b) => b.type === "bundle") ?? [];
+    return siblingBundles.filter((b) => b.graphNode.relatedNodes.map((n) => n.id).includes(this.graphNode.id));
   }
 }

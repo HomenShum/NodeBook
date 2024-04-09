@@ -89,7 +89,7 @@ export const BulletListWithBundles = ({
 
   return (
     <div>
-      {bullets.map(({ bullet }, i) => {
+      {bullets.map(({ bullet, position }, i) => {
         const bundleIdsWithBullet = bundles
           .filter((bundle) => bundle.graphNode.children.map((c) => c.id).includes(bullet.graphNode.id))
           .map((b) => b.id);
@@ -115,6 +115,7 @@ export const BulletListWithBundles = ({
             {bullet.type === "bullet" && (
               <BulletView
                 bullet={bullet}
+                position={position}
                 depth={depth}
                 parents={parents}
                 siblingAbove={bullets[i - 1]?.bullet}

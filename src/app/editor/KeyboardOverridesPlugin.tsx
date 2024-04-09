@@ -36,7 +36,7 @@ const makeBulletKeyCommands = (
   return mergeRegister(
     editor.registerCommand(
       KEY_ENTER_COMMAND,
-      (event) => {
+      action((event) => {
         if (!event || !graphStore) return false;
         event.preventDefault();
         if (!bullet.parent) {
@@ -48,7 +48,7 @@ const makeBulletKeyCommands = (
         const newBullet = graphStore.splitBullet(bullet, selection);
         viewStore.setFocusedNode(newBullet);
         return true;
-      },
+      }),
       COMMAND_PRIORITY_LOW,
     ),
     editor.registerCommand(
