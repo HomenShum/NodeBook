@@ -21,7 +21,8 @@ export const ThoughtstreamView = observer(() => {
 
   return (
     <div
-      className="w-full px-8"
+      tabIndex={0}
+      className="w-full h-full flex flex-col px-8"
       onKeyDown={action((e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
           createBullet();
@@ -36,7 +37,9 @@ export const ThoughtstreamView = observer(() => {
           </button>
         </div>
       </div>
-      <BulletChildren bullet={root} depth={0} parents={[]} />
+      <div className="flex-1">
+        <BulletChildren bullet={root} depth={0} parents={[]} />
+      </div>
     </div>
   );
 });
