@@ -140,7 +140,8 @@ export const KeyboardOverridesPlugin = () => {
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
           event.preventDefault();
-          // viewStore.setFocusedNode(siblingBelow ?? null);
+          if (!siblingBelow) return false;
+          viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingBelow]));
           return true;
         },
         COMMAND_PRIORITY_LOW,
@@ -149,7 +150,8 @@ export const KeyboardOverridesPlugin = () => {
         KEY_ARROW_UP_COMMAND,
         (event) => {
           event.preventDefault();
-          // viewStore.setFocusedNode(siblingAbove ?? null);
+          if (!siblingAbove) return false;
+          viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]));
           return true;
         },
         COMMAND_PRIORITY_LOW,
