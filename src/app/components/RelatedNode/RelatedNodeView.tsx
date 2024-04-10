@@ -169,6 +169,8 @@ const RelatedNodeMenu = observer(
 );
 
 const RelatedNodeEditor = observer(() => {
+  const { node } = useRelationAtPath();
+  const hasNonChildRelation = node.relations.some(relation => relation.type.id !== "child");
   return (
     <div
       style={{
@@ -176,6 +178,8 @@ const RelatedNodeEditor = observer(() => {
         display: "flex",
         alignItems: "flex-start",
         flex: 1,
+        color: hasNonChildRelation ? "#2f3a90" : undefined,
+        textDecoration: hasNonChildRelation ? "underline" : undefined
       }}
     >
       {/* <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}> */}
