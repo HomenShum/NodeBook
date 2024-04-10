@@ -20,7 +20,7 @@ const App = observer(() => {
   return (
     <div className="App">
       <div ref={appContainerRef} className="flex flex-col h-full relative">
-        <header className="flex justify-center items-center h-8 border-b">
+        <header className="flex justify-center items-center px-2 py-4 h-8 border-b">
           <button onClick={() => viewStore.toggleLeftSidebar()}>
             <Sidebar size={20} />
           </button>
@@ -31,23 +31,29 @@ const App = observer(() => {
         </header>
         <div className="flex flex-row flex-1">
           {viewStore.leftSidebarOpen && (
-            <aside className="flex flex-col w-1/6 bg-gray-100 border-r">
-              <div className="flex flex-col p-4 align-left">
+            <aside className="flex flex-col w-1/6 bg-[--teal-2] border-r">
+              <div className="flex flex-col p-2 align-left">
                 {/* highlight if active */}
                 <button
-                  className={`text-left ${viewStore.curView === ViewType.OUTLINE ? "bg-blue-100" : ""}`}
+                  className={`text-left px-2 py-1 hover:bg-[--teal-3] ${
+                    viewStore.curView === ViewType.OUTLINE ? "bg-[--teal-4]" : ""
+                  }`}
                   onClick={() => viewStore.setView(ViewType.OUTLINE)}
                 >
                   Outline view
                 </button>
                 <button
-                  className={`text-left ${viewStore.curView === ViewType.THOUGHTSTREAM ? "bg-blue-100" : ""}`}
+                  className={`text-left px-2 py-1 hover:bg-[--teal-3] ${
+                    viewStore.curView === ViewType.THOUGHTSTREAM ? "bg-[--teal-4]" : ""
+                  }`}
                   onClick={() => viewStore.setView(ViewType.THOUGHTSTREAM)}
                 >
                   Thoughtstream view
                 </button>
                 <button
-                  className={`text-left ${viewStore.curView === ViewType.SPLIT ? "bg-blue-100" : ""}`}
+                  className={`text-left px-2 py-1 hover:bg-[--teal-3] ${
+                    viewStore.curView === ViewType.SPLIT ? "bg-[--teal-4]" : ""
+                  }`}
                   onClick={() => viewStore.setView(ViewType.SPLIT)}
                 >
                   Split view

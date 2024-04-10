@@ -73,7 +73,7 @@ export const MouseSelection = ({ appContainerRef }: Props) => {
   return (
     <div
       ref={selectionBoxRef}
-      style={{ display: "none", position: "absolute", backgroundColor: "rgba(0, 120, 255, 0.3)" }}
+      style={{ display: "none", position: "absolute", backgroundColor: "var(--teal-a2)" }}
     ></div>
   );
 };
