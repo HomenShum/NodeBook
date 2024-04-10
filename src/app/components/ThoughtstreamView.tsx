@@ -22,7 +22,7 @@ export const ThoughtstreamView = observer(() => {
   return (
     <div
       tabIndex={0}
-      className="w-full h-full flex flex-col px-8"
+      className="w-full h-full flex flex-col px-8 gap-4"
       onKeyDown={action((e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
           createBullet();
@@ -30,10 +30,13 @@ export const ThoughtstreamView = observer(() => {
       })}
     >
       <div className="ml-2">
-        <div className="flex align-center gap-2">
-          <h1 className="text-2xl font-bold select-none">{root.graphNode.text}</h1>
-          <button className="select-none" onClick={createBullet}>
-            +
+        <div className="flex gap-2">
+          <h1 className="text-2xl font-medium select-none">{root.graphNode.text}</h1>
+          <button
+            className="select-none text-xl font-light bg-slate-50 hover:bg-slate-200 hover:shadow-inner transition-colors duration-150 ease-in w-6 h-6 text-center rounded-lg relative translate-y-1"
+            onClick={createBullet}
+          >
+            <span className="absolute -translate-x-[6px] -translate-y-[15px]">+</span>
           </button>
         </div>
       </div>

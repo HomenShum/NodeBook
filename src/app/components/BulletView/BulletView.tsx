@@ -30,8 +30,8 @@ export const Toggle = observer(({ bullet }: { bullet: Bullet }) => {
         backgroundColor: "transparent",
         border: "none",
         width: "1rem",
-        fontSize: "0.75rem",
-        color: viewStore.hoveredNode?.id === bullet.id ? "black" : "transparent",
+        fontSize: "0.6rem",
+        color: viewStore.hoveredNode?.id === bullet.id ? "#9ca3af" : "transparent",
         cursor: "pointer",
         userSelect: "none",
       }}
@@ -78,18 +78,18 @@ export const BulletView = observer(
               <BulletMenu bullet={bullet} setUpdatingRelationType={setUpdatingRelationType} />
               {hasChildren && <Toggle bullet={bullet} />}
             </div>
-            <div className="w-4 relative h-4 mr-1">
+            <div className="w-6 relative h-4">
               {hasChildren && !bullet.isExpanded && (
                 <Dot
                   stroke="#ddd"
                   height={16}
-                  strokeWidth={18}
+                  strokeWidth={17}
                   className={cn(
                     "cursor-pointer absolute top-0",
                     // When the parent is a bundle, only show bullets on hover
                     bullet.parent?.type === "bundle"
                       ? viewStore.hoveredNode?.id === bullet.id
-                        ? "text-grey-800"
+                        ? "text-gray-800"
                         : "text-transparent"
                       : "",
                   )}
@@ -97,14 +97,15 @@ export const BulletView = observer(
                 />
               )}
               <Dot
-                strokeWidth={7}
+                color="#596567"
+                strokeWidth={5}
                 height={16}
                 className={cn(
                   "cursor-pointer absolute top-0",
                   // When the parent is a bundle, only show bullets on hover
                   bullet.parent!.type === "bundle"
                     ? viewStore.hoveredNode?.id === bullet.id
-                      ? "text-grey-800"
+                      ? "text-gray-800"
                       : "text-transparent"
                     : "",
                 )}
@@ -113,7 +114,7 @@ export const BulletView = observer(
             </div>
             {/* relation and node */}
             <div className="flex flex-col flex-1">
-              <div className="flex gap-2">
+              <div className="flex gap-1 items-baseline">
                 {!isChild || updatingRelationType ? (
                   <RelationCombobox bullet={bullet} setUpdatingRelationType={setUpdatingRelationType} />
                 ) : null}
@@ -140,7 +141,10 @@ const BulletMenu = observer(
     return (
       <DropdownMenu>
         <DropdownMenuTrigger>
-          <Ellipsis className={cn(viewStore.hoveredNode?.id === bullet.id ? "text-grey-800" : "text-transparent")} />
+          <Ellipsis
+            size={18}
+            className={cn(viewStore.hoveredNode?.id === bullet.id ? "text-gray-400" : "text-transparent")}
+          />
         </DropdownMenuTrigger>
         <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenuItem onSelect={() => graphStore.deleteBulletByDeletingRelationOrNode(bullet.id)}>

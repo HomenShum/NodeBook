@@ -32,7 +32,7 @@ export const BulletChildren = observer(
     const bundles = children.map(({ bullet }) => bullet).filter((b) => b.type === "bundle");
 
     return (
-      <div className={depth > 0 ? "ml-8" : ""}>
+      <div className={depth > 0 ? "ml-5" : ""}>
         {bundles.length > 0 ? (
           <BulletListWithBundles bullets={children} parents={parents} depth={depth} />
         ) : (

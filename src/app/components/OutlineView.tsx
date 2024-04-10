@@ -13,7 +13,7 @@ export const OutlineView = observer(() => {
 
   return (
     <div
-      className="w-full px-8"
+      className="w-full px-8 flex flex-col gap-4"
       style={{ maxWidth: 1000 }}
       onKeyDown={(e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -37,15 +37,15 @@ export const OutlineView = observer(() => {
           ))}
         </div>
         <div className="flex align-center gap-2">
-          <h1 className="text-2xl font-bold select-none">{root.graphNode.text}</h1>
+          <h1 className="text-2xl font-medium select-none">{root.graphNode.text}</h1>
           <button
-            className="select-none"
+            className="select-none text-xl font-light bg-slate-50 hover:bg-slate-200 hover:shadow-inner transition-colors duration-150 ease-in w-6 h-6 text-center rounded-lg relative translate-y-1"
             onClick={() => {
               const { bullet } = root.createChild();
               viewStore.setFocusedNode(bullet);
             }}
           >
-            +
+            <span className="absolute -translate-x-[6px] -translate-y-[15px]">+</span>
           </button>
         </div>
       </div>

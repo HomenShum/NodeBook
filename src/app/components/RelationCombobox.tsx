@@ -97,7 +97,8 @@ export const RelationCombobox = observer(
 
     const type = bullet.graphRelation?.type;
     const label = bullet.isRelationToThis() ? type?.label : type?.reverseLabel;
-
+    const isParent =
+      bullet.graphRelation?.type.id === graphStore.relationTypesById.child.id && !bullet.isRelationToThis();
     return (
       <Popover
         open={isOpen}
@@ -114,7 +115,9 @@ export const RelationCombobox = observer(
             variant="outline"
             role="combobox"
             aria-expanded={isOpen}
-            className="justify-between p-1 m-0 h-5 text-black border-black"
+            className={`border-none text-md justify-between h-4 p-0 m-0 font-normal text-gray-400 ${
+              isParent ? "" : ""
+            }`}
           >
             {label}:
           </Button>
