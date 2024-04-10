@@ -5,24 +5,26 @@ import * as React from "react";
 
 import { Button } from "@/app/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
+import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
-import { GraphRelationType } from "../model/GraphRelation";
-import { Bullet } from "../model/OutlineBullet";
-import { useGraphStore } from "../store/useGraphStore";
+import { GraphRelationType } from "../../model/GraphRelation";
+import { useGraphStore } from "../../store/useGraphStore";
+import { useRelationAtPath } from "./RelatedNodeContext";
 
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
   `${relationType.id}-${isForward ? "forward" : "reverse"}`;
 
 export const RelationCombobox = observer(
-  ({ bullet, setUpdatingRelationType }: { bullet: Bullet; setUpdatingRelationType: (updating: boolean) => void }) => {
+  ({ setUpdatingRelationType }: { setUpdatingRelationType: (updating: boolean) => void }) => {
     const graphStore = useGraphStore();
+
+    const { node, parent, relation } = useRelationAtPath();
+    const isForward = relation.to.id === node.id;
+
     const [isOpen, setIsOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
-    const [selected, setSelected] = React.useState(
-      `${bullet.graphRelation?.type?.id}-${bullet.isRelationToThis() ? "forward" : "reverse"}`,
-    );
-    const graphNode = bullet.graphNode;
+    const [selected, setSelected] = React.useState(`${relation.type.id}-${isForward ? "forward" : "reverse"}`);
     const open = () => {
       setIsOpen(true);
     };
@@ -38,16 +40,16 @@ export const RelationCombobox = observer(
           key: `${relationType.id}-forward`,
           label: relationType.label,
           onSelect: () => {
-            if (relationType.id === bullet.graphRelation?.type.id) {
-              if (bullet.isRelationToThis()) {
+            if (relationType.id === relation.type.id) {
+              if (isForward) {
                 return; // already selected
               } else {
-                graphStore.reverseRelation(bullet.graphRelation!);
+                graphStore.reverseRelation(relation);
               }
             } else {
-              graphStore.updateRelationsType(bullet.graphRelation!, relationType);
-              if (!bullet.isRelationToThis()) {
-                graphStore.reverseRelation(bullet.graphRelation!);
+              graphStore.updateRelationsType(relation, relationType);
+              if (!isForward) {
+                graphStore.reverseRelation(relation);
               }
             }
           },
@@ -56,16 +58,16 @@ export const RelationCombobox = observer(
           key: `${relationType.id}-reverse`,
           label: relationType.reverseLabel,
           onSelect: () => {
-            if (relationType.id === bullet.graphRelation?.type.id) {
-              if (bullet.isRelationToThis()) {
-                graphStore.reverseRelation(bullet.graphRelation!);
+            if (relationType.id === relation?.type.id) {
+              if (isForward) {
+                graphStore.reverseRelation(relation!);
               } else {
                 return; // already selected
               }
             } else {
-              graphStore.updateRelationsType(bullet.graphRelation!, relationType);
-              if (bullet.isRelationToThis()) {
-                graphStore.reverseRelation(bullet.graphRelation!);
+              graphStore.updateRelationsType(relation!, relationType);
+              if (isForward) {
+                graphStore.reverseRelation(relation!);
               }
             }
           },
@@ -73,7 +75,6 @@ export const RelationCombobox = observer(
       ])
       .flat()
       .filter(({ label }) => label.toLowerCase().includes(search.toLowerCase()));
-    const parent = bullet.parent;
     if (search.length > 0 && parent !== null) {
       items.push({
         key: "new",
@@ -84,21 +85,14 @@ export const RelationCombobox = observer(
             label: search,
             reverseLabel: `is ${search} of`,
           });
-          graphStore.deleteRelation(bullet.graphRelation!);
-          const rel = graphStore.createRelation({
-            from: parent.graphNode,
-            to: graphNode,
-            type: relationType,
-          });
-          bullet.setRelation(rel);
+          relation.setType(relationType);
         },
       });
     }
 
-    const type = bullet.graphRelation?.type;
-    const label = bullet.isRelationToThis() ? type?.label : type?.reverseLabel;
-    const isParent =
-      bullet.graphRelation?.type.id === graphStore.relationTypesById.child.id && !bullet.isRelationToThis();
+    const label = isForward ? relation.type.label : relation.type.reverseLabel;
+    const isParent = relation.type.id === defaultRelationTypes.child.id && isForward;
+
     return (
       <Popover
         open={isOpen}
@@ -162,9 +156,7 @@ export const RelationCombobox = observer(
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    relToKey(bullet.graphRelation?.type!, bullet.isRelationToThis()) === key
-                      ? "opacity-100"
-                      : "opacity-0",
+                    relToKey(relation.type, isForward) === key ? "opacity-100" : "opacity-0",
                   )}
                 />
                 <div>{label}</div>

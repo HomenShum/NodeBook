@@ -1,16 +1,15 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useEffect } from "react";
-import { Bullet } from "../model/OutlineBullet";
 import { useViewStore } from "../store/useViewStore";
 
-export const ViewStoreRegistryPlugin = ({ bullet }: { bullet: Bullet }) => {
+export const ViewStoreRegistryPlugin = ({ pathToNodeStr }: { pathToNodeStr: string }) => {
   const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
-    viewStore.registerEditor(bullet, editor);
+    viewStore.registerEditor(pathToNodeStr, editor);
     return () => {
-      viewStore.removeEditor(bullet);
+      viewStore.removeEditor(pathToNodeStr);
     };
-  }, [bullet, editor, viewStore]);
+  }, [pathToNodeStr, editor, viewStore]);
   return null;
 };

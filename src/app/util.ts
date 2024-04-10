@@ -2,6 +2,8 @@
 import { generateKeyBetween } from "fractional-indexing";
 import { autorun, toJS } from "mobx";
 import { v4 as uuidv4 } from "uuid";
+import { GraphNode } from "./model/GraphNode";
+import { GraphRelation } from "./model/GraphRelation";
 
 export const uuid = () => uuidv4().slice(0, 8);
 
@@ -52,3 +54,16 @@ export function makeAutoSaving<T>(store: T, propertiesToSave: { [K in keyof T]?:
   });
 }
 export type Position = { int: number; frac: string };
+export const relationsToNodes = (relations: GraphRelation[]) => {
+  if (relations.length === 0) return [];
+  const nodes: GraphNode[] = [relations[0].from];
+  relations.forEach((relation, i) => {
+    const prevNode = nodes[nodes.length - 1];
+    nodes.push(relation.from.id === prevNode.id ? relation.to : relation.from);
+  });
+  return nodes;
+};
+
+export const relationsToPathStr = (relations: GraphRelation[]) => {
+  return relations.map((r) => r.id).join("/");
+};

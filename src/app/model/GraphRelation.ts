@@ -32,6 +32,18 @@ export class GraphRelation {
     makeAutoObservable(this);
   }
 
+  setType(type: GraphRelationType) {
+    this.type = type;
+  }
+
+  setFrom(node: GraphNode) {
+    this.from = node;
+  }
+
+  setTo(node: GraphNode) {
+    this.to = node;
+  }
+
   delete() {
     this.store.deleteRelation(this);
   }

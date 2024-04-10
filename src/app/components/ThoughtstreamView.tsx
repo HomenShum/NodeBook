@@ -1,23 +1,27 @@
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
-import { BulletChildren } from "./BulletChildren";
+import { relationsToPathStr } from "../util";
+import { RelatedNodeChildren } from "./RelatedNode/RelatedNodeChildren";
 
 export const ThoughtstreamView = observer(() => {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
-  const root = graphStore.thoughtstreamBulletRoot;
-  root.setIsExpanded(true);
+  const pathToThoughtstream = useMemo(
+    () => [graphStore.thoughtstreamRootRelationFromUserRoot],
+    [graphStore.thoughtstreamRootRelationFromUserRoot],
+  );
+  const thoughstreamNode = graphStore.thoughtstreamRoot;
 
-  const createBullet = useCallback(() => {
-    const { bullet } = root.createChild();
-    const { bullet: bundle } = root.createChild();
-    graphStore.createRelation({ from: bundle.graphNode, to: bullet.graphNode });
-    bundle.setType("bundle");
-    viewStore.setFocusedNode(bullet);
-  }, [root, graphStore, viewStore]);
+  const createChild = useCallback(() => {
+    const { node, relation } = thoughstreamNode.createChild();
+    // const { bullet: bundle } = root.createChild();
+    // graphStore.createRelation({ from: bundle.graphNode, to: bullet.graphNode });
+    // bundle.setType("bundle");
+    viewStore.setFocusedNode(relationsToPathStr([...pathToThoughtstream, relation]));
+  }, [thoughstreamNode, pathToThoughtstream, viewStore]);
 
   return (
     <div
@@ -25,23 +29,23 @@ export const ThoughtstreamView = observer(() => {
       className="w-full h-full flex flex-col px-8 gap-4"
       onKeyDown={action((e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-          createBullet();
+          createChild();
         }
       })}
     >
       <div className="ml-2">
-        <div className="flex gap-2">
-          <h1 className="text-2xl font-medium select-none">{root.graphNode.text}</h1>
+        <div className="flex align-center gap-2">
+          <h1 className="text-2xl font-medium select-none">{thoughstreamNode.text}</h1>
           <button
             className="select-none text-xl font-light bg-slate-50 hover:bg-slate-200 hover:shadow-inner transition-colors duration-150 ease-in w-6 h-6 text-center rounded-lg relative translate-y-1"
-            onClick={createBullet}
+            onClick={createChild}
           >
             <span className="absolute -translate-x-[6px] -translate-y-[15px]">+</span>
           </button>
         </div>
       </div>
       <div className="flex-1">
-        <BulletChildren bullet={root} depth={0} parents={[]} />
+        <RelatedNodeChildren pathToParentRelations={pathToThoughtstream} />
       </div>
     </div>
   );

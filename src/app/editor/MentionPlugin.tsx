@@ -8,6 +8,7 @@ import {
 import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
+import { useRelationAtPath } from "../components/RelatedNode/RelatedNodeContext";
 import { GraphNode } from "../model/GraphNode";
 import { $createMentionNode } from "../model/MentionNode";
 import { useGraphStore } from "../store/useGraphStore";
@@ -29,6 +30,7 @@ class MentionTypeaheadOption extends MenuOption {
 }
 
 export function MentionPlugin(): JSX.Element | null {
+  const { node } = useRelationAtPath();
   const [queryString, setQueryString] = useState<string | null>(null);
 
   const [editor] = useLexicalComposerContext();
@@ -42,16 +44,16 @@ export function MentionPlugin(): JSX.Element | null {
           nodeToReplace.replace(mentionNode);
         }
         if (
-          !viewStore.focusedNode?.graphNode.relations.some(
+          !node.relations.some(
             (relation) =>
               relation.type == graphStore.relationTypesById.child &&
               relation.from == selectedOption.graphNode &&
-              relation.to == viewStore.focusedNode!.graphNode,
+              relation.to == node,
           )
         ) {
           graphStore.createRelation({
             from: selectedOption.graphNode,
-            to: viewStore.focusedNode!.graphNode,
+            to: node,
             type: graphStore.relationTypesById.child,
           });
         }
@@ -59,21 +61,17 @@ export function MentionPlugin(): JSX.Element | null {
         closeMenu();
       });
     },
-    [editor, graphStore, viewStore],
+    [editor, graphStore, node],
   );
 
   const options: Array<MentionTypeaheadOption> = useMemo(() => {
     const SUGGESTION_LIST_LENGTH_LIMIT = 5;
     if (queryString === null) return [];
     return graphStore.nodes
-      .filter(
-        (node) =>
-          node.text.toLowerCase().includes(queryString.toLowerCase()) &&
-          node.id !== viewStore.focusedNode?.graphNode.id,
-      )
+      .filter((n) => n.text.toLowerCase().includes(queryString.toLowerCase()) && n.id !== node.id)
       .map((node) => new MentionTypeaheadOption(node.text, node))
       .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
-  }, [queryString, graphStore.nodes, viewStore.focusedNode]);
+  }, [queryString, graphStore.nodes, node]);
 
   const menuRenderFn = getMenuRenderFn(options);
   return (

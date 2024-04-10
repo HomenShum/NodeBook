@@ -1,6 +1,5 @@
 import { $createParagraphNode, $createTextNode, $getRoot, $setSelection, EditorState, ParagraphNode } from "lexical";
 
-import { AutoFocusPlugin } from "@lexical/react/LexicalAutoFocusPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
@@ -8,10 +7,10 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect } from "react";
+import { useRelationAtPath } from "../components/RelatedNode/RelatedNodeContext";
 import { Chip, GraphNode } from "../model/GraphNode";
 import { GraphStore } from "../model/GraphStore";
 import { $createMentionNode, $isMentionNode, MentionNode } from "../model/MentionNode";
-import { Bullet } from "../model/OutlineBullet";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
 import styles from "./Editor.module.css";
@@ -32,20 +31,8 @@ const onError = (error: any) => {
   console.error(error);
 };
 
-export type EditorContext = {
-  bullet: Bullet;
-  // TODO shouldn't be necessary
-  siblingAbove?: Bullet;
-  siblingBelow?: Bullet;
-};
-
-interface Props {
-  bullet: Bullet;
-  onChange: (newValue: string) => void;
-  context: EditorContext;
-}
-
-export const Editor = ({ bullet, context }: Props) => {
+export const Editor = () => {
+  const { node, pathToNodeStr } = useRelationAtPath();
   const viewStore = useViewStore();
   const initialConfig = {
     namespace: "MyEditor",
@@ -54,7 +41,7 @@ export const Editor = ({ bullet, context }: Props) => {
     nodes: [MentionNode],
     editorState: () => {
       const paragraph = $createParagraphNode();
-      const text = $createTextNode(bullet.graphNode.text);
+      const text = $createTextNode(node.text);
       paragraph.append(text);
       $getRoot().append(paragraph);
       $getRoot().selectEnd();
@@ -62,20 +49,23 @@ export const Editor = ({ bullet, context }: Props) => {
   };
 
   return (
-    <div className={styles.EditorWrapper} onFocus={() => viewStore.setFocusedNode(bullet)}>
+    <div
+      className={styles.EditorWrapper}
+      // onFocus={() => viewStore.setFocusedNode(bullet)}
+    >
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable key={bullet.id} nodeId={bullet.graphNode.id} bulletId={bullet.id} />}
+          contentEditable={<ContentEditable nodeId={node.id} />}
           placeholder={null}
           // placeholder={<EditorPlaceholder />}
         />
-        {viewStore.isFocused(bullet) && <AutoFocusPlugin />}
+        {/* {viewStore.isFocused(bullet) && <AutoFocusPlugin />} */}
         <HistoryPlugin />
-        <SyncEditorAndGraphNode bullet={bullet} />
-        <KeyboardOverridesPlugin bullet={bullet} context={context} />
+        <SyncEditorAndGraphNode node={node} />
+        <KeyboardOverridesPlugin />
         <MentionPlugin />
-        <ViewStoreRegistryPlugin bullet={bullet} />
+        <ViewStoreRegistryPlugin pathToNodeStr={pathToNodeStr} />
       </LexicalComposer>
     </div>
   );
@@ -132,7 +122,7 @@ const createContentMatchingParagraph = (paragraph: ParagraphNode): Chip[] => {
  * (TODO: This way of avoiding infinite loops feels a bit sketchy, but it works
  * for now)
  */
-const SyncEditorAndGraphNode = observer(({ bullet }: { bullet: Bullet }) => {
+const SyncEditorAndGraphNode = observer(({ node }: { node: GraphNode }) => {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
 
@@ -141,18 +131,18 @@ const SyncEditorAndGraphNode = observer(({ bullet }: { bullet: Bullet }) => {
       let referencingNodes: GraphNode[] = [];
       editorState.read(() => {
         const paragraph = $getRoot().getChildren()[0] as ParagraphNode;
-        if (graphNodeMatchesParagraph(bullet.graphNode, paragraph, graphStore)) {
+        if (graphNodeMatchesParagraph(node, paragraph, graphStore)) {
           return;
         }
-        referencingNodes = bullet.graphNode.relations
+        referencingNodes = node.relations
           .filter((relation) => {
-            if (relation.from.id !== bullet.graphNode.id) return false;
+            if (relation.from.id !== node.id) return false;
 
-            return relation.to.content.some((item) => item.type === "mention" && item.value === bullet.graphNode.id);
+            return relation.to.content.some((item) => item.type === "mention" && item.value === node.id);
           })
           .map((relation) => relation.to);
         const newContent = createContentMatchingParagraph(paragraph);
-        bullet.graphNode.setContent(newContent);
+        node.setContent(newContent);
       });
       editor.update(() => {
         referencingNodes.map((refNode) => {
@@ -160,7 +150,7 @@ const SyncEditorAndGraphNode = observer(({ bullet }: { bullet: Bullet }) => {
         });
       });
     },
-    [bullet, editor, graphStore],
+    [node, editor, graphStore],
   );
 
   const setEditorToGraphNodeText = useCallback(
@@ -192,7 +182,7 @@ const SyncEditorAndGraphNode = observer(({ bullet }: { bullet: Bullet }) => {
   );
 
   useEffect(() => {
-    setEditorToGraphNodeText(bullet.graphNode);
-  }, [setEditorToGraphNodeText, bullet.graphNode, bullet.graphNode.content]);
+    setEditorToGraphNodeText(node);
+  }, [setEditorToGraphNodeText, node, node.content]);
   return <OnChangePlugin onChange={setGraphNodeTextToEditorState} />;
 });

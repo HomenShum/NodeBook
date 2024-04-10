@@ -1,6 +1,5 @@
 import { makeAutoObservable } from "mobx";
 import { Position, comparePositions } from "../util";
-import { FractionalPositionedList } from "./FractionalPositionedList";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 
@@ -25,16 +24,31 @@ export type PositionedRelation = {
 };
 
 export class GraphNode {
-  public id: string;
-  public content: Chip[] = [];
-  public allRelationsList = new FractionalPositionedList<GraphRelation>([]);
-  public pinnedRelationsList = new FractionalPositionedList<GraphRelation>([]);
-  public createdAt = new Date();
+  id: string;
+  content: Chip[] = [];
+  createdAt = new Date();
+  type: "bullet" | "bundle" = "bullet";
 
   constructor(private store: GraphStore, { id, content = [] }: { id: string; content?: Chip[] }) {
     this.id = id;
     this.content = content;
     makeAutoObservable(this);
+  }
+
+  setType(type: "bullet" | "bundle") {
+    this.type = type;
+  }
+
+  get allRelationsList() {
+    const list = this.store.relationsByNodeId.get(this.id);
+    if (!list) throw new Error("Missing allRelationsList");
+    return list;
+  }
+
+  get pinnedRelationsList() {
+    const list = this.store.pinnedRelationsByNodeId.get(this.id);
+    if (!list) throw new Error("Missing pinnedRelationsList");
+    return list;
   }
 
   get isRoot() {
@@ -75,6 +89,10 @@ export class GraphNode {
       .join();
   }
 
+  createChild(props: GraphNodeProps = {}) {
+    return this.store.createChildNode(this, props);
+  }
+
   delete() {
     this.store.deleteNode(this.id);
   }
@@ -93,6 +111,22 @@ export class GraphNode {
 
   get relatedNodes(): GraphNode[] {
     return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
+  }
+
+  pinChildRelation(childRelation: GraphRelation) {
+    if (!this.allRelationsList.get(childRelation.id)) {
+      console.error("Can't pin relation that doesn't involve this node");
+      return;
+    }
+    this.pinnedRelationsList.add(childRelation);
+  }
+
+  unpinChildRelation(childRelation: GraphRelation) {
+    this.pinnedRelationsList.delete(childRelation.id);
+  }
+
+  isRelationPinned(childRelation: GraphRelation) {
+    return this.pinnedRelationsList.has(childRelation.id);
   }
 
   toString() {

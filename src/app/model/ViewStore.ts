@@ -2,8 +2,8 @@ import { LexicalEditor } from "lexical";
 import { makeAutoObservable } from "mobx";
 import { Box } from "../selection/utils";
 import { makeAutoSaving } from "../util";
-import { GraphStore } from "./GraphStore";
-import { Bullet } from "./OutlineBullet";
+import { GraphRelation } from "./GraphRelation";
+import { GraphStore, Path } from "./GraphStore";
 
 export enum ViewType {
   OUTLINE = "outline",
@@ -15,12 +15,12 @@ export class ViewStore {
   public curView: ViewType;
   private graphStore: GraphStore;
 
-  public focusedNode: Bullet | null = null;
-  public hoveredNode: Bullet | null = null;
+  public focusedNode: Path | null = null;
+  public hoveredNode: Path | null = null;
 
-  private editorsByViewId: Map<string, LexicalEditor> = new Map();
+  private editorsByPath: Map<string, LexicalEditor> = new Map();
 
-  public selectedNodes: Set<Bullet> = new Set();
+  public selectedNodes: Set<Path> = new Set();
 
   public showNodeDetails = false;
   public leftSidebarOpen = false;
@@ -33,12 +33,12 @@ export class ViewStore {
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
 
-  public currentOutlineViewRoot: Bullet | null = null;
+  public currentOutlineViewRoot: GraphRelation[] | null = null;
 
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;
     this.graphStore = graphStore;
-    this.currentOutlineViewRoot = graphStore.outlineBulletRoot;
+    this.currentOutlineViewRoot = [graphStore.outlineRootRelationFromUserRoot];
     makeAutoObservable(this);
     makeAutoSaving(this, {
       showNodeDetails: true,
@@ -48,7 +48,7 @@ export class ViewStore {
     });
   }
 
-  setCurrentOutlineViewRoot(root: Bullet) {
+  setCurrentOutlineViewRoot(root: GraphRelation[] | null) {
     this.currentOutlineViewRoot = root;
   }
 
@@ -64,22 +64,23 @@ export class ViewStore {
     this.curView = view;
   }
 
-  setFocusedNode(nodeView: Bullet | null) {
-    this.focusedNode = nodeView;
+  setFocusedNode(path: Path | null) {
+    this.focusedNode = path;
     setTimeout(() => {
-      const editor = this.editorsByViewId.get(nodeView?.id ?? "");
+      if (!path || this.focusedNode !== path) return;
+      const editor = this.editorsByPath.get(path);
       if (editor) {
         editor.focus();
       }
     }, 0);
   }
 
-  isFocused(nodeView: Bullet) {
-    return this.focusedNode?.id === nodeView.id;
+  isFocused(path: Path) {
+    return this.focusedNode === path;
   }
 
-  setHoveredNode(node: Bullet | null) {
-    this.hoveredNode = node;
+  setHoveredNode(path: Path | null) {
+    this.hoveredNode = path;
   }
 
   setShowNodeDetails(show: boolean) {
@@ -102,12 +103,12 @@ export class ViewStore {
     this.hideBackrelations = show;
   }
 
-  registerEditor(view: Bullet, editor: LexicalEditor) {
-    this.editorsByViewId.set(view.id, editor);
+  registerEditor(pathStr: Path, editor: LexicalEditor) {
+    this.editorsByPath.set(pathStr, editor);
   }
 
-  removeEditor(view: Bullet) {
-    this.editorsByViewId.delete(view.id);
+  removeEditor(pathStr: Path) {
+    this.editorsByPath.delete(pathStr);
   }
 
   private selectionBoxToEvaluate: Box | null = null;

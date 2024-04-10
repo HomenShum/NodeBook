@@ -1,10 +1,10 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { BaseSelection, LexicalNode } from "lexical";
 import { makeAutoObservable } from "mobx";
-import { uuid } from "../util";
+import { relationsToNodes, uuid } from "../util";
+import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
-import { Bullet } from "./OutlineBullet";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 
 export const defaultRelationTypes = {
@@ -18,22 +18,34 @@ export const USER_ROOT_ID = "user-root-id";
 export const OUTLINE_ROOT_ID = "outline-root-id";
 export const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
 
+/**
+ * Forward slash delimited relation ids.
+ * Needs to be relation ids, not node ids, cause you can have multiple instances of
+ * the same node related to the same parent, so node paths are not unique.
+ *
+ * Example:
+ * - A
+ *   - child: B
+ *   - author: B
+ */
+export type Path = string;
+
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
   relationTypesById: Record<string, GraphRelationType> = {};
-  bulletsById: Map<string, Bullet> = new Map();
-  bulletsByRelationId: Map<string, Map<string, Bullet>> = new Map();
+
+  relationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
+  pinnedRelationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
+
+  pathData: Map<Path, { isExpanded: boolean }> = new Map();
 
   // Default nodes and relations
-  // TODO: do we need this? feels like there could be multiple
-  outlineBulletRoot: Bullet;
-  thoughtstreamBulletRoot: Bullet;
   userRoot: GraphNode;
   outlineRoot: GraphNode;
   thoughtstreamRoot: GraphNode;
-  outlineRootRelationToUserRoot: GraphRelation;
-  thoughtstreamRootRelationToUserRoot: GraphRelation;
+  outlineRootRelationFromUserRoot: GraphRelation;
+  thoughtstreamRootRelationFromUserRoot: GraphRelation;
 
   isLoading = false;
 
@@ -55,22 +67,32 @@ export class GraphStore {
       id: THOUGHTSTREAM_ROOT_ID,
       content: [{ type: "text", value: "Thoughtstream" }],
     });
-    this.outlineRootRelationToUserRoot = this.createRelation({
+    this.outlineRootRelationFromUserRoot = this.createRelation({
       from: this.userRoot,
       to: this.outlineRoot,
       type: this.relationTypesById.child,
     });
-    this.thoughtstreamRootRelationToUserRoot = this.createRelation({
+    this.thoughtstreamRootRelationFromUserRoot = this.createRelation({
       from: this.userRoot,
       to: this.thoughtstreamRoot,
       type: this.relationTypesById.child,
     });
-    this.outlineBulletRoot = this.createBullet({
-      relation: this.outlineRootRelationToUserRoot,
+  }
+
+  isPathExpanded(path: Path): boolean {
+    return this.pathData.get(path)?.isExpanded || false;
+  }
+
+  togglePathExpanded(path: Path) {
+    const oldData = this.pathData.get(path);
+    this.pathData.set(path, {
+      ...oldData,
+      isExpanded: !oldData?.isExpanded,
     });
-    this.thoughtstreamBulletRoot = this.createBullet({
-      relation: this.thoughtstreamRootRelationToUserRoot,
-    });
+  }
+
+  setPathExpanded(path: Path, isExpanded: boolean) {
+    this.pathData.set(path, { isExpanded });
   }
 
   setAddThoughtstreamDirectChildrenToOutline(value: boolean) {
@@ -101,12 +123,41 @@ export class GraphStore {
     return Object.values(this.relationTypesById);
   }
 
+  getNodesFromPath(path: Path): GraphNode[] {
+    const relationIds = path.split("/");
+    const relations = relationIds.map((id) => this.relationsById.get(id)).filter((r) => r) as GraphRelation[];
+    const nodes: GraphNode[] = [];
+    relations.forEach((r, i) => {
+      if (i === 0) {
+        nodes.push(r.from);
+      } else {
+        const prevNode = nodes[i - 1];
+        const nextNode = r.from.id === prevNode.id ? r.to : r.from;
+        nodes.push(nextNode);
+      }
+    });
+    return nodes;
+  }
+
+  getRelationsFromPath(path: Path): GraphRelation[] {
+    const relationIds = path.split("/");
+    return relationIds.map((id) => this.relationsById.get(id)).filter((r) => r) as GraphRelation[];
+  }
+
+  getNodesAndRelationsFromPath(path: Path): { node: GraphNode; relation: GraphRelation }[] {
+    const relationIds = path.split("/");
+    const relations = relationIds.map((id) => this.relationsById.get(id)).filter((r) => r) as GraphRelation[];
+    const nodes = this.getNodesFromPath(path);
+    return nodes.map((node, i) => ({ node, relation: relations[i] }));
+  }
+
   createNode(props: GraphNodeProps = {}): GraphNode {
     const node = new GraphNode(this, {
       id: props.id || uuid(),
       content: props.content,
     });
     this.nodesById.set(node.id, node);
+    this.relationsByNodeId.set(node.id, new FractionalPositionedList());
     if (node.id === OUTLINE_ROOT_ID) {
       this.outlineRoot = node;
     } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
@@ -115,6 +166,16 @@ export class GraphStore {
       this.userRoot = node;
     }
     return node;
+  }
+
+  createChildNode(parent: GraphNode, props: GraphNodeProps = {}) {
+    const node = this.createNode(props);
+    const relation = this.createRelation({
+      from: parent,
+      to: node,
+      type: defaultRelationTypes.child,
+    });
+    return { node, relation };
   }
 
   insertNode(node: GraphNode): GraphNode {
@@ -130,6 +191,7 @@ export class GraphStore {
     if (!node) return;
     node.relations.forEach((r) => this.deleteRelation(r));
     this.nodesById.delete(node.id);
+    this.relationsByNodeId.delete(node.id);
   }
 
   getNode(id: string): GraphNode | undefined {
@@ -147,25 +209,38 @@ export class GraphStore {
     this.assertNodeExists(relation.from, relation.to);
     this.relationsById.set(relation.id, relation);
 
-    relation.from.allRelationsList.add(relation);
-    relation.to.allRelationsList.add(relation);
+    this.getRelationListForNode(relation.from).add(relation);
+    this.getRelationListForNode(relation.to).add(relation);
+    this.getPinnedRelationListForNode(relation.from).add(relation);
+    this.getPinnedRelationListForNode(relation.to).add(relation);
 
     return relation;
+  }
+
+  getRelationListForNode(node: GraphNode): FractionalPositionedList<GraphRelation> {
+    const list = this.relationsByNodeId.get(node.id);
+    if (list) return list;
+    const newList = new FractionalPositionedList<GraphRelation>();
+    this.relationsByNodeId.set(node.id, newList);
+    return newList;
+  }
+
+  getPinnedRelationListForNode(node: GraphNode): FractionalPositionedList<GraphRelation> {
+    const list = this.pinnedRelationsByNodeId.get(node.id);
+    if (list) return list;
+    const newList = new FractionalPositionedList<GraphRelation>();
+    this.pinnedRelationsByNodeId.set(node.id, newList);
+    return newList;
   }
 
   deleteRelation(relation: GraphRelation) {
     const { from: fromNode, to: toNode } = relation;
 
     // Remove the relation from the nodes
-    fromNode.allRelationsList.delete(relation.id);
-    fromNode.pinnedRelationsList.delete(relation.id);
-    toNode.allRelationsList.delete(relation.id);
-    toNode.pinnedRelationsList.delete(relation.id);
-
-    // Delete all bullets in subtrees rooted at this relation
-    const bullets = this.bulletsByRelationId.get(relation.id);
-    bullets?.forEach((b) => this.deleteBulletAndDescendantsOnly(b.id));
-    this.bulletsByRelationId.delete(relation.id);
+    this.getRelationListForNode(fromNode).delete(relation.id);
+    this.getRelationListForNode(toNode).delete(relation.id);
+    this.getPinnedRelationListForNode(fromNode).delete(relation.id);
+    this.getPinnedRelationListForNode(toNode).delete(relation.id);
 
     // Delete the relation itself
     this.relationsById.delete(relation.id);
@@ -178,23 +253,16 @@ export class GraphStore {
    * also updates the list of relations on the old and new `from` nodes
    * to reflect the changes.
    */
-  updateRelationFrom(relations: GraphRelation[], newFrom: GraphNode): GraphRelation[] {
-    this.assertNodeExists(newFrom, ...relations.map((r) => r.to));
+  updateRelationFrom(relation: GraphRelation, newFrom: GraphNode) {
     // remove the relations from their old from nodes
-    const oldFroms = relations.map((r) => {
-      const oldFrom = r.from;
-      oldFrom.allRelationsList.delete(r.id);
-      oldFrom.pinnedRelationsList.delete(r.id);
-      return oldFrom;
-    });
+    const oldFrom = relation.from;
+    oldFrom.allRelationsList.delete(relation.id);
+    oldFrom.pinnedRelationsList.delete(relation.id);
     // update the relations from property
-    relations.forEach((r) => {
-      r.from = newFrom;
-    });
+    relation.setFrom(newFrom);
     // add the relations to the new from node
-    newFrom.allRelationsList.add(...relations);
-    this.deleteNodeIfEmptyAndUnrelated(...oldFroms);
-    return relations;
+    newFrom.allRelationsList.add(relation);
+    this.deleteNodeIfEmptyAndUnrelated(oldFrom);
   }
 
   /**
@@ -202,23 +270,26 @@ export class GraphStore {
    * also updates the list of relations on the old and new `to` nodes
    * to reflect the changes.
    */
-  updateRelationTo(relations: GraphRelation[], newTo: GraphNode): GraphRelation[] {
-    this.assertNodeExists(newTo, ...relations.map((r) => r.from));
+  updateRelationTo(relation: GraphRelation, newTo: GraphNode) {
     // remove the relations from their old to nodes
-    const oldTos = relations.map((r) => {
-      const oldTo = r.to;
-      oldTo.allRelationsList.delete(r.id);
-      oldTo.pinnedRelationsList.delete(r.id);
-      return oldTo;
-    });
+    const oldTo = relation.to;
+    oldTo.allRelationsList.delete(relation.id);
+    oldTo.pinnedRelationsList.delete(relation.id);
     // update the relations to property
-    relations.forEach((r) => {
-      r.to = newTo;
-    });
+    relation.setTo(newTo);
     // add the relations to the new to node
-    newTo.allRelationsList.add(...relations);
-    this.deleteNodeIfEmptyAndUnrelated(...oldTos);
-    return relations;
+    newTo.allRelationsList.add(relation);
+    this.deleteNodeIfEmptyAndUnrelated(oldTo);
+  }
+
+  setGraphNodeAtPath(relation: GraphRelation, node: GraphNode, pathToParentRelation: GraphRelation[]) {
+    const nodes = relationsToNodes([...pathToParentRelation, relation]);
+    const oldNode = nodes[nodes.length - 1];
+    if (relation.to.id === oldNode.id) {
+      this.updateRelationTo(relation, node);
+    } else {
+      this.updateRelationFrom(relation, node);
+    }
   }
 
   reverseRelation(relation: GraphRelation): GraphRelation {
@@ -301,120 +372,14 @@ export class GraphStore {
     this.isLoading = false;
   }
 
-  createBullet({ parent, relation }: { parent?: Bullet; relation: GraphRelation }) {
-    // Create bullet
-    const bullet = new Bullet(this, relation, { parent });
-    this.bulletsById.set(bullet.id, bullet);
-
-    // Add to index by relation id
-    const bullets = this.bulletsByRelationId.get(bullet.graphRelation.id) || new Map();
-    bullets.set(bullet.id, bullet);
-    this.bulletsByRelationId.set(bullet.graphRelation.id, bullets);
-
-    // Add to parent's children
-    parent?.childrenByRelationId.set(relation.id, bullet);
-
-    return bullet;
-  }
-
-  /**
-   * Delete a bullet and all descendent bullets recursively.
-   * Does not delete the node or relation it represents.
-   */
-  deleteBulletAndDescendantsOnly(bulletId: string) {
-    const bullet = this.bulletsById.get(bulletId);
-    if (!bullet) return;
-
-    // Delete all children
-    bullet.childrenByRelationId.forEach((child) => this.deleteBulletAndDescendantsOnly(child.id));
-    bullet.pinnedByRelationId.forEach((child) => this.deleteBulletAndDescendantsOnly(child.id));
-    bullet.childrenByRelationId.clear();
-    bullet.pinnedByRelationId.clear();
-
-    // Remove reference to bullet from their parent
-    bullet.parent?.childrenByRelationId.delete(bullet.graphRelation.id);
-    bullet.parent?.pinnedByRelationId.delete(bullet.graphRelation.id);
-
-    // Remove bullets from index by relation id
-    const bulletsOfSameRelation = this.bulletsByRelationId.get(bullet.graphRelation.id);
-    bulletsOfSameRelation?.delete(bullet.id);
-    if (bulletsOfSameRelation?.size === 0) {
-      this.bulletsByRelationId.delete(bullet.graphRelation.id);
-    }
-
-    // Delete the bullet itself
-    this.bulletsById.delete(bullet.id);
-  }
-
-  /**
-   * By default, deletes a bullet by deleting the relation it represents.
-   * If {@link removingNodeAsDirectChildOfThoughtstreamDeletesIt} is enabled,
-   * and the bullet is a direct child of the thoughtstream, delete node
-   * entirely (which deletes all relations and bullets associated with it).
-   */
-  deleteBulletByDeletingRelationOrNode(bulletId: string) {
-    const bullet = this.bulletsById.get(bulletId);
-    if (!bullet) return;
-    if (
-      this.removingNodeAsDirectChildOfThoughtstreamDeletesIt &&
-      bullet.parent?.id === this.thoughtstreamBulletRoot.id
-    ) {
-      this.deleteNode(bullet.graphNode.id);
-    } else {
-      this.deleteRelation(bullet.graphRelation);
-    }
-  }
-
-  moveBulletToNewParent({
-    parent,
-    bullets,
-    target,
-  }: {
-    parent: Bullet;
-    bullets: Bullet[];
-    target?: Bullet | "top" | "bottom";
-  }) {
-    const parentBullet = parent;
-    const parentGraphNode = parentBullet.graphNode;
-    this.updateRelationFrom(
-      bullets.map((b) => b.graphRelation),
-      parentGraphNode,
-    );
-    if (target) {
-      parentGraphNode.allRelationsList.move(
-        bullets.map((b) => b.graphRelation),
-        typeof target === "string" ? target : target.graphRelation,
-      );
-    }
-    // We need to manually add the bullets to the respective maps because otherwise new bullets
-    // will be created to reflect the new relations, and we'll lose things like the expanded states
-    // underneath and focus state.
-    // (TODO: This seems more complicated than it should be though. It's worth revisiting.)
-    bullets.forEach((b) => {
-      // Remove from old parent
-      b.parent?.childrenByRelationId.delete(b.graphRelation.id);
-      b.parent?.pinnedByRelationId.delete(b.graphRelation.id);
-
-      // Add to new parent
-      b.parent = parentBullet;
-      if (target instanceof Bullet && target.isPinned) {
-        parentGraphNode.pinnedRelationsList.add(b.graphRelation);
-        parentBullet.pinnedByRelationId.set(b.graphRelation!.id, b);
-      } else {
-        parentBullet.childrenByRelationId.set(b.graphRelation!.id, b);
-      }
-    });
-  }
-
-  splitBullet(bullet: Bullet, selection: BaseSelection): Bullet | null {
-    if (!bullet.parent) {
-      throw new Error("Can't split bullet with no parent");
-      // TODO this shouldn't be possible?
-    }
+  splitRelatedNode(relation: GraphRelation, nodeToSplit: GraphNode, selection: BaseSelection) {
+    const parent = relation.to.id === nodeToSplit.id ? relation.from : relation.to;
 
     // Get text before and after the cursor
     const points = selection?.getStartEndPoints();
-    if (!points) return null;
+    if (!points) {
+      throw new Error("No selection points");
+    }
     const start = points[0].offset;
     const end = points[1].offset;
 
@@ -433,7 +398,7 @@ export class GraphStore {
 
     let chipsBefore: Chip[] = [];
     let chipsAfter: Chip[] = [];
-    bullet.graphNode.content.forEach((chip, idx) => {
+    nodeToSplit.content.forEach((chip, idx) => {
       if (idx < startIndex) {
         // All chips before the start index are part of chipsBefore
         chipsBefore.push({ type: chip.type, value: chip.value });
@@ -467,23 +432,16 @@ export class GraphStore {
         // Nodes between the start and end nodes are deleted by ignoring them
       }
     });
+    nodeToSplit.setContent(chipsBefore);
+    // Create a new related node below the current one with the text after the cursor
+    const { node: newNode, relation: newRelation } = parent.createChild({ content: chipsAfter });
+    const relationsList = this.getRelationListForNode(parent);
+    relationsList.move([newRelation], relation);
+    return { node: newNode, relation: newRelation };
+  }
 
-    bullet.graphNode.setContent(chipsBefore);
-    // Create a new bullet below the current bullet with the text after the cursor
-    const { bullet: newBullet } = bullet.parent.createChild({ content: chipsAfter });
-    newBullet.moveAfterSibling(bullet);
-    // Add to same bundles as the original bullet
-    bullet.siblingBundlesThisNodeIsChildOf().map((bundle) => {
-      // Create a new relation between the bundle and the new bullet
-      const rel = this.createRelation({
-        from: bundle.graphNode,
-        to: newBullet.graphNode,
-        type: defaultRelationTypes.child,
-      });
-      // Move the relation under the sibling we split from
-      rel.from.allRelationsList.move([rel], ({ item }) => item.to.id === newBullet.graphNode.id);
-      return rel;
-    });
-    return newBullet;
+  moveRelationAfterSibling(node: GraphNode, relation: GraphRelation, sibling: GraphRelation) {
+    const list = this.relationsByNodeId.get(node.id);
+    list?.move([relation], sibling);
   }
 }

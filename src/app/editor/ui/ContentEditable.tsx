@@ -5,13 +5,6 @@ interface Props {
   bulletId?: string;
 }
 
-export const ContentEditable = ({ nodeId, bulletId }: Props) => {
-  return (
-    <LexicalContentEditable
-      className="outline-none"
-      style={{ maxWidth: "400px" }}
-      data-nodeid={nodeId}
-      data-bulletid={bulletId}
-    />
-  );
+export const ContentEditable = ({ nodeId }: Props) => {
+  return <LexicalContentEditable className="outline-none" style={{ maxWidth: "400px" }} data-nodeid={nodeId} />;
 };

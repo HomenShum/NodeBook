@@ -9,7 +9,7 @@ type ItemWithPosition<T> = {
 
 export class FractionalPositionedList<T extends { id: string; createdAt: Date }> {
   private map = new Map<string, ItemWithPosition<T>>();
-  constructor(items: T[]) {
+  constructor(items: T[] = []) {
     items.forEach((item) => {
       this.map.set(item.id, {
         position: generateDefaultPosition(item.createdAt),
@@ -27,6 +27,10 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
 
   get(id: string) {
     return this.map.get(id);
+  }
+
+  has(id: string) {
+    return this.map.has(id);
   }
 
   values(): ItemWithPosition<T>[] {
@@ -62,6 +66,12 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
     this.map.delete(id);
   }
 
+  /**
+   * Move items to a new position in the list.
+   *
+   * The `to` parameter can specify an item to position the items after, or
+   * "top" or "bottom" to move to the top or bottom of the list.
+   */
   move(items: T[], to: T | "top" | "bottom" | ((v: ItemWithPosition<T>) => boolean)) {
     let posInt: number;
     let posFracBefore: string | null = null;
