@@ -29,11 +29,13 @@ export const RelatedNodeView = observer(
     relation,
     siblingAbove,
     siblingBelow,
+    searchResult,
   }: {
     pathToParentRelations: GraphRelation[];
     relation: GraphRelation;
     siblingAbove?: GraphRelation;
     siblingBelow?: GraphRelation;
+    searchResult?: Map<string, boolean>;
   }) => {
     const viewStore = useViewStore();
     const graphStore = useGraphStore();
@@ -110,7 +112,12 @@ export const RelatedNodeView = observer(
               </div>
             </div>
           </RelationAtPathProvider>
-          {isExpanded && <RelatedNodeChildren pathToParentRelations={[...pathToParentRelations, relation]} />}
+          {isExpanded && (
+            <RelatedNodeChildren
+              pathToParentRelations={[...pathToParentRelations, relation]}
+              searchResult={searchResult}
+            />
+          )}
         </div>
       </>
     );
