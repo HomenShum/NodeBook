@@ -78,9 +78,9 @@ const App = observer(() => {
                   <OutlineView searchQuery={searchQuery} />
                 </div>
               ) : viewStore.curView === ViewType.THOUGHTSTREAM ? (
-                <ThoughtstreamView />
+                <ThoughtstreamView searchQuery={searchQuery} />
               ) : (
-                <SplitView />
+                <SplitView searchQuery={searchQuery} />
               )}
             </div>
           </main>
