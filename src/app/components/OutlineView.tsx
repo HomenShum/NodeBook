@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
@@ -18,10 +18,7 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
   const nodes = relationsToNodes(relations);
   const relation = relations[relations.length - 1];
   const root = nodes[nodes.length - 1];
-  let searchResult;
-  if (searchQuery) {
-    searchResult = searchGraph(root, searchQuery);
-  }
+  const searchResult = useMemo(() => (searchQuery ? searchGraph(root, searchQuery) : undefined), [root, searchQuery]);
 
   if (!root) {
     return <div>Missing root node</div>;

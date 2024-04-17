@@ -24,10 +24,6 @@ export const RelatedNodeChildren = observer(
       .sort((a, b) => comparePositions(a.position, b.position))
       .filter(({ relation }) => {
         const childNode = relation.from.id === parent.id ? relation.to : relation.from;
-        // if (searchResult) {
-        //   console.log(childNode.text);
-        //   console.log(searchResult.get(childNode.id));
-        // }
         return (
           filterFocusedNodesRelations(viewStore, relation, childNode, grandparent) &&
           (!searchResult || searchResult.get(childNode.id))
@@ -50,6 +46,7 @@ export const RelatedNodeChildren = observer(
               relation={childRelation}
               siblingAbove={children[i - 1]?.relation}
               siblingBelow={children[i + 1]?.relation}
+              searchResult={searchResult}
             />
           );
         })}

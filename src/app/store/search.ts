@@ -20,9 +20,7 @@ function searchRecursively(node: GraphNode, query: string, result: Map<string, b
 
     const childContainsNestedMatch = searchRecursively(child, query, result);
     const childMatches = childContainsNestedMatch || matches.has(child.id);
-    if (child.text === "e" && childMatches) {
-      debugger;
-    }
+
     result.set(child.id, childMatches);
     hasNestedMatch = hasNestedMatch || childMatches;
   }
