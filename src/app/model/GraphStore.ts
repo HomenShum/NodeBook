@@ -1,7 +1,7 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { BaseSelection, LexicalNode } from "lexical";
 import { makeAutoObservable } from "mobx";
-import { relationsToNodes, uuid } from "../util";
+import { comparePositions, relationsToNodes, uuid } from "../util";
 import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
@@ -383,61 +383,77 @@ export class GraphStore {
     const start = points[0].offset;
     const end = points[1].offset;
 
-    const selectionNodes = selection.getNodes();
-    const firstNode = selectionNodes[0];
-    const lastNode = selectionNodes[selectionNodes.length - 1];
+    if (start === 0 && end === 0) {
+      // Insert a new blank node just above the current node
+      // (we do this by getting the sibling above and moving the new node after it,
+      // because FractionalPositionedList.move can only place nodes after another node.
+      // TODO: add a moveBefore method or something to FractionalPositionedList)
+      const child = this.createChildNode(parent);
+      const relationsList = this.getRelationListForNode(parent);
+      const relations = Array.from(relationsList.values())
+        .sort((a, b) => comparePositions(a.position, b.position))
+        .map((v) => v.item);
+      const relationIndex = relations.findIndex((r) => r.id === relation.id);
+      const siblingAbove = relations[relationIndex - 1];
+      if (siblingAbove) relationsList.move([child.relation], siblingAbove);
+      return child;
+    } else {
+      const selectionNodes = selection.getNodes();
+      const firstNode = selectionNodes[0];
+      const lastNode = selectionNodes[selectionNodes.length - 1];
 
-    const paragraphNode = firstNode.getParent();
-    const paragraphChildren: LexicalNode[] = paragraphNode.getChildren();
+      const paragraphNode = firstNode.getParent();
+      const paragraphChildren: LexicalNode[] = paragraphNode.getChildren();
 
-    const firstNodeIndexInParagraph = paragraphChildren.findIndex((node) => node === firstNode);
-    const lastNodeIndexInParagraph = paragraphChildren.findIndex((node) => node === lastNode);
+      const firstNodeIndexInParagraph = paragraphChildren.findIndex((node) => node === firstNode);
+      const lastNodeIndexInParagraph = paragraphChildren.findIndex((node) => node === lastNode);
 
-    const startIndex = selection.isBackward() ? lastNodeIndexInParagraph : firstNodeIndexInParagraph;
-    const endIndex = selection.isBackward() ? firstNodeIndexInParagraph : lastNodeIndexInParagraph;
+      const startIndex = selection.isBackward() ? lastNodeIndexInParagraph : firstNodeIndexInParagraph;
+      const endIndex = selection.isBackward() ? firstNodeIndexInParagraph : lastNodeIndexInParagraph;
 
-    let chipsBefore: Chip[] = [];
-    let chipsAfter: Chip[] = [];
-    nodeToSplit.content.forEach((chip, idx) => {
-      if (idx < startIndex) {
-        // All chips before the start index are part of chipsBefore
-        chipsBefore.push({ type: chip.type, value: chip.value });
-      } else if (idx > endIndex) {
-        // All chips after the end index are part of chipsAfter
-        chipsAfter.push({ type: chip.type, value: chip.value });
-      } else {
-        // For chips within the selection range, split based on start and end offsets
-        if (idx === startIndex) {
-          // For the first node in the selection, add the text after the start offset to chipsAfter
-          if (start < chip.value.length) {
-            if (chip.type === "text") {
-              chipsAfter.push({ type: "text", value: chip.value.substring(start) });
-            } else {
-              const mentionText = paragraphChildren[idx]?.getTextContent() || "";
-              chipsAfter.push({ type: "text", value: mentionText.substring(start) });
+      let chipsBefore: Chip[] = [];
+      let chipsAfter: Chip[] = [];
+      nodeToSplit.content.forEach((chip, idx) => {
+        if (idx < startIndex) {
+          // All chips before the start index are part of chipsBefore
+          chipsBefore.push({ type: chip.type, value: chip.value });
+        } else if (idx > endIndex) {
+          // All chips after the end index are part of chipsAfter
+          chipsAfter.push({ type: chip.type, value: chip.value });
+        } else {
+          // For chips within the selection range, split based on start and end offsets
+          if (idx === startIndex) {
+            // For the first node in the selection, add the text after the start offset to chipsAfter
+            if (start < chip.value.length) {
+              if (chip.type === "text") {
+                chipsAfter.push({ type: "text", value: chip.value.substring(start) });
+              } else {
+                const mentionText = paragraphChildren[idx]?.getTextContent() || "";
+                chipsAfter.push({ type: "text", value: mentionText.substring(start) });
+              }
             }
           }
-        }
-        if (idx === endIndex) {
-          // For the last node in the selection, add the text before the end offset to chipsBefore
-          if (end > 0) {
-            if (chip.type === "text") {
-              chipsBefore.push({ type: "text", value: chip.value.substring(0, end) });
-            } else {
-              const mentionText = paragraphChildren[idx]?.getTextContent() || "";
-              chipsBefore.push({ type: "text", value: mentionText.substring(0, end) });
+          if (idx === endIndex) {
+            // For the last node in the selection, add the text before the end offset to chipsBefore
+            if (end > 0) {
+              if (chip.type === "text") {
+                chipsBefore.push({ type: "text", value: chip.value.substring(0, end) });
+              } else {
+                const mentionText = paragraphChildren[idx]?.getTextContent() || "";
+                chipsBefore.push({ type: "text", value: mentionText.substring(0, end) });
+              }
             }
           }
+          // Nodes between the start and end nodes are deleted by ignoring them
         }
-        // Nodes between the start and end nodes are deleted by ignoring them
-      }
-    });
-    nodeToSplit.setContent(chipsBefore);
-    // Create a new related node below the current one with the text after the cursor
-    const { node: newNode, relation: newRelation } = parent.createChild({ content: chipsAfter });
-    const relationsList = this.getRelationListForNode(parent);
-    relationsList.move([newRelation], relation);
-    return { node: newNode, relation: newRelation };
+      });
+      nodeToSplit.setContent(chipsBefore);
+      // Create a new related node below the current one with the text after the cursor
+      const { node: newNode, relation: newRelation } = parent.createChild({ content: chipsAfter });
+      const relationsList = this.getRelationListForNode(parent);
+      relationsList.move([newRelation], relation);
+      return { node: newNode, relation: newRelation };
+    }
   }
 
   moveRelationAfterSibling(node: GraphNode, relation: GraphRelation, sibling: GraphRelation) {
