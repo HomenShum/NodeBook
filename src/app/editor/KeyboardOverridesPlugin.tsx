@@ -77,6 +77,10 @@ export const KeyboardOverridesPlugin = () => {
               console.log("Can't shift tab because no grandparent to move to");
               return false;
             }
+            if (grandparentNode.id === graphStore.userRoot.id) {
+              console.log("Can't move relation to user root");
+              return false;
+            }
             if (!parent) {
               console.log("Can't shift tab because no parent to move to");
               return false;
