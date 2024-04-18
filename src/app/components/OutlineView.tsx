@@ -41,7 +41,8 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
     >
       <div className="ml-2">
         <div>
-          {nodes.slice(0, relations.length - 1).map((node, i) => {
+          {nodes.slice(0, relations.length).map((node, i) => {
+            if (i === 0) return null;
             // TODO
             const relation = relations[i];
             return (
@@ -49,7 +50,7 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
                 key={relation.id}
                 style={{ cursor: "pointer", userSelect: "none" }}
                 onClick={() => {
-                  viewStore.setCurrentOutlineViewRoot(relations.slice(0, i + 1));
+                  viewStore.setCurrentOutlineViewRoot(relations.slice(0, i));
                 }}
               >
                 {node.text} /{" "}
