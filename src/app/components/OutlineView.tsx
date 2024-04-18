@@ -1,11 +1,12 @@
 import { observer } from "mobx-react-lite";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
 import { relationsToNodes, relationsToPathStr } from "../util";
 import { RelatedNodeChildren } from "./RelatedNode/RelatedNodeChildren";
 
-export const OutlineView = observer(() => {
+export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) => {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
 
@@ -17,6 +18,7 @@ export const OutlineView = observer(() => {
   const nodes = relationsToNodes(relations);
   const relation = relations[relations.length - 1];
   const root = nodes[nodes.length - 1];
+  const searchResult = useMemo(() => (searchQuery ? searchGraph(root, searchQuery) : undefined), [root, searchQuery]);
 
   if (!root) {
     return <div>Missing root node</div>;
@@ -66,7 +68,7 @@ export const OutlineView = observer(() => {
         </div>
       </div>
       {/* <BulletChildren bullet={root} depth={0} parents={[...ancestors, root]} /> */}
-      <RelatedNodeChildren pathToParentRelations={relations} />
+      <RelatedNodeChildren pathToParentRelations={relations} searchResult={searchResult} />
     </div>
   );
 });

@@ -1,12 +1,13 @@
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useCallback, useMemo } from "react";
+import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
 import { relationsToPathStr } from "../util";
 import { RelatedNodeChildren } from "./RelatedNode/RelatedNodeChildren";
 
-export const ThoughtstreamView = observer(() => {
+export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: string }) => {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const pathToThoughtstream = useMemo(
@@ -14,6 +15,10 @@ export const ThoughtstreamView = observer(() => {
     [graphStore.thoughtstreamRootRelationFromUserRoot],
   );
   const thoughstreamNode = graphStore.thoughtstreamRoot;
+  const searchResult = useMemo(
+    () => (searchQuery ? searchGraph(thoughstreamNode, searchQuery) : undefined),
+    [thoughstreamNode, searchQuery],
+  );
 
   const createChild = useCallback(() => {
     const { node, relation } = thoughstreamNode.createChild();
@@ -45,7 +50,7 @@ export const ThoughtstreamView = observer(() => {
         </div>
       </div>
       <div className="flex-1">
-        <RelatedNodeChildren pathToParentRelations={pathToThoughtstream} />
+        <RelatedNodeChildren pathToParentRelations={pathToThoughtstream} searchResult={searchResult} />
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 import { Sidebar } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { OutlineView } from "./components/OutlineView";
 import { SplitView } from "./components/SplitView";
 import { ThoughtstreamView } from "./components/ThoughtstreamView";
@@ -16,15 +16,25 @@ const App = observer(() => {
   const appContainerRef = useRef<HTMLDivElement>(null);
   // useKeyboardShortcuts();
   const viewStore = useViewStore();
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <div className="App">
       <div ref={appContainerRef} className="flex flex-col h-full relative">
-        <header className="flex justify-center items-center px-2 py-4 h-8 border-b">
+        <header className="flex justify-center items-center px-2 py-4 border-b">
           <button onClick={() => viewStore.toggleLeftSidebar()}>
             <Sidebar size={20} />
           </button>
-          <div className="flex-1"></div>
+          <div className="flex-1 flex justify-center">
+            <input
+              type="text"
+              placeholder="Search..."
+              className="bg-gray-100 px-2 py-1 rounded-lg my-1 min-w-64"
+              value={searchQuery}
+              onFocus={() => viewStore.setFocusedNode(null)}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            ></input>
+          </div>
           <button onClick={() => viewStore.toggleRightSidebar()}>
             <Sidebar size={20} className="transform rotate-180" />
           </button>
@@ -65,12 +75,12 @@ const App = observer(() => {
             <div className="m-4 w-full">
               {viewStore.curView === ViewType.OUTLINE ? (
                 <div className="flex flex-col h-full items-center">
-                  <OutlineView />
+                  <OutlineView searchQuery={searchQuery} />
                 </div>
               ) : viewStore.curView === ViewType.THOUGHTSTREAM ? (
-                <ThoughtstreamView />
+                <ThoughtstreamView searchQuery={searchQuery} />
               ) : (
-                <SplitView />
+                <SplitView searchQuery={searchQuery} />
               )}
             </div>
           </main>

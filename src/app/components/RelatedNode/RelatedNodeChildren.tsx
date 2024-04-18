@@ -5,43 +5,55 @@ import { useViewStore } from "../../store/useViewStore";
 import { comparePositions } from "../../util";
 import { RelatedNodeView, filterFocusedNodesRelations } from "./RelatedNodeView";
 
-export const RelatedNodeChildren = observer(({ pathToParentRelations }: { pathToParentRelations: GraphRelation[] }) => {
-  const viewStore = useViewStore();
-  const depth = pathToParentRelations.length;
+export const RelatedNodeChildren = observer(
+  ({
+    pathToParentRelations,
+    searchResult,
+  }: {
+    pathToParentRelations: GraphRelation[];
+    searchResult?: Map<string, boolean>;
+  }) => {
+    const viewStore = useViewStore();
+    const depth = pathToParentRelations.length;
 
-  const nodes = relationsToNodes(pathToParentRelations);
+    const nodes = relationsToNodes(pathToParentRelations);
 
-  const grandparent = nodes[nodes.length - 2];
-  const parent = nodes[nodes.length - 1];
-  const children = parent.relationsWithPositions
-    .sort((a, b) => comparePositions(a.position, b.position))
-    .filter(({ relation }) => {
-      const childNode = relation.from.id === parent.id ? relation.to : relation.from;
-      return filterFocusedNodesRelations(viewStore, relation, childNode, grandparent);
-    });
-  // const bundles = children.map(({ bullet }) => bullet).filter((b) => b.type === "bundle");
+    const grandparent = nodes[nodes.length - 2];
+    const parent = nodes[nodes.length - 1];
+    const children = parent.relationsWithPositions
+      .sort((a, b) => comparePositions(a.position, b.position))
+      .filter(({ relation }) => {
+        const childNode = relation.from.id === parent.id ? relation.to : relation.from;
+        return (
+          filterFocusedNodesRelations(viewStore, relation, childNode, grandparent) &&
+          (!searchResult || searchResult.get(childNode.id))
+        );
+      });
+    // const bundles = children.map(({ bullet }) => bullet).filter((b) => b.type === "bundle");
 
-  return (
-    <div className={depth > 0 ? "ml-5" : ""}>
-      {/* {bundles.length > 0 ? (
+    return (
+      <div className={depth > 0 ? "ml-5" : ""}>
+        {/* {bundles.length > 0 ? (
           <BulletListWithBundles bullets={children} parents={parents} depth={depth} />
         ) : (
           <BulletList bullets={children} parents={parents} depth={depth} />
         )} */}
-      {children.map(({ relation: childRelation }, i) => {
-        return (
-          <RelatedNodeView
-            key={relationsToPathStr([...pathToParentRelations, childRelation])}
-            pathToParentRelations={pathToParentRelations}
-            relation={childRelation}
-            siblingAbove={children[i - 1]?.relation}
-            siblingBelow={children[i + 1]?.relation}
-          />
-        );
-      })}
-    </div>
-  );
-});
+        {children.map(({ relation: childRelation }, i) => {
+          return (
+            <RelatedNodeView
+              key={relationsToPathStr([...pathToParentRelations, childRelation])}
+              pathToParentRelations={pathToParentRelations}
+              relation={childRelation}
+              siblingAbove={children[i - 1]?.relation}
+              siblingBelow={children[i + 1]?.relation}
+              searchResult={searchResult}
+            />
+          );
+        })}
+      </div>
+    );
+  },
+);
 
 // export const BulletList = ({
 //   bullets,

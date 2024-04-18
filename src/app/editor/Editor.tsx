@@ -44,7 +44,6 @@ export const Editor = () => {
       const text = $createTextNode(node.text);
       paragraph.append(text);
       $getRoot().append(paragraph);
-      $getRoot().selectEnd();
     },
   };
 
