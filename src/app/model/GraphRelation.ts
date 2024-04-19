@@ -91,6 +91,10 @@ export class GraphRelation implements Serializable, GraphObject {
     return list.values().map(({ position, item }) => ({ position, relation: item }));
   }
 
+  get pinnedRelationsWithPositions(): PositionedRelation[] {
+    return this.pinnedRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
+  }
+
   get relations(): GraphRelation[] {
     return this.relationsWithPositions.map(({ relation }) => relation);
   }

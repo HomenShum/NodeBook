@@ -1,5 +1,7 @@
+import { PositionedRelation } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { relationsPathToParentChild, relationsToPathStr } from "@/app/util";
+import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { GraphRelation } from "../../model/GraphRelation";
 import { useViewStore } from "../../store/useViewStore";
@@ -21,22 +23,30 @@ export const RelatedObjectChildren = observer(
     const lastLinkToParent = pathToParent[pathToParent.length - 1];
     const grandparent = lastLinkToParent.parent;
     const parent = lastLinkToParent.child;
+
+    const filterFn = ({ relation }: PositionedRelation) => {
+      let childNode: GraphObject;
+      if (relation.from.id === parent.id) {
+        childNode = relation.to;
+      } else if (relation.to.id === parent.id) {
+        childNode = relation.from;
+      } else {
+        throw new Error("Relation does not connect to parent");
+      }
+      return (
+        filterFocusedNodesRelations(viewStore, relation, childNode, grandparent) &&
+        (!searchResult || searchResult.get(childNode.id))
+      );
+    };
+
+    const pinnedChildren = parent.pinnedRelationsWithPositions
+      //  sort reverse because FractionalPositionedList adds to the top by default
+      .sort((a, b) => comparePositions(b.position, a.position))
+      .filter(filterFn);
+
     const children = parent.relationsWithPositions
       .sort((a, b) => comparePositions(a.position, b.position))
-      .filter(({ relation }) => {
-        let childNode: GraphObject;
-        if (relation.from.id === parent.id) {
-          childNode = relation.to;
-        } else if (relation.to.id === parent.id) {
-          childNode = relation.from;
-        } else {
-          throw new Error("Relation does not connect to parent");
-        }
-        return (
-          filterFocusedNodesRelations(viewStore, relation, childNode, grandparent) &&
-          (!searchResult || searchResult.get(childNode.id))
-        );
-      });
+      .filter(filterFn);
     // const bundles = children.map(({ bullet }) => bullet).filter((b) => b.type === "bundle");
 
     return (
@@ -46,6 +56,19 @@ export const RelatedObjectChildren = observer(
         ) : (
           <BulletList bullets={children} parents={parents} depth={depth} />
         )} */}
+        <div className={cn(pinnedChildren.length > 0 && "border-red-500 border-b")}>
+          {pinnedChildren.map(({ relation: childRelation }, i) => {
+            return (
+              <RelatedObjectView
+                key={relationsToPathStr([...pathToParentRelations, childRelation])}
+                path={[...pathToParentRelations, childRelation]}
+                siblingAbove={children[i - 1]?.relation}
+                siblingBelow={children[i + 1]?.relation}
+                searchResult={searchResult}
+              />
+            );
+          })}
+        </div>
         {children.map(({ relation: childRelation }, i) => {
           return (
             <RelatedObjectView

@@ -142,6 +142,7 @@ export class GraphStore {
     });
     this.nodesById.set(node.id, node);
     this.relationsByNodeId.set(node.id, new FractionalPositionedList());
+    this.pinnedRelationsByNodeId.set(node.id, new FractionalPositionedList());
     if (node.id === OUTLINE_ROOT_ID) {
       this.outlineRoot = node;
     } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
@@ -167,6 +168,10 @@ export class GraphStore {
       throw new Error(`Node with id ${node.id} already exists`);
     }
     this.nodesById.set(node.id, node);
+
+    const newList = new FractionalPositionedList<GraphRelation>();
+    this.pinnedRelationsByNodeId.set(node.id, newList);
+
     return node;
   }
 
@@ -195,8 +200,9 @@ export class GraphStore {
 
     this.getRelationList(relation.from).add(relation);
     this.getRelationList(relation.to).add(relation);
-    this.getPinnedRelationList(relation.from).add(relation);
-    this.getPinnedRelationList(relation.to).add(relation);
+
+    const newList = new FractionalPositionedList<GraphRelation>();
+    this.pinnedRelationsByNodeId.set(relation.id, newList);
 
     return relation;
   }
@@ -211,11 +217,7 @@ export class GraphStore {
   }
 
   getPinnedRelationList(node: GraphObject): FractionalPositionedList<GraphRelation> {
-    const list = this.pinnedRelationsByNodeId.get(node.id);
-    if (list) return list;
-    const newList = new FractionalPositionedList<GraphRelation>();
-    this.pinnedRelationsByNodeId.set(node.id, newList);
-    return newList;
+    return this.pinnedRelationsByNodeId.get(node.id)!;
   }
 
   deleteRelation(relation: GraphRelation) {
