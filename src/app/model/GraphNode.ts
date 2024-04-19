@@ -1,17 +1,15 @@
 import { makeAutoObservable } from "mobx";
-import { Position, comparePositions } from "../util";
+import { Position, comparePositions, uuid } from "../util";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
+import { Serializable } from "./serialization";
 
 export type Chip = {
   type: "text" | "mention";
   value: string;
 };
 
-export type GraphNodeProps = {
-  id?: string;
-  content?: Chip[];
-};
+export type GraphNodeProps = { id?: string; content?: Chip[]; createdAt?: Date; type?: GraphNodeType };
 
 export type RelativePositionProps = {
   target?: GraphRelation;
@@ -23,19 +21,26 @@ export type PositionedRelation = {
   relation: GraphRelation;
 };
 
-export class GraphNode {
-  id: string;
-  content: Chip[] = [];
-  createdAt = new Date();
-  type: "bullet" | "bundle" = "bullet";
+export type GraphNodeType = "bullet" | "bundle";
 
-  constructor(private store: GraphStore, { id, content = [] }: { id: string; content?: Chip[] }) {
+export class GraphNode implements Serializable {
+  id: string;
+  content: Chip[];
+  createdAt: Date;
+  type: GraphNodeType;
+
+  constructor(
+    private store: GraphStore,
+    { id = uuid(), content = [], createdAt = new Date(), type = "bullet" }: GraphNodeProps,
+  ) {
     this.id = id;
     this.content = content;
+    this.createdAt = createdAt;
+    this.type = type;
     makeAutoObservable(this);
   }
 
-  setType(type: "bullet" | "bundle") {
+  setType(type: GraphNodeType) {
     this.type = type;
   }
 
@@ -137,5 +142,23 @@ export class GraphNode {
     if (relation.from.id !== this.id && relation.to.id !== this.id) {
       throw new Error(`Relation ${relation} does not involve node ${this}`);
     }
+  }
+
+  serialize() {
+    return {
+      id: this.id,
+      type: this.type,
+      createdAt: this.createdAt,
+      content: this.content,
+    };
+  }
+
+  static deserialize(data: ReturnType<GraphNode["serialize"]>, store: GraphStore): GraphNode {
+    return new GraphNode(store, {
+      id: data.id,
+      type: data.type,
+      content: data.content,
+      createdAt: new Date(data.createdAt),
+    });
   }
 }

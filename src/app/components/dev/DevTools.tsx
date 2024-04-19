@@ -1,11 +1,13 @@
 import { useGraphStore } from "@/app/store/useGraphStore";
 import { useViewStore } from "@/app/store/useViewStore";
 import { observer } from "mobx-react-lite";
+import { useRef } from "react";
 import { Button } from "../ui/button";
 
 export const DevTools = observer(() => {
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
+  const fileInputRef = useRef(null);
 
   return (
     <div className="p-2 mb-4 max-h-96 overflow-y-auto flex flex-col">
@@ -103,6 +105,54 @@ export const DevTools = observer(() => {
             <option value="pinned">Pinned and all nodes</option>
           </select>
         </div> */}
+        <Button
+          size={"sm"}
+          style={{ maxWidth: "fit-content" }}
+          onClick={() => {
+            // Create a Blob with the JSON string
+            const blob = new Blob([JSON.stringify(graphStore.serialize())], { type: "application/json" });
+
+            // Create a temporary URL for the Blob
+            const url = URL.createObjectURL(blob);
+
+            // Create a link element and trigger the download
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "data.json";
+            link.click();
+
+            // Clean up the temporary URL
+            URL.revokeObjectURL(url);
+          }}
+        >
+          Export as JSON
+        </Button>
+        <Button
+          size={"sm"}
+          style={{ maxWidth: "fit-content" }}
+          onClick={() => {
+            (fileInputRef.current! as HTMLInputElement).click();
+          }}
+        >
+          Import JSON
+        </Button>
+        <input
+          type="file"
+          accept=".json"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={(event) => {
+            const file = event.target.files![0];
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+              const fileContent = event.target!.result;
+              graphStore.deserializeInPlace(JSON.parse(fileContent as string));
+            };
+
+            reader.readAsText(file);
+          }}
+        />
         <Button
           size={"sm"}
           variant={"destructive"}

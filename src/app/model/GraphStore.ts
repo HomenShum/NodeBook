@@ -6,6 +6,7 @@ import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { RemoteGraphStore } from "./RemoteGraphStore";
+import { serializeMap } from "./serialization";
 
 export const defaultRelationTypes = {
   child: { id: "child", label: "child", reverseLabel: "parent" },
@@ -29,6 +30,7 @@ export const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
  *   - author: B
  */
 export type Path = string;
+export type PathData = { isExpanded: boolean };
 
 export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
@@ -38,7 +40,7 @@ export class GraphStore {
   relationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
   pinnedRelationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
 
-  pathData: Map<Path, { isExpanded: boolean }> = new Map();
+  pathData: Map<Path, PathData> = new Map();
 
   // Default nodes and relations
   userRoot: GraphNode;
@@ -459,5 +461,65 @@ export class GraphStore {
   moveRelationAfterSibling(node: GraphNode, relation: GraphRelation, sibling: GraphRelation) {
     const list = this.relationsByNodeId.get(node.id);
     list?.move([relation], sibling);
+  }
+
+  serialize() {
+    const nodesById = serializeMap(this.nodesById);
+    const relationsById = serializeMap(this.relationsById);
+    const relationsByNodeId = serializeMap(this.relationsByNodeId);
+    const pinnedRelationsByNodeId = serializeMap(this.pinnedRelationsByNodeId);
+
+    return {
+      nodesById,
+      relationsById,
+      relationTypesById: this.relationTypesById,
+      relationsByNodeId,
+      pinnedRelationsByNodeId,
+      pathData: Object.fromEntries(this.pathData.entries()),
+    };
+  }
+
+  deserializeInPlace(data: ReturnType<GraphStore["serialize"]>) {
+    const nodesById = new Map<string, GraphNode>();
+    for (const [key, value] of Object.entries(data.nodesById)) {
+      nodesById.set(key, GraphNode.deserialize(value, this));
+    }
+
+    const relationsById = new Map<string, GraphRelation>();
+    for (const [key, value] of Object.entries(data.relationsById)) {
+      relationsById.set(key, GraphRelation.deserialize(value, this, nodesById));
+    }
+
+    const relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
+    for (const [key, value] of Object.entries(data.relationsByNodeId)) {
+      relationsByNodeId.set(
+        key,
+        FractionalPositionedList.deserialize<GraphRelation>(value, (data) =>
+          GraphRelation.deserialize(data, this, nodesById),
+        ),
+      );
+    }
+
+    const pinnedRelationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
+    for (const [key, value] of Object.entries(data.pinnedRelationsByNodeId)) {
+      pinnedRelationsByNodeId.set(
+        key,
+        FractionalPositionedList.deserialize<GraphRelation>(value, (data) =>
+          GraphRelation.deserialize(data, this, nodesById),
+        ),
+      );
+    }
+
+    const pathData = new Map<Path, PathData>();
+    for (const [key, value] of Object.entries(data.pathData)) {
+      pathData.set(key, value);
+    }
+
+    this.nodesById = nodesById;
+    this.relationsById = relationsById;
+    this.relationTypesById = data.relationTypesById;
+    this.relationsByNodeId = relationsByNodeId;
+    this.pinnedRelationsByNodeId = pinnedRelationsByNodeId;
+    this.pathData = pathData;
   }
 }

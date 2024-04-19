@@ -1,14 +1,20 @@
 import { generateNKeysBetween } from "fractional-indexing";
 import { action, computed, makeObservable, observable } from "mobx";
 import { Position, comparePositions, generateDefaultPosition } from "../util";
+import { Serializable } from "./serialization";
 
 type ItemWithPosition<T> = {
   item: T;
   position: Position;
 };
 
-export class FractionalPositionedList<T extends { id: string; createdAt: Date }> {
-  private map = new Map<string, ItemWithPosition<T>>();
+type ListItem = {
+  id: string;
+  createdAt: Date;
+};
+
+export class FractionalPositionedList<T extends ListItem & Serializable> implements Serializable {
+  map = new Map<string, ItemWithPosition<T>>();
   constructor(items: T[] = []) {
     items.forEach((item) => {
       this.map.set(item.id, {
@@ -100,5 +106,33 @@ export class FractionalPositionedList<T extends { id: string; createdAt: Date }>
     items.forEach((item, i) => {
       this.map.set(item.id, { position: { int: posInt, frac: newFractionalPositions[i] }, item });
     });
+  }
+
+  serialize() {
+    const result: { [key: string]: { item: ReturnType<T["serialize"]>; position: Position } } = {};
+    for (const [key, value] of this.map.entries()) {
+      result[key] = {
+        item: value.item.serialize(),
+        position: value.position,
+      };
+    }
+    return result;
+  }
+
+  static deserialize<T extends ListItem & Serializable>(
+    data: ReturnType<FractionalPositionedList<T>["serialize"]>,
+    deserializeInnerType: (data: any) => T,
+  ): FractionalPositionedList<T> {
+    const list = new FractionalPositionedList<T>();
+    const result = new Map();
+    for (const [key, value] of Object.entries(data)) {
+      result.set(key, {
+        item: deserializeInnerType(value.item),
+        position: value.position,
+      });
+    }
+
+    list.map = result;
+    return list;
   }
 }
