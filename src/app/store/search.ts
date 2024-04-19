@@ -1,14 +1,14 @@
 import { search } from "fast-fuzzy";
-import { GraphNode } from "../model/GraphNode";
+import { GraphObject } from "../model/GraphObject";
 
-export function searchGraph(node: GraphNode, query: string): Map<string, boolean> {
+export function searchGraph(obj: GraphObject, query: string): Map<string, boolean> {
   const result = new Map();
-  searchRecursively(node, query, result);
+  searchRecursively(obj, query, result);
   return result;
 }
 
 // search the children of the node for the query
-function searchRecursively(node: GraphNode, query: string, result: Map<string, boolean>): boolean {
+function searchRecursively(node: GraphObject, query: string, result: Map<string, boolean>): boolean {
   const matches = new Set(search(query, node.children, { keySelector: (node) => node.text }).map((node) => node.id));
 
   let hasNestedMatch = false;

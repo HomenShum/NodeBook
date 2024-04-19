@@ -1,9 +1,10 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { BaseSelection, LexicalNode } from "lexical";
 import { makeAutoObservable } from "mobx";
-import { comparePositions, relationsToNodes, uuid } from "../util";
+import { comparePositions, relationsPathToParentChild, uuid } from "../util";
 import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
+import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { RemoteGraphStore } from "./RemoteGraphStore";
 import { serializeMap } from "./serialization";
@@ -72,13 +73,17 @@ export class GraphStore {
     this.outlineRootRelationFromUserRoot = this.createRelation({
       from: this.userRoot,
       to: this.outlineRoot,
-      type: this.relationTypesById.child,
+      relationType: this.relationTypesById.child,
     });
     this.thoughtstreamRootRelationFromUserRoot = this.createRelation({
       from: this.userRoot,
       to: this.thoughtstreamRoot,
-      type: this.relationTypesById.child,
+      relationType: this.relationTypesById.child,
     });
+  }
+
+  isRoot(obj: GraphObject) {
+    return obj.id === this.userRoot.id || obj.id === this.outlineRoot.id || obj.id === this.thoughtstreamRoot.id;
   }
 
   isPathExpanded(path: Path): boolean {
@@ -125,32 +130,9 @@ export class GraphStore {
     return Object.values(this.relationTypesById);
   }
 
-  getNodesFromPath(path: Path): GraphNode[] {
-    const relationIds = path.split("/");
-    const relations = relationIds.map((id) => this.relationsById.get(id)).filter((r) => r) as GraphRelation[];
-    const nodes: GraphNode[] = [];
-    relations.forEach((r, i) => {
-      if (i === 0) {
-        nodes.push(r.from);
-      } else {
-        const prevNode = nodes[i - 1];
-        const nextNode = r.from.id === prevNode.id ? r.to : r.from;
-        nodes.push(nextNode);
-      }
-    });
-    return nodes;
-  }
-
   getRelationsFromPath(path: Path): GraphRelation[] {
     const relationIds = path.split("/");
     return relationIds.map((id) => this.relationsById.get(id)).filter((r) => r) as GraphRelation[];
-  }
-
-  getNodesAndRelationsFromPath(path: Path): { node: GraphNode; relation: GraphRelation }[] {
-    const relationIds = path.split("/");
-    const relations = relationIds.map((id) => this.relationsById.get(id)).filter((r) => r) as GraphRelation[];
-    const nodes = this.getNodesFromPath(path);
-    return nodes.map((node, i) => ({ node, relation: relations[i] }));
   }
 
   createNode(props: GraphNodeProps = {}): GraphNode {
@@ -170,12 +152,12 @@ export class GraphStore {
     return node;
   }
 
-  createChildNode(parent: GraphNode, props: GraphNodeProps = {}) {
+  createChildNode(parent: GraphObject, props: GraphNodeProps = {}) {
     const node = this.createNode(props);
     const relation = this.createRelation({
       from: parent,
       to: node,
-      type: defaultRelationTypes.child,
+      relationType: defaultRelationTypes.child,
     });
     return { node, relation };
   }
@@ -208,18 +190,19 @@ export class GraphStore {
     if (this.relationsById.has(relation.id)) {
       throw new Error(`Relation with id ${relation.id} already exists`);
     }
-    this.assertNodeExists(relation.from, relation.to);
+    this.assertExists(relation.from, relation.to);
     this.relationsById.set(relation.id, relation);
 
-    this.getRelationListForNode(relation.from).add(relation);
-    this.getRelationListForNode(relation.to).add(relation);
-    this.getPinnedRelationListForNode(relation.from).add(relation);
-    this.getPinnedRelationListForNode(relation.to).add(relation);
+    this.getRelationList(relation.from).add(relation);
+    this.getRelationList(relation.to).add(relation);
+    this.getPinnedRelationList(relation.from).add(relation);
+    this.getPinnedRelationList(relation.to).add(relation);
 
     return relation;
   }
 
-  getRelationListForNode(node: GraphNode): FractionalPositionedList<GraphRelation> {
+  // TODO: this is creating an observable, which might cause issues
+  getRelationList(node: GraphObject): FractionalPositionedList<GraphRelation> {
     const list = this.relationsByNodeId.get(node.id);
     if (list) return list;
     const newList = new FractionalPositionedList<GraphRelation>();
@@ -227,7 +210,7 @@ export class GraphStore {
     return newList;
   }
 
-  getPinnedRelationListForNode(node: GraphNode): FractionalPositionedList<GraphRelation> {
+  getPinnedRelationList(node: GraphObject): FractionalPositionedList<GraphRelation> {
     const list = this.pinnedRelationsByNodeId.get(node.id);
     if (list) return list;
     const newList = new FractionalPositionedList<GraphRelation>();
@@ -239,10 +222,10 @@ export class GraphStore {
     const { from: fromNode, to: toNode } = relation;
 
     // Remove the relation from the nodes
-    this.getRelationListForNode(fromNode).delete(relation.id);
-    this.getRelationListForNode(toNode).delete(relation.id);
-    this.getPinnedRelationListForNode(fromNode).delete(relation.id);
-    this.getPinnedRelationListForNode(toNode).delete(relation.id);
+    this.getRelationList(fromNode).delete(relation.id);
+    this.getRelationList(toNode).delete(relation.id);
+    this.getPinnedRelationList(fromNode).delete(relation.id);
+    this.getPinnedRelationList(toNode).delete(relation.id);
 
     // Delete the relation itself
     this.relationsById.delete(relation.id);
@@ -255,15 +238,15 @@ export class GraphStore {
    * also updates the list of relations on the old and new `from` nodes
    * to reflect the changes.
    */
-  updateRelationFrom(relation: GraphRelation, newFrom: GraphNode) {
+  updateRelationFrom(relation: GraphRelation, newFrom: GraphObject) {
     // remove the relations from their old from nodes
     const oldFrom = relation.from;
-    oldFrom.allRelationsList.delete(relation.id);
-    oldFrom.pinnedRelationsList.delete(relation.id);
+    this.getRelationList(oldFrom).delete(relation.id);
+    this.getPinnedRelationList(oldFrom).delete(relation.id);
     // update the relations from property
     relation.setFrom(newFrom);
     // add the relations to the new from node
-    newFrom.allRelationsList.add(relation);
+    this.getRelationList(newFrom).add(relation);
     this.deleteNodeIfEmptyAndUnrelated(oldFrom);
   }
 
@@ -272,25 +255,24 @@ export class GraphStore {
    * also updates the list of relations on the old and new `to` nodes
    * to reflect the changes.
    */
-  updateRelationTo(relation: GraphRelation, newTo: GraphNode) {
+  updateRelationTo(relation: GraphRelation, newTo: GraphObject) {
     // remove the relations from their old to nodes
     const oldTo = relation.to;
-    oldTo.allRelationsList.delete(relation.id);
-    oldTo.pinnedRelationsList.delete(relation.id);
+    this.getRelationList(oldTo).delete(relation.id);
+    this.getPinnedRelationList(oldTo).delete(relation.id);
     // update the relations to property
     relation.setTo(newTo);
     // add the relations to the new to node
-    newTo.allRelationsList.add(relation);
+    this.getRelationList(newTo).add(relation);
     this.deleteNodeIfEmptyAndUnrelated(oldTo);
   }
 
-  setGraphNodeAtPath(relation: GraphRelation, node: GraphNode, pathToParentRelation: GraphRelation[]) {
-    const nodes = relationsToNodes([...pathToParentRelation, relation]);
-    const oldNode = nodes[nodes.length - 1];
-    if (relation.to.id === oldNode.id) {
-      this.updateRelationTo(relation, node);
+  setGraphNodeAtPath(path: GraphRelation[], newGraphObject: GraphObject) {
+    const { relation, child } = relationsPathToParentChild(path).slice(-1)[0];
+    if (child.id === relation.to.id) {
+      this.updateRelationTo(relation, newGraphObject);
     } else {
-      this.updateRelationFrom(relation, node);
+      this.updateRelationFrom(relation, newGraphObject);
     }
   }
 
@@ -302,7 +284,7 @@ export class GraphStore {
   }
 
   updateRelationsType(relation: GraphRelation, newType: GraphRelationType): GraphRelation {
-    relation.type = newType;
+    relation.relationType = newType;
     return relation;
   }
 
@@ -330,19 +312,26 @@ export class GraphStore {
     delete this.relationTypesById[id];
   }
 
-  private assertNodeExists(...nodes: (GraphNode | string)[]): void {
-    nodes.forEach((node) => {
-      const id = typeof node === "string" ? node : node.id;
-      if (!this.nodesById.has(id)) {
-        throw new Error(`Node with id ${id} does not exist`);
+  private assertExists(...objects: GraphObject[]): void {
+    objects.forEach((obj) => {
+      if (obj instanceof GraphNode) {
+        if (!this.nodesById.has(obj.id)) {
+          throw new Error(`Node with id ${obj.id} does not exist`);
+        }
+      } else if (obj instanceof GraphRelation) {
+        if (!this.relationsById.has(obj.id)) {
+          throw new Error(`Relation with id ${obj.id} does not exist`);
+        }
+      } else {
+        throw new Error("Invalid object type");
       }
     });
   }
 
-  private deleteNodeIfEmptyAndUnrelated(...nodes: GraphNode[]) {
-    nodes.forEach((node) => {
-      if (node.text === "" && node.relations.length === 0) {
-        this.deleteNode(node.id);
+  private deleteNodeIfEmptyAndUnrelated(...objects: GraphObject[]) {
+    objects.forEach((obj) => {
+      if (obj instanceof GraphNode && obj.text === "" && obj.relations.length === 0) {
+        this.deleteNode(obj.id);
       }
     });
   }
@@ -366,7 +355,7 @@ export class GraphStore {
         if (!from || !to || !type) {
           throw new Error("Invalid persisted relation");
         }
-        this.createRelation({ from, to, type });
+        this.createRelation({ from, to, relationType: type });
       });
     } catch (e) {
       console.error(e);
@@ -391,7 +380,7 @@ export class GraphStore {
       // because FractionalPositionedList.move can only place nodes after another node.
       // TODO: add a moveBefore method or something to FractionalPositionedList)
       const child = this.createChildNode(parent);
-      const relationsList = this.getRelationListForNode(parent);
+      const relationsList = this.getRelationList(parent);
       const relations = Array.from(relationsList.values())
         .sort((a, b) => comparePositions(a.position, b.position))
         .map((v) => v.item);
@@ -451,8 +440,8 @@ export class GraphStore {
       });
       nodeToSplit.setContent(chipsBefore);
       // Create a new related node below the current one with the text after the cursor
-      const { node: newNode, relation: newRelation } = parent.createChild({ content: chipsAfter });
-      const relationsList = this.getRelationListForNode(parent);
+      const { node: newNode, relation: newRelation } = this.createChildNode(parent, { content: chipsAfter });
+      const relationsList = this.getRelationList(parent);
       relationsList.move([newRelation], relation);
       return { node: newNode, relation: newRelation };
     }

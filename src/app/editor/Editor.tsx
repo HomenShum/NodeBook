@@ -7,7 +7,7 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect } from "react";
-import { useRelationAtPath } from "../components/RelatedNode/RelatedNodeContext";
+import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
 import { Chip, GraphNode } from "../model/GraphNode";
 import { GraphStore } from "../model/GraphStore";
 import { $createMentionNode, $isMentionNode, MentionNode } from "../model/MentionNode";
@@ -32,7 +32,10 @@ const onError = (error: any) => {
 };
 
 export const Editor = () => {
-  const { node, pathToNodeStr } = useRelationAtPath();
+  const { object: node, pathToNodeStr } = useRelationAtPath();
+  if (!(node instanceof GraphNode)) {
+    throw new Error("Expected object to be a GraphNode");
+  }
   const viewStore = useViewStore();
   const initialConfig = {
     namespace: "MyEditor",
@@ -124,6 +127,9 @@ const createContentMatchingParagraph = (paragraph: ParagraphNode): Chip[] => {
 const SyncEditorAndGraphNode = observer(({ node }: { node: GraphNode }) => {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
+  if (node.type !== "node") {
+    throw new Error("Expected object to be a GraphNode");
+  }
 
   const setGraphNodeTextToEditorState = useCallback(
     (editorState: EditorState) => {
@@ -136,10 +142,10 @@ const SyncEditorAndGraphNode = observer(({ node }: { node: GraphNode }) => {
         referencingNodes = node.relations
           .filter((relation) => {
             if (relation.from.id !== node.id) return false;
-
+            if (!(relation.to instanceof GraphNode)) return false;
             return relation.to.content.some((item) => item.type === "mention" && item.value === node.id);
           })
-          .map((relation) => relation.to);
+          .map((relation) => relation.to) as GraphNode[];
         const newContent = createContentMatchingParagraph(paragraph);
         node.setContent(newContent);
       });

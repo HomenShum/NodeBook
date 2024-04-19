@@ -8,15 +8,15 @@ function relationsFromNodesPerspective(node: GraphNode) {
       return {
         id: relation.id,
         to: relation.to,
-        type: relation.type,
-        label: relation.type.label,
+        type: relation.relationType,
+        label: relation.relationType.label,
       };
     } else {
       return {
         id: relation.id,
         to: relation.from,
-        type: relation.type,
-        label: relation.type.reverseLabel || "reverse:" + relation.type.label,
+        type: relation.relationType,
+        label: relation.relationType.reverseLabel || "reverse:" + relation.relationType.label,
       };
     }
   });
@@ -45,7 +45,7 @@ export const NodeTable = observer(() => {
                 <input
                   value={node.text}
                   onChange={(e) => {
-                    node.setContent([{type: "text", value: e.target.value}] ?? [])
+                    node.setContent([{ type: "text", value: e.target.value }] ?? []);
                   }}
                 />
               </td>

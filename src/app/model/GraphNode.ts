@@ -1,5 +1,6 @@
 import { makeAutoObservable } from "mobx";
 import { Position, comparePositions, uuid } from "../util";
+import { GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 import { Serializable } from "./serialization";
@@ -9,7 +10,7 @@ export type Chip = {
   value: string;
 };
 
-export type GraphNodeProps = { id?: string; content?: Chip[]; createdAt?: Date; type?: GraphNodeType };
+export type GraphNodeProps = { id?: string; content?: Chip[]; createdAt?: Date };
 
 export type RelativePositionProps = {
   target?: GraphRelation;
@@ -21,27 +22,17 @@ export type PositionedRelation = {
   relation: GraphRelation;
 };
 
-export type GraphNodeType = "bullet" | "bundle";
-
-export class GraphNode implements Serializable {
+export class GraphNode implements Serializable, GraphObject {
   id: string;
-  content: Chip[];
+  content: Chip[] = [];
   createdAt: Date;
-  type: GraphNodeType;
+  type = "node" as const;
 
-  constructor(
-    private store: GraphStore,
-    { id = uuid(), content = [], createdAt = new Date(), type = "bullet" }: GraphNodeProps,
-  ) {
+  constructor(private store: GraphStore, { id = uuid(), content = [], createdAt = new Date() }: GraphNodeProps) {
     this.id = id;
     this.content = content;
     this.createdAt = createdAt;
-    this.type = type;
     makeAutoObservable(this);
-  }
-
-  setType(type: GraphNodeType) {
-    this.type = type;
   }
 
   get allRelationsList() {
@@ -56,26 +47,24 @@ export class GraphNode implements Serializable {
     return list;
   }
 
-  get isRoot() {
-    return (
-      this.id === this.store.outlineRoot.id ||
-      this.id === this.store.thoughtstreamRoot.id ||
-      this.id === this.store.userRoot.id
-    );
-  }
-
-  get relations(): GraphRelation[] {
-    return this.allRelationsList.values().map(({ item }) => item);
-  }
-
-  get relationsSortedByPosition(): GraphRelation[] {
-    return Array.from(this.allRelationsList.values())
-      .sort((a, b) => comparePositions(a.position, b.position))
-      .map(({ item }) => item);
+  get isRoot(): boolean {
+    return this.store.isRoot(this);
   }
 
   get relationsWithPositions(): PositionedRelation[] {
-    return this.allRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
+    const list = this.store.relationsByNodeId.get(this.id);
+    if (!list) return [];
+    return list.values().map(({ position, item }) => ({ position, relation: item }));
+  }
+
+  get relations(): GraphRelation[] {
+    return this.relationsWithPositions.map(({ relation }) => relation);
+  }
+
+  get relationsSortedByPosition(): GraphRelation[] {
+    return this.relationsWithPositions
+      .sort((a, b) => comparePositions(a.position, b.position))
+      .map(({ relation }) => relation);
   }
 
   get pinnedRelationsWithPositions(): PositionedRelation[] {
@@ -94,28 +83,10 @@ export class GraphNode implements Serializable {
       .join();
   }
 
-  createChild(props: GraphNodeProps = {}) {
-    return this.store.createChildNode(this, props);
-  }
-
-  delete() {
-    this.store.deleteNode(this.id);
-  }
-
-  get children(): GraphNode[] {
+  get children(): GraphObject[] {
     return this.relations
-      .filter((r) => r.type.id === this.store.relationTypesById.child.id && r.from === this)
+      .filter((r) => r.relationType.id === this.store.relationTypesById.child.id && r.from === this)
       .map((r) => r.to);
-  }
-
-  get parents(): GraphNode[] {
-    return this.relations
-      .filter((r) => r.type.id === this.store.relationTypesById.child.id && r.to === this)
-      .map((r) => r.from);
-  }
-
-  get relatedNodes(): GraphNode[] {
-    return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
   }
 
   pinChildRelation(childRelation: GraphRelation) {
@@ -134,6 +105,10 @@ export class GraphNode implements Serializable {
     return this.pinnedRelationsList.has(childRelation.id);
   }
 
+  delete() {
+    this.store.deleteNode(this.id);
+  }
+
   toString() {
     return `Node(${this.id.slice(0, 8)}: ${this.text.slice(0, 8)})`;
   }
@@ -147,7 +122,6 @@ export class GraphNode implements Serializable {
   serialize() {
     return {
       id: this.id,
-      type: this.type,
       createdAt: this.createdAt,
       content: this.content,
     };
@@ -156,7 +130,6 @@ export class GraphNode implements Serializable {
   static deserialize(data: ReturnType<GraphNode["serialize"]>, store: GraphStore): GraphNode {
     return new GraphNode(store, {
       id: data.id,
-      type: data.type,
       content: data.content,
       createdAt: new Date(data.createdAt),
     });

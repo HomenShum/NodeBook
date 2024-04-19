@@ -1,6 +1,7 @@
 import { makeAutoObservable } from "mobx";
-import { uuid } from "../util";
-import { GraphNode } from "./GraphNode";
+import { comparePositions, uuid } from "../util";
+import { GraphNode, PositionedRelation } from "./GraphNode";
+import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
 import { Serializable } from "./serialization";
 
@@ -12,37 +13,55 @@ export type GraphRelationType = {
 
 export type GraphRelationProps = {
   id?: string;
-  from: GraphNode;
-  to: GraphNode;
-  type?: GraphRelationType;
+  from: GraphObject;
+  to: GraphObject;
+  relationType?: GraphRelationType;
 };
 
-export class GraphRelation implements Serializable {
+export class GraphRelation implements Serializable, GraphObject {
+  type = "relation" as const;
   public id: string;
-  public from: GraphNode;
-  public to: GraphNode;
-  public type: GraphRelationType;
+  public from: GraphObject;
+  public to: GraphObject;
+  public relationType: GraphRelationType;
   public createdAt: Date = new Date();
   private store: GraphStore;
 
-  constructor(store: GraphStore, { id = uuid(), from, to, type = defaultRelationTypes.child }: GraphRelationProps) {
+  constructor(
+    store: GraphStore,
+    { id = uuid(), from, to, relationType: type = defaultRelationTypes.child }: GraphRelationProps,
+  ) {
     this.id = id;
     this.from = from;
     this.to = to;
-    this.type = type;
+    this.relationType = type;
     this.store = store;
     makeAutoObservable(this);
   }
 
-  setType(type: GraphRelationType) {
-    this.type = type;
+  get text(): string {
+    return `(${this.from.id}) -[${this.id}: ${this.relationType.label}]-> (${this.to.id})`;
   }
 
-  setFrom(node: GraphNode) {
+  get children(): GraphObject[] {
+    return this.relations
+      .filter((r) => r.relationType.id === this.store.relationTypesById.child.id && r.from === this)
+      .map((r) => r.to);
+  }
+
+  get isRoot(): boolean {
+    return this.store.isRoot(this);
+  }
+
+  setType(type: GraphRelationType) {
+    this.relationType = type;
+  }
+
+  setFrom(node: GraphObject) {
     this.from = node;
   }
 
-  setTo(node: GraphNode) {
+  setTo(node: GraphObject) {
     this.to = node;
   }
 
@@ -54,12 +73,56 @@ export class GraphRelation implements Serializable {
     this.store.updateRelationsType(this, newType);
   }
 
+  get allRelationsList() {
+    const list = this.store.relationsByNodeId.get(this.id);
+    if (!list) throw new Error("Missing allRelationsList");
+    return list;
+  }
+
+  get pinnedRelationsList() {
+    const list = this.store.pinnedRelationsByNodeId.get(this.id);
+    if (!list) throw new Error("Missing pinnedRelationsList");
+    return list;
+  }
+
+  get relationsWithPositions(): PositionedRelation[] {
+    const list = this.store.relationsByNodeId.get(this.id);
+    if (!list) return [];
+    return list.values().map(({ position, item }) => ({ position, relation: item }));
+  }
+
+  get relations(): GraphRelation[] {
+    return this.relationsWithPositions.map(({ relation }) => relation);
+  }
+
+  get relationsSortedByPosition(): GraphRelation[] {
+    return this.relationsWithPositions
+      .sort((a, b) => comparePositions(a.position, b.position))
+      .map(({ relation }) => relation);
+  }
+
+  pinChildRelation(childRelation: GraphRelation) {
+    if (!this.allRelationsList.get(childRelation.id)) {
+      console.error("Can't pin relation that doesn't involve this node");
+      return;
+    }
+    this.pinnedRelationsList.add(childRelation);
+  }
+
+  unpinChildRelation(childRelation: GraphRelation) {
+    this.pinnedRelationsList.delete(childRelation.id);
+  }
+
+  isRelationPinned(childRelation: GraphRelation) {
+    return this.pinnedRelationsList.has(childRelation.id);
+  }
+
   serialize() {
     return {
       id: this.id,
       fromId: this.from.id,
       toId: this.to.id,
-      type: this.type,
+      relationType: this.relationType,
     };
   }
 
@@ -72,7 +135,7 @@ export class GraphRelation implements Serializable {
       id: data.id,
       from: nodesById.get(data.fromId)!,
       to: nodesById.get(data.toId)!,
-      type: data.type,
+      relationType: data.relationType,
     });
   }
 }

@@ -12,7 +12,8 @@ import {
 } from "lexical";
 import { action } from "mobx";
 import { useEffect } from "react";
-import { useRelationAtPath } from "../components/RelatedNode/RelatedNodeContext";
+import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
+import { GraphNode } from "../model/GraphNode";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
 import { relationsToPathStr } from "../util";
@@ -21,8 +22,19 @@ export const KeyboardOverridesPlugin = () => {
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
-  const { node, pathToParentRelations, relation, pathToParentNodes, siblingAbove, siblingBelow, parent, setReplacing } =
-    useRelationAtPath();
+  const {
+    object,
+    pathToParentRelations,
+    relation,
+    pathToParentWithOrderedObjects: pathToParentNodes,
+    siblingAbove,
+    siblingBelow,
+    parent,
+    setReplacing,
+  } = useRelationAtPath();
+  if (!(object instanceof GraphNode)) {
+    throw new Error("Expected object to be a GraphNode");
+  }
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
@@ -32,7 +44,7 @@ export const KeyboardOverridesPlugin = () => {
           event.preventDefault();
           const selection = $getSelection();
           if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
-          const { relation: newRelation } = graphStore.splitRelatedNode(relation, node, selection);
+          const { relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection);
           viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
           return true;
         }),
@@ -42,7 +54,7 @@ export const KeyboardOverridesPlugin = () => {
         KEY_DOWN_COMMAND,
         (event) => {
           const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
-          if (event.key === "@" && node.text === "") {
+          if (event.key === "@" && object.text === "") {
             // When user types "@" at the beginning of a bullet, we set it to
             // replacing mode, where you can select a different node for the
             // bullet to represent.
@@ -53,12 +65,12 @@ export const KeyboardOverridesPlugin = () => {
             if (!siblingAbove) return false;
             // TODO: is this sketchy?
             event.preventDefault();
-            parent.allRelationsList.move([siblingAbove], relation);
+            graphStore.getRelationList(parent).move([siblingAbove], relation);
             return true;
           } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowDown") {
             if (!siblingBelow) return false;
             event.preventDefault();
-            parent.allRelationsList.move([relation], siblingBelow);
+            graphStore.getRelationList(parent).move([relation], siblingBelow);
             return true;
           }
           return false;
@@ -71,7 +83,7 @@ export const KeyboardOverridesPlugin = () => {
           if (!graphStore) return false;
           event.preventDefault();
           if (event.shiftKey) {
-            const grandparentNode = pathToParentNodes[pathToParentNodes.length - 2];
+            const grandparentNode = pathToParentNodes[pathToParentNodes.length - 1].parent;
             const parentRelation = pathToParentRelations[pathToParentRelations.length - 1];
             if (!grandparentNode) {
               console.log("Can't shift tab because no grandparent to move to");
@@ -92,7 +104,7 @@ export const KeyboardOverridesPlugin = () => {
               graphStore.updateRelationTo(relation, grandparentNode);
             }
             // Position the relation under the parent
-            grandparentNode.allRelationsList.move([relation], parentRelation);
+            graphStore.getRelationList(grandparentNode).move([relation], parentRelation);
             viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), relation]));
             return true;
           } else {
@@ -108,7 +120,7 @@ export const KeyboardOverridesPlugin = () => {
               graphStore.updateRelationTo(relation, siblingAboveNode);
             }
             // Position the relation at the bottom of the siblings list
-            siblingAboveNode.allRelationsList.move([relation], "bottom");
+            graphStore.getRelationList(siblingAboveNode).move([relation], "bottom");
             // toggle open sibling
             const relationPathToSibling = [...pathToParentRelations, siblingAbove];
             graphStore.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
@@ -124,7 +136,7 @@ export const KeyboardOverridesPlugin = () => {
         (event) => {
           if (!graphStore) return false;
           event.preventDefault();
-          if (node.text === "") {
+          if (object.text === "") {
             const parentRelation = pathToParentRelations[pathToParentRelations.length - 1];
             if (parentRelation) {
               graphStore.deleteRelation(relation);
@@ -169,7 +181,7 @@ export const KeyboardOverridesPlugin = () => {
     pathToParentNodes,
     siblingAbove,
     siblingBelow,
-    node,
+    object,
     parent,
   ]);
   return null;

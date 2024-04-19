@@ -1,18 +1,19 @@
-import { GraphNode } from "@/app/model/GraphNode";
+import { GraphObject } from "@/app/model/GraphObject";
 import { GraphRelation } from "@/app/model/GraphRelation";
+import { PathLink } from "@/app/util";
 import { createContext, useContext } from "react";
 
 export type RelationPathAndSiblings = {
   /** Ordered list of relations from the root to this relation's parent */
   pathToParentRelations: GraphRelation[];
   /** Ordered list of nodes from the root to this relation's parent */
-  pathToParentNodes: GraphNode[];
+  pathToParentWithOrderedObjects: PathLink[];
   /** Path to this node as a string */
   pathToNodeStr: string;
   /** The node at the end of this path */
-  node: GraphNode;
+  object: GraphObject;
   /** Parent node of this in path */
-  parent: GraphNode;
+  parent: GraphObject;
   /** The relation connecting the parent to this node */
   relation: GraphRelation;
   /** Sibling relation above this one */

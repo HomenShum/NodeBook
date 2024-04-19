@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { GraphRelationType } from "../../model/GraphRelation";
 import { useGraphStore } from "../../store/useGraphStore";
-import { useRelationAtPath } from "./RelatedNodeContext";
+import { useRelationAtPath } from "./RelatedObjectContext";
 
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
   `${relationType.id}-${isForward ? "forward" : "reverse"}`;
@@ -19,12 +19,12 @@ export const RelationCombobox = observer(
   ({ setUpdatingRelationType }: { setUpdatingRelationType: (updating: boolean) => void }) => {
     const graphStore = useGraphStore();
 
-    const { node, parent, relation } = useRelationAtPath();
-    const isForward = relation.to.id === node.id;
+    const { object, parent, relation } = useRelationAtPath();
+    const isForward = relation.to.id === object.id;
 
     const [isOpen, setIsOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
-    const [selected, setSelected] = React.useState(`${relation.type.id}-${isForward ? "forward" : "reverse"}`);
+    const [selected, setSelected] = React.useState(`${relation.relationType.id}-${isForward ? "forward" : "reverse"}`);
     const open = () => {
       setIsOpen(true);
     };
@@ -40,7 +40,7 @@ export const RelationCombobox = observer(
           key: `${relationType.id}-forward`,
           label: relationType.label,
           onSelect: () => {
-            if (relationType.id === relation.type.id) {
+            if (relationType.id === relation.relationType.id) {
               if (isForward) {
                 return; // already selected
               } else {
@@ -58,7 +58,7 @@ export const RelationCombobox = observer(
           key: `${relationType.id}-reverse`,
           label: relationType.reverseLabel,
           onSelect: () => {
-            if (relationType.id === relation?.type.id) {
+            if (relationType.id === relation?.relationType.id) {
               if (isForward) {
                 graphStore.reverseRelation(relation!);
               } else {
@@ -90,8 +90,8 @@ export const RelationCombobox = observer(
       });
     }
 
-    const label = isForward ? relation.type.label : relation.type.reverseLabel;
-    const isParent = relation.type.id === defaultRelationTypes.child.id && isForward;
+    const label = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
+    const isParent = relation.relationType.id === defaultRelationTypes.child.id && isForward;
 
     return (
       <Popover
@@ -156,7 +156,7 @@ export const RelationCombobox = observer(
                 <Check
                   className={cn(
                     "mr-2 h-4 w-4",
-                    relToKey(relation.type, isForward) === key ? "opacity-100" : "opacity-0",
+                    relToKey(relation.relationType, isForward) === key ? "opacity-100" : "opacity-0",
                   )}
                 />
                 <div>{label}</div>

@@ -8,8 +8,9 @@ import {
 import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
-import { useRelationAtPath } from "../components/RelatedNode/RelatedNodeContext";
+import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
 import { GraphNode } from "../model/GraphNode";
+import { GraphObject } from "../model/GraphObject";
 import { $createMentionNode } from "../model/MentionNode";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
@@ -30,7 +31,7 @@ class MentionTypeaheadOption extends MenuOption {
 }
 
 export function MentionPlugin(): JSX.Element | null {
-  const { node } = useRelationAtPath();
+  const { object: node } = useRelationAtPath();
   const [queryString, setQueryString] = useState<string | null>(null);
 
   const [editor] = useLexicalComposerContext();
@@ -46,7 +47,7 @@ export function MentionPlugin(): JSX.Element | null {
         if (
           !node.relations.some(
             (relation) =>
-              relation.type == graphStore.relationTypesById.child &&
+              relation.relationType == graphStore.relationTypesById.child &&
               relation.from == selectedOption.graphNode &&
               relation.to == node,
           )
@@ -54,7 +55,7 @@ export function MentionPlugin(): JSX.Element | null {
           graphStore.createRelation({
             from: selectedOption.graphNode,
             to: node,
-            type: graphStore.relationTypesById.child,
+            relationType: graphStore.relationTypesById.child,
           });
         }
         mentionNode.select();
@@ -236,13 +237,16 @@ function MentionsTypeaheadMenuItem({
  *
  * If we find a cycle, hit the root, or hit a limit, we return the current path.
  */
-function getTopMostParentPath(node: GraphNode): { key: string; text: string }[] {
-  const path: GraphNode[] = [];
-  let current: GraphNode | undefined = node;
+function getTopMostParentPath(
+  node: GraphObject,
+  { limit = 10 }: { limit?: number } = {},
+): { key: string; text: string }[] {
+  const path: GraphObject[] = [];
+  let current: GraphObject | undefined = node;
 
-  for (let i = 0; i < 10 && current; i++) {
-    const parent: GraphNode | undefined = current.relationsSortedByPosition.find(
-      (r) => r.type.id === "child" && r.to === current,
+  for (let i = 0; i < limit && current; i++) {
+    const parent: GraphObject | undefined = current.relationsSortedByPosition.find(
+      (r) => r.relationType.id === "child" && r.to === current,
     )?.from;
     if (!parent || path.some((p) => p.id === parent.id)) {
       return path.map((p) => ({ key: p.id, text: p.text }));

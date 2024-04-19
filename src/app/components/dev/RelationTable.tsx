@@ -1,9 +1,9 @@
+import { GraphObject } from "@/app/model/GraphObject";
 import { useGraphStore } from "@/app/store/useGraphStore";
 import { observer } from "mobx-react-lite";
-import { GraphNode } from "../../model/GraphNode";
 
-const nodeToString = (node: GraphNode) => {
-  return `"${node.text}" (${node.id.slice(0, 8)})`;
+const objectToString = (obj: GraphObject) => {
+  return `"${obj.text}" (${obj.id.slice(0, 8)})`;
 };
 
 export const RelationTable = observer(() => {
@@ -26,9 +26,9 @@ export const RelationTable = observer(() => {
           {relations.map((relation) => (
             <tr key={relation.id}>
               <td>{relation.id}</td>
-              <td>{nodeToString(relation.from)}</td>
-              <td>{nodeToString(relation.to)}</td>
-              <td>{relation.type.label}</td>
+              <td>{objectToString(relation.from)}</td>
+              <td>{objectToString(relation.to)}</td>
+              <td>{relation.relationType.label}</td>
               <td>
                 <button onClick={() => relation.delete()}>x</button>
               </td>

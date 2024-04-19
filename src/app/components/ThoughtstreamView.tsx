@@ -5,7 +5,7 @@ import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
 import { relationsToPathStr } from "../util";
-import { RelatedNodeChildren } from "./RelatedNode/RelatedNodeChildren";
+import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
 export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: string }) => {
   const viewStore = useViewStore();
@@ -21,12 +21,12 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
   );
 
   const createChild = useCallback(() => {
-    const { node, relation } = thoughstreamNode.createChild();
+    const { node, relation } = graphStore.createChildNode(thoughstreamNode);
     // const { bullet: bundle } = root.createChild();
     // graphStore.createRelation({ from: bundle.graphNode, to: bullet.graphNode });
     // bundle.setType("bundle");
     viewStore.setFocusedNode(relationsToPathStr([...pathToThoughtstream, relation]));
-  }, [thoughstreamNode, pathToThoughtstream, viewStore]);
+  }, [graphStore, thoughstreamNode, pathToThoughtstream, viewStore]);
 
   return (
     <div
@@ -50,7 +50,7 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
         </div>
       </div>
       <div className="flex-1">
-        <RelatedNodeChildren pathToParentRelations={pathToThoughtstream} searchResult={searchResult} />
+        <RelatedObjectChildren pathToParentRelations={pathToThoughtstream} searchResult={searchResult} />
       </div>
     </div>
   );

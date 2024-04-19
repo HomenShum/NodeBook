@@ -1,11 +1,12 @@
-import { relationsToNodes, relationsToPathStr } from "@/app/util";
+import { GraphObject } from "@/app/model/GraphObject";
+import { relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { observer } from "mobx-react-lite";
 import { GraphRelation } from "../../model/GraphRelation";
 import { useViewStore } from "../../store/useViewStore";
 import { comparePositions } from "../../util";
-import { RelatedNodeView, filterFocusedNodesRelations } from "./RelatedNodeView";
+import { RelatedObjectView, filterFocusedNodesRelations } from "./RelatedObjectView";
 
-export const RelatedNodeChildren = observer(
+export const RelatedObjectChildren = observer(
   ({
     pathToParentRelations,
     searchResult,
@@ -16,14 +17,21 @@ export const RelatedNodeChildren = observer(
     const viewStore = useViewStore();
     const depth = pathToParentRelations.length;
 
-    const nodes = relationsToNodes(pathToParentRelations);
-
-    const grandparent = nodes[nodes.length - 2];
-    const parent = nodes[nodes.length - 1];
+    const pathToParent = relationsPathToParentChild(pathToParentRelations);
+    const lastLinkToParent = pathToParent[pathToParent.length - 1];
+    const grandparent = lastLinkToParent.parent;
+    const parent = lastLinkToParent.child;
     const children = parent.relationsWithPositions
       .sort((a, b) => comparePositions(a.position, b.position))
       .filter(({ relation }) => {
-        const childNode = relation.from.id === parent.id ? relation.to : relation.from;
+        let childNode: GraphObject;
+        if (relation.from.id === parent.id) {
+          childNode = relation.to;
+        } else if (relation.to.id === parent.id) {
+          childNode = relation.from;
+        } else {
+          throw new Error("Relation does not connect to parent");
+        }
         return (
           filterFocusedNodesRelations(viewStore, relation, childNode, grandparent) &&
           (!searchResult || searchResult.get(childNode.id))
@@ -40,10 +48,9 @@ export const RelatedNodeChildren = observer(
         )} */}
         {children.map(({ relation: childRelation }, i) => {
           return (
-            <RelatedNodeView
+            <RelatedObjectView
               key={relationsToPathStr([...pathToParentRelations, childRelation])}
-              pathToParentRelations={pathToParentRelations}
-              relation={childRelation}
+              path={[...pathToParentRelations, childRelation]}
               siblingAbove={children[i - 1]?.relation}
               siblingBelow={children[i + 1]?.relation}
               searchResult={searchResult}

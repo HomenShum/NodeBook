@@ -3,8 +3,8 @@ import { useCallback, useMemo } from "react";
 import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
 import { useViewStore } from "../store/useViewStore";
-import { relationsToNodes, relationsToPathStr } from "../util";
-import { RelatedNodeChildren } from "./RelatedNode/RelatedNodeChildren";
+import { relationsPathToParentChild, relationsToPathStr } from "../util";
+import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
 export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) => {
   const viewStore = useViewStore();
@@ -15,9 +15,9 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
     return <div>Root path is null</div>;
   }
 
-  const nodes = relationsToNodes(relations);
-  const relation = relations[relations.length - 1];
-  const root = nodes[nodes.length - 1];
+  const path = relationsPathToParentChild(relations);
+
+  const root = path[path.length - 1].child;
   const searchResult = useMemo(() => (searchQuery ? searchGraph(root, searchQuery) : undefined), [root, searchQuery]);
 
   if (!root) {
@@ -41,19 +41,16 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
     >
       <div className="ml-2">
         <div>
-          {nodes.slice(0, relations.length).map((node, i) => {
-            if (i === 0) return null;
-            // TODO
-            const relation = relations[i];
+          {path.slice(0, path.length - 1).map(({ relation, child }, i) => {
             return (
               <span
                 key={relation.id}
                 style={{ cursor: "pointer", userSelect: "none" }}
                 onClick={() => {
-                  viewStore.setCurrentOutlineViewRoot(relations.slice(0, i));
+                  viewStore.setCurrentOutlineViewRoot(relations.slice(0, i + 1));
                 }}
               >
-                {node.text} /{" "}
+                {child.text} /{" "}
               </span>
             );
           })}
@@ -69,7 +66,7 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
         </div>
       </div>
       {/* <BulletChildren bullet={root} depth={0} parents={[...ancestors, root]} /> */}
-      <RelatedNodeChildren pathToParentRelations={relations} searchResult={searchResult} />
+      <RelatedObjectChildren pathToParentRelations={relations} searchResult={searchResult} />
     </div>
   );
 });
