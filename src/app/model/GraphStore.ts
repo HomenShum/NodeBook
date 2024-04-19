@@ -41,6 +41,9 @@ export class GraphStore {
   relationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
   pinnedRelationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
 
+  correspondingObjectsForPinned: Map<string, GraphRelation> = new Map();
+  correspondingPinnedForObjects: Map<string, GraphRelation> = new Map();
+
   pathData: Map<Path, PathData> = new Map();
 
   // Default nodes and relations
@@ -207,6 +210,44 @@ export class GraphStore {
     return relation;
   }
 
+  createPinnedVersionOfRelation(relation: GraphRelation): GraphRelation {
+    const pinnedRelation = new GraphRelation(this, {
+      from: relation.from,
+      to: relation.to,
+      relationType: relation.relationType,
+    });
+    this.correspondingObjectsForPinned.set(pinnedRelation.id, relation);
+    this.correspondingPinnedForObjects.set(relation.id, pinnedRelation);
+    this.relationsById.set(pinnedRelation.id, pinnedRelation);
+
+    const newList = new FractionalPositionedList<GraphRelation>();
+    this.pinnedRelationsByNodeId.set(pinnedRelation.id, newList);
+
+    this.getPinnedRelationList(relation.from).add(pinnedRelation);
+    this.getPinnedRelationList(relation.to).add(pinnedRelation);
+
+    return relation;
+  }
+
+  deletePinnedVersionOfRelation(relation: GraphRelation) {
+    let pinnedRelation: GraphRelation;
+    if (this.correspondingObjectsForPinned.has(relation.id)) {
+      pinnedRelation = relation;
+      const correspondingRelation = this.correspondingObjectsForPinned.get(relation.id)!;
+      this.correspondingObjectsForPinned.delete(relation.id);
+      this.correspondingPinnedForObjects.delete(correspondingRelation.id);
+    } else {
+      pinnedRelation = this.correspondingPinnedForObjects.get(relation.id)!;
+      this.correspondingPinnedForObjects.delete(relation.id);
+      this.correspondingObjectsForPinned.delete(pinnedRelation.id);
+    }
+
+    this.pinnedRelationsByNodeId.delete(pinnedRelation.id);
+    this.getPinnedRelationList(pinnedRelation.from).delete(pinnedRelation.id);
+    this.getPinnedRelationList(pinnedRelation.to).delete(pinnedRelation.id);
+    this.relationsById.delete(pinnedRelation.id);
+  }
+
   // TODO: this is creating an observable, which might cause issues
   getRelationList(node: GraphObject): FractionalPositionedList<GraphRelation> {
     const list = this.relationsByNodeId.get(node.id);
@@ -228,6 +269,18 @@ export class GraphStore {
     this.getRelationList(toNode).delete(relation.id);
     this.getPinnedRelationList(fromNode).delete(relation.id);
     this.getPinnedRelationList(toNode).delete(relation.id);
+
+    if (this.correspondingObjectsForPinned.has(relation.id)) {
+      const correspondingRelation = this.correspondingObjectsForPinned.get(relation.id)!;
+      this.correspondingObjectsForPinned.delete(relation.id);
+      this.correspondingPinnedForObjects.delete(correspondingRelation.id);
+      this.deleteRelation(correspondingRelation);
+    } else if (this.correspondingPinnedForObjects.has(relation.id)) {
+      const correspondingRelation = this.correspondingPinnedForObjects.get(relation.id)!;
+      this.correspondingPinnedForObjects.delete(relation.id);
+      this.correspondingObjectsForPinned.delete(correspondingRelation.id);
+      this.deleteRelation(correspondingRelation);
+    }
 
     // Delete the relation itself
     this.relationsById.delete(relation.id);
@@ -459,6 +512,8 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationsByNodeId = serializeMap(this.relationsByNodeId);
     const pinnedRelationsByNodeId = serializeMap(this.pinnedRelationsByNodeId);
+    const correspondingObjectsForPinned = serializeMap(this.correspondingObjectsForPinned);
+    const correspondingPinnedForObjects = serializeMap(this.correspondingPinnedForObjects);
 
     return {
       nodesById,
@@ -467,6 +522,8 @@ export class GraphStore {
       relationsByNodeId,
       pinnedRelationsByNodeId,
       pathData: Object.fromEntries(this.pathData.entries()),
+      correspondingObjectsForPinned,
+      correspondingPinnedForObjects,
     };
   }
 
@@ -501,6 +558,16 @@ export class GraphStore {
       );
     }
 
+    const correspondingObjectsForPinned = new Map<string, GraphRelation>();
+    for (const [key, value] of Object.entries(data.correspondingObjectsForPinned)) {
+      correspondingObjectsForPinned.set(key, GraphRelation.deserialize(value, this, nodesById));
+    }
+
+    const correspondingPinnedForObjects = new Map<string, GraphRelation>();
+    for (const [key, value] of Object.entries(data.correspondingPinnedForObjects)) {
+      correspondingPinnedForObjects.set(key, GraphRelation.deserialize(value, this, nodesById));
+    }
+
     const pathData = new Map<Path, PathData>();
     for (const [key, value] of Object.entries(data.pathData)) {
       pathData.set(key, value);
@@ -512,5 +579,7 @@ export class GraphStore {
     this.relationsByNodeId = relationsByNodeId;
     this.pinnedRelationsByNodeId = pinnedRelationsByNodeId;
     this.pathData = pathData;
+    this.correspondingObjectsForPinned = correspondingObjectsForPinned;
+    this.correspondingPinnedForObjects = correspondingPinnedForObjects;
   }
 }
