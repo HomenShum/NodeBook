@@ -57,6 +57,7 @@ export const RelatedObjectView = observer(
     const isSelected = false;
     const relation = path[path.length - 1];
     const isChild = relation.relationType.id === defaultRelationTypes.child.id && relation.to.id === object.id;
+    const displayChildren = isExpanded || !!searchResult;
 
     return (
       <>
@@ -86,7 +87,7 @@ export const RelatedObjectView = observer(
                 {hasChildren && isHovered && <Toggle />}
               </div>
               <div className="w-6 relative h-4">
-                {hasChildren && !isExpanded && (
+                {hasChildren && !displayChildren && (
                   <Dot stroke="#ddd" height={16} strokeWidth={17} className={cn("cursor-pointer absolute top-0")} />
                 )}
                 <Dot
@@ -109,7 +110,7 @@ export const RelatedObjectView = observer(
               </div>
             </div>
           </RelationAtPathProvider>
-          {isExpanded && (
+          {displayChildren && (
             <RelatedObjectChildren
               pathToParentRelations={[...pathToParentRelations, relation]}
               searchResult={searchResult}
