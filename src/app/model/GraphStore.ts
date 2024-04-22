@@ -224,7 +224,6 @@ export class GraphStore {
     this.pinnedRelationsByNodeId.set(pinnedRelation.id, newList);
 
     this.getPinnedRelationList(relation.from).add(pinnedRelation);
-    this.getPinnedRelationList(relation.to).add(pinnedRelation);
 
     return relation;
   }
@@ -244,7 +243,6 @@ export class GraphStore {
 
     this.pinnedRelationsByNodeId.delete(pinnedRelation.id);
     this.getPinnedRelationList(pinnedRelation.from).delete(pinnedRelation.id);
-    this.getPinnedRelationList(pinnedRelation.to).delete(pinnedRelation.id);
     this.relationsById.delete(pinnedRelation.id);
   }
 
