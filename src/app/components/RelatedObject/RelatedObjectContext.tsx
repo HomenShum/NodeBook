@@ -1,6 +1,6 @@
 import { GraphObject } from "@/app/model/GraphObject";
 import { GraphRelation } from "@/app/model/GraphRelation";
-import { PathLink } from "@/app/util";
+import { PathLink, Position } from "@/app/util";
 import { createContext, useContext } from "react";
 
 export type RelationPathAndSiblings = {
@@ -21,6 +21,7 @@ export type RelationPathAndSiblings = {
   /** Sibling relation below this one */
   siblingBelow?: GraphRelation;
   setReplacing: (v: boolean) => void;
+  position: Position;
 };
 
 const RelationAtPathContext = createContext<RelationPathAndSiblings | null>(null);

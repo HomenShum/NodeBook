@@ -41,6 +41,9 @@ export class GraphStore {
   relationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
   pinnedRelationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
 
+  /** Relation id to list of bundle-nodes that contain it */
+  relationToBundles: Map<string, GraphNode[]> = new Map();
+
   pathData: Map<Path, PathData> = new Map();
 
   // Default nodes and relations
@@ -80,6 +83,34 @@ export class GraphStore {
       to: this.thoughtstreamRoot,
       relationType: this.relationTypesById.child,
     });
+  }
+
+  addToBundle(relation: GraphRelation, bundle: GraphNode) {
+    if (!bundle.isBundle) {
+      throw new Error("Node must be a bundle");
+    }
+    const relationToBundle = this.createRelation({ from: bundle, to: relation });
+    const bundles = this.relationToBundles.get(relation.id) || [];
+    this.relationToBundles.set(relation.id, [...bundles, bundle]);
+    return relationToBundle;
+  }
+
+  removeFromBundle(relation: GraphRelation, bundle: GraphNode) {
+    if (!bundle.isBundle) {
+      throw new Error("Node must be a bundle");
+    }
+    // Delete relation from bundle to relation
+    const relationFromRelationToBundle = this.getRelationList(bundle)
+      .values()
+      .map((v) => v.item)
+      .find((r) => r.to.id === relation.id);
+    if (relationFromRelationToBundle) {
+      this.deleteRelation(relationFromRelationToBundle);
+    }
+    // Update relation to bundles map
+    const bundles = this.relationToBundles.get(relation.id) || [];
+    const newBundles = bundles.filter((b) => b.id !== bundle.id);
+    this.relationToBundles.set(relation.id, newBundles);
   }
 
   isRoot(obj: GraphObject) {
@@ -160,6 +191,31 @@ export class GraphStore {
       relationType: defaultRelationTypes.child,
     });
     return { node, relation };
+  }
+
+  /**
+   * Create a new node, with child relation to thoughtstream, and a new bundle
+   * which contains it.
+   */
+  createThoughtstreamChild(props: GraphNodeProps = {}) {
+    const node = this.createNode(props);
+    return { node, ...this.addToThoughtstream(node) };
+  }
+
+  /**
+   * Add a node to the thoughtstream, with a new bundle containing it.
+   */
+  addToThoughtstream(obj: GraphObject) {
+    // add to thoughtstream
+    const relationToThoughtstream = this.createRelation({
+      from: this.thoughtstreamRoot,
+      to: obj,
+    });
+    // within a new bundle
+    const bundle = this.createChildNode(this.thoughtstreamRoot).node;
+    bundle.setIsBundle(true);
+    const relationToBundle = this.addToBundle(relationToThoughtstream, bundle);
+    return { bundle, relationToThoughtstream, relationToBundle };
   }
 
   insertNode(node: GraphNode): GraphNode {
@@ -374,12 +430,13 @@ export class GraphStore {
     const start = points[0].offset;
     const end = points[1].offset;
 
+    let child: { node: GraphNode; relation: GraphRelation };
     if (start === 0 && end === 0) {
       // Insert a new blank node just above the current node
       // (we do this by getting the sibling above and moving the new node after it,
       // because FractionalPositionedList.move can only place nodes after another node.
       // TODO: add a moveBefore method or something to FractionalPositionedList)
-      const child = this.createChildNode(parent);
+      child = this.createChildNode(parent);
       const relationsList = this.getRelationList(parent);
       const relations = Array.from(relationsList.values())
         .sort((a, b) => comparePositions(a.position, b.position))
@@ -387,7 +444,6 @@ export class GraphStore {
       const relationIndex = relations.findIndex((r) => r.id === relation.id);
       const siblingAbove = relations[relationIndex - 1];
       if (siblingAbove) relationsList.move([child.relation], siblingAbove);
-      return child;
     } else {
       const selectionNodes = selection.getNodes();
       const firstNode = selectionNodes[0];
@@ -440,11 +496,20 @@ export class GraphStore {
       });
       nodeToSplit.setContent(chipsBefore);
       // Create a new related node below the current one with the text after the cursor
-      const { node: newNode, relation: newRelation } = this.createChildNode(parent, { content: chipsAfter });
+      child = this.createChildNode(parent, { content: chipsAfter });
       const relationsList = this.getRelationList(parent);
-      relationsList.move([newRelation], relation);
-      return { node: newNode, relation: newRelation };
+      relationsList.move([child.relation], relation);
     }
+
+    // Add new node to the same bundles as the original
+    const bundles = this.relationToBundles.get(relation.id);
+    bundles?.forEach((bundle) => {
+      this.createRelation({ from: bundle, to: child.relation });
+      const existingBundles = this.relationToBundles.get(child.relation.id) || [];
+      this.relationToBundles.set(child.relation.id, [...existingBundles, bundle]);
+    });
+
+    return child;
   }
 
   moveRelationAfterSibling(node: GraphNode, relation: GraphRelation, sibling: GraphRelation) {

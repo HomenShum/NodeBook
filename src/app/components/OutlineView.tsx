@@ -25,8 +25,11 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
   }
 
   const createChild = useCallback(() => {
-    const { relation } = graphStore.createChildNode(root);
+    const { node, relation } = graphStore.createChildNode(root);
     viewStore.setFocusedNode(relationsToPathStr([...relations, relation]));
+    if (graphStore.addAllOutlineDescendantsToThoughtstream) {
+      graphStore.addToThoughtstream(node);
+    }
   }, [root, graphStore, viewStore, relations]);
 
   return (

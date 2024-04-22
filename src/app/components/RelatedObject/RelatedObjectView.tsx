@@ -15,22 +15,24 @@ import { GraphObject } from "@/app/model/GraphObject";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { ViewStore } from "@/app/model/ViewStore";
-import { relationsPathToParentChild, relationsToPathStr } from "@/app/util";
+import { Position, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { action } from "mobx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RelatedObjectChildren } from "./RelatedObjectChildren";
+import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
 import { RelationCombobox } from "./RelationCombobox";
 
 export const RelatedObjectView = observer(
   ({
     path,
+    position,
     siblingAbove,
     siblingBelow,
     searchResult,
   }: {
     path: GraphRelation[];
+    position: Position;
     siblingAbove?: GraphRelation;
     siblingBelow?: GraphRelation;
     searchResult?: Map<string, boolean>;
@@ -50,14 +52,7 @@ export const RelatedObjectView = observer(
 
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
-    const childRelations = graphStore
-      .getRelationList(object)
-      .values()
-      .filter(({ item: relationWithChild }) => {
-        const childNode = relationWithChild.from.id === object.id ? relationWithChild.to : relationWithChild.from;
-        return filterFocusedNodesRelations(viewStore, relationWithChild, childNode, parent);
-      });
-    const hasChildren = childRelations.length > 0;
+    const hasChildren = getFilteredChildrenAtPath(pathObjects, viewStore, searchResult).length > 0;
 
     // const isSelected = viewStore.selectedNodes.has(bullet);
     const isSelected = false;
@@ -74,6 +69,7 @@ export const RelatedObjectView = observer(
               pathToNodeStr,
               object,
               parent,
+              position,
               relation,
               siblingAbove,
               siblingBelow,
@@ -156,6 +152,13 @@ const RelatedObjectMenu = observer(
           ) : (
             <DropdownMenuItem onSelect={() => parent.pinChildRelation(relation)}>Pin</DropdownMenuItem>
           )}
+          {/* make bundle */}
+          {object instanceof GraphNode &&
+            (object.isBundle ? (
+              <DropdownMenuItem onSelect={() => object.setIsBundle(false)}>Unbundle</DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onSelect={() => object.setIsBundle(true)}>Bundle</DropdownMenuItem>
+            ))}
           <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>Change relation type</DropdownMenuItem>
           <DropdownMenuItem
             onSelect={action(() => {
@@ -200,8 +203,8 @@ const RelatedObjectEditor = observer(() => {
 
 const RelatedObjectDetails = observer(() => {
   const graphStore = useGraphStore();
-  const { object, relation, parent } = useRelationAtPath();
-  const position = graphStore.relationsByNodeId.get(parent.id)?.get(object.id)?.position;
+  const { object, relation, position } = useRelationAtPath();
+  const bundles = graphStore.relationToBundles.get(relation.id);
   return (
     <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
       {position && (
@@ -209,9 +212,11 @@ const RelatedObjectDetails = observer(() => {
           position: {position.int}-{position.frac}
         </span>
       )}
-      <span style={{ color: "gray" }}>nodeId: {object.id}</span>
+      <span style={{ color: "gray" }}>id: {object.id}</span>
       <span style={{ color: "gray" }}>relationId: {relation.id}</span>
       <span style={{ color: "gray" }}>createdAt: {object.createdAt.toISOString()}</span>
+      {object instanceof GraphNode && object.isBundle && <span style={{ color: "gray" }}>BUNDLE</span>}
+      {bundles && <span style={{ color: "gray" }}>part of bundle: {bundles.map((b) => b.id).join(", ")}</span>}
     </div>
   );
 });
