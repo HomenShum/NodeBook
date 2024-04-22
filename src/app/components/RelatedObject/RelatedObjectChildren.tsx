@@ -1,11 +1,12 @@
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
+import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { ViewStore } from "@/app/model/ViewStore";
 import { PathLink, comparePositions, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { observer } from "mobx-react-lite";
 import { GraphRelation } from "../../model/GraphRelation";
 import { useViewStore } from "../../store/useViewStore";
-import { RelatedObjectView, filterFocusedNodesRelations } from "./RelatedObjectView";
+import { RelatedObjectView } from "./RelatedObjectView";
 
 export const RelatedObjectChildren = observer(
   ({
@@ -82,3 +83,72 @@ export const getFilteredChildrenAtPath = (
       );
     });
 };
+
+/**
+ * TODO: This is still conceptually messy imo
+ *
+ * You've traversed a path from the root to a particular node. That node has a
+ * list of relation it's involved in. Filter those relations according to the
+ * view settings.
+ *
+ * ## Example:
+ *
+ * - Projects                   // pathParentOfFocusedNode
+ *   - Mew                      // focusedNode
+ *     - Features               // relatedNode
+ *     - Bugs                   // relatedNode
+ *     - parent: Projects       // relatedNode
+ *     - parent: Root           // relatedNode
+ *
+ * ### Filter all parents
+ * Filter all relations which are parent/child, where the parent is the related
+ * node
+ *
+ * - Projects
+ *   - Mew
+ *     - Features
+ *     - Bugs
+ *
+ * ### Filter all root parents
+ * Filter all relations which are parent/child, where the parent is the related
+ * node and the parent is a special root node
+ *
+ * - Projects
+ *   - Mew
+ *     - Features
+ *     - Bugs
+ *     - parent: Projects
+ *
+ * ### Filter direct parent
+ * Filter all relations which are parent/child, where the parent is the related
+ * node and the node directly precedes the focused node in the current path
+ *
+ * - Projects
+ *   - Mew
+ *     - Features
+ *     - Bugs
+ *     - parent: Root
+ *
+ */
+function filterFocusedNodesRelations(
+  viewStore: ViewStore,
+  r: GraphRelation,
+  relatedNode: GraphObject,
+  precedingFocusedNodeInPath?: GraphObject,
+) {
+  /** The relation points from the related node to the focused node */
+  const isBackwards = r.from.id === relatedNode.id;
+  if (viewStore.hideBackrelations && isBackwards) {
+    return false;
+  }
+  /** Parent from the perspective of the graph, not the current tree */
+  const isGraphParent = isBackwards && r.relationType.id === defaultRelationTypes.child.id;
+  if (viewStore.hideAllParents && isGraphParent) {
+    return false;
+  } else if (viewStore.hideAllRootParents && isGraphParent && relatedNode.isRoot) {
+    return false;
+  } else if (viewStore.hideDirectParent && relatedNode.id === precedingFocusedNodeInPath?.id) {
+    return false;
+  }
+  return true;
+}
