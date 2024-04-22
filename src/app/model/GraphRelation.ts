@@ -106,11 +106,11 @@ export class GraphRelation implements Serializable, GraphObject {
   }
 
   pinChildRelation(childRelation: GraphRelation) {
-    this.store.createPinnedVersionOfRelation(childRelation);
+    this.store.createPinnedVersionOfRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
   }
 
   unpinChildRelation(childRelation: GraphRelation) {
-    this.store.deletePinnedVersionOfRelation(childRelation);
+    this.store.deletePinnedVersionOfRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
   }
 
   isRelationPinned(childRelation: GraphRelation) {

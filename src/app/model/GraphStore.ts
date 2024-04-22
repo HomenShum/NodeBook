@@ -210,7 +210,7 @@ export class GraphStore {
     return relation;
   }
 
-  createPinnedVersionOfRelation(relation: GraphRelation): GraphRelation {
+  createPinnedVersionOfRelation(relation: GraphRelation, direction: "from" | "to"): GraphRelation {
     const pinnedRelation = new GraphRelation(this, {
       from: relation.from,
       to: relation.to,
@@ -223,12 +223,16 @@ export class GraphStore {
     const newList = new FractionalPositionedList<GraphRelation>();
     this.pinnedRelationsByNodeId.set(pinnedRelation.id, newList);
 
-    this.getPinnedRelationList(relation.from).add(pinnedRelation);
+    if (direction === "from") {
+      this.getPinnedRelationList(relation.from).add(pinnedRelation);
+    } else {
+      this.getPinnedRelationList(relation.to).add(pinnedRelation);
+    }
 
     return relation;
   }
 
-  deletePinnedVersionOfRelation(relation: GraphRelation) {
+  deletePinnedVersionOfRelation(relation: GraphRelation, direction: "from" | "to") {
     let pinnedRelation: GraphRelation;
     if (this.correspondingObjectsForPinned.has(relation.id)) {
       pinnedRelation = relation;
@@ -242,7 +246,11 @@ export class GraphStore {
     }
 
     this.pinnedRelationsByNodeId.delete(pinnedRelation.id);
-    this.getPinnedRelationList(pinnedRelation.from).delete(pinnedRelation.id);
+    if (direction === "from") {
+      this.getPinnedRelationList(relation.from).delete(pinnedRelation.id);
+    } else {
+      this.getPinnedRelationList(relation.to).delete(pinnedRelation.id);
+    }
     this.relationsById.delete(pinnedRelation.id);
   }
 
