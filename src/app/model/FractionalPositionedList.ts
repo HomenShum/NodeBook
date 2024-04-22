@@ -69,7 +69,7 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
   }
 
   delete(id: string) {
-    this.map.delete(id);
+    return this.map.delete(id);
   }
 
   /**

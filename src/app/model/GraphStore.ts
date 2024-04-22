@@ -211,17 +211,20 @@ export class GraphStore {
   }
 
   createPinnedVersionOfRelation(relation: GraphRelation, direction: "from" | "to"): GraphRelation {
-    const pinnedRelation = new GraphRelation(this, {
-      from: relation.from,
-      to: relation.to,
-      relationType: relation.relationType,
-    });
-    this.correspondingObjectsForPinned.set(pinnedRelation.id, relation);
-    this.correspondingPinnedForObjects.set(relation.id, pinnedRelation);
-    this.relationsById.set(pinnedRelation.id, pinnedRelation);
+    let pinnedRelation = this.getCorrespondingRelation(relation);
 
-    const newList = new FractionalPositionedList<GraphRelation>();
-    this.pinnedRelationsByNodeId.set(pinnedRelation.id, newList);
+    if (!pinnedRelation) {
+      pinnedRelation = new GraphRelation(this, {
+        from: relation.from,
+        to: relation.to,
+        relationType: relation.relationType,
+      });
+      this.correspondingObjectsForPinned.set(pinnedRelation.id, relation);
+      this.correspondingPinnedForObjects.set(relation.id, pinnedRelation);
+      this.relationsById.set(pinnedRelation.id, pinnedRelation);
+      const newList = new FractionalPositionedList<GraphRelation>();
+      this.pinnedRelationsByNodeId.set(pinnedRelation.id, newList);
+    }
 
     if (direction === "from") {
       this.getPinnedRelationList(relation.from).add(pinnedRelation);
@@ -232,26 +235,33 @@ export class GraphStore {
     return relation;
   }
 
-  deletePinnedVersionOfRelation(relation: GraphRelation, direction: "from" | "to") {
+  unpinRelation(relation: GraphRelation, direction: "from" | "to") {
+    let baseRelation: GraphRelation;
     let pinnedRelation: GraphRelation;
     if (this.correspondingObjectsForPinned.has(relation.id)) {
+      baseRelation = this.correspondingObjectsForPinned.get(relation.id)!;
       pinnedRelation = relation;
-      const correspondingRelation = this.correspondingObjectsForPinned.get(relation.id)!;
-      this.correspondingObjectsForPinned.delete(relation.id);
-      this.correspondingPinnedForObjects.delete(correspondingRelation.id);
     } else {
+      baseRelation = relation;
       pinnedRelation = this.correspondingPinnedForObjects.get(relation.id)!;
-      this.correspondingPinnedForObjects.delete(relation.id);
-      this.correspondingObjectsForPinned.delete(pinnedRelation.id);
     }
 
-    this.pinnedRelationsByNodeId.delete(pinnedRelation.id);
-    if (direction === "from") {
+    if (this.getPinnedRelationList(relation.from).has(pinnedRelation.id) && direction === "from") {
+      // unpin from the "from" node
       this.getPinnedRelationList(relation.from).delete(pinnedRelation.id);
-    } else {
+    } else if (this.getPinnedRelationList(relation.to).has(pinnedRelation.id) && direction === "to") {
+      // unpin from the "to" node
       this.getPinnedRelationList(relation.to).delete(pinnedRelation.id);
     }
-    this.relationsById.delete(pinnedRelation.id);
+
+    if (
+      !this.getPinnedRelationList(relation.to).has(pinnedRelation.id) &&
+      !this.getPinnedRelationList(relation.from).has(pinnedRelation.id)
+    ) {
+      // delete the pinned relation if it's no longer referenced anywhere
+      this.pinnedRelationsByNodeId.delete(pinnedRelation.id);
+      this.relationsById.delete(pinnedRelation.id);
+    }
   }
 
   // TODO: this is creating an observable, which might cause issues
@@ -265,6 +275,15 @@ export class GraphStore {
 
   getPinnedRelationList(node: GraphObject): FractionalPositionedList<GraphRelation> {
     return this.pinnedRelationsByNodeId.get(node.id)!;
+  }
+
+  getCorrespondingRelation(relation: GraphRelation): GraphRelation | null {
+    if (this.correspondingObjectsForPinned.has(relation.id)) {
+      return this.correspondingObjectsForPinned.get(relation.id)!;
+    } else if (this.correspondingPinnedForObjects.has(relation.id)) {
+      return this.correspondingPinnedForObjects.get(relation.id)!;
+    }
+    return null;
   }
 
   deleteRelation(relation: GraphRelation) {
@@ -303,7 +322,9 @@ export class GraphStore {
     // remove the relations from their old from nodes
     const oldFrom = relation.from;
     this.getRelationList(oldFrom).delete(relation.id);
-    this.getPinnedRelationList(oldFrom).delete(relation.id);
+    if (this.getPinnedRelationList(oldFrom).has(relation.id)) {
+      this.unpinRelation(relation, "from");
+    }
     // update the relations from property
     relation.setFrom(newFrom);
     // add the relations to the new from node
@@ -320,7 +341,9 @@ export class GraphStore {
     // remove the relations from their old to nodes
     const oldTo = relation.to;
     this.getRelationList(oldTo).delete(relation.id);
-    this.getPinnedRelationList(oldTo).delete(relation.id);
+    if (this.getPinnedRelationList(oldTo).has(relation.id)) {
+      this.unpinRelation(relation, "from");
+    }
     // update the relations to property
     relation.setTo(newTo);
     // add the relations to the new to node
@@ -341,11 +364,22 @@ export class GraphStore {
     const { from, to } = relation;
     relation.from = to;
     relation.to = from;
+
+    const correspondingRelation = this.getCorrespondingRelation(relation);
+    if (correspondingRelation) {
+      correspondingRelation.to = from;
+      correspondingRelation.from = to;
+    }
     return relation;
   }
 
   updateRelationsType(relation: GraphRelation, newType: GraphRelationType): GraphRelation {
     relation.relationType = newType;
+    const correspondingRelation = this.getCorrespondingRelation(relation);
+    if (correspondingRelation) {
+      correspondingRelation.relationType = newType;
+    }
+
     return relation;
   }
 
