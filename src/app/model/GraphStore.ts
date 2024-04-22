@@ -342,7 +342,7 @@ export class GraphStore {
     const oldTo = relation.to;
     this.getRelationList(oldTo).delete(relation.id);
     if (this.getPinnedRelationList(oldTo).has(relation.id)) {
-      this.unpinRelation(relation, "from");
+      this.unpinRelation(relation, "to");
     }
     // update the relations to property
     relation.setTo(newTo);
