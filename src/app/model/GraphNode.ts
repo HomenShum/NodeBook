@@ -137,6 +137,7 @@ export class GraphNode implements Serializable, GraphObject {
       id: this.id,
       createdAt: this.createdAt,
       content: this.content,
+      isBundle: this.isBundle,
     };
   }
 
@@ -145,6 +146,7 @@ export class GraphNode implements Serializable, GraphObject {
       id: data.id,
       content: data.content,
       createdAt: new Date(data.createdAt),
+      isBundle: data.isBundle,
     });
   }
 }

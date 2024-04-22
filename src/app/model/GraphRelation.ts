@@ -1,6 +1,6 @@
 import { makeAutoObservable } from "mobx";
 import { comparePositions, uuid } from "../util";
-import { GraphNode, PositionedRelation } from "./GraphNode";
+import { PositionedRelation } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
 import { Serializable } from "./serialization";
@@ -122,20 +122,26 @@ export class GraphRelation implements Serializable, GraphObject {
       id: this.id,
       fromId: this.from.id,
       toId: this.to.id,
-      relationType: this.relationType,
+      relationTypeId: this.relationType.id,
     };
   }
 
   static deserialize(
     data: ReturnType<GraphRelation["serialize"]>,
     store: GraphStore,
-    nodesById: Map<string, GraphNode>,
+    getObjectById: (id: string) => GraphObject | undefined,
+    getRelationTypeById: (id: string) => GraphRelationType | undefined,
   ): GraphRelation {
+    const from = getObjectById(data.fromId);
+    const to = getObjectById(data.toId);
+    if (!from || !to) {
+      throw new Error("Missing from or to node");
+    }
     return new GraphRelation(store, {
       id: data.id,
-      from: nodesById.get(data.fromId)!,
-      to: nodesById.get(data.toId)!,
-      relationType: data.relationType,
+      from,
+      to,
+      relationType: getRelationTypeById(data.relationTypeId),
     });
   }
 }

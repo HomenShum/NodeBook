@@ -1,6 +1,6 @@
 import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { BaseSelection, LexicalNode } from "lexical";
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, toJS } from "mobx";
 import { comparePositions, relationsPathToParentChild, uuid } from "../util";
 import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
@@ -522,11 +522,12 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationsByNodeId = serializeMap(this.relationsByNodeId);
     const pinnedRelationsByNodeId = serializeMap(this.pinnedRelationsByNodeId);
+    const relationTypesById = toJS(this.relationTypesById);
 
     return {
       nodesById,
       relationsById,
-      relationTypesById: this.relationTypesById,
+      relationTypesById,
       relationsByNodeId,
       pinnedRelationsByNodeId,
       pathData: Object.fromEntries(this.pathData.entries()),
@@ -539,17 +540,37 @@ export class GraphStore {
       nodesById.set(key, GraphNode.deserialize(value, this));
     }
 
-    const relationsById = new Map<string, GraphRelation>();
-    for (const [key, value] of Object.entries(data.relationsById)) {
-      relationsById.set(key, GraphRelation.deserialize(value, this, nodesById));
+    const relationTypesById: Record<string, GraphRelationType> = {};
+    for (const [key, value] of Object.entries(data.relationTypesById)) {
+      relationTypesById[key] = value;
     }
+
+    const relationsById = new Map<string, GraphRelation>();
+    const getObjectById = (id: string) => nodesById.get(id) || relationsById.get(id);
+    const getRelationTypeById = (id: string) => relationTypesById[id];
+    const failed = new Set<string>();
+    for (const [key, value] of Object.entries(data.relationsById)) {
+      try {
+        relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById));
+      } catch (e) {
+        failed.add(key);
+      }
+    }
+    // Relations can point to relations, so sometimes deserialization fails because we don't have the needed
+    // relations yet. We retry deserializing the failed relations after all relations have been deserialized.
+    // TODO: This is a bit hacky, and doesn't address circular dependencies. We might need to do something
+    // like allow null to/from fields in the relation, and then fill them in later.
+    failed.forEach((key) => {
+      const value = data.relationsById[key];
+      relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById));
+    });
 
     const relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
     for (const [key, value] of Object.entries(data.relationsByNodeId)) {
       relationsByNodeId.set(
         key,
         FractionalPositionedList.deserialize<GraphRelation>(value, (data) =>
-          GraphRelation.deserialize(data, this, nodesById),
+          GraphRelation.deserialize(data, this, getObjectById, getRelationTypeById),
         ),
       );
     }
@@ -559,7 +580,7 @@ export class GraphStore {
       pinnedRelationsByNodeId.set(
         key,
         FractionalPositionedList.deserialize<GraphRelation>(value, (data) =>
-          GraphRelation.deserialize(data, this, nodesById),
+          GraphRelation.deserialize(data, this, getObjectById, getRelationTypeById),
         ),
       );
     }
@@ -571,7 +592,7 @@ export class GraphStore {
 
     this.nodesById = nodesById;
     this.relationsById = relationsById;
-    this.relationTypesById = data.relationTypesById;
+    this.relationTypesById = relationTypesById;
     this.relationsByNodeId = relationsByNodeId;
     this.pinnedRelationsByNodeId = pinnedRelationsByNodeId;
     this.pathData = pathData;
