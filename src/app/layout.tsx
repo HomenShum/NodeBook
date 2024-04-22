@@ -1,6 +1,6 @@
 "use client";
 import { toJS } from "mobx";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { env } from "./envFrontend";
 import "./global.css";
 import { GraphStore } from "./model/GraphStore";
@@ -10,7 +10,6 @@ import { ViewStoreProvider } from "./store/useViewStore";
 
 // Initialize stores
 const graphStore = new GraphStore();
-const loadedPromise = Promise.resolve();
 const viewStore = new ViewStore(graphStore);
 
 // Expose stores to the window for debugging
@@ -23,6 +22,16 @@ if (typeof window !== "undefined" && env.env !== "production") {
   };
 }
 
+function persistData(dataString: string) {
+  fetch("/api/persist", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ data: dataString }),
+  });
+}
+
 /**
  * The root component which wraps every page in the application
  * and provides the app stores.
@@ -33,8 +42,31 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isLoading, setIsLoading] = useState(true);
+  const persistedData = useRef<string | null>(null);
   useEffect(() => {
-    loadedPromise.then(() => setIsLoading(false));
+    if (!env.isPersistenceEnabled) {
+      setIsLoading(false);
+      return;
+    }
+
+    fetch("/api/persist")
+      .then((res) => res.json())
+      .then((json) => {
+        const dataString: string = json.data;
+        persistedData.current = dataString;
+        if (dataString !== null) {
+          graphStore.deserializeInPlace(JSON.parse(dataString));
+        }
+
+        setIsLoading(false);
+        setInterval(() => {
+          const newDataString = JSON.stringify(graphStore.serialize());
+          if (newDataString !== persistedData.current) {
+            persistedData.current = newDataString;
+            persistData(newDataString);
+          }
+        }, 500);
+      });
   }, []);
   return (
     <html lang="en">
