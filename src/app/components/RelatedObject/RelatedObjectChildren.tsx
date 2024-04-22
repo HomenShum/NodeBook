@@ -36,17 +36,16 @@ export const RelatedObjectChildren = observer(
           const newBundle = firstBundle?.id !== lastBundleId;
           lastBundleId = firstBundle?.id;
           return (
-            <>
+            <div key={relationsToPathStr([...pathToParentRelations, childRelation])}>
               {newBundle && <div className="border-t border-black" />}
               <RelatedObjectView
-                key={relationsToPathStr([...pathToParentRelations, childRelation])}
                 path={[...pathToParentRelations, childRelation]}
                 position={position}
                 siblingAbove={children[i - 1]?.relation}
                 siblingBelow={children[i + 1]?.relation}
                 searchResult={searchResult}
               />
-            </>
+            </div>
           );
         })}
       </div>
