@@ -1,1 +1,0 @@
-ALTER TABLE "graph_node" ALTER COLUMN "text" SET NOT NULL;

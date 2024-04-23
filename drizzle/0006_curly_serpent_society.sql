@@ -1,1 +1,0 @@
-ALTER TABLE "graph_node" ADD COLUMN "thoughtstream_position" text;
