@@ -63,6 +63,7 @@ export const RelatedObjectView = observer(
     const displayChildren =
       (!searchResult && isExpanded) ||
       (searchResult &&
+        searchResult.get(object.id) &&
         searchResult.get(object.id)!.expandChildren &&
         objectCount === 1 &&
         relation.to.id === object.id);
