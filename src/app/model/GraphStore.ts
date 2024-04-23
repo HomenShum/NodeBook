@@ -510,7 +510,7 @@ export class GraphStore {
     const end = points[1].offset;
 
     let child: { node: GraphNode; relation: GraphRelation };
-    if (start === 0 && end === 0) {
+    if (start === 0 && end === 0 && nodeToSplit.content.length > 0) {
       // Insert a new blank node just above the current node
       // (we do this by getting the sibling above and moving the new node after it,
       // because FractionalPositionedList.move can only place nodes after another node.
