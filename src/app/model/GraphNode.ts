@@ -10,7 +10,7 @@ export type Chip = {
   value: string;
 };
 
-export type GraphNodeProps = { id?: string; content?: Chip[]; createdAt?: Date };
+export type GraphNodeProps = { id?: string; content?: Chip[]; createdAt?: Date; isBundle?: boolean };
 
 export type RelativePositionProps = {
   target?: GraphRelation;
@@ -27,12 +27,25 @@ export class GraphNode implements Serializable, GraphObject {
   content: Chip[] = [];
   createdAt: Date;
   type = "node" as const;
+  isBundle: boolean;
 
-  constructor(private store: GraphStore, { id = uuid(), content = [], createdAt = new Date() }: GraphNodeProps) {
+  constructor(
+    private store: GraphStore,
+    { id = uuid(), content = [], createdAt = new Date(), isBundle = false }: GraphNodeProps,
+  ) {
     this.id = id;
     this.content = content;
     this.createdAt = createdAt;
+    this.isBundle = isBundle;
     makeAutoObservable(this);
+  }
+
+  toggleBundle() {
+    this.isBundle = !this.isBundle;
+  }
+
+  setIsBundle(isBundle: boolean) {
+    this.isBundle = isBundle;
   }
 
   get allRelationsList() {
@@ -123,6 +136,7 @@ export class GraphNode implements Serializable, GraphObject {
       id: this.id,
       createdAt: this.createdAt,
       content: this.content,
+      isBundle: this.isBundle,
     };
   }
 
@@ -131,6 +145,7 @@ export class GraphNode implements Serializable, GraphObject {
       id: data.id,
       content: data.content,
       createdAt: new Date(data.createdAt),
+      isBundle: data.isBundle,
     });
   }
 }

@@ -21,12 +21,16 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
   );
 
   const createChild = useCallback(() => {
-    const { node, relation } = graphStore.createChildNode(thoughstreamNode);
-    // const { bullet: bundle } = root.createChild();
-    // graphStore.createRelation({ from: bundle.graphNode, to: bullet.graphNode });
-    // bundle.setType("bundle");
-    viewStore.setFocusedNode(relationsToPathStr([...pathToThoughtstream, relation]));
-  }, [graphStore, thoughstreamNode, pathToThoughtstream, viewStore]);
+    const { node, relationToThoughtstream } = graphStore.createThoughtstreamChild();
+    viewStore.setFocusedNode(relationsToPathStr([...pathToThoughtstream, relationToThoughtstream]));
+    if (graphStore.addThoughstreamDirectChildrenToOutline) {
+      graphStore.createRelation({
+        from: graphStore.outlineRoot,
+        to: node,
+        relationType: graphStore.relationTypesById.child,
+      });
+    }
+  }, [graphStore, viewStore, pathToThoughtstream]);
 
   return (
     <div

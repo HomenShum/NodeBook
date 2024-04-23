@@ -61,6 +61,15 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
+            checked={viewStore.hideBundles}
+            onChange={(e) => viewStore.setHideBundles(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Hide bundles
+        </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
             checked={graphStore.addAllOutlineDescendantsToThoughtstream}
             onChange={(e) => graphStore.setAddAllOutlineDescendantsToThoughtstream(e.target.checked)}
             className="mr-2 mb-2"

@@ -18,7 +18,7 @@ export class ViewStore {
   public focusedNode: Path | null = null;
   public hoveredNode: Path | null = null;
 
-  private editorsByPath: Map<string, LexicalEditor> = new Map();
+  editorsByPath: Map<string, LexicalEditor> = new Map();
 
   public selectedNodes: Set<Path> = new Set();
 
@@ -29,6 +29,7 @@ export class ViewStore {
   public hideAllRootParents = true;
   public hideAllParents = false;
   public hideBackrelations = false;
+  public hideBundles = true;
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -101,6 +102,10 @@ export class ViewStore {
 
   setHideBackrelations(show: boolean) {
     this.hideBackrelations = show;
+  }
+
+  setHideBundles(show: boolean) {
+    this.hideBundles = show;
   }
 
   registerEditor(pathStr: Path, editor: LexicalEditor) {

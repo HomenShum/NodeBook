@@ -44,7 +44,26 @@ export const KeyboardOverridesPlugin = () => {
           event.preventDefault();
           const selection = $getSelection();
           if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
-          const { relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection);
+
+          const { node: newNode, relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection);
+
+          // Add to outline if necessary
+          const root = pathToParentNodes[0].child;
+          if (
+            (graphStore.addThoughtstreamNestedChildrenToThoughtstream && root.id === graphStore.thoughtstreamRoot.id) ||
+            (graphStore.addThoughstreamDirectChildrenToOutline && parent.id === graphStore.thoughtstreamRoot.id)
+          ) {
+            graphStore.createRelation({
+              from: graphStore.outlineRoot,
+              to: newNode,
+              relationType: graphStore.relationTypesById.child,
+            });
+          }
+          // Add to thoughtstream if necessary
+          if (graphStore.addAllOutlineDescendantsToThoughtstream && root.id === graphStore.outlineRoot.id) {
+            graphStore.addToThoughtstream(newNode);
+          }
+
           viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
           return true;
         }),
@@ -63,14 +82,35 @@ export const KeyboardOverridesPlugin = () => {
             return true;
           } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
             if (!siblingAbove) return false;
-            // TODO: is this sketchy?
             event.preventDefault();
             graphStore.getRelationList(parent).move([siblingAbove], relation);
+            // While in thoughtstream view, move relation into the same bundle as the sibling above
+            if (parent.id === graphStore.thoughtstreamRoot.id) {
+              const siblingAboveBundle = graphStore.relationToBundles.get(siblingAbove.id)?.[0];
+              const thisBundle = graphStore.relationToBundles.get(relation.id)?.[0];
+              if (siblingAboveBundle && thisBundle?.id !== siblingAboveBundle?.id) {
+                if (thisBundle) {
+                  graphStore.removeFromBundle(relation, thisBundle);
+                }
+                graphStore.addToBundle(relation, siblingAboveBundle);
+              }
+            }
             return true;
           } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowDown") {
             if (!siblingBelow) return false;
             event.preventDefault();
             graphStore.getRelationList(parent).move([relation], siblingBelow);
+            // While in thoughtstream view, move relation into the same bundle as the sibling below
+            if (parent.id === graphStore.thoughtstreamRoot.id) {
+              const siblingBelowBundle = graphStore.relationToBundles.get(siblingBelow.id)?.[0];
+              const thisBundle = graphStore.relationToBundles.get(relation.id)?.[0];
+              if (siblingBelowBundle && thisBundle?.id !== siblingBelowBundle?.id) {
+                if (thisBundle) {
+                  graphStore.removeFromBundle(relation, thisBundle);
+                }
+                graphStore.addToBundle(relation, siblingBelowBundle);
+              }
+            }
             return true;
           }
           return false;
