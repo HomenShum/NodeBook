@@ -3,6 +3,7 @@ import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { PathLink, comparePositions, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
+import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useViewController } from "../../controller/useViewController";
 import { GraphRelation } from "../../model/GraphRelation";
@@ -20,7 +21,8 @@ export const RelatedObjectChildren = observer(
     const depth = pathToParentRelations.length;
 
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
-    const children = getFilteredChildrenAtPath(pathToParent, viewController, searchResult);
+    const children = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, false);
+    const pinnedChildren = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, true).reverse();
 
     const parent = pathToParent[pathToParent.length - 1].child;
 
@@ -31,6 +33,27 @@ export const RelatedObjectChildren = observer(
     let lastBundleId: string | undefined;
     return (
       <div className={depth > 0 ? "ml-5" : ""}>
+        {/* {bundles.length > 0 ? (
+          <BulletListWithBundles bullets={children} parents={parents} depth={depth} />
+        ) : (
+          <BulletList bullets={children} parents={parents} depth={depth} />
+        )} */}
+        <div className={cn(pinnedChildren.length > 0 && "border-red-500 border-b")}>
+          {pinnedChildren.map(({ relation: childRelation, position }, i) => {
+            return (
+              <div key={relationsToPathStr([...pathToParentRelations, childRelation])}>
+                <RelatedObjectView
+                  path={[...pathToParentRelations, childRelation]}
+                  position={position}
+                  siblingAbove={pinnedChildren[i - 1]?.relation}
+                  siblingBelow={pinnedChildren[i + 1]?.relation}
+                  searchResult={searchResult}
+                />
+              </div>
+            );
+          })}
+        </div>
+
         {children.map(({ relation: childRelation, position }, i) => {
           const firstBundle = findRelationsFirstBundle(childRelation);
           const newBundle = firstBundle?.id !== lastBundleId;
@@ -56,14 +79,15 @@ export const RelatedObjectChildren = observer(
 export const getFilteredChildrenAtPath = (
   path: PathLink[],
   viewController: ViewController,
-  searchResult?: Map<string, boolean>,
+  searchResult: Map<string, boolean> | undefined,
+  pinned: boolean,
 ) => {
   if (path.length === 0) {
     return [];
   }
   const node = path[path.length - 1].child;
   const grandparent = path[path.length - 2]?.child;
-  return node.relationsWithPositions
+  return (pinned ? node.pinnedRelationsWithPositions : node.relationsWithPositions)
     .sort((a, b) => comparePositions(a.position, b.position))
     .filter(({ relation }) => {
       let childNode: GraphObject;

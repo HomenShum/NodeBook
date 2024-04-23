@@ -91,6 +91,10 @@ export class GraphRelation implements Serializable, GraphObject {
     return list.values().map(({ position, item }) => ({ position, relation: item }));
   }
 
+  get pinnedRelationsWithPositions(): PositionedRelation[] {
+    return this.pinnedRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
+  }
+
   get relations(): GraphRelation[] {
     return this.relationsWithPositions.map(({ relation }) => relation);
   }
@@ -102,19 +106,18 @@ export class GraphRelation implements Serializable, GraphObject {
   }
 
   pinChildRelation(childRelation: GraphRelation) {
-    if (!this.allRelationsList.get(childRelation.id)) {
-      console.error("Can't pin relation that doesn't involve this node");
-      return;
-    }
-    this.pinnedRelationsList.add(childRelation);
+    this.store.createPinnedVersionOfRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
   }
 
   unpinChildRelation(childRelation: GraphRelation) {
-    this.pinnedRelationsList.delete(childRelation.id);
+    this.store.unpinRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
   }
 
   isRelationPinned(childRelation: GraphRelation) {
-    return this.pinnedRelationsList.has(childRelation.id);
+    const correspondingRelation = this.store.getCorrespondingRelation(childRelation);
+    if (!correspondingRelation) return false;
+
+    return this.pinnedRelationsList.has(childRelation.id) || this.pinnedRelationsList.has(correspondingRelation.id);
   }
 
   serialize() {
