@@ -1,12 +1,12 @@
+import { useViewController } from "@/app/controller/useViewController";
 import { useGraphStore } from "@/app/store/useGraphStore";
-import { useViewStore } from "@/app/store/useViewStore";
 import { observer } from "mobx-react-lite";
 import { useRef } from "react";
 import { Button } from "../ui/button";
 
 export const DevTools = observer(() => {
   const graphStore = useGraphStore();
-  const viewStore = useViewStore();
+  const viewController = useViewController();
   const fileInputRef = useRef(null);
 
   return (
@@ -16,8 +16,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer">
           <input
             type="checkbox"
-            checked={viewStore.showNodeDetails}
-            onChange={(e) => viewStore.setShowNodeDetails(e.target.checked)}
+            checked={viewController.showNodeDetails}
+            onChange={(e) => viewController.setShowNodeDetails(e.target.checked)}
             className="mr-2 mb-2"
           />
           Show node details in view
@@ -25,8 +25,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewStore.hideDirectParent}
-            onChange={(e) => viewStore.setHideDirectParent(e.target.checked)}
+            checked={viewController.hideDirectParent}
+            onChange={(e) => viewController.setHideDirectParent(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide relations to direct parent
@@ -34,8 +34,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewStore.hideAllRootParents}
-            onChange={(e) => viewStore.setHideAllRootParents(e.target.checked)}
+            checked={viewController.hideAllRootParents}
+            onChange={(e) => viewController.setHideAllRootParents(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide all root parents
@@ -43,8 +43,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewStore.hideAllParents}
-            onChange={(e) => viewStore.setHideAllParents(e.target.checked)}
+            checked={viewController.hideAllParents}
+            onChange={(e) => viewController.setHideAllParents(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide all parents
@@ -52,8 +52,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewStore.hideBackrelations}
-            onChange={(e) => viewStore.setHideBackrelations(e.target.checked)}
+            checked={viewController.hideBackrelations}
+            onChange={(e) => viewController.setHideBackrelations(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide backrelations
@@ -61,8 +61,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewStore.hideBundles}
-            onChange={(e) => viewStore.setHideBundles(e.target.checked)}
+            checked={viewController.hideBundles}
+            onChange={(e) => viewController.setHideBundles(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide bundles
@@ -107,8 +107,8 @@ export const DevTools = observer(() => {
         {/* <div className="flex gap-2">
           <label>Relation view:</label>
           <select
-            value={viewStore.outlineViewStore.relatedNodesViewType}
-            onChange={(e) => viewStore.outlineViewStore.setRelatedNodesViewType(e.target.value as any)} // TODO "as any" bad
+            value={viewController.outlineViewController.relatedNodesViewType}
+            onChange={(e) => viewController.outlineViewController.setRelatedNodesViewType(e.target.value as any)} // TODO "as any" bad
           >
             <option value="all">All related nodes only</option>
             <option value="pinned">Pinned and all nodes</option>

@@ -8,16 +8,16 @@ import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect } from "react";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
+import { useViewController } from "../controller/useViewController";
 import { Chip, GraphNode } from "../model/GraphNode";
 import { GraphStore } from "../model/GraphStore";
 import { $createMentionNode, $isMentionNode, MentionNode } from "../model/MentionNode";
 import { useGraphStore } from "../store/useGraphStore";
-import { useViewStore } from "../store/useViewStore";
 import styles from "./Editor.module.css";
 import { KeyboardOverridesPlugin } from "./KeyboardOverridesPlugin";
 import { MentionPlugin } from "./MentionPlugin";
 import { OnChangePlugin } from "./OnChangePlugin";
-import { ViewStoreRegistryPlugin } from "./ViewStoreRegistryPlugin";
+import { ViewControllerRegistryPlugin } from "./ViewControllerRegistryPlugin";
 import { ContentEditable } from "./ui/ContentEditable";
 
 const theme = {
@@ -36,7 +36,7 @@ export const Editor = () => {
   if (!(node instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
-  const viewStore = useViewStore();
+  const viewController = useViewController();
   const initialConfig = {
     namespace: "MyEditor",
     theme,
@@ -53,7 +53,7 @@ export const Editor = () => {
   return (
     <div
       className={styles.EditorWrapper}
-      // onFocus={() => viewStore.setFocusedNode(bullet)}
+      // onFocus={() => viewController.setFocusedNode(bullet)}
     >
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
@@ -62,12 +62,12 @@ export const Editor = () => {
           placeholder={null}
           // placeholder={<EditorPlaceholder />}
         />
-        {/* {viewStore.isFocused(bullet) && <AutoFocusPlugin />} */}
+        {/* {viewController.isFocused(bullet) && <AutoFocusPlugin />} */}
         <HistoryPlugin />
         <SyncEditorAndGraphNode node={node} />
         <KeyboardOverridesPlugin />
         <MentionPlugin />
-        <ViewStoreRegistryPlugin pathToNodeStr={pathToNodeStr} />
+        <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
       </LexicalComposer>
     </div>
   );

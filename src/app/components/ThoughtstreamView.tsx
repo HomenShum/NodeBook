@@ -1,14 +1,12 @@
-import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useCallback, useMemo } from "react";
+import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
-import { useViewStore } from "../store/useViewStore";
-import { relationsToPathStr } from "../util";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
 export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: string }) => {
-  const viewStore = useViewStore();
+  const viewController = useViewController();
   const graphStore = useGraphStore();
   const pathToThoughtstream = useMemo(
     () => [graphStore.thoughtstreamRootRelationFromUserRoot],
@@ -21,27 +19,11 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
   );
 
   const createChild = useCallback(() => {
-    const { node, relationToThoughtstream } = graphStore.createThoughtstreamChild();
-    viewStore.setFocusedNode(relationsToPathStr([...pathToThoughtstream, relationToThoughtstream]));
-    if (graphStore.addThoughstreamDirectChildrenToOutline) {
-      graphStore.createRelation({
-        from: graphStore.outlineRoot,
-        to: node,
-        relationType: graphStore.relationTypesById.child,
-      });
-    }
-  }, [graphStore, viewStore, pathToThoughtstream]);
+    viewController.createAndFocusChildNode();
+  }, [viewController]);
 
   return (
-    <div
-      tabIndex={0}
-      className="w-full h-full flex flex-col px-8 gap-4"
-      onKeyDown={action((e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-          createChild();
-        }
-      })}
-    >
+    <div tabIndex={0} className="w-full h-full flex flex-col px-8 gap-4">
       <div className="ml-2">
         <div className="flex align-center gap-2">
           <h1 className="text-2xl font-medium select-none">{thoughstreamNode.text}</h1>

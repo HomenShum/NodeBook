@@ -9,11 +9,11 @@ import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
+import { useViewController } from "../controller/useViewController";
 import { GraphNode } from "../model/GraphNode";
 import { GraphObject } from "../model/GraphObject";
 import { $createMentionNode } from "../model/MentionNode";
 import { useGraphStore } from "../store/useGraphStore";
-import { useViewStore } from "../store/useViewStore";
 import styles from "./MentionPlugin.module.css";
 
 // Much of this implementation is copied from:
@@ -36,7 +36,7 @@ export function MentionPlugin(): JSX.Element | null {
 
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  const viewStore = useViewStore();
+  const viewController = useViewController();
   const onSelectOption = useCallback(
     (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
       editor.update(() => {

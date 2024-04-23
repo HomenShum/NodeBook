@@ -1,8 +1,8 @@
 import { Dot, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
+import { useViewController } from "../../controller/useViewController";
 import { Editor } from "../../editor/Editor";
 import { useGraphStore } from "../../store/useGraphStore";
-import { useViewStore } from "../../store/useViewStore";
 
 import {
   DropdownMenu,
@@ -36,7 +36,7 @@ export const RelatedObjectView = observer(
     siblingBelow?: GraphRelation;
     searchResult?: Map<string, boolean>;
   }) => {
-    const viewStore = useViewStore();
+    const viewController = useViewController();
     const graphStore = useGraphStore();
     // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
@@ -51,9 +51,9 @@ export const RelatedObjectView = observer(
 
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
-    const hasChildren = getFilteredChildrenAtPath(pathObjects, viewStore, searchResult).length > 0;
+    const hasChildren = getFilteredChildrenAtPath(pathObjects, viewController, searchResult).length > 0;
 
-    // const isSelected = viewStore.selectedNodes.has(bullet);
+    // const isSelected = viewController.selectedNodes.has(bullet);
     const isSelected = false;
     const relation = path[path.length - 1];
     const isChild = relation.relationType.id === defaultRelationTypes.child.id && relation.to.id === object.id;
@@ -94,7 +94,7 @@ export const RelatedObjectView = observer(
                   color="#596567"
                   height={16}
                   className={cn("cursor-pointer absolute top-0")}
-                  onClick={() => viewStore.setCurrentOutlineViewRoot([...pathToParentRelations, relation])}
+                  onClick={() => viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation])}
                 />
               </div>
               {/* relation and node */}
@@ -105,7 +105,7 @@ export const RelatedObjectView = observer(
                   ) : null}
                   {!replacing ? <RelatedObjectEditor /> : <ReplaceRelatedNodeView />}
                 </div>
-                {viewStore.showNodeDetails && !replacing && <RelatedObjectDetails />}
+                {viewController.showNodeDetails && !replacing && <RelatedObjectDetails />}
               </div>
             </div>
           </RelationAtPathProvider>
@@ -124,7 +124,7 @@ export const RelatedObjectView = observer(
 const RelatedObjectMenu = observer(
   // ({ bullet, setUpdatingRelationType }: { bullet: Bullet; setUpdatingRelationType: (v: boolean) => void }) => {
   ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {
-    const viewStore = useViewStore();
+    const viewController = useViewController();
     const graphStore = useGraphStore();
     const { object, parent, relation, setReplacing, pathToParentRelations, siblingAbove } = useRelationAtPath();
 
@@ -139,7 +139,7 @@ const RelatedObjectMenu = observer(
               graphStore.deleteRelation(relation);
               if (siblingAbove) {
                 const pathStr = relationsToPathStr([...pathToParentRelations, siblingAbove]);
-                viewStore.setFocusedNode(pathStr);
+                viewController.setFocusedNode(pathStr);
               }
             })}
           >

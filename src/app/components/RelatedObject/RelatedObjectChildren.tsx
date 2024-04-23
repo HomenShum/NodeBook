@@ -1,12 +1,12 @@
+import { ViewController } from "@/app/controller/ViewController";
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
-import { ViewStore } from "@/app/model/ViewStore";
 import { PathLink, comparePositions, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
+import { useViewController } from "../../controller/useViewController";
 import { GraphRelation } from "../../model/GraphRelation";
-import { useViewStore } from "../../store/useViewStore";
 import { RelatedObjectView } from "./RelatedObjectView";
 
 export const RelatedObjectChildren = observer(
@@ -17,7 +17,7 @@ export const RelatedObjectChildren = observer(
     pathToParentRelations: GraphRelation[];
     searchResult?: Map<string, boolean>;
   }) => {
-    const viewStore = useViewStore();
+    const viewController = useViewController();
     const depth = pathToParentRelations.length;
 
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
@@ -100,8 +100,8 @@ export const getFilteredChildrenAtPath = (
       }
       const isBundle = childNode instanceof GraphNode && childNode.isBundle;
       return (
-        !(viewStore.hideBundles && isBundle) &&
-        filterFocusedNodesRelations(viewStore, relation, childNode, grandparent) &&
+        !(viewController.hideBundles && isBundle) &&
+        filterFocusedNodesRelations(viewController, relation, childNode, grandparent) &&
         (!searchResult || searchResult.get(childNode.id))
       );
     });
@@ -154,23 +154,23 @@ export const getFilteredChildrenAtPath = (
  *
  */
 function filterFocusedNodesRelations(
-  viewStore: ViewStore,
+  viewController: ViewController,
   r: GraphRelation,
   relatedNode: GraphObject,
   precedingFocusedNodeInPath?: GraphObject,
 ) {
   /** The relation points from the related node to the focused node */
   const isBackwards = r.from.id === relatedNode.id;
-  if (viewStore.hideBackrelations && isBackwards) {
+  if (viewController.hideBackrelations && isBackwards) {
     return false;
   }
   /** Parent from the perspective of the graph, not the current tree */
   const isGraphParent = isBackwards && r.relationType.id === defaultRelationTypes.child.id;
-  if (viewStore.hideAllParents && isGraphParent) {
+  if (viewController.hideAllParents && isGraphParent) {
     return false;
-  } else if (viewStore.hideAllRootParents && isGraphParent && relatedNode.isRoot) {
+  } else if (viewController.hideAllRootParents && isGraphParent && relatedNode.isRoot) {
     return false;
-  } else if (viewStore.hideDirectParent && relatedNode.id === precedingFocusedNodeInPath?.id) {
+  } else if (viewController.hideDirectParent && relatedNode.id === precedingFocusedNodeInPath?.id) {
     return false;
   }
   return true;
