@@ -86,8 +86,11 @@ export const getFilteredChildrenAtPath = (
   if (path.length === 0) {
     return [];
   }
-  const node = path[path.length - 1].child;
-  const grandparent = path[path.length - 2]?.child;
+  const node = path.length > 0 ? path[path.length - 1].child : undefined;
+  if (!node) {
+    return [];
+  }
+  const grandparent = path.length > 1 ? path[path.length - 2]?.child : undefined;
   return (pinned ? node.pinnedRelationsWithPositions : node.relationsWithPositions)
     .sort((a, b) => comparePositions(a.position, b.position))
     .filter(({ relation }) => {

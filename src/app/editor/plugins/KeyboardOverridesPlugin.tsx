@@ -30,7 +30,7 @@ export const KeyboardOverridesPlugin = () => {
     siblingAbove,
     siblingBelow,
     parent,
-    setReplacing,
+    setViewType,
   } = useRelationAtPath();
   if (!(object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
@@ -78,7 +78,7 @@ export const KeyboardOverridesPlugin = () => {
             // replacing mode, where you can select a different node for the
             // bullet to represent.
             event.preventDefault();
-            setReplacing(true);
+            setViewType("replace");
             return true;
           } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
             if (!siblingAbove) return false;
@@ -224,7 +224,7 @@ export const KeyboardOverridesPlugin = () => {
     object,
     parent,
     viewController,
-    setReplacing,
+    setViewType,
   ]);
   return null;
 };

@@ -10,7 +10,7 @@ export type Chip = {
   value: string;
 };
 
-export type GraphNodeProps = { id?: string; content?: Chip[]; createdAt?: Date; isBundle?: boolean };
+export type GraphNodeProps = { id?: string; content?: Chip[] | string; createdAt?: Date; isBundle?: boolean };
 
 export type RelativePositionProps = {
   target?: GraphRelation;
@@ -34,7 +34,7 @@ export class GraphNode implements Serializable, GraphObject {
     { id = uuid(), content = [], createdAt = new Date(), isBundle = false }: GraphNodeProps,
   ) {
     this.id = id;
-    this.content = content;
+    this.content = typeof content === "string" ? [{ type: "text", value: content }] : content;
     this.createdAt = createdAt;
     this.isBundle = isBundle;
     makeAutoObservable(this);
@@ -84,8 +84,8 @@ export class GraphNode implements Serializable, GraphObject {
     return this.pinnedRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
   }
 
-  setContent(newContent: Chip[]) {
-    this.content = newContent;
+  setContent(newContent: Chip[] | string) {
+    this.content = typeof newContent === "string" ? [{ type: "text", value: newContent }] : newContent;
   }
 
   get text(): string {

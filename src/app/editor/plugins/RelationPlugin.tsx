@@ -1,13 +1,6 @@
 import { ViewType } from "@/app/controller/ViewController";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import {
-  $getSelection,
-  $isRangeSelection,
-  CLEAR_EDITOR_COMMAND,
-  COMMAND_PRIORITY_NORMAL,
-  KEY_DOWN_COMMAND,
-  LexicalEditor,
-} from "lexical";
+import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND, LexicalEditor } from "lexical";
 import { useEffect } from "react";
 import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
 import { useViewController } from "../../controller/useViewController";
@@ -34,7 +27,7 @@ export const RelationPlugin = () => {
   const graphStore = useGraphStore();
   const viewController = useViewController();
   const [editor] = useLexicalComposerContext();
-  const { object, relation } = useRelationAtPath();
+  const { object, relation, pathToNodeStr } = useRelationAtPath();
   if (!(object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
@@ -77,8 +70,8 @@ export const RelationPlugin = () => {
           });
         }
         relation.setType(relationType);
-
-        editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined);
+        object.setContent("");
+        viewController.setFocusedNode(pathToNodeStr);
 
         event.preventDefault();
         event.stopPropagation();
@@ -86,6 +79,6 @@ export const RelationPlugin = () => {
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [graphStore, viewController, editor, object, relation]);
+  }, [graphStore, viewController, editor, object, relation, pathToNodeStr]);
   return null;
 };

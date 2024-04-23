@@ -20,8 +20,9 @@ export type RelationPathAndSiblings = {
   siblingAbove?: GraphRelation;
   /** Sibling relation below this one */
   siblingBelow?: GraphRelation;
-  setReplacing: (v: boolean) => void;
   position: Position;
+  viewType: "edit" | "replace" | "search-or-create";
+  setViewType: (v: "edit" | "replace" | "search-or-create") => void;
 };
 
 const RelationAtPathContext = createContext<RelationPathAndSiblings | null>(null);

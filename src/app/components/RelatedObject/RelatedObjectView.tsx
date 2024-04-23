@@ -39,16 +39,20 @@ export const RelatedObjectView = observer(
   }) => {
     const viewController = useViewController();
     const graphStore = useGraphStore();
-    // TODO: this was really shoehorned in here for demo day and should be refactored
-    const [updatingRelationType, setUpdatingRelationType] = useState(false);
-    const [replacing, setReplacing] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
 
     // computed values
+    const relation = path[path.length - 1];
     const pathToParentRelations = path.slice(0, path.length - 1);
     const pathToNodeStr = relationsToPathStr(path);
     const pathObjects = relationsPathToParentChild(path);
     const { parent, child: object } = pathObjects[pathObjects.length - 1];
+
+    // TODO: this was really shoehorned in here for demo day and should be refactored
+    const [updatingRelationType, setUpdatingRelationType] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+    const [viewType, setViewType] = useState<"edit" | "replace" | "search-or-create">(
+      relation.relationType.id === defaultRelationTypes.child.id ? "edit" : "search-or-create",
+    );
 
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
@@ -56,7 +60,6 @@ export const RelatedObjectView = observer(
 
     // const isSelected = viewController.selectedNodes.has(bullet);
     const isSelected = false;
-    const relation = path[path.length - 1];
     const isChild = relation.relationType.id === defaultRelationTypes.child.id && relation.to.id === object.id;
     const objectCount = pathObjects.reduce((acc, { child }) => (child.id === object.id ? acc + 1 : acc), 0);
 
@@ -67,9 +70,18 @@ export const RelatedObjectView = observer(
         objectCount === 1 &&
         relation.to.id === object.id);
 
+    // When the relation type changes from child to something else, switch to search-or-create view
+    const lastRelationTypeId = useRef(relation.relationType.id);
+    useEffect(() => {
+      if (lastRelationTypeId.current === "child" && relation.relationType.id !== "child") {
+        setViewType("search-or-create");
+        lastRelationTypeId.current = relation.relationType.id;
+      }
+    }, [relation.relationType.id]);
+
     return (
       <>
-        <div className={cn("flex flex-col align-start", isSelected ? "bg-sky-200" : "")}>
+        <div id={pathToNodeStr} className={cn("flex flex-col align-start", isSelected ? "bg-sky-200" : "")}>
           <RelationAtPathProvider
             value={{
               pathToParentRelations,
@@ -81,7 +93,8 @@ export const RelatedObjectView = observer(
               relation,
               siblingAbove,
               siblingBelow,
-              setReplacing,
+              viewType,
+              setViewType,
             }}
           >
             <div
@@ -112,9 +125,15 @@ export const RelatedObjectView = observer(
                   {!isChild || updatingRelationType ? (
                     <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} />
                   ) : null}
-                  {!replacing ? <RelatedObjectEditor /> : <ReplaceRelatedNodeView />}
+                  {viewType === "edit" ? (
+                    <RelatedObjectEditor />
+                  ) : viewType === "replace" ? (
+                    <ReplaceRelatedNodeView />
+                  ) : (
+                    <SearchOrCreateNodeView />
+                  )}
                 </div>
-                {viewController.showNodeDetails && !replacing && <RelatedObjectDetails />}
+                {viewController.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
               </div>
             </div>
           </RelationAtPathProvider>
@@ -135,7 +154,8 @@ const RelatedObjectMenu = observer(
   ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {
     const viewController = useViewController();
     const graphStore = useGraphStore();
-    const { object, parent, relation, setReplacing, pathToParentRelations, siblingAbove } = useRelationAtPath();
+    const { object, parent, relation, pathToParentRelations, siblingAbove, viewType, setViewType } =
+      useRelationAtPath();
 
     return (
       <DropdownMenu>
@@ -154,7 +174,25 @@ const RelatedObjectMenu = observer(
           >
             Delete relation
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setReplacing(true)}>Replace related node</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setViewType("replace")}>Replace related node</DropdownMenuItem>
+          {viewType !== "search-or-create" && (
+            <DropdownMenuItem
+              onSelect={() => {
+                setViewType("search-or-create");
+              }}
+            >
+              Set to search or create view
+            </DropdownMenuItem>
+          )}
+          {viewType !== "edit" && (
+            <DropdownMenuItem
+              onSelect={() => {
+                setViewType("edit");
+              }}
+            >
+              Set to edit view
+            </DropdownMenuItem>
+          )}
           {parent.isRelationPinned(relation) ? (
             <DropdownMenuItem onSelect={() => parent.unpinChildRelation(relation)}>Unpin</DropdownMenuItem>
           ) : (
@@ -256,7 +294,7 @@ function ReplaceRelatedNodeView() {
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
-  const { object: currentObject, setReplacing, relation, pathToParentRelations } = useRelationAtPath();
+  const { object: currentObject, setViewType, relation, pathToParentRelations } = useRelationAtPath();
   const { optionsFlat: options, optionsGrouped } = useMemo(() => {
     const nodeOptions = graph.nodes.filter(
       (node) => node.id !== currentObject.id && node.text.toLowerCase().includes(filter.toLowerCase()),
@@ -291,9 +329,9 @@ function ReplaceRelatedNodeView() {
   const onSelect = useCallback(
     (obj: GraphObject) => {
       graph.setGraphNodeAtPath([...pathToParentRelations, relation], obj);
-      setReplacing(false);
+      setViewType("edit");
     },
-    [graph, relation, pathToParentRelations, setReplacing],
+    [graph, relation, pathToParentRelations, setViewType],
   );
 
   // TODO hack
@@ -307,7 +345,7 @@ function ReplaceRelatedNodeView() {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setReplacing(false);
+        setViewType("edit");
       }
     };
     // for some reason, when I click "replace" which renders this component, that click
@@ -318,18 +356,18 @@ function ReplaceRelatedNodeView() {
     return () => {
       window.removeEventListener("click", handleClick);
     };
-  }, [setReplacing]);
+  }, [setViewType]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setReplacing(false);
+        setViewType("edit");
       } else if (e.key === "Enter") {
         e.preventDefault();
         if (selected !== null) {
           onSelect(options[selected]);
         } else {
-          setReplacing(false);
+          setViewType("edit");
         }
       } else if (e.key === "ArrowDown") {
         if (selected === null) {
@@ -349,7 +387,7 @@ function ReplaceRelatedNodeView() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [setReplacing, onSelect, selected, options]);
+  }, [setViewType, onSelect, selected, options]);
 
   return (
     <div className="ml-4 flex-1">
@@ -383,3 +421,111 @@ function ReplaceRelatedNodeView() {
     </div>
   );
 }
+
+const SearchOrCreateNodeView = observer(() => {
+  const graph = useGraphStore();
+  const view = useViewController();
+  const { object, relation, parent, pathToParentRelations } = useRelationAtPath();
+  const [search, setSearch] = useState(object.text);
+  const [selected, setSelected] = useState<number | null>(null);
+  const ref = useRef<HTMLInputElement>(null);
+  const [inputFocused, setInputFocused] = useState(false);
+
+  // Keep the search input in sync with the object's text
+  useEffect(() => setSearch(object.text), [object.text]);
+
+  // Replace the current object with the selected node
+  const onSelect = useCallback(
+    (node: GraphNode) => {
+      graph.setGraphNodeAtPath([...pathToParentRelations, relation], node);
+      setSearch(node.text);
+      view.setFocusedNode(relationsToPathStr([...pathToParentRelations, relation]));
+    },
+    [graph, relation, pathToParentRelations, view],
+  );
+
+  // Filter nodes that match the search
+  const nodesMatchingSearch = useMemo(() => {
+    return graph.nodes.filter((n) => n.id !== object.id && n.text.toLowerCase().includes(search.toLowerCase()));
+  }, [graph.nodes, search, object]);
+
+  return (
+    <div className="flex flex-col relative">
+      <input
+        ref={ref}
+        className="border border-blue-500 rounded"
+        value={search}
+        placeholder="Search or create node..."
+        onFocus={() => setInputFocused(true)}
+        onBlur={() => setInputFocused(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            ref.current?.blur();
+          }
+          if (nodesMatchingSearch.length > 0) {
+            if (e.key === "Enter" && selected !== null) {
+              e.preventDefault();
+              onSelect(nodesMatchingSearch[selected]);
+            } else if (e.key === "ArrowDown") {
+              e.preventDefault();
+              if (selected === null) {
+                setSelected(0);
+              } else {
+                setSelected((selected + 1) % nodesMatchingSearch.length);
+              }
+            } else if (e.key === "ArrowUp") {
+              e.preventDefault();
+              if (selected === null) {
+                setSelected(nodesMatchingSearch.length - 1);
+              } else {
+                setSelected((selected - 1 + nodesMatchingSearch.length) % nodesMatchingSearch.length);
+              }
+            }
+          } else {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const { relation: newRelation } = graph.createChildNode(parent);
+              graph.getRelationList(parent).move([newRelation], relation);
+              view.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
+            }
+          }
+        }}
+        onChange={(e) => {
+          const search = e.target.value;
+          let newNode = graph.nodes.find((n) => n.text !== "" && n.text === search);
+          if (!newNode) {
+            newNode = graph.createNode({ content: search });
+          }
+          graph.setGraphNodeAtPath([...pathToParentRelations, relation], newNode);
+          // If the node has no relations, or is only related to the thoughtstream, delete it
+          if (
+            object.relations.length === 0 ||
+            object.relations.every((r) => {
+              const other = r.from.id === object.id ? r.to : r.from;
+              return other.id === graph.thoughtstreamRoot.id;
+            })
+          ) {
+            graph.deleteNode(object.id);
+          }
+          setSearch(search);
+        }}
+      />
+      {inputFocused && nodesMatchingSearch.length > 0 && (
+        <div className="absolute top-6 left-0 w-full bg-white border border-gray-300 z-10">
+          {nodesMatchingSearch.map((node, i) => (
+            <div
+              key={node.id}
+              onClick={() => {
+                onSelect(node);
+              }}
+              onMouseEnter={() => setSelected(i)}
+              className={selected === i ? "bg-gray-200" : ""}
+            >
+              {node.text}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
