@@ -1,4 +1,3 @@
-import { PersistedGraphNode, PersistedGraphRelation } from "@/db/schema";
 import { BaseSelection, LexicalNode } from "lexical";
 import { makeAutoObservable, toJS } from "mobx";
 import { comparePositions, relationsPathToParentChild, uuid } from "../util";
@@ -6,7 +5,6 @@ import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
-import { RemoteGraphStore } from "./RemoteGraphStore";
 import { serializeMap } from "./serialization";
 
 export const defaultRelationTypes = {
@@ -390,33 +388,6 @@ export class GraphStore {
         this.deleteNode(obj.id);
       }
     });
-  }
-
-  loadFromServer(data: Awaited<ReturnType<RemoteGraphStore["load"]>>) {
-    this.isLoading = true;
-    try {
-      const { nodes, relationTypes, relations } = data;
-      nodes.forEach((n: PersistedGraphNode) => {
-        this.createNode({ id: n.id, content: [{ type: "text", value: n.text }] });
-      });
-      relationTypes.forEach((rt: GraphRelationType) => this.createRelationType(rt, true));
-      // TODO: clean up logic elsewhere so "child" type isn't hardcoded
-      if (!this.relationTypesById.child) {
-        this.createRelationType({ id: "child", label: "child", reverseLabel: "parent" });
-      }
-      relations.forEach((r: PersistedGraphRelation) => {
-        const from = this.getNode(r.fromId);
-        const to = this.getNode(r.toId);
-        const type = this.relationTypesById[r.typeId as keyof typeof this.relationTypesById]; // TODO
-        if (!from || !to || !type) {
-          throw new Error("Invalid persisted relation");
-        }
-        this.createRelation({ from, to, relationType: type });
-      });
-    } catch (e) {
-      console.error(e);
-    }
-    this.isLoading = false;
   }
 
   splitRelatedNode(relation: GraphRelation, nodeToSplit: GraphNode, selection: BaseSelection) {
