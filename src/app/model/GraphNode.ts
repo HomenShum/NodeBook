@@ -97,9 +97,7 @@ export class GraphNode implements Serializable, GraphObject {
   }
 
   get children(): GraphObject[] {
-    return this.relations
-      .filter((r) => r.relationType.id === this.store.relationTypesById.child.id && r.from === this)
-      .map((r) => r.to);
+    return this.relations.filter((r) => r.from === this).map((r) => r.to);
   }
 
   pinChildRelation(childRelation: GraphRelation) {
