@@ -14,6 +14,7 @@ import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
+import { SearchResult } from "@/app/store/search";
 import { Position, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { action } from "mobx";
@@ -34,7 +35,7 @@ export const RelatedObjectView = observer(
     position: Position;
     siblingAbove?: GraphRelation;
     siblingBelow?: GraphRelation;
-    searchResult?: Map<string, boolean>;
+    searchResult?: Map<string, SearchResult>;
   }) => {
     const viewController = useViewController();
     const graphStore = useGraphStore();
@@ -57,6 +58,14 @@ export const RelatedObjectView = observer(
     const isSelected = false;
     const relation = path[path.length - 1];
     const isChild = relation.relationType.id === defaultRelationTypes.child.id && relation.to.id === object.id;
+    const objectCount = pathObjects.reduce((acc, { child }) => (child.id === object.id ? acc + 1 : acc), 0);
+
+    const displayChildren =
+      (!searchResult && isExpanded) ||
+      (searchResult &&
+        searchResult.get(object.id)?.expandChildren &&
+        objectCount === 1 &&
+        relation.to.id === object.id);
 
     return (
       <>
@@ -86,7 +95,7 @@ export const RelatedObjectView = observer(
                 {hasChildren && isHovered && <Toggle />}
               </div>
               <div className="w-6 relative h-4">
-                {hasChildren && !isExpanded && (
+                {hasChildren && !displayChildren && (
                   <Dot stroke="#ddd" height={16} strokeWidth={17} className={cn("cursor-pointer absolute top-0")} />
                 )}
                 <Dot
@@ -109,7 +118,7 @@ export const RelatedObjectView = observer(
               </div>
             </div>
           </RelationAtPathProvider>
-          {isExpanded && (
+          {displayChildren && (
             <RelatedObjectChildren
               pathToParentRelations={[...pathToParentRelations, relation]}
               searchResult={searchResult}

@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
 import { relationsPathToParentChild } from "../util";
@@ -16,7 +16,7 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
   const path = relationsPathToParentChild(relations);
 
   const root = path[path.length - 1].child;
-  const searchResult = useMemo(() => (searchQuery ? searchGraph(root, searchQuery) : undefined), [root, searchQuery]);
+  const searchResult = searchQuery ? searchGraph(root, searchQuery) : undefined;
 
   if (!root) {
     return <div>Missing root node</div>;
