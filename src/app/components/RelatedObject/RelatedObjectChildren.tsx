@@ -21,8 +21,8 @@ export const RelatedObjectChildren = observer(
     const depth = pathToParentRelations.length;
 
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
-    const children = getFilteredChildrenAtPath(pathToParent, viewStore, searchResult, false);
-    const pinnedChildren = getFilteredChildrenAtPath(pathToParent, viewStore, searchResult, true).reverse();
+    const children = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, false);
+    const pinnedChildren = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, true).reverse();
 
     const parent = pathToParent[pathToParent.length - 1].child;
 
@@ -78,7 +78,7 @@ export const RelatedObjectChildren = observer(
 
 export const getFilteredChildrenAtPath = (
   path: PathLink[],
-  viewStore: ViewStore,
+  viewController: ViewController,
   searchResult: Map<string, boolean> | undefined,
   pinned: boolean,
 ) => {

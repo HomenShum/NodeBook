@@ -51,7 +51,7 @@ export const RelatedObjectView = observer(
 
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
-    const hasChildren = getFilteredChildrenAtPath(pathObjects, viewController, searchResult).length > 0;
+    const hasChildren = getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false).length > 0;
 
     // const isSelected = viewController.selectedNodes.has(bullet);
     const isSelected = false;

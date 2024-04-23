@@ -685,12 +685,18 @@ export class GraphStore {
 
     const correspondingObjectsForPinned = new Map<string, GraphRelation>();
     for (const [key, value] of Object.entries(data.correspondingObjectsForPinned)) {
-      correspondingObjectsForPinned.set(key, GraphRelation.deserialize(value, this, nodesById));
+      correspondingObjectsForPinned.set(
+        key,
+        GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
+      );
     }
 
     const correspondingPinnedForObjects = new Map<string, GraphRelation>();
     for (const [key, value] of Object.entries(data.correspondingPinnedForObjects)) {
-      correspondingPinnedForObjects.set(key, GraphRelation.deserialize(value, this, nodesById));
+      correspondingPinnedForObjects.set(
+        key,
+        GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
+      );
     }
 
     const pathData = new Map<Path, PathData>();
