@@ -1,9 +1,9 @@
 import { LexicalEditor } from "lexical";
 import { makeAutoObservable } from "mobx";
+import { GraphRelation } from "../model/GraphRelation";
+import { GraphStore, Path } from "../model/GraphStore";
 import { Box } from "../selection/utils";
-import { makeAutoSaving } from "../util";
-import { GraphRelation } from "./GraphRelation";
-import { GraphStore, Path } from "./GraphStore";
+import { makeAutoSaving, relationsPathToParentChild, relationsToPathStr } from "../util";
 
 export enum ViewType {
   OUTLINE = "outline",
@@ -11,7 +11,7 @@ export enum ViewType {
   SPLIT = "split",
 }
 
-export class ViewStore {
+export class ViewController {
   public curView: ViewType;
   private graphStore: GraphStore;
 
@@ -20,11 +20,13 @@ export class ViewStore {
 
   editorsByPath: Map<string, LexicalEditor> = new Map();
 
-  public selectedNodes: Set<Path> = new Set();
+  public selectedNodes: Path[] = [];
 
-  public showNodeDetails = false;
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
+
+  // Dev bar toggles
+  public showNodeDetails = false;
   public hideDirectParent = true;
   public hideAllRootParents = true;
   public hideAllParents = false;
@@ -114,6 +116,45 @@ export class ViewStore {
 
   removeEditor(pathStr: Path) {
     this.editorsByPath.delete(pathStr);
+  }
+
+  private createAndFocusOutlineChildNode() {
+    const path = relationsPathToParentChild(this.currentOutlineViewRoot!);
+    const root = path[path.length - 1].child;
+    const { node, relation } = this.graphStore.createChildNode(root);
+    this.setFocusedNode(relationsToPathStr([...this.currentOutlineViewRoot!, relation]));
+    if (this.graphStore.addAllOutlineDescendantsToThoughtstream) {
+      this.graphStore.addToThoughtstream(node);
+    }
+  }
+
+  private createAndFocusThoughtstreamChildNode() {
+    const { node, relationToThoughtstream } = this.graphStore.createThoughtstreamChild();
+    this.setFocusedNode(
+      relationsToPathStr([this.graphStore.thoughtstreamRootRelationFromUserRoot, relationToThoughtstream]),
+    );
+    if (this.graphStore.addThoughstreamDirectChildrenToOutline) {
+      this.graphStore.createRelation({
+        from: this.graphStore.outlineRoot,
+        to: node,
+        relationType: this.graphStore.relationTypesById.child,
+      });
+    }
+  }
+
+  createAndFocusChildNode() {
+    switch (this.curView) {
+      case ViewType.OUTLINE:
+        this.createAndFocusOutlineChildNode();
+        break;
+      case ViewType.THOUGHTSTREAM:
+        this.createAndFocusThoughtstreamChildNode();
+        break;
+      case ViewType.SPLIT:
+        // Split view should create a child in Thoughtstream
+        this.createAndFocusThoughtstreamChildNode();
+        break;
+    }
   }
 
   private selectionBoxToEvaluate: Box | null = null;

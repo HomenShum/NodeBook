@@ -1,16 +1,14 @@
 import { observer } from "mobx-react-lite";
 import { useCallback, useMemo } from "react";
+import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
-import { useGraphStore } from "../store/useGraphStore";
-import { useViewStore } from "../store/useViewStore";
-import { relationsPathToParentChild, relationsToPathStr } from "../util";
+import { relationsPathToParentChild } from "../util";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
 export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) => {
-  const viewStore = useViewStore();
-  const graphStore = useGraphStore();
+  const viewController = useViewController();
 
-  const relations = viewStore.currentOutlineViewRoot;
+  const relations = viewController.currentOutlineViewRoot;
   if (relations === null) {
     return <div>Root path is null</div>;
   }
@@ -25,23 +23,11 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
   }
 
   const createChild = useCallback(() => {
-    const { node, relation } = graphStore.createChildNode(root);
-    viewStore.setFocusedNode(relationsToPathStr([...relations, relation]));
-    if (graphStore.addAllOutlineDescendantsToThoughtstream) {
-      graphStore.addToThoughtstream(node);
-    }
-  }, [root, graphStore, viewStore, relations]);
+    viewController.createAndFocusChildNode();
+  }, [viewController]);
 
   return (
-    <div
-      className="w-full px-8 flex flex-col gap-4"
-      style={{ maxWidth: 1000 }}
-      onKeyDown={(e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-          createChild();
-        }
-      }}
-    >
+    <div className="w-full px-8 flex flex-col gap-4" style={{ maxWidth: 1000 }}>
       <div className="ml-2">
         <div>
           {path.slice(0, path.length - 1).map(({ relation, child }, i) => {
@@ -50,7 +36,7 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
                 key={relation.id}
                 style={{ cursor: "pointer", userSelect: "none" }}
                 onClick={() => {
-                  viewStore.setCurrentOutlineViewRoot(relations.slice(0, i + 1));
+                  viewController.setCurrentOutlineViewRoot(relations.slice(0, i + 1));
                 }}
               >
                 {child.text} /{" "}
