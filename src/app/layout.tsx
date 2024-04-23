@@ -1,16 +1,16 @@
 "use client";
 import { toJS } from "mobx";
 import { useEffect, useRef, useState } from "react";
+import { ViewController } from "./controller/ViewController";
+import { ViewControllerProvider } from "./controller/useViewController";
 import { env } from "./envFrontend";
 import "./global.css";
 import { GraphStore } from "./model/GraphStore";
-import { ViewStore } from "./model/ViewStore";
 import { GraphStoreProvider } from "./store/useGraphStore";
-import { ViewStoreProvider } from "./store/useViewStore";
 
 // Initialize stores
 const graphStore = new GraphStore();
-const viewStore = new ViewStore(graphStore);
+const viewController = new ViewController(graphStore);
 
 // Expose stores to the window for debugging
 if (typeof window !== "undefined" && env.env !== "production") {
@@ -18,7 +18,7 @@ if (typeof window !== "undefined" && env.env !== "production") {
     env,
     toJS,
     graphStore,
-    viewStore,
+    viewController,
   };
 }
 
@@ -71,9 +71,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <GraphStoreProvider value={graphStore}>
-        <ViewStoreProvider value={viewStore}>
+        <ViewControllerProvider value={viewController}>
           <body>{isLoading ? <div>Loading...</div> : children}</body>
-        </ViewStoreProvider>
+        </ViewControllerProvider>
       </GraphStoreProvider>
     </html>
   );

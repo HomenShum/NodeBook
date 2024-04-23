@@ -39,6 +39,8 @@ export class GraphStore {
   relationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
   pinnedRelationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
 
+  correspondingObjectsForPinned: Map<string, GraphRelation> = new Map();
+  correspondingPinnedForObjects: Map<string, GraphRelation> = new Map();
   /** Relation id to list of bundle-nodes that contain it */
   relationToBundles: Map<string, GraphNode[]> = new Map();
 
@@ -171,6 +173,7 @@ export class GraphStore {
     });
     this.nodesById.set(node.id, node);
     this.relationsByNodeId.set(node.id, new FractionalPositionedList());
+    this.pinnedRelationsByNodeId.set(node.id, new FractionalPositionedList());
     if (node.id === OUTLINE_ROOT_ID) {
       this.outlineRoot = node;
     } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
@@ -221,6 +224,10 @@ export class GraphStore {
       throw new Error(`Node with id ${node.id} already exists`);
     }
     this.nodesById.set(node.id, node);
+
+    const newList = new FractionalPositionedList<GraphRelation>();
+    this.pinnedRelationsByNodeId.set(node.id, newList);
+
     return node;
   }
 
@@ -249,10 +256,65 @@ export class GraphStore {
 
     this.getRelationList(relation.from).add(relation);
     this.getRelationList(relation.to).add(relation);
-    this.getPinnedRelationList(relation.from).add(relation);
-    this.getPinnedRelationList(relation.to).add(relation);
+
+    const newList = new FractionalPositionedList<GraphRelation>();
+    this.pinnedRelationsByNodeId.set(relation.id, newList);
 
     return relation;
+  }
+
+  createPinnedVersionOfRelation(relation: GraphRelation, direction: "from" | "to"): GraphRelation {
+    let pinnedRelation = this.getCorrespondingRelation(relation);
+
+    if (!pinnedRelation) {
+      pinnedRelation = new GraphRelation(this, {
+        from: relation.from,
+        to: relation.to,
+        relationType: relation.relationType,
+      });
+      this.correspondingObjectsForPinned.set(pinnedRelation.id, relation);
+      this.correspondingPinnedForObjects.set(relation.id, pinnedRelation);
+      this.relationsById.set(pinnedRelation.id, pinnedRelation);
+      const newList = new FractionalPositionedList<GraphRelation>();
+      this.pinnedRelationsByNodeId.set(pinnedRelation.id, newList);
+    }
+
+    if (direction === "from") {
+      this.getPinnedRelationList(relation.from).add(pinnedRelation);
+    } else {
+      this.getPinnedRelationList(relation.to).add(pinnedRelation);
+    }
+
+    return relation;
+  }
+
+  unpinRelation(relation: GraphRelation, direction: "from" | "to") {
+    let baseRelation: GraphRelation;
+    let pinnedRelation: GraphRelation;
+    if (this.correspondingObjectsForPinned.has(relation.id)) {
+      baseRelation = this.correspondingObjectsForPinned.get(relation.id)!;
+      pinnedRelation = relation;
+    } else {
+      baseRelation = relation;
+      pinnedRelation = this.correspondingPinnedForObjects.get(relation.id)!;
+    }
+
+    if (this.getPinnedRelationList(relation.from).has(pinnedRelation.id) && direction === "from") {
+      // unpin from the "from" node
+      this.getPinnedRelationList(relation.from).delete(pinnedRelation.id);
+    } else if (this.getPinnedRelationList(relation.to).has(pinnedRelation.id) && direction === "to") {
+      // unpin from the "to" node
+      this.getPinnedRelationList(relation.to).delete(pinnedRelation.id);
+    }
+
+    if (
+      !this.getPinnedRelationList(relation.to).has(pinnedRelation.id) &&
+      !this.getPinnedRelationList(relation.from).has(pinnedRelation.id)
+    ) {
+      // delete the pinned relation if it's no longer referenced anywhere
+      this.pinnedRelationsByNodeId.delete(pinnedRelation.id);
+      this.relationsById.delete(pinnedRelation.id);
+    }
   }
 
   // TODO: this is creating an observable, which might cause issues
@@ -265,11 +327,16 @@ export class GraphStore {
   }
 
   getPinnedRelationList(node: GraphObject): FractionalPositionedList<GraphRelation> {
-    const list = this.pinnedRelationsByNodeId.get(node.id);
-    if (list) return list;
-    const newList = new FractionalPositionedList<GraphRelation>();
-    this.pinnedRelationsByNodeId.set(node.id, newList);
-    return newList;
+    return this.pinnedRelationsByNodeId.get(node.id)!;
+  }
+
+  getCorrespondingRelation(relation: GraphRelation): GraphRelation | null {
+    if (this.correspondingObjectsForPinned.has(relation.id)) {
+      return this.correspondingObjectsForPinned.get(relation.id)!;
+    } else if (this.correspondingPinnedForObjects.has(relation.id)) {
+      return this.correspondingPinnedForObjects.get(relation.id)!;
+    }
+    return null;
   }
 
   deleteRelation(relation: GraphRelation) {
@@ -280,6 +347,18 @@ export class GraphStore {
     this.getRelationList(toNode).delete(relation.id);
     this.getPinnedRelationList(fromNode).delete(relation.id);
     this.getPinnedRelationList(toNode).delete(relation.id);
+
+    if (this.correspondingObjectsForPinned.has(relation.id)) {
+      const correspondingRelation = this.correspondingObjectsForPinned.get(relation.id)!;
+      this.correspondingObjectsForPinned.delete(relation.id);
+      this.correspondingPinnedForObjects.delete(correspondingRelation.id);
+      this.deleteRelation(correspondingRelation);
+    } else if (this.correspondingPinnedForObjects.has(relation.id)) {
+      const correspondingRelation = this.correspondingPinnedForObjects.get(relation.id)!;
+      this.correspondingPinnedForObjects.delete(relation.id);
+      this.correspondingObjectsForPinned.delete(correspondingRelation.id);
+      this.deleteRelation(correspondingRelation);
+    }
 
     // Delete the relation itself
     this.relationsById.delete(relation.id);
@@ -296,7 +375,9 @@ export class GraphStore {
     // remove the relations from their old from nodes
     const oldFrom = relation.from;
     this.getRelationList(oldFrom).delete(relation.id);
-    this.getPinnedRelationList(oldFrom).delete(relation.id);
+    if (this.getPinnedRelationList(oldFrom).has(relation.id)) {
+      this.unpinRelation(relation, "from");
+    }
     // update the relations from property
     relation.setFrom(newFrom);
     // add the relations to the new from node
@@ -313,7 +394,9 @@ export class GraphStore {
     // remove the relations from their old to nodes
     const oldTo = relation.to;
     this.getRelationList(oldTo).delete(relation.id);
-    this.getPinnedRelationList(oldTo).delete(relation.id);
+    if (this.getPinnedRelationList(oldTo).has(relation.id)) {
+      this.unpinRelation(relation, "to");
+    }
     // update the relations to property
     relation.setTo(newTo);
     // add the relations to the new to node
@@ -334,11 +417,22 @@ export class GraphStore {
     const { from, to } = relation;
     relation.from = to;
     relation.to = from;
+
+    const correspondingRelation = this.getCorrespondingRelation(relation);
+    if (correspondingRelation) {
+      correspondingRelation.to = from;
+      correspondingRelation.from = to;
+    }
     return relation;
   }
 
   updateRelationsType(relation: GraphRelation, newType: GraphRelationType): GraphRelation {
     relation.relationType = newType;
+    const correspondingRelation = this.getCorrespondingRelation(relation);
+    if (correspondingRelation) {
+      correspondingRelation.relationType = newType;
+    }
+
     return relation;
   }
 
@@ -493,6 +587,8 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationsByNodeId = serializeMap(this.relationsByNodeId);
     const pinnedRelationsByNodeId = serializeMap(this.pinnedRelationsByNodeId);
+    const correspondingObjectsForPinned = serializeMap(this.correspondingObjectsForPinned);
+    const correspondingPinnedForObjects = serializeMap(this.correspondingPinnedForObjects);
     const relationTypesById = toJS(this.relationTypesById);
 
     return {
@@ -502,6 +598,8 @@ export class GraphStore {
       relationsByNodeId,
       pinnedRelationsByNodeId,
       pathData: Object.fromEntries(this.pathData.entries()),
+      correspondingObjectsForPinned,
+      correspondingPinnedForObjects,
     };
   }
 
@@ -556,6 +654,22 @@ export class GraphStore {
       );
     }
 
+    const correspondingObjectsForPinned = new Map<string, GraphRelation>();
+    for (const [key, value] of Object.entries(data.correspondingObjectsForPinned)) {
+      correspondingObjectsForPinned.set(
+        key,
+        GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
+      );
+    }
+
+    const correspondingPinnedForObjects = new Map<string, GraphRelation>();
+    for (const [key, value] of Object.entries(data.correspondingPinnedForObjects)) {
+      correspondingPinnedForObjects.set(
+        key,
+        GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
+      );
+    }
+
     const pathData = new Map<Path, PathData>();
     for (const [key, value] of Object.entries(data.pathData)) {
       pathData.set(key, value);
@@ -567,5 +681,7 @@ export class GraphStore {
     this.relationsByNodeId = relationsByNodeId;
     this.pinnedRelationsByNodeId = pinnedRelationsByNodeId;
     this.pathData = pathData;
+    this.correspondingObjectsForPinned = correspondingObjectsForPinned;
+    this.correspondingPinnedForObjects = correspondingPinnedForObjects;
   }
 }

@@ -11,6 +11,9 @@ export interface GraphObject {
   relationsWithPositions: PositionedRelation[];
   relationsSortedByPosition: GraphRelation[];
   children: GraphObject[];
+
+  // pinned objects
+  pinnedRelationsWithPositions: PositionedRelation[];
   pinChildRelation(relation: GraphRelation): void;
   unpinChildRelation(relation: GraphRelation): void;
   isRelationPinned(relation: GraphRelation): boolean;

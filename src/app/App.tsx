@@ -9,20 +9,21 @@ import { DevTools } from "./components/dev/DevTools";
 import { NodeTable } from "./components/dev/NodeTable";
 import { RelationTable } from "./components/dev/RelationTable";
 import { RelationTypeTable } from "./components/dev/RelationTypeTable";
-import { ViewType } from "./model/ViewStore";
-import { useViewStore } from "./store/useViewStore";
+import { ViewType } from "./controller/ViewController";
+import { useKeyboardShortcuts } from "./controller/useKeyboardShortcuts";
+import { useViewController } from "./controller/useViewController";
 
 const App = observer(() => {
   const appContainerRef = useRef<HTMLDivElement>(null);
-  // useKeyboardShortcuts();
-  const viewStore = useViewStore();
+  const viewController = useViewController();
+  useKeyboardShortcuts();
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <div className="App">
       <div ref={appContainerRef} className="flex flex-col h-full relative">
         <header className="flex justify-center items-center px-2 py-4 border-b">
-          <button onClick={() => viewStore.toggleLeftSidebar()}>
+          <button onClick={() => viewController.toggleLeftSidebar()}>
             <Sidebar size={20} />
           </button>
           <div className="flex-1 flex justify-center">
@@ -31,40 +32,40 @@ const App = observer(() => {
               placeholder="Search..."
               className="bg-gray-100 px-2 py-1 rounded-lg my-1 min-w-64"
               value={searchQuery}
-              onFocus={() => viewStore.setFocusedNode(null)}
+              onFocus={() => viewController.setFocusedNode(null)}
               onChange={(e) => setSearchQuery(e.target.value)}
             ></input>
           </div>
-          <button onClick={() => viewStore.toggleRightSidebar()}>
+          <button onClick={() => viewController.toggleRightSidebar()}>
             <Sidebar size={20} className="transform rotate-180" />
           </button>
         </header>
         <div className="flex flex-row flex-1">
-          {viewStore.leftSidebarOpen && (
+          {viewController.leftSidebarOpen && (
             <aside className="flex flex-col w-1/6 bg-[--teal-2] border-r">
               <div className="flex flex-col p-2 align-left">
                 {/* highlight if active */}
                 <button
                   className={`text-left px-2 py-1 hover:bg-[--teal-3] ${
-                    viewStore.curView === ViewType.OUTLINE ? "bg-[--teal-4]" : ""
+                    viewController.curView === ViewType.OUTLINE ? "bg-[--teal-4]" : ""
                   }`}
-                  onClick={() => viewStore.setView(ViewType.OUTLINE)}
+                  onClick={() => viewController.setView(ViewType.OUTLINE)}
                 >
                   Outline view
                 </button>
                 <button
                   className={`text-left px-2 py-1 hover:bg-[--teal-3] ${
-                    viewStore.curView === ViewType.THOUGHTSTREAM ? "bg-[--teal-4]" : ""
+                    viewController.curView === ViewType.THOUGHTSTREAM ? "bg-[--teal-4]" : ""
                   }`}
-                  onClick={() => viewStore.setView(ViewType.THOUGHTSTREAM)}
+                  onClick={() => viewController.setView(ViewType.THOUGHTSTREAM)}
                 >
                   Thoughtstream view
                 </button>
                 <button
                   className={`text-left px-2 py-1 hover:bg-[--teal-3] ${
-                    viewStore.curView === ViewType.SPLIT ? "bg-[--teal-4]" : ""
+                    viewController.curView === ViewType.SPLIT ? "bg-[--teal-4]" : ""
                   }`}
-                  onClick={() => viewStore.setView(ViewType.SPLIT)}
+                  onClick={() => viewController.setView(ViewType.SPLIT)}
                 >
                   Split view
                 </button>
@@ -73,18 +74,18 @@ const App = observer(() => {
           )}
           <main className="flex flex-1">
             <div className="m-4 w-full">
-              {viewStore.curView === ViewType.OUTLINE ? (
+              {viewController.curView === ViewType.OUTLINE ? (
                 <div className="flex flex-col h-full items-center">
                   <OutlineView searchQuery={searchQuery} />
                 </div>
-              ) : viewStore.curView === ViewType.THOUGHTSTREAM ? (
+              ) : viewController.curView === ViewType.THOUGHTSTREAM ? (
                 <ThoughtstreamView searchQuery={searchQuery} />
               ) : (
                 <SplitView searchQuery={searchQuery} />
               )}
             </div>
           </main>
-          {viewStore.rightSidebarOpen && (
+          {viewController.rightSidebarOpen && (
             <aside className="w-1/3 bg-gray-100 border-l overflow-y-auto">
               <DevTools />
               <NodeTable />

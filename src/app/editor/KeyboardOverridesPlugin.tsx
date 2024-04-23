@@ -13,14 +13,14 @@ import {
 import { action } from "mobx";
 import { useEffect } from "react";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
+import { useViewController } from "../controller/useViewController";
 import { GraphNode } from "../model/GraphNode";
 import { useGraphStore } from "../store/useGraphStore";
-import { useViewStore } from "../store/useViewStore";
 import { relationsToPathStr } from "../util";
 
 export const KeyboardOverridesPlugin = () => {
   const graphStore = useGraphStore();
-  const viewStore = useViewStore();
+  const viewController = useViewController();
   const [editor] = useLexicalComposerContext();
   const {
     object,
@@ -64,7 +64,7 @@ export const KeyboardOverridesPlugin = () => {
             graphStore.addToThoughtstream(newNode);
           }
 
-          viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
+          viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
           return true;
         }),
         COMMAND_PRIORITY_LOW,
@@ -145,7 +145,7 @@ export const KeyboardOverridesPlugin = () => {
             }
             // Position the relation under the parent
             graphStore.getRelationList(grandparentNode).move([relation], parentRelation);
-            viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), relation]));
+            viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), relation]));
             return true;
           } else {
             if (!siblingAbove) {
@@ -165,7 +165,7 @@ export const KeyboardOverridesPlugin = () => {
             const relationPathToSibling = [...pathToParentRelations, siblingAbove];
             graphStore.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
             // set focus at the relations new path
-            viewStore.setFocusedNode(relationsToPathStr([...relationPathToSibling, relation]));
+            viewController.setFocusedNode(relationsToPathStr([...relationPathToSibling, relation]));
             return true;
           }
         }),
@@ -181,9 +181,9 @@ export const KeyboardOverridesPlugin = () => {
             if (parentRelation) {
               graphStore.deleteRelation(relation);
               if (siblingAbove) {
-                viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]));
+                viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]));
               } else {
-                viewStore.setFocusedNode(relationsToPathStr(pathToParentRelations));
+                viewController.setFocusedNode(relationsToPathStr(pathToParentRelations));
               }
               return true;
             }
@@ -197,7 +197,7 @@ export const KeyboardOverridesPlugin = () => {
         (event) => {
           event.preventDefault();
           if (!siblingBelow) return false;
-          viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingBelow]));
+          viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingBelow]));
           return true;
         },
         COMMAND_PRIORITY_LOW,
@@ -207,7 +207,7 @@ export const KeyboardOverridesPlugin = () => {
         (event) => {
           event.preventDefault();
           if (!siblingAbove) return false;
-          viewStore.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]));
+          viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]));
           return true;
         },
         COMMAND_PRIORITY_LOW,
@@ -223,6 +223,8 @@ export const KeyboardOverridesPlugin = () => {
     siblingBelow,
     object,
     parent,
+    viewController,
+    setReplacing,
   ]);
   return null;
 };
