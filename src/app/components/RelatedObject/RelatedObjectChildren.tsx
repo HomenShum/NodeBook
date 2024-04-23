@@ -2,6 +2,7 @@ import { ViewController } from "@/app/controller/ViewController";
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
+import { SearchResult } from "@/app/store/search";
 import { PathLink, comparePositions, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
@@ -15,7 +16,7 @@ export const RelatedObjectChildren = observer(
     searchResult,
   }: {
     pathToParentRelations: GraphRelation[];
-    searchResult?: Map<string, boolean>;
+    searchResult?: Map<string, SearchResult>;
   }) => {
     const viewController = useViewController();
     const depth = pathToParentRelations.length;
@@ -79,7 +80,7 @@ export const RelatedObjectChildren = observer(
 export const getFilteredChildrenAtPath = (
   path: PathLink[],
   viewController: ViewController,
-  searchResult: Map<string, boolean> | undefined,
+  searchResult: Map<string, SearchResult> | undefined,
   pinned: boolean,
 ) => {
   if (path.length === 0) {
@@ -98,11 +99,13 @@ export const getFilteredChildrenAtPath = (
       } else {
         throw new Error("Relation does not connect to parent");
       }
+
+      const objectCount = path.reduce((acc, { child }) => (child.id === childNode.id ? acc + 1 : acc), 0);
       const isBundle = childNode instanceof GraphNode && childNode.isBundle;
       return (
         !(viewController.hideBundles && isBundle) &&
         filterFocusedNodesRelations(viewController, relation, childNode, grandparent) &&
-        (!searchResult || searchResult.get(childNode.id))
+        (!searchResult || (searchResult.get(childNode.id)!.display && objectCount === 0))
       );
     });
 };
