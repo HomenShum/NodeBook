@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useEffect } from "react";
-import { useViewController } from "../controller/useViewController";
+import { useViewController } from "../../controller/useViewController";
 
 export const ViewControllerRegistryPlugin = ({ pathToNodeStr }: { pathToNodeStr: string }) => {
   const viewController = useViewController();

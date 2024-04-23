@@ -12,11 +12,11 @@ import {
 } from "lexical";
 import { action } from "mobx";
 import { useEffect } from "react";
-import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "../controller/useViewController";
-import { GraphNode } from "../model/GraphNode";
-import { useGraphStore } from "../store/useGraphStore";
-import { relationsToPathStr } from "../util";
+import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
+import { useViewController } from "../../controller/useViewController";
+import { GraphNode } from "../../model/GraphNode";
+import { useGraphStore } from "../../store/useGraphStore";
+import { relationsToPathStr } from "../../util";
 
 export const KeyboardOverridesPlugin = () => {
   const graphStore = useGraphStore();

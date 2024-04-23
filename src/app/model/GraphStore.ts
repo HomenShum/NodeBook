@@ -288,6 +288,20 @@ export class GraphStore {
     return relation;
   }
 
+  /**
+   * Finds the first relation type whose label (or reverseLabel) matches the provided text.
+   *
+   * TODO: think about how this should be handled long term.
+   */
+  getRelationTypeByLabel(labelText: string): GraphRelationType | null {
+    for (const [_, type] of Object.entries(this.relationTypesById)) {
+      if (type.label === labelText || type.reverseLabel === labelText) {
+        return type;
+      }
+    }
+    return null;
+  }
+
   unpinRelation(relation: GraphRelation, direction: "from" | "to") {
     let baseRelation: GraphRelation;
     let pinnedRelation: GraphRelation;
