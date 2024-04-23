@@ -10,7 +10,13 @@ export type Chip = {
   value: string;
 };
 
-export type GraphNodeProps = { id?: string; content?: Chip[] | string; createdAt?: Date; isBundle?: boolean };
+export type GraphNodeProps = {
+  id?: string;
+  content?: Chip[] | string;
+  createdAt?: Date;
+  isBundle?: boolean;
+  isZone?: boolean;
+};
 
 export type RelativePositionProps = {
   target?: GraphRelation;
@@ -28,15 +34,17 @@ export class GraphNode implements Serializable, GraphObject {
   createdAt: Date;
   type = "node" as const;
   isBundle: boolean;
+  isZone: boolean;
 
   constructor(
     private store: GraphStore,
-    { id = uuid(), content = [], createdAt = new Date(), isBundle = false }: GraphNodeProps,
+    { id = uuid(), content = [], createdAt = new Date(), isBundle = false, isZone = false }: GraphNodeProps,
   ) {
     this.id = id;
     this.content = typeof content === "string" ? [{ type: "text", value: content }] : content;
     this.createdAt = createdAt;
     this.isBundle = isBundle;
+    this.isZone = isZone;
     makeAutoObservable(this);
   }
 
@@ -46,6 +54,14 @@ export class GraphNode implements Serializable, GraphObject {
 
   setIsBundle(isBundle: boolean) {
     this.isBundle = isBundle;
+  }
+
+  toggleZone() {
+    this.isZone = !this.isZone;
+  }
+
+  setIsZone(isZone: boolean) {
+    this.isZone = isZone;
   }
 
   get allRelationsList() {
@@ -135,6 +151,7 @@ export class GraphNode implements Serializable, GraphObject {
       createdAt: this.createdAt,
       content: this.content,
       isBundle: this.isBundle,
+      isZone: this.isZone,
     };
   }
 
@@ -144,6 +161,7 @@ export class GraphNode implements Serializable, GraphObject {
       content: data.content,
       createdAt: new Date(data.createdAt),
       isBundle: data.isBundle,
+      isZone: data.isZone,
     });
   }
 }

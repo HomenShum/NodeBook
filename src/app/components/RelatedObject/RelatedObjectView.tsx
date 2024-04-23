@@ -198,12 +198,19 @@ const RelatedObjectMenu = observer(
           ) : (
             <DropdownMenuItem onSelect={() => parent.pinChildRelation(relation)}>Pin</DropdownMenuItem>
           )}
-          {/* make bundle */}
+          {/* toggle bundle */}
           {object instanceof GraphNode &&
             (object.isBundle ? (
-              <DropdownMenuItem onSelect={() => object.setIsBundle(false)}>Unbundle</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => object.setIsBundle(false)}>unset as bundle</DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onSelect={() => object.setIsBundle(true)}>Bundle</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => object.setIsBundle(true)}>set as bundle</DropdownMenuItem>
+            ))}
+          {/* toggle zone */}
+          {object instanceof GraphNode &&
+            (object.isZone ? (
+              <DropdownMenuItem onSelect={() => object.setIsZone(false)}>unset as zone</DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onSelect={() => object.setIsZone(true)}>set as zone</DropdownMenuItem>
             ))}
           <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>Change relation type</DropdownMenuItem>
           <DropdownMenuItem
@@ -251,6 +258,23 @@ const RelatedObjectDetails = observer(() => {
   const graphStore = useGraphStore();
   const { object, relation, position } = useRelationAtPath();
   const bundles = graphStore.relationToBundles.get(relation.id);
+
+  const parentZones = Array.from(
+    new Set(
+      relation.relations
+        .filter(
+          (r) =>
+            // is parent relation
+            r.relationType.id === defaultRelationTypes.child.id &&
+            r.to.id === relation.id &&
+            // and parent is a zone
+            r.from instanceof GraphNode &&
+            r.from.isZone,
+        )
+        .map((r) => r.from),
+    ),
+  );
+
   return (
     <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
       {position && (
@@ -261,8 +285,12 @@ const RelatedObjectDetails = observer(() => {
       <span style={{ color: "gray" }}>id: {object.id}</span>
       <span style={{ color: "gray" }}>relationId: {relation.id}</span>
       <span style={{ color: "gray" }}>createdAt: {object.createdAt.toISOString()}</span>
-      {object instanceof GraphNode && object.isBundle && <span style={{ color: "gray" }}>BUNDLE</span>}
+      {object instanceof GraphNode && object.isBundle && <span style={{ color: "gray" }}>#BUNDLE</span>}
+      {object instanceof GraphNode && object.isZone && <span style={{ color: "gray" }}>#ZONE</span>}
       {bundles && <span style={{ color: "gray" }}>part of bundle: {bundles.map((b) => b.id).join(", ")}</span>}
+      {parentZones.length > 0 && (
+        <span style={{ color: "gray" }}>zones: {parentZones.map((z) => `${z.id}:"${z.text}"`).join(", ")}</span>
+      )}
     </div>
   );
 });
@@ -296,12 +324,17 @@ function ReplaceRelatedNodeView() {
   const ref = useRef<HTMLDivElement>(null);
   const { object: currentObject, setViewType, relation, pathToParentRelations } = useRelationAtPath();
   const { optionsFlat: options, optionsGrouped } = useMemo(() => {
+    const keywords = filter.split(/\s+/);
     const nodeOptions = graph.nodes.filter(
-      (node) => node.id !== currentObject.id && node.text.toLowerCase().includes(filter.toLowerCase()),
+      (node) =>
+        node.id !== currentObject.id &&
+        keywords.every((keyword) => node.text.toLowerCase().includes(keyword.toLowerCase())),
     );
     const relationOptions = graph.relations.filter(
       (r) =>
-        r.id !== currentObject.id && r.id !== relation.id && r.text.toLocaleLowerCase().includes(filter.toLowerCase()),
+        r.id !== currentObject.id &&
+        r.id !== relation.id &&
+        keywords.every((keyword) => r.text.toLowerCase().includes(keyword.toLowerCase())),
     );
     const optionsGrouped: {
       type: "nodes" | "relations";
