@@ -105,7 +105,8 @@ export const getFilteredChildrenAtPath = (
       return (
         !(viewController.hideBundles && isBundle) &&
         filterFocusedNodesRelations(viewController, relation, childNode, grandparent) &&
-        (!searchResult || (searchResult.get(childNode.id)!.display && objectCount === 0))
+        (!searchResult ||
+          (searchResult.get(childNode.id) && searchResult.get(childNode.id)!.display && objectCount === 0))
       );
     });
 };
