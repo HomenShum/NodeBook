@@ -1,5 +1,5 @@
 "use client";
-import { Sidebar } from "lucide-react";
+import { Sidebar, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRef, useState } from "react";
 import { OutlineView } from "./components/OutlineView";
@@ -27,14 +27,21 @@ const App = observer(() => {
             <Sidebar size={20} />
           </button>
           <div className="flex-1 flex justify-center">
-            <input
-              type="text"
-              placeholder="Search..."
-              className="bg-gray-100 px-2 py-1 rounded-lg my-1 min-w-64"
-              value={searchQuery}
-              onFocus={() => viewController.setFocusedNode(null)}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            ></input>
+            <div className="bg-gray-100 pl-2 pr-1 py-1 rounded-lg my-1 min-w-64 flex justify-center">
+              <input
+                type="text"
+                placeholder="Search..."
+                className="bg-gray-100 focus:outline-none flex-1"
+                value={searchQuery}
+                onFocus={() => viewController.setFocusedNode(null)}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              ></input>
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")}>
+                  <X className="text-gray-400"></X>
+                </button>
+              )}
+            </div>
           </div>
           <button onClick={() => viewController.toggleRightSidebar()}>
             <Sidebar size={20} className="transform rotate-180" />
