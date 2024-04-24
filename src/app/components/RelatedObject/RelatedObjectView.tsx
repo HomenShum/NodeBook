@@ -107,7 +107,7 @@ export const RelatedObjectView = observer(
                 <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
                 {hasChildren && isHovered && <Toggle />}
               </div>
-              <div className="w-6 relative h-4">
+              <div className="w-4 relative right-2 h-4">
                 {hasChildren && !displayChildren && (
                   <Dot stroke="#ddd" height={16} strokeWidth={17} className={cn("cursor-pointer absolute top-0")} />
                 )}
@@ -310,6 +310,7 @@ const Toggle = observer(() => {
         cursor: "pointer",
         userSelect: "none",
       }}
+      className="relative right-1"
       onClick={() => graphStore.togglePathExpanded(pathToNodeStr)}
     >
       {isExpanded ? "▼" : "▶"}
