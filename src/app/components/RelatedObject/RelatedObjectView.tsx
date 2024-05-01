@@ -1,4 +1,4 @@
-import { Dot, Ellipsis } from "lucide-react";
+import { Circle, Dot, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useViewController } from "../../controller/useViewController";
 import { Editor } from "../../editor/Editor";
@@ -111,13 +111,24 @@ export const RelatedObjectView = observer(
                 {hasChildren && !displayChildren && (
                   <Dot stroke="#ddd" height={16} strokeWidth={17} className={cn("cursor-pointer absolute top-0")} />
                 )}
-                <Dot
-                  strokeWidth={5}
-                  color="#596567"
-                  height={16}
-                  className={cn("cursor-pointer absolute top-0")}
-                  onClick={() => viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation])}
-                />
+                {isChild && (
+                  <Dot
+                    strokeWidth={5}
+                    color="#596567"
+                    height={16}
+                    className={cn("cursor-pointer absolute top-0")}
+                    onClick={() => viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation])}
+                  />
+                )}
+                {!isChild && (
+                  <Circle
+                    strokeWidth={6}
+                    color="#596567"
+                    height={8}
+                    className={cn("cursor-pointer absolute top-1")}
+                    onClick={() => viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation])}
+                  />
+                )}
               </div>
               {/* relation and node */}
               <div className="flex flex-col flex-1">
