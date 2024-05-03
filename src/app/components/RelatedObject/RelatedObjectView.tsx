@@ -1,4 +1,4 @@
-import { Circle, Dot, Ellipsis } from "lucide-react";
+import { Circle, Dot, Ellipsis, Pin } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useViewController } from "../../controller/useViewController";
 import { Editor } from "../../editor/Editor";
@@ -105,11 +105,24 @@ export const RelatedObjectView = observer(
               {/* toggle, bullet, menu */}
               <div className="flex items-center gap-1 absolute right-full">
                 <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
+                {parent.isRelationPinned(relation) && graphStore.correspondingPinnedForObjects.has(relation.id) && (
+                  <Pin
+                    height={16}
+                    stroke="#596567"
+                    className="cursor-pointer"
+                    onClick={() => parent.unpinChildRelation(relation)}
+                  />
+                )}
                 {hasChildren && isHovered && <Toggle />}
               </div>
-              <div className="w-4 relative right-2 h-4">
+              <div className="w-4 relative right-2 h-4 flex">
                 {hasChildren && !displayChildren && (
-                  <Dot stroke="#ddd" height={16} strokeWidth={17} className={cn("cursor-pointer absolute top-0")} />
+                  <Dot
+                    stroke="#ddd"
+                    height={16}
+                    strokeWidth={17}
+                    className={cn("cursor-pointer absolute top-0 left-0")}
+                  />
                 )}
                 {isChild && (
                   <Dot
