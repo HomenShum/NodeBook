@@ -49,7 +49,7 @@ const App = observer(() => {
         </header>
         <div className="flex flex-row flex-1">
           {viewController.leftSidebarOpen && (
-            <aside className="flex flex-col w-1/6 bg-[--teal-2] border-r">
+            <aside className="flex flex-col w-1/6 bg-[--teal-2] border-r z-10">
               <div className="flex flex-col p-2 align-left">
                 {/* highlight if active */}
                 <button

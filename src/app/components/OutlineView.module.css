@@ -1,0 +1,34 @@
+.OutlineView {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 4px;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.OutlineObject {
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+}
+
+.OutlineObject.Selected {
+  background-color: skyblue;
+}
+
+.OutlineObjectContent {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  position: relative;
+  padding: 0.3rem 0;
+}
+
+.OutlineObjectLeftArea {
+  position: absolute;
+  height: 100%;
+  width: 500px;
+  right: 100%;
+}

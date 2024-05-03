@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
 import { relationsPathToParentChild } from "../util";
+import styles from "./OutlineView.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
 export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) => {
@@ -27,7 +28,7 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
   }, [viewController]);
 
   return (
-    <div className="w-full px-8 flex flex-col gap-4" style={{ maxWidth: 1000 }}>
+    <div className={styles.OutlineView}>
       <div className="ml-2">
         <div>
           {path.slice(0, path.length - 1).map(({ relation, child }, i) => {

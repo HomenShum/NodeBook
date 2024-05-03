@@ -34,11 +34,6 @@ export const RelatedObjectChildren = observer(
     let lastBundleId: string | undefined;
     return (
       <div className={depth > 0 ? "ml-5" : ""}>
-        {/* {bundles.length > 0 ? (
-          <BulletListWithBundles bullets={children} parents={parents} depth={depth} />
-        ) : (
-          <BulletList bullets={children} parents={parents} depth={depth} />
-        )} */}
         <div className={cn(pinnedChildren.length > 0 && "border-red-500 border-b")}>
           {pinnedChildren.map(({ relation: childRelation, position }, i) => {
             return (

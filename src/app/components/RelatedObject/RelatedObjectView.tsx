@@ -20,6 +20,7 @@ import { Position, relationsPathToParentChild, relationsToPathStr } from "@/app/
 import { cn } from "@/lib/utils";
 import { action } from "mobx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import styles from "../OutlineView.module.css";
 import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
 import { RelationCombobox } from "./RelationCombobox";
@@ -82,7 +83,7 @@ export const RelatedObjectView = observer(
 
     return (
       <>
-        <div id={pathToNodeStr} className={cn("flex flex-col align-start", isSelected ? "bg-sky-200" : "")}>
+        <div id={pathToNodeStr} className={cn(styles.OutlineObject, isSelected && styles.Selected)}>
           <RelationAtPathProvider
             value={{
               pathToParentRelations,
@@ -99,10 +100,11 @@ export const RelatedObjectView = observer(
             }}
           >
             <div
-              className="flex items-center gap-1 my-1 relative"
+              className={styles.OutlineObjectContent}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
+              <div className={styles.OutlineObjectLeftArea} />
               {/* toggle, bullet, menu */}
               <div className="flex items-center gap-1 absolute right-full">
                 <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
