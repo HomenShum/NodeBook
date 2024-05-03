@@ -121,6 +121,15 @@ export const DevTools = observer(() => {
           />
           Hide bullets in thoughtstream view
         </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={viewController.hideBulletBackgroundIfParentsOnly}
+            onChange={(e) => viewController.setHideBulletBackgroundIfParentsOnly(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Hide bullet backgrounds if it contains only parents
+        </label>
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"

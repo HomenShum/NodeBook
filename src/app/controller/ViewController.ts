@@ -35,6 +35,7 @@ export class ViewController {
   public hideZones = false;
   public showAtSignOnMention = false;
   public hideThoughtstreamBullets = false;
+  public hideBulletBackgroundIfParentsOnly = true;
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -126,6 +127,10 @@ export class ViewController {
 
   setHideThoughtstreamBullets(hide: boolean) {
     this.hideThoughtstreamBullets = hide;
+  }
+
+  setHideBulletBackgroundIfParentsOnly(hide: boolean) {
+    this.hideBulletBackgroundIfParentsOnly = hide;
   }
 
   registerEditor(pathStr: Path, editor: LexicalEditor) {

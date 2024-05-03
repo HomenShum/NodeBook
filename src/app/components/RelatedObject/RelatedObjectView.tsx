@@ -59,6 +59,8 @@ export const RelatedObjectView = observer(
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
     const hasChildren = getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false).length > 0;
+    const hasTrueChildren =
+      getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false, true).length > 0;
 
     // const isSelected = viewController.selectedNodes.has(bullet);
     const isSelected = false;
@@ -124,14 +126,16 @@ export const RelatedObjectView = observer(
                   viewController.hideThoughtstreamBullets && parent === graphStore.thoughtstreamRoot && "hidden",
                 )}
               >
-                {hasChildren && !displayChildren && (
-                  <Dot
-                    stroke="#ddd"
-                    height={16}
-                    strokeWidth={17}
-                    className={cn("cursor-pointer absolute top-0 left-0")}
-                  />
-                )}
+                {hasChildren &&
+                  !displayChildren &&
+                  (!viewController.hideBulletBackgroundIfParentsOnly || hasTrueChildren) && (
+                    <Dot
+                      stroke="#ddd"
+                      height={16}
+                      strokeWidth={17}
+                      className={cn("cursor-pointer absolute top-0 left-0")}
+                    />
+                  )}
                 {isChild && (
                   <Dot
                     strokeWidth={5}
@@ -284,7 +288,7 @@ const RelatedObjectEditor = observer(() => {
         display: "flex",
         alignItems: "flex-start",
         flex: 1,
-        color: hasNonChildRelation ? "#2f3a90" : undefined,
+        color: hasNonChildRelation ? "#09acec" : undefined,
         textDecoration: hasNonChildRelation ? "underline" : undefined,
       }}
     >
