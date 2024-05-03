@@ -133,10 +133,10 @@ export const RelatedObjectView = observer(
                     height={8}
                     className={cn("cursor-pointer absolute top-1")}
                     onClick={() => {
+                      viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
                       if (viewController.curView === ViewType.THOUGHTSTREAM) {
                         viewController.setView(ViewType.OUTLINE);
                       }
-                      viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
                     }}
                   />
                 )}
