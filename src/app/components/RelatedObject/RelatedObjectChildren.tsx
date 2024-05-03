@@ -77,6 +77,7 @@ export const getFilteredChildrenAtPath = (
   viewController: ViewController,
   searchResult: Map<string, SearchResult> | undefined,
   pinned: boolean,
+  strict: boolean = false,
 ) => {
   if (path.length === 0) {
     return [];
@@ -93,6 +94,7 @@ export const getFilteredChildrenAtPath = (
       if (relation.from.id === node.id) {
         childNode = relation.to;
       } else if (relation.to.id === node.id) {
+        if (strict) return false;
         childNode = relation.from;
       } else {
         throw new Error("Relation does not connect to parent");

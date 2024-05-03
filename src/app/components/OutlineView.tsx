@@ -33,14 +33,17 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
         <div>
           {path.slice(0, path.length - 1).map(({ relation, child }, i) => {
             return (
-              <span
-                key={relation.id}
-                style={{ cursor: "pointer", userSelect: "none" }}
-                onClick={() => {
-                  viewController.setCurrentOutlineViewRoot(relations.slice(0, i + 1));
-                }}
-              >
-                {child.text} /{" "}
+              <span className="text-gray-400" key={relation.id}>
+                <span
+                  style={{ userSelect: "none" }}
+                  className="cursor-pointer underline"
+                  onClick={() => {
+                    viewController.setCurrentOutlineViewRoot(relations.slice(0, i + 1));
+                  }}
+                >
+                  {child.text}
+                </span>
+                {" / "}
               </span>
             );
           })}
