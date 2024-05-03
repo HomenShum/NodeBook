@@ -103,6 +103,15 @@ export const DevTools = observer(() => {
           />
           Add thoughtstream nested children as direct children of thoughtstream
         </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={viewController.hideThoughtstreamBullets}
+            onChange={(e) => viewController.setHideThoughtstreamBullets(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Hide bullets in thoughtstream view
+        </label>
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"

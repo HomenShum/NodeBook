@@ -61,7 +61,7 @@ export const RelatedObjectChildren = observer(
           lastBundleId = firstBundle?.id;
           return (
             <div key={relationsToPathStr([...pathToParentRelations, childRelation])}>
-              {newBundle && <div className="border-t border-black" />}
+              {newBundle && <div className="border-t border-grey-400 border-dashed" />}
               <RelatedObjectView
                 path={[...pathToParentRelations, childRelation]}
                 position={position}

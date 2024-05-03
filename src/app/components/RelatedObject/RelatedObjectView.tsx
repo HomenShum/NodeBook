@@ -116,7 +116,12 @@ export const RelatedObjectView = observer(
                 )}
                 {hasChildren && isHovered && <Toggle />}
               </div>
-              <div className="w-4 relative right-2 h-4 flex">
+              <div
+                className={cn(
+                  "w-4 relative right-2 h-4 flex",
+                  viewController.hideThoughtstreamBullets && parent === graphStore.thoughtstreamRoot && "hidden",
+                )}
+              >
                 {hasChildren && !displayChildren && (
                   <Dot
                     stroke="#ddd"
@@ -209,7 +214,7 @@ const RelatedObjectMenu = observer(
           >
             Delete relation
           </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setViewType("replace")}>Replace related node</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setViewType("replace")}>Replace related object</DropdownMenuItem>
           {viewType !== "search-or-create" && (
             <DropdownMenuItem
               onSelect={() => {

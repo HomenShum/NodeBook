@@ -33,6 +33,7 @@ export class ViewController {
   public hideBackrelations = false;
   public hideBundles = true;
   public hideZones = false;
+  public hideThoughtstreamBullets = false;
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -116,6 +117,10 @@ export class ViewController {
 
   setHideZones(show: boolean) {
     this.hideZones = show;
+  }
+
+  setHideThoughtstreamBullets(hide: boolean) {
+    this.hideThoughtstreamBullets = hide;
   }
 
   registerEditor(pathStr: Path, editor: LexicalEditor) {
