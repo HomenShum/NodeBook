@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
+import { ViewType } from "@/app/controller/ViewController";
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { GraphRelation } from "@/app/model/GraphRelation";
@@ -117,7 +118,12 @@ export const RelatedObjectView = observer(
                     color="#596567"
                     height={16}
                     className={cn("cursor-pointer absolute top-0")}
-                    onClick={() => viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation])}
+                    onClick={() => {
+                      viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+                      if (viewController.curView === ViewType.THOUGHTSTREAM) {
+                        viewController.setView(ViewType.OUTLINE);
+                      }
+                    }}
                   />
                 )}
                 {!isChild && (
@@ -126,7 +132,12 @@ export const RelatedObjectView = observer(
                     color="#596567"
                     height={8}
                     className={cn("cursor-pointer absolute top-1")}
-                    onClick={() => viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation])}
+                    onClick={() => {
+                      if (viewController.curView === ViewType.THOUGHTSTREAM) {
+                        viewController.setView(ViewType.OUTLINE);
+                      }
+                      viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+                    }}
                   />
                 )}
               </div>
