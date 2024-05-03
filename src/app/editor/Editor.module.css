@@ -2,6 +2,19 @@
   position: relative;
   width: 100%;
   flex: 1;
+  --descendant-content: "";
+}
+
+.EditorWrapper.showAtSignPrefix {
+  --descendant-content: "@";
+}
+
+.MentionNode {
+  background-color: rgba(24, 119, 232, 0.2);
+}
+
+.MentionNode::before {
+  content: var(--descendant-content);
 }
 
 .EditorWrapper p {

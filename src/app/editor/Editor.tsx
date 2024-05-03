@@ -1,11 +1,14 @@
 import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 
+import { cn } from "@/lib/utils";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { observer } from "mobx-react-lite";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
+import { useViewController } from "../controller/useViewController";
 import { GraphNode } from "../model/GraphNode";
 import { MentionNode } from "../model/MentionNode";
 import styles from "./Editor.module.css";
@@ -27,7 +30,8 @@ const onError = (error: any) => {
   console.error(error);
 };
 
-export const Editor = () => {
+export const Editor = observer(() => {
+  const view = useViewController();
   const { object: node, pathToNodeStr } = useRelationAtPath();
   if (!(node instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
@@ -46,7 +50,7 @@ export const Editor = () => {
   };
 
   return (
-    <div className={styles.EditorWrapper}>
+    <div className={cn(styles.EditorWrapper, view.showAtSignOnMention && styles.showAtSignPrefix)}>
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
@@ -63,4 +67,4 @@ export const Editor = () => {
       </LexicalComposer>
     </div>
   );
-};
+});

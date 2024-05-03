@@ -1,4 +1,5 @@
-import type { Spread } from 'lexical';
+import type { Spread } from "lexical";
+import styles from "../editor/Editor.module.css";
 
 import {
   $applyNodeReplacement,
@@ -7,8 +8,9 @@ import {
   type DOMConversionOutput,
   type DOMExportOutput,
   type EditorConfig,
-  type LexicalNode, type SerializedTextNode
-} from 'lexical';
+  type LexicalNode,
+  type SerializedTextNode,
+} from "lexical";
 
 // Much of this implementation is copied from:
 // https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/nodes/MentionNode.ts
@@ -16,14 +18,14 @@ import {
 export type SerializedMentionNode = Spread<
   {
     mentionedGraphNodeId: string;
-    mentionedGraphNodeText: string
+    mentionedGraphNodeText: string;
   },
   SerializedTextNode
 >;
 
 function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null {
   const textContent = domNode.textContent;
-  const mentionedGraphNodeId = domNode.getAttribute('data-lexical-mentioned-graph-node-id');
+  const mentionedGraphNodeId = domNode.getAttribute("data-lexical-mentioned-graph-node-id");
   if (textContent !== null && mentionedGraphNodeId !== null) {
     const node = $createMentionNode(mentionedGraphNodeId, textContent);
     return { node };
@@ -31,13 +33,12 @@ function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null
   return null;
 }
 
-const mentionStyle = 'background-color: rgba(24, 119, 232, 0.2)';
 export class MentionNode extends TextNode {
-  mentionedGraphNodeId: string
-  mentionedGraphNodeText: string
+  mentionedGraphNodeId: string;
+  mentionedGraphNodeText: string;
 
   static getType(): string {
-    return 'mention';
+    return "mention";
   }
 
   static clone(node: MentionNode): MentionNode {
@@ -56,32 +57,30 @@ export class MentionNode extends TextNode {
 
   constructor(mentionedGraphNodeId: string, mentionedGraphNodeText: string) {
     super(mentionedGraphNodeText);
-    this.mentionedGraphNodeId = mentionedGraphNodeId
-    this.mentionedGraphNodeText = mentionedGraphNodeText
+    this.mentionedGraphNodeId = mentionedGraphNodeId;
+    this.mentionedGraphNodeText = mentionedGraphNodeText;
   }
-
 
   exportJSON(): SerializedMentionNode {
     return {
       ...super.exportJSON(),
       mentionedGraphNodeId: this.mentionedGraphNodeId,
       mentionedGraphNodeText: this.mentionedGraphNodeText,
-      type: 'mention',
+      type: "mention",
       version: 1,
     };
   }
 
   createDOM(config: EditorConfig): HTMLElement {
     const dom = super.createDOM(config);
-    dom.style.cssText = mentionStyle;
-    dom.className = 'mention';
+    dom.className = styles.MentionNode;
     return dom;
   }
 
   exportDOM(): DOMExportOutput {
-    const element = document.createElement('span');
-    element.setAttribute('data-lexical-mention', 'true');
-    element.setAttribute('data-lexical-mentioned-graph-node-id', this.mentionedGraphNodeId);
+    const element = document.createElement("span");
+    element.setAttribute("data-lexical-mention", "true");
+    element.setAttribute("data-lexical-mentioned-graph-node-id", this.mentionedGraphNodeId);
     element.textContent = this.__text;
     return { element };
   }
@@ -89,7 +88,7 @@ export class MentionNode extends TextNode {
   static importDOM(): DOMConversionMap | null {
     return {
       span: (domNode: HTMLElement) => {
-        if (!domNode.hasAttribute('data-lexical-mention')) {
+        if (!domNode.hasAttribute("data-lexical-mention")) {
           return null;
         }
         return {
@@ -111,17 +110,14 @@ export class MentionNode extends TextNode {
   canInsertTextAfter(): boolean {
     return false;
   }
-
 }
 
 export function $createMentionNode(mentionedGraphNodeId: string, mentionedGraphNodeText: string): MentionNode {
   const mentionNode = new MentionNode(mentionedGraphNodeId, mentionedGraphNodeText);
-  mentionNode.setMode('token').toggleDirectionless();
+  mentionNode.setMode("token").toggleDirectionless();
   return $applyNodeReplacement(mentionNode);
 }
 
-export function $isMentionNode(
-  node: LexicalNode | null | undefined,
-): node is MentionNode {
+export function $isMentionNode(node: LexicalNode | null | undefined): node is MentionNode {
   return node instanceof MentionNode;
 }

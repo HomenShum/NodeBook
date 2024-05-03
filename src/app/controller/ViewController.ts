@@ -33,6 +33,7 @@ export class ViewController {
   public hideBackrelations = false;
   public hideBundles = true;
   public hideZones = false;
+  public showAtSignOnMention = false;
   public hideThoughtstreamBullets = false;
 
   // TODO do we need this right now?
@@ -51,6 +52,10 @@ export class ViewController {
       rightSidebarOpen: true,
       hideDirectParent: true,
     });
+  }
+
+  setShowAtSignOnMention(show: boolean) {
+    this.showAtSignOnMention = show;
   }
 
   setCurrentOutlineViewRoot(root: GraphRelation[] | null) {

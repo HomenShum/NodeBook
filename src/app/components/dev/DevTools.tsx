@@ -79,6 +79,15 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
+            checked={viewController.showAtSignOnMention}
+            onChange={(e) => viewController.setShowAtSignOnMention(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Show @ sign on mention
+        </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
             checked={graphStore.addAllOutlineDescendantsToThoughtstream}
             onChange={(e) => graphStore.setAddAllOutlineDescendantsToThoughtstream(e.target.checked)}
             className="mr-2 mb-2"
