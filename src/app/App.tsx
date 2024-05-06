@@ -85,12 +85,11 @@ const App = observer(() => {
           </button>
         </header>
         <div className="flex flex-row flex-1">
-          {viewController.leftSidebarOpen && (
+          {/* {viewController.leftSidebarOpen && (
             <aside className="flex flex-col w-1/3 bg-[--teal-2] border-r z-10 pt-16"></aside>
-          )}
+          )} */}
           <main className="flex flex-1 pt-16">
             <div className="m-4 w-full">
-
               {viewController.curView === ViewType.OUTLINE ? (
                 <div className="flex flex-col h-full items-center ">
                   <OutlineView searchQuery={searchQuery} />
