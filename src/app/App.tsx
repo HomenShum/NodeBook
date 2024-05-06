@@ -99,6 +99,16 @@ const App = observer(() => {
               ) : (
                 <SplitView searchQuery={searchQuery} />
               )}
+              {searchQuery !== "" && (
+                <div
+                  onClick={() => {
+                    setSearchQuery("");
+                  }}
+                  className="flex items-center justify-center text-blue-300 hover:opacity-50 cursor-pointer"
+                >
+                  <X></X>Clear filter
+                </div>
+              )}
             </div>
           </main>
           {viewController.rightSidebarOpen && (
