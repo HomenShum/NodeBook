@@ -27,7 +27,7 @@ export const NodeTable = observer(() => {
   const headers = ["id", "text", "relations"];
 
   return (
-    <div className="p-2 mb-4 max-h-96 overflow-y-auto">
+    <div className="p-2 mb-4 max-h-96 overflow-y-auto border-t">
       <h1 className="text-xl font-bold">Node Table</h1>
       <table>
         <thead>

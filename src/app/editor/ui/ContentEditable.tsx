@@ -6,5 +6,5 @@ interface Props {
 }
 
 export const ContentEditable = ({ nodeId }: Props) => {
-  return <LexicalContentEditable className="outline-none" style={{ maxWidth: "400px" }} data-nodeid={nodeId} />;
+  return <LexicalContentEditable className="outline-none" style={{ maxWidth: "720px" }} data-nodeid={nodeId} />;
 };

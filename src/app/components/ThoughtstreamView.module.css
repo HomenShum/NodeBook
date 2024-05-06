@@ -1,0 +1,8 @@
+.StreamContainer {
+  width: 720px;
+  margin: 0 auto;
+  padding: 0px 0;
+  padding-left: 8px;
+  display: flex;
+  flex-direction: column;
+}
