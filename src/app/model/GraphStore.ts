@@ -99,6 +99,7 @@ export class GraphStore {
     if (!bundle.isBundle) {
       throw new Error("Node must be a bundle");
     }
+
     // Delete relation from bundle to relation
     const relationFromRelationToBundle = this.getRelationList(bundle)
       .values()
@@ -107,6 +108,13 @@ export class GraphStore {
     if (relationFromRelationToBundle) {
       this.deleteRelation(relationFromRelationToBundle);
     }
+
+    // If bundle is empty after removing relation, delete it
+    // (Bundle is empty if it only has relation to Thoughtstream)
+    if (this.getRelationList(bundle).values().length === 1) {
+      this.deleteNode(bundle.id);
+    }
+
     // Update relation to bundles map
     const bundles = this.relationToBundles.get(relation.id) || [];
     const newBundles = bundles.filter((b) => b.id !== bundle.id);
@@ -373,6 +381,12 @@ export class GraphStore {
       this.correspondingObjectsForPinned.delete(correspondingRelation.id);
       this.deleteRelation(correspondingRelation);
     }
+
+    // Remove relation from all bundles
+    const bundles = this.relationToBundles.get(relation.id) || [];
+    bundles.forEach((bundle) => {
+      this.removeFromBundle(relation, bundle);
+    });
 
     // Delete the relation itself
     this.relationsById.delete(relation.id);
