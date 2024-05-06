@@ -1,4 +1,4 @@
-import { Circle, Dot, Ellipsis } from "lucide-react";
+import { Circle, Dot, Ellipsis, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useViewController } from "../../controller/useViewController";
 import { Editor } from "../../editor/Editor";
@@ -358,15 +358,14 @@ const Toggle = observer(() => {
         border: "none",
         width: "1rem",
         height: "1rem",
-        fontSize: "0.6rem",
         color: "var(--gray-8)",
         cursor: "pointer",
         userSelect: "none",
       }}
-      className="relative right-[8px]"
+      className="relative right-[4px]"
       onClick={() => graphStore.togglePathExpanded(pathToNodeStr)}
     >
-      {isExpanded ? "▼" : "▶"}
+      {isExpanded ? <Play size={8} fill="currentColor" className="rotate-90" /> : <Play size={8} fill="currentColor" />}
     </button>
   );
 });
