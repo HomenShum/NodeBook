@@ -90,6 +90,7 @@ const App = observer(() => {
           )}
           <main className="flex flex-1 pt-16">
             <div className="m-4 w-full">
+
               {viewController.curView === ViewType.OUTLINE ? (
                 <div className="flex flex-col h-full items-center ">
                   <OutlineView searchQuery={searchQuery} />

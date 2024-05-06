@@ -141,21 +141,31 @@ export class ViewController {
     this.editorsByPath.delete(pathStr);
   }
 
-  private createAndFocusOutlineChildNode() {
+  private createOutlineChildNode(focus: boolean = true) {
     const path = relationsPathToParentChild(this.currentOutlineViewRoot!);
     const root = path[path.length - 1].child;
     const { node, relation } = this.graphStore.createChildNode(root);
-    this.setFocusedNode(relationsToPathStr([...this.currentOutlineViewRoot!, relation]));
+
+    if (focus) {
+      this.setFocusedNode(relationsToPathStr([...this.currentOutlineViewRoot!, relation]));
+    }
+
     if (this.graphStore.addAllOutlineDescendantsToThoughtstream) {
       this.graphStore.addToThoughtstream(node);
     }
+
+    return node;
   }
 
-  private createAndFocusThoughtstreamChildNode() {
+  private createThoughtstreamChildNode(focus: boolean = true) {
     const { node, relationToThoughtstream } = this.graphStore.createThoughtstreamChild();
-    this.setFocusedNode(
-      relationsToPathStr([this.graphStore.thoughtstreamRootRelationFromUserRoot, relationToThoughtstream]),
-    );
+
+    if (focus) {
+      this.setFocusedNode(
+        relationsToPathStr([this.graphStore.thoughtstreamRootRelationFromUserRoot, relationToThoughtstream]),
+      );
+    }
+
     if (this.graphStore.addThoughstreamDirectChildrenToOutline) {
       this.graphStore.createRelation({
         from: this.graphStore.outlineRoot,
@@ -163,20 +173,18 @@ export class ViewController {
         relationType: this.graphStore.relationTypesById.child,
       });
     }
+    return node;
   }
 
-  createAndFocusChildNode() {
+  createChildNode(focusAfterCreate: boolean = true) {
     switch (this.curView) {
       case ViewType.OUTLINE:
-        this.createAndFocusOutlineChildNode();
-        break;
+        return this.createOutlineChildNode(focusAfterCreate);
       case ViewType.THOUGHTSTREAM:
-        this.createAndFocusThoughtstreamChildNode();
-        break;
+        return this.createThoughtstreamChildNode(focusAfterCreate);
       case ViewType.SPLIT:
         // Split view should create a child in Thoughtstream
-        this.createAndFocusThoughtstreamChildNode();
-        break;
+        return this.createThoughtstreamChildNode(focusAfterCreate);
     }
   }
 

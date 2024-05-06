@@ -21,7 +21,7 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
   );
 
   const createChild = useCallback(() => {
-    viewController.createAndFocusChildNode();
+    viewController.createChildNode();
   }, [viewController]);
 
   return (

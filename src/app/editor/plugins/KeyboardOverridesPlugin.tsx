@@ -45,7 +45,10 @@ export const KeyboardOverridesPlugin = () => {
           const selection = $getSelection();
           if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
 
-          const { node: newNode, relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection);
+          let { node: newNode, relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection);
+          if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
+            newRelation = graphStore.correspondingPinnedForObjects.get(newRelation.id)!;
+          }
 
           // Add to outline if necessary
           const root = pathToParentNodes[0].child;

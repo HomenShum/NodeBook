@@ -16,6 +16,7 @@ export type GraphRelationProps = {
   from: GraphObject;
   to: GraphObject;
   relationType?: GraphRelationType;
+  isPrivate?: boolean;
 };
 
 export class GraphRelation implements Serializable, GraphObject {
@@ -26,16 +27,18 @@ export class GraphRelation implements Serializable, GraphObject {
   public relationType: GraphRelationType;
   public createdAt: Date = new Date();
   private store: GraphStore;
+  public isPrivate: boolean = true;
 
   constructor(
     store: GraphStore,
-    { id = uuid(), from, to, relationType: type = defaultRelationTypes.child }: GraphRelationProps,
+    { id = uuid(), from, to, relationType: type = defaultRelationTypes.child, isPrivate = true }: GraphRelationProps,
   ) {
     this.id = id;
     this.from = from;
     this.to = to;
     this.relationType = type;
     this.store = store;
+    this.isPrivate = isPrivate;
     makeAutoObservable(this);
   }
 
@@ -61,6 +64,10 @@ export class GraphRelation implements Serializable, GraphObject {
 
   setTo(node: GraphObject) {
     this.to = node;
+  }
+
+  setIsPrivate(value: boolean) {
+    this.isPrivate = value;
   }
 
   delete() {
@@ -124,6 +131,7 @@ export class GraphRelation implements Serializable, GraphObject {
       fromId: this.from.id,
       toId: this.to.id,
       relationTypeId: this.relationType.id,
+      isPrivate: this.isPrivate,
     };
   }
 
@@ -143,6 +151,7 @@ export class GraphRelation implements Serializable, GraphObject {
       from,
       to,
       relationType: getRelationTypeById(data.relationTypeId),
+      isPrivate: data?.isPrivate ?? true,
     });
   }
 }

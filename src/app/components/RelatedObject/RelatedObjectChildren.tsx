@@ -23,7 +23,7 @@ export const RelatedObjectChildren = observer(
 
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
     const children = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, false);
-    const pinnedChildren = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, true).reverse();
+    const pinnedChildren = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, true);
 
     const parent = pathToParent[pathToParent.length - 1].child;
 

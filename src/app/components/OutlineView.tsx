@@ -25,7 +25,7 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
   }
 
   const createChild = useCallback(() => {
-    viewController.createAndFocusChildNode();
+    viewController.createChildNode();
   }, [viewController]);
 
   return (

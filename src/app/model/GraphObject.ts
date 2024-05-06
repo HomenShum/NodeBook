@@ -11,6 +11,8 @@ export interface GraphObject {
   relationsWithPositions: PositionedRelation[];
   relationsSortedByPosition: GraphRelation[];
   children: GraphObject[];
+  isPrivate: boolean;
+  setIsPrivate(value: boolean): void;
 
   // pinned objects
   pinnedRelationsWithPositions: PositionedRelation[];

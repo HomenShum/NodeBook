@@ -104,7 +104,7 @@ export const RelatedObjectView = observer(
             }}
           >
             <div
-              className={styles.OutlineObjectContent}
+              className={cn(styles.OutlineObjectContent, !object.isPrivate && "bg-[#dfdfc9]")}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
@@ -229,6 +229,13 @@ const RelatedObjectMenu = observer(
               Set to search or create view
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem
+            onSelect={action(() => {
+              object.setIsPrivate(!object.isPrivate);
+            })}
+          >
+            {object.isPrivate ? "Make public" : "Make private"}
+          </DropdownMenuItem>
           {viewType !== "edit" && (
             <DropdownMenuItem
               onSelect={() => {
@@ -367,7 +374,6 @@ const Toggle = observer(() => {
 function ReplaceRelatedNodeView() {
   const graph = useGraphStore();
   const [filter, setFilter] = useState("");
-  const [selected, setSelected] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const { object: currentObject, setViewType, relation, pathToParentRelations } = useRelationAtPath();
   const { optionsFlat: options, optionsGrouped } = useMemo(() => {
@@ -405,6 +411,7 @@ function ReplaceRelatedNodeView() {
       optionsGrouped,
     };
   }, [graph, currentObject, relation, filter]);
+  const [selected, setSelected] = useState<number | null>(optionsGrouped.length === 0 ? null : 0);
 
   const onSelect = useCallback(
     (obj: GraphObject) => {
@@ -510,7 +517,6 @@ const SearchOrCreateNodeView = observer(() => {
   const view = useViewController();
   const { object, relation, parent, pathToParentRelations } = useRelationAtPath();
   const [search, setSearch] = useState(object.text);
-  const [selected, setSelected] = useState<number | null>(null);
   const ref = useRef<HTMLInputElement>(null);
   const [inputFocused, setInputFocused] = useState(false);
 
@@ -531,6 +537,7 @@ const SearchOrCreateNodeView = observer(() => {
   const nodesMatchingSearch = useMemo(() => {
     return graph.nodes.filter((n) => n.id !== object.id && n.text.toLowerCase().includes(search.toLowerCase()));
   }, [graph.nodes, search, object]);
+  const [selected, setSelected] = useState<number | null>(nodesMatchingSearch.length === 0 ? null : 0);
 
   return (
     <div className="flex flex-col relative">
