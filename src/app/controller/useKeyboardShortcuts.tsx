@@ -8,7 +8,7 @@ export const useKeyboardShortcuts = () => {
   const viewController = useViewController();
 
   const createNode = useCallback(() => {
-    viewController.createAndFocusChildNode();
+    viewController.createChildNode();
   }, [viewController]);
 
   const deleteNodes = useCallback(() => {

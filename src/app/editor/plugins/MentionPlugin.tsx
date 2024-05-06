@@ -22,8 +22,8 @@ import styles from "./MentionPlugin.module.css";
 
 class MentionTypeaheadOption extends MenuOption {
   name: string;
-  graphNode: GraphNode;
-  constructor(name: string, graphNode: GraphNode) {
+  graphNode?: GraphNode;
+  constructor(name: string, graphNode?: GraphNode) {
     super(name);
     this.name = name;
     this.graphNode = graphNode;
@@ -39,8 +39,16 @@ export function MentionPlugin(): JSX.Element | null {
   const viewController = useViewController();
   const onSelectOption = useCallback(
     (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
+      let graphNode: GraphNode; // For some reason have to declare this way to make TSC happy
+      if (selectedOption.graphNode) {
+        graphNode = selectedOption.graphNode;
+      } else {
+        // Create a new node
+        graphNode = viewController.createChildNode(false);
+        graphNode.setContent(selectedOption.name.slice("Create new node: ".length));
+      }
       editor.update(() => {
-        const mentionNode = $createMentionNode(selectedOption.graphNode.id, selectedOption.graphNode.text);
+        const mentionNode = $createMentionNode(graphNode.id, graphNode.text);
         if (nodeToReplace) {
           nodeToReplace.replace(mentionNode);
         }
@@ -53,7 +61,7 @@ export function MentionPlugin(): JSX.Element | null {
           )
         ) {
           graphStore.createRelation({
-            from: selectedOption.graphNode,
+            from: graphNode,
             to: node,
             relationType: graphStore.relationTypesById.child,
           });
@@ -62,16 +70,18 @@ export function MentionPlugin(): JSX.Element | null {
         closeMenu();
       });
     },
-    [editor, graphStore, node],
+    [editor, graphStore, node, viewController],
   );
 
   const options: Array<MentionTypeaheadOption> = useMemo(() => {
     const SUGGESTION_LIST_LENGTH_LIMIT = 5;
     if (queryString === null) return [];
-    return graphStore.nodes
+    const optionsForExistingNodes = graphStore.nodes
       .filter((n) => n.text.toLowerCase().includes(queryString.toLowerCase()) && n.id !== node.id)
       .map((node) => new MentionTypeaheadOption(node.text, node))
       .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
+    const newNodeOption = new MentionTypeaheadOption("Create new node: " + queryString);
+    return [...optionsForExistingNodes, newNodeOption];
   }, [queryString, graphStore.nodes, node]);
 
   const menuRenderFn = getMenuRenderFn(options);
@@ -205,7 +215,8 @@ function MentionsTypeaheadMenuItem({
     className = styles.Selected;
   }
 
-  const path = getTopMostParentPath(option.graphNode);
+  const path = option.graphNode ? getTopMostParentPath(option.graphNode) : [];
+
   return (
     <li
       key={option.key}
