@@ -1,7 +1,8 @@
 "use client";
-import { Sidebar, X } from "lucide-react";
+import { Home, Search, SettingsIcon, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRef, useState } from "react";
+import s from "./app.module.css";
 import { OutlineView } from "./components/OutlineView";
 import { SplitView } from "./components/SplitView";
 import { ThoughtstreamView } from "./components/ThoughtstreamView";
@@ -9,6 +10,7 @@ import { DevTools } from "./components/dev/DevTools";
 import { NodeTable } from "./components/dev/NodeTable";
 import { RelationTable } from "./components/dev/RelationTable";
 import { RelationTypeTable } from "./components/dev/RelationTypeTable";
+import { ListIcon, StreamIcon } from "./components/icons/icons";
 import { ViewType } from "./controller/ViewController";
 import { useKeyboardShortcuts } from "./controller/useKeyboardShortcuts";
 import { useViewController } from "./controller/useViewController";
@@ -18,71 +20,79 @@ const App = observer(() => {
   const viewController = useViewController();
   useKeyboardShortcuts();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
 
   return (
     <div className="App">
       <div ref={appContainerRef} className="flex flex-col h-full relative">
-        <header className="flex justify-center items-center px-2 py-4 border-b">
-          <button onClick={() => viewController.toggleLeftSidebar()}>
-            <Sidebar size={20} />
-          </button>
-          <div className="flex-1 flex justify-center">
-            <div className="bg-gray-100 pl-2 pr-1 py-1 rounded-lg my-1 min-w-64 flex justify-center">
+        <header className="fixed w-full bg-white z-10 flex justify-center items-center px-4 border-b">
+          {/* <button onClick={() => viewController.toggleLeftSidebar()}>
+            <SidebarIcon />
+          </button> */}
+          <div className="flex w-[720px] justify-between items-center">
+            <div
+              className={searchFocused ? s.SearchFocus : s.Search}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+            >
+              <Search className={s.SearchIcon} size={16} strokeWidth={2.5} />
               <input
-                type="text"
+                type="search"
                 placeholder="Search..."
-                className="bg-gray-100 focus:outline-none flex-1"
+                className={s.SearchContent}
                 value={searchQuery}
                 onFocus={() => viewController.setFocusedNode(null)}
                 onChange={(e) => setSearchQuery(e.target.value)}
               ></input>
               {searchQuery && (
                 <button onClick={() => setSearchQuery("")}>
-                  <X className="text-gray-400"></X>
+                  <X size={18} className={s.CancelSearch}></X>
                 </button>
               )}
             </div>
+            <div className="flex gap-4 py-2 pl-2 align-left">
+              <button
+                className={`${s.Button} ${viewController.curView === ViewType.SPLIT ? s.Selected : ""}`}
+                onClick={() => viewController.setView(ViewType.SPLIT)}
+              >
+                <div className={s.ButtonIcon}>
+                  <Home size={16} />
+                </div>
+                Home
+              </button>
+              <button
+                className={`${s.Button} ${viewController.curView === ViewType.THOUGHTSTREAM ? s.Selected : ""}`}
+                onClick={() => viewController.setView(ViewType.THOUGHTSTREAM)}
+              >
+                <div className={s.ButtonIcon}>
+                  <StreamIcon />
+                </div>
+                Stream
+              </button>
+              <button
+                className={`${s.Button} ${viewController.curView === ViewType.OUTLINE ? s.Selected : ""}`}
+                onClick={() => viewController.setView(ViewType.OUTLINE)}
+              >
+                <div className={s.ButtonIcon}>
+                  <ListIcon />
+                </div>
+                List
+              </button>
+            </div>
           </div>
           <button onClick={() => viewController.toggleRightSidebar()}>
-            <Sidebar size={20} className="transform rotate-180" />
+            <SettingsIcon size={18} strokeWidth={1.5} className="absolute top-4 right-4" />
           </button>
         </header>
         <div className="flex flex-row flex-1">
           {viewController.leftSidebarOpen && (
-            <aside className="flex flex-col w-1/6 bg-[--teal-2] border-r z-10">
-              <div className="flex flex-col p-2 align-left">
-                {/* highlight if active */}
-                <button
-                  className={`text-left px-2 py-1 hover:bg-[--teal-3] ${
-                    viewController.curView === ViewType.OUTLINE ? "bg-[--teal-4]" : ""
-                  }`}
-                  onClick={() => viewController.setView(ViewType.OUTLINE)}
-                >
-                  Outline view
-                </button>
-                <button
-                  className={`text-left px-2 py-1 hover:bg-[--teal-3] ${
-                    viewController.curView === ViewType.THOUGHTSTREAM ? "bg-[--teal-4]" : ""
-                  }`}
-                  onClick={() => viewController.setView(ViewType.THOUGHTSTREAM)}
-                >
-                  Thoughtstream view
-                </button>
-                <button
-                  className={`text-left px-2 py-1 hover:bg-[--teal-3] ${
-                    viewController.curView === ViewType.SPLIT ? "bg-[--teal-4]" : ""
-                  }`}
-                  onClick={() => viewController.setView(ViewType.SPLIT)}
-                >
-                  Split view
-                </button>
-              </div>
-            </aside>
+            <aside className="flex flex-col w-1/3 bg-[--teal-2] border-r z-10 pt-16"></aside>
           )}
-          <main className="flex flex-1">
-            <div className="m-8 w-full">
+          <main className="flex flex-1 pt-16">
+            <div className="m-4 w-full">
+
               {viewController.curView === ViewType.OUTLINE ? (
-                <div className="flex flex-col h-full items-center">
+                <div className="flex flex-col h-full items-center ">
                   <OutlineView searchQuery={searchQuery} />
                 </div>
               ) : viewController.curView === ViewType.THOUGHTSTREAM ? (
@@ -93,7 +103,7 @@ const App = observer(() => {
             </div>
           </main>
           {viewController.rightSidebarOpen && (
-            <aside className="w-1/3 bg-gray-100 border-l overflow-y-auto">
+            <aside className="w-1/3 bg-[--gray-2] border-l overflow-y-hidden absolute right-0 pt-12">
               <DevTools />
               <NodeTable />
               <RelationTable />

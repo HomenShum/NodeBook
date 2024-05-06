@@ -10,7 +10,11 @@
 }
 
 .MentionNode {
-  background-color: rgba(24, 119, 232, 0.2);
+  border-radius: 4px;
+  padding: 0 2px;
+  background-color: var(--teal-a3);
+
+  color: var(--teal-11);
 }
 
 .MentionNode::before {
@@ -19,4 +23,5 @@
 
 .EditorWrapper p {
   margin: 0;
+  text-decoration: none;
 }

@@ -33,8 +33,15 @@ export const RelatedObjectChildren = observer(
 
     let lastBundleId: string | undefined;
     return (
-      <div className={depth > 0 ? "ml-5" : ""}>
-        <div className={cn(pinnedChildren.length > 0 && "border-red-500 border-b")}>
+      <div className={depth > 0 ? "ml-[16px]" : ""}>
+        <div
+          className={cn(
+            pinnedChildren.length > 0 && "border-[--teal-4] border rounded-md px-4 mt-2 py-1 mb-4 -translate-x-4",
+          )}
+        >
+          {pinnedChildren.length > 0 && (
+            <div className="relative -top-3 -left-2 uppercase text-xs bg-white w-fit px-2 text-[--gray-9]">pinned</div>
+          )}
           {pinnedChildren.map(({ relation: childRelation, position }, i) => {
             return (
               <div key={relationsToPathStr([...pathToParentRelations, childRelation])}>
@@ -56,7 +63,9 @@ export const RelatedObjectChildren = observer(
           lastBundleId = firstBundle?.id;
           return (
             <div key={relationsToPathStr([...pathToParentRelations, childRelation])}>
-              {newBundle && <div className="border-t border-grey-400 border-dashed" />}
+              {i !== 0 && newBundle && (
+                <div className="pt-4 mt-1 -translate-x-3 border-t border-dashed border-[][-gray--5]" />
+              )}
               <RelatedObjectView
                 path={[...pathToParentRelations, childRelation]}
                 position={position}

@@ -3,7 +3,9 @@ import { useCallback, useMemo } from "react";
 import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
+import stylesList from "./OutlineView.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
+import stylesStream from "./ThoughtstreamView.module.css";
 
 export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: string }) => {
   const viewController = useViewController();
@@ -23,19 +25,16 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
   }, [viewController]);
 
   return (
-    <div tabIndex={0} className="w-full h-full flex flex-col px-8 gap-4">
-      <div className="ml-2">
-        <div className="flex align-center gap-2">
-          <h1 className="text-2xl font-medium select-none">{thoughstreamNode.text}</h1>
-          <button
-            className="select-none text-xl font-light bg-slate-50 hover:bg-slate-200 hover:shadow-inner transition-colors duration-150 ease-in w-6 h-6 text-center rounded-lg relative translate-y-1"
-            onClick={createChild}
-          >
-            <span className="absolute -translate-x-[6px] -translate-y-[15px]">+</span>
+    <div tabIndex={0} className={stylesStream.StreamContainer}>
+      <div className={stylesStream.ContentSection}>
+        <div className={stylesList.TitleContainer}>
+          <h1 className={stylesList.TitleText}>{thoughstreamNode.text}</h1>
+          <button className={stylesList.AddButton} onClick={createChild}>
+            <span className={stylesList.AddButtonIcon}>+</span>
           </button>
         </div>
       </div>
-      <div className="flex-1">
+      <div className={stylesList.relatedObjectsContainer}>
         <RelatedObjectChildren pathToParentRelations={pathToThoughtstream} searchResult={searchResult} />
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { Circle, Dot, Ellipsis, Pin } from "lucide-react";
+import { Circle, Dot, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useViewController } from "../../controller/useViewController";
 import { Editor } from "../../editor/Editor";
@@ -21,6 +21,8 @@ import { cn } from "@/lib/utils";
 import { action } from "mobx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../OutlineView.module.css";
+
+import { PinCustom } from "../icons/icons";
 import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
 import { RelationCombobox } from "./RelationCombobox";
@@ -111,12 +113,9 @@ export const RelatedObjectView = observer(
               <div className="flex items-center gap-1 absolute right-full">
                 <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
                 {parent.isRelationPinned(relation) && graphStore.correspondingPinnedForObjects.has(relation.id) && (
-                  <Pin
-                    height={16}
-                    stroke="#596567"
-                    className="cursor-pointer"
-                    onClick={() => parent.unpinChildRelation(relation)}
-                  />
+                  <button className={styles.PinIcon} onClick={() => parent.unpinChildRelation(relation)}>
+                    <PinCustom />
+                  </button>
                 )}
                 {hasChildren && isHovered && <Toggle />}
               </div>
@@ -130,7 +129,7 @@ export const RelatedObjectView = observer(
                   !displayChildren &&
                   (!viewController.hideBulletBackgroundIfParentsOnly || hasTrueChildren) && (
                     <Dot
-                      stroke="#ddd"
+                      stroke="var(--gray-4)"
                       height={16}
                       strokeWidth={17}
                       className={cn("cursor-pointer absolute top-0 left-0")}
@@ -139,7 +138,7 @@ export const RelatedObjectView = observer(
                 {isChild && (
                   <Dot
                     strokeWidth={5}
-                    color="#596567"
+                    color="var(--gray-10)"
                     height={16}
                     className={cn("cursor-pointer absolute top-0")}
                     onClick={() => {
@@ -153,7 +152,7 @@ export const RelatedObjectView = observer(
                 {!isChild && (
                   <Circle
                     strokeWidth={6}
-                    color="#596567"
+                    color="var(--gray-8)"
                     height={8}
                     className={cn("cursor-pointer absolute top-1")}
                     onClick={() => {
@@ -166,7 +165,7 @@ export const RelatedObjectView = observer(
                 )}
               </div>
               {/* relation and node */}
-              <div className="flex flex-col flex-1">
+              <div className="flex flex-col flex-1 relative -top-[2px]">
                 <div className="flex w-full gap-2 items-center">
                   {!isChild || updatingRelationType ? (
                     <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} />
@@ -205,8 +204,8 @@ const RelatedObjectMenu = observer(
 
     return (
       <DropdownMenu>
-        <DropdownMenuTrigger>
-          <Ellipsis size={18} className={cn(isHovered ? "text-grey-400" : "text-transparent")} />
+        <DropdownMenuTrigger className="mx-2">
+          <Ellipsis size={18} className={cn(isHovered ? "text-[var(--gray-8)] bg-white" : "text-transparent")} />
         </DropdownMenuTrigger>
         <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenuItem
@@ -295,8 +294,8 @@ const RelatedObjectEditor = observer(() => {
         display: "flex",
         alignItems: "flex-start",
         flex: 1,
-        color: hasNonChildRelation ? "#09acec" : undefined,
-        textDecoration: hasNonChildRelation ? "underline" : undefined,
+        color: hasNonChildRelation ? "var(--gray-12)" : undefined,
+        textDecoration: hasNonChildRelation ? "underline  var(--teal-9)" : undefined,
       }}
     >
       {/* <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}> */}
@@ -355,15 +354,16 @@ const Toggle = observer(() => {
   return (
     <button
       style={{
-        backgroundColor: "transparent",
+        backgroundColor: "white",
         border: "none",
         width: "1rem",
+        height: "1rem",
         fontSize: "0.6rem",
-        color: "#9ca3af",
+        color: "var(--gray-8)",
         cursor: "pointer",
         userSelect: "none",
       }}
-      className="relative right-1"
+      className="relative right-[8px]"
       onClick={() => graphStore.togglePathExpanded(pathToNodeStr)}
     >
       {isExpanded ? "▼" : "▶"}
@@ -477,30 +477,33 @@ function ReplaceRelatedNodeView() {
   }, [setViewType, onSelect, selected, options]);
 
   return (
-    <div className="ml-4 flex-1">
+    <div className="ml-0 flex-1">
       <div ref={ref} className="relative flex flex-col z-10">
         <input
           placeholder="Search nodes..."
           autoFocus
-          className="h-8"
+          className="px-2 h-8 outline-none bg-[--teal-a2] rounded text-[--teal-a9]"
           type="text"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
-        <div className="absolute top-8 left-0 w-full bg-white border border-gray-300">
+        <div className="absolute top-8 p-1 left-0 w-full bg-[white] border border-[--teal-3] rounded-sm flex flex-col gap-4">
           {optionsGrouped.map((group) => (
             <div key={group.type}>
-              <div className="underline">{group.type}</div>
-              {group.options.map(({ index, object, text }) => (
-                <div
-                  key={object.id}
-                  onClick={() => onSelect(object)}
-                  onMouseEnter={() => setSelected(index)}
-                  className={selected === index ? "bg-gray-200" : ""}
-                >
-                  {text}
-                </div>
-              ))}
+              <div className="px-2 py-0 uppercase text-sm text-[--gray-6] pointer-events-none">{group.type}</div>
+              {group.options.map(
+                ({ index, object, text }) =>
+                  text && ( // avoiding empty nodes being rendered into the search results
+                    <div
+                      key={object.id}
+                      onClick={() => onSelect(object)}
+                      onMouseEnter={() => setSelected(index)}
+                      className={`px-2 py-1 rounded ${selected === index ? "bg-[--teal-2]" : ""} `}
+                    >
+                      {text}
+                    </div>
+                  ),
+              )}
             </div>
           ))}
         </div>
@@ -540,7 +543,7 @@ const SearchOrCreateNodeView = observer(() => {
     <div className="flex flex-col relative">
       <input
         ref={ref}
-        className="border border-blue-500 rounded"
+        className=" text-[--teal-10] hover:bg-[--teal-a2] rounded-sm outline-none underline decoration-[--gray-6]"
         value={search}
         placeholder="Search or create node..."
         onFocus={() => setInputFocused(true)}
@@ -598,7 +601,7 @@ const SearchOrCreateNodeView = observer(() => {
         }}
       />
       {inputFocused && nodesMatchingSearch.length > 0 && (
-        <div className="absolute top-6 left-0 w-full bg-white border border-gray-300 z-10">
+        <div className="absolute top-6 left-0 w-full bg-white border border-[--teal-3] text-[--gray-10] rounded-md z-10">
           {nodesMatchingSearch.map((node, i) => (
             <div
               key={node.id}
@@ -606,7 +609,7 @@ const SearchOrCreateNodeView = observer(() => {
                 onSelect(node);
               }}
               onMouseEnter={() => setSelected(i)}
-              className={selected === i ? "bg-gray-200" : ""}
+              className={`px-4 py-2 rounded-sm cursor-pointer ${selected === i ? "bg-[--teal-1]" : ""}`}
             >
               {node.text}
             </div>

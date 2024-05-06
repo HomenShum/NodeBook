@@ -1,8 +1,8 @@
 .EditorPlaceholder {
-    color: #999;
-    overflow: hidden;
-    position: absolute;
-    top: 15px;
-    user-select: none;
-    pointer-events: none;
+  color: var(--gray-5);
+  overflow: hidden;
+  position: absolute;
+  top: 15px;
+  user-select: none;
+  pointer-events: none;
 }
