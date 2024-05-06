@@ -102,7 +102,7 @@ export const RelatedObjectView = observer(
             }}
           >
             <div
-              className={styles.OutlineObjectContent}
+              className={cn(styles.OutlineObjectContent, !object.isPrivate && "bg-[#dfdfc9]")}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
@@ -230,6 +230,13 @@ const RelatedObjectMenu = observer(
               Set to search or create view
             </DropdownMenuItem>
           )}
+          <DropdownMenuItem
+            onSelect={action(() => {
+              object.setIsPrivate(!object.isPrivate);
+            })}
+          >
+            {object.isPrivate ? "Make public" : "Make private"}
+          </DropdownMenuItem>
           {viewType !== "edit" && (
             <DropdownMenuItem
               onSelect={() => {
