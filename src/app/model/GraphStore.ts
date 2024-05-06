@@ -500,6 +500,10 @@ export class GraphStore {
 
   splitRelatedNode(relation: GraphRelation, nodeToSplit: GraphNode, selection: BaseSelection) {
     const parent = relation.to.id === nodeToSplit.id ? relation.from : relation.to;
+    const unpinnedRelation = this.correspondingObjectsForPinned.has(relation.id)
+      ? this.correspondingObjectsForPinned.get(relation.id)!
+      : relation;
+    const pinnedRelation = this.correspondingPinnedForObjects.get(unpinnedRelation.id);
 
     // Get text before and after the cursor
     const points = selection?.getStartEndPoints();
@@ -520,9 +524,16 @@ export class GraphStore {
       const relations = Array.from(relationsList.values())
         .sort((a, b) => comparePositions(a.position, b.position))
         .map((v) => v.item);
-      const relationIndex = relations.findIndex((r) => r.id === relation.id);
+      const relationIndex = relations.findIndex((r) => r.id === unpinnedRelation.id);
       const siblingAbove = relations[relationIndex - 1];
       if (siblingAbove) relationsList.move([child.relation], siblingAbove);
+      if (pinnedRelation && relation === pinnedRelation) {
+        parent.pinChildRelation(child.relation);
+        const newPinnedRelation = this.correspondingPinnedForObjects.get(child.relation.id)!;
+
+        const pinnedRelationsList = this.getPinnedRelationList(parent);
+        pinnedRelationsList.move([newPinnedRelation], this.correspondingPinnedForObjects.get(siblingAbove.id)!);
+      }
     } else {
       const selectionNodes = selection.getNodes();
       const firstNode = selectionNodes[0];
@@ -577,11 +588,19 @@ export class GraphStore {
       // Create a new related node below the current one with the text after the cursor
       child = this.createChildNode(parent, { content: chipsAfter });
       const relationsList = this.getRelationList(parent);
-      relationsList.move([child.relation], relation);
+      relationsList.move([child.relation], unpinnedRelation);
+
+      if (pinnedRelation && relation === pinnedRelation) {
+        parent.pinChildRelation(child.relation);
+        const newPinnedRelation = this.correspondingPinnedForObjects.get(child.relation.id)!;
+
+        const pinnedRelationsList = this.getPinnedRelationList(parent);
+        pinnedRelationsList.move([newPinnedRelation], pinnedRelation);
+      }
     }
 
     // Add new node to the same bundles as the original
-    const bundles = this.relationToBundles.get(relation.id);
+    const bundles = this.relationToBundles.get(unpinnedRelation.id);
     bundles?.forEach((bundle) => {
       this.createRelation({ from: bundle, to: child.relation });
       const existingBundles = this.relationToBundles.get(child.relation.id) || [];
