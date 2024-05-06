@@ -73,6 +73,11 @@ export class ViewController {
 
   setView(view: ViewType) {
     this.curView = view;
+
+    if (view === ViewType.OUTLINE) {
+      // Reset root when switching into outline view (ENT-3278)
+      this.currentOutlineViewRoot = [this.graphStore.outlineRootRelationFromUserRoot];
+    }
   }
 
   setFocusedNode(path: Path | null) {
