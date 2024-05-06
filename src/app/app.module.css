@@ -77,16 +77,3 @@
   margin-right: 6px;
   height: 32px;
 }
-
-.overflow-scrollable {
-  overflow-y: auto; /* Only vertical scrolling */
-}
-
-.overflow-scrollable::-webkit-scrollbar {
-  width: 12px; /* Adjust the width of the scrollbar to your preference */
-}
-
-.overflow-scrollable::-webkit-scrollbar-thumb {
-  background-color: darkgrey;
-  border-radius: 6px;
-}
