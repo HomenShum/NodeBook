@@ -6,6 +6,7 @@ import {
   MenuTextMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
+import { HomeIcon } from "lucide-react";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
@@ -231,10 +232,16 @@ function MentionsTypeaheadMenuItem({
     >
       <div className="flex flex-col">
         <div>{option.name}</div>
-        <div className="flex text-sm text-gray-500">
-          <span>/</span>
+        <div className="flex items-center text-sm text-[--gray-9] h-[20px]">
+          {path.length <= 1 && <HomeIcon size={12} />}
+
+          <span className="px-1">/</span>
+
           {path.map(({ key, text }) => (
-            <span key={key}>{text}/</span>
+            <span key={key}>
+              {text}
+              <span className="px-1">/</span>
+            </span>
           ))}
         </div>
       </div>
