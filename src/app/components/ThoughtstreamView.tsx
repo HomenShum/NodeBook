@@ -1,5 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { useCallback, useMemo } from "react";
+import { ViewType } from "../controller/ViewController";
 import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
@@ -21,7 +22,7 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
   );
 
   const createChild = useCallback(() => {
-    viewController.createChildNode();
+    viewController.createChildNode({ focusAfterCreate: true, targetView: ViewType.THOUGHTSTREAM });
   }, [viewController]);
 
   return (

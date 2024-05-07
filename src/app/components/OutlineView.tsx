@@ -1,6 +1,7 @@
 import { ChevronRight, Home, HomeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useCallback } from "react";
+import { ViewType } from "../controller/ViewController";
 import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
 import { relationsPathToParentChild } from "../util";
@@ -25,7 +26,7 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
   }
 
   const createChild = useCallback(() => {
-    viewController.createChildNode();
+    viewController.createChildNode({ focusAfterCreate: true, targetView: ViewType.OUTLINE });
   }, [viewController]);
 
   return (

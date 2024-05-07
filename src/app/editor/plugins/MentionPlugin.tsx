@@ -44,7 +44,7 @@ export function MentionPlugin(): JSX.Element | null {
         graphNode = selectedOption.graphNode;
       } else {
         // Create a new node
-        graphNode = viewController.createChildNode(false);
+        graphNode = viewController.createChildNode({ focusAfterCreate: false });
         graphNode.setContent(selectedOption.name.slice("Create new node: ".length));
       }
       editor.update(() => {

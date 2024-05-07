@@ -11,6 +11,11 @@ export enum ViewType {
   SPLIT = "split",
 }
 
+interface ChildNodeOptions {
+  focusAfterCreate: boolean;
+  targetView?: ViewType;
+}
+
 export class ViewController {
   public curView: ViewType;
   private graphStore: GraphStore;
@@ -181,14 +186,15 @@ export class ViewController {
     return node;
   }
 
-  createChildNode(focusAfterCreate: boolean = true) {
-    switch (this.curView) {
+  createChildNode({ focusAfterCreate, targetView }: ChildNodeOptions = { focusAfterCreate: true }) {
+    switch (targetView) {
       case ViewType.OUTLINE:
         return this.createOutlineChildNode(focusAfterCreate);
       case ViewType.THOUGHTSTREAM:
         return this.createThoughtstreamChildNode(focusAfterCreate);
       case ViewType.SPLIT:
-        // Split view should create a child in Thoughtstream
+      default:
+        // In split view default to creating a child in Thoughtstream (e.g. when cmd + k is pressed)
         return this.createThoughtstreamChildNode(focusAfterCreate);
     }
   }
