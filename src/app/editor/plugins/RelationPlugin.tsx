@@ -1,4 +1,3 @@
-import { ViewType } from "@/app/controller/ViewController";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND, LexicalEditor } from "lexical";
 import { useEffect } from "react";
@@ -43,10 +42,6 @@ export const RelationPlugin = () => {
       KEY_DOWN_COMMAND,
       (event) => {
         if (event.key !== ":") {
-          return false;
-        }
-        if (viewController.curView != ViewType.OUTLINE) {
-          // TODO: make this also work for outline side of split view?
           return false;
         }
 
