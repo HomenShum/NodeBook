@@ -4,10 +4,12 @@ import { GraphObject } from "@/app/model/GraphObject";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { SearchResult } from "@/app/store/search";
 import { PathLink, comparePositions, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
-import { cn } from "@/lib/utils";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
+import { useState } from "react";
 import { useViewController } from "../../controller/useViewController";
 import { GraphRelation } from "../../model/GraphRelation";
+import { PinCustom } from "../icons/icons";
 import { RelatedObjectView } from "./RelatedObjectView";
 
 export const RelatedObjectChildren = observer(
@@ -23,7 +25,10 @@ export const RelatedObjectChildren = observer(
 
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
     const children = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, false);
+
     const pinnedChildren = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, true);
+    const [isPinnedVisible, setIsPinnedVisible] = useState(true);
+    const togglePinnedVisibility = () => setIsPinnedVisible(!isPinnedVisible);
 
     const parent = pathToParent[pathToParent.length - 1].child;
 
@@ -32,31 +37,42 @@ export const RelatedObjectChildren = observer(
       bundles.find((b) => b.children.map((o) => o.id).includes(r.id));
 
     let lastBundleId: string | undefined;
+
     return (
       <div className={depth > 0 ? "ml-[16px]" : ""}>
-        <div
-          className={cn(
-            pinnedChildren.length > 0 && "border-[--teal-4] border rounded-md px-4 mt-2 py-1 mb-4 -translate-x-4",
-          )}
-        >
-          {pinnedChildren.length > 0 && (
-            <div className="relative -top-3 -left-2 uppercase text-xs bg-white w-fit px-2 text-[--gray-9]">pinned</div>
-          )}
-          {pinnedChildren.map(({ relation: childRelation, position }, i) => {
-            return (
-              <div key={relationsToPathStr([...pathToParentRelations, childRelation])}>
-                <RelatedObjectView
-                  path={[...pathToParentRelations, childRelation]}
-                  position={position}
-                  siblingAbove={pinnedChildren[i - 1]?.relation}
-                  siblingBelow={pinnedChildren[i + 1]?.relation}
-                  searchResult={searchResult}
-                />
+        {pinnedChildren.length > 0 && (
+          <>
+            <button
+              onClick={togglePinnedVisibility}
+              className={`flex gap-1 relative top-3 -left-1 uppercase text-xs bg-white w-fit -ml-1 -mt-4 px-1 py-1 border-[--teal-4] border rounded-md text-[--gray-9] z-10  ${
+                isPinnedVisible ? "mb-0" : "mb-8"
+              }`}
+            >
+              <span className="text-[--gray-9] scale-[0.80]">
+                <PinCustom />
+              </span>
+              {isPinnedVisible ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
+            {isPinnedVisible && (
+              <div className="border-[--teal-4] border rounded-md px-4 pt-6 pb-1 mb-4 -translate-x-4">
+                {isPinnedVisible &&
+                  pinnedChildren.map(({ relation: childRelation, position }, i) => {
+                    return (
+                      <div key={relationsToPathStr([...pathToParentRelations, childRelation])}>
+                        <RelatedObjectView
+                          path={[...pathToParentRelations, childRelation]}
+                          position={position}
+                          siblingAbove={pinnedChildren[i - 1]?.relation}
+                          siblingBelow={pinnedChildren[i + 1]?.relation}
+                          searchResult={searchResult}
+                        />
+                      </div>
+                    );
+                  })}
               </div>
-            );
-          })}
-        </div>
-
+            )}
+          </>
+        )}
         {children.map(({ relation: childRelation, position }, i) => {
           const firstBundle = findRelationsFirstBundle(childRelation);
           const newBundle = firstBundle?.id !== lastBundleId;
@@ -64,7 +80,7 @@ export const RelatedObjectChildren = observer(
           return (
             <div key={relationsToPathStr([...pathToParentRelations, childRelation])}>
               {i !== 0 && newBundle && (
-                <div className="pt-4 mt-1 -translate-x-3 border-t border-dashed border-[][-gray--5]" />
+                <div className="pt-4 mt-1 -translate-x-3 border-t border-dashed border-[--gray-5]" />
               )}
               <RelatedObjectView
                 path={[...pathToParentRelations, childRelation]}
@@ -118,6 +134,8 @@ export const getFilteredChildrenAtPath = (
       );
     });
 };
+
+export default RelatedObjectChildren;
 
 /**
  * TODO: This is still conceptually messy imo

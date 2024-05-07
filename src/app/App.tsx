@@ -87,7 +87,7 @@ const App = observer(() => {
               </div>
             </aside>
           )}
-          <main className="flex flex-1 pt-16">
+          <main className="flex flex-1 pt-20">
             {viewController.curView === ViewType.OUTLINE ? (
               <OutlineView searchQuery={searchQuery} />
             ) : viewController.curView === ViewType.THOUGHTSTREAM ? (
