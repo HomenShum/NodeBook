@@ -104,7 +104,7 @@ export const RelatedObjectView = observer(
             }}
           >
             <div
-              className={cn(styles.OutlineObjectContent, !object.isPrivate && "bg-[#dfdfc9]")}
+              className={cn(styles.OutlineObjectContent, !object.isPrivate && styles.OutlineObjectContentPublic)}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
@@ -129,7 +129,7 @@ export const RelatedObjectView = observer(
                   !displayChildren &&
                   (!viewController.hideBulletBackgroundIfParentsOnly || hasTrueChildren) && (
                     <Dot
-                      stroke="var(--gray-4)"
+                      stroke={!object.isPrivate ? "var(--teal-4)" : "var(--gray-4)"}
                       height={16}
                       strokeWidth={17}
                       className={cn("cursor-pointer absolute top-0 left-0")}
@@ -138,7 +138,7 @@ export const RelatedObjectView = observer(
                 {isChild && (
                   <Dot
                     strokeWidth={5}
-                    color="var(--gray-10)"
+                    color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
                     height={16}
                     className={cn("cursor-pointer absolute top-0")}
                     onClick={() => {
@@ -152,7 +152,7 @@ export const RelatedObjectView = observer(
                 {!isChild && (
                   <Circle
                     strokeWidth={6}
-                    color="var(--gray-8)"
+                    color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
                     height={8}
                     className={cn("cursor-pointer absolute top-1")}
                     onClick={() => {
