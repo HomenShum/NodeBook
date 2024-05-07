@@ -32,19 +32,21 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
   return (
     <div className={s.OutlineView}>
       <div className={s.OutlineContainer}>
-        <div className={s.BreadcrumbContainer}>
-          {path.slice(0, path.length - 1).map(({ relation, child }, i) => (
-            <span className={s.Breadcrumb} key={relation.id}>
-              {/* Home icon before the first item */}
-              {i === 0 && <HomeIcon size={14} />}
-              {/* Chevron only between items, not before the first item */}
-              {path.length > 2 && i !== 0 && <ChevronRight size={14} strokeWidth={2} />}
-              <span onClick={() => viewController.setCurrentOutlineViewRoot(relations.slice(0, i + 1))}>
-                {child.text}
+        {path.length > 1 && (
+          <div className={s.BreadcrumbContainer}>
+            {path.map(({ relation, child }, i) => (
+              <span className={s.Breadcrumb} key={relation.id}>
+                {/* Home icon before the first item */}
+                {i === 0 && <HomeIcon size={14} />}
+                {/* Chevron only between items, not before the first item */}
+                {i !== 0 && <ChevronRight size={14} strokeWidth={2} />}
+                <span onClick={() => viewController.setCurrentOutlineViewRoot(relations.slice(0, i + 1))}>
+                  {child.text}
+                </span>
               </span>
-            </span>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div className={s.TitleContainer}>
           {root.text === "My Lists" && <Home className={s.HomeIcon} size={20} />}
