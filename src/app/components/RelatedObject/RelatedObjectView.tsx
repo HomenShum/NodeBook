@@ -165,7 +165,7 @@ export const RelatedObjectView = observer(
               </div>
               {/* relation and node */}
               <div className="flex flex-col flex-1 relative -top-[2px]">
-                <div className="flex w-full gap-2 items-baseline">
+                <div className="flex w-full gap-2 items-baseline pb-2">
                   {!isChild || updatingRelationType ? (
                     <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} />
                   ) : null}
