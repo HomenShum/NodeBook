@@ -85,6 +85,9 @@ export class GraphStore {
       to: this.thoughtstreamRoot,
       relationType: this.relationTypesById.child,
     });
+    // Initialize with blank entries in thoughtstream and outline
+    const { node } = this.createChildNode(this.outlineRoot);
+    this.addToThoughtstream(node);
   }
 
   addToBundle(relation: GraphRelation, bundle: GraphNode) {
