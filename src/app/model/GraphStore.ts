@@ -13,6 +13,7 @@ export const defaultRelationTypes = {
   author: { id: "author", label: "author", reverseLabel: "authored" },
   reference: { id: "reference", label: "reference", reverseLabel: "referenced by" },
   relatesTo: { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
+  empty: { id: "empty", label: "", reverseLabel: "" },
 };
 
 export const USER_ROOT_ID = "user-root-id";
@@ -302,13 +303,13 @@ export class GraphStore {
    *
    * TODO: think about how this should be handled long term.
    */
-  getRelationTypeByLabel(labelText: string): GraphRelationType | null {
+  getOrCreateRelationTypeByLabel(labelText: string): GraphRelationType {
     for (const [_, type] of Object.entries(this.relationTypesById)) {
       if (type.label === labelText || type.reverseLabel === labelText) {
         return type;
       }
     }
-    return null;
+    return this.createRelationType({ label: labelText });
   }
 
   unpinRelation(relation: GraphRelation, direction: "from" | "to") {
@@ -465,12 +466,20 @@ export class GraphStore {
     return relation;
   }
 
-  createRelationType(props: GraphRelationType, fromServer = false): GraphRelationType {
-    if (this.relationTypesById[props.id] && !fromServer) {
+  createRelationType(
+    props: { id?: string; label: string; reverseLabel?: string },
+    fromServer = false,
+  ): GraphRelationType {
+    const id = props.id || uuid();
+    if (this.relationTypesById[id] && !fromServer) {
       throw new Error(`Relation type with id ${props.id} already exists`);
     }
-    this.relationTypesById[props.id] = { ...props };
-    return this.relationTypesById[props.id];
+    this.relationTypesById[id] = {
+      id,
+      label: props.label,
+      reverseLabel: props.reverseLabel || `is ${props.label} of`,
+    };
+    return this.relationTypesById[id];
   }
 
   updateRelationType(id: string, props: Partial<Omit<GraphRelationType, "id">>): GraphRelationType {

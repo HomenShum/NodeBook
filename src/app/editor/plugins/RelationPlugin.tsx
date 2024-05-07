@@ -1,26 +1,33 @@
 import { ViewType } from "@/app/controller/ViewController";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND, LexicalEditor } from "lexical";
+import { $getSelection, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND, LexicalEditor } from "lexical";
 import { useEffect } from "react";
 import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
 import { useViewController } from "../../controller/useViewController";
 import { GraphNode } from "../../model/GraphNode";
 import { useGraphStore } from "../../store/useGraphStore";
 
-function getEditorText(editor: LexicalEditor): string | null {
-  let text: string | null = null;
-  editor.getEditorState().read(() => {
+/**
+ * Returns the text from the start of the editor to the left side of the selection.
+ * If there's no selection, returns null.
+ */
+function getTextBeforeSelection(editor: LexicalEditor): string | null {
+  return editor.getEditorState().read(() => {
+    // Get nodes up to and including the selection start node
     const selection = $getSelection();
-    if (!$isRangeSelection(selection) || selection.anchor.type !== "text") {
-      return;
-    }
-    const anchorNode = selection.anchor.getNode();
-    if (!anchorNode.isSimpleText()) {
-      return;
-    }
-    text = anchorNode.getTextContent().slice(0, selection.anchor.offset);
+    if (!selection) return null;
+    const points = selection.getStartEndPoints();
+    if (!points) return null;
+    const selectionStartNode = selection.getNodes()[0];
+    if (!selectionStartNode) return null;
+    const nodesBeforeSelection = selectionStartNode.getPreviousSiblings();
+    // Convert to text
+    const offset = selection.isBackward() ? points[1].offset : points[0].offset;
+    return (
+      nodesBeforeSelection.map((node) => node.getTextContent()).join("") +
+      selectionStartNode.getTextContent().slice(0, offset)
+    );
   });
-  return text;
 }
 
 export const RelationPlugin = () => {
@@ -53,22 +60,14 @@ export const RelationPlugin = () => {
           return false;
         }
 
-        let editorText = getEditorText(editor);
-        if (editorText === null) {
+        let textBeforeSelection = getTextBeforeSelection(editor);
+        if (textBeforeSelection === null) {
           // If editorText is null here, indicates that the editor contains non-plain text, so we bail
           return false;
         }
-        editorText = editorText.trim();
+        textBeforeSelection = textBeforeSelection.trim();
 
-        let relationType = graphStore.getRelationTypeByLabel(editorText);
-        if (!relationType) {
-          // If there isn't an existing relation type with the label, we create a new one
-          relationType = graphStore.createRelationType({
-            id: editorText.replace(" ", "_"),
-            label: editorText,
-            reverseLabel: `is ${editorText} of`,
-          });
-        }
+        let relationType = graphStore.getOrCreateRelationTypeByLabel(textBeforeSelection);
         relation.setType(relationType);
         object.setContent("");
         viewController.setFocusedNode(pathToNodeStr);
