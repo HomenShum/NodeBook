@@ -1,7 +1,7 @@
 "use client";
-import { Home, Search, SettingsIcon, X } from "lucide-react";
+import { Search, SettingsIcon, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useRef, useState } from "react";
+import { ReactNode, useRef, useState } from "react";
 import s from "./app.module.css";
 import { OutlineView } from "./components/OutlineView";
 import { SplitView } from "./components/SplitView";
@@ -10,7 +10,7 @@ import { DevTools } from "./components/dev/DevTools";
 import { NodeTable } from "./components/dev/NodeTable";
 import { RelationTable } from "./components/dev/RelationTable";
 import { RelationTypeTable } from "./components/dev/RelationTypeTable";
-import { ListIcon, StreamIcon } from "./components/icons/icons";
+import { ListIcon, SidebarIcon, SplitIcon, StreamIcon } from "./components/icons/icons";
 import { ViewType } from "./controller/ViewController";
 import { useKeyboardShortcuts } from "./controller/useKeyboardShortcuts";
 import { useViewController } from "./controller/useViewController";
@@ -22,13 +22,35 @@ const App = observer(() => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchFocused, setSearchFocused] = useState(false);
 
+  const ButtonNavigation = () => (
+    <>
+      <ButtonNav viewType={ViewType.THOUGHTSTREAM} icon={<StreamIcon />} label="Stream" />
+      <ButtonNav viewType={ViewType.OUTLINE} icon={<ListIcon />} label="List" />
+      <ButtonNav viewType={ViewType.SPLIT} icon={<SplitIcon />} label="Split" />
+    </>
+  );
+  interface ButtonNavProps {
+    viewType: ViewType;
+    icon: ReactNode;
+    label: string;
+  }
+  const ButtonNav: React.FC<ButtonNavProps> = ({ viewType, icon, label }) => (
+    <button
+      className={`${s.Button} ${viewController.curView === viewType ? s.Selected : ""}`}
+      onClick={() => viewController.setView(viewType)}
+    >
+      <div className={s.ButtonIcon}>{icon}</div>
+      {label}
+    </button>
+  );
+
   return (
     <div className="App">
       <div ref={appContainerRef} className="flex flex-col h-full relative">
         <header className="fixed w-full bg-white z-10 flex justify-center items-center px-4 border-b">
-          {/* <button onClick={() => viewController.toggleLeftSidebar()}>
+          <button className="absolute left-4" onClick={() => viewController.toggleLeftSidebar()}>
             <SidebarIcon />
-          </button> */}
+          </button>
           <div className="flex w-[720px] justify-between items-center">
             <div
               className={searchFocused ? s.SearchFocus : s.Search}
@@ -41,43 +63,16 @@ const App = observer(() => {
                 placeholder="Search..."
                 className={s.SearchContent}
                 value={searchQuery}
-                onFocus={() => viewController.setFocusedNode(null)}
                 onChange={(e) => setSearchQuery(e.target.value)}
-              ></input>
+              />
               {searchQuery && (
                 <button onClick={() => setSearchQuery("")}>
-                  <X size={18} className={s.CancelSearch}></X>
+                  <X size={18} className={s.CancelSearch} />
                 </button>
               )}
             </div>
-            <div className="flex gap-4 py-2 pl-2 align-left">
-              <button
-                className={`${s.Button} ${viewController.curView === ViewType.SPLIT ? s.Selected : ""}`}
-                onClick={() => viewController.setView(ViewType.SPLIT)}
-              >
-                <div className={s.ButtonIcon}>
-                  <Home size={16} />
-                </div>
-                Home
-              </button>
-              <button
-                className={`${s.Button} ${viewController.curView === ViewType.THOUGHTSTREAM ? s.Selected : ""}`}
-                onClick={() => viewController.setView(ViewType.THOUGHTSTREAM)}
-              >
-                <div className={s.ButtonIcon}>
-                  <StreamIcon />
-                </div>
-                Stream
-              </button>
-              <button
-                className={`${s.Button} ${viewController.curView === ViewType.OUTLINE ? s.Selected : ""}`}
-                onClick={() => viewController.setView(ViewType.OUTLINE)}
-              >
-                <div className={s.ButtonIcon}>
-                  <ListIcon />
-                </div>
-                List
-              </button>
+            <div className="flex gap-2 py-2 pl-2 align-left">
+              <ButtonNavigation />
             </div>
           </div>
           <button onClick={() => viewController.toggleRightSidebar()}>
@@ -85,31 +80,21 @@ const App = observer(() => {
           </button>
         </header>
         <div className="flex flex-row flex-1">
-          {/* {viewController.leftSidebarOpen && (
-            <aside className="flex flex-col w-1/3 bg-[--teal-2] border-r z-10 pt-16"></aside>
-          )} */}
+          {viewController.leftSidebarOpen && (
+            <aside className="flex flex-col w-1/6 bg-[--teal-1] border-r z-10 mt-12 px-2">
+              <div className="flex items-start flex-col w-full gap-2 py-2 ">
+                <ButtonNavigation />
+              </div>
+            </aside>
+          )}
           <main className="flex flex-1 pt-16">
-            <div className="m-4 w-full">
-              {viewController.curView === ViewType.OUTLINE ? (
-                <div className="flex flex-col h-full items-center ">
-                  <OutlineView searchQuery={searchQuery} />
-                </div>
-              ) : viewController.curView === ViewType.THOUGHTSTREAM ? (
-                <ThoughtstreamView searchQuery={searchQuery} />
-              ) : (
-                <SplitView searchQuery={searchQuery} />
-              )}
-              {searchQuery !== "" && (
-                <div
-                  onClick={() => {
-                    setSearchQuery("");
-                  }}
-                  className="flex items-center justify-center text-blue-300 hover:opacity-50 cursor-pointer"
-                >
-                  <X></X>Clear filter
-                </div>
-              )}
-            </div>
+            {viewController.curView === ViewType.OUTLINE ? (
+              <OutlineView searchQuery={searchQuery} />
+            ) : viewController.curView === ViewType.THOUGHTSTREAM ? (
+              <ThoughtstreamView searchQuery={searchQuery} />
+            ) : (
+              <SplitView searchQuery={searchQuery} />
+            )}
           </main>
           {viewController.rightSidebarOpen && (
             <aside className="w-1/3 bg-[--gray-2] border-l overflow-y-hidden absolute right-0 pt-12">
@@ -120,7 +105,6 @@ const App = observer(() => {
             </aside>
           )}
         </div>
-        {/* <MouseSelection appContainerRef={appContainerRef} /> */}
       </div>
     </div>
   );

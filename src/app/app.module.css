@@ -1,8 +1,10 @@
 .Button {
+  width: 100%;
   text-align: left;
+
   padding: 8px 8px;
   display: inline-flex;
-  justify-content: center;
+  justify-content: left;
   align-items: center;
   gap: 8px;
   border-radius: 6px;
@@ -16,6 +18,7 @@
 
 .Button:hover,
 .Button.Selected {
+  background-color: white;
   color: var(--teal-8);
   box-shadow: 0px 1px 2px 0px var(--teal-a4), 0px 0px 0px 1px var(--teal-2);
 }
@@ -38,13 +41,12 @@
 
 .Search {
   background-color: var(--gray-a2);
-
   color: var(--gray-11);
 }
 
 .SearchFocus {
-  box-shadow: inset 0px 1px 0px var(--teal-a6), inset 0px -1px 0px var(--teal-3);
   background-color: var(--teal-a2);
+  outline: 1px solid var(--teal-5);
 }
 
 .SearchIcon {
@@ -67,6 +69,10 @@
   /* Remove default */
   -moz-appearance: none;
   -webkit-appearance: none;
+}
+
+.SearchContent::placeholder {
+  color: var(--gray-9);
 }
 
 .CancelSearch {
