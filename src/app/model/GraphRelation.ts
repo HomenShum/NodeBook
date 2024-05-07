@@ -43,7 +43,7 @@ export class GraphRelation implements Serializable, GraphObject {
   }
 
   get text(): string {
-    return `(${this.from.text}) -[${this.id}: ${this.relationType.label}]-> (${this.to.text})`;
+    return `[(${this.from.text}) -(${this.id}: ${this.relationType.label})-> (${this.to.text})]`;
   }
 
   get children(): GraphObject[] {
