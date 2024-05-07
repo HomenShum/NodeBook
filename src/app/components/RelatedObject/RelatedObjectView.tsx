@@ -135,7 +135,7 @@ export const RelatedObjectView = observer(
                       className={cn("cursor-pointer absolute top-0 left-0")}
                     />
                   )}
-                {isChild && (
+                {objectCount === 1 && (
                   <Dot
                     strokeWidth={5}
                     color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
@@ -149,7 +149,7 @@ export const RelatedObjectView = observer(
                     }}
                   />
                 )}
-                {!isChild && (
+                {objectCount > 1 && (
                   <Circle
                     strokeWidth={6}
                     color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
