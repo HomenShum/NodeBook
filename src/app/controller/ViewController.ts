@@ -46,11 +46,13 @@ export class ViewController {
   public relatedNodesViewType: "all" | "pinned" = "all";
 
   public currentOutlineViewRoot: GraphRelation[] | null = null;
+  public currentStreamViewRoot: GraphRelation[] | null = null;
 
   constructor(graphStore: GraphStore) {
     this.curView = ViewType.OUTLINE;
     this.graphStore = graphStore;
     this.currentOutlineViewRoot = [graphStore.outlineRootRelationFromUserRoot];
+    this.currentStreamViewRoot = [graphStore.thoughtstreamRootRelationFromUserRoot];
     makeAutoObservable(this);
     makeAutoSaving(this, {
       showNodeDetails: true,
@@ -62,6 +64,10 @@ export class ViewController {
 
   setShowAtSignOnMention(show: boolean) {
     this.showAtSignOnMention = show;
+  }
+
+  setCurrentStreamViewRoot(root: GraphRelation[] | null) {
+    this.currentStreamViewRoot = root;
   }
 
   setCurrentOutlineViewRoot(root: GraphRelation[] | null) {

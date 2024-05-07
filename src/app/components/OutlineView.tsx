@@ -4,12 +4,14 @@ import { useCallback } from "react";
 import { ViewType } from "../controller/ViewController";
 import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
+import { useGraphStore } from "../store/useGraphStore";
 import { relationsPathToParentChild } from "../util";
 import s from "./OutlineView.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
 export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) => {
   const viewController = useViewController();
+  const graphStore = useGraphStore();
 
   const relations = viewController.currentOutlineViewRoot;
   if (relations === null) {
@@ -17,11 +19,10 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
   }
 
   const path = relationsPathToParentChild(relations);
+  const nodeAtPathEnd = path[path.length - 1].child;
+  const searchResult = searchQuery ? searchGraph(nodeAtPathEnd, searchQuery) : undefined;
 
-  const root = path[path.length - 1].child;
-  const searchResult = searchQuery ? searchGraph(root, searchQuery) : undefined;
-
-  if (!root) {
+  if (!nodeAtPathEnd) {
     return <div>Missing root node</div>;
   }
 
@@ -49,8 +50,8 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
         )}
 
         <div className={s.TitleContainer}>
-          {root.text === "My Lists" && <Home className={s.HomeIcon} size={20} />}
-          <h1 className={s.TitleText}>{root.text}</h1>
+          {nodeAtPathEnd.id === graphStore.outlineRoot.id && <Home className={s.HomeIcon} size={20} />}
+          <h1 className={s.TitleText}>{nodeAtPathEnd.text}</h1>
           <button className={s.AddButton} onClick={createChild}>
             <span className={s.AddButtonIcon}>+</span>
           </button>

@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
-import { ViewType } from "@/app/controller/ViewController";
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { GraphRelation } from "@/app/model/GraphRelation";
@@ -50,6 +49,7 @@ export const RelatedObjectView = observer(
     const pathToNodeStr = relationsToPathStr(path);
     const pathObjects = relationsPathToParentChild(path);
     const { parent, child: object } = pathObjects[pathObjects.length - 1];
+    const viewRoot = pathObjects[0].child; // TODO messy conceptually
 
     // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
@@ -84,6 +84,16 @@ export const RelatedObjectView = observer(
         lastRelationTypeId.current = relation.relationType.id;
       }
     }, [relation.relationType.id]);
+
+    const setPathToThisAsRoot = useCallback(() => {
+      if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
+        viewController.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
+      } else if (viewRoot.id === graphStore.outlineRoot.id) {
+        viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+      } else {
+        throw new Error("Unknown view root");
+      }
+    }, [viewController, viewRoot, graphStore, pathToParentRelations, relation]);
 
     return (
       <>
@@ -135,34 +145,23 @@ export const RelatedObjectView = observer(
                       className={cn("cursor-pointer absolute top-0 left-0")}
                     />
                   )}
-                {objectCount === 1 && (
+                {objectCount === 1 ? (
                   <Dot
                     strokeWidth={5}
                     color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
                     height={16}
                     className={cn("cursor-pointer absolute top-0")}
-                    onClick={() => {
-                      viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
-                      if (viewController.curView === ViewType.THOUGHTSTREAM) {
-                        viewController.setView(ViewType.OUTLINE);
-                      }
-                    }}
+                    onClick={setPathToThisAsRoot}
                   />
-                )}
-                {objectCount > 1 && (
+                ) : objectCount > 1 ? (
                   <Circle
                     strokeWidth={6}
                     color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
                     height={8}
                     className={cn("cursor-pointer absolute top-1")}
-                    onClick={() => {
-                      viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
-                      if (viewController.curView === ViewType.THOUGHTSTREAM) {
-                        viewController.setView(ViewType.OUTLINE);
-                      }
-                    }}
+                    onClick={setPathToThisAsRoot}
                   />
-                )}
+                ) : null}
               </div>
               {/* relation and node */}
               <div className="flex flex-col flex-1 relative -top-[2px]">
