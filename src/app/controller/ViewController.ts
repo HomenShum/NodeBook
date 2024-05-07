@@ -34,7 +34,7 @@ export class ViewController {
   public hideBundles = true;
   public hideZones = false;
   public showAtSignOnMention = false;
-  public hideThoughtstreamBullets = false;
+  public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
 
   // TODO do we need this right now?
