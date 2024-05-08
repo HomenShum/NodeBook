@@ -30,13 +30,30 @@ if (typeof window !== "undefined" && env.env !== "production") {
 }
 
 function persistData(dataString: string) {
-  fetch("/api/persist", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ data: dataString }),
-  });
+  if (env.persistTo === "local") {
+    localStorage.setItem("data", dataString);
+  } else if (env.persistTo === "server") {
+    fetch("/api/persist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ data: dataString }),
+    });
+  } else {
+    return env.persistTo satisfies never;
+  }
+}
+
+async function loadData() {
+  let dataString: string | null = null;
+  if (env.persistTo === "local") {
+    dataString = localStorage.getItem("data");
+  } else if (env.persistTo === "server") {
+    const json = await fetch("/api/persist").then((res) => res.json());
+    dataString = json.data;
+  }
+  return dataString ? JSON.parse(dataString) : null;
 }
 
 /**
@@ -55,25 +72,21 @@ export default function RootLayout({
       setIsLoading(false);
       return;
     }
-
-    fetch("/api/persist")
-      .then((res) => res.json())
-      .then((json) => {
-        const dataString: string = json.data;
-        persistedData.current = dataString;
-        if (dataString !== null) {
-          graphStore.deserializeInPlace(JSON.parse(dataString));
+    async function setupSync() {
+      const data = await loadData();
+      if (data !== null) {
+        graphStore.deserializeInPlace(data);
+      }
+      setIsLoading(false);
+      setInterval(() => {
+        const newDataString = JSON.stringify(graphStore.serialize());
+        if (newDataString !== persistedData.current) {
+          persistedData.current = newDataString;
+          persistData(newDataString);
         }
-
-        setIsLoading(false);
-        setInterval(() => {
-          const newDataString = JSON.stringify(graphStore.serialize());
-          if (newDataString !== persistedData.current) {
-            persistedData.current = newDataString;
-            persistData(newDataString);
-          }
-        }, 500);
-      });
+      }, 500);
+    }
+    setupSync();
   }, []);
   return (
     <html lang="en" className={inter.className}>
