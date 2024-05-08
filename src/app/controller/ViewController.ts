@@ -91,12 +91,22 @@ export class ViewController {
     }
   }
 
+  /**
+   * Moves the focus to the given node.
+   */
   setFocusedNode(path: Path | null) {
     this.focusedNode = path;
     setTimeout(() => {
       if (!path || this.focusedNode !== path) return;
       this.editorsByPath.get(path)?.focus();
     }, 0);
+  }
+
+  /**
+   * Used to track the focused node without changing the focus.
+   */
+  trackFocusedNode(path: Path | null) {
+    this.focusedNode = path;
   }
 
   isFocused(path: Path) {
@@ -186,16 +196,31 @@ export class ViewController {
     return node;
   }
 
+  /**
+   * Create a child node in the specified view, or in the current view if no view is specified.
+   * In split view, the child node will be created in the same view as the focused node.
+   */
   createChildNode({ focusAfterCreate, targetView }: ChildNodeOptions = { focusAfterCreate: true }) {
-    switch (targetView) {
+    const view = targetView || this.curView;
+    switch (view) {
       case ViewType.OUTLINE:
         return this.createOutlineChildNode(focusAfterCreate);
       case ViewType.THOUGHTSTREAM:
         return this.createThoughtstreamChildNode(focusAfterCreate);
       case ViewType.SPLIT:
       default:
-        // In split view default to creating a child in Thoughtstream (e.g. when cmd + k is pressed)
-        return this.createThoughtstreamChildNode(focusAfterCreate);
+        const id = this.focusedNode?.split("/")?.[0] ?? "";
+        const focusedViewRoot = this.graphStore.relationsById.get(id)?.to;
+        if (!focusedViewRoot) {
+          // default to creating a child in Thoughtstream (e.g. when cmd + k is pressed)
+          return this.createThoughtstreamChildNode(focusAfterCreate);
+        } else if (focusedViewRoot.id === this.graphStore.thoughtstreamRoot.id) {
+          return this.createThoughtstreamChildNode(focusAfterCreate);
+        } else if (focusedViewRoot.id === this.graphStore.outlineRoot.id) {
+          return this.createOutlineChildNode(focusAfterCreate);
+        } else {
+          throw new Error("Unsupported split view root node");
+        }
     }
   }
 

@@ -40,6 +40,7 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "../store/useGraphStore";
+import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 
 /**
  * SetRelatedObjectEditor
@@ -102,6 +103,7 @@ export const SetRelatedObjectEditor = observer(() => {
         <KeyboardOverridesPlugin />
         <ClearEditorPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
+        <TrackFocusedPath pathToNodeStr={pathToNodeStr} />
       </LexicalComposer>
     </div>
   );

@@ -17,6 +17,7 @@ import { KeyboardOverridesPlugin } from "./plugins/KeyboardOverridesPlugin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
+import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
 
 const theme = {
@@ -64,6 +65,7 @@ export const NodeContentEditor = observer(() => {
         <RelationPlugin />
         <MentionPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
+        <TrackFocusedPath pathToNodeStr={pathToNodeStr} />
       </LexicalComposer>
     </div>
   );
