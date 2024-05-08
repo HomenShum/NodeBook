@@ -525,7 +525,12 @@ export class GraphStore {
     });
   }
 
-  splitRelatedNode(relation: GraphRelation, nodeToSplit: GraphNode, selection: BaseSelection) {
+  splitRelatedNode(
+    relation: GraphRelation,
+    nodeToSplit: GraphNode,
+    selection: BaseSelection,
+    { splitToNewBundle } = { splitToNewBundle: false },
+  ) {
     const parent = relation.to.id === nodeToSplit.id ? relation.from : relation.to;
     const unpinnedRelation = this.correspondingObjectsForPinned.has(relation.id)
       ? this.correspondingObjectsForPinned.get(relation.id)!
@@ -561,6 +566,14 @@ export class GraphStore {
       end = selection.isBackward() ? selectionEnds[0] : selectionEnds[1];
     }
 
+    const relationsList = this.getRelationList(parent);
+    const relations = Array.from(relationsList.values())
+      .sort((a, b) => comparePositions(a.position, b.position))
+      .map((v) => v.item);
+    const relationIndex = relations.findIndex((r) => r.id === unpinnedRelation.id);
+    const siblingAbove = relations[relationIndex - 1];
+    const siblingsBelow = relations.slice(relationIndex + 1);
+
     let child: { node: GraphNode; relation: GraphRelation };
     const isCollapsedAndAtStart =
       start.index === end.index && start.offset === end.offset && start.index === 0 && start.offset === 0;
@@ -570,12 +583,6 @@ export class GraphStore {
       // because FractionalPositionedList.move can only place nodes after another node.
       // TODO: add a moveBefore method or something to FractionalPositionedList)
       child = this.createChildNode(parent);
-      const relationsList = this.getRelationList(parent);
-      const relations = Array.from(relationsList.values())
-        .sort((a, b) => comparePositions(a.position, b.position))
-        .map((v) => v.item);
-      const relationIndex = relations.findIndex((r) => r.id === unpinnedRelation.id);
-      const siblingAbove = relations[relationIndex - 1];
       if (siblingAbove) relationsList.move([child.relation], siblingAbove);
       if (pinnedRelation && relation === pinnedRelation) {
         parent.pinChildRelation(child.relation);
@@ -608,7 +615,6 @@ export class GraphStore {
       nodeToSplit.setContent(chipsBefore);
       // Create a new related node below the current one with the text after the cursor
       child = this.createChildNode(parent, { content: chipsAfter });
-      const relationsList = this.getRelationList(parent);
       relationsList.move([child.relation], unpinnedRelation);
 
       if (pinnedRelation && relation === pinnedRelation) {
@@ -620,13 +626,39 @@ export class GraphStore {
       }
     }
 
-    // Add new node to the same bundles as the original
-    const bundles = this.relationToBundles.get(unpinnedRelation.id);
-    bundles?.forEach((bundle) => {
-      this.createRelation({ from: bundle, to: child.relation });
-      const existingBundles = this.relationToBundles.get(child.relation.id) || [];
-      this.relationToBundles.set(child.relation.id, [...existingBundles, bundle]);
-    });
+    if (splitToNewBundle) {
+      // Make a new bundle
+      const newBundle = this.createChildNode(this.thoughtstreamRoot).node;
+      newBundle.setIsBundle(true);
+
+      // Add the new node to the new bundle
+      this.addToBundle(child.relation, newBundle);
+
+      const oldBundles = this.relationToBundles.get(unpinnedRelation.id);
+      for (const sibling of siblingsBelow) {
+        const oldBundlesForSibling = (this.relationToBundles.get(sibling.id) || []).filter((b) =>
+          oldBundles?.includes(b),
+        );
+        if (oldBundlesForSibling.length === 0) {
+          // If the sibling is not in the same bundle as the split node, we've hit the end of the bundle we're splitting and can stop
+          // TODO: this is hack-y because we don't have a concept of a "main" bundle that we're splitting here. Revisit at some point
+          break;
+        }
+        // Add siblings below the split node to the new bundle and remove them from the old bundle
+        this.addToBundle(sibling, newBundle);
+        oldBundlesForSibling?.forEach((bundle) => {
+          this.removeFromBundle(sibling, bundle);
+        });
+      }
+    } else {
+      // Add new node to the same bundles as the original
+      const bundles = this.relationToBundles.get(unpinnedRelation.id);
+      bundles?.forEach((bundle) => {
+        this.createRelation({ from: bundle, to: child.relation });
+        const existingBundles = this.relationToBundles.get(child.relation.id) || [];
+        this.relationToBundles.set(child.relation.id, [...existingBundles, bundle]);
+      });
+    }
 
     return child;
   }

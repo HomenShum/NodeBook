@@ -39,11 +39,17 @@ export const KeyboardOverridesPlugin = () => {
         action((event) => {
           if (!event || !graphStore) return false;
           event.preventDefault();
+
+          const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
+          const splitToNewBundle = !!metaOrCtrl;
+
           const selection = $getSelection();
           if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
 
           if (object instanceof GraphNode) {
-            let { node: newNode, relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection);
+            let { node: newNode, relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection, {
+              splitToNewBundle,
+            });
             if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
               newRelation = graphStore.correspondingPinnedForObjects.get(newRelation.id)!;
             }
