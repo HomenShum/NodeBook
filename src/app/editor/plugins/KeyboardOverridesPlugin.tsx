@@ -124,6 +124,16 @@ export const KeyboardOverridesPlugin = () => {
               }
             }
             return true;
+          } else if (metaOrCtrl && event.key === ".") {
+            const viewRoot = pathToParentNodes[0].child;
+            if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
+              viewController.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
+            } else if (viewRoot.id === graphStore.outlineRoot.id) {
+              viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+            } else {
+              throw new Error("Unknown view root");
+            }
+            return true;
           }
           return false;
         },
