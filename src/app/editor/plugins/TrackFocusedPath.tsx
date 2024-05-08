@@ -13,7 +13,7 @@ export const TrackFocusedPath = ({ pathToNodeStr }: { pathToNodeStr: string }) =
         BLUR_COMMAND,
         () => {
           viewController.trackFocusedNode(null);
-          return true;
+          return false;
         },
         COMMAND_PRIORITY_LOW,
       ),
@@ -21,7 +21,7 @@ export const TrackFocusedPath = ({ pathToNodeStr }: { pathToNodeStr: string }) =
         FOCUS_COMMAND,
         () => {
           viewController.trackFocusedNode(pathToNodeStr);
-          return true;
+          return false;
         },
         COMMAND_PRIORITY_LOW,
       ),
