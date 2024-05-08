@@ -10,7 +10,7 @@ export const DevTools = observer(() => {
   const fileInputRef = useRef(null);
 
   return (
-    <div className="p-2 mb-4 max-h-96 overflow-y-auto flex flex-col">
+    <div className="p-2 mb-0 max-h-96 overflow-y-auto flex flex-col">
       <h1 className="text-xl font-bold mb-2">Dev Tools</h1>
       <div className="flex flex-col gap-2">
         <label className="cursor-pointer">
