@@ -1,4 +1,4 @@
-import { Circle, Dot, Edit2, Ellipsis, Play } from "lucide-react";
+import { Circle, Dot, Edit2, Ellipsis, GlobeIcon, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useViewController } from "../../controller/useViewController";
 import { NodeContentEditor } from "../../editor/NodeContentEditor";
@@ -118,7 +118,13 @@ export const RelatedObjectView = observer(
             }}
           >
             <div
-              className={cn(styles.OutlineObjectContent, !object.isPrivate && styles.OutlineObjectContentPublic)}
+              className={cn(
+                styles.OutlineObjectContent,
+                !object.isPrivate &&
+                  viewController.hideThoughtstreamBullets &&
+                  parent === graphStore.thoughtstreamRoot &&
+                  styles.OutlineObjectContentPublic,
+              )}
               onMouseEnter={() => setIsHovered(true)}
               onMouseLeave={() => setIsHovered(false)}
             >
@@ -132,7 +138,15 @@ export const RelatedObjectView = observer(
                   </button>
                 )}
                 {hasChildren && isHovered && <Toggle />}
+                {!object.isPrivate &&
+                  viewController.hideThoughtstreamBullets &&
+                  parent === graphStore.thoughtstreamRoot && (
+                    <div className="relative right-[10px] pl-1  translate-y-[0.5px] flex text-[--teal-7] bg-white">
+                      <GlobeIcon size={13} strokeWidth={2} />
+                    </div>
+                  )}
               </div>
+
               <div
                 className={cn(
                   "w-4 relative right-2 h-4 flex",
