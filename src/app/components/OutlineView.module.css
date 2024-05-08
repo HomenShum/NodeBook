@@ -26,7 +26,6 @@
 }
 
 .OutlineObjectContentPublic {
-  color: inherit;
   /* Leaving this empty in case Jacob wants to add extra styles for the public content */
 }
 
@@ -44,8 +43,9 @@
 .PinIcon {
   position: relative;
   top: 0;
+  padding: 0 3px;
   right: 7px;
-  transform: scale(0.8);
+  transform: scale(0.8) translateY(-0.5px);
   color: var(--teal-7);
 }
 
