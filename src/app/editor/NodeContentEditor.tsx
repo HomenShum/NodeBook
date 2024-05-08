@@ -3,6 +3,7 @@ import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 import { cn } from "@/lib/utils";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
@@ -17,7 +18,6 @@ import { MentionPlugin } from "./plugins/MentionPlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
-import { ContentEditable } from "./ui/ContentEditable";
 
 const theme = {
   // Theme styling goes here
@@ -30,7 +30,7 @@ const onError = (error: any) => {
   console.error(error);
 };
 
-export const Editor = observer(() => {
+export const NodeContentEditor = observer(() => {
   const view = useViewController();
   const { object: node, pathToNodeStr } = useRelationAtPath();
   if (!(node instanceof GraphNode)) {
@@ -54,7 +54,7 @@ export const Editor = observer(() => {
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable nodeId={node.id} />}
+          contentEditable={<ContentEditable className="outline-none" data-nodeid={node.id} />}
           placeholder={null}
         />
         <HistoryPlugin />

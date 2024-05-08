@@ -8,7 +8,7 @@ import { $createMentionNode, $isMentionNode } from "../../model/MentionNode";
 import { useGraphStore } from "../../store/useGraphStore";
 import { OnChangePlugin } from "./OnChangePlugin";
 
-const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphNode, graphStore: GraphStore) => {
+export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphNode, graphStore: GraphStore) => {
   const paragraphChildren = paragraph.getChildren();
   if (node.content.length !== paragraphChildren.length) return false;
 
@@ -39,7 +39,7 @@ const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: GraphStor
   return paragraph;
 };
 
-const createContentMatchingParagraph = (paragraph: ParagraphNode): Chip[] => {
+export const createContentMatchingParagraph = (paragraph: ParagraphNode): Chip[] => {
   return paragraph
     .getChildren()
     .map((child) =>

@@ -32,9 +32,6 @@ export const KeyboardOverridesPlugin = () => {
     parent,
     setViewType,
   } = useRelationAtPath();
-  if (!(object instanceof GraphNode)) {
-    throw new Error("Expected object to be a GraphNode");
-  }
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
@@ -45,30 +42,36 @@ export const KeyboardOverridesPlugin = () => {
           const selection = $getSelection();
           if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
 
-          let { node: newNode, relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection);
-          if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
-            newRelation = graphStore.correspondingPinnedForObjects.get(newRelation.id)!;
-          }
+          if (object instanceof GraphNode) {
+            let { node: newNode, relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection);
+            if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
+              newRelation = graphStore.correspondingPinnedForObjects.get(newRelation.id)!;
+            }
 
-          // Add to outline if necessary
-          const root = pathToParentNodes[0].child;
-          if (
-            (graphStore.addThoughtstreamNestedChildrenToThoughtstream && root.id === graphStore.thoughtstreamRoot.id) ||
-            (graphStore.addThoughstreamDirectChildrenToOutline && parent.id === graphStore.thoughtstreamRoot.id)
-          ) {
-            graphStore.createRelation({
-              from: graphStore.outlineRoot,
-              to: newNode,
-              relationType: graphStore.relationTypesById.child,
-            });
-          }
-          // Add to thoughtstream if necessary
-          if (graphStore.addAllOutlineDescendantsToThoughtstream && root.id === graphStore.outlineRoot.id) {
-            graphStore.addToThoughtstream(newNode);
-          }
+            // Add to outline if necessary
+            const root = pathToParentNodes[0].child;
+            if (
+              (graphStore.addThoughtstreamNestedChildrenToThoughtstream &&
+                root.id === graphStore.thoughtstreamRoot.id) ||
+              (graphStore.addThoughstreamDirectChildrenToOutline && parent.id === graphStore.thoughtstreamRoot.id)
+            ) {
+              graphStore.createRelation({
+                from: graphStore.outlineRoot,
+                to: newNode,
+                relationType: graphStore.relationTypesById.child,
+              });
+            }
+            // Add to thoughtstream if necessary
+            if (graphStore.addAllOutlineDescendantsToThoughtstream && root.id === graphStore.outlineRoot.id) {
+              graphStore.addToThoughtstream(newNode);
+            }
 
-          viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
-          return true;
+            viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
+            return true;
+          } else {
+            // TODO handle related relations
+            throw new Error("Splitting relations not yet implemented");
+          }
         }),
         COMMAND_PRIORITY_LOW,
       ),

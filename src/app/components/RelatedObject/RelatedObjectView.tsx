@@ -1,7 +1,7 @@
-import { Circle, Dot, Ellipsis, Play } from "lucide-react";
+import { Circle, Dot, Edit2, Ellipsis, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useViewController } from "../../controller/useViewController";
-import { Editor } from "../../editor/Editor";
+import { NodeContentEditor } from "../../editor/NodeContentEditor";
 import { useGraphStore } from "../../store/useGraphStore";
 
 import {
@@ -21,6 +21,7 @@ import { action } from "mobx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../OutlineView.module.css";
 
+import { SetRelatedObjectEditor } from "../../editor/SetRelatedObjectEditor";
 import { PinCustom } from "../icons/icons";
 import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
@@ -66,7 +67,8 @@ export const RelatedObjectView = observer(
 
     // const isSelected = viewController.selectedNodes.has(bullet);
     const isSelected = false;
-    const isChild = relation.relationType.id === defaultRelationTypes.child.id && relation.to.id === object.id;
+    const isBackwards = relation.from.id === object.id;
+    const isChild = relation.relationType.id === defaultRelationTypes.child.id && !isBackwards;
     const objectCount = pathObjects.reduce((acc, { child }) => (child.id === object.id ? acc + 1 : acc), 0);
 
     const displayChildren =
@@ -111,6 +113,8 @@ export const RelatedObjectView = observer(
               siblingBelow,
               viewType,
               setViewType,
+              isBackwards,
+              isChild,
             }}
           >
             <div
@@ -174,7 +178,12 @@ export const RelatedObjectView = observer(
                   ) : viewType === "replace" ? (
                     <ReplaceRelatedNodeView />
                   ) : (
-                    <SearchOrCreateNodeView />
+                    <>
+                      <SetRelatedObjectEditor />
+                      {isHovered && (
+                        <Edit2 size={18} className="text-gray-400 cursor-pointer" onClick={() => setViewType("edit")} />
+                      )}
+                    </>
                   )}
                 </div>
                 {viewController.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
@@ -280,12 +289,17 @@ const RelatedObjectMenu = observer(
 );
 
 const RelatedObjectEditor = observer(() => {
-  const { object } = useRelationAtPath();
   const graphStore = useGraphStore();
-  const hasNonChildRelation = graphStore
-    .getRelationList(object)
-    .values()
-    .some(({ item: relation }) => relation.relationType.id !== "child");
+  const { object, relation, pathToParentWithOrderedObjects } = useRelationAtPath();
+
+  // TODO 1) duplicate and 2) needing to special case the outline root feels wrong
+  const root = pathToParentWithOrderedObjects[0].child;
+  const underline =
+    root.id === graphStore.outlineRoot.id &&
+    object.relations.some(
+      (r) => r.to.id === object.id && r.id !== relation.id && r.from.id !== graphStore.thoughtstreamRoot.id,
+    );
+
   return (
     <div
       style={{
@@ -293,13 +307,13 @@ const RelatedObjectEditor = observer(() => {
         display: "flex",
         alignItems: "flex-start",
         flex: 1,
-        color: hasNonChildRelation ? "var(--gray-12)" : undefined,
-        textDecoration: hasNonChildRelation ? "underline  var(--teal-9)" : undefined,
+        color: underline ? "var(--gray-12)" : undefined,
+        textDecoration: underline ? "underline  var(--teal-9)" : undefined,
       }}
     >
       {/* <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}> */}
       <div className="flex flex-col flex-1">
-        {object instanceof GraphNode ? <Editor /> : <span className="italic">{object.text}</span>}
+        {object instanceof GraphNode ? <NodeContentEditor /> : <span className="italic">{object.text}</span>}
       </div>
     </div>
   );
@@ -515,6 +529,7 @@ const SearchOrCreateNodeView = observer(() => {
   const view = useViewController();
   const { object, relation, parent, pathToParentRelations } = useRelationAtPath();
   const [search, setSearch] = useState(object.text);
+  const [selected, setSelected] = useState<number | null>(null);
   const ref = useRef<HTMLInputElement>(null);
   const [inputFocused, setInputFocused] = useState(false);
 
@@ -535,7 +550,6 @@ const SearchOrCreateNodeView = observer(() => {
   const nodesMatchingSearch = useMemo(() => {
     return graph.nodes.filter((n) => n.id !== object.id && n.text.toLowerCase().includes(search.toLowerCase()));
   }, [graph.nodes, search, object]);
-  const [selected, setSelected] = useState<number | null>(nodesMatchingSearch.length === 0 ? null : 0);
 
   return (
     <div className="flex flex-col relative">

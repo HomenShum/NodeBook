@@ -23,6 +23,8 @@ export type RelationPathAndSiblings = {
   position: Position;
   viewType: "edit" | "replace" | "search-or-create";
   setViewType: (v: "edit" | "replace" | "search-or-create") => void;
+  isChild: boolean;
+  isBackwards: boolean;
 };
 
 const RelationAtPathContext = createContext<RelationPathAndSiblings | null>(null);

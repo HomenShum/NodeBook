@@ -95,13 +95,7 @@ export class ViewController {
     this.focusedNode = path;
     setTimeout(() => {
       if (!path || this.focusedNode !== path) return;
-      const editor = this.editorsByPath.get(path);
-      if (editor) {
-        editor.focus();
-      } else {
-        const el = document.querySelector(`[id="${path}"] input`);
-        if (el instanceof HTMLInputElement) el.focus();
-      }
+      this.editorsByPath.get(path)?.focus();
     }, 0);
   }
 
