@@ -533,26 +533,33 @@ export class GraphStore {
     const pinnedRelation = this.correspondingPinnedForObjects.get(unpinnedRelation.id);
 
     // Get selection start and end points
-    const points = selection?.getStartEndPoints();
-    if (!points) {
-      throw new Error("No selection points");
+    let start = { index: 0, offset: 0 };
+    let end = { index: 0, offset: 0 };
+    let nodes: LexicalNode[] = [];
+    const nonEmptyEditor = selection.getNodes()[0]?.getParents()[0]?.getTextContent() !== "";
+    if (nonEmptyEditor) {
+      const points = selection?.getStartEndPoints();
+      if (!points) {
+        throw new Error("No selection points");
+      }
+
+      const selectionNodes = selection.getNodes();
+      const firstNode = selectionNodes[0];
+      const lastNode = selectionNodes[selectionNodes.length - 1];
+
+      const paragraphNode = firstNode.getParent();
+      nodes = paragraphNode.getChildren();
+
+      const firstNodeIndexInParagraph = nodes.findIndex((node) => node === firstNode);
+      const lastNodeIndexInParagraph = nodes.findIndex((node) => node === lastNode);
+
+      const selectionEnds = [
+        { index: firstNodeIndexInParagraph, offset: points[0].offset },
+        { index: lastNodeIndexInParagraph, offset: points[1].offset },
+      ];
+      start = selection.isBackward() ? selectionEnds[1] : selectionEnds[0];
+      end = selection.isBackward() ? selectionEnds[0] : selectionEnds[1];
     }
-    const selectionNodes = selection.getNodes();
-    const firstNode = selectionNodes[0];
-    const lastNode = selectionNodes[selectionNodes.length - 1];
-
-    const paragraphNode = firstNode.getParent();
-    const nodes: LexicalNode[] = paragraphNode.getChildren();
-
-    const firstNodeIndexInParagraph = nodes.findIndex((node) => node === firstNode);
-    const lastNodeIndexInParagraph = nodes.findIndex((node) => node === lastNode);
-
-    const selectionEnds = [
-      { index: firstNodeIndexInParagraph, offset: points[0].offset },
-      { index: lastNodeIndexInParagraph, offset: points[1].offset },
-    ];
-    const start = selection.isBackward() ? selectionEnds[1] : selectionEnds[0];
-    const end = selection.isBackward() ? selectionEnds[0] : selectionEnds[1];
 
     let child: { node: GraphNode; relation: GraphRelation };
     const isCollapsedAndAtStart =
@@ -582,15 +589,17 @@ export class GraphStore {
       // Collect nodes before the selection
       chipsBefore.push(...nodes.slice(0, start.index).map(nodeToChip));
       // and the first part of the node the selection start
-      if (start.offset < nodes[start.index].getTextContent().length) {
-        chipsBefore.push({ type: "text", value: nodes[start.index].getTextContent().substring(0, start.offset) });
-      } else {
-        chipsBefore.push(nodeToChip(nodes[start.index]));
+      if (nodes[start.index]) {
+        if (start.offset < nodes[start.index].getTextContent().length) {
+          chipsBefore.push({ type: "text", value: nodes[start.index].getTextContent().substring(0, start.offset) });
+        } else {
+          chipsBefore.push(nodeToChip(nodes[start.index]));
+        }
       }
 
       const chipsAfter: Chip[] = [];
       // Collect the last part of the node after the selection end
-      if (end.offset < nodes[end.index].getTextContent().length) {
+      if (nodes[end.index] && end.offset < nodes[end.index].getTextContent().length) {
         chipsAfter.push({ type: "text", value: nodes[end.index].getTextContent().substring(end.offset) });
       }
       // and all the nodes after that
