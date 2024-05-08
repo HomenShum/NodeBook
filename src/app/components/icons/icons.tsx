@@ -50,9 +50,9 @@ export const SplitIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="16" height="16" viewBox="0 0 14 14">
     <path
       stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      stroke-width="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.2"
       d="M7 1h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7M7 1v12M7 1H3a2 2 0 0 0-2 2v8c0 1.1.9 2 2 2h4M4.5 9 3.18 7.4a.54.54 0 0 1 0-.78L4.5 5m5 4 1.34-1.6a.54.54 0 0 0 0-.78L9.5 5"
     />
   </svg>
