@@ -98,7 +98,7 @@ export function MentionPlugin(): JSX.Element | null {
 }
 
 function checkForMentionMatch(text: string): MenuTextMatch | null {
-  const PUNC = "\\.,\\+\\*\\?\\$\\@\\|#{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
+  const PUNC = "\\.,\\+\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
   const TRIGGERS = "@";
 
   // Chars we expect to see in a mention (non-space, non-punctuation).
@@ -127,7 +127,7 @@ function checkForMentionMatch(text: string): MenuTextMatch | null {
     "(^|\\s|\\()(" + "[" + TRIGGERS + "]" + "((?:" + VALID_CHARS + "){0," + ALIAS_LENGTH_LIMIT + "})" + ")$",
   );
 
-  const minMatchLength = 1;
+  const minMatchLength = 0;
   let match = AtSignMentionsRegex.exec(text);
   if (match === null) {
     match = AtSignMentionsRegexAliasRegex.exec(text);
