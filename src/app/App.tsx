@@ -1,5 +1,5 @@
 "use client";
-import { Search, SettingsIcon, X } from "lucide-react";
+import { ArrowLeft, Search, SettingsIcon, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { ReactNode, useRef, useState } from "react";
 import s from "./app.module.css";
@@ -48,25 +48,25 @@ const App = observer(() => {
   );
 
   return (
-    <div className="App">
-      <div ref={appContainerRef} className="flex w-full h-full relative overflow-y-scroll items-start">
+    <div className={s.App}>
+      <div ref={appContainerRef} className={s.AppContainer}>
         <aside className={`${s.LeftAside} ${viewController.leftSidebarOpen ? s.AsideVisible : ""}`}>
+          {/* for now keeping this as tailwind bc it handles wisely the gaps in both axis */}
           <div className="flex items-start flex-col w-full gap-x-2 gap-y-1 py-1">
             <ButtonNavigation />
           </div>
         </aside>
 
-        <div className="relative w-full flex flex-col">
-          <header className={`fixed w-full bg-white z-20 flex justify-center items-center px-4 border-b`}>
-            <button className="fixed left-4" onClick={() => viewController.toggleLeftSidebar()}>
+        <div className={s.Container}>
+          <header className={s.Header}>
+            <button className={s.LeftSidebarIcon} onClick={() => viewController.toggleLeftSidebar()}>
               <SidebarIcon />
             </button>
-            <div
-              className={`flex justify-between w-10/12 lg:w-[720px] items-center transition-all animate-out duration-300 ${
-                viewController.leftSidebarOpen ? "ml-[16%]" : ""
-              }
-              }`}
-            >
+
+            <div className={`${s.HeaderNav} ${viewController.leftSidebarOpen ? s.LeftShift : ""}`}>
+              <div className={`${s.BackButton}`}>
+                <ArrowLeft size={18} />
+              </div>
               <div
                 className={searchFocused ? s.SearchFocus : s.Search}
                 onFocus={() => setSearchFocused(true)}
@@ -86,7 +86,8 @@ const App = observer(() => {
                   </button>
                 )}
               </div>
-              <div className="flex gap-2 py-2 pl-2 align-left">
+
+              <div className={s.HeaderNavButtons}>
                 <ButtonNavigation />
               </div>
             </div>
@@ -94,12 +95,8 @@ const App = observer(() => {
               <SettingsIcon size={18} strokeWidth={1.5} className="absolute top-4 right-4" />
             </button>
           </header>
-          <div className="flex flex-row flex-1">
-            <main
-              className={`flex flex-1 pt-20 transition-all animate-out duration-300  ${
-                viewController.leftSidebarOpen ? " pl-[16%]" : ""
-              }`}
-            >
+          <div className={s.MainContainer}>
+            <main className={`${s.Main} ${viewController.leftSidebarOpen ? s.LeftShift : ""}`}>
               {viewController.curView === ViewType.OUTLINE ? (
                 <OutlineView searchQuery={searchQuery} />
               ) : viewController.curView === ViewType.THOUGHTSTREAM ? (
