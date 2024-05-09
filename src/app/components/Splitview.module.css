@@ -1,0 +1,17 @@
+.container {
+  display: flex;
+  width: 100%;
+  margin: 0 auto;
+  max-width: 72rem;
+}
+
+.mainContent {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.halfWidth {
+  width: 50%;
+}

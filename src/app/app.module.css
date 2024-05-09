@@ -46,7 +46,11 @@
   line-height: 12px;
 }
 
-.Button:hover,
+.Button:hover {
+  background-color: var(--teal-1);
+  color: var(--teal-8);
+}
+
 .Button.Selected {
   background-color: white;
   color: var(--teal-8);
@@ -55,6 +59,12 @@
 
 .Button.Selected.ButtonIcon {
   color: var(--teal-8);
+}
+
+@media (max-width: 960px) {
+  .Button[data-label="Split"] {
+    display: none;
+  }
 }
 
 .Search,
