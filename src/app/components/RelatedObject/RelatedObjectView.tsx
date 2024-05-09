@@ -18,7 +18,7 @@ import { SearchResult } from "@/app/store/search";
 import { Position, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { action } from "mobx";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../OutlineView.module.css";
 
 import { PinCustom } from "../icons/icons";
@@ -58,6 +58,7 @@ export const RelatedObjectView = observer(
 
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
+    const [searchExpansion, setSearchExpansion] = useState(false);
     const hasChildren = getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false).length > 0;
     const hasTrueChildren =
       getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false, true).length > 0;
@@ -68,12 +69,17 @@ export const RelatedObjectView = observer(
     const isChild = relation.relationType.id === defaultRelationTypes.child.id && !isBackwards;
     const objectCount = pathObjects.reduce((acc, { child }) => (child.id === object.id ? acc + 1 : acc), 0);
 
-    const displayChildren =
-      (!searchResult && isExpanded) ||
-      (searchResult &&
+    useEffect(() => {
+      if (
+        searchResult &&
         searchResult.get(object.id)?.expandChildren &&
         objectCount === 1 &&
-        relation.to.id === object.id);
+        relation.to.id === object.id
+      ) {
+        setSearchExpansion(true);
+      }
+    }, [graphStore, object.id, objectCount, pathToNodeStr, relation.to.id, searchResult]);
+    const showChildren = searchResult ? searchExpansion : isExpanded;
 
     const setPathToThisAsRoot = useCallback(() => {
       if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
@@ -125,7 +131,13 @@ export const RelatedObjectView = observer(
                     <PinCustom />
                   </button>
                 )}
-                {hasChildren && isHovered && <Toggle />}
+                {hasChildren && isHovered && (
+                  <Toggle
+                    isSearching={!!searchResult}
+                    searchExpansion={searchExpansion}
+                    setSearchExpansion={setSearchExpansion}
+                  />
+                )}
                 {!object.isPrivate &&
                   viewController.hideThoughtstreamBullets &&
                   parent === graphStore.thoughtstreamRoot && (
@@ -142,7 +154,7 @@ export const RelatedObjectView = observer(
                 )}
               >
                 {hasChildren &&
-                  !displayChildren &&
+                  !showChildren &&
                   (!viewController.hideBulletBackgroundIfParentsOnly || hasTrueChildren) && (
                     <Dot
                       stroke={!object.isPrivate ? "var(--teal-4)" : "var(--gray-4)"}
@@ -181,7 +193,7 @@ export const RelatedObjectView = observer(
               </div>
             </div>
           </RelationAtPathProvider>
-          {displayChildren && (
+          {showChildren && (
             <RelatedObjectChildren
               pathToParentRelations={[...pathToParentRelations, relation]}
               searchResult={searchResult}
@@ -342,28 +354,48 @@ const RelatedObjectDetails = observer(() => {
   );
 });
 
-const Toggle = observer(() => {
-  const { pathToNodeStr } = useRelationAtPath();
-  const graphStore = useGraphStore();
-  const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
-  return (
-    <button
-      style={{
-        backgroundColor: "white",
-        border: "none",
-        width: "1rem",
-        height: "1rem",
-        color: "var(--gray-8)",
-        cursor: "pointer",
-        userSelect: "none",
-      }}
-      className="relative right-[4px]"
-      onClick={() => graphStore.togglePathExpanded(pathToNodeStr)}
-    >
-      {isExpanded ? <Play size={8} fill="currentColor" className="rotate-90" /> : <Play size={8} fill="currentColor" />}
-    </button>
-  );
-});
+const Toggle = observer(
+  ({
+    isSearching,
+    searchExpansion,
+    setSearchExpansion,
+  }: {
+    searchExpansion: boolean;
+    setSearchExpansion: Dispatch<SetStateAction<boolean>>;
+    isSearching: boolean;
+  }) => {
+    const { pathToNodeStr } = useRelationAtPath();
+    const graphStore = useGraphStore();
+    const isExpanded = isSearching ? searchExpansion : graphStore.isPathExpanded(pathToNodeStr);
+    return (
+      <button
+        style={{
+          backgroundColor: "white",
+          border: "none",
+          width: "1rem",
+          height: "1rem",
+          color: "var(--gray-8)",
+          cursor: "pointer",
+          userSelect: "none",
+        }}
+        className="relative right-[4px]"
+        onClick={() => {
+          if (isSearching) {
+            setSearchExpansion(!searchExpansion);
+          } else {
+            graphStore.togglePathExpanded(pathToNodeStr);
+          }
+        }}
+      >
+        {isExpanded ? (
+          <Play size={8} fill="currentColor" className="rotate-90" />
+        ) : (
+          <Play size={8} fill="currentColor" />
+        )}
+      </button>
+    );
+  },
+);
 
 function ReplaceRelatedNodeView() {
   const graph = useGraphStore();
