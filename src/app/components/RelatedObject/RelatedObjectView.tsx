@@ -289,8 +289,8 @@ const RelatedObjectEditor = observer(() => {
         display: "flex",
         alignItems: "flex-start",
         flex: 1,
-        color: underline ? "var(--gray-12)" : undefined,
-        textDecoration: underline ? "underline  var(--teal-9)" : undefined,
+        color: underline ? "#0b0b79" : undefined,
+        textDecoration: underline ? "underline #0b0b79" : undefined,
       }}
     >
       {/* <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}> */}
