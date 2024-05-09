@@ -59,9 +59,18 @@ export const RelatedObjectView = observer(
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
     const [searchExpansion, setSearchExpansion] = useState(false);
-    const hasChildren = getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false).length > 0;
-    const hasTrueChildren =
-      getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false, true).length > 0;
+    const children = getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false);
+    const hasChildren = children.length > 0;
+
+    const allNodesInPath = new Set();
+    for (const pathRelation of path) {
+      allNodesInPath.add(pathRelation.from.id);
+      allNodesInPath.add(pathRelation.to.id);
+    }
+
+    const hasNewChildren =
+      children.filter((c) => !allNodesInPath.has(c.relation.from === object ? c.relation.to.id : c.relation.from.id))
+        .length > 0;
 
     // const isSelected = viewController.selectedNodes.has(bullet);
     const isSelected = false;
@@ -155,7 +164,7 @@ export const RelatedObjectView = observer(
               >
                 {hasChildren &&
                   !showChildren &&
-                  (!viewController.hideBulletBackgroundIfParentsOnly || hasTrueChildren) && (
+                  (!viewController.hideBulletBackgroundIfParentsOnly || hasNewChildren) && (
                     <Dot
                       stroke={!object.isPrivate ? "var(--teal-4)" : "var(--gray-4)"}
                       height={16}
