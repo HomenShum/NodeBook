@@ -41,6 +41,7 @@ export class ViewController {
   public showAtSignOnMention = false;
   public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
+  public searchAndReplaceDropdown: "labelled-only" | "all" | "none" = "labelled-only";
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -60,6 +61,10 @@ export class ViewController {
       rightSidebarOpen: true,
       hideDirectParent: true,
     });
+  }
+
+  setSearchAndReplaceDropdown(value: "labelled-only" | "all" | "none") {
+    this.searchAndReplaceDropdown = value;
   }
 
   setShowAtSignOnMention(show: boolean) {

@@ -2,8 +2,7 @@ import { useViewController } from "@/app/controller/useViewController";
 import { KeyboardOverridesPlugin } from "@/app/editor/plugins/KeyboardOverridesPlugin";
 import { createContentMatchingParagraph, graphNodeMatchesParagraph } from "@/app/editor/plugins/SyncWithGraphPlugin";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
-import { Chip, GraphNode } from "@/app/model/GraphNode";
-import { GraphRelation } from "@/app/model/GraphRelation";
+import { Chip } from "@/app/model/GraphNode";
 import { $createMentionNode } from "@/app/model/MentionNode";
 import { relationsToPathStr } from "@/app/util";
 import { cn } from "@/lib/utils";
@@ -14,32 +13,26 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { mergeRegister } from "@lexical/utils";
 import {
   $createParagraphNode,
   $createTextNode,
   $getRoot,
   $getSelection,
   $setSelection,
-  BLUR_COMMAND,
-  COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_LOW,
   COMMAND_PRIORITY_NORMAL,
   EditorState,
-  FOCUS_COMMAND,
-  KEY_ARROW_DOWN_COMMAND,
-  KEY_ARROW_UP_COMMAND,
   KEY_DOWN_COMMAND,
   KEY_ENTER_COMMAND,
-  KEY_ESCAPE_COMMAND,
   KEY_SPACE_COMMAND,
   LexicalEditor,
   ParagraphNode,
 } from "lexical";
 import { observer } from "mobx-react-lite";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "../store/useGraphStore";
+import { SearchAndReplaceDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 
 /**
@@ -95,7 +88,7 @@ export const SetRelatedObjectEditor = observer(() => {
         />
         <SetEditorContentToRelatedObjectTextPlugin />
         <ReplaceRelatedObjectOnEditorChangePlugin />
-        <DropdownPlugin parentRef={ref} />
+        <SearchAndReplaceDropdownPlugin parentRef={ref} />
         <SplitOnEnterPlugin />
         <SetRelationTypeOnColonPlugin />
         <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
@@ -193,185 +186,6 @@ const SetRelationTypeOnColonPlugin = () => {
   }, [editor, graph, object, relation, viewController, pathToNodeStr]);
 
   return null;
-};
-
-type DropdownOption =
-  | { type: "node"; id: string; object: GraphNode }
-  | { type: "relation"; id: string; object: GraphRelation }
-  | { type: "action"; id: "create-new-node" };
-
-const DropdownPlugin = ({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) => {
-  const graph = useGraphStore();
-  const viewController = useViewController();
-  const { object, relation, pathToParentRelations, pathToNodeStr } = useRelationAtPath();
-  const [editor] = useLexicalComposerContext();
-  const [selected, setSelected] = useState<string | null>(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [hasFocus, setHasFocus] = useState(editor.getRootElement()?.contains(document.activeElement) ?? false);
-
-  // If the user clicks anywhere that's not the input or dropdown, close the dropdown
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (parentRef.current && !parentRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, [parentRef]);
-
-  // Filter nodes that match the search
-  const objectsMatchingSearch = useMemo(() => {
-    const keywords = object.text.split(/\s+/);
-    const nodeOptions: DropdownOption[] = graph.nodes
-      .filter(
-        (node) =>
-          node.id !== object.id && keywords.every((keyword) => node.text.toLowerCase().includes(keyword.toLowerCase())),
-      )
-      .map((node) => ({ type: "node", id: node.id, object: node }));
-    const relationOptions: DropdownOption[] = graph.relations
-      .filter(
-        (r) =>
-          r.id !== object.id &&
-          r.id !== relation.id &&
-          keywords.every((keyword) => r.text.toLowerCase().includes(keyword.toLowerCase())),
-      )
-      .map((relation) => ({ type: "relation", id: relation.id, object: relation }));
-    const actionOptions: DropdownOption[] =
-      object.relations.length > 1 ? [{ type: "action", id: "create-new-node" }] : [];
-    return [...nodeOptions, ...relationOptions, ...actionOptions];
-  }, [graph.nodes, graph.relations, object.id, object.text, relation.id, object.relations]);
-
-  // Select a node from the dropdown
-  const onSelect = useCallback(
-    (option: DropdownOption) => {
-      const newObject: GraphNode | GraphRelation =
-        option.type === "action" && option.id === "create-new-node"
-          ? graph.createNode({ content: object.text })
-          : option.object;
-      graph.setGraphNodeAtPath([...pathToParentRelations, relation], newObject);
-      viewController.setFocusedNode(pathToNodeStr);
-      setDropdownOpen(false);
-    },
-    [graph, pathToParentRelations, relation, viewController, pathToNodeStr, object.text],
-  );
-
-  // Register keyboard commands for the dropdown
-  useEffect(() => {
-    const unsubscribe = mergeRegister(
-      editor.registerCommand<KeyboardEvent>(
-        KEY_ARROW_UP_COMMAND,
-        (event) => {
-          if (dropdownOpen && objectsMatchingSearch.length > 0) {
-            if (selected === null) {
-              setSelected(objectsMatchingSearch[0].id ?? null);
-            } else {
-              const selectedIdx = objectsMatchingSearch.findIndex((o) => o.id === selected);
-              const nextIdx = (selectedIdx - 1 + objectsMatchingSearch.length) % objectsMatchingSearch.length;
-              setSelected(objectsMatchingSearch[nextIdx].id ?? null);
-            }
-            return true;
-          }
-          return false;
-        },
-        COMMAND_PRIORITY_NORMAL,
-      ),
-      editor.registerCommand<KeyboardEvent>(
-        KEY_ARROW_DOWN_COMMAND,
-        (event) => {
-          if (dropdownOpen && objectsMatchingSearch.length > 0) {
-            if (selected === null) {
-              setSelected(objectsMatchingSearch[0].id ?? null);
-            } else {
-              const selectedIdx = objectsMatchingSearch.findIndex((o) => o.id === selected);
-              const nextIdx = (selectedIdx + 1) % objectsMatchingSearch.length;
-              setSelected(objectsMatchingSearch[nextIdx].id ?? null);
-            }
-            return true;
-          }
-          return false;
-        },
-        COMMAND_PRIORITY_NORMAL,
-      ),
-      editor.registerCommand<KeyboardEvent>(
-        KEY_ENTER_COMMAND,
-        (event) => {
-          if (dropdownOpen && objectsMatchingSearch.length > 0) {
-            event.preventDefault();
-            const option = objectsMatchingSearch.find((o) => o.id === selected);
-            if (option) {
-              onSelect(option);
-            }
-            return true;
-          }
-          return false;
-        },
-        // High priority so it takes precedence over the split on enter command
-        COMMAND_PRIORITY_HIGH,
-      ),
-      editor.registerCommand<KeyboardEvent>(
-        KEY_ESCAPE_COMMAND,
-        (event) => {
-          setDropdownOpen(false);
-          return true;
-        },
-        COMMAND_PRIORITY_NORMAL,
-      ),
-      editor.registerCommand(
-        FOCUS_COMMAND,
-        () => {
-          setHasFocus(true);
-          return false;
-        },
-        COMMAND_PRIORITY_LOW,
-      ),
-      editor.registerCommand(
-        BLUR_COMMAND,
-        () => {
-          setHasFocus(false);
-          // Don't close dropdown here. If you do, clicking on the dropdown blurs the editor
-          // first, which closes the dropdown, and so the dropdown doesn't get the click event.
-          return false;
-        },
-        COMMAND_PRIORITY_LOW,
-      ),
-    );
-    return unsubscribe;
-  }, [editor, dropdownOpen, setDropdownOpen, objectsMatchingSearch, selected, setSelected, onSelect]);
-
-  // Open the dropdown when the text content changes while the editor is focused
-  useEffect(() => {
-    const unsubscribe = editor.registerTextContentListener((text) => {
-      if (hasFocus && text !== object.text) {
-        setDropdownOpen(true);
-      }
-    });
-    return unsubscribe;
-  }, [editor, object.text, hasFocus]);
-
-  return hasFocus && dropdownOpen && objectsMatchingSearch.length > 0 ? (
-    <div className="absolute top-6 left-0 w-full bg-white border border-gray-300 z-10">
-      {objectsMatchingSearch.map((option, i) => (
-        <div
-          key={option.id}
-          onClick={() => onSelect(option)}
-          onMouseEnter={() => setSelected(option.id)}
-          className={cn(selected === option.id ? "bg-gray-200" : "")}
-        >
-          {option.type === "action" && option.id === "create-new-node" ? (
-            `Create new node "${object.text}"`
-          ) : option.type === "node" ? (
-            option.object.text
-          ) : (
-            <span>
-              <span className="text-gray-400">Relation:</span>
-              {option.object.text}
-            </span>
-          )}
-        </div>
-      ))}
-    </div>
-  ) : null;
 };
 
 /**

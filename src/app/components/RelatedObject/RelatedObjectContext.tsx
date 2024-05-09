@@ -21,8 +21,8 @@ export type RelationPathAndSiblings = {
   /** Sibling relation below this one */
   siblingBelow?: GraphRelation;
   position: Position;
-  viewType: "edit" | "replace" | "search-or-create";
-  setViewType: (v: "edit" | "replace" | "search-or-create") => void;
+  viewType: "edit" | "replace";
+  setViewType: (v: "edit" | "replace") => void;
   isChild: boolean;
   isBackwards: boolean;
 };

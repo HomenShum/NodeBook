@@ -1,4 +1,4 @@
-import { Circle, Dot, Edit2, Ellipsis, GlobeIcon, Play } from "lucide-react";
+import { Circle, Dot, Ellipsis, GlobeIcon, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useViewController } from "../../controller/useViewController";
 import { NodeContentEditor } from "../../editor/NodeContentEditor";
@@ -21,7 +21,6 @@ import { action } from "mobx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../OutlineView.module.css";
 
-import { SetRelatedObjectEditor } from "../../editor/SetRelatedObjectEditor";
 import { PinCustom } from "../icons/icons";
 import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
@@ -55,9 +54,7 @@ export const RelatedObjectView = observer(
     // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
-    const [viewType, setViewType] = useState<"edit" | "replace" | "search-or-create">(
-      relation.relationType.id === defaultRelationTypes.child.id ? "edit" : "search-or-create",
-    );
+    const [viewType, setViewType] = useState<"edit" | "replace">("edit");
 
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
@@ -77,15 +74,6 @@ export const RelatedObjectView = observer(
         searchResult.get(object.id)?.expandChildren &&
         objectCount === 1 &&
         relation.to.id === object.id);
-
-    // When the relation type changes from child to something else, switch to search-or-create view
-    const lastRelationTypeId = useRef(relation.relationType.id);
-    useEffect(() => {
-      if (lastRelationTypeId.current === "child" && relation.relationType.id !== "child") {
-        setViewType("search-or-create");
-        lastRelationTypeId.current = relation.relationType.id;
-      }
-    }, [relation.relationType.id]);
 
     const setPathToThisAsRoot = useCallback(() => {
       if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
@@ -187,18 +175,7 @@ export const RelatedObjectView = observer(
                   {!isChild || updatingRelationType ? (
                     <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} />
                   ) : null}
-                  {viewType === "edit" ? (
-                    <RelatedObjectEditor />
-                  ) : viewType === "replace" ? (
-                    <ReplaceRelatedNodeView />
-                  ) : (
-                    <>
-                      <SetRelatedObjectEditor />
-                      {isHovered && (
-                        <Edit2 size={18} className="text-gray-400 cursor-pointer" onClick={() => setViewType("edit")} />
-                      )}
-                    </>
-                  )}
+                  {viewType === "edit" ? <RelatedObjectEditor /> : <ReplaceRelatedNodeView />}
                 </div>
                 {viewController.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
               </div>
@@ -242,15 +219,6 @@ const RelatedObjectMenu = observer(
             Delete relation
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={() => setViewType("replace")}>Replace related object</DropdownMenuItem>
-          {viewType !== "search-or-create" && (
-            <DropdownMenuItem
-              onSelect={() => {
-                setViewType("search-or-create");
-              }}
-            >
-              Set to search or create view
-            </DropdownMenuItem>
-          )}
           <DropdownMenuItem
             onSelect={action(() => {
               object.setIsPrivate(!object.isPrivate);

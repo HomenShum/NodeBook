@@ -9,6 +9,14 @@ export const DevTools = observer(() => {
   const viewController = useViewController();
   const fileInputRef = useRef(null);
 
+  const searchAndReplaceDropdownOptions: {
+    label: string;
+    value: typeof viewController.searchAndReplaceDropdown;
+  }[] = [
+    { label: "Only after labelled relations", value: "labelled-only" },
+    { label: "All", value: "all" },
+    { label: "None", value: "none" },
+  ];
   return (
     <div className="p-2 mb-0 max-h-96 overflow-y-auto flex flex-col">
       <h1 className="text-xl font-bold mb-2">Dev Tools</h1>
@@ -139,17 +147,19 @@ export const DevTools = observer(() => {
           />
           On removing node as direct child of thoughtstream, delete the node everywhere
         </label>
-
-        {/* <div className="flex gap-2">
-          <label>Relation view:</label>
+        <div className="flex gap-2">
+          <label>Search and replace dropdown:</label>
           <select
-            value={viewController.outlineViewController.relatedNodesViewType}
-            onChange={(e) => viewController.outlineViewController.setRelatedNodesViewType(e.target.value as any)} // TODO "as any" bad
+            value={viewController.searchAndReplaceDropdown}
+            onChange={(e) => viewController.setSearchAndReplaceDropdown(e.target.value as any)} // TODO "as any" bad
           >
-            <option value="all">All related nodes only</option>
-            <option value="pinned">Pinned and all nodes</option>
+            {searchAndReplaceDropdownOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
-        </div> */}
+        </div>
         <Button
           size={"sm"}
           style={{ maxWidth: "fit-content" }}

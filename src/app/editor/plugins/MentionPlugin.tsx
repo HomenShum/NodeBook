@@ -30,7 +30,7 @@ class MentionTypeaheadOption extends MenuOption {
   }
 }
 
-export function MentionPlugin(): JSX.Element | null {
+export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: boolean) => void }): JSX.Element | null {
   const { object: node } = useRelationAtPath();
   const [queryString, setQueryString] = useState<string | null>(null);
 
@@ -89,7 +89,12 @@ export function MentionPlugin(): JSX.Element | null {
     <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
       onQueryChange={setQueryString}
       onSelectOption={onSelectOption}
-      triggerFn={checkForMentionMatch}
+      triggerFn={(text) => {
+        const match = checkForMentionMatch(text);
+        const shouldOpen = match !== null;
+        setDropdownOpen(shouldOpen);
+        return match;
+      }}
       options={options}
       menuRenderFn={menuRenderFn}
       commandPriority={COMMAND_PRIORITY_NORMAL}

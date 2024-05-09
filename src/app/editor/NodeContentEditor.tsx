@@ -8,6 +8,7 @@ import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
+import { useRef, useState } from "react";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
 import { useViewController } from "../controller/useViewController";
 import { GraphNode } from "../model/GraphNode";
@@ -16,6 +17,7 @@ import styles from "./Editor.module.css";
 import { KeyboardOverridesPlugin } from "./plugins/KeyboardOverridesPlugin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
+import { SearchAndReplaceDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
@@ -33,7 +35,10 @@ const onError = (error: any) => {
 
 export const NodeContentEditor = observer(() => {
   const view = useViewController();
-  const { object: node, pathToNodeStr } = useRelationAtPath();
+  const { object: node, pathToNodeStr, isChild } = useRelationAtPath();
+  const [mentionDropdownOpen, setMentionDropdownOpen] = useState(false);
+
+  const ref = useRef<HTMLDivElement>(null);
   if (!(node instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
@@ -50,8 +55,11 @@ export const NodeContentEditor = observer(() => {
     },
   };
 
+  const showSearchAndReplaceDropdown =
+    !mentionDropdownOpen &&
+    (view.searchAndReplaceDropdown === "all" || (view.searchAndReplaceDropdown === "labelled-only" && !isChild));
   return (
-    <div className={cn(styles.EditorWrapper, view.showAtSignOnMention && styles.showAtSignPrefix)}>
+    <div ref={ref} className={cn(styles.EditorWrapper, view.showAtSignOnMention && styles.showAtSignPrefix)}>
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
@@ -63,7 +71,8 @@ export const NodeContentEditor = observer(() => {
         <SyncWithGraphPlugin node={node} />
         <KeyboardOverridesPlugin />
         <RelationPlugin />
-        <MentionPlugin />
+        <MentionPlugin setDropdownOpen={setMentionDropdownOpen} />
+        {showSearchAndReplaceDropdown && <SearchAndReplaceDropdownPlugin parentRef={ref} />}
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
         <TrackFocusedPath pathToNodeStr={pathToNodeStr} />
       </LexicalComposer>
