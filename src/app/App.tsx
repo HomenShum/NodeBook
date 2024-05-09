@@ -15,6 +15,12 @@ import { ViewType } from "./controller/ViewController";
 import { useKeyboardShortcuts } from "./controller/useKeyboardShortcuts";
 import { useViewController } from "./controller/useViewController";
 
+interface ButtonNavProps {
+  viewType: ViewType;
+  icon: ReactNode;
+  label: string;
+}
+
 const App = observer(() => {
   const appContainerRef = useRef<HTMLDivElement>(null);
   const viewController = useViewController();
@@ -29,15 +35,12 @@ const App = observer(() => {
       <ButtonNav viewType={ViewType.SPLIT} icon={<SplitIcon />} label="Split" />
     </>
   );
-  interface ButtonNavProps {
-    viewType: ViewType;
-    icon: ReactNode;
-    label: string;
-  }
+
   const ButtonNav: React.FC<ButtonNavProps> = ({ viewType, icon, label }) => (
     <button
       className={`${s.Button} ${viewController.curView === viewType ? s.Selected : ""}`}
       onClick={() => viewController.setView(viewType)}
+      data-label={label}
     >
       <div className={s.ButtonIcon}>{icon}</div>
       {label}
@@ -48,18 +51,18 @@ const App = observer(() => {
     <div className="App">
       <div ref={appContainerRef} className="flex w-full h-full relative overflow-y-scroll items-start">
         <aside className={`${s.LeftAside} ${viewController.leftSidebarOpen ? s.AsideVisible : ""}`}>
-          <div className="flex items-start flex-col w-full gap-2 py-2 ">
+          <div className="flex items-start flex-col w-full gap-x-2 gap-y-1 py-1">
             <ButtonNavigation />
           </div>
         </aside>
 
         <div className="relative w-full flex flex-col">
-          <header className={`fixed w-full bg-white z-20 flex justify-center items-center px-4 border-b `}>
+          <header className={`fixed w-full bg-white z-20 flex justify-center items-center px-4 border-b`}>
             <button className="fixed left-4" onClick={() => viewController.toggleLeftSidebar()}>
               <SidebarIcon />
             </button>
             <div
-              className={`flex justify-between w-[720px] items-center transition-all animate-out duration-300 ${
+              className={`flex justify-between w-10/12 lg:w-[720px] items-center transition-all animate-out duration-300 ${
                 viewController.leftSidebarOpen ? "ml-[16%]" : ""
               }
               }`}
@@ -95,7 +98,7 @@ const App = observer(() => {
             <main
               className={`flex flex-1 pt-20 transition-all animate-out duration-300  ${
                 viewController.leftSidebarOpen ? " pl-[16%]" : ""
-              } ${viewController.leftSidebarOpen && viewController.curView === ViewType.SPLIT ? "pl-[16%]" : ""}`}
+              }`}
             >
               {viewController.curView === ViewType.OUTLINE ? (
                 <OutlineView searchQuery={searchQuery} />
