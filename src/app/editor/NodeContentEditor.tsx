@@ -14,6 +14,7 @@ import { useViewController } from "../controller/useViewController";
 import { GraphNode } from "../model/GraphNode";
 import { MentionNode } from "../model/MentionNode";
 import styles from "./Editor.module.css";
+import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { KeyboardOverridesPlugin } from "./plugins/KeyboardOverridesPlugin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
@@ -73,6 +74,7 @@ export const NodeContentEditor = observer(() => {
         <RelationPlugin />
         <MentionPlugin setDropdownOpen={setMentionDropdownOpen} />
         {showSearchAndReplaceDropdown && <SearchAndReplaceDropdownPlugin parentRef={ref} />}
+        <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
         <TrackFocusedPath pathToNodeStr={pathToNodeStr} />
       </LexicalComposer>

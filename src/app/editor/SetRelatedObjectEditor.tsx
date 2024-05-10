@@ -19,12 +19,10 @@ import {
   $getRoot,
   $getSelection,
   $setSelection,
-  COMMAND_PRIORITY_LOW,
   COMMAND_PRIORITY_NORMAL,
   EditorState,
   KEY_DOWN_COMMAND,
   KEY_ENTER_COMMAND,
-  KEY_SPACE_COMMAND,
   LexicalEditor,
   ParagraphNode,
 } from "lexical";
@@ -32,6 +30,7 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "../store/useGraphStore";
+import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { SearchAndReplaceDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 
@@ -101,31 +100,6 @@ export const SetRelatedObjectEditor = observer(() => {
     </div>
   );
 });
-
-/**
- * Ignore space at the start of the editor.
- *
- */
-const IgnoreSpaceAtStartOfLabelledRelationsPlugin = () => {
-  const [editor] = useLexicalComposerContext();
-  const { isChild } = useRelationAtPath();
-  useEffect(() => {
-    if (isChild) return;
-    return editor.registerCommand(
-      KEY_SPACE_COMMAND,
-      (event) => {
-        const text = $getRoot().getTextContent();
-        if (text.trim() === "") {
-          event.preventDefault();
-          return true;
-        }
-        return false;
-      },
-      COMMAND_PRIORITY_LOW,
-    );
-  }, [editor, isChild]);
-  return null;
-};
 
 const SetRelationTypeOnColonPlugin = () => {
   const graph = useGraphStore();
