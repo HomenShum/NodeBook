@@ -244,7 +244,10 @@ export const SearchAndReplaceDropdownPlugin = observer(
           return (
             <div
               key={option.id}
-              onClick={() => onSelect(option)}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onSelect(option);
+              }}
               onMouseEnter={() => mouseHasMoved && setSelected(option.id)}
               className={cn(i === selectedIdx ? "bg-gray-200" : "")}
             >
