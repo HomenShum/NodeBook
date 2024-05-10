@@ -480,7 +480,7 @@ export class GraphStore {
     this.relationTypesById[id] = {
       id,
       label: props.label,
-      reverseLabel: props.reverseLabel || `is ${props.label} of`,
+      reverseLabel: props.reverseLabel ?? `is ${props.label} of`,
     };
     return this.relationTypesById[id];
   }

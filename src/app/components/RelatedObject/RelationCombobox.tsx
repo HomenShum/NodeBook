@@ -83,7 +83,6 @@ export const RelationCombobox = observer(
           const relationType = graphStore.createRelationType({
             id: search,
             label: search,
-            reverseLabel: `is ${search} of`,
           });
           relation.setType(relationType);
         },
