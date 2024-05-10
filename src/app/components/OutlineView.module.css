@@ -26,6 +26,7 @@
 }
 
 .OutlineObjectContentPublic {
+  color: inherit;
   /* Leaving this empty in case Jacob wants to add extra styles for the public content */
 }
 
@@ -78,7 +79,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 10px 1rem;
-
+  height: 52px;
   color: var(--teal-10);
   gap: 8px;
 }

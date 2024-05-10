@@ -83,3 +83,23 @@ export const relationsPathToParentChild = (relations: GraphRelation[]): PathLink
 export const relationsToPathStr = (relations: GraphRelation[]) => {
   return relations.map((r) => r.id).join("/");
 };
+
+export function formatDate(date: Date | undefined): string {
+  if (!date) {
+    return "No date available";
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const givenDate = new Date(date);
+
+  if (givenDate >= today && givenDate < new Date(today.getTime() + 86400000)) {
+    return "Today";
+  } else {
+    return givenDate.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+    });
+  }
+}
