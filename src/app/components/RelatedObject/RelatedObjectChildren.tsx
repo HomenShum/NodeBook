@@ -89,12 +89,14 @@ export const RelatedObjectChildren = observer(
                 <>
                   <div
                     className={`-translate-x-3 border-t border-dashed border-[--gray-5] ${
-                      i === 0 ? `mt-2 pt-2 border-none ${displayDate ? "pb-4" : "mb-2"}` : "mt-3 mb-2 pt-4"
+                      i === 0 ? `mt-2 pt-2 border-none ${displayDate ? "pb-4" : "mb-2"}` : "mt-3 mb-4 pt-2"
                     }`}
                   />
-                  <div className="absolute -translate-y-8 bg-white w-fit left-1/2 px-1 text-[--gray-8] text-[12px] -translate-x-1/2">
-                    {displayDate ? currentDate : ""}
-                  </div>
+                  {displayDate && (
+                    <div className="relative -translate-y-8 w-fit left-1/2 text-[--gray-8] text-[12px] -translate-x-1/2 z-10 h-0">
+                      <span className="bg-white px-1">{currentDate}</span>
+                    </div>
+                  )}
                 </>
               )}
               <RelatedObjectView
