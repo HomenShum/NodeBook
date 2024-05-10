@@ -27,6 +27,7 @@ export const KeyboardOverridesPlugin = () => {
     pathToParentRelations,
     relation,
     pathToParentWithOrderedObjects: pathToParentNodes,
+    pathToNodeStr,
     siblingAbove,
     siblingBelow,
     parent,
@@ -133,6 +134,14 @@ export const KeyboardOverridesPlugin = () => {
             } else {
               throw new Error("Unknown view root");
             }
+            return true;
+          } else if (metaOrCtrl && event.key === "ArrowDown") {
+            event.preventDefault();
+            graphStore.setPathExpanded(pathToNodeStr, true);
+            return true;
+          } else if (metaOrCtrl && event.key === "ArrowUp") {
+            event.preventDefault();
+            graphStore.setPathExpanded(pathToNodeStr, false);
             return true;
           }
           return false;
