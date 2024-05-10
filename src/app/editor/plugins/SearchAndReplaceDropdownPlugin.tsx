@@ -89,16 +89,18 @@ export const SearchAndReplaceDropdownPlugin = observer(
         (r) =>
           r.id !== object.id &&
           r.id !== relation.id &&
+          r.to.id !== object.id && // ignore relations to this object
+          !(r.from instanceof GraphNode && r.from.isBundle) && // ignore relations from bundles
           keywords.every((keyword) => r.text.toLowerCase().includes(keyword.toLowerCase())),
       );
-      const actionOptions: DropdownOption[] =
-        object.relations.length > 1 ? [{ type: "action", id: "create-new-node" }] : [];
+      const actionOptions: DropdownOption[] = [];
+      // object.relations.length > 1 ? [{ type: "action", id: "create-new-node" }] : [];
       return [
         ...nodes.map((node) => ({ type: "node" as const, id: node.id, object: node })),
         ...relations.map((relation) => ({ type: "relation" as const, id: relation.id, object: relation })),
         ...actionOptions,
       ];
-    }, [graph.nodes, graph.relations, object.id, object.text, relation.id, object.relations, hasFocus]);
+    }, [graph.nodes, graph.relations, object.id, object.text, relation.id, hasFocus]);
 
     /**
      * Given a selected option's id or index, return the index of the selected option
