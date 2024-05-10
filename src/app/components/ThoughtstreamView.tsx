@@ -48,7 +48,7 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
           </div>
         )}
         <div className={stylesList.TitleContainer}>
-          <h1 className={stylesList.TitleText}>{nodeAtPathEnd.text}</h1>
+          {viewController.curView === ViewType.SPLIT && <h1 className={stylesList.TitleText}>{nodeAtPathEnd.text}</h1>}
           <button className={stylesList.AddButton} onClick={createChild}>
             <span className={stylesList.AddButtonIcon}>+</span>
           </button>

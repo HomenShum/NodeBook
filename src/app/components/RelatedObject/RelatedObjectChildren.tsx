@@ -3,7 +3,7 @@ import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { SearchResult } from "@/app/store/search";
-import { PathLink, comparePositions, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
+import { PathLink, comparePositions, formatDate, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
@@ -37,6 +37,7 @@ export const RelatedObjectChildren = observer(
       bundles.find((b) => b.children.map((o) => o.id).includes(r.id));
 
     let lastBundleId: string | undefined;
+    let lastDisplayedDate: string | undefined;
 
     return (
       <div className={depth > 0 ? "ml-[16px]" : ""}>
@@ -44,7 +45,7 @@ export const RelatedObjectChildren = observer(
           <>
             <button
               onClick={togglePinnedVisibility}
-              className={`flex gap-1 relative top-3 -left-1 uppercase text-xs bg-white w-fit -ml-1 -mt-4 px-1 py-1 border-[--teal-4] border rounded-md text-[--gray-9] z-10  ${
+              className={`flex gap-1 relative top-3 -left-1 uppercase text-xs bg-white w-fit -ml-1 -mt-4 px-1 py-1 border-[--teal-4] border rounded-lg text-[--gray-9] z-10  ${
                 isPinnedVisible ? "mb-0" : "mb-8"
               }`}
             >
@@ -54,7 +55,7 @@ export const RelatedObjectChildren = observer(
               {isPinnedVisible ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </button>
             {isPinnedVisible && (
-              <div className="border-[--teal-4] border rounded-md px-4 pt-6 pb-1 mb-4 -translate-x-4">
+              <div className="border-[--teal-4] border rounded-sm px-4 pt-6 pb-1 mb-8 -translate-x-4">
                 {isPinnedVisible &&
                   pinnedChildren.map(({ relation: childRelation, position }, i) => {
                     return (
@@ -76,11 +77,25 @@ export const RelatedObjectChildren = observer(
         {children.map(({ relation: childRelation, position }, i) => {
           const firstBundle = findRelationsFirstBundle(childRelation);
           const newBundle = firstBundle?.id !== lastBundleId;
+          const currentDate = formatDate(firstBundle?.createdAt);
+          const displayDate = newBundle && currentDate !== lastDisplayedDate;
           lastBundleId = firstBundle?.id;
+          if (displayDate) {
+            lastDisplayedDate = currentDate;
+          }
           return (
             <div key={relationsToPathStr([...pathToParentRelations, childRelation])}>
-              {i !== 0 && newBundle && (
-                <div className="pt-4 mt-1 -translate-x-3 border-t border-dashed border-[--gray-5]" />
+              {newBundle && (
+                <>
+                  <div
+                    className={`-translate-x-3 border-t border-dashed border-[--gray-5] ${
+                      i === 0 ? `mt-2 pt-2 border-none ${displayDate ? "pb-4" : "mb-2"}` : "mt-3 mb-2 pt-4"
+                    }`}
+                  />
+                  <div className="absolute -translate-y-8 bg-white w-fit left-1/2 px-1 text-[--gray-8] text-[12px] -translate-x-1/2">
+                    {displayDate ? currentDate : ""}
+                  </div>
+                </>
               )}
               <RelatedObjectView
                 path={[...pathToParentRelations, childRelation]}
