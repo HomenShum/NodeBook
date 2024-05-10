@@ -283,17 +283,7 @@ const RelatedObjectMenu = observer(
 );
 
 const RelatedObjectEditor = observer(() => {
-  const graphStore = useGraphStore();
-  const { object, relation, pathToParentWithOrderedObjects } = useRelationAtPath();
-
-  // TODO 1) duplicate and 2) needing to special case the outline root feels wrong
-  const root = pathToParentWithOrderedObjects[0].child;
-  const underline =
-    root.id === graphStore.outlineRoot.id &&
-    object.relations.some(
-      (r) => r.to.id === object.id && r.id !== relation.id && r.from.id !== graphStore.thoughtstreamRoot.id,
-    );
-
+  const { object } = useRelationAtPath();
   return (
     <div
       style={{
@@ -301,8 +291,8 @@ const RelatedObjectEditor = observer(() => {
         display: "flex",
         alignItems: "flex-start",
         flex: 1,
-        color: underline ? "#0b0b79" : undefined,
-        textDecoration: underline ? "underline #0b0b79" : undefined,
+        color: object.multipleNonStreamRelationsToThis ? "#0b0b79" : undefined,
+        textDecoration: object.multipleNonStreamRelationsToThis ? "underline #cecece" : undefined,
       }}
     >
       {/* <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}> */}
