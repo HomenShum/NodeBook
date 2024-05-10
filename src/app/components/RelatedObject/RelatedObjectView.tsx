@@ -133,20 +133,24 @@ export const RelatedObjectView = observer(
             >
               <div className={styles.OutlineObjectLeftArea} />
               {/* toggle, bullet, menu */}
-              <div className="flex items-center gap-1 absolute right-full">
-                <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
+              <div className="flex items-center gap-2 absolute right-full">
+                <div className="flex items-center gap-1">
+                  {hasChildren && isHovered && (
+                    <Toggle
+                      isSearching={!!searchResult}
+                      searchExpansion={searchExpansion}
+                      setSearchExpansion={setSearchExpansion}
+                    />
+                  )}
+                  <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
+                </div>
+
                 {parent.isRelationPinned(relation) && graphStore.correspondingPinnedForObjects.has(relation.id) && (
                   <button className={styles.PinIcon} onClick={() => parent.unpinChildRelation(relation)}>
                     <PinCustom />
                   </button>
                 )}
-                {hasChildren && isHovered && (
-                  <Toggle
-                    isSearching={!!searchResult}
-                    searchExpansion={searchExpansion}
-                    setSearchExpansion={setSearchExpansion}
-                  />
-                )}
+
                 {!object.isPrivate &&
                   viewController.hideThoughtstreamBullets &&
                   parent === graphStore.thoughtstreamRoot && (
@@ -371,7 +375,7 @@ const Toggle = observer(
         style={{
           backgroundColor: "white",
           border: "none",
-          width: "1rem",
+          width: "0",
           height: "1rem",
           color: "var(--gray-8)",
           cursor: "pointer",
