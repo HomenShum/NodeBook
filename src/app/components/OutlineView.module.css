@@ -44,8 +44,8 @@
 .PinIcon {
   position: relative;
   top: 0;
-  padding: 0 3px;
-  right: 7px;
+  padding: 0 4px 0 0;
+  right: 6px;
   transform: scale(0.8) translateY(-0.5px);
   color: var(--teal-7);
 }
