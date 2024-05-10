@@ -180,4 +180,10 @@ export class GraphNode implements Serializable, GraphObject {
       isPrivate: data.isPrivate,
     });
   }
+
+  get multipleNonStreamRelationsToThis() {
+    return (
+      this.relations.filter((r) => r.to.id === this.id && r.from.id !== this.store.thoughtstreamRoot.id).length > 1
+    );
+  }
 }
