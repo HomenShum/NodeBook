@@ -159,6 +159,23 @@ export class GraphNode implements Serializable, GraphObject {
     }
   }
 
+  getPath({ limit = 10 }: { limit?: number } = {}): GraphRelation[] {
+    const path: GraphRelation[] = [];
+    let current: GraphObject | undefined = this;
+
+    for (let i = 0; i < limit && current; i++) {
+      const parentRelation: GraphRelation | undefined = current.relationsSortedByPosition.find(
+        (r) => r.relationType.id === "child" && r.to === current && r.from.id !== this.store.thoughtstreamRoot.id,
+      );
+      if (!parentRelation || path.some((p) => p.id === parentRelation.id)) {
+        return path;
+      }
+      path.unshift(parentRelation);
+      current = parentRelation.from;
+    }
+    return path;
+  }
+
   serialize() {
     return {
       id: this.id,

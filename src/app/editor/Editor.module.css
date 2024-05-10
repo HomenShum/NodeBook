@@ -15,6 +15,7 @@
   background-color: var(--teal-a3);
 
   color: var(--teal-11);
+  cursor: pointer;
 }
 
 .MentionNode::before {

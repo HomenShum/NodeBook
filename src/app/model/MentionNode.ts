@@ -74,6 +74,8 @@ export class MentionNode extends TextNode {
   createDOM(config: EditorConfig): HTMLElement {
     const dom = super.createDOM(config);
     dom.className = styles.MentionNode;
+    dom.setAttribute("data-lexical-mention", "true");
+    dom.setAttribute("data-lexical-mentioned-graph-node-id", this.mentionedGraphNodeId);
     return dom;
   }
 

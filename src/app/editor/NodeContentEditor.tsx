@@ -6,13 +6,15 @@ import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
 import { useViewController } from "../controller/useViewController";
 import { GraphNode } from "../model/GraphNode";
 import { MentionNode } from "../model/MentionNode";
+import { useGraphStore } from "../store/useGraphStore";
 import styles from "./Editor.module.css";
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { KeyboardOverridesPlugin } from "./plugins/KeyboardOverridesPlugin";
@@ -36,7 +38,8 @@ const onError = (error: any) => {
 
 export const NodeContentEditor = observer(() => {
   const view = useViewController();
-  const { object: node, pathToNodeStr, isChild } = useRelationAtPath();
+  const graphStore = useGraphStore();
+  const { object: node, relation, pathToNodeStr, pathToParentRelations, isChild } = useRelationAtPath();
   const [mentionDropdownOpen, setMentionDropdownOpen] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -56,6 +59,18 @@ export const NodeContentEditor = observer(() => {
     },
   };
 
+  const setPathToNodeAsRoot = useCallback(
+    (nodeId: string) => {
+      console.log("setPathToNodeAsRoot", nodeId);
+      const node = graphStore.getNode(nodeId);
+      if (!node) {
+        return;
+      }
+      view.setCurrentOutlineViewRoot(node.getPath());
+    },
+    [view, graphStore],
+  );
+
   const showSearchAndReplaceDropdown =
     !mentionDropdownOpen &&
     (view.searchAndReplaceDropdown === "all" || (view.searchAndReplaceDropdown === "labelled-only" && !isChild));
@@ -73,6 +88,14 @@ export const NodeContentEditor = observer(() => {
         <KeyboardOverridesPlugin />
         <RelationPlugin />
         <MentionPlugin setDropdownOpen={setMentionDropdownOpen} />
+        <NodeEventPlugin
+          nodeType={MentionNode}
+          eventType={"click"}
+          eventListener={(e: Event) => {
+            console.log(e.target);
+            setPathToNodeAsRoot((e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!);
+          }}
+        />
         {showSearchAndReplaceDropdown && <SearchAndReplaceDropdownPlugin parentRef={ref} />}
         <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
