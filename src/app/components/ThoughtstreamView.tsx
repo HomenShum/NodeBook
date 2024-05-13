@@ -1,4 +1,10 @@
-import { ChevronRight } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/app/components/ui/dropdown-menu";
+import { ChevronRight, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useCallback, useMemo } from "react";
 import { ViewType } from "../controller/ViewController";
@@ -9,6 +15,13 @@ import { relationsPathToParentChild } from "../util";
 import stylesList from "./OutlineView.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 import stylesStream from "./ThoughtstreamView.module.css";
+
+const truncateText = (text: string, maxLength: number) => {
+  if (text.length > maxLength) {
+    return text.slice(0, maxLength) + "...";
+  }
+  return text;
+};
 
 export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: string }) => {
   const viewController = useViewController();
@@ -31,24 +44,73 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
     viewController.createChildNode({ focusAfterCreate: true, targetView: ViewType.THOUGHTSTREAM });
   }, [viewController]);
 
+  const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
+
   return (
     <div tabIndex={0} className={stylesStream.StreamContainer}>
       <div className={stylesStream.ContentSection}>
         {path.length > 1 && (
           <div className={stylesList.BreadcrumbContainer}>
-            {path.map(({ relation, child }, i) => (
-              <span className={stylesList.Breadcrumb} key={relation.id}>
-                {/* Chevron only between items, not before the first item */}
-                {i !== 0 && <ChevronRight size={14} strokeWidth={2} />}
-                <span onClick={() => viewController.setCurrentStreamViewRoot(relations.slice(0, i + 1))}>
-                  {child.text}
+            {path.map(({ relation, child }, i) => {
+              const isFirst = i === 0;
+              const isLast = i === path.length - 1;
+
+              if (isFirst || isLast) {
+                return (
+                  <span
+                    className={stylesList.Breadcrumb}
+                    key={relation.id}
+                    onClick={() => viewController.setCurrentStreamViewRoot(relations.slice(0, i + 1))}
+                  >
+                    {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
+                    <span>{truncateText(child.text, 20)}</span>
+                  </span>
+                );
+              }
+
+              if (isLong && i === 1) {
+                return (
+                  <DropdownMenu key="ellipsis">
+                    <DropdownMenuTrigger asChild>
+                      <span className={stylesList.Breadcrumb}>
+                        <ChevronRight size={14} />
+                        <Ellipsis size={14} />
+                      </span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className={stylesList.BreadcrumbDropdownMenu} align="start" sideOffset={5}>
+                      {path.slice(1, -1).map(({ relation, child }, index) => (
+                        <DropdownMenuItem
+                          key={relation.id}
+                          className={stylesList.BreadcrumbMenuItem}
+                          onSelect={() => {
+                            viewController.setCurrentStreamViewRoot(relations.slice(0, index + 2));
+                          }}
+                        >
+                          {truncateText(child.text, 20)}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              }
+
+              return !isLong ? (
+                <span
+                  className={stylesList.Breadcrumb}
+                  key={relation.id}
+                  onClick={() => viewController.setCurrentOutlineViewRoot(relations.slice(0, i + 1))}
+                >
+                  <ChevronRight size={14} strokeWidth={2} />
+                  <span>{truncateText(child.text, 20)}</span>
                 </span>
-              </span>
-            ))}
+              ) : null;
+            })}
           </div>
         )}
         <div className={stylesList.TitleContainer}>
-          {viewController.curView === ViewType.SPLIT && <h1 className={stylesList.TitleText}>{nodeAtPathEnd.text}</h1>}
+          {(viewController.curView === ViewType.SPLIT || path.length > 1) && (
+            <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 20)}</h1>
+          )}
           <button className={stylesList.AddButton} onClick={createChild}>
             <span className={stylesList.AddButtonIcon}>+</span>
           </button>
