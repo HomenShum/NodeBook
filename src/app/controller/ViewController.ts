@@ -38,7 +38,7 @@ export class ViewController {
   public hideBackrelations = false;
   public hideBundles = true;
   public hideZones = false;
-  public showAtSignOnMention = false;
+  public showAtSignOnMention = true;
   public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
   public searchAndReplaceDropdown: "labelled-only" | "all" | "none" = "labelled-only";

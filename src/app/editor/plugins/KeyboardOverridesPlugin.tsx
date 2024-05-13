@@ -56,22 +56,7 @@ export const KeyboardOverridesPlugin = () => {
             }
 
             // Add to outline if necessary
-            const root = pathToParentNodes[0].child;
-            if (
-              (graphStore.addThoughtstreamNestedChildrenToThoughtstream &&
-                root.id === graphStore.thoughtstreamRoot.id) ||
-              (graphStore.addThoughstreamDirectChildrenToOutline && parent.id === graphStore.thoughtstreamRoot.id)
-            ) {
-              graphStore.createRelation({
-                from: graphStore.outlineRoot,
-                to: newNode,
-                relationType: graphStore.relationTypesById.child,
-              });
-            }
-            // Add to thoughtstream if necessary
-            if (graphStore.addAllOutlineDescendantsToThoughtstream && root.id === graphStore.outlineRoot.id) {
-              graphStore.addToThoughtstream(newNode);
-            }
+            graphStore.addElsewhereAfterCreate(newNode, parent, pathToParentNodes[0].child);
 
             viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
             return true;

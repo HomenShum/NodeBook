@@ -102,7 +102,7 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
   );
 }
 
-function checkForMentionMatch(text: string): MenuTextMatch | null {
+export function checkForMentionMatch(text: string): MenuTextMatch | null {
   const PUNC = "\\.,\\+\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
   const TRIGGERS = "@";
 

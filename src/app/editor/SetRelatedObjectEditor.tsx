@@ -1,6 +1,5 @@
 import { useViewController } from "@/app/controller/useViewController";
 import { KeyboardOverridesPlugin } from "@/app/editor/plugins/KeyboardOverridesPlugin";
-import { createContentMatchingParagraph, graphNodeMatchesParagraph } from "@/app/editor/plugins/SyncWithGraphPlugin";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
 import { Chip } from "@/app/model/GraphNode";
 import { $createMentionNode } from "@/app/model/MentionNode";
@@ -33,6 +32,7 @@ import { useGraphStore } from "../store/useGraphStore";
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { SearchAndReplaceDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
+import { createContentMatchingParagraph, graphNodeMatchesParagraph } from "./utils";
 
 /**
  * SetRelatedObjectEditor

@@ -125,9 +125,22 @@ export const SearchAndReplaceDropdownPlugin = observer(
             : option.object;
         graph.setGraphNodeAtPath([...pathToParentRelations, relation], newObject);
         viewController.setFocusedNode(pathToNodeStr);
+        if (object.relations.every((r) => r.from.id === graph.thoughtstreamRoot.id)) {
+          graph.deleteNode(object.id);
+        }
         closeDropdown();
       },
-      [graph, pathToParentRelations, relation, viewController, pathToNodeStr, object.text, closeDropdown],
+      [
+        graph,
+        pathToParentRelations,
+        relation,
+        viewController,
+        pathToNodeStr,
+        object.text,
+        closeDropdown,
+        object.id,
+        object.relations,
+      ],
     );
 
     // Register keyboard commands for the dropdown

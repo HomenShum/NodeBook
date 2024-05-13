@@ -1,16 +1,18 @@
-import { $getRoot, $getSelection, $isParagraphNode, $isTextNode, LexicalEditor, LexicalNode } from "lexical";
-import { Chip } from "../model/GraphNode";
-import { $isMentionNode } from "../model/MentionNode";
-
-export function nodeToChip(node: LexicalNode): Chip {
-  if ($isMentionNode(node)) {
-    return { type: "mention", value: node.mentionedGraphNodeId };
-  } else if ($isTextNode(node)) {
-    return { type: "text", value: node.getTextContent() };
-  } else {
-    throw new Error("Unsupported node type");
-  }
-}
+import {
+  $createParagraphNode,
+  $createTextNode,
+  $getRoot,
+  $getSelection,
+  $isParagraphNode,
+  $isTextNode,
+  LexicalEditor,
+  LexicalNode,
+  ParagraphNode,
+  TextNode,
+} from "lexical";
+import { Chip, GraphNode } from "../model/GraphNode";
+import { GraphStore } from "../model/GraphStore";
+import { $createMentionNode, $isMentionNode, MentionNode } from "../model/MentionNode";
 
 type LexicalEditorPosition = { index: number; offset: number };
 
@@ -46,32 +48,26 @@ export function getSelectionPositions(editor: LexicalEditor): [LexicalEditorPosi
  * This functions returns a flat list of lexical nodes which corresponds
  * to that content.
  */
-function getNodes(editor: LexicalEditor): LexicalNode[] {
-  return editor.getEditorState().read(() => {
-    const children = $getRoot().getChildren();
-    if (children.length === 0) {
-      return [];
-    }
-    if (children.length > 1) {
-      throw new Error("Expected only one child node");
-    }
-    const child = children[0];
-    if (!$isParagraphNode(child)) {
-      throw new Error("Expected a paragraph node");
-    }
-    return child.getChildren();
-  });
+function $getNodes(): LexicalNode[] {
+  const children = $getRoot().getChildren();
+  if (children.length === 0) {
+    return [];
+  }
+  if (children.length > 1) {
+    throw new Error("Expected only one child node");
+  }
+  const child = children[0];
+  if (!$isParagraphNode(child)) {
+    throw new Error("Expected a paragraph node");
+  }
+  return child.getChildren();
 }
 
 /**
- * Returns the text content between two positions in the editor.
+ * Returns the text content of the active editor (optionally between two positions).
  */
-export function getTextBetween(
-  editor: LexicalEditor,
-  from?: LexicalEditorPosition,
-  to?: LexicalEditorPosition,
-): string {
-  const nodes: LexicalNode[] = getNodes(editor);
+export function $getText(from?: LexicalEditorPosition, to?: LexicalEditorPosition): string {
+  const nodes: LexicalNode[] = $getNodes();
   if (!from) {
     return nodes.map((node) => node.getTextContent()).join("");
   }
@@ -94,14 +90,10 @@ export function getTextBetween(
 }
 
 /**
- * Returns the content between two positions in the editor as a list of chips.
+ * Returns the content of the active editor as a list of chips (optionally between two positions).
  */
-export function getChipsBetween(
-  editor: LexicalEditor,
-  from?: LexicalEditorPosition,
-  to?: LexicalEditorPosition,
-): Chip[] {
-  const nodes = getNodes(editor);
+export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPosition): Chip[] {
+  const nodes = $getNodes();
   if (!from) {
     return nodes.map(nodeToChip);
   }
@@ -163,3 +155,57 @@ export function getChipsBetween(
   });
   return chips;
 }
+
+export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphNode, graphStore: GraphStore) => {
+  const paragraphChildren = paragraph.getChildren();
+  if (node.content.length !== paragraphChildren.length) return false;
+
+  const match = node.content.every((chip, idx) => {
+    if (chip.type !== paragraphChildren[idx].getType()) return false;
+
+    if (chip.type === "mention") {
+      const referencedNode = graphStore.getNode(chip.value);
+      return referencedNode !== undefined && referencedNode.text === paragraphChildren[idx].getTextContent();
+    } else {
+      return chip.value === paragraphChildren[idx].getTextContent();
+    }
+  });
+
+  return match;
+};
+
+export const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: GraphStore): ParagraphNode => {
+  const paragraph = $createParagraphNode();
+  node.content.forEach((chip) => {
+    if (chip.type == "mention") {
+      const mentionNodeText = graphStore.getNode(chip.value)?.text || "";
+      paragraph.append($createMentionNode(chip.value, mentionNodeText));
+    } else {
+      paragraph.append($createTextNode(chip.value));
+    }
+  });
+  return paragraph;
+};
+
+export const createContentMatchingParagraph = (paragraph: ParagraphNode): Chip[] => {
+  return paragraph
+    .getChildren()
+    .map((child) =>
+      $isMentionNode(child)
+        ? { type: "mention", value: child.mentionedGraphNodeId }
+        : { type: "text", value: child.getTextContent() },
+    );
+};
+
+export function nodeToChip(node: LexicalNode): Chip {
+  if (node instanceof MentionNode) {
+    return { type: "mention", value: node.mentionedGraphNodeId };
+  } else if (node instanceof TextNode) {
+    return { type: "text", value: node.getTextContent() };
+  } else {
+    throw new Error("Unsupported node type");
+  }
+}
+/**
+ * Returns the content between two positions in the editor as a list of chips.
+ */

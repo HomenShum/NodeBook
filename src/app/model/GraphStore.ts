@@ -60,7 +60,7 @@ export class GraphStore {
   isLoading = false;
 
   /** Add outline descendants which are direct children of outline to outline */
-  addThoughstreamDirectChildrenToOutline = true;
+  addThoughstreamDirectChildrenToOutline = false;
   /** Add thoughtstream descendants which are direct children of thoughtstream to thoughtstream */
   addAllOutlineDescendantsToThoughtstream = true;
   /** Add thoughtstream descendants which are not direct children of thoughtstream as direct children of thoughtstream */
@@ -232,6 +232,27 @@ export class GraphStore {
     bundle.setIsBundle(true);
     const relationToBundle = this.addToBundle(relationToThoughtstream, bundle);
     return { bundle, relationToThoughtstream, relationToBundle };
+  }
+
+  /**
+   * Call this method after creating a new object. Depending on the settings, it
+   * will add the object to the thoughtstream or outline as needed.
+   */
+  addElsewhereAfterCreate(obj: GraphObject, parent: GraphObject, root: GraphObject) {
+    if (
+      (this.addThoughtstreamNestedChildrenToThoughtstream && root.id === this.thoughtstreamRoot.id) ||
+      (this.addThoughstreamDirectChildrenToOutline && parent.id === this.thoughtstreamRoot.id)
+    ) {
+      this.createRelation({
+        from: this.outlineRoot,
+        to: obj,
+        relationType: this.relationTypesById.child,
+      });
+    }
+    // Add to thoughtstream if necessary
+    if (this.addAllOutlineDescendantsToThoughtstream && root.id === this.outlineRoot.id) {
+      this.addToThoughtstream(obj);
+    }
   }
 
   insertNode(node: GraphNode): GraphNode {
@@ -519,9 +540,16 @@ export class GraphStore {
     });
   }
 
+  /**
+   * Deletes a node if it is empty and not related to anything other than the thoughtstream root.
+   */
   private deleteNodeIfEmptyAndUnrelated(...objects: GraphObject[]) {
     objects.forEach((obj) => {
-      if (obj instanceof GraphNode && obj.text === "" && obj.relations.length === 0) {
+      if (
+        obj instanceof GraphNode &&
+        obj.text === "" &&
+        obj.relations.every((r) => r.from.id === this.thoughtstreamRoot.id)
+      ) {
         this.deleteNode(obj.id);
       }
     });

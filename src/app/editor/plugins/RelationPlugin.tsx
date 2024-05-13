@@ -5,7 +5,7 @@ import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectC
 import { useViewController } from "../../controller/useViewController";
 import { GraphNode } from "../../model/GraphNode";
 import { useGraphStore } from "../../store/useGraphStore";
-import { getChipsBetween, getSelectionPositions, getTextBetween } from "../utils";
+import { $getChips, $getText, getSelectionPositions } from "../utils";
 
 export const RelationPlugin = () => {
   const graphStore = useGraphStore();
@@ -32,11 +32,11 @@ export const RelationPlugin = () => {
           a.index === b.index ? a.offset - b.offset : a.index - b.index,
         );
         // Set the relation type to the text before the cursor
-        const textBefore = getTextBetween(editor, { index: 0, offset: 0 }, selectionLeft).trim();
+        const textBefore = $getText({ index: 0, offset: 0 }, selectionLeft).trim();
         let relationType = graphStore.getOrCreateRelationTypeByLabel(textBefore);
         relation.setType(relationType);
         // Set the content to the content after the cursor and focus
-        object.setContent(getChipsBetween(editor, selectionRight));
+        object.setContent($getChips(selectionRight));
         viewController.setFocusedNode(pathToNodeStr);
         return true;
       },

@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, toJS } from "mobx";
 import { Position, comparePositions, uuid } from "../util";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
@@ -185,7 +185,7 @@ export class GraphNode implements Serializable, GraphObject {
     return {
       id: this.id,
       createdAt: this.createdAt,
-      content: this.content,
+      content: toJS(this.content),
       isBundle: this.isBundle,
       isZone: this.isZone,
       isPrivate: this.isPrivate,
