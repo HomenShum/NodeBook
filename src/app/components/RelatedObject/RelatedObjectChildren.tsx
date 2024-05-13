@@ -57,8 +57,8 @@ export const RelatedObjectChildren = observer(
             </button>
             {isPinnedVisible && (
               <div
-                className={`border-[--teal-4] border-b  pt-8 pb-4 ${
-                  parent === graphStore.thoughtstreamRoot ? "-mb-2" : "mb-6"
+                className={`border-[--teal-4] border-b  pt-8  ${
+                  parent === graphStore.thoughtstreamRoot ? "-mb-2 pb-4" : "mb-3 pb-0"
                 } `}
               >
                 {isPinnedVisible &&
