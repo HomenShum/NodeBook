@@ -25,6 +25,9 @@ export class PlaceholderGraphObject implements GraphObject {
   get children(): GraphObject[] {
     throw new Error("Method not implemented.");
   }
+  connectedObjects(): GraphObject[] {
+    throw new Error("Method not implemented.");
+  }
   get relations(): GraphRelation[] {
     throw new Error("Method not implemented.");
   }

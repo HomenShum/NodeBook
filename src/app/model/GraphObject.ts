@@ -11,6 +11,7 @@ export interface GraphObject {
   relationsWithPositions: PositionedRelation[];
   relationsSortedByPosition: GraphRelation[];
   children: GraphObject[];
+  connectedObjects(): GraphObject[];
   isPrivate: boolean;
   setIsPrivate(value: boolean): void;
   multipleNonStreamRelationsToThis: boolean;

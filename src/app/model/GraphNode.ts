@@ -131,6 +131,10 @@ export class GraphNode implements Serializable, GraphObject {
     return this.relations.filter((r) => r.from.id === this.id).map((r) => r.to);
   }
 
+  connectedObjects(): GraphObject[] {
+    return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
+  }
+
   pinChildRelation(childRelation: GraphRelation) {
     this.store.createPinnedVersionOfRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
   }

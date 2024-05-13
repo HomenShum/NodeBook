@@ -52,6 +52,10 @@ export class GraphRelation implements Serializable, GraphObject {
     return this.relations.filter((r) => r.from.id === this.id).map((r) => r.to);
   }
 
+  connectedObjects(): GraphObject[] {
+    return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
+  }
+
   get isRoot(): boolean {
     return this.store.isRoot(this);
   }
