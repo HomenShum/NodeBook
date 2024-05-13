@@ -135,7 +135,7 @@ export const RelatedObjectView = observer(
               {/* toggle, bullet, menu */}
               <div className="flex items-center gap-2 absolute right-full">
                 <div className="flex items-center gap-1">
-                  {hasChildren && isHovered && (
+                  {hasChildren && (objectCount === 1 || !viewController.disableCycles) && isHovered && (
                     <Toggle
                       isSearching={!!searchResult}
                       searchExpansion={searchExpansion}
@@ -168,6 +168,7 @@ export const RelatedObjectView = observer(
               >
                 {hasChildren &&
                   !showChildren &&
+                  (objectCount === 1 || !viewController.disableCycles) &&
                   (!viewController.hideBulletBackgroundIfParentsOnly || hasNewChildren) && (
                     <Dot
                       stroke={!object.isPrivate ? "var(--teal-4)" : "var(--gray-4)"}

@@ -42,6 +42,7 @@ export class ViewController {
   public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
   public searchAndReplaceDropdown: "labelled-only" | "all" | "none" = "labelled-only";
+  public disableCycles = true;
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -77,6 +78,10 @@ export class ViewController {
 
   setCurrentOutlineViewRoot(root: GraphRelation[] | null) {
     this.currentOutlineViewRoot = root;
+  }
+
+  setDisableCycles(value: boolean) {
+    this.disableCycles = value;
   }
 
   toggleLeftSidebar() {

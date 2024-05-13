@@ -132,6 +132,15 @@ export const DevTools = observer(() => {
         <label>
           <input
             type="checkbox"
+            checked={viewController.disableCycles}
+            onChange={(e) => viewController.setDisableCycles(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Disable expanding cycles
+        </label>
+        <label>
+          <input
+            type="checkbox"
             checked={viewController.hideBulletBackgroundIfParentsOnly}
             onChange={(e) => viewController.setHideBulletBackgroundIfParentsOnly(e.target.checked)}
             className="mr-2 mb-2"
