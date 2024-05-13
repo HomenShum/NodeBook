@@ -3,7 +3,7 @@ import { GraphRelation } from "./GraphRelation";
 
 export interface GraphObject {
   id: string;
-  type: "node" | "relation";
+  type: "node" | "relation" | "placeholder";
   createdAt: Date;
   isRoot: boolean;
   text: string;

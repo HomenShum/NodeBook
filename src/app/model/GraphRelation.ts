@@ -3,6 +3,7 @@ import { comparePositions, uuid } from "../util";
 import { PositionedRelation } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
+import { PlaceholderGraphObject, isPlaceholder } from "./PlaceholderGraphObject";
 import { Serializable } from "./serialization";
 
 export type GraphRelationType = {
@@ -141,18 +142,22 @@ export class GraphRelation implements Serializable, GraphObject {
     getObjectById: (id: string) => GraphObject | undefined,
     getRelationTypeById: (id: string) => GraphRelationType | undefined,
   ): GraphRelation {
-    const from = getObjectById(data.fromId);
-    const to = getObjectById(data.toId);
-    if (!from || !to) {
-      throw new Error("Missing from or to node");
-    }
-    return new GraphRelation(store, {
+    const from = getObjectById(data.fromId) ?? new PlaceholderGraphObject(data.fromId);
+    const to = getObjectById(data.toId) ?? new PlaceholderGraphObject(data.toId);
+    const newRelation = new GraphRelation(store, {
       id: data.id,
       from,
       to,
       relationType: getRelationTypeById(data.relationTypeId),
       isPrivate: data?.isPrivate ?? true,
     });
+    if (from instanceof GraphRelation && isPlaceholder(from.to) && from.to.id === data.id) {
+      from.to = newRelation;
+    }
+    if (to instanceof GraphRelation && isPlaceholder(to.from) && to.from.id === data.id) {
+      to.from = newRelation;
+    }
+    return newRelation;
   }
 
   get multipleNonStreamRelationsToThis() {

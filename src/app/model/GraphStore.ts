@@ -6,6 +6,7 @@ import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
+import { isPlaceholder } from "./PlaceholderGraphObject";
 import { serializeMap } from "./serialization";
 
 export const defaultRelationTypes = {
@@ -703,22 +704,28 @@ export class GraphStore {
     const relationsById = new Map<string, GraphRelation>();
     const getObjectById = (id: string) => nodesById.get(id) || relationsById.get(id);
     const getRelationTypeById = (id: string) => relationTypesById[id];
-    const failed = new Set<string>();
     for (const [key, value] of Object.entries(data.relationsById)) {
-      try {
-        relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById));
-      } catch (e) {
-        failed.add(key);
+      // Placeholders set here should be cleaned up by subsequent relations in this loop
+      relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById));
+    }
+
+    for (const [_, relation] of relationsById) {
+      if (isPlaceholder(relation.from)) {
+        // Do one last check to see if we can resolve the placeholder, log to console if not
+        if (getObjectById(relation.from.id)) {
+          relation.from = getObjectById(relation.from.id)!;
+        } else {
+          console.warn("Deserialized relation with placeholder from", relation);
+        }
+      }
+      if (isPlaceholder(relation.to)) {
+        if (getObjectById(relation.to.id)) {
+          relation.to = getObjectById(relation.to.id)!;
+        } else {
+          console.warn("Deserialized relation with placeholder to", relation);
+        }
       }
     }
-    // Relations can point to relations, so sometimes deserialization fails because we don't have the needed
-    // relations yet. We retry deserializing the failed relations after all relations have been deserialized.
-    // TODO: This is a bit hacky, and doesn't address circular dependencies. We might need to do something
-    // like allow null to/from fields in the relation, and then fill them in later.
-    failed.forEach((key) => {
-      const value = data.relationsById[key];
-      relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById));
-    });
 
     const relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
     for (const [key, value] of Object.entries(data.relationsByNodeId)) {
