@@ -4,6 +4,7 @@ import { PositionedRelation } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
 import { PlaceholderGraphObject, isPlaceholder } from "./PlaceholderGraphObject";
+import { SerializedRelation } from "./SerializedData";
 import { Serializable } from "./serialization";
 
 export type GraphRelationType = {
@@ -48,7 +49,7 @@ export class GraphRelation implements Serializable, GraphObject {
   }
 
   get children(): GraphObject[] {
-    return this.relations.filter((r) => r.from === this).map((r) => r.to);
+    return this.relations.filter((r) => r.from.id === this.id).map((r) => r.to);
   }
 
   get isRoot(): boolean {
@@ -126,7 +127,7 @@ export class GraphRelation implements Serializable, GraphObject {
     return this.pinnedRelationsList.has(childRelation.id) || this.pinnedRelationsList.has(correspondingRelation.id);
   }
 
-  serialize() {
+  serialize(): SerializedRelation {
     return {
       id: this.id,
       fromId: this.from.id,
@@ -137,7 +138,7 @@ export class GraphRelation implements Serializable, GraphObject {
   }
 
   static deserialize(
-    data: ReturnType<GraphRelation["serialize"]>,
+    data: SerializedRelation,
     store: GraphStore,
     getObjectById: (id: string) => GraphObject | undefined,
     getRelationTypeById: (id: string) => GraphRelationType | undefined,
@@ -152,10 +153,10 @@ export class GraphRelation implements Serializable, GraphObject {
       isPrivate: data?.isPrivate ?? true,
     });
     if (from instanceof GraphRelation && isPlaceholder(from.to) && from.to.id === data.id) {
-      from.to = newRelation;
+      from.setTo(newRelation);
     }
     if (to instanceof GraphRelation && isPlaceholder(to.from) && to.from.id === data.id) {
-      to.from = newRelation;
+      to.setFrom(newRelation);
     }
     return newRelation;
   }

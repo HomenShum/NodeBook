@@ -11,3 +11,13 @@ export function serializeMap<T extends Serializable>(
   }
   return result;
 }
+
+export function serializeMapWithArrayValues<T extends Serializable>(
+  map: Map<string, T[]>,
+): { [key: string]: ReturnType<T["serialize"]>[] } {
+  const result: { [key: string]: ReturnType<T["serialize"]>[] } = {};
+  for (const [key, value] of map.entries()) {
+    result[key] = value.map((v) => v.serialize());
+  }
+  return result;
+}

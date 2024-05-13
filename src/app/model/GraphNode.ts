@@ -3,6 +3,7 @@ import { Position, comparePositions, uuid } from "../util";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
+import { SerializedGraphNode } from "./SerializedData";
 import { Serializable } from "./serialization";
 
 export type Chip = {
@@ -127,7 +128,7 @@ export class GraphNode implements Serializable, GraphObject {
   }
 
   get children(): GraphObject[] {
-    return this.relations.filter((r) => r.from === this).map((r) => r.to);
+    return this.relations.filter((r) => r.from.id === this.id).map((r) => r.to);
   }
 
   pinChildRelation(childRelation: GraphRelation) {
@@ -176,7 +177,7 @@ export class GraphNode implements Serializable, GraphObject {
     return path;
   }
 
-  serialize() {
+  serialize(): SerializedGraphNode {
     return {
       id: this.id,
       createdAt: this.createdAt,
@@ -187,7 +188,7 @@ export class GraphNode implements Serializable, GraphObject {
     };
   }
 
-  static deserialize(data: ReturnType<GraphNode["serialize"]>, store: GraphStore): GraphNode {
+  static deserialize(data: SerializedGraphNode, store: GraphStore): GraphNode {
     return new GraphNode(store, {
       id: data.id,
       content: data.content,

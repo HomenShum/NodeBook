@@ -7,7 +7,8 @@ import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { isPlaceholder } from "./PlaceholderGraphObject";
-import { serializeMap } from "./serialization";
+import { SerializedGraphStore } from "./SerializedData";
+import { serializeMap, serializeMapWithArrayValues } from "./serialization";
 
 export const defaultRelationTypes = {
   child: { id: "child", label: "child", reverseLabel: "parent" },
@@ -669,14 +670,18 @@ export class GraphStore {
     list?.move([relation], sibling);
   }
 
-  serialize() {
+  serialize(): SerializedGraphStore {
     const nodesById = serializeMap(this.nodesById);
     const relationsById = serializeMap(this.relationsById);
+    const relationTypesById = toJS(this.relationTypesById);
+
     const relationsByNodeId = serializeMap(this.relationsByNodeId);
     const pinnedRelationsByNodeId = serializeMap(this.pinnedRelationsByNodeId);
+
+    const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
+
     const correspondingObjectsForPinned = serializeMap(this.correspondingObjectsForPinned);
     const correspondingPinnedForObjects = serializeMap(this.correspondingPinnedForObjects);
-    const relationTypesById = toJS(this.relationTypesById);
 
     return {
       nodesById,
@@ -685,12 +690,13 @@ export class GraphStore {
       relationsByNodeId,
       pinnedRelationsByNodeId,
       pathData: Object.fromEntries(this.pathData.entries()),
+      relationToBundles,
       correspondingObjectsForPinned,
       correspondingPinnedForObjects,
     };
   }
 
-  deserializeInPlace(data: ReturnType<GraphStore["serialize"]>) {
+  deserializeInPlace(data: SerializedGraphStore) {
     const nodesById = new Map<string, GraphNode>();
     for (const [key, value] of Object.entries(data.nodesById)) {
       nodesById.set(key, GraphNode.deserialize(value, this));
@@ -713,14 +719,14 @@ export class GraphStore {
       if (isPlaceholder(relation.from)) {
         // Do one last check to see if we can resolve the placeholder, log to console if not
         if (getObjectById(relation.from.id)) {
-          relation.from = getObjectById(relation.from.id)!;
+          relation.setFrom(getObjectById(relation.from.id)!);
         } else {
           console.warn("Deserialized relation with placeholder from", relation);
         }
       }
       if (isPlaceholder(relation.to)) {
         if (getObjectById(relation.to.id)) {
-          relation.to = getObjectById(relation.to.id)!;
+          relation.setTo(getObjectById(relation.to.id)!);
         } else {
           console.warn("Deserialized relation with placeholder to", relation);
         }
@@ -748,24 +754,41 @@ export class GraphStore {
     }
 
     const correspondingObjectsForPinned = new Map<string, GraphRelation>();
-    for (const [key, value] of Object.entries(data.correspondingObjectsForPinned)) {
-      correspondingObjectsForPinned.set(
-        key,
-        GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
-      );
+    if (data.correspondingObjectsForPinned) {
+      for (const [key, value] of Object.entries(data.correspondingObjectsForPinned)) {
+        correspondingObjectsForPinned.set(
+          key,
+          GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
+        );
+      }
     }
 
     const correspondingPinnedForObjects = new Map<string, GraphRelation>();
-    for (const [key, value] of Object.entries(data.correspondingPinnedForObjects)) {
-      correspondingPinnedForObjects.set(
-        key,
-        GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
-      );
+    if (data.correspondingPinnedForObjects) {
+      for (const [key, value] of Object.entries(data.correspondingPinnedForObjects)) {
+        correspondingPinnedForObjects.set(
+          key,
+          GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
+        );
+      }
     }
 
     const pathData = new Map<Path, PathData>();
-    for (const [key, value] of Object.entries(data.pathData)) {
-      pathData.set(key, value);
+    if (data.pathData) {
+      for (const [key, value] of Object.entries(data.pathData)) {
+        pathData.set(key, value);
+      }
+    }
+
+    const relationToBundles = new Map<string, GraphNode[]>();
+    if (data.relationToBundles) {
+      for (const [relationId, bundlesArray] of Object.entries(data.relationToBundles)) {
+        if (!relationsById.has(relationId)) continue;
+        relationToBundles.set(
+          relationId,
+          bundlesArray.map((bundle) => nodesById.get(bundle.id)).filter((b) => !!b) as GraphNode[],
+        );
+      }
     }
 
     this.nodesById = nodesById;
@@ -774,6 +797,7 @@ export class GraphStore {
     this.relationsByNodeId = relationsByNodeId;
     this.pinnedRelationsByNodeId = pinnedRelationsByNodeId;
     this.pathData = pathData;
+    this.relationToBundles = relationToBundles;
     this.correspondingObjectsForPinned = correspondingObjectsForPinned;
     this.correspondingPinnedForObjects = correspondingPinnedForObjects;
   }
