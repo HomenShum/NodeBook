@@ -33,10 +33,18 @@ export const RelationPlugin = () => {
         );
         // Set the relation type to the text before the cursor
         const textBefore = $getText({ index: 0, offset: 0 }, selectionLeft).trim();
-        let relationType = graphStore.getOrCreateRelationTypeByLabel(textBefore);
+        let [relationType, direction] = graphStore.getOrCreateRelationTypeByLabel(textBefore);
         relation.setType(relationType);
+        if (direction === "reverse") {
+          graphStore.reverseRelation(relation);
+        }
+
         // Set the content to the content after the cursor and focus
-        object.setContent($getChips(selectionRight));
+        const chipsRight = $getChips(selectionRight);
+        if (chipsRight.length) {
+          chipsRight[0].value = chipsRight[0].value.trimStart(); // Remove leading whitespace
+        }
+        object.setContent(chipsRight);
         viewController.setFocusedNode(pathToNodeStr);
         return true;
       },

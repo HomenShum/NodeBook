@@ -329,13 +329,16 @@ export class GraphStore {
    *
    * TODO: think about how this should be handled long term.
    */
-  getOrCreateRelationTypeByLabel(labelText: string): GraphRelationType {
+  getOrCreateRelationTypeByLabel(labelText: string): [GraphRelationType, "forward" | "reverse"] {
     for (const [_, type] of Object.entries(this.relationTypesById)) {
-      if (type.label === labelText || type.reverseLabel === labelText) {
-        return type;
+      if (type.label.toLowerCase() === labelText.toLowerCase()) {
+        return [type, "forward"];
+      }
+      if (type.reverseLabel.toLowerCase() === labelText.toLowerCase()) {
+        return [type, "reverse"];
       }
     }
-    return this.createRelationType({ label: labelText });
+    return [this.createRelationType({ label: labelText }), "forward"];
   }
 
   unpinRelation(relation: GraphRelation, direction: "from" | "to") {

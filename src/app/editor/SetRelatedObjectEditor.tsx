@@ -142,8 +142,11 @@ const SetRelationTypeOnColonPlugin = () => {
           }
 
           // Set relation type to the text before the selection
-          const relationType = graph.getOrCreateRelationTypeByLabel(textBeforeSelection);
+          const [relationType, direction] = graph.getOrCreateRelationTypeByLabel(textBeforeSelection);
           relation.setType(relationType);
+          if (direction === "reverse") {
+            graph.reverseRelation(relation);
+          }
 
           // Set the editor text to the text after the selection end to the end of the text
           setEditorToContent(editor, editorText.slice(end));
