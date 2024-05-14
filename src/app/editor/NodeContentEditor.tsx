@@ -57,6 +57,7 @@ export const NodeContentEditor = observer(() => {
       paragraph.append(text);
       $getRoot().append(paragraph);
     },
+    editable: node.id !== graphStore.outlineRoot.id && node.id !== graphStore.thoughtstreamRoot.id && node.id !== graphStore.userRoot.id,
   };
 
   const setPathToNodeAsRoot = useCallback(

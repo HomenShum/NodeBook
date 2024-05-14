@@ -12,10 +12,12 @@ export function searchGraph(obj: GraphObject, query: string): Map<string, Search
 
 // search the children of the node for the query
 function searchRecursively(node: GraphObject, query: string, result: Map<string, TemporarySearchResult>): boolean {
-  const matches = new Set(search(query, node.children, { keySelector: (node) => node.text }).map((node) => node.id));
+  const matches = new Set(
+    search(query, node.connectedObjects(), { keySelector: (node) => node.text }).map((node) => node.id),
+  );
 
   let hasNestedMatch = false;
-  for (const child of node.children) {
+  for (const child of node.connectedObjects()) {
     if (result.has(child.id)) {
       // null means that the child is currently being evaluated higher up in the call stack
       // so ignore it

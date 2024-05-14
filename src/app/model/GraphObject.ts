@@ -3,7 +3,7 @@ import { GraphRelation } from "./GraphRelation";
 
 export interface GraphObject {
   id: string;
-  type: "node" | "relation";
+  type: "node" | "relation" | "placeholder";
   createdAt: Date;
   isRoot: boolean;
   text: string;
@@ -11,9 +11,9 @@ export interface GraphObject {
   relationsWithPositions: PositionedRelation[];
   relationsSortedByPosition: GraphRelation[];
   children: GraphObject[];
+  connectedObjects(): GraphObject[];
   isPrivate: boolean;
   setIsPrivate(value: boolean): void;
-  multipleNonStreamRelationsToThis: boolean;
 
   // pinned objects
   pinnedRelationsWithPositions: PositionedRelation[];

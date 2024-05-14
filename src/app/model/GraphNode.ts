@@ -1,8 +1,9 @@
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, toJS } from "mobx";
 import { Position, comparePositions, uuid } from "../util";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
+import { SerializedGraphNode } from "./SerializedData";
 import { Serializable } from "./serialization";
 
 export type Chip = {
@@ -121,13 +122,24 @@ export class GraphNode implements Serializable, GraphObject {
   get text(): string {
     return this.content
       .map((chip) => {
-        return chip.type == "mention" ? this.store.getNode(chip.value)?.text || "[Deleted node]" : chip.value;
+        switch (chip.type) {
+          case "text":
+            return chip.value;
+          case "mention":
+            const referencedNode = this.store.getNode(chip.value);
+            if (!referencedNode) return "[Deleted node]";
+            return `@[${referencedNode.text}]`;
+        }
       })
-      .join();
+      .join("");
   }
 
   get children(): GraphObject[] {
-    return this.relations.filter((r) => r.from === this).map((r) => r.to);
+    return this.relations.filter((r) => r.from.id === this.id).map((r) => r.to);
+  }
+
+  connectedObjects(): GraphObject[] {
+    return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
   }
 
   pinChildRelation(childRelation: GraphRelation) {
@@ -176,18 +188,18 @@ export class GraphNode implements Serializable, GraphObject {
     return path;
   }
 
-  serialize() {
+  serialize(): SerializedGraphNode {
     return {
       id: this.id,
       createdAt: this.createdAt,
-      content: this.content,
+      content: toJS(this.content),
       isBundle: this.isBundle,
       isZone: this.isZone,
       isPrivate: this.isPrivate,
     };
   }
 
-  static deserialize(data: ReturnType<GraphNode["serialize"]>, store: GraphStore): GraphNode {
+  static deserialize(data: SerializedGraphNode, store: GraphStore): GraphNode {
     return new GraphNode(store, {
       id: data.id,
       content: data.content,
@@ -196,11 +208,5 @@ export class GraphNode implements Serializable, GraphObject {
       isZone: data.isZone,
       isPrivate: data.isPrivate,
     });
-  }
-
-  get multipleNonStreamRelationsToThis() {
-    return (
-      this.relations.filter((r) => r.to.id === this.id && r.from.id !== this.store.thoughtstreamRoot.id).length > 1
-    );
   }
 }

@@ -9,10 +9,23 @@ export async function GET(req: Request) {
   return NextResponse.json({ data: null });
 }
 
+function isValidDataString(dataString: string) {
+  try {
+    JSON.parse(dataString);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 export async function POST(req: Request) {
   const body = await req.json();
 
   const dataString = body.data;
+  if (!isValidDataString(dataString)) {
+    return NextResponse.json({ status: "error", message: "Invalid data" }, { status: 400 });
+  }
+
   await sql`INSERT INTO data (id, json)
   VALUES (1, ${dataString})
   ON CONFLICT (id) DO UPDATE SET json = EXCLUDED.json;`;

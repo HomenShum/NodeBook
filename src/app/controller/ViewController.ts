@@ -23,6 +23,8 @@ export class ViewController {
   public focusedNode: Path | null = null;
   public hoveredNode: Path | null = null;
 
+  public searchQuery: string = "";
+
   editorsByPath: Map<string, LexicalEditor> = new Map();
 
   public selectedNodes: Path[] = [];
@@ -38,10 +40,11 @@ export class ViewController {
   public hideBackrelations = false;
   public hideBundles = true;
   public hideZones = false;
-  public showAtSignOnMention = false;
+  public showAtSignOnMention = true;
   public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
   public searchAndReplaceDropdown: "labelled-only" | "all" | "none" = "labelled-only";
+  public disableCycles = true;
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -63,6 +66,10 @@ export class ViewController {
     });
   }
 
+  setSearchQuery(query: string) {
+    this.searchQuery = query;
+  }
+
   setSearchAndReplaceDropdown(value: "labelled-only" | "all" | "none") {
     this.searchAndReplaceDropdown = value;
   }
@@ -77,6 +84,10 @@ export class ViewController {
 
   setCurrentOutlineViewRoot(root: GraphRelation[] | null) {
     this.currentOutlineViewRoot = root;
+  }
+
+  setDisableCycles(value: boolean) {
+    this.disableCycles = value;
   }
 
   toggleLeftSidebar() {

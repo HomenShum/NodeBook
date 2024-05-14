@@ -135,7 +135,7 @@ export const RelatedObjectView = observer(
               {/* toggle, bullet, menu */}
               <div className="flex items-center gap-1 absolute right-full">
                 <div className="flex items-center gap-1">
-                  {hasChildren && isHovered && (
+                  {hasChildren && (objectCount === 1 || !viewController.disableCycles) && isHovered && (
                     <Toggle
                       isSearching={!!searchResult}
                       searchExpansion={searchExpansion}
@@ -168,6 +168,7 @@ export const RelatedObjectView = observer(
               >
                 {hasChildren &&
                   !showChildren &&
+                  (objectCount === 1 || !viewController.disableCycles) &&
                   (!viewController.hideBulletBackgroundIfParentsOnly || hasNewChildren) && (
                     <Dot
                       stroke={!object.isPrivate ? "var(--teal-4)" : "var(--gray-4)"}
@@ -296,7 +297,9 @@ const RelatedObjectMenu = observer(
 );
 
 const RelatedObjectEditor = observer(() => {
+  const graph = useGraphStore();
   const { object } = useRelationAtPath();
+  const blueUnderline = graph.shouldTreatObjectAsLink(object);
   return (
     <div
       style={{
@@ -304,8 +307,8 @@ const RelatedObjectEditor = observer(() => {
         display: "flex",
         alignItems: "flex-start",
         flex: 1,
-        color: object.multipleNonStreamRelationsToThis ? "#0b0b79" : undefined,
-        textDecoration: object.multipleNonStreamRelationsToThis ? "underline #cecece" : undefined,
+        color: blueUnderline ? "#0b0b79" : undefined,
+        textDecoration: blueUnderline ? "underline #cecece" : undefined,
       }}
     >
       {/* <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}> */}

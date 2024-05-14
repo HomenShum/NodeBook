@@ -6,7 +6,9 @@ import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
-import { serializeMap } from "./serialization";
+import { isPlaceholder } from "./PlaceholderGraphObject";
+import { SerializedGraphStore } from "./SerializedData";
+import { serializeMap, serializeMapWithArrayValues } from "./serialization";
 
 export const defaultRelationTypes = {
   child: { id: "child", label: "child", reverseLabel: "parent" },
@@ -58,7 +60,7 @@ export class GraphStore {
   isLoading = false;
 
   /** Add outline descendants which are direct children of outline to outline */
-  addThoughstreamDirectChildrenToOutline = true;
+  addThoughstreamDirectChildrenToOutline = false;
   /** Add thoughtstream descendants which are direct children of thoughtstream to thoughtstream */
   addAllOutlineDescendantsToThoughtstream = true;
   /** Add thoughtstream descendants which are not direct children of thoughtstream as direct children of thoughtstream */
@@ -232,6 +234,27 @@ export class GraphStore {
     return { bundle, relationToThoughtstream, relationToBundle };
   }
 
+  /**
+   * Call this method after creating a new object. Depending on the settings, it
+   * will add the object to the thoughtstream or outline as needed.
+   */
+  addElsewhereAfterCreate(obj: GraphObject, parent: GraphObject, root: GraphObject) {
+    if (
+      (this.addThoughtstreamNestedChildrenToThoughtstream && root.id === this.thoughtstreamRoot.id) ||
+      (this.addThoughstreamDirectChildrenToOutline && parent.id === this.thoughtstreamRoot.id)
+    ) {
+      this.createRelation({
+        from: this.outlineRoot,
+        to: obj,
+        relationType: this.relationTypesById.child,
+      });
+    }
+    // Add to thoughtstream if necessary
+    if (this.addAllOutlineDescendantsToThoughtstream && root.id === this.outlineRoot.id) {
+      this.addToThoughtstream(obj);
+    }
+  }
+
   insertNode(node: GraphNode): GraphNode {
     if (this.nodesById.has(node.id)) {
       throw new Error(`Node with id ${node.id} already exists`);
@@ -306,13 +329,16 @@ export class GraphStore {
    *
    * TODO: think about how this should be handled long term.
    */
-  getOrCreateRelationTypeByLabel(labelText: string): GraphRelationType {
+  getOrCreateRelationTypeByLabel(labelText: string): [GraphRelationType, "forward" | "reverse"] {
     for (const [_, type] of Object.entries(this.relationTypesById)) {
-      if (type.label === labelText || type.reverseLabel === labelText) {
-        return type;
+      if (type.label.toLowerCase() === labelText.toLowerCase()) {
+        return [type, "forward"];
+      }
+      if (type.reverseLabel.toLowerCase() === labelText.toLowerCase()) {
+        return [type, "reverse"];
       }
     }
-    return this.createRelationType({ label: labelText });
+    return [this.createRelationType({ label: labelText }), "forward"];
   }
 
   unpinRelation(relation: GraphRelation, direction: "from" | "to") {
@@ -341,6 +367,8 @@ export class GraphStore {
       // delete the pinned relation if it's no longer referenced anywhere
       this.pinnedRelationsByNodeId.delete(pinnedRelation.id);
       this.relationsById.delete(pinnedRelation.id);
+      this.correspondingObjectsForPinned.delete(pinnedRelation.id);
+      this.correspondingPinnedForObjects.delete(baseRelation.id);
     }
   }
 
@@ -517,9 +545,16 @@ export class GraphStore {
     });
   }
 
+  /**
+   * Deletes a node if it is empty and not related to anything other than the thoughtstream root.
+   */
   private deleteNodeIfEmptyAndUnrelated(...objects: GraphObject[]) {
     objects.forEach((obj) => {
-      if (obj instanceof GraphNode && obj.text === "" && obj.relations.length === 0) {
+      if (
+        obj instanceof GraphNode &&
+        obj.text === "" &&
+        obj.relations.every((r) => r.from.id === this.thoughtstreamRoot.id)
+      ) {
         this.deleteNode(obj.id);
       }
     });
@@ -668,14 +703,53 @@ export class GraphStore {
     list?.move([relation], sibling);
   }
 
-  serialize() {
+  /**
+   * By default, object renderings are treated as the object themselves, and
+   * edits change the object's content. But in some cases, we want to treat them
+   * more like a link to the object. This method determines if an object should
+   * be treated as a link.
+   *
+   * Roughly speaking, if an object appears in multiple places, we treat it as a
+   * link.
+   *
+   * More specifically, we treat an object as a link if it is involved in
+   * multiple relations, excluding it's children. There's also a special case
+   * where if there are exactly two relations to the object, and one of them is
+   * from the thoughtstream, then we return false. If we don't do this, then
+   * every node created gets treated as a link (since all nodes are added to the
+   * thoughtstream) which is not what we want.
+   *
+   * @see
+   * https://linear.app/ideaflow/issue/ENT-3404/update-to-blue-underline-logic
+   *
+   * TODO: This whole thing is conceptually messy and should be rethought.
+   */
+  shouldTreatObjectAsLink(obj: GraphObject): boolean {
+    const relationsExceptChildren = obj.relations.filter(
+      (r) => !(r.relationType.id === defaultRelationTypes.child.id && r.from.id === obj.id),
+    );
+    const fromStream = relationsExceptChildren.filter((r) => r.from.id === this.thoughtstreamRoot.id);
+    if (relationsExceptChildren.length <= 1) {
+      return false;
+    } else if (relationsExceptChildren.length === 2 && fromStream.length === 1) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  serialize(): SerializedGraphStore {
     const nodesById = serializeMap(this.nodesById);
     const relationsById = serializeMap(this.relationsById);
+    const relationTypesById = toJS(this.relationTypesById);
+
     const relationsByNodeId = serializeMap(this.relationsByNodeId);
     const pinnedRelationsByNodeId = serializeMap(this.pinnedRelationsByNodeId);
+
+    const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
+
     const correspondingObjectsForPinned = serializeMap(this.correspondingObjectsForPinned);
     const correspondingPinnedForObjects = serializeMap(this.correspondingPinnedForObjects);
-    const relationTypesById = toJS(this.relationTypesById);
 
     return {
       nodesById,
@@ -684,12 +758,13 @@ export class GraphStore {
       relationsByNodeId,
       pinnedRelationsByNodeId,
       pathData: Object.fromEntries(this.pathData.entries()),
+      relationToBundles,
       correspondingObjectsForPinned,
       correspondingPinnedForObjects,
     };
   }
 
-  deserializeInPlace(data: ReturnType<GraphStore["serialize"]>) {
+  deserializeInPlace(data: SerializedGraphStore) {
     const nodesById = new Map<string, GraphNode>();
     for (const [key, value] of Object.entries(data.nodesById)) {
       nodesById.set(key, GraphNode.deserialize(value, this));
@@ -703,22 +778,28 @@ export class GraphStore {
     const relationsById = new Map<string, GraphRelation>();
     const getObjectById = (id: string) => nodesById.get(id) || relationsById.get(id);
     const getRelationTypeById = (id: string) => relationTypesById[id];
-    const failed = new Set<string>();
     for (const [key, value] of Object.entries(data.relationsById)) {
-      try {
-        relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById));
-      } catch (e) {
-        failed.add(key);
+      // Placeholders set here should be cleaned up by subsequent relations in this loop
+      relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById));
+    }
+
+    for (const [_, relation] of relationsById) {
+      if (isPlaceholder(relation.from)) {
+        // Do one last check to see if we can resolve the placeholder, log to console if not
+        if (getObjectById(relation.from.id)) {
+          relation.setFrom(getObjectById(relation.from.id)!);
+        } else {
+          console.warn("Deserialized relation with placeholder from", relation);
+        }
+      }
+      if (isPlaceholder(relation.to)) {
+        if (getObjectById(relation.to.id)) {
+          relation.setTo(getObjectById(relation.to.id)!);
+        } else {
+          console.warn("Deserialized relation with placeholder to", relation);
+        }
       }
     }
-    // Relations can point to relations, so sometimes deserialization fails because we don't have the needed
-    // relations yet. We retry deserializing the failed relations after all relations have been deserialized.
-    // TODO: This is a bit hacky, and doesn't address circular dependencies. We might need to do something
-    // like allow null to/from fields in the relation, and then fill them in later.
-    failed.forEach((key) => {
-      const value = data.relationsById[key];
-      relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById));
-    });
 
     const relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
     for (const [key, value] of Object.entries(data.relationsByNodeId)) {
@@ -741,24 +822,41 @@ export class GraphStore {
     }
 
     const correspondingObjectsForPinned = new Map<string, GraphRelation>();
-    for (const [key, value] of Object.entries(data.correspondingObjectsForPinned)) {
-      correspondingObjectsForPinned.set(
-        key,
-        GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
-      );
+    if (data.correspondingObjectsForPinned) {
+      for (const [key, value] of Object.entries(data.correspondingObjectsForPinned)) {
+        correspondingObjectsForPinned.set(
+          key,
+          GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
+        );
+      }
     }
 
     const correspondingPinnedForObjects = new Map<string, GraphRelation>();
-    for (const [key, value] of Object.entries(data.correspondingPinnedForObjects)) {
-      correspondingPinnedForObjects.set(
-        key,
-        GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
-      );
+    if (data.correspondingPinnedForObjects) {
+      for (const [key, value] of Object.entries(data.correspondingPinnedForObjects)) {
+        correspondingPinnedForObjects.set(
+          key,
+          GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
+        );
+      }
     }
 
     const pathData = new Map<Path, PathData>();
-    for (const [key, value] of Object.entries(data.pathData)) {
-      pathData.set(key, value);
+    if (data.pathData) {
+      for (const [key, value] of Object.entries(data.pathData)) {
+        pathData.set(key, value);
+      }
+    }
+
+    const relationToBundles = new Map<string, GraphNode[]>();
+    if (data.relationToBundles) {
+      for (const [relationId, bundlesArray] of Object.entries(data.relationToBundles)) {
+        if (!relationsById.has(relationId)) continue;
+        relationToBundles.set(
+          relationId,
+          bundlesArray.map((bundle) => nodesById.get(bundle.id)).filter((b) => !!b) as GraphNode[],
+        );
+      }
     }
 
     this.nodesById = nodesById;
@@ -767,6 +865,7 @@ export class GraphStore {
     this.relationsByNodeId = relationsByNodeId;
     this.pinnedRelationsByNodeId = pinnedRelationsByNodeId;
     this.pathData = pathData;
+    this.relationToBundles = relationToBundles;
     this.correspondingObjectsForPinned = correspondingObjectsForPinned;
     this.correspondingPinnedForObjects = correspondingPinnedForObjects;
   }

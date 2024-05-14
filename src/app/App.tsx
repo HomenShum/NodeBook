@@ -1,9 +1,10 @@
 "use client";
-import { ArrowLeft, Search, SettingsIcon, X } from "lucide-react";
+import { ArrowLeft, SettingsIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { ReactNode, useRef, useState } from "react";
+import { ReactNode, useRef } from "react";
 import s from "./app.module.css";
 import { OutlineView } from "./components/OutlineView";
+import { SearchBar } from "./components/SearchBar/SearchBar";
 import { SplitView } from "./components/SplitView";
 import { ThoughtstreamView } from "./components/ThoughtstreamView";
 import { DevTools } from "./components/dev/DevTools";
@@ -25,8 +26,6 @@ const App = observer(() => {
   const appContainerRef = useRef<HTMLDivElement>(null);
   const viewController = useViewController();
   useKeyboardShortcuts();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchFocused, setSearchFocused] = useState(false);
 
   const ButtonNavigation = () => (
     <>
@@ -67,26 +66,7 @@ const App = observer(() => {
               <div className={`${s.BackButton}`}>
                 <ArrowLeft size={18} />
               </div>
-              <div
-                className={searchFocused ? s.SearchFocus : s.Search}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-              >
-                <Search className={s.SearchIcon} size={16} strokeWidth={2.5} />
-                <input
-                  type="search"
-                  placeholder="Search..."
-                  className={s.SearchContent}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery("")}>
-                    <X size={18} className={s.CancelSearch} />
-                  </button>
-                )}
-              </div>
-
+              <SearchBar />
               <div className={s.HeaderNavButtons}>
                 <ButtonNavigation />
               </div>
@@ -98,11 +78,11 @@ const App = observer(() => {
           <div className={s.MainContainer}>
             <main className={`${s.Main} ${viewController.leftSidebarOpen ? s.LeftShift : ""}`}>
               {viewController.curView === ViewType.OUTLINE ? (
-                <OutlineView searchQuery={searchQuery} />
+                <OutlineView />
               ) : viewController.curView === ViewType.THOUGHTSTREAM ? (
-                <ThoughtstreamView searchQuery={searchQuery} />
+                <ThoughtstreamView />
               ) : (
-                <SplitView searchQuery={searchQuery} />
+                <SplitView />
               )}
             </main>
             {viewController.rightSidebarOpen && (

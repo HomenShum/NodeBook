@@ -3,6 +3,8 @@ import { comparePositions, uuid } from "../util";
 import { PositionedRelation } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
+import { PlaceholderGraphObject, isPlaceholder } from "./PlaceholderGraphObject";
+import { SerializedRelation } from "./SerializedData";
 import { Serializable } from "./serialization";
 
 export type GraphRelationType = {
@@ -47,7 +49,11 @@ export class GraphRelation implements Serializable, GraphObject {
   }
 
   get children(): GraphObject[] {
-    return this.relations.filter((r) => r.from === this).map((r) => r.to);
+    return this.relations.filter((r) => r.from.id === this.id).map((r) => r.to);
+  }
+
+  connectedObjects(): GraphObject[] {
+    return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
   }
 
   get isRoot(): boolean {
@@ -125,7 +131,7 @@ export class GraphRelation implements Serializable, GraphObject {
     return this.pinnedRelationsList.has(childRelation.id) || this.pinnedRelationsList.has(correspondingRelation.id);
   }
 
-  serialize() {
+  serialize(): SerializedRelation {
     return {
       id: this.id,
       fromId: this.from.id,
@@ -136,28 +142,26 @@ export class GraphRelation implements Serializable, GraphObject {
   }
 
   static deserialize(
-    data: ReturnType<GraphRelation["serialize"]>,
+    data: SerializedRelation,
     store: GraphStore,
     getObjectById: (id: string) => GraphObject | undefined,
     getRelationTypeById: (id: string) => GraphRelationType | undefined,
   ): GraphRelation {
-    const from = getObjectById(data.fromId);
-    const to = getObjectById(data.toId);
-    if (!from || !to) {
-      throw new Error("Missing from or to node");
-    }
-    return new GraphRelation(store, {
+    const from = getObjectById(data.fromId) ?? new PlaceholderGraphObject(data.fromId);
+    const to = getObjectById(data.toId) ?? new PlaceholderGraphObject(data.toId);
+    const newRelation = new GraphRelation(store, {
       id: data.id,
       from,
       to,
       relationType: getRelationTypeById(data.relationTypeId),
       isPrivate: data?.isPrivate ?? true,
     });
-  }
-
-  get multipleNonStreamRelationsToThis() {
-    return (
-      this.relations.filter((r) => r.to.id === this.id && r.from.id !== this.store.thoughtstreamRoot.id).length > 1
-    );
+    if (from instanceof GraphRelation && isPlaceholder(from.to) && from.to.id === data.id) {
+      from.setTo(newRelation);
+    }
+    if (to instanceof GraphRelation && isPlaceholder(to.from) && to.from.id === data.id) {
+      to.setFrom(newRelation);
+    }
+    return newRelation;
   }
 }
