@@ -47,7 +47,7 @@ import { createContentMatchingParagraph, graphNodeMatchesParagraph } from "./uti
  */
 export const SetRelatedObjectEditor = observer(() => {
   const graphStore = useGraphStore();
-  const { object, relation, pathToNodeStr, pathToParentWithOrderedObjects } = useRelationAtPath();
+  const { object, relation, pathToNodeStr, pathToParentWithOrderedObjects, viewType } = useRelationAtPath();
   const ref = useRef<HTMLInputElement>(null);
   const initialConfig = useMemo<InitialConfigType>(() => {
     return {

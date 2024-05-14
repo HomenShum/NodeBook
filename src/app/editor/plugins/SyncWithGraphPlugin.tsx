@@ -7,12 +7,7 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useEffect } from "react";
 import { GraphNode } from "../../model/GraphNode";
 import { useGraphStore } from "../../store/useGraphStore";
-import {
-  $getChips,
-  createContentMatchingParagraph,
-  createParagraphMatchingGraphNode,
-  graphNodeMatchesParagraph,
-} from "../utils";
+import { $getChips, createParagraphMatchingGraphNode, graphNodeMatchesParagraph } from "../utils";
 import { checkForMentionMatch } from "./MentionPlugin";
 
 function accessPropertyByPath(obj: any, path: string) {
@@ -27,6 +22,49 @@ function accessPropertyByPath(obj: any, path: string) {
   }
   return current;
 }
+
+const detectSpaceOrMentionChange = (editorState: EditorState, prevEditorState: EditorState) => {
+  // Get what changed in editor
+  const chips = editorState.read($getChips);
+  const prevChips = prevEditorState.read($getChips);
+  const diff = compare(prevChips, chips);
+  if (diff.length === 0) {
+    return;
+  }
+
+  // Check for changes were mention-related
+  const isAddMention = diff.some((d) => d.op === "add" && d.value.type === "mention");
+  const isRemoveMention =
+    diff.length === 1 && diff[0].op === "remove" && accessPropertyByPath(prevChips, diff[0].path).type === "mention";
+  // TODO: sketch that we re-compute this here and in mention plugin. when I tried using a state which
+  // tracked if the mention dropdown was open, it was sometimes stale here. A solvable problem I'm sure
+  // but not one I want to solve right now.
+  const isMentionMatch = !!checkForMentionMatch(editorState.read(() => $getRoot().getTextContent()));
+
+  // Check for changes that were whitespace-related
+  let isSpaceInsertion = false;
+  let isSpaceRemove = false;
+  if (diff.length === 1 && diff[0].op === "add" && diff[0].value.type === "text" && diff[0].value.value === " ") {
+    isSpaceInsertion = true;
+  } else if (
+    diff.length === 1 &&
+    diff[0].op === "remove" &&
+    accessPropertyByPath(prevChips, diff[0].path).value === " "
+  ) {
+    isSpaceRemove = true;
+  } else if (diff.length === 1 && diff[0].op === "replace" && typeof diff[0].value === "string") {
+    // The change was to a single text chip. Check if it was an add/remove of a space
+    const string = accessPropertyByPath(chips, diff[0].path);
+    const prevString = accessPropertyByPath(prevChips, diff[0].path);
+    const stringDiff = compare(prevString.split(""), string.split(""));
+    isSpaceInsertion = stringDiff.length === 1 && stringDiff[0].op === "add" && stringDiff[0].value === " ";
+    isSpaceRemove =
+      stringDiff.length === 1 &&
+      stringDiff[0].op === "remove" &&
+      accessPropertyByPath(prevString, stringDiff[0].path) === " ";
+  }
+  return isSpaceInsertion || isSpaceRemove || isAddMention || isRemoveMention || isMentionMatch;
+};
 
 /**
  * When the graph object content changes, the editor content is updated to
@@ -50,7 +88,8 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
   const viewController = useViewController();
-  const { pathToParentRelations, pathToParentWithOrderedObjects, pathToNodeStr, relation } = useRelationAtPath();
+  const { pathToParentRelations, pathToParentWithOrderedObjects, pathToNodeStr, relation, viewType } =
+    useRelationAtPath();
   const root = pathToParentWithOrderedObjects[0].child;
   const parent = pathToParentWithOrderedObjects.slice(-1)[0].child;
   if (node.type !== "node") {
@@ -59,89 +98,51 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
 
   const updateGraphOnEditorChange = useCallback(
     (editorState: EditorState, prevEditorState: EditorState) => {
+      // exit early if the editor doesn't have focus or the node hasn't changed
       const editorHasFocus = editor.getRootElement()?.contains(document.activeElement);
       if (!editorHasFocus) {
         return;
       }
-
-      // Get what changed in editor
-      const chips = editorState.read($getChips);
-      const prevChips = prevEditorState.read($getChips);
-      const diff = compare(prevChips, chips);
-      if (diff.length === 0) {
+      const unchanged = editorState.read(() => {
+        const paragraph = $getRoot().getChildren()[0] as ParagraphNode;
+        return graphNodeMatchesParagraph(node, paragraph, graphStore);
+      });
+      if (unchanged) {
         return;
       }
 
-      // Check for changes were mention-related
-      const isAddMention = diff.some((d) => d.op === "add" && d.value.type === "mention");
-      const isRemoveMention =
-        diff.length === 1 &&
-        diff[0].op === "remove" &&
-        accessPropertyByPath(prevChips, diff[0].path).type === "mention";
-      // TODO: sketch that we re-compute this here and in mention plugin. when I tried using a state which
-      // tracked if the mention dropdown was open, it was sometimes stale here. A solvable problem I'm sure
-      // but not one I want to solve right now.
-      const isMentionMatch = !!checkForMentionMatch(editorState.read(() => $getRoot().getTextContent()));
-
-      // Check for changes that were whitespace-related
-      let isSpaceInsertion = false;
-      let isSpaceRemove = false;
-      if (diff.length === 1 && diff[0].op === "add" && diff[0].value.type === "text" && diff[0].value.value === " ") {
-        isSpaceInsertion = true;
-      } else if (
-        diff.length === 1 &&
-        diff[0].op === "remove" &&
-        accessPropertyByPath(prevChips, diff[0].path).value === " "
-      ) {
-        isSpaceRemove = true;
-      } else if (diff.length === 1 && diff[0].op === "replace" && typeof diff[0].value === "string") {
-        // The change was to a single text chip. Check if it was an add/remove of a space
-        const string = accessPropertyByPath(chips, diff[0].path);
-        const prevString = accessPropertyByPath(prevChips, diff[0].path);
-        const stringDiff = compare(prevString.split(""), string.split(""));
-        isSpaceInsertion = stringDiff.length === 1 && stringDiff[0].op === "add" && stringDiff[0].value === " ";
-        isSpaceRemove =
-          stringDiff.length === 1 &&
-          stringDiff[0].op === "remove" &&
-          accessPropertyByPath(prevString, stringDiff[0].path) === " ";
-      }
-
       // Update the graph
-      let referencingNodes: GraphNode[] = [];
-      editorState.read(() => {
-        const paragraph = $getRoot().getChildren()[0] as ParagraphNode;
-        if (graphNodeMatchesParagraph(node, paragraph, graphStore)) {
-          return;
-        }
-        referencingNodes = node.relations
-          .filter((relation) => {
-            if (relation.from.id !== node.id) return false;
-            if (!(relation.to instanceof GraphNode)) return false;
-            return relation.to.content.some((item) => item.type === "mention" && item.value === node.id);
+      const chips = editorState.read($getChips);
+      if (
+        viewType === "temp-edit" ||
+        !graphStore.shouldTreatObjectAsLink(node) ||
+        detectSpaceOrMentionChange(editorState, prevEditorState)
+      ) {
+        // update the node's content
+        node.setContent(chips);
+        // force the nodes with mentions of this node to update. (TODO: This is a
+        // hack. Ideally the nodes would update reactively. Also, it doesn't
+        // cover case where a node mentions another but we've deleted that
+        // relation.)
+        node.relations
+          .map((relation) => (relation.from.id === node.id ? relation.to : relation.from))
+          .filter((obj): obj is GraphNode => {
+            return (
+              obj instanceof GraphNode && obj.content.some((item) => item.type === "mention" && item.value === node.id)
+            );
           })
-          .map((relation) => relation.to) as GraphNode[];
-
-        const isSpaceOrMentionChange =
-          isSpaceInsertion || isSpaceRemove || isAddMention || isRemoveMention || isMentionMatch;
-        if (!graphStore.shouldTreatObjectAsLink(node) || isSpaceOrMentionChange) {
-          // update the node's content
-          const newContent = createContentMatchingParagraph(paragraph);
-          node.setContent(newContent);
-        } else {
-          // create a new node with the editor's content and point the current relation to it
-          const newNode = graphStore.createNode({ content: createContentMatchingParagraph(paragraph) });
-          graphStore.setGraphNodeAtPath([...pathToParentRelations, relation], newNode);
-          graphStore.addElsewhereAfterCreate(newNode, parent, root);
-          viewController.setFocusedNode(pathToNodeStr);
-        }
-      });
-      editor.update(() => {
-        referencingNodes.map((refNode) => {
-          refNode.setContent(createContentMatchingParagraph(createParagraphMatchingGraphNode(refNode, graphStore)));
-        });
-      });
+          .forEach((obj) => {
+            obj.setContent([...obj.content]);
+          });
+      } else {
+        // create a new node with the editor's content and point the current relation to it
+        const newNode = graphStore.createNode({ content: chips });
+        graphStore.setGraphNodeAtPath([...pathToParentRelations, relation], newNode);
+        graphStore.addElsewhereAfterCreate(newNode, parent, root);
+        viewController.setFocusedNode(pathToNodeStr);
+      }
     },
-    [editor, graphStore, viewController, pathToParentRelations, pathToNodeStr, relation, node, root, parent],
+    [editor, graphStore, node, pathToNodeStr, pathToParentRelations, relation, viewType, parent, root, viewController],
   );
 
   const setEditorToGraphNodeText = useCallback(

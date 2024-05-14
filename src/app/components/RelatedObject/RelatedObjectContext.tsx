@@ -2,6 +2,7 @@ import { GraphObject } from "@/app/model/GraphObject";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { PathLink, Position } from "@/app/util";
 import { createContext, useContext } from "react";
+import { RelatedObjectViewType } from "./RelatedObjectView";
 
 export type RelationPathAndSiblings = {
   /** Ordered list of relations from the root to this relation's parent */
@@ -21,8 +22,8 @@ export type RelationPathAndSiblings = {
   /** Sibling relation below this one */
   siblingBelow?: GraphRelation;
   position: Position;
-  viewType: "edit" | "replace";
-  setViewType: (v: "edit" | "replace") => void;
+  viewType: RelatedObjectViewType;
+  setViewType: (v: RelatedObjectViewType) => void;
   isChild: boolean;
   isBackwards: boolean;
 };

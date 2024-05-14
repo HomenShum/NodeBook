@@ -29,7 +29,7 @@ export const SearchAndReplaceDropdownPlugin = observer(
   ({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) => {
     const graph = useGraphStore();
     const viewController = useViewController();
-    const { object, relation, pathToParentRelations, pathToNodeStr } = useRelationAtPath();
+    const { object, relation, pathToParentRelations, pathToNodeStr, viewType } = useRelationAtPath();
     const [editor] = useLexicalComposerContext();
     const [selected, setSelected] = useState<string | number | null>(0);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -145,6 +145,9 @@ export const SearchAndReplaceDropdownPlugin = observer(
 
     // Register keyboard commands for the dropdown
     useEffect(() => {
+      if (viewType === "temp-edit") {
+        return;
+      }
       const unsubscribe = mergeRegister(
         editor.registerCommand<KeyboardEvent>(
           KEY_ARROW_UP_COMMAND,
@@ -225,6 +228,7 @@ export const SearchAndReplaceDropdownPlugin = observer(
       );
       return unsubscribe;
     }, [
+      viewType,
       editor,
       dropdownOpen,
       setDropdownOpen,
@@ -253,7 +257,7 @@ export const SearchAndReplaceDropdownPlugin = observer(
     }, [editor, object.text, closeDropdown]);
 
     const selectedIdx = findSelectionIdx(objectsMatchingSearch, selected);
-    return hasFocus && dropdownOpen && objectsMatchingSearch.length > 0 ? (
+    return hasFocus && dropdownOpen && viewType !== "temp-edit" && objectsMatchingSearch.length > 0 ? (
       <div className="absolute top-6 left-0 w-full bg-white border border-gray-300 z-10">
         {objectsMatchingSearch.map((option, i) => {
           return (

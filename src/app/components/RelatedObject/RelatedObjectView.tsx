@@ -1,4 +1,4 @@
-import { Circle, Dot, Ellipsis, GlobeIcon, Play } from "lucide-react";
+import { Circle, Dot, Edit2, Ellipsis, GlobeIcon, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useViewController } from "../../controller/useViewController";
 import { NodeContentEditor } from "../../editor/NodeContentEditor";
@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { GraphNode } from "@/app/model/GraphNode";
-import { GraphObject } from "@/app/model/GraphObject";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { SearchResult } from "@/app/store/search";
@@ -21,10 +20,24 @@ import { action } from "mobx";
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../OutlineView.module.css";
 
+import { GraphObject } from "@/app/model/GraphObject";
 import { PinCustom } from "../icons/icons";
 import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
 import { RelationCombobox } from "./RelationCombobox";
+
+/**
+ * The view type of the related object. This determines what is displayed in the
+ * related object view.
+ * - `edit`: The default view where edits update the object content (or create a
+ *   new object when it's rendered as a link)
+ * - `replace`: The view where the user can replace the object with another
+ *   object.
+ * - `temp-edit`: When an object is rendered as a link, you can drop into a
+ *   temporary edit mode to edit the object content
+ * TODO: this should be refactored
+ */
+export type RelatedObjectViewType = "edit" | "replace" | "temp-edit";
 
 export const RelatedObjectView = observer(
   ({
@@ -54,7 +67,7 @@ export const RelatedObjectView = observer(
     // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
-    const [viewType, setViewType] = useState<"edit" | "replace">("edit");
+    const [viewType, setViewType] = useState<RelatedObjectViewType>("edit");
 
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
@@ -201,7 +214,7 @@ export const RelatedObjectView = observer(
                   {!isChild || updatingRelationType ? (
                     <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} />
                   ) : null}
-                  {viewType === "edit" ? <RelatedObjectEditor /> : <ReplaceRelatedNodeView />}
+                  {viewType === "replace" ? <ReplaceRelatedNodeView /> : <RelatedObjectEditor isHovered={isHovered} />}
                 </div>
                 {viewController.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
               </div>
@@ -296,24 +309,60 @@ const RelatedObjectMenu = observer(
   },
 );
 
-const RelatedObjectEditor = observer(() => {
+const RelatedObjectEditor = observer(({ isHovered }: { isHovered: boolean }) => {
   const graph = useGraphStore();
-  const { object } = useRelationAtPath();
-  const blueUnderline = graph.shouldTreatObjectAsLink(object);
+  const viewController = useViewController();
+  const { object, viewType, setViewType, pathToNodeStr } = useRelationAtPath();
+  const ref = useRef<HTMLDivElement>(null);
+  const treatAsLink = object instanceof GraphNode && graph.shouldTreatObjectAsLink(object) && viewType !== "temp-edit";
+
+  // close the temp edit view when clicking outside of it
+  useEffect(() => {
+    if (viewType === "temp-edit") {
+      const handleClick = (e: MouseEvent) => {
+        if (ref.current && !ref.current.contains(e.target as Node)) {
+          setViewType("edit");
+        }
+      };
+      window.addEventListener("click", handleClick);
+      return () => {
+        window.removeEventListener("click", handleClick);
+      };
+    }
+  }, [object.id, setViewType, viewType, viewController, pathToNodeStr]);
+
   return (
     <div
+      ref={ref}
       style={{
         gap: "5px",
         display: "flex",
         alignItems: "flex-start",
         flex: 1,
-        color: blueUnderline ? "#0b0b79" : undefined,
-        textDecoration: blueUnderline ? "underline #cecece" : undefined,
+        color: treatAsLink ? "#0b0b79" : undefined,
+        textDecoration: treatAsLink ? "underline #cecece" : undefined,
+        backgroundColor: viewType === "temp-edit" ? "var(--teal-2)" : undefined,
       }}
     >
-      {/* <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}> */}
       <div className="flex flex-col flex-1">
-        {object instanceof GraphNode ? <NodeContentEditor /> : <span className="italic">{object.text}</span>}
+        {object instanceof GraphNode ? (
+          <div className="flex ">
+            <NodeContentEditor />
+            {treatAsLink && isHovered && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setViewType("temp-edit");
+                  viewController.setFocusedNode(pathToNodeStr);
+                }}
+              >
+                <Edit2 size={16} />
+              </button>
+            )}
+          </div>
+        ) : (
+          <span className="italic">{object.text}</span>
+        )}
       </div>
     </div>
   );

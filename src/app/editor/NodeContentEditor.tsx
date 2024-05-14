@@ -39,7 +39,7 @@ const onError = (error: any) => {
 export const NodeContentEditor = observer(() => {
   const view = useViewController();
   const graphStore = useGraphStore();
-  const { object: node, relation, pathToNodeStr, pathToParentRelations, isChild } = useRelationAtPath();
+  const { object: node, relation, pathToNodeStr, pathToParentRelations, isChild, viewType } = useRelationAtPath();
   const [mentionDropdownOpen, setMentionDropdownOpen] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -57,7 +57,10 @@ export const NodeContentEditor = observer(() => {
       paragraph.append(text);
       $getRoot().append(paragraph);
     },
-    editable: node.id !== graphStore.outlineRoot.id && node.id !== graphStore.thoughtstreamRoot.id && node.id !== graphStore.userRoot.id,
+    editable:
+      node.id !== graphStore.outlineRoot.id &&
+      node.id !== graphStore.thoughtstreamRoot.id &&
+      node.id !== graphStore.userRoot.id,
   };
 
   const setPathToNodeAsRoot = useCallback(

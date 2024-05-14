@@ -8,6 +8,7 @@ import {
   KEY_BACKSPACE_COMMAND,
   KEY_DOWN_COMMAND,
   KEY_ENTER_COMMAND,
+  KEY_ESCAPE_COMMAND,
   KEY_TAB_COMMAND,
 } from "lexical";
 import { action } from "mobx";
@@ -31,15 +32,34 @@ export const KeyboardOverridesPlugin = () => {
     siblingAbove,
     siblingBelow,
     parent,
+    viewType,
     setViewType,
   } = useRelationAtPath();
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
+        KEY_ESCAPE_COMMAND,
+        action((event) => {
+          if (viewType === "temp-edit") {
+            event.preventDefault();
+            setViewType("edit");
+            viewController.setFocusedNode(pathToNodeStr);
+            return true;
+          }
+          return false;
+        }),
+        COMMAND_PRIORITY_LOW,
+      ),
+      editor.registerCommand(
         KEY_ENTER_COMMAND,
         action((event) => {
           if (!event || !graphStore) return false;
           event.preventDefault();
+          if (viewType === "temp-edit") {
+            setViewType("edit");
+            viewController.setFocusedNode(pathToNodeStr);
+            return true;
+          }
 
           const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
           const splitToNewBundle = !!metaOrCtrl;
@@ -128,6 +148,13 @@ export const KeyboardOverridesPlugin = () => {
             event.preventDefault();
             graphStore.setPathExpanded(pathToNodeStr, false);
             return true;
+          } else if (event.altKey && event.shiftKey && (event.key === "r" || event.key === "‰")) {
+            // Alt + Shift + R (for some reason, on Taylor's Mac, this is the key combo for ‰)
+            if (graphStore.shouldTreatObjectAsLink(object)) {
+              event.preventDefault();
+              setViewType("temp-edit");
+              return true;
+            }
           }
           return false;
         },
