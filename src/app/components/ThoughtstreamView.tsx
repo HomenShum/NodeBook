@@ -23,7 +23,7 @@ const truncateText = (text: string, maxLength: number) => {
   return text;
 };
 
-export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: string }) => {
+export const ThoughtstreamView = observer(() => {
   const viewController = useViewController();
   const graphStore = useGraphStore();
 
@@ -36,8 +36,8 @@ export const ThoughtstreamView = observer(({ searchQuery }: { searchQuery: strin
 
   const thoughstreamNode = graphStore.thoughtstreamRoot;
   const searchResult = useMemo(
-    () => (searchQuery ? searchGraph(thoughstreamNode, searchQuery) : undefined),
-    [thoughstreamNode, searchQuery],
+    () => (viewController.searchQuery ? searchGraph(thoughstreamNode, viewController.searchQuery) : undefined),
+    [thoughstreamNode, viewController.searchQuery],
   );
 
   const createChild = useCallback(() => {

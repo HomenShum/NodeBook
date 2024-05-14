@@ -23,6 +23,8 @@ export class ViewController {
   public focusedNode: Path | null = null;
   public hoveredNode: Path | null = null;
 
+  public searchQuery: string = "";
+
   editorsByPath: Map<string, LexicalEditor> = new Map();
 
   public selectedNodes: Path[] = [];
@@ -62,6 +64,10 @@ export class ViewController {
       rightSidebarOpen: true,
       hideDirectParent: true,
     });
+  }
+
+  setSearchQuery(query: string) {
+    this.searchQuery = query;
   }
 
   setSearchAndReplaceDropdown(value: "labelled-only" | "all" | "none") {

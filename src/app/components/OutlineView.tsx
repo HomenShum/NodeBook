@@ -23,7 +23,7 @@ const truncateText = (text: string, maxLength: number) => {
   return text;
 };
 
-export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) => {
+export const OutlineView = observer(() => {
   const viewController = useViewController();
   const graphStore = useGraphStore();
 
@@ -34,7 +34,7 @@ export const OutlineView = observer(({ searchQuery }: { searchQuery: string }) =
 
   const path = relationsPathToParentChild(relations);
   const nodeAtPathEnd = path[path.length - 1].child;
-  const searchResult = searchQuery ? searchGraph(nodeAtPathEnd, searchQuery) : undefined;
+  const searchResult = viewController.searchQuery ? searchGraph(nodeAtPathEnd, viewController.searchQuery) : undefined;
 
   if (!nodeAtPathEnd) {
     return <div>Missing root node</div>;
