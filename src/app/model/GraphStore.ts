@@ -364,6 +364,8 @@ export class GraphStore {
       // delete the pinned relation if it's no longer referenced anywhere
       this.pinnedRelationsByNodeId.delete(pinnedRelation.id);
       this.relationsById.delete(pinnedRelation.id);
+      this.correspondingObjectsForPinned.delete(pinnedRelation.id);
+      this.correspondingPinnedForObjects.delete(baseRelation.id);
     }
   }
 

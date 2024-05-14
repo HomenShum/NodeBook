@@ -138,6 +138,18 @@ export const KeyboardOverridesPlugin = () => {
         action((event) => {
           if (!graphStore) return false;
           event.preventDefault();
+          let baseRelation;
+          if (parent.isRelationPinned(relation)) {
+            if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
+              baseRelation = graphStore.correspondingObjectsForPinned.get(relation.id)!;
+            } else {
+              baseRelation = relation;
+            }
+            parent.unpinChildRelation(relation);
+          } else {
+            baseRelation = relation;
+          }
+
           if (event.shiftKey) {
             const grandparentNode = pathToParentNodes[pathToParentNodes.length - 1].parent;
             const parentRelation = pathToParentRelations[pathToParentRelations.length - 1];
@@ -154,14 +166,14 @@ export const KeyboardOverridesPlugin = () => {
               return false;
             }
             // Replace the relations pointer to the parent with the grandparent
-            if (relation.from.id === parent.id) {
-              graphStore.updateRelationFrom(relation, grandparentNode);
+            if (baseRelation.from.id === parent.id) {
+              graphStore.updateRelationFrom(baseRelation, grandparentNode);
             } else {
-              graphStore.updateRelationTo(relation, grandparentNode);
+              graphStore.updateRelationTo(baseRelation, grandparentNode);
             }
             // Position the relation under the parent
-            graphStore.getRelationList(grandparentNode).move([relation], parentRelation);
-            viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), relation]));
+            graphStore.getRelationList(grandparentNode).move([baseRelation], parentRelation);
+            viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), baseRelation]));
             return true;
           } else {
             if (!siblingAbove) {
@@ -170,18 +182,18 @@ export const KeyboardOverridesPlugin = () => {
             }
             const siblingAboveNode = siblingAbove.from.id === parent.id ? siblingAbove.to : siblingAbove?.from;
             // Change the relation's parent to the sibling above
-            if (relation.from.id === parent.id) {
-              graphStore.updateRelationFrom(relation, siblingAboveNode);
+            if (baseRelation.from.id === parent.id) {
+              graphStore.updateRelationFrom(baseRelation, siblingAboveNode);
             } else {
-              graphStore.updateRelationTo(relation, siblingAboveNode);
+              graphStore.updateRelationTo(baseRelation, siblingAboveNode);
             }
             // Position the relation at the bottom of the siblings list
-            graphStore.getRelationList(siblingAboveNode).move([relation], "bottom");
+            graphStore.getRelationList(siblingAboveNode).move([baseRelation], "bottom");
             // toggle open sibling
             const relationPathToSibling = [...pathToParentRelations, siblingAbove];
             graphStore.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
             // set focus at the relations new path
-            viewController.setFocusedNode(relationsToPathStr([...relationPathToSibling, relation]));
+            viewController.setFocusedNode(relationsToPathStr([...relationPathToSibling, baseRelation]));
             return true;
           }
         }),
