@@ -122,9 +122,16 @@ export class GraphNode implements Serializable, GraphObject {
   get text(): string {
     return this.content
       .map((chip) => {
-        return chip.type == "mention" ? this.store.getNode(chip.value)?.text || "[Deleted node]" : chip.value;
+        switch (chip.type) {
+          case "text":
+            return chip.value;
+          case "mention":
+            const referencedNode = this.store.getNode(chip.value);
+            if (!referencedNode) return "[Deleted node]";
+            return `@[${referencedNode.text}]`;
+        }
       })
-      .join();
+      .join("");
   }
 
   get children(): GraphObject[] {
