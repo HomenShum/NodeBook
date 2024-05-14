@@ -122,3 +122,27 @@
   transform: translateX(-6px);
   transform: translateY(-2px);
 }
+
+@media only screen and (max-width: 600px) {
+  .OutlineContainer {
+    margin-left: 0;
+    margin-top: 36px;
+  }
+
+  .AddButton {
+    position: fixed;
+    right: 10%;
+    bottom: 5%;
+    z-index: 10;
+    width: 36px;
+    height: 32px;
+    font-size: 32px;
+  }
+  .TitleContainer {
+    padding: 0 13px;
+  }
+
+  .OutlineObjectContent {
+    margin: 2px;
+  }
+}

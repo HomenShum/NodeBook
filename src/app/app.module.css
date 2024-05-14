@@ -14,9 +14,9 @@
 
 .LeftAside {
   position: fixed;
-  z-index: 1;
+  z-index: 20;
   left: -16%;
-  top: 48px;
+  top: 46px;
   width: 16%;
   height: calc(100vh - 48px);
   background-color: var(--gray-2);
@@ -207,4 +207,24 @@
   flex: 1;
   padding-top: 80px;
   transition: all 0.3s;
+}
+
+@media only screen and (max-width: 600px) {
+  .Main {
+    padding-top: 12px;
+  }
+  .AsideVisible {
+    width: 100%;
+    left: 0;
+    z-index: 20;
+  }
+  .LeftShift {
+    margin-left: 0;
+  }
+  .HeaderNav {
+    width: 80%;
+  }
+  .BackButton {
+    right: 8px;
+  }
 }

@@ -41,7 +41,7 @@ export const RelatedObjectChildren = observer(
     let lastDisplayedDate: string | undefined;
 
     return (
-      <div className={depth > 0 ? "ml-[16px]" : ""}>
+      <div className={depth > 0 ? "mx-[16px]" : ""}>
         {pinnedChildren.length > 0 && (
           <>
             <button
