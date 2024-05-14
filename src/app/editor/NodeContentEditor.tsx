@@ -20,7 +20,7 @@ import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpa
 import { KeyboardOverridesPlugin } from "./plugins/KeyboardOverridesPlugin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
-import { SearchAndReplaceDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
+import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
@@ -100,7 +100,7 @@ export const NodeContentEditor = observer(() => {
             setPathToNodeAsRoot((e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!);
           }}
         />
-        {showSearchAndReplaceDropdown && <SearchAndReplaceDropdownPlugin parentRef={ref} />}
+        {showSearchAndReplaceDropdown && <AutocompleteDropdownPlugin parentRef={ref} />}
         <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
         <TrackFocusedPath pathToNodeStr={pathToNodeStr} />

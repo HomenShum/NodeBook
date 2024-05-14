@@ -13,8 +13,6 @@ import { serializeMap, serializeMapWithArrayValues } from "./serialization";
 export const defaultRelationTypes = {
   child: { id: "child", label: "child", reverseLabel: "parent" },
   author: { id: "author", label: "author", reverseLabel: "authored" },
-  reference: { id: "reference", label: "reference", reverseLabel: "referenced by" },
-  relatesTo: { id: "relatesTo", label: "relates to", reverseLabel: "relates to" },
   empty: { id: "empty", label: "", reverseLabel: "" },
 };
 

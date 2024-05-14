@@ -30,7 +30,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "../store/useGraphStore";
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
-import { SearchAndReplaceDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
+import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 import { createContentMatchingParagraph, graphNodeMatchesParagraph } from "./utils";
 
@@ -87,7 +87,7 @@ export const SetRelatedObjectEditor = observer(() => {
         />
         <SetEditorContentToRelatedObjectTextPlugin />
         <ReplaceRelatedObjectOnEditorChangePlugin />
-        <SearchAndReplaceDropdownPlugin parentRef={ref} />
+        <AutocompleteDropdownPlugin parentRef={ref} />
         <SplitOnEnterPlugin />
         <SetRelationTypeOnColonPlugin />
         <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
