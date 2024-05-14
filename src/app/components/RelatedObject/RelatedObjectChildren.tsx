@@ -3,6 +3,7 @@ import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { SearchResult } from "@/app/store/search";
+import { useGraphStore } from "@/app/store/useGraphStore";
 import { PathLink, comparePositions, formatDate, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
@@ -22,7 +23,7 @@ export const RelatedObjectChildren = observer(
   }) => {
     const viewController = useViewController();
     const depth = pathToParentRelations.length;
-
+    const graphStore = useGraphStore();
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
     const children = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, false);
 
@@ -40,22 +41,26 @@ export const RelatedObjectChildren = observer(
     let lastDisplayedDate: string | undefined;
 
     return (
-      <div className={depth > 0 ? "ml-[16px]" : ""}>
+      <div className={depth > 0 ? "mx-[16px]" : ""}>
         {pinnedChildren.length > 0 && (
           <>
             <button
               onClick={togglePinnedVisibility}
-              className={`flex gap-1 relative top-3 -left-1 uppercase text-xs bg-white w-fit -ml-1 -mt-4 px-1 py-1 border-[--teal-4] border rounded-lg text-[--gray-9] z-10  ${
-                isPinnedVisible ? "mb-0" : "mb-8"
+              className={`flex gap-1 relative top-3 -left-1 uppercase text-xs bg-white w-fit px-1 py-1  border rounded-md text-[--gray-7] z-10  ${
+                isPinnedVisible ? "border-[--teal-4] mb-0" : "border-[--gray-4] mb-8"
               }`}
             >
-              <span className="text-[--gray-9] scale-[0.80]">
+              <span className={` scale-[0.80] ${isPinnedVisible ? "text-[--teal-7]" : "text-[--gray-7]"}`}>
                 <PinCustom />
               </span>
               {isPinnedVisible ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </button>
             {isPinnedVisible && (
-              <div className="border-[--teal-4] border rounded-sm px-4 pt-6 pb-1 mb-8 -translate-x-4">
+              <div
+                className={`border-[--teal-4] border-b  pt-8  ${
+                  parent === graphStore.thoughtstreamRoot ? "-mb-2 pb-4" : "mb-3 pb-0"
+                } `}
+              >
                 {isPinnedVisible &&
                   pinnedChildren.map(({ relation: childRelation, position }, i) => {
                     return (
@@ -88,7 +93,7 @@ export const RelatedObjectChildren = observer(
               {newBundle && (
                 <>
                   <div
-                    className={`-translate-x-3 border-t border-dashed border-[--gray-5] ${
+                    className={`border-t border-dashed border-[--gray-5] ${
                       i === 0 ? `mt-2 pt-2 border-none ${displayDate ? "pb-4" : "mb-2"}` : "mt-3 mb-4 pt-2"
                     }`}
                   />

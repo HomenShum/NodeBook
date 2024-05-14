@@ -71,7 +71,7 @@ export class GraphStore {
   constructor() {
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
-    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Lists" }] });
+    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
     this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
     this.thoughtstreamRoot = this.createNode({
       id: THOUGHTSTREAM_ROOT_ID,

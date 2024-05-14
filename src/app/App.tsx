@@ -72,7 +72,7 @@ const App = observer(() => {
               </div>
             </div>
             <button onClick={() => viewController.toggleRightSidebar()}>
-              <SettingsIcon size={18} strokeWidth={1.5} className="absolute top-4 right-4" />
+              <SettingsIcon size={16} strokeWidth={1.5} className="absolute top-[16px] right-4" />
             </button>
           </header>
           <div className={s.MainContainer}>

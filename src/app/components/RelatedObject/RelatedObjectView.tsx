@@ -133,7 +133,7 @@ export const RelatedObjectView = observer(
             >
               <div className={styles.OutlineObjectLeftArea} />
               {/* toggle, bullet, menu */}
-              <div className="flex items-center gap-2 absolute right-full">
+              <div className="flex items-center gap-1 absolute right-full">
                 <div className="flex items-center gap-1">
                   {hasChildren && (objectCount === 1 || !viewController.disableCycles) && isHovered && (
                     <Toggle
