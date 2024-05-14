@@ -10,6 +10,7 @@ export const SplitView = observer(({ searchQuery }: { searchQuery: string }) => 
         <div className={s.halfWidth}>
           <ThoughtstreamView searchQuery={searchQuery} />
         </div>
+        <div className={s.divider}></div>
         <div className={s.halfWidth}>
           <OutlineView searchQuery={searchQuery} />
         </div>
