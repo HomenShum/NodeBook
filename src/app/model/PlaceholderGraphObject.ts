@@ -40,9 +40,6 @@ export class PlaceholderGraphObject implements GraphObject {
   get isPrivate(): boolean {
     throw new Error("Method not implemented.");
   }
-  get multipleNonStreamRelationsToThis(): boolean {
-    throw new Error("Method not implemented.");
-  }
   get pinnedRelationsWithPositions(): PositionedRelation[] {
     throw new Error("Method not implemented.");
   }

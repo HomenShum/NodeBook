@@ -297,7 +297,9 @@ const RelatedObjectMenu = observer(
 );
 
 const RelatedObjectEditor = observer(() => {
+  const graph = useGraphStore();
   const { object } = useRelationAtPath();
+  const blueUnderline = graph.shouldTreatObjectAsLink(object);
   return (
     <div
       style={{
@@ -305,8 +307,8 @@ const RelatedObjectEditor = observer(() => {
         display: "flex",
         alignItems: "flex-start",
         flex: 1,
-        color: object.multipleNonStreamRelationsToThis ? "#0b0b79" : undefined,
-        textDecoration: object.multipleNonStreamRelationsToThis ? "underline #cecece" : undefined,
+        color: blueUnderline ? "#0b0b79" : undefined,
+        textDecoration: blueUnderline ? "underline #cecece" : undefined,
       }}
     >
       {/* <div className={cn("flex flex-col flex-1", bullet.type === "bundle" && "text-xl")}> */}

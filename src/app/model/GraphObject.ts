@@ -14,7 +14,6 @@ export interface GraphObject {
   connectedObjects(): GraphObject[];
   isPrivate: boolean;
   setIsPrivate(value: boolean): void;
-  multipleNonStreamRelationsToThis: boolean;
 
   // pinned objects
   pinnedRelationsWithPositions: PositionedRelation[];

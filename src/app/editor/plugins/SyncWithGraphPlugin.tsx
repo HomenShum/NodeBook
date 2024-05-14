@@ -29,17 +29,22 @@ function accessPropertyByPath(obj: any, path: string) {
 }
 
 /**
- * When the graph object content changes, the editor content is updated to match.
- * It only applies a change if the new state is different from the current state, to avoid infinite loops.
- * (TODO: This way of avoiding infinite loops feels a bit sketchy, but it works for now)
+ * When the graph object content changes, the editor content is updated to
+ * match. It only applies a change if the new state is different from the
+ * current state, to avoid infinite loops. (TODO: This way of avoiding infinite
+ * loops feels a bit sketchy, but it works for now)
  *
  * When the editor content changes, it's a bit more complicated...:
- * - If the node has no non-stream relations to it, we update the node's content.
- * - Otherwise, we create a new node and set it's content to the editor content.
- * - We also special case changes that are mention-related or whitespace-related. In these cases,
- *  we always update the node's content.
+ * - We sometimes render a node as itself, and sometimes more like a link.
+ * - If the node is being rendered as itself, updates to the editor content
+ *   should update the node's content.
+ * - If the node is being rendered as a link, updates to the editor content
+ *   should create a new node and update the relation to point to it. (Unless
+ *   the change is mention-related or whitespace-related, in which case we
+ *   always update the node's content)
  *
- * TODO: This spec matches Jacob's desires, but it's bad and we should change it.
+ * TODO: This spec matches Jacob's desires, but it's bad and we should change
+ * it.
  */
 export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
   const [editor] = useLexicalComposerContext();
@@ -118,7 +123,7 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
 
         const isSpaceOrMentionChange =
           isSpaceInsertion || isSpaceRemove || isAddMention || isRemoveMention || isMentionMatch;
-        if (!node.multipleNonStreamRelationsToThis || isSpaceOrMentionChange) {
+        if (!graphStore.shouldTreatObjectAsLink(node) || isSpaceOrMentionChange) {
           // update the node's content
           const newContent = createContentMatchingParagraph(paragraph);
           node.setContent(newContent);
