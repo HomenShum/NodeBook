@@ -10,6 +10,7 @@ export const SplitView = observer(() => {
         <div className={s.halfWidth}>
           <ThoughtstreamView />
         </div>
+        <div className={s.divider}></div>
         <div className={s.halfWidth}>
           <OutlineView />
         </div>
