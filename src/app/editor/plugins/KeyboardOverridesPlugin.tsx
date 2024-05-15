@@ -1,9 +1,13 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
+  $getRoot,
   $getSelection,
+  $isRangeSelection,
   COMMAND_PRIORITY_LOW,
   KEY_ARROW_DOWN_COMMAND,
+  KEY_ARROW_LEFT_COMMAND,
+  KEY_ARROW_RIGHT_COMMAND,
   KEY_ARROW_UP_COMMAND,
   KEY_BACKSPACE_COMMAND,
   KEY_DOWN_COMMAND,
@@ -250,8 +254,8 @@ export const KeyboardOverridesPlugin = () => {
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
-          event.preventDefault();
           if (!siblingBelow) return false;
+          event.preventDefault();
           viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingBelow]));
           return true;
         },
@@ -260,9 +264,46 @@ export const KeyboardOverridesPlugin = () => {
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
         (event) => {
-          event.preventDefault();
           if (!siblingAbove) return false;
+          event.preventDefault();
           viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]));
+          return true;
+        },
+        COMMAND_PRIORITY_LOW,
+      ),
+      editor.registerCommand(
+        KEY_ARROW_LEFT_COMMAND,
+        (event) => {
+          const selectionStart = $getSelection()?.getStartEndPoints()?.[0];
+          // Offset is 0 when at start of text
+          if (!selectionStart || selectionStart.offset !== 0) return false;
+          if (!siblingAbove) return false;
+          event.preventDefault();
+          viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]), {
+            focusAt: "end",
+          });
+          return true;
+        },
+        COMMAND_PRIORITY_LOW,
+      ),
+      editor.registerCommand(
+        KEY_ARROW_RIGHT_COMMAND,
+        (event) => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return false;
+          const lastNode = $getRoot().getLastDescendant();
+          if (
+            selection.anchor.key !== lastNode?.getKey() ||
+            selection.anchor.offset !== lastNode?.getTextContentSize()
+          ) {
+            // Selection not at end of editor
+            return false;
+          }
+          if (!siblingBelow) return false;
+          event.preventDefault();
+          viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingBelow]), {
+            focusAt: "start",
+          });
           return true;
         },
         COMMAND_PRIORITY_LOW,
@@ -279,7 +320,9 @@ export const KeyboardOverridesPlugin = () => {
     object,
     parent,
     viewController,
+    viewType,
     setViewType,
+    pathToNodeStr,
   ]);
   return null;
 };

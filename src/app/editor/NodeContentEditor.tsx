@@ -17,6 +17,7 @@ import { MentionNode } from "../model/MentionNode";
 import { useGraphStore } from "../store/useGraphStore";
 import styles from "./Editor.module.css";
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
+import { JumpSelectionPlugin } from "./plugins/JumpSelectionPluigin";
 import { KeyboardOverridesPlugin } from "./plugins/KeyboardOverridesPlugin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
@@ -104,6 +105,7 @@ export const NodeContentEditor = observer(() => {
         <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
         <TrackFocusedPath pathToNodeStr={pathToNodeStr} />
+        <JumpSelectionPlugin />
       </LexicalComposer>
     </div>
   );

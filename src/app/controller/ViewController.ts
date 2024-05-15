@@ -1,5 +1,6 @@
 import { LexicalEditor } from "lexical";
 import { makeAutoObservable } from "mobx";
+import { JUMP_TO_START } from "../editor/plugins/JumpSelectionPluigin";
 import { GraphRelation } from "../model/GraphRelation";
 import { GraphStore, Path } from "../model/GraphStore";
 import { Box } from "../selection/utils";
@@ -111,11 +112,18 @@ export class ViewController {
   /**
    * Moves the focus to the given node.
    */
-  setFocusedNode(path: Path | null) {
+  setFocusedNode(path: Path | null, { focusAt }: { focusAt?: "start" | "end" } = {}) {
     this.focusedNode = path;
     setTimeout(() => {
       if (!path || this.focusedNode !== path) return;
-      this.editorsByPath.get(path)?.focus();
+      if (focusAt === "start") {
+        const editor = this.editorsByPath.get(path);
+        editor?.focus();
+        editor?.dispatchCommand(JUMP_TO_START, null);
+      } else {
+        // Cursor will be at end by default
+        this.editorsByPath.get(path)?.focus();
+      }
     }, 0);
   }
 
