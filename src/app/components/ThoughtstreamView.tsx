@@ -107,7 +107,11 @@ export const ThoughtstreamView = observer(() => {
             })}
           </div>
         )}
-        <div className={stylesList.TitleContainer}>
+        <div
+          className={
+            viewController.curView === ViewType.SPLIT ? stylesStream.TitleContainer : stylesStream.TitleContainer
+          }
+        >
           {(viewController.curView === ViewType.SPLIT || path.length > 1) && (
             <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 20)}</h1>
           )}

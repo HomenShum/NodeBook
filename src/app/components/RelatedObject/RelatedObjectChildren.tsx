@@ -46,18 +46,20 @@ export const RelatedObjectChildren = observer(
           <>
             <button
               onClick={togglePinnedVisibility}
-              className={`flex gap-1 relative top-3 -left-1 uppercase text-xs bg-white w-fit px-1 py-1  border rounded-md text-[--gray-7] z-10  ${
-                isPinnedVisible ? "border-[--teal-4] mb-0" : "border-[--gray-4] mb-8"
+              className={`flex gap-[2px] relative top-0  uppercase text-xs  w-fit px-1 py-1 rounded-md text-[--gray-7] z-10 ${
+                parent === graphStore.thoughtstreamRoot ? "left-0" : "left-1"
+              }  ${
+                isPinnedVisible ? "bg-[--teal-1] hover:bg-[--teal-2] mb-0" : "bg-[--gray-1] hover:bg-[--gray-2] mb-3"
               }`}
             >
-              <span className={` scale-[0.80] ${isPinnedVisible ? "text-[--teal-7]" : "text-[--gray-7]"}`}>
+              <span className={` scale-[0.80] ${isPinnedVisible ? "text-[--teal-9]" : "text-[--gray-7]"}`}>
                 <PinCustom />
               </span>
               {isPinnedVisible ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </button>
             {isPinnedVisible && (
               <div
-                className={`border-[--teal-4] border-b  pt-8  ${
+                className={`border-[--teal-4] border-b  pt-3  ${
                   parent === graphStore.thoughtstreamRoot ? "-mb-2 pb-4" : "mb-3 pb-0"
                 } `}
               >
