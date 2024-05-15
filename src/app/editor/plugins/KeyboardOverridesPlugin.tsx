@@ -104,12 +104,14 @@ export const KeyboardOverridesPlugin = () => {
         (event) => {
           const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
           if (event.key === "@" && object.text === "") {
-            // When user types "@" at the beginning of a bullet, we set it to
-            // replacing mode, where you can select a different node for the
-            // bullet to represent.
-            event.preventDefault();
-            setViewType("replace");
-            return true;
+            if (viewController.atSignTriggerToReplaceObject) {
+              // When user types "@" at the beginning of a bullet, we set it to
+              // replacing mode, where you can select a different node for the
+              // bullet to represent.
+              event.preventDefault();
+              setViewType("replace");
+              return true;
+            }
           } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
             if (!siblingAbove) return false;
             event.preventDefault();

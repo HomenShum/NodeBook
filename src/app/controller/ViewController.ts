@@ -47,6 +47,7 @@ export class ViewController {
   public hideBulletBackgroundIfParentsOnly = true;
   public searchAndReplaceDropdown: "labelled-only" | "all" | "none" = "labelled-only";
   public disableCycles = true;
+  public atSignTriggerToReplaceObject = false;
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -66,6 +67,10 @@ export class ViewController {
       rightSidebarOpen: true,
       hideDirectParent: true,
     });
+  }
+
+  setAtSignTriggerToReplaceObject(value: boolean) {
+    this.atSignTriggerToReplaceObject = value;
   }
 
   setSearchQuery(query: string) {

@@ -156,6 +156,15 @@ export const DevTools = observer(() => {
           />
           On removing node as direct child of thoughtstream, delete the node everywhere
         </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={viewController.atSignTriggerToReplaceObject}
+            onChange={(e) => viewController.setAtSignTriggerToReplaceObject(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Enable @ sign to trigger replacing current object
+        </label>
         <div className="flex gap-2">
           <label>Search and replace dropdown:</label>
           <select
