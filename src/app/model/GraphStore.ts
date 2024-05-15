@@ -785,7 +785,7 @@ export class GraphStore {
     const getRelationTypeById = (id: string) => relationTypesById[id];
     for (const [key, value] of Object.entries(data.relationsById)) {
       // Placeholders set here should be cleaned up by subsequent relations in this loop
-      relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById));
+      relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById)!);
     }
 
     for (const [_, relation] of relationsById) {
@@ -795,6 +795,8 @@ export class GraphStore {
           relation.setFrom(getObjectById(relation.from.id)!);
         } else {
           console.warn("Deserialized relation with placeholder from", relation);
+          // Delete the relation if we can't resolve the placeholder to prevent issues later
+          relationsById.delete(relation.id);
         }
       }
       if (isPlaceholder(relation.to)) {
@@ -802,6 +804,7 @@ export class GraphStore {
           relation.setTo(getObjectById(relation.to.id)!);
         } else {
           console.warn("Deserialized relation with placeholder to", relation);
+          relationsById.delete(relation.id);
         }
       }
     }
@@ -811,7 +814,7 @@ export class GraphStore {
       relationsByNodeId.set(
         key,
         FractionalPositionedList.deserialize<GraphRelation>(value, (data) =>
-          GraphRelation.deserialize(data, this, getObjectById, getRelationTypeById),
+          GraphRelation.deserialize(data, this, getObjectById, getRelationTypeById, true),
         ),
       );
     }
@@ -821,7 +824,7 @@ export class GraphStore {
       pinnedRelationsByNodeId.set(
         key,
         FractionalPositionedList.deserialize<GraphRelation>(value, (data) =>
-          GraphRelation.deserialize(data, this, getObjectById, getRelationTypeById),
+          GraphRelation.deserialize(data, this, getObjectById, getRelationTypeById, true),
         ),
       );
     }
@@ -829,20 +832,20 @@ export class GraphStore {
     const correspondingObjectsForPinned = new Map<string, GraphRelation>();
     if (data.correspondingObjectsForPinned) {
       for (const [key, value] of Object.entries(data.correspondingObjectsForPinned)) {
-        correspondingObjectsForPinned.set(
-          key,
-          GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
-        );
+        const rel = GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById, true);
+        if (rel) {
+          correspondingObjectsForPinned.set(key, rel);
+        }
       }
     }
 
     const correspondingPinnedForObjects = new Map<string, GraphRelation>();
     if (data.correspondingPinnedForObjects) {
       for (const [key, value] of Object.entries(data.correspondingPinnedForObjects)) {
-        correspondingPinnedForObjects.set(
-          key,
-          GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById),
-        );
+        const rel = GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById, true);
+        if (rel) {
+          correspondingPinnedForObjects.set(key, rel);
+        }
       }
     }
 

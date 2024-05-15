@@ -121,11 +121,15 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
 
   static deserialize<T extends ListItem & Serializable>(
     data: ReturnType<FractionalPositionedList<T>["serialize"]>,
-    deserializeInnerType: (data: any) => T,
+    deserializeInnerType: (data: any) => T | null,
   ): FractionalPositionedList<T> {
     const list = new FractionalPositionedList<T>();
     const result = new Map();
     for (const [key, value] of Object.entries(data)) {
+      const item = deserializeInnerType(value.item);
+      if (item === null) {
+        continue;
+      }
       result.set(key, {
         item: deserializeInnerType(value.item),
         position: value.position,

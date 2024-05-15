@@ -146,9 +146,15 @@ export class GraphRelation implements Serializable, GraphObject {
     store: GraphStore,
     getObjectById: (id: string) => GraphObject | undefined,
     getRelationTypeById: (id: string) => GraphRelationType | undefined,
-  ): GraphRelation {
+    nullInsteadOfPlaceholder = false,
+  ): GraphRelation | null {
     const from = getObjectById(data.fromId) ?? new PlaceholderGraphObject(data.fromId);
     const to = getObjectById(data.toId) ?? new PlaceholderGraphObject(data.toId);
+
+    if (nullInsteadOfPlaceholder && (isPlaceholder(from) || isPlaceholder(to))) {
+      return null;
+    }
+
     const newRelation = new GraphRelation(store, {
       id: data.id,
       from,
