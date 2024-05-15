@@ -111,7 +111,7 @@ export const OutlineView = observer(() => {
 
         <div className={s.TitleContainer}>
           {nodeAtPathEnd.id === graphStore.outlineRoot.id && <HomeIcon className={s.HomeIcon} size={20} />}
-          <h1 className={s.TitleText}>{truncateText(nodeAtPathEnd.text, 20)}</h1>
+          <h1 className={s.TitleText}>{truncateText(nodeAtPathEnd.text, 58)}</h1>
 
           <button className={s.AddButton} onClick={createChild}>
             <span className={s.AddButtonIcon}>+</span>
