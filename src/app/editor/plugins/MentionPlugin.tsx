@@ -44,8 +44,10 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
         graphNode = selectedOption.graphNode;
       } else {
         // Create a new node
-        graphNode = viewController.createChildNode({ focusAfterCreate: false, alwaysAddToOutline: true });
-        graphNode.setContent(selectedOption.name.slice("Create new node: ".length));
+        const newNodeAndRelation = graphStore.createChildNode(graphStore.outlineRoot, {
+          content: selectedOption.name.slice("Create new node: ".length),
+        });
+        graphNode = newNodeAndRelation.node;
       }
       editor.update(() => {
         const mentionNode = $createMentionNode(graphNode.id, graphNode.text);
@@ -70,7 +72,7 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
         closeMenu();
       });
     },
-    [editor, graphStore, node, viewController],
+    [editor, graphStore, node],
   );
 
   const options: Array<MentionTypeaheadOption> = useMemo(() => {
