@@ -14,6 +14,7 @@ export enum ViewType {
 interface ChildNodeOptions {
   focusAfterCreate: boolean;
   targetView?: ViewType;
+  alwaysAddToOutline?: boolean;
 }
 
 export class ViewController {
@@ -193,7 +194,7 @@ export class ViewController {
     return node;
   }
 
-  private createThoughtstreamChildNode(focus: boolean = true) {
+  private createThoughtstreamChildNode(focus: boolean = true, ensureInOutline: boolean = false) {
     const { node, relationToThoughtstream } = this.graphStore.createThoughtstreamChild();
 
     if (focus) {
@@ -202,7 +203,7 @@ export class ViewController {
       );
     }
 
-    if (this.graphStore.addThoughstreamDirectChildrenToOutline) {
+    if (ensureInOutline || this.graphStore.addThoughstreamDirectChildrenToOutline) {
       this.graphStore.createRelation({
         from: this.graphStore.outlineRoot,
         to: node,
@@ -216,22 +217,22 @@ export class ViewController {
    * Create a child node in the specified view, or in the current view if no view is specified.
    * In split view, the child node will be created in the same view as the focused node.
    */
-  createChildNode({ focusAfterCreate, targetView }: ChildNodeOptions = { focusAfterCreate: true }) {
+  createChildNode({ focusAfterCreate, targetView, alwaysAddToOutline }: ChildNodeOptions = { focusAfterCreate: true }) {
     const view = targetView || this.curView;
     switch (view) {
       case ViewType.OUTLINE:
         return this.createOutlineChildNode(focusAfterCreate);
       case ViewType.THOUGHTSTREAM:
-        return this.createThoughtstreamChildNode(focusAfterCreate);
+        return this.createThoughtstreamChildNode(focusAfterCreate, alwaysAddToOutline);
       case ViewType.SPLIT:
       default:
         const id = this.focusedNode?.split("/")?.[0] ?? "";
         const focusedViewRoot = this.graphStore.relationsById.get(id)?.to;
         if (!focusedViewRoot) {
           // default to creating a child in Thoughtstream (e.g. when cmd + k is pressed)
-          return this.createThoughtstreamChildNode(focusAfterCreate);
+          return this.createThoughtstreamChildNode(focusAfterCreate, alwaysAddToOutline);
         } else if (focusedViewRoot.id === this.graphStore.thoughtstreamRoot.id) {
-          return this.createThoughtstreamChildNode(focusAfterCreate);
+          return this.createThoughtstreamChildNode(focusAfterCreate, alwaysAddToOutline);
         } else if (focusedViewRoot.id === this.graphStore.outlineRoot.id) {
           return this.createOutlineChildNode(focusAfterCreate);
         } else {

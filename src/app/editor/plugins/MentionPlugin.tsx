@@ -44,7 +44,7 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
         graphNode = selectedOption.graphNode;
       } else {
         // Create a new node
-        graphNode = viewController.createChildNode({ focusAfterCreate: false });
+        graphNode = viewController.createChildNode({ focusAfterCreate: false, alwaysAddToOutline: true });
         graphNode.setContent(selectedOption.name.slice("Create new node: ".length));
       }
       editor.update(() => {
