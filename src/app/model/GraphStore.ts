@@ -339,8 +339,9 @@ export class GraphStore {
     if (labelText.endsWith(" of")) {
       // Special case for "is X of" relations because the auto-generated reverse label will be "is X of" and
       // we don't want "is X of of"
-      const label = labelText.substring(0, labelText.length - " of".length);
-      return [this.createRelationType({ label }), "reverse"];
+      const reverseLabel = labelText;
+      const label = labelText.replace(/^(is\s+)?(.+?)\s+of$/i, "$2");
+      return [this.createRelationType({ label, reverseLabel }), "reverse"];
     }
     return [this.createRelationType({ label: labelText }), "forward"];
   }
