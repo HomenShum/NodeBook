@@ -46,10 +46,10 @@
 .PinIcon {
   position: relative;
   top: 0;
-  padding: 0 6px 0 0;
+  padding: 0 1px 0 0;
   right: 4px;
   transform: scale(0.8) translateY(-0.5px);
-  color: var(--teal-7);
+  color: var(--gray-6);
 }
 
 .BreadcrumbContainer {
