@@ -74,6 +74,11 @@ export const RelatedObjectView = observer(
     const [searchExpansion, setSearchExpansion] = useState(false);
     const children = getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false);
     const hasChildren = children.length > 0;
+    useEffect(() => {
+      if (!hasChildren) {
+        graphStore.setPathExpanded(pathToNodeStr, false);
+      }
+    }, [graphStore, hasChildren, pathToNodeStr]);
 
     const allNodesInPath = new Set();
     for (const pathRelation of path) {

@@ -569,6 +569,7 @@ export class GraphStore {
     relation: GraphRelation,
     nodeToSplit: GraphNode,
     selection: BaseSelection,
+    pathToNodeStr: string,
     { splitToNewBundle } = { splitToNewBundle: false },
   ) {
     const parent = relation.to.id === nodeToSplit.id ? relation.from : relation.to;
@@ -615,6 +616,7 @@ export class GraphStore {
     const siblingsBelow = relations.slice(relationIndex + 1);
 
     let child: { node: GraphNode; relation: GraphRelation };
+    let nested = false;
     const isCollapsedAndAtStart =
       start.index === end.index && start.offset === end.offset && start.index === 0 && start.offset === 0;
     if (isCollapsedAndAtStart && nodeToSplit.content.length > 0) {
@@ -653,16 +655,22 @@ export class GraphStore {
       chipsAfter.push(...nodes.slice(end.index + 1).map(nodeToChip));
 
       nodeToSplit.setContent(chipsBefore);
-      // Create a new related node below the current one with the text after the cursor
-      child = this.createChildNode(parent, { content: chipsAfter });
-      relationsList.move([child.relation], unpinnedRelation);
+      if (this.isPathExpanded(pathToNodeStr)) {
+        child = this.createChildNode(nodeToSplit, { content: chipsAfter });
+        this.getRelationList(nodeToSplit).move([child.relation], "top");
+        nested = true;
+      } else {
+        // Create a new related node below the current one with the text after the cursor
+        child = this.createChildNode(parent, { content: chipsAfter });
+        relationsList.move([child.relation], unpinnedRelation);
 
-      if (pinnedRelation && relation === pinnedRelation) {
-        parent.pinChildRelation(child.relation);
-        const newPinnedRelation = this.correspondingPinnedForObjects.get(child.relation.id)!;
+        if (pinnedRelation && relation === pinnedRelation) {
+          parent.pinChildRelation(child.relation);
+          const newPinnedRelation = this.correspondingPinnedForObjects.get(child.relation.id)!;
 
-        const pinnedRelationsList = this.getPinnedRelationList(parent);
-        pinnedRelationsList.move([newPinnedRelation], pinnedRelation);
+          const pinnedRelationsList = this.getPinnedRelationList(parent);
+          pinnedRelationsList.move([newPinnedRelation], pinnedRelation);
+        }
       }
     }
 
@@ -700,7 +708,7 @@ export class GraphStore {
       });
     }
 
-    return child;
+    return { child, nested };
   }
 
   moveRelationAfterSibling(node: GraphNode, relation: GraphRelation, sibling: GraphRelation) {

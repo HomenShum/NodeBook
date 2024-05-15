@@ -72,7 +72,10 @@ export const KeyboardOverridesPlugin = () => {
           if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
 
           if (object instanceof GraphNode) {
-            let { node: newNode, relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection, {
+            let {
+              child: { node: newNode, relation: newRelation },
+              nested,
+            } = graphStore.splitRelatedNode(relation, object, selection, pathToNodeStr, {
               splitToNewBundle,
             });
             if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
@@ -81,8 +84,13 @@ export const KeyboardOverridesPlugin = () => {
 
             // Add to outline if necessary
             graphStore.addElsewhereAfterCreate(newNode, parent, pathToParentNodes[0].child);
-
-            viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
+            let newPath;
+            if (nested) {
+              newPath = [...pathToParentRelations, relation, newRelation];
+            } else {
+              newPath = [...pathToParentRelations, newRelation];
+            }
+            viewController.setFocusedNode(relationsToPathStr(newPath));
             return true;
           } else {
             // TODO handle related relations
