@@ -132,6 +132,15 @@ export const DevTools = observer(() => {
         <label>
           <input
             type="checkbox"
+            checked={viewController.addStreamLabeledRelationsToMyLists}
+            onChange={(e) => viewController.setAddStreamLabeledRelationsToMyLists(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Add stream labeled relations to My Lists
+        </label>
+        <label>
+          <input
+            type="checkbox"
             checked={viewController.disableCycles}
             onChange={(e) => viewController.setDisableCycles(e.target.checked)}
             className="mr-2 mb-2"

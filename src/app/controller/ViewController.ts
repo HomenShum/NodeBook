@@ -47,6 +47,7 @@ export class ViewController {
   public searchAndReplaceDropdown: "labelled-only" | "all" | "none" = "labelled-only";
   public disableCycles = true;
   public atSignTriggerToReplaceObject = false;
+  public addStreamLabeledRelationsToMyLists = true;
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -89,6 +90,10 @@ export class ViewController {
 
   setCurrentOutlineViewRoot(root: GraphRelation[] | null) {
     this.currentOutlineViewRoot = root;
+  }
+
+  setAddStreamLabeledRelationsToMyLists(value: boolean) {
+    this.addStreamLabeledRelationsToMyLists = value;
   }
 
   setDisableCycles(value: boolean) {
