@@ -25,6 +25,7 @@ import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPl
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
+import { PastePlugin } from "./plugins/pastePlugin";
 
 const theme = {
   // Theme styling goes here
@@ -91,6 +92,7 @@ export const NodeContentEditor = observer(() => {
         <ClearEditorPlugin />
         <SyncWithGraphPlugin node={node} />
         <KeyboardOverridesPlugin />
+        <PastePlugin />
         <RelationPlugin />
         <MentionPlugin setDropdownOpen={setMentionDropdownOpen} />
         <NodeEventPlugin
