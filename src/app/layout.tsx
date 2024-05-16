@@ -1,7 +1,7 @@
 "use client";
 import { toJS } from "mobx";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import App from "./App";
 import { ViewController } from "./controller/ViewController";
 import { ViewControllerProvider } from "./controller/useViewController";
 import { env } from "./envFrontend";
@@ -9,6 +9,9 @@ import "./global.css";
 import { GraphStore } from "./model/GraphStore";
 import { GraphStoreProvider } from "./store/useGraphStore";
 import { useCurView } from "./util";
+const App = dynamic(() => import("./App"), {
+  ssr: false,
+});
 
 // Initialize stores
 const graphStore = new GraphStore();

@@ -120,3 +120,7 @@ export function useCurView() {
       return ViewType.OUTLINE;
   }
 }
+
+export function relationsToURLPath(relations: GraphRelation[]) {
+  return `/${relations.map((x) => x.id).join("/")}`;
+}

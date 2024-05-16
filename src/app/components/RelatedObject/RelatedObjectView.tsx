@@ -14,13 +14,15 @@ import { GraphNode } from "@/app/model/GraphNode";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { SearchResult } from "@/app/store/search";
-import { Position, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
+import { Position, relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { action } from "mobx";
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../OutlineView.module.css";
 
+import { ViewType } from "@/app/controller/ViewController";
 import { GraphObject } from "@/app/model/GraphObject";
+import { useRouter } from "next/navigation";
 import { PinCustom } from "../icons/icons";
 import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
@@ -107,16 +109,35 @@ export const RelatedObjectView = observer(
       }
     }, [graphStore, object.id, objectCount, pathToNodeStr, relation.to.id, searchResult]);
     const showChildren = searchResult ? searchExpansion : isExpanded;
+    const curView = useCurView();
+    const router = useRouter();
 
     const setPathToThisAsRoot = useCallback(() => {
       if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
-        viewController.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
+        if (curView === ViewType.THOUGHTSTREAM) {
+          router.push(`/stream${relationsToURLPath([...pathToParentRelations, relation])}`);
+        } else {
+          viewController.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
+        }
       } else if (viewRoot.id === graphStore.outlineRoot.id) {
-        viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+        if (curView === ViewType.OUTLINE) {
+          router.push(`/outline${relationsToURLPath([...pathToParentRelations, relation])}`);
+        } else {
+          viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+        }
       } else {
         throw new Error("Unknown view root");
       }
-    }, [viewController, viewRoot, graphStore, pathToParentRelations, relation]);
+    }, [
+      viewRoot.id,
+      graphStore.thoughtstreamRoot.id,
+      graphStore.outlineRoot.id,
+      curView,
+      router,
+      pathToParentRelations,
+      relation,
+      viewController,
+    ]);
 
     return (
       <>

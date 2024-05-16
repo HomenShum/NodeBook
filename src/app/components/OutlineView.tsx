@@ -7,12 +7,13 @@ import {
 } from "@/app/components/ui/dropdown-menu";
 import { ChevronRight, Ellipsis, HomeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { ViewType } from "../controller/ViewController";
 import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
-import { relationsPathToParentChild } from "../util";
+import { relationsPathToParentChild, relationsToURLPath, useCurView } from "../util";
 import s from "./OutlineView.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
@@ -46,6 +47,8 @@ export const OutlineView = observer(() => {
   }, [viewController]);
 
   const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
+  const router = useRouter();
+  const curView = useCurView();
 
   return (
     <div className={s.OutlineView}>
@@ -61,7 +64,11 @@ export const OutlineView = observer(() => {
                   <span
                     className={s.Breadcrumb}
                     key={relation.id}
-                    onClick={() => viewController.setCurrentOutlineViewRoot(relations.slice(0, i + 1))}
+                    onClick={() => {
+                      if (curView !== ViewType.SPLIT) {
+                        router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1))}`);
+                      }
+                    }}
                   >
                     {isFirst && <HomeIcon size={14} />}
                     {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
@@ -85,7 +92,9 @@ export const OutlineView = observer(() => {
                           key={relation.id}
                           className={s.BreadcrumbMenuItem}
                           onSelect={() => {
-                            viewController.setCurrentOutlineViewRoot(relations.slice(0, index + 2));
+                            if (curView !== ViewType.SPLIT) {
+                              router.push(`/outline${relationsToURLPath(relations.slice(0, i + 2))}`);
+                            }
                           }}
                         >
                           {truncateText(child.text, 20)}
@@ -100,7 +109,11 @@ export const OutlineView = observer(() => {
                 <span
                   className={s.Breadcrumb}
                   key={relation.id}
-                  onClick={() => viewController.setCurrentOutlineViewRoot(relations.slice(0, i + 1))}
+                  onClick={() => {
+                    if (curView !== ViewType.SPLIT) {
+                      router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1))}`);
+                    }
+                  }}
                 >
                   <ChevronRight size={14} strokeWidth={2} />
                   <span>{truncateText(child.text, 20)}</span>
