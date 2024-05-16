@@ -14,12 +14,11 @@ export enum ViewType {
 
 interface ChildNodeOptions {
   focusAfterCreate: boolean;
-  targetView?: ViewType;
+  targetView: ViewType;
   alwaysAddToOutline?: boolean;
 }
 
 export class ViewController {
-  public curView: ViewType;
   private graphStore: GraphStore;
 
   public focusedNode: Path | null = null;
@@ -56,7 +55,6 @@ export class ViewController {
   public currentStreamViewRoot: GraphRelation[] | null = null;
 
   constructor(graphStore: GraphStore) {
-    this.curView = ViewType.OUTLINE;
     this.graphStore = graphStore;
     this.currentOutlineViewRoot = [graphStore.outlineRootRelationFromUserRoot];
     this.currentStreamViewRoot = [graphStore.thoughtstreamRootRelationFromUserRoot];
@@ -103,15 +101,6 @@ export class ViewController {
 
   toggleRightSidebar() {
     this.rightSidebarOpen = !this.rightSidebarOpen;
-  }
-
-  setView(view: ViewType) {
-    this.curView = view;
-
-    if (view === ViewType.OUTLINE) {
-      // Reset root when switching into outline view (ENT-3278)
-      this.currentOutlineViewRoot = [this.graphStore.outlineRootRelationFromUserRoot];
-    }
   }
 
   /**
@@ -230,8 +219,8 @@ export class ViewController {
    * Create a child node in the specified view, or in the current view if no view is specified.
    * In split view, the child node will be created in the same view as the focused node.
    */
-  createChildNode({ focusAfterCreate, targetView, alwaysAddToOutline }: ChildNodeOptions = { focusAfterCreate: true }) {
-    const view = targetView || this.curView;
+  createChildNode({ focusAfterCreate, targetView, alwaysAddToOutline }: ChildNodeOptions) {
+    const view = targetView;
     switch (view) {
       case ViewType.OUTLINE:
         return this.createOutlineChildNode(focusAfterCreate);

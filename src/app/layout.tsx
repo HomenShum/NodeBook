@@ -1,19 +1,14 @@
 "use client";
 import { toJS } from "mobx";
-import { Inter } from "next/font/google";
 import { useEffect, useRef, useState } from "react";
+import App from "./App";
 import { ViewController } from "./controller/ViewController";
 import { ViewControllerProvider } from "./controller/useViewController";
 import { env } from "./envFrontend";
 import "./global.css";
 import { GraphStore } from "./model/GraphStore";
 import { GraphStoreProvider } from "./store/useGraphStore";
-
-// If loading a variable font, you don't need to specify the font weight
-const inter = Inter({
-  subsets: ["latin"],
-  display: "swap",
-});
+import { useCurView } from "./util";
 
 // Initialize stores
 const graphStore = new GraphStore();
@@ -55,18 +50,19 @@ async function loadData() {
   }
   return dataString ? JSON.parse(dataString) : null;
 }
-
 /**
  * The root component which wraps every page in the application
  * and provides the app stores.
  */
-export default function RootLayout({
+export default function RootTemplate({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const [isLoading, setIsLoading] = useState(true);
   const persistedData = useRef<string | null>(null);
+  const curView = useCurView();
+
   useEffect(() => {
     if (!env.isPersistenceEnabled) {
       setIsLoading(false);
@@ -88,11 +84,14 @@ export default function RootLayout({
     }
     setupSync();
   }, []);
+
   return (
-    <html lang="en" className={inter.className}>
+    <html>
       <GraphStoreProvider value={graphStore}>
         <ViewControllerProvider value={viewController}>
-          <body>{isLoading ? <div>Loading...</div> : children}</body>
+          <body>
+            <App curView={curView}>{children}</App>
+          </body>
         </ViewControllerProvider>
       </GraphStoreProvider>
     </html>

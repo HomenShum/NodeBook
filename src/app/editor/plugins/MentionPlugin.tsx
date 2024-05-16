@@ -1,3 +1,4 @@
+import { useCurView } from "@/app/util";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
@@ -37,6 +38,7 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
   const viewController = useViewController();
+  const curView = useCurView();
   const onSelectOption = useCallback(
     (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
       let graphNode: GraphNode; // For some reason have to declare this way to make TSC happy

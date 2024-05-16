@@ -11,7 +11,7 @@ import { ViewType } from "../controller/ViewController";
 import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
-import { relationsPathToParentChild } from "../util";
+import { relationsPathToParentChild, useCurView } from "../util";
 import stylesList from "./OutlineView.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 import stylesStream from "./ThoughtstreamView.module.css";
@@ -45,6 +45,7 @@ export const ThoughtstreamView = observer(() => {
   }, [viewController]);
 
   const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
+  const curView = useCurView();
 
   return (
     <div tabIndex={0} className={stylesStream.StreamContainer}>
@@ -108,7 +109,7 @@ export const ThoughtstreamView = observer(() => {
           </div>
         )}
         <div className={stylesList.TitleContainer}>
-          {(viewController.curView === ViewType.SPLIT || path.length > 1) && (
+          {(curView === ViewType.SPLIT || path.length > 1) && (
             <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 20)}</h1>
           )}
           <button className={stylesList.AddButton} onClick={createChild}>
