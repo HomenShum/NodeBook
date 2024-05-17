@@ -192,6 +192,25 @@ export const KeyboardOverridesPlugin = () => {
           }
 
           if (event.shiftKey) {
+            const viewRoot = pathToParentNodes[0].child;
+            let visibleRootRelations;
+            if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
+              visibleRootRelations = viewController.currentStreamViewRoot;
+            } else if (viewRoot.id === graphStore.outlineRoot.id) {
+              visibleRootRelations = viewController.currentOutlineViewRoot;
+            } else {
+              throw new Error("Unknown view root");
+            }
+
+            if (
+              !viewController.allowShiftTabAboveViewRoot &&
+              visibleRootRelations &&
+              visibleRootRelations.length == pathToParentNodes.length
+            ) {
+              console.log("Can't shift tab because grandparent is above view root");
+              return false;
+            }
+
             const grandparentNode = pathToParentNodes[pathToParentNodes.length - 1].parent;
             const parentRelation = pathToParentRelations[pathToParentRelations.length - 1];
             if (!grandparentNode) {

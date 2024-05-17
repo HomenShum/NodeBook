@@ -141,6 +141,15 @@ export const DevTools = observer(() => {
         <label>
           <input
             type="checkbox"
+            checked={viewController.allowShiftTabAboveViewRoot}
+            onChange={(e) => viewController.setAllowShiftTabAboveViewRoot(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Allow shift tab above view root
+        </label>
+        <label>
+          <input
+            type="checkbox"
             checked={viewController.disableCycles}
             onChange={(e) => viewController.setDisableCycles(e.target.checked)}
             className="mr-2 mb-2"

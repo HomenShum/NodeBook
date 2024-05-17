@@ -48,6 +48,7 @@ export class ViewController {
   public disableCycles = true;
   public atSignTriggerToReplaceObject = false;
   public addStreamLabeledRelationsToMyLists = true;
+  public allowShiftTabAboveViewRoot = false;
 
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
@@ -98,6 +99,10 @@ export class ViewController {
 
   setDisableCycles(value: boolean) {
     this.disableCycles = value;
+  }
+
+  setAllowShiftTabAboveViewRoot(value: boolean) {
+    this.allowShiftTabAboveViewRoot = value;
   }
 
   toggleLeftSidebar() {
