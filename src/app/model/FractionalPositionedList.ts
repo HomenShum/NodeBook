@@ -63,6 +63,8 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
       const int = Math.max(topPosition.int, ...items.map((item) => item.createdAt.getTime()));
       const fracs = generateNKeysBetween(null, topPosition.int === int ? topPosition.frac : null, items.length);
       items.forEach((item, i) => {
+        // don't re-insert items; that would reset their position (ENT-3361)
+        if (this.map.has(item.id)) return;
         this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
       });
     }
