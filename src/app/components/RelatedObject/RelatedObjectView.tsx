@@ -244,8 +244,8 @@ export const RelatedObjectView = observer(
                 </div>
                 {viewController.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
               </div>
-              {children.length > 0 && (
-                <div className="relative -top-[2px] border text-gray-400 px-1">{children.length}</div>
+              {object.relations.length > 1 && (
+                <div className="relative -top-[2px] border text-gray-400 px-1">{object.relations.length - 1}</div>
               )}
             </div>
           </RelationAtPathProvider>
