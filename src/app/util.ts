@@ -124,3 +124,16 @@ export function useCurView() {
 export function relationsToURLPath(relations: GraphRelation[]) {
   return `/${relations.map((x) => x.id).join("/")}`;
 }
+
+export function sortByPrefixMatch(objects: GraphObject[], query: string) {
+  const isPrefixMatch: { [key: string]: number } = {};
+  for (const o of objects) {
+    if (o.text.toLowerCase().startsWith(query.toLowerCase())) {
+      isPrefixMatch[o.id] = 0;
+    } else {
+      isPrefixMatch[o.id] = 1;
+    }
+  }
+
+  objects.sort((a, b) => isPrefixMatch[a.id] - isPrefixMatch[b.id]);
+}

@@ -1,4 +1,4 @@
-import { useCurView } from "@/app/util";
+import { sortByPrefixMatch, useCurView } from "@/app/util";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
@@ -80,10 +80,15 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
   const options: Array<MentionTypeaheadOption> = useMemo(() => {
     const SUGGESTION_LIST_LENGTH_LIMIT = 5;
     if (queryString === null) return [];
-    const optionsForExistingNodes = graphStore.nodes
-      .filter((n) => n.text.toLowerCase().includes(queryString.toLowerCase()) && n.id !== node.id)
+    let matchingNodes = graphStore.nodes.filter(
+      (n) => n.text.toLowerCase().includes(queryString.toLowerCase()) && n.id !== node.id,
+    );
+    sortByPrefixMatch(matchingNodes, queryString);
+
+    const optionsForExistingNodes = matchingNodes
       .map((node) => new MentionTypeaheadOption(node.text, node))
       .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
+
     const newNodeOption = new MentionTypeaheadOption("Create new node: " + queryString);
     return [...optionsForExistingNodes, newNodeOption];
   }, [queryString, graphStore.nodes, node]);

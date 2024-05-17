@@ -14,7 +14,14 @@ import { GraphNode } from "@/app/model/GraphNode";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { SearchResult } from "@/app/store/search";
-import { Position, relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
+import {
+  Position,
+  relationsPathToParentChild,
+  relationsToPathStr,
+  relationsToURLPath,
+  sortByPrefixMatch,
+  useCurView,
+} from "@/app/util";
 import { cn } from "@/lib/utils";
 import { action } from "mobx";
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -493,12 +500,16 @@ function ReplaceRelatedNodeView() {
         node.id !== currentObject.id &&
         keywords.every((keyword) => node.text.toLowerCase().includes(keyword.toLowerCase())),
     );
+    sortByPrefixMatch(nodeOptions, filter);
+
     const relationOptions = graph.relations.filter(
       (r) =>
         r.id !== currentObject.id &&
         r.id !== relation.id &&
         keywords.every((keyword) => r.text.toLowerCase().includes(keyword.toLowerCase())),
     );
+    sortByPrefixMatch(relationOptions, filter);
+
     const optionsGrouped: {
       type: "nodes" | "relations";
       options: { index: number; object: GraphObject; text: string }[];
