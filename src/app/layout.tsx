@@ -48,8 +48,12 @@ async function loadData() {
   if (env.persistTo === "local") {
     dataString = localStorage.getItem("data");
   } else if (env.persistTo === "server") {
-    const json = await fetch("/api/persist").then((res) => res.json());
-    dataString = json.data;
+    try {
+      const json = await fetch("/api/persist").then((res) => res.json());
+      dataString = json.data;
+    } catch (e) {
+      console.error("Error loading data from server", e);
+    }
   }
   return dataString ? JSON.parse(dataString) : null;
 }
