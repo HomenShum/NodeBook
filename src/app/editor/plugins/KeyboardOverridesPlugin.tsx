@@ -275,7 +275,56 @@ export const KeyboardOverridesPlugin = () => {
               }
               return true;
             }
+            return false;
           }
+
+          // merge nodes if necessary
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return false;
+
+          const startEnd = selection.getStartEndPoints();
+          if (!startEnd) return false;
+          const [selectionStart, selectionEnd] = startEnd;
+
+          // Offset is 0 when at start of text
+          if (selectionStart.offset !== 0 || selectionEnd.offset !== 0) return false;
+          let targetNode = null;
+          let targetPath = null;
+          if (siblingAbove) {
+            const node = siblingAbove.from.id === parent.id ? siblingAbove.to : siblingAbove.from;
+            if (node instanceof GraphNode) {
+              targetNode = node;
+              targetPath = relationsToPathStr([...pathToParentRelations, siblingAbove]);
+            }
+          } else {
+            const viewRoot = pathToParentNodes[0].child;
+            let visibleRootRelations;
+            if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
+              visibleRootRelations = viewController.currentStreamViewRoot;
+            } else if (viewRoot.id === graphStore.outlineRoot.id) {
+              visibleRootRelations = viewController.currentOutlineViewRoot;
+            } else {
+              throw new Error("Unknown view root");
+            }
+
+            if (
+              visibleRootRelations &&
+              visibleRootRelations.length < pathToParentNodes.length &&
+              parent instanceof GraphNode
+            ) {
+              targetNode = parent;
+              targetPath = relationsToPathStr([...pathToParentRelations]);
+            }
+          }
+
+          if (targetNode && object instanceof GraphNode) {
+            targetNode.content = targetNode.content.concat(object.content);
+            graphStore.deleteNode(object.id);
+            graphStore.deleteRelation(relation);
+            viewController.setFocusedNode(targetPath!);
+            return true;
+          }
+
           return false;
         },
         COMMAND_PRIORITY_LOW,
