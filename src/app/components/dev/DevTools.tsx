@@ -18,7 +18,7 @@ export const DevTools = observer(() => {
     { label: "None", value: "none" },
   ];
   return (
-    <div className="p-2 mb-0 max-h-96 overflow-y-auto flex flex-col">
+    <div className="p-2 mb-0 overflow-y-auto flex flex-col flex-initial">
       <h1 className="text-xl font-bold mb-2">Dev Tools</h1>
       <div className="flex flex-col gap-2">
         <label className="cursor-pointer">
@@ -244,20 +244,6 @@ export const DevTools = observer(() => {
             reader.readAsText(file);
           }}
         />
-        <Button
-          size={"sm"}
-          variant={"destructive"}
-          style={{ maxWidth: "fit-content" }}
-          onClick={() => {
-            throw new Error("Not implemented");
-            // if (!confirm("Really delete all data?")) {
-            //   return;
-            // }
-            // graphStore.remote?.deleteAll();
-          }}
-        >
-          Delete all remote data
-        </Button>
       </div>
     </div>
   );
