@@ -90,6 +90,39 @@ export class GraphStore {
     this.addToThoughtstream(node);
   }
 
+  clear() {
+    this.nodesById.clear();
+    this.relationsById.clear();
+    this.relationTypesById = {};
+    this.relationsByNodeId.clear();
+    this.pinnedRelationsByNodeId.clear();
+    this.pathData.clear();
+    this.relationToBundles.clear();
+    this.correspondingObjectsForPinned.clear();
+    this.correspondingPinnedForObjects.clear();
+
+    Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
+    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
+    this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
+    this.thoughtstreamRoot = this.createNode({
+      id: THOUGHTSTREAM_ROOT_ID,
+      content: [{ type: "text", value: "Stream" }],
+    });
+    this.outlineRootRelationFromUserRoot = this.createRelation({
+      from: this.userRoot,
+      to: this.outlineRoot,
+      relationType: this.relationTypesById.child,
+    });
+    this.thoughtstreamRootRelationFromUserRoot = this.createRelation({
+      from: this.userRoot,
+      to: this.thoughtstreamRoot,
+      relationType: this.relationTypesById.child,
+    });
+    // Initialize with blank entries in thoughtstream and outline
+    const { node } = this.createChildNode(this.outlineRoot);
+    this.addToThoughtstream(node);
+  }
+
   addToBundle(relation: GraphRelation, bundle: GraphNode) {
     if (!bundle.isBundle) {
       throw new Error("Node must be a bundle");
@@ -884,5 +917,89 @@ export class GraphStore {
     this.relationToBundles = relationToBundles;
     this.correspondingObjectsForPinned = correspondingObjectsForPinned;
     this.correspondingPinnedForObjects = correspondingPinnedForObjects;
+  }
+
+  deserializeAndMerge(data: SerializedGraphStore) {
+    for (const [key, value] of Object.entries(data.nodesById)) {
+      if (!this.nodesById.has(key)) {
+        this.createNode(value);
+      }
+    }
+    for (const [key, value] of Object.entries(data.relationTypesById)) {
+      if (!this.relationTypesById[key]) {
+        this.relationTypesById[key] = value;
+      }
+    }
+
+    const getObjectById = (id: string) => this.nodesById.get(id) || this.relationsById.get(id);
+    const getRelationTypeById = (id: string) => this.relationTypesById[id];
+    for (const [key, value] of Object.entries(data.relationsById)) {
+      if (this.relationsById.has(key)) continue;
+      // Placeholders set here should be cleaned up by subsequent relations in this loop
+      this.relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById)!);
+    }
+
+    for (const [_, relation] of this.relationsById) {
+      if (isPlaceholder(relation.from)) {
+        // Do one last check to see if we can resolve the placeholder, log to console if not
+        if (getObjectById(relation.from.id)) {
+          relation.setFrom(getObjectById(relation.from.id)!);
+        } else {
+          console.warn("Deserialized relation with placeholder from", relation);
+          // Delete the relation if we can't resolve the placeholder to prevent issues later
+          this.relationsById.delete(relation.id);
+          continue;
+        }
+      }
+      if (isPlaceholder(relation.to)) {
+        if (getObjectById(relation.to.id)) {
+          relation.setTo(getObjectById(relation.to.id)!);
+        } else {
+          console.warn("Deserialized relation with placeholder to", relation);
+          this.relationsById.delete(relation.id);
+          continue;
+        }
+      }
+      if (!isPlaceholder(relation.from) && !isPlaceholder(relation.to)) {
+        this.getRelationList(relation.from).add(relation);
+        this.getRelationList(relation.to).add(relation);
+
+        if (!this.pinnedRelationsByNodeId.has(relation.id)) {
+          const newList = new FractionalPositionedList<GraphRelation>();
+          this.pinnedRelationsByNodeId.set(relation.id, newList);
+        }
+      }
+    }
+
+    const pathData = new Map<Path, PathData>();
+    if (data.pathData) {
+      for (const [key, value] of Object.entries(data.pathData)) {
+        if (!this.pathData.has(key)) {
+          pathData.set(key, value);
+        }
+      }
+    }
+
+    if (data.relationToBundles) {
+      for (const [relationId, bundlesArray] of Object.entries(data.relationToBundles)) {
+        if (!this.relationsById.has(relationId)) continue;
+        if (this.relationToBundles.has(relationId)) {
+          // Add any new bundles to the existing list
+          const existingBundles = this.relationToBundles.get(relationId)!;
+          const newBundles = bundlesArray
+            .map((bundle) => this.nodesById.get(bundle.id))
+            .filter((b) => !!b) as GraphNode[];
+          this.relationToBundles.set(relationId, [
+            ...existingBundles,
+            ...newBundles.filter((b) => !existingBundles.includes(b)),
+          ]);
+        } else {
+          this.relationToBundles.set(
+            relationId,
+            bundlesArray.map((bundle) => this.nodesById.get(bundle.id)).filter((b) => !!b) as GraphNode[],
+          );
+        }
+      }
+    }
   }
 }

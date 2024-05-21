@@ -1,13 +1,13 @@
 import { useViewController } from "@/app/controller/useViewController";
 import { useGraphStore } from "@/app/store/useGraphStore";
 import { observer } from "mobx-react-lite";
-import { useRef } from "react";
+import { ClearData } from "../DataDialog/ClearData";
+import { ImportDialog } from "../DataDialog/ImportDialog";
 import { Button } from "../ui/button";
 
 export const DevTools = observer(() => {
   const graphStore = useGraphStore();
   const viewController = useViewController();
-  const fileInputRef = useRef(null);
 
   const searchAndReplaceDropdownOptions: {
     label: string;
@@ -196,6 +196,7 @@ export const DevTools = observer(() => {
             ))}
           </select>
         </div>
+        <ImportDialog />
         <Button
           size={"sm"}
           style={{ maxWidth: "fit-content" }}
@@ -218,30 +219,9 @@ export const DevTools = observer(() => {
         >
           Export as JSON
         </Button>
-        <Button
-          size={"sm"}
-          style={{ maxWidth: "fit-content" }}
-          onClick={() => {
-            (fileInputRef.current! as HTMLInputElement).click();
-          }}
-        >
-          Import JSON
-        </Button>
-        <input
-          type="file"
-          accept=".json"
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={(event) => {
-            const file = event.target.files![0];
-            const reader = new FileReader();
-
-            reader.onload = (event) => {
-              const fileContent = event.target!.result;
-              graphStore.deserializeInPlace(JSON.parse(fileContent as string));
-            };
-
-            reader.readAsText(file);
+        <ClearData
+          onConfirm={() => {
+            graphStore.clear();
           }}
         />
       </div>
