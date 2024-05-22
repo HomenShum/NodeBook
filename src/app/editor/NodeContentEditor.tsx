@@ -84,7 +84,7 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
     <div
       ref={ref}
       className={cn(styles.EditorWrapper, view.showAtSignOnMention && styles.showAtSignPrefix)}
-      style={{ textIndent: indent, position: "relative", left: `-${indent}` }}
+      // style={{ textIndent: indent, position: "relative", left: `-${indent}` }}
     >
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin

@@ -464,7 +464,7 @@ const RelatedObjectEditor = observer(
           ) : (
             <span
               className="italic"
-              style={{ textIndent: indentationWidth, position: "relative", left: `-${indentationWidth}` }}
+              // style={{ textIndent: indentationWidth, position: "relative", left: `-${indentationWidth}` }}
             >
               {object.text}
             </span>
