@@ -259,13 +259,13 @@ export const RelatedObjectView = observer(
               <div className="flex flex-col flex-1 relative -top-[2px]">
                 <div className="flex w-full gap-1 items-baseline pb-2">
                   <HoverCard.Root>
-                    <HoverCard.Trigger className="z-50">
+                    <HoverCard.Trigger className="z-10">
                       {showRelationType ? <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} /> : null}
                     </HoverCard.Trigger>
                     <HoverCard.Portal>
                       <HoverCard.Content
                         align={"start"}
-                        className="bg-white border-gray-300 border p-2 rounded-md shadow"
+                        className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
                       >
                         <div>Connected objects:</div>
                         {object.connectedObjects().map((o) => (
@@ -286,7 +286,7 @@ export const RelatedObjectView = observer(
                       <HoverCard.Portal>
                         <HoverCard.Content
                           align={"start"}
-                          className="bg-white border-gray-300 border p-2 rounded-md shadow"
+                          className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
                         >
                           <div>
                             from:{" "}
