@@ -1,9 +1,3 @@
-import { Circle, Dot, Edit2, Ellipsis, GlobeIcon, Play } from "lucide-react";
-import { observer } from "mobx-react-lite";
-import { useViewController } from "../../controller/useViewController";
-import { NodeContentEditor } from "../../editor/NodeContentEditor";
-import { useGraphStore } from "../../store/useGraphStore";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,8 +17,14 @@ import {
   useCurView,
 } from "@/app/util";
 import { cn } from "@/lib/utils";
+import * as HoverCard from "@radix-ui/react-hover-card";
+import { Circle, Dot, Edit2, Ellipsis, GlobeIcon, Play } from "lucide-react";
 import { action } from "mobx";
+import { observer } from "mobx-react-lite";
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useViewController } from "../../controller/useViewController";
+import { NodeContentEditor } from "../../editor/NodeContentEditor";
+import { useGraphStore } from "../../store/useGraphStore";
 import styles from "../OutlineView.module.css";
 
 import { ViewType } from "@/app/controller/ViewController";
@@ -258,12 +258,53 @@ export const RelatedObjectView = observer(
               {/* relation and node */}
               <div className="flex flex-col flex-1 relative -top-[2px]">
                 <div className="flex w-full gap-1 items-baseline pb-2">
-                  {showRelationType ? <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} /> : null}
-                  {viewType === "replace" ? (
-                    <ReplaceRelatedNodeView />
-                  ) : (
-                    <RelatedObjectEditor isHovered={isHovered} indentationWidth={relationTypeTextWidth} />
-                  )}
+                  <HoverCard.Root>
+                    <HoverCard.Trigger className="z-50">
+                      {showRelationType ? <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} /> : null}
+                    </HoverCard.Trigger>
+                    <HoverCard.Portal>
+                      <HoverCard.Content
+                        align={"start"}
+                        className="bg-white border-gray-300 border p-2 rounded-md shadow"
+                      >
+                        <div>Connected objects:</div>
+                        {object.connectedObjects().map((o) => (
+                          <div key={o.id}>{o.text}</div>
+                        ))}
+                      </HoverCard.Content>
+                    </HoverCard.Portal>
+                  </HoverCard.Root>
+                  <HoverCard.Root>
+                    <HoverCard.Trigger>
+                      {viewType === "replace" ? (
+                        <ReplaceRelatedNodeView />
+                      ) : (
+                        <RelatedObjectEditor isHovered={isHovered} indentationWidth={relationTypeTextWidth} />
+                      )}
+                    </HoverCard.Trigger>
+                    {object instanceof GraphRelation && (
+                      <HoverCard.Portal>
+                        <HoverCard.Content
+                          align={"start"}
+                          className="bg-white border-gray-300 border p-2 rounded-md shadow"
+                        >
+                          <div>
+                            from:{" "}
+                            <span
+                              onClick={() => {
+                                router.push(`/outline${relationsToURLPath([object])}`);
+                              }}
+                            >
+                              {object.from.text}
+                            </span>
+                          </div>
+                          <div>
+                            to: <span>{object.to.text}</span>
+                          </div>
+                        </HoverCard.Content>
+                      </HoverCard.Portal>
+                    )}
+                  </HoverCard.Root>
                 </div>
                 {viewController.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
               </div>
