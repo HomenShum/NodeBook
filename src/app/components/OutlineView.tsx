@@ -55,11 +55,11 @@ export const OutlineView = observer(() => {
       <div className={s.OutlineContainer}>
         {path.length > 1 && (
           <div className={s.BreadcrumbContainer}>
-            {path.map(({ relation, child }, i) => {
+            {path.slice(0, -1).map(({ relation, child }, i) => {
               const isFirst = i === 0;
-              const isLast = i === path.length - 1;
+              const isSecondLast = i === path.length - 2;
 
-              if (isFirst || isLast) {
+              if (isFirst || isSecondLast) {
                 return (
                   <span
                     className={s.Breadcrumb}
@@ -93,7 +93,7 @@ export const OutlineView = observer(() => {
                           className={s.BreadcrumbMenuItem}
                           onSelect={() => {
                             if (curView !== ViewType.SPLIT) {
-                              router.push(`/outline${relationsToURLPath(relations.slice(0, i + 2))}`);
+                              router.push(`/outline${relationsToURLPath(relations.slice(0, index + 2))}`);
                             }
                           }}
                         >
@@ -125,7 +125,7 @@ export const OutlineView = observer(() => {
 
         <div className={s.TitleContainer}>
           {nodeAtPathEnd.id === graphStore.outlineRoot.id && <HomeIcon className={s.HomeIcon} size={20} />}
-          <h1 className={s.TitleText}>{truncateText(nodeAtPathEnd.text, 58)}</h1>
+          <h1 className={s.TitleText}>{truncateText(nodeAtPathEnd.text, 40)}</h1>
 
           <button className={s.AddButton} onClick={createChild}>
             <span className={s.AddButtonIcon}>+</span>

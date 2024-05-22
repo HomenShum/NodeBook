@@ -54,11 +54,10 @@ export const ThoughtstreamView = observer(() => {
       <div className={stylesStream.ContentSection}>
         {path.length > 1 && (
           <div className={stylesList.BreadcrumbContainer}>
-            {path.map(({ relation, child }, i) => {
+            {path.slice(0, -1).map(({ relation, child }, i) => {
               const isFirst = i === 0;
-              const isLast = i === path.length - 1;
-
-              if (isFirst || isLast) {
+              const isSecondLast = i === path.length - 2;
+              if (isFirst || isSecondLast) {
                 return (
                   <span
                     className={stylesList.Breadcrumb}
@@ -122,7 +121,7 @@ export const ThoughtstreamView = observer(() => {
         )}
         <div className={stylesList.TitleContainer}>
           {(curView === ViewType.SPLIT || path.length > 1) && (
-            <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 20)}</h1>
+            <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 40)}</h1>
           )}
           <button className={stylesList.AddButton} onClick={createChild}>
             <span className={stylesList.AddButtonIcon}>+</span>
