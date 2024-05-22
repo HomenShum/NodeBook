@@ -917,6 +917,56 @@ export class GraphStore {
     this.relationToBundles = relationToBundles;
     this.correspondingObjectsForPinned = correspondingObjectsForPinned;
     this.correspondingPinnedForObjects = correspondingPinnedForObjects;
+
+    const outlineRoot = this.nodesById.get(OUTLINE_ROOT_ID);
+    if (outlineRoot) {
+      this.outlineRoot = outlineRoot;
+    } else {
+      this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
+    }
+
+    const userRoot = this.nodesById.get(USER_ROOT_ID);
+    if (userRoot) {
+      this.userRoot = userRoot;
+    } else {
+      this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
+    }
+
+    const thoughtstreamRoot = this.nodesById.get(THOUGHTSTREAM_ROOT_ID);
+    if (thoughtstreamRoot) {
+      this.thoughtstreamRoot = thoughtstreamRoot;
+    } else {
+      this.thoughtstreamRoot = this.createNode({
+        id: THOUGHTSTREAM_ROOT_ID,
+        content: [{ type: "text", value: "Stream" }],
+      });
+    }
+
+    const outlineRootRelationFromUserRoot = this.getRelationList(this.outlineRoot)
+      .values()
+      .find((r) => r.item.from.id === this.userRoot.id);
+    if (outlineRootRelationFromUserRoot) {
+      this.outlineRootRelationFromUserRoot = outlineRootRelationFromUserRoot.item;
+    } else {
+      this.outlineRootRelationFromUserRoot = this.createRelation({
+        from: this.userRoot,
+        to: this.outlineRoot,
+        relationType: this.relationTypesById.child,
+      });
+    }
+
+    const thoughtstreamRootRelationFromUserRoot = this.getRelationList(this.thoughtstreamRoot)
+      .values()
+      .find((r) => r.item.from.id === this.userRoot.id);
+    if (thoughtstreamRootRelationFromUserRoot) {
+      this.thoughtstreamRootRelationFromUserRoot = thoughtstreamRootRelationFromUserRoot.item;
+    } else {
+      this.thoughtstreamRootRelationFromUserRoot = this.createRelation({
+        from: this.userRoot,
+        to: this.thoughtstreamRoot,
+        relationType: this.relationTypesById.child,
+      });
+    }
   }
 
   deserializeAndMerge(data: SerializedGraphStore) {
