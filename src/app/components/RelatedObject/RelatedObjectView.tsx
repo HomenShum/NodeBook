@@ -267,10 +267,16 @@ export const RelatedObjectView = observer(
                         align={"start"}
                         className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
                       >
-                        <div>Connected objects:</div>
-                        {object.connectedObjects().map((o) => (
-                          <div key={o.id}>{o.text}</div>
-                        ))}
+                        {relation.connectedObjects().length > 0 ? (
+                          <>
+                            <div>Connected objects:</div>
+                            {relation.connectedObjects().map((o) => (
+                              <div key={o.id}>{o.text}</div>
+                            ))}
+                          </>
+                        ) : (
+                          <div>No connected objects</div>
+                        )}
                       </HoverCard.Content>
                     </HoverCard.Portal>
                   </HoverCard.Root>
