@@ -452,7 +452,7 @@ const RelatedObjectEditor = observer(
       >
         <div className="flex flex-col flex-1">
           {object instanceof GraphNode ? (
-            <div className="flex ">
+            <div className="flex min-w-64">
               <NodeContentEditor indent={indentationWidth} />
               {treatAsLink && isHovered && (
                 <button
