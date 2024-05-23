@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import s from "./app.module.css";
 import { SearchBar } from "./components/SearchBar/SearchBar";
+import SidebarTree from "./components/SidebarTree";
 import { DevTools } from "./components/dev/DevTools";
 import { NodeTable } from "./components/dev/NodeTable";
 import { RelationTable } from "./components/dev/RelationTable";
@@ -50,6 +51,7 @@ export default observer(
             {/* for now keeping this as tailwind bc it handles wisely the gaps in both axis */}
             <div className="flex items-start flex-col w-full gap-x-2 gap-y-1 py-1">
               <ButtonNavigation />
+              <SidebarTree />
             </div>
           </aside>
 
