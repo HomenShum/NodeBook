@@ -3,6 +3,7 @@ import { makeAutoObservable } from "mobx";
 import { JUMP_TO_START } from "../editor/plugins/JumpSelectionPluigin";
 import { GraphRelation } from "../model/GraphRelation";
 import { GraphStore, Path } from "../model/GraphStore";
+import { SettingsStore } from "../model/SettingsStore";
 import { Box } from "../selection/utils";
 import { makeAutoSaving, relationsPathToParentChild, relationsToPathStr } from "../util";
 
@@ -19,6 +20,7 @@ interface ChildNodeOptions {
 }
 
 export class ViewController {
+  private settingsStore: SettingsStore;
   private graphStore: GraphStore;
 
   public focusedNode: Path | null = null;
@@ -33,56 +35,26 @@ export class ViewController {
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
 
-  // Dev bar toggles
-  public showNodeDetails = false;
-  public hideDirectParent = true;
-  public hideAllRootParents = true;
-  public hideAllParents = false;
-  public hideBackrelations = false;
-  public hideBundles = true;
-  public hideZones = false;
-  public showAtSignOnMention = true;
-  public hideThoughtstreamBullets = true;
-  public hideBulletBackgroundIfParentsOnly = true;
-  public searchAndReplaceDropdown: "labelled-only" | "all" | "none" = "labelled-only";
-  public disableCycles = true;
-  public atSignTriggerToReplaceObject = false;
-  public addStreamLabeledRelationsToMyLists = true;
-  public allowShiftTabAboveViewRoot = false;
-
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
 
   public currentOutlineViewRoot: GraphRelation[] | null = null;
   public currentStreamViewRoot: GraphRelation[] | null = null;
 
-  constructor(graphStore: GraphStore) {
+  constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
+    this.settingsStore = settingsStore;
     this.graphStore = graphStore;
     this.currentOutlineViewRoot = [graphStore.outlineRootRelationFromUserRoot];
     this.currentStreamViewRoot = [graphStore.thoughtstreamRootRelationFromUserRoot];
     makeAutoObservable(this);
     makeAutoSaving(this, {
-      showNodeDetails: true,
       leftSidebarOpen: true,
       rightSidebarOpen: true,
-      hideDirectParent: true,
     });
-  }
-
-  setAtSignTriggerToReplaceObject(value: boolean) {
-    this.atSignTriggerToReplaceObject = value;
   }
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
-  }
-
-  setSearchAndReplaceDropdown(value: "labelled-only" | "all" | "none") {
-    this.searchAndReplaceDropdown = value;
-  }
-
-  setShowAtSignOnMention(show: boolean) {
-    this.showAtSignOnMention = show;
   }
 
   setCurrentStreamViewRoot(root: GraphRelation[] | null) {
@@ -91,18 +63,6 @@ export class ViewController {
 
   setCurrentOutlineViewRoot(root: GraphRelation[] | null) {
     this.currentOutlineViewRoot = root;
-  }
-
-  setAddStreamLabeledRelationsToMyLists(value: boolean) {
-    this.addStreamLabeledRelationsToMyLists = value;
-  }
-
-  setDisableCycles(value: boolean) {
-    this.disableCycles = value;
-  }
-
-  setAllowShiftTabAboveViewRoot(value: boolean) {
-    this.allowShiftTabAboveViewRoot = value;
   }
 
   toggleLeftSidebar() {
@@ -146,42 +106,6 @@ export class ViewController {
     this.hoveredNode = path;
   }
 
-  setShowNodeDetails(show: boolean) {
-    this.showNodeDetails = show;
-  }
-
-  setHideDirectParent(show: boolean) {
-    this.hideDirectParent = show;
-  }
-
-  setHideAllRootParents(show: boolean) {
-    this.hideAllRootParents = show;
-  }
-
-  setHideAllParents(show: boolean) {
-    this.hideAllParents = show;
-  }
-
-  setHideBackrelations(show: boolean) {
-    this.hideBackrelations = show;
-  }
-
-  setHideBundles(show: boolean) {
-    this.hideBundles = show;
-  }
-
-  setHideZones(show: boolean) {
-    this.hideZones = show;
-  }
-
-  setHideThoughtstreamBullets(hide: boolean) {
-    this.hideThoughtstreamBullets = hide;
-  }
-
-  setHideBulletBackgroundIfParentsOnly(hide: boolean) {
-    this.hideBulletBackgroundIfParentsOnly = hide;
-  }
-
   registerEditor(pathStr: Path, editor: LexicalEditor) {
     this.editorsByPath.set(pathStr, editor);
   }
@@ -199,7 +123,7 @@ export class ViewController {
       this.setFocusedNode(relationsToPathStr([...this.currentOutlineViewRoot!, relation]));
     }
 
-    if (this.graphStore.addAllOutlineDescendantsToThoughtstream) {
+    if (this.settingsStore.addAllOutlineDescendantsToThoughtstream) {
       this.graphStore.addToThoughtstream(node);
     }
 
@@ -215,7 +139,7 @@ export class ViewController {
       );
     }
 
-    if (ensureInOutline || this.graphStore.addThoughstreamDirectChildrenToOutline) {
+    if (ensureInOutline || this.settingsStore.addThoughtstreamDirectChildrenToOutline) {
       this.graphStore.createRelation({
         from: this.graphStore.outlineRoot,
         to: node,

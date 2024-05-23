@@ -24,11 +24,12 @@ import { observer } from "mobx-react-lite";
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useViewController } from "../../controller/useViewController";
 import { NodeContentEditor } from "../../editor/NodeContentEditor";
-import { useGraphStore } from "../../store/useGraphStore";
+import { useGraphStore } from "../../model/useGraphStore";
 import styles from "../OutlineView.module.css";
 
 import { ViewType } from "@/app/controller/ViewController";
 import { GraphObject } from "@/app/model/GraphObject";
+import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { useRouter } from "next/navigation";
 import { PinCustom } from "../icons/icons";
 import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
@@ -71,6 +72,7 @@ export const RelatedObjectView = observer(
     siblingBelow?: GraphRelation;
     searchResult?: Map<string, SearchResult>;
   }) => {
+    const settingsStore = useSettingsStore();
     const viewController = useViewController();
     const graphStore = useGraphStore();
 
@@ -90,7 +92,7 @@ export const RelatedObjectView = observer(
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
     const [searchExpansion, setSearchExpansion] = useState(false);
-    const children = getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false);
+    const children = getFilteredChildrenAtPath(pathObjects, settingsStore, searchResult, false);
     const hasChildren = children.length > 0;
     useEffect(() => {
       if (!hasChildren) {
@@ -184,7 +186,7 @@ export const RelatedObjectView = observer(
               className={cn(
                 styles.OutlineObjectContent,
                 !object.isPrivate &&
-                  viewController.hideThoughtstreamBullets &&
+                  settingsStore.hideThoughtstreamBullets &&
                   parent === graphStore.thoughtstreamRoot &&
                   styles.OutlineObjectContentPublic,
               )}
@@ -195,7 +197,7 @@ export const RelatedObjectView = observer(
               {/* toggle, bullet, menu */}
               <div className="flex items-center gap-1 absolute right-full">
                 <div className="flex items-center gap-1">
-                  {hasChildren && (objectCount === 1 || !viewController.disableCycles) && isHovered && (
+                  {hasChildren && (objectCount === 1 || !settingsStore.disableCycles) && isHovered && (
                     <Toggle
                       isSearching={!!searchResult}
                       searchExpansion={searchExpansion}
@@ -212,7 +214,7 @@ export const RelatedObjectView = observer(
                 )}
 
                 {!object.isPrivate &&
-                  viewController.hideThoughtstreamBullets &&
+                  settingsStore.hideThoughtstreamBullets &&
                   parent === graphStore.thoughtstreamRoot && (
                     <div className="relative right-[6px] pl-1  translate-y-[0.5px] flex text-[--teal-7] bg-white">
                       <GlobeIcon size={12} strokeWidth={2} />
@@ -223,13 +225,13 @@ export const RelatedObjectView = observer(
               <div
                 className={cn(
                   "w-4 relative right-2 h-4 flex",
-                  viewController.hideThoughtstreamBullets && parent === graphStore.thoughtstreamRoot && "hidden",
+                  settingsStore.hideThoughtstreamBullets && parent === graphStore.thoughtstreamRoot && "hidden",
                 )}
               >
                 {hasChildren &&
                   !showChildren &&
-                  (objectCount === 1 || !viewController.disableCycles) &&
-                  (!viewController.hideBulletBackgroundIfParentsOnly || hasNewChildren) && (
+                  (objectCount === 1 || !settingsStore.disableCycles) &&
+                  (!settingsStore.hideBulletBackgroundIfParentsOnly || hasNewChildren) && (
                     <Dot
                       stroke={!object.isPrivate ? "var(--teal-4)" : "var(--gray-4)"}
                       height={16}
@@ -312,7 +314,7 @@ export const RelatedObjectView = observer(
                     )}
                   </HoverCard.Root>
                 </div>
-                {viewController.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
+                {settingsStore.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
               </div>
               {object.relations.length > 1 && (
                 <div className="relative h-6 bg-[--gray-1] text-[--gray-8] px-1">{object.relations.length - 1}</div>

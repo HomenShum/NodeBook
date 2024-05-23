@@ -14,7 +14,7 @@ import { useViewController } from "../../controller/useViewController";
 import { GraphNode } from "../../model/GraphNode";
 import { GraphObject } from "../../model/GraphObject";
 import { $createMentionNode } from "../../model/MentionNode";
-import { useGraphStore } from "../../store/useGraphStore";
+import { useGraphStore } from "../../model/useGraphStore";
 import styles from "./MentionPlugin.module.css";
 
 // Much of this implementation is copied from:

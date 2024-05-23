@@ -9,7 +9,7 @@ import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { GraphRelationType } from "../../model/GraphRelation";
-import { useGraphStore } from "../../store/useGraphStore";
+import { useGraphStore } from "../../model/useGraphStore";
 import { useRelationAtPath } from "./RelatedObjectContext";
 
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>

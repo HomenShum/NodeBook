@@ -14,7 +14,8 @@ import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectCont
 import { useViewController } from "../controller/useViewController";
 import { GraphNode } from "../model/GraphNode";
 import { MentionNode } from "../model/MentionNode";
-import { useGraphStore } from "../store/useGraphStore";
+import { useGraphStore } from "../model/useGraphStore";
+import { useSettingsStore } from "../model/useSettingsStore";
 import styles from "./Editor.module.css";
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { JumpSelectionPlugin } from "./plugins/JumpSelectionPluigin";
@@ -39,6 +40,7 @@ const onError = (error: any) => {
 };
 
 export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
+  const settingsStore = useSettingsStore();
   const view = useViewController();
   const graphStore = useGraphStore();
   const { object: node, relation, pathToNodeStr, pathToParentRelations, isChild, viewType } = useRelationAtPath();
@@ -79,11 +81,12 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
 
   const showSearchAndReplaceDropdown =
     !mentionDropdownOpen &&
-    (view.searchAndReplaceDropdown === "all" || (view.searchAndReplaceDropdown === "labelled-only" && !isChild));
+    (settingsStore.searchAndReplaceDropdown === "all" ||
+      (settingsStore.searchAndReplaceDropdown === "labelled-only" && !isChild));
   return (
     <div
       ref={ref}
-      className={cn(styles.EditorWrapper, view.showAtSignOnMention && styles.showAtSignPrefix)}
+      className={cn(styles.EditorWrapper, settingsStore.showAtSignOnMention && styles.showAtSignPrefix)}
       // style={{ textIndent: indent, position: "relative", left: `-${indent}` }}
     >
       <LexicalComposer initialConfig={initialConfig}>

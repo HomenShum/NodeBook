@@ -6,7 +6,7 @@ import { $getRoot, $setSelection, EditorState, ParagraphNode } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect } from "react";
 import { GraphNode } from "../../model/GraphNode";
-import { useGraphStore } from "../../store/useGraphStore";
+import { useGraphStore } from "../../model/useGraphStore";
 import { $getChips, createParagraphMatchingGraphNode, graphNodeMatchesParagraph } from "../utils";
 import { checkForMentionMatch } from "./MentionPlugin";
 

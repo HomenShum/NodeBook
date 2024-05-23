@@ -3,7 +3,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { Button } from "@/app/components/ui/button";
 
-import { useGraphStore } from "@/app/store/useGraphStore";
+import { useGraphStore } from "@/app/model/useGraphStore";
 import { ConfirmReplace } from "./ConfirmReplace";
 import styles from "./DataDialog.module.css";
 

@@ -1,13 +1,15 @@
+import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
 import { useViewController } from "../../controller/useViewController";
 import { GraphNode } from "../../model/GraphNode";
-import { useGraphStore } from "../../store/useGraphStore";
+import { useGraphStore } from "../../model/useGraphStore";
 import { $getChips, $getText, getSelectionPositions } from "../utils";
 
 export const RelationPlugin = () => {
+  const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const viewController = useViewController();
   const [editor] = useLexicalComposerContext();
@@ -40,7 +42,7 @@ export const RelationPlugin = () => {
         }
 
         const parent = relation.to.id === object.id ? relation.from : relation.to;
-        if (viewController.addStreamLabeledRelationsToMyLists && parent === graphStore.thoughtstreamRoot) {
+        if (settingsStore.addStreamLabeledRelationsToMyLists && parent === graphStore.thoughtstreamRoot) {
           graphStore.createRelation({
             from: graphStore.thoughtstreamRoot,
             to: object,
@@ -58,6 +60,6 @@ export const RelationPlugin = () => {
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [graphStore, viewController, editor, object, relation, pathToNodeStr]);
+  }, [graphStore, settingsStore, viewController, editor, object, relation, pathToNodeStr]);
   return null;
 };

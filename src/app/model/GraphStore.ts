@@ -8,6 +8,7 @@ import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { isPlaceholder } from "./PlaceholderGraphObject";
 import { SerializedGraphStore } from "./SerializedData";
+import { SettingsStore } from "./SettingsStore";
 import { serializeMap, serializeMapWithArrayValues } from "./serialization";
 
 export const defaultRelationTypes = {
@@ -34,6 +35,8 @@ export type Path = string;
 export type PathData = { isExpanded: boolean };
 
 export class GraphStore {
+  private settingsStore: SettingsStore;
+
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
   relationTypesById: Record<string, GraphRelationType> = {};
@@ -57,16 +60,8 @@ export class GraphStore {
 
   isLoading = false;
 
-  /** Add outline descendants which are direct children of outline to outline */
-  addThoughstreamDirectChildrenToOutline = false;
-  /** Add thoughtstream descendants which are direct children of thoughtstream to thoughtstream */
-  addAllOutlineDescendantsToThoughtstream = true;
-  /** Add thoughtstream descendants which are not direct children of thoughtstream as direct children of thoughtstream */
-  addThoughtstreamNestedChildrenToThoughtstream = false;
-  /** When enabled, removing a node as a direct child of a thoughtstream will delete it */
-  removingNodeAsDirectChildOfThoughtstreamDeletesIt = false;
-
-  constructor() {
+  constructor(settingsStore: SettingsStore) {
+    this.settingsStore = settingsStore;
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
     this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
@@ -179,22 +174,6 @@ export class GraphStore {
     this.pathData.set(path, { isExpanded });
   }
 
-  setAddThoughtstreamDirectChildrenToOutline(value: boolean) {
-    this.addThoughstreamDirectChildrenToOutline = value;
-  }
-
-  setAddAllOutlineDescendantsToThoughtstream(value: boolean) {
-    this.addAllOutlineDescendantsToThoughtstream = value;
-  }
-
-  setAddThoughtstreamNestedChildrenToThoughstream(value: boolean) {
-    this.addThoughtstreamNestedChildrenToThoughtstream = value;
-  }
-
-  setRemovingNodeAsDirectChildOfThoughtstreamDeletesIt(value: boolean) {
-    this.removingNodeAsDirectChildOfThoughtstreamDeletesIt = value;
-  }
-
   get nodes(): GraphNode[] {
     return Array.from(this.nodesById.values());
   }
@@ -271,8 +250,8 @@ export class GraphStore {
    */
   addElsewhereAfterCreate(obj: GraphObject, parent: GraphObject, root: GraphObject) {
     if (
-      (this.addThoughtstreamNestedChildrenToThoughtstream && root.id === this.thoughtstreamRoot.id) ||
-      (this.addThoughstreamDirectChildrenToOutline && parent.id === this.thoughtstreamRoot.id)
+      (this.settingsStore.addThoughtstreamNestedChildrenToThoughtstream && root.id === this.thoughtstreamRoot.id) ||
+      (this.settingsStore.addThoughtstreamDirectChildrenToOutline && parent.id === this.thoughtstreamRoot.id)
     ) {
       this.createRelation({
         from: this.outlineRoot,
@@ -281,7 +260,7 @@ export class GraphStore {
       });
     }
     // Add to thoughtstream if necessary
-    if (this.addAllOutlineDescendantsToThoughtstream && root.id === this.outlineRoot.id) {
+    if (this.settingsStore.addAllOutlineDescendantsToThoughtstream && root.id === this.outlineRoot.id) {
       this.addToThoughtstream(obj);
     }
   }

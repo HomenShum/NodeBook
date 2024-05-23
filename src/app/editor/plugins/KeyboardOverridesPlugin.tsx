@@ -1,3 +1,4 @@
+import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
@@ -20,10 +21,11 @@ import { useEffect } from "react";
 import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
 import { useViewController } from "../../controller/useViewController";
 import { GraphNode } from "../../model/GraphNode";
-import { useGraphStore } from "../../store/useGraphStore";
+import { useGraphStore } from "../../model/useGraphStore";
 import { relationsToPathStr } from "../../util";
 
 export const KeyboardOverridesPlugin = () => {
+  const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const viewController = useViewController();
   const [editor] = useLexicalComposerContext();
@@ -67,7 +69,7 @@ export const KeyboardOverridesPlugin = () => {
       }
 
       if (
-        !viewController.allowShiftTabAboveViewRoot &&
+        !settingsStore.allowShiftTabAboveViewRoot &&
         visibleRootRelations &&
         visibleRootRelations.length == pathToParentNodes.length
       ) {
@@ -187,7 +189,7 @@ export const KeyboardOverridesPlugin = () => {
         (event) => {
           const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
           if (event.key === "@" && object.text === "") {
-            if (viewController.atSignTriggerToReplaceObject) {
+            if (settingsStore.atSignTriggerToReplaceObject) {
               // When user types "@" at the beginning of a bullet, we set it to
               // replacing mode, where you can select a different node for the
               // bullet to represent.
@@ -404,6 +406,7 @@ export const KeyboardOverridesPlugin = () => {
     );
   }, [
     editor,
+    settingsStore,
     graphStore,
     pathToParentRelations,
     relation,

@@ -1,7 +1,7 @@
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useViewController } from "@/app/controller/useViewController";
 import { GraphNode } from "@/app/model/GraphNode";
-import { useGraphStore } from "@/app/store/useGraphStore";
+import { useGraphStore } from "@/app/model/useGraphStore";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_LOW, PASTE_COMMAND } from "lexical";
 import { useEffect } from "react";

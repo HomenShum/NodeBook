@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { useGraphStore } from "../../store/useGraphStore";
+import { useGraphStore } from "../../model/useGraphStore";
 
 export const RelationTypeTable = observer(() => {
   const graph = useGraphStore();

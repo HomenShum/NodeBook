@@ -1,6 +1,6 @@
 "use client";
 import { useViewController } from "@/app/controller/useViewController";
-import { useGraphStore } from "@/app/store/useGraphStore";
+import { useGraphStore } from "@/app/model/useGraphStore";
 import { relationsPathToParentChild } from "@/app/util";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";

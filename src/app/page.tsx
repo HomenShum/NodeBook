@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import { useViewController } from "./controller/useViewController";
-import { useGraphStore } from "./store/useGraphStore";
+import { useGraphStore } from "./model/useGraphStore";
 
 const OutlineView = dynamic(() => import("./components/OutlineView").then((x) => x.OutlineView), {
   ssr: false,

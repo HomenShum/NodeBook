@@ -1,5 +1,5 @@
 "use client";
-import { toJS } from "mobx";
+import { autorun, toJS } from "mobx";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { ViewController } from "./controller/ViewController";
@@ -7,15 +7,24 @@ import { ViewControllerProvider } from "./controller/useViewController";
 import { env } from "./envFrontend";
 import "./global.css";
 import { GraphStore } from "./model/GraphStore";
-import { GraphStoreProvider } from "./store/useGraphStore";
+import { SettingsStore } from "./model/SettingsStore";
+import { GraphStoreProvider } from "./model/useGraphStore";
+import { SettingsStoreProvider } from "./model/useSettingsStore";
 import { useCurView } from "./util";
+
 const App = dynamic(() => import("./App"), {
   ssr: false,
 });
 
 // Initialize stores
-const graphStore = new GraphStore();
-const viewController = new ViewController(graphStore);
+const settingsStore = new SettingsStore();
+settingsStore.loadFromLocalStorage();
+const graphStore = new GraphStore(settingsStore);
+const viewController = new ViewController(settingsStore, graphStore);
+
+autorun(() => {
+  settingsStore.saveToLocalStorage();
+});
 
 // Expose stores to the window for debugging
 if (typeof window !== "undefined" && env.env !== "production") {
@@ -27,7 +36,7 @@ if (typeof window !== "undefined" && env.env !== "production") {
   };
 }
 
-function persistData(dataString: string) {
+function persistGraphData(dataString: string) {
   if (env.persistTo === "local") {
     localStorage.setItem("data", dataString);
   } else if (env.persistTo === "server") {
@@ -43,7 +52,7 @@ function persistData(dataString: string) {
   }
 }
 
-async function loadData() {
+async function loadGraphData() {
   let dataString: string | null = null;
   if (env.persistTo === "local") {
     dataString = localStorage.getItem("data");
@@ -76,7 +85,7 @@ export default function RootTemplate({
       return;
     }
     async function setupSync() {
-      const data = await loadData();
+      const data = await loadGraphData();
       if (data !== null) {
         graphStore.deserializeInPlace(data);
       }
@@ -85,7 +94,7 @@ export default function RootTemplate({
         const newDataString = JSON.stringify(graphStore.serialize());
         if (newDataString !== persistedData.current) {
           persistedData.current = newDataString;
-          persistData(newDataString);
+          persistGraphData(newDataString);
         }
       }, 500);
     }
@@ -94,13 +103,15 @@ export default function RootTemplate({
 
   return (
     <html>
-      <GraphStoreProvider value={graphStore}>
-        <ViewControllerProvider value={viewController}>
-          <body>
-            <App curView={curView}>{children}</App>
-          </body>
-        </ViewControllerProvider>
-      </GraphStoreProvider>
+      <SettingsStoreProvider value={settingsStore}>
+        <GraphStoreProvider value={graphStore}>
+          <ViewControllerProvider value={viewController}>
+            <body>
+              <App curView={curView}>{children}</App>
+            </body>
+          </ViewControllerProvider>
+        </GraphStoreProvider>
+      </SettingsStoreProvider>
     </html>
   );
 }

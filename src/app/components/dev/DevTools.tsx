@@ -1,17 +1,19 @@
 import { useViewController } from "@/app/controller/useViewController";
-import { useGraphStore } from "@/app/store/useGraphStore";
+import { useGraphStore } from "@/app/model/useGraphStore";
+import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { observer } from "mobx-react-lite";
 import { ClearData } from "../DataDialog/ClearData";
 import { ImportDialog } from "../DataDialog/ImportDialog";
 import { Button } from "../ui/button";
 
 export const DevTools = observer(() => {
+  const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const viewController = useViewController();
 
   const searchAndReplaceDropdownOptions: {
     label: string;
-    value: typeof viewController.searchAndReplaceDropdown;
+    value: typeof settingsStore.searchAndReplaceDropdown;
   }[] = [
     { label: "Only after labelled relations", value: "labelled-only" },
     { label: "All", value: "all" },
@@ -24,8 +26,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer">
           <input
             type="checkbox"
-            checked={viewController.showNodeDetails}
-            onChange={(e) => viewController.setShowNodeDetails(e.target.checked)}
+            checked={settingsStore.showNodeDetails}
+            onChange={(e) => settingsStore.setShowNodeDetails(e.target.checked)}
             className="mr-2 mb-2"
           />
           Show node details in view
@@ -33,8 +35,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewController.hideDirectParent}
-            onChange={(e) => viewController.setHideDirectParent(e.target.checked)}
+            checked={settingsStore.hideDirectParent}
+            onChange={(e) => settingsStore.setHideDirectParent(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide relations to direct parent
@@ -42,8 +44,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewController.hideAllRootParents}
-            onChange={(e) => viewController.setHideAllRootParents(e.target.checked)}
+            checked={settingsStore.hideAllRootParents}
+            onChange={(e) => settingsStore.setHideAllRootParents(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide all root parents
@@ -51,8 +53,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewController.hideAllParents}
-            onChange={(e) => viewController.setHideAllParents(e.target.checked)}
+            checked={settingsStore.hideAllParents}
+            onChange={(e) => settingsStore.setHideAllParents(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide all parents
@@ -60,8 +62,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewController.hideBackrelations}
-            onChange={(e) => viewController.setHideBackrelations(e.target.checked)}
+            checked={settingsStore.hideBackrelations}
+            onChange={(e) => settingsStore.setHideBackrelations(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide backrelations
@@ -69,8 +71,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewController.hideBundles}
-            onChange={(e) => viewController.setHideBundles(e.target.checked)}
+            checked={settingsStore.hideBundles}
+            onChange={(e) => settingsStore.setHideBundles(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide bundles
@@ -78,8 +80,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewController.hideZones}
-            onChange={(e) => viewController.setHideZones(e.target.checked)}
+            checked={settingsStore.hideZones}
+            onChange={(e) => settingsStore.setHideZones(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide zones
@@ -87,8 +89,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewController.showAtSignOnMention}
-            onChange={(e) => viewController.setShowAtSignOnMention(e.target.checked)}
+            checked={settingsStore.showAtSignOnMention}
+            onChange={(e) => settingsStore.setShowAtSignOnMention(e.target.checked)}
             className="mr-2 mb-2"
           />
           Show @ sign on mention
@@ -96,8 +98,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={graphStore.addAllOutlineDescendantsToThoughtstream}
-            onChange={(e) => graphStore.setAddAllOutlineDescendantsToThoughtstream(e.target.checked)}
+            checked={settingsStore.addAllOutlineDescendantsToThoughtstream}
+            onChange={(e) => settingsStore.setAddAllOutlineDescendantsToThoughtstream(e.target.checked)}
             className="mr-2 mb-2"
           />
           Add all outline descendants to thoughtstream
@@ -105,8 +107,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={graphStore.addThoughstreamDirectChildrenToOutline}
-            onChange={(e) => graphStore.setAddThoughtstreamDirectChildrenToOutline(e.target.checked)}
+            checked={settingsStore.addThoughtstreamDirectChildrenToOutline}
+            onChange={(e) => settingsStore.setAddThoughtstreamDirectChildrenToOutline(e.target.checked)}
             className="mr-2 mb-2"
           />
           Add thoughtstream direct children to outline
@@ -114,8 +116,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={graphStore.addThoughtstreamNestedChildrenToThoughtstream}
-            onChange={(e) => graphStore.setAddThoughtstreamNestedChildrenToThoughstream(e.target.checked)}
+            checked={settingsStore.addThoughtstreamNestedChildrenToThoughtstream}
+            onChange={(e) => settingsStore.setAddThoughtstreamNestedChildrenToThoughtstream(e.target.checked)}
             className="mr-2 mb-2"
           />
           Add thoughtstream nested children as direct children of thoughtstream
@@ -123,8 +125,8 @@ export const DevTools = observer(() => {
         <label>
           <input
             type="checkbox"
-            checked={viewController.hideThoughtstreamBullets}
-            onChange={(e) => viewController.setHideThoughtstreamBullets(e.target.checked)}
+            checked={settingsStore.hideThoughtstreamBullets}
+            onChange={(e) => settingsStore.setHideThoughtstreamBullets(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide bullets in thoughtstream view
@@ -132,8 +134,8 @@ export const DevTools = observer(() => {
         <label>
           <input
             type="checkbox"
-            checked={viewController.addStreamLabeledRelationsToMyLists}
-            onChange={(e) => viewController.setAddStreamLabeledRelationsToMyLists(e.target.checked)}
+            checked={settingsStore.addStreamLabeledRelationsToMyLists}
+            onChange={(e) => settingsStore.setAddStreamLabeledRelationsToMyLists(e.target.checked)}
             className="mr-2 mb-2"
           />
           Add stream labeled relations to My Lists
@@ -141,8 +143,8 @@ export const DevTools = observer(() => {
         <label>
           <input
             type="checkbox"
-            checked={viewController.allowShiftTabAboveViewRoot}
-            onChange={(e) => viewController.setAllowShiftTabAboveViewRoot(e.target.checked)}
+            checked={settingsStore.allowShiftTabAboveViewRoot}
+            onChange={(e) => settingsStore.setAllowShiftTabAboveViewRoot(e.target.checked)}
             className="mr-2 mb-2"
           />
           Allow shift tab above view root
@@ -150,8 +152,8 @@ export const DevTools = observer(() => {
         <label>
           <input
             type="checkbox"
-            checked={viewController.disableCycles}
-            onChange={(e) => viewController.setDisableCycles(e.target.checked)}
+            checked={settingsStore.disableCycles}
+            onChange={(e) => settingsStore.setDisableCycles(e.target.checked)}
             className="mr-2 mb-2"
           />
           Disable expanding cycles
@@ -159,8 +161,8 @@ export const DevTools = observer(() => {
         <label>
           <input
             type="checkbox"
-            checked={viewController.hideBulletBackgroundIfParentsOnly}
-            onChange={(e) => viewController.setHideBulletBackgroundIfParentsOnly(e.target.checked)}
+            checked={settingsStore.hideBulletBackgroundIfParentsOnly}
+            onChange={(e) => settingsStore.setHideBulletBackgroundIfParentsOnly(e.target.checked)}
             className="mr-2 mb-2"
           />
           Hide bullet backgrounds if it contains only parents
@@ -168,8 +170,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={graphStore.removingNodeAsDirectChildOfThoughtstreamDeletesIt}
-            onChange={(e) => graphStore.setRemovingNodeAsDirectChildOfThoughtstreamDeletesIt(e.target.checked)}
+            checked={settingsStore.removingNodeAsDirectChildOfThoughtstreamDeletesIt}
+            onChange={(e) => settingsStore.setRemovingNodeAsDirectChildOfThoughtstreamDeletesIt(e.target.checked)}
             className="mr-2 mb-2"
           />
           On removing node as direct child of thoughtstream, delete the node everywhere
@@ -177,8 +179,8 @@ export const DevTools = observer(() => {
         <label className="cursor-pointer mb-2">
           <input
             type="checkbox"
-            checked={viewController.atSignTriggerToReplaceObject}
-            onChange={(e) => viewController.setAtSignTriggerToReplaceObject(e.target.checked)}
+            checked={settingsStore.atSignTriggerToReplaceObject}
+            onChange={(e) => settingsStore.setAtSignTriggerToReplaceObject(e.target.checked)}
             className="mr-2 mb-2"
           />
           Enable @ sign to trigger replacing current object
@@ -186,8 +188,8 @@ export const DevTools = observer(() => {
         <div className="flex gap-2">
           <label>Search and replace dropdown:</label>
           <select
-            value={viewController.searchAndReplaceDropdown}
-            onChange={(e) => viewController.setSearchAndReplaceDropdown(e.target.value as any)} // TODO "as any" bad
+            value={settingsStore.searchAndReplaceDropdown}
+            onChange={(e) => settingsStore.setSearchAndReplaceDropdown(e.target.value as any)} // TODO "as any" bad
           >
             {searchAndReplaceDropdownOptions.map((option) => (
               <option key={option.value} value={option.value}>
@@ -196,6 +198,7 @@ export const DevTools = observer(() => {
             ))}
           </select>
         </div>
+        <hr />
         <ImportDialog />
         <Button
           size={"sm"}
@@ -224,6 +227,16 @@ export const DevTools = observer(() => {
             graphStore.clear();
           }}
         />
+        <hr />
+        <Button
+          size={"sm"}
+          style={{ maxWidth: "fit-content" }}
+          onClick={() => {
+            settingsStore.resetToDefaults();
+          }}
+        >
+          Reset user setttings to default
+        </Button>
       </div>
     </div>
   );

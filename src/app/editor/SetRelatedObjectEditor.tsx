@@ -28,7 +28,7 @@ import {
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
-import { useGraphStore } from "../store/useGraphStore";
+import { useGraphStore } from "../model/useGraphStore";
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";

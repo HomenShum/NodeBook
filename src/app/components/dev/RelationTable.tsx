@@ -1,5 +1,5 @@
 import { GraphObject } from "@/app/model/GraphObject";
-import { useGraphStore } from "@/app/store/useGraphStore";
+import { useGraphStore } from "@/app/model/useGraphStore";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";

@@ -1,14 +1,14 @@
-import { ViewController } from "@/app/controller/ViewController";
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphObject } from "@/app/model/GraphObject";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
+import { SettingsStore } from "@/app/model/SettingsStore";
+import { useGraphStore } from "@/app/model/useGraphStore";
+import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { SearchResult } from "@/app/store/search";
-import { useGraphStore } from "@/app/store/useGraphStore";
 import { PathLink, comparePositions, formatDate, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { useViewController } from "../../controller/useViewController";
 import { GraphRelation } from "../../model/GraphRelation";
 import { PinCustom } from "../icons/icons";
 import { RelatedObjectView } from "./RelatedObjectView";
@@ -21,13 +21,13 @@ export const RelatedObjectChildren = observer(
     pathToParentRelations: GraphRelation[];
     searchResult?: Map<string, SearchResult>;
   }) => {
-    const viewController = useViewController();
+    const settingsStore = useSettingsStore();
     const depth = pathToParentRelations.length;
     const graphStore = useGraphStore();
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
-    const children = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, false);
+    const children = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, false);
 
-    const pinnedChildren = getFilteredChildrenAtPath(pathToParent, viewController, searchResult, true);
+    const pinnedChildren = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, true);
     const [isPinnedVisible, setIsPinnedVisible] = useState(true);
     const togglePinnedVisibility = () => setIsPinnedVisible(!isPinnedVisible);
 
@@ -123,7 +123,7 @@ export const RelatedObjectChildren = observer(
 
 export const getFilteredChildrenAtPath = (
   path: PathLink[],
-  viewController: ViewController,
+  settingsStore: SettingsStore,
   searchResult: Map<string, SearchResult> | undefined,
   pinned: boolean,
 ) => {
@@ -150,8 +150,8 @@ export const getFilteredChildrenAtPath = (
       const objectCount = path.reduce((acc, { child }) => (child.id === childNode.id ? acc + 1 : acc), 0);
       const isBundle = childNode instanceof GraphNode && childNode.isBundle;
       return (
-        !(viewController.hideBundles && isBundle) &&
-        filterFocusedNodesRelations(viewController, relation, childNode, grandparent) &&
+        !(settingsStore.hideBundles && isBundle) &&
+        filterFocusedNodesRelations(settingsStore, relation, childNode, grandparent) &&
         (!searchResult || (searchResult.get(childNode.id)?.display && objectCount === 0))
       );
     });
@@ -206,23 +206,23 @@ export default RelatedObjectChildren;
  *
  */
 function filterFocusedNodesRelations(
-  viewController: ViewController,
+  settingsStore: SettingsStore,
   r: GraphRelation,
   relatedNode: GraphObject,
   precedingFocusedNodeInPath?: GraphObject,
 ) {
   /** The relation points from the related node to the focused node */
   const isBackwards = r.from.id === relatedNode.id;
-  if (viewController.hideBackrelations && isBackwards) {
+  if (settingsStore.hideBackrelations && isBackwards) {
     return false;
   }
   /** Parent from the perspective of the graph, not the current tree */
   const isGraphParent = isBackwards && r.relationType.id === defaultRelationTypes.child.id;
-  if (viewController.hideAllParents && isGraphParent) {
+  if (settingsStore.hideAllParents && isGraphParent) {
     return false;
-  } else if (viewController.hideAllRootParents && isGraphParent && relatedNode.isRoot) {
+  } else if (settingsStore.hideAllRootParents && isGraphParent && relatedNode.isRoot) {
     return false;
-  } else if (viewController.hideDirectParent && relatedNode.id === precedingFocusedNodeInPath?.id) {
+  } else if (settingsStore.hideDirectParent && relatedNode.id === precedingFocusedNodeInPath?.id) {
     return false;
   }
   return true;

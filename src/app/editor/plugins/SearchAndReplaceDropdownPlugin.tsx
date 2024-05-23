@@ -18,7 +18,7 @@ import {
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
-import { useGraphStore } from "../../store/useGraphStore";
+import { useGraphStore } from "../../model/useGraphStore";
 
 /**
  * Dropdown options:
