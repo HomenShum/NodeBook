@@ -39,6 +39,14 @@ export const RelationPlugin = () => {
           graphStore.reverseRelation(relation);
         }
 
+        const parent = relation.to.id === object.id ? relation.from : relation.to;
+        if (viewController.addStreamLabeledRelationsToMyLists && parent === graphStore.thoughtstreamRoot) {
+          graphStore.createRelation({
+            from: graphStore.thoughtstreamRoot,
+            to: object,
+          });
+        }
+
         // Set the content to the content after the cursor and focus
         const chipsRight = $getChips(selectionRight);
         if (chipsRight.length) {

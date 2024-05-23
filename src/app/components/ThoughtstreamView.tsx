@@ -6,14 +6,15 @@ import {
 } from "@/app/components/ui/dropdown-menu";
 import { ChevronRight, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { ViewType } from "../controller/ViewController";
 import { useViewController } from "../controller/useViewController";
 import { searchGraph } from "../store/search";
 import { useGraphStore } from "../store/useGraphStore";
-import { relationsPathToParentChild } from "../util";
+import { relationsPathToParentChild, relationsToURLPath, useCurView } from "../util";
 import stylesList from "./OutlineView.module.css";
-import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
+import RelatedObjectChildren from "./RelatedObject/RelatedObjectChildren";
 import stylesStream from "./ThoughtstreamView.module.css";
 
 const truncateText = (text: string, maxLength: number) => {
@@ -45,22 +46,27 @@ export const ThoughtstreamView = observer(() => {
   }, [viewController]);
 
   const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
+  const curView = useCurView();
+  const router = useRouter();
 
   return (
     <div tabIndex={0} className={stylesStream.StreamContainer}>
       <div className={stylesStream.ContentSection}>
         {path.length > 1 && (
           <div className={stylesList.BreadcrumbContainer}>
-            {path.map(({ relation, child }, i) => {
+            {path.slice(0, -1).map(({ relation, child }, i) => {
               const isFirst = i === 0;
-              const isLast = i === path.length - 1;
-
-              if (isFirst || isLast) {
+              const isSecondLast = i === path.length - 2;
+              if (isFirst || isSecondLast) {
                 return (
                   <span
                     className={stylesList.Breadcrumb}
                     key={relation.id}
-                    onClick={() => viewController.setCurrentStreamViewRoot(relations.slice(0, i + 1))}
+                    onClick={() => {
+                      if (curView !== ViewType.SPLIT) {
+                        router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1))}`);
+                      }
+                    }}
                   >
                     {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
                     <span>{truncateText(child.text, 20)}</span>
@@ -83,7 +89,9 @@ export const ThoughtstreamView = observer(() => {
                           key={relation.id}
                           className={stylesList.BreadcrumbMenuItem}
                           onSelect={() => {
-                            viewController.setCurrentStreamViewRoot(relations.slice(0, index + 2));
+                            if (curView !== ViewType.SPLIT) {
+                              router.push(`/stream${relationsToURLPath(relations.slice(0, index + 2))}`);
+                            }
                           }}
                         >
                           {truncateText(child.text, 20)}
@@ -98,7 +106,11 @@ export const ThoughtstreamView = observer(() => {
                 <span
                   className={stylesList.Breadcrumb}
                   key={relation.id}
-                  onClick={() => viewController.setCurrentOutlineViewRoot(relations.slice(0, i + 1))}
+                  onClick={() => {
+                    if (curView !== ViewType.SPLIT) {
+                      router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1))}`);
+                    }
+                  }}
                 >
                   <ChevronRight size={14} strokeWidth={2} />
                   <span>{truncateText(child.text, 20)}</span>
@@ -107,13 +119,9 @@ export const ThoughtstreamView = observer(() => {
             })}
           </div>
         )}
-        <div
-          className={
-            viewController.curView === ViewType.SPLIT ? stylesStream.TitleContainer : stylesStream.TitleContainer
-          }
-        >
-          {(viewController.curView === ViewType.SPLIT || path.length > 1) && (
-            <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 20)}</h1>
+        <div className={stylesList.TitleContainer}>
+          {(curView === ViewType.SPLIT || path.length > 1) && (
+            <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 40)}</h1>
           )}
           <button className={stylesList.AddButton} onClick={createChild}>
             <span className={stylesList.AddButtonIcon}>+</span>

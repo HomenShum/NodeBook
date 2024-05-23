@@ -10,8 +10,8 @@ export const PinCustom = () => (
   </svg>
 );
 
-export const ListIcon = () => (
-  <svg width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+export const ListIcon = ({ className }: { className: string }) => (
+  <svg width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <path
       d="M4.331 1h8.662M1 1h.007m6.656 4h5.33M4.325 5h.006m3.332 4h5.33M4.325 9h.006m0 4h8.662M1 13h.007"
       stroke="currentColor"
@@ -22,8 +22,8 @@ export const ListIcon = () => (
   </svg>
 );
 
-export const StreamIcon = () => (
-  <svg width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
+export const StreamIcon = ({ className }: { className: string }) => (
+  <svg width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
     <path
       d="M10.999 1h-10m12 4h-12m12 4h-12m0 4h9"
       stroke="currentColor"
@@ -46,8 +46,8 @@ export const SidebarIcon = () => (
   </svg>
 );
 
-export const SplitIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="16" height="16" viewBox="0 0 14 14">
+export const SplitIcon = ({ className }: { className: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="16" height="16" viewBox="0 0 14 14" className={className}>
     <path
       stroke="currentColor"
       strokeLinecap="round"

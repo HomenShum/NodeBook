@@ -39,6 +39,89 @@ export const KeyboardOverridesPlugin = () => {
     viewType,
     setViewType,
   } = useRelationAtPath();
+
+  function tabBullet(event: KeyboardEvent | null) {
+    if (!graphStore) return false;
+    event?.preventDefault();
+    let baseRelation;
+    if (parent.isRelationPinned(relation)) {
+      if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
+        baseRelation = graphStore.correspondingObjectsForPinned.get(relation.id)!;
+      } else {
+        baseRelation = relation;
+      }
+      parent.unpinChildRelation(relation);
+    } else {
+      baseRelation = relation;
+    }
+
+    if (event?.shiftKey) {
+      const viewRoot = pathToParentNodes[0].child;
+      let visibleRootRelations;
+      if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
+        visibleRootRelations = viewController.currentStreamViewRoot;
+      } else if (viewRoot.id === graphStore.outlineRoot.id) {
+        visibleRootRelations = viewController.currentOutlineViewRoot;
+      } else {
+        throw new Error("Unknown view root");
+      }
+
+      if (
+        !viewController.allowShiftTabAboveViewRoot &&
+        visibleRootRelations &&
+        visibleRootRelations.length == pathToParentNodes.length
+      ) {
+        console.log("Can't shift tab because grandparent is above view root");
+        return false;
+      }
+
+      const grandparentNode = pathToParentNodes[pathToParentNodes.length - 1].parent;
+      const parentRelation = pathToParentRelations[pathToParentRelations.length - 1];
+      if (!grandparentNode) {
+        console.log("Can't shift tab because no grandparent to move to");
+        return false;
+      }
+      if (grandparentNode.id === graphStore.userRoot.id) {
+        console.log("Can't move relation to user root");
+        return false;
+      }
+      if (!parent) {
+        console.log("Can't shift tab because no parent to move to");
+        return false;
+      }
+      // Replace the relations pointer to the parent with the grandparent
+      if (baseRelation.from.id === parent.id) {
+        graphStore.updateRelationFrom(baseRelation, grandparentNode);
+      } else {
+        graphStore.updateRelationTo(baseRelation, grandparentNode);
+      }
+      // Position the relation under the parent
+      graphStore.getRelationList(grandparentNode).move([baseRelation], parentRelation);
+      viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), baseRelation]));
+      return true;
+    } else {
+      if (!siblingAbove) {
+        console.log("Sibling not found");
+        return false;
+      }
+      const siblingAboveNode = siblingAbove.from.id === parent.id ? siblingAbove.to : siblingAbove?.from;
+      // Change the relation's parent to the sibling above
+      if (baseRelation.from.id === parent.id) {
+        graphStore.updateRelationFrom(baseRelation, siblingAboveNode);
+      } else {
+        graphStore.updateRelationTo(baseRelation, siblingAboveNode);
+      }
+      // Position the relation at the bottom of the siblings list
+      graphStore.getRelationList(siblingAboveNode).move([baseRelation], "bottom");
+      // toggle open sibling
+      const relationPathToSibling = [...pathToParentRelations, siblingAbove];
+      graphStore.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
+      // set focus at the relations new path
+      viewController.setFocusedNode(relationsToPathStr([...relationPathToSibling, baseRelation]));
+      return true;
+    }
+  }
+
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
@@ -72,7 +155,10 @@ export const KeyboardOverridesPlugin = () => {
           if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
 
           if (object instanceof GraphNode) {
-            let { node: newNode, relation: newRelation } = graphStore.splitRelatedNode(relation, object, selection, {
+            let {
+              child: { node: newNode, relation: newRelation },
+              nested,
+            } = graphStore.splitRelatedNode(relation, object, selection, pathToNodeStr, {
               splitToNewBundle,
             });
             if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
@@ -81,8 +167,13 @@ export const KeyboardOverridesPlugin = () => {
 
             // Add to outline if necessary
             graphStore.addElsewhereAfterCreate(newNode, parent, pathToParentNodes[0].child);
-
-            viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
+            let newPath;
+            if (nested) {
+              newPath = [...pathToParentRelations, relation, newRelation];
+            } else {
+              newPath = [...pathToParentRelations, newRelation];
+            }
+            viewController.setFocusedNode(relationsToPathStr(newPath));
             return true;
           } else {
             // TODO handle related relations
@@ -96,12 +187,14 @@ export const KeyboardOverridesPlugin = () => {
         (event) => {
           const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
           if (event.key === "@" && object.text === "") {
-            // When user types "@" at the beginning of a bullet, we set it to
-            // replacing mode, where you can select a different node for the
-            // bullet to represent.
-            event.preventDefault();
-            setViewType("replace");
-            return true;
+            if (viewController.atSignTriggerToReplaceObject) {
+              // When user types "@" at the beginning of a bullet, we set it to
+              // replacing mode, where you can select a different node for the
+              // bullet to represent.
+              event.preventDefault();
+              setViewType("replace");
+              return true;
+            }
           } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
             if (!siblingAbove) return false;
             event.preventDefault();
@@ -159,6 +252,18 @@ export const KeyboardOverridesPlugin = () => {
               setViewType("temp-edit");
               return true;
             }
+          } else if (event.key === "-") {
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection)) return false;
+
+            const startEnd = selection.getStartEndPoints();
+            if (!startEnd) return false;
+            const [selectionStart, selectionEnd] = startEnd;
+
+            // Offset is 0 when at start of text
+            if (selectionStart.offset !== 0 || selectionEnd.offset !== 0) return false;
+            if (!siblingAbove) return false;
+            tabBullet(null);
           }
           return false;
         },
@@ -166,68 +271,7 @@ export const KeyboardOverridesPlugin = () => {
       ),
       editor.registerCommand(
         KEY_TAB_COMMAND,
-        action((event) => {
-          if (!graphStore) return false;
-          event.preventDefault();
-          let baseRelation;
-          if (parent.isRelationPinned(relation)) {
-            if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
-              baseRelation = graphStore.correspondingObjectsForPinned.get(relation.id)!;
-            } else {
-              baseRelation = relation;
-            }
-            parent.unpinChildRelation(relation);
-          } else {
-            baseRelation = relation;
-          }
-
-          if (event.shiftKey) {
-            const grandparentNode = pathToParentNodes[pathToParentNodes.length - 1].parent;
-            const parentRelation = pathToParentRelations[pathToParentRelations.length - 1];
-            if (!grandparentNode) {
-              console.log("Can't shift tab because no grandparent to move to");
-              return false;
-            }
-            if (grandparentNode.id === graphStore.userRoot.id) {
-              console.log("Can't move relation to user root");
-              return false;
-            }
-            if (!parent) {
-              console.log("Can't shift tab because no parent to move to");
-              return false;
-            }
-            // Replace the relations pointer to the parent with the grandparent
-            if (baseRelation.from.id === parent.id) {
-              graphStore.updateRelationFrom(baseRelation, grandparentNode);
-            } else {
-              graphStore.updateRelationTo(baseRelation, grandparentNode);
-            }
-            // Position the relation under the parent
-            graphStore.getRelationList(grandparentNode).move([baseRelation], parentRelation);
-            viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), baseRelation]));
-            return true;
-          } else {
-            if (!siblingAbove) {
-              console.log("Sibling not found");
-              return false;
-            }
-            const siblingAboveNode = siblingAbove.from.id === parent.id ? siblingAbove.to : siblingAbove?.from;
-            // Change the relation's parent to the sibling above
-            if (baseRelation.from.id === parent.id) {
-              graphStore.updateRelationFrom(baseRelation, siblingAboveNode);
-            } else {
-              graphStore.updateRelationTo(baseRelation, siblingAboveNode);
-            }
-            // Position the relation at the bottom of the siblings list
-            graphStore.getRelationList(siblingAboveNode).move([baseRelation], "bottom");
-            // toggle open sibling
-            const relationPathToSibling = [...pathToParentRelations, siblingAbove];
-            graphStore.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
-            // set focus at the relations new path
-            viewController.setFocusedNode(relationsToPathStr([...relationPathToSibling, baseRelation]));
-            return true;
-          }
-        }),
+        action((event: KeyboardEvent) => tabBullet(event)),
         COMMAND_PRIORITY_LOW,
       ),
       editor.registerCommand(
@@ -246,7 +290,56 @@ export const KeyboardOverridesPlugin = () => {
               }
               return true;
             }
+            return false;
           }
+
+          // merge nodes if necessary
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return false;
+
+          const startEnd = selection.getStartEndPoints();
+          if (!startEnd) return false;
+          const [selectionStart, selectionEnd] = startEnd;
+
+          // Offset is 0 when at start of text
+          if (selectionStart.offset !== 0 || selectionEnd.offset !== 0) return false;
+          let targetNode = null;
+          let targetPath = null;
+          if (siblingAbove) {
+            const node = siblingAbove.from.id === parent.id ? siblingAbove.to : siblingAbove.from;
+            if (node instanceof GraphNode) {
+              targetNode = node;
+              targetPath = relationsToPathStr([...pathToParentRelations, siblingAbove]);
+            }
+          } else {
+            const viewRoot = pathToParentNodes[0].child;
+            let visibleRootRelations;
+            if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
+              visibleRootRelations = viewController.currentStreamViewRoot;
+            } else if (viewRoot.id === graphStore.outlineRoot.id) {
+              visibleRootRelations = viewController.currentOutlineViewRoot;
+            } else {
+              throw new Error("Unknown view root");
+            }
+
+            if (
+              visibleRootRelations &&
+              visibleRootRelations.length < pathToParentNodes.length &&
+              parent instanceof GraphNode
+            ) {
+              targetNode = parent;
+              targetPath = relationsToPathStr([...pathToParentRelations]);
+            }
+          }
+
+          if (targetNode && object instanceof GraphNode) {
+            targetNode.content = targetNode.content.concat(object.content);
+            graphStore.deleteNode(object.id);
+            graphStore.deleteRelation(relation);
+            viewController.setFocusedNode(targetPath!);
+            return true;
+          }
+
           return false;
         },
         COMMAND_PRIORITY_LOW,

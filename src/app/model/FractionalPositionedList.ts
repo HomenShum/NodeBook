@@ -63,6 +63,8 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
       const int = Math.max(topPosition.int, ...items.map((item) => item.createdAt.getTime()));
       const fracs = generateNKeysBetween(null, topPosition.int === int ? topPosition.frac : null, items.length);
       items.forEach((item, i) => {
+        // don't re-insert items; that would reset their position (ENT-3361)
+        if (this.map.has(item.id)) return;
         this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
       });
     }
@@ -121,11 +123,15 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
 
   static deserialize<T extends ListItem & Serializable>(
     data: ReturnType<FractionalPositionedList<T>["serialize"]>,
-    deserializeInnerType: (data: any) => T,
+    deserializeInnerType: (data: any) => T | null,
   ): FractionalPositionedList<T> {
     const list = new FractionalPositionedList<T>();
     const result = new Map();
     for (const [key, value] of Object.entries(data)) {
+      const item = deserializeInnerType(value.item);
+      if (item === null) {
+        continue;
+      }
       result.set(key, {
         item: deserializeInnerType(value.item),
         position: value.position,

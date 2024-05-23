@@ -1,9 +1,3 @@
-import { Circle, Dot, Edit2, Ellipsis, GlobeIcon, Play } from "lucide-react";
-import { observer } from "mobx-react-lite";
-import { useViewController } from "../../controller/useViewController";
-import { NodeContentEditor } from "../../editor/NodeContentEditor";
-import { useGraphStore } from "../../store/useGraphStore";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,13 +8,28 @@ import { GraphNode } from "@/app/model/GraphNode";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { SearchResult } from "@/app/store/search";
-import { Position, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
+import {
+  Position,
+  relationsPathToParentChild,
+  relationsToPathStr,
+  relationsToURLPath,
+  sortByPrefixMatch,
+  useCurView,
+} from "@/app/util";
 import { cn } from "@/lib/utils";
+import * as HoverCard from "@radix-ui/react-hover-card";
+import { Circle, Dot, Edit2, Ellipsis, GlobeIcon, Play } from "lucide-react";
 import { action } from "mobx";
+import { observer } from "mobx-react-lite";
 import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useViewController } from "../../controller/useViewController";
+import { NodeContentEditor } from "../../editor/NodeContentEditor";
+import { useGraphStore } from "../../store/useGraphStore";
 import styles from "../OutlineView.module.css";
 
+import { ViewType } from "@/app/controller/ViewController";
 import { GraphObject } from "@/app/model/GraphObject";
+import { useRouter } from "next/navigation";
 import { PinCustom } from "../icons/icons";
 import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
@@ -38,6 +47,15 @@ import { RelationCombobox } from "./RelationCombobox";
  * TODO: this should be refactored
  */
 export type RelatedObjectViewType = "edit" | "replace" | "temp-edit";
+
+const canvas = document.createElement("canvas");
+
+function getTextWidth(text: string, font: string) {
+  const context = canvas.getContext("2d")!;
+  context.font = font;
+  const metrics = context.measureText(text);
+  return metrics.width;
+}
 
 export const RelatedObjectView = observer(
   ({
@@ -74,6 +92,11 @@ export const RelatedObjectView = observer(
     const [searchExpansion, setSearchExpansion] = useState(false);
     const children = getFilteredChildrenAtPath(pathObjects, viewController, searchResult, false);
     const hasChildren = children.length > 0;
+    useEffect(() => {
+      if (!hasChildren) {
+        graphStore.setPathExpanded(pathToNodeStr, false);
+      }
+    }, [graphStore, hasChildren, pathToNodeStr]);
 
     const allNodesInPath = new Set();
     for (const pathRelation of path) {
@@ -102,16 +125,40 @@ export const RelatedObjectView = observer(
       }
     }, [graphStore, object.id, objectCount, pathToNodeStr, relation.to.id, searchResult]);
     const showChildren = searchResult ? searchExpansion : isExpanded;
+    const curView = useCurView();
+    const router = useRouter();
 
     const setPathToThisAsRoot = useCallback(() => {
       if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
-        viewController.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
+        if (curView === ViewType.THOUGHTSTREAM) {
+          router.push(`/stream${relationsToURLPath([...pathToParentRelations, relation])}`);
+        } else {
+          viewController.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
+        }
       } else if (viewRoot.id === graphStore.outlineRoot.id) {
-        viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+        if (curView === ViewType.OUTLINE) {
+          router.push(`/outline${relationsToURLPath([...pathToParentRelations, relation])}`);
+        } else {
+          viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+        }
       } else {
         throw new Error("Unknown view root");
       }
-    }, [viewController, viewRoot, graphStore, pathToParentRelations, relation]);
+    }, [
+      viewRoot.id,
+      graphStore.thoughtstreamRoot.id,
+      graphStore.outlineRoot.id,
+      curView,
+      router,
+      pathToParentRelations,
+      relation,
+      viewController,
+    ]);
+
+    const showRelationType = !isChild || updatingRelationType;
+    const relationTypeTextWidth = showRelationType
+      ? `${getTextWidth(`${relation.relationType.label}:`, "normal 17.5px ui-sans-serif") + 3}px`
+      : "0px";
 
     return (
       <>
@@ -210,16 +257,65 @@ export const RelatedObjectView = observer(
               </div>
               {/* relation and node */}
               <div className="flex flex-col flex-1 relative -top-[2px]">
-                <div className="flex w-full gap-2 items-baseline pb-2">
-                  {!isChild || updatingRelationType ? (
-                    <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} />
-                  ) : null}
-                  {viewType === "replace" ? <ReplaceRelatedNodeView /> : <RelatedObjectEditor isHovered={isHovered} />}
+                <div className="flex w-full gap-1 items-baseline pb-2">
+                  <HoverCard.Root>
+                    <HoverCard.Trigger className="z-10">
+                      {showRelationType ? <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} /> : null}
+                    </HoverCard.Trigger>
+                    <HoverCard.Portal>
+                      <HoverCard.Content
+                        align={"start"}
+                        className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
+                      >
+                        {relation.connectedObjects().length > 0 ? (
+                          <>
+                            <div>Connected objects:</div>
+                            {relation.connectedObjects().map((o) => (
+                              <div key={o.id}>{o.text}</div>
+                            ))}
+                          </>
+                        ) : (
+                          <div>No connected objects</div>
+                        )}
+                      </HoverCard.Content>
+                    </HoverCard.Portal>
+                  </HoverCard.Root>
+                  <HoverCard.Root>
+                    <HoverCard.Trigger>
+                      {viewType === "replace" ? (
+                        <ReplaceRelatedNodeView />
+                      ) : (
+                        <RelatedObjectEditor isHovered={isHovered} indentationWidth={relationTypeTextWidth} />
+                      )}
+                    </HoverCard.Trigger>
+                    {object instanceof GraphRelation && (
+                      <HoverCard.Portal>
+                        <HoverCard.Content
+                          align={"start"}
+                          className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
+                        >
+                          <div>
+                            from:{" "}
+                            <span
+                              onClick={() => {
+                                router.push(`/outline${relationsToURLPath([object])}`);
+                              }}
+                            >
+                              {object.from.text}
+                            </span>
+                          </div>
+                          <div>
+                            to: <span>{object.to.text}</span>
+                          </div>
+                        </HoverCard.Content>
+                      </HoverCard.Portal>
+                    )}
+                  </HoverCard.Root>
                 </div>
                 {viewController.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
               </div>
-              {children.length > 0 && (
-                <div className="relative h-6 bg-[--gray-1] text-[--gray-8] px-1">{children.length}</div>
+              {object.relations.length > 1 && (
+                <div className="relative h-6 bg-[--gray-1] text-[--gray-8] px-1">{object.relations.length - 1}</div>
               )}
             </div>
           </RelationAtPathProvider>
@@ -312,64 +408,72 @@ const RelatedObjectMenu = observer(
   },
 );
 
-const RelatedObjectEditor = observer(({ isHovered }: { isHovered: boolean }) => {
-  const graph = useGraphStore();
-  const viewController = useViewController();
-  const { object, viewType, setViewType, pathToNodeStr } = useRelationAtPath();
-  const ref = useRef<HTMLDivElement>(null);
-  const treatAsLink = object instanceof GraphNode && graph.shouldTreatObjectAsLink(object) && viewType !== "temp-edit";
+const RelatedObjectEditor = observer(
+  ({ isHovered, indentationWidth }: { isHovered: boolean; indentationWidth: string }) => {
+    const graph = useGraphStore();
+    const viewController = useViewController();
+    const { object, viewType, setViewType, pathToNodeStr } = useRelationAtPath();
+    const ref = useRef<HTMLDivElement>(null);
+    const treatAsLink =
+      object instanceof GraphNode && graph.shouldTreatObjectAsLink(object) && viewType !== "temp-edit";
 
-  // close the temp edit view when clicking outside of it
-  useEffect(() => {
-    if (viewType === "temp-edit") {
-      const handleClick = (e: MouseEvent) => {
-        if (ref.current && !ref.current.contains(e.target as Node)) {
-          setViewType("edit");
-        }
-      };
-      window.addEventListener("click", handleClick);
-      return () => {
-        window.removeEventListener("click", handleClick);
-      };
-    }
-  }, [object.id, setViewType, viewType, viewController, pathToNodeStr]);
+    // close the temp edit view when clicking outside of it
+    useEffect(() => {
+      if (viewType === "temp-edit") {
+        const handleClick = (e: MouseEvent) => {
+          if (ref.current && !ref.current.contains(e.target as Node)) {
+            setViewType("edit");
+          }
+        };
+        window.addEventListener("click", handleClick);
+        return () => {
+          window.removeEventListener("click", handleClick);
+        };
+      }
+    }, [object.id, setViewType, viewType, viewController, pathToNodeStr]);
 
-  return (
-    <div
-      ref={ref}
-      style={{
-        gap: "5px",
-        display: "flex",
-        alignItems: "flex-start",
-        flex: 1,
-        color: treatAsLink ? "#0b0b79" : undefined,
-        textDecoration: treatAsLink ? "underline #cecece" : undefined,
-        backgroundColor: viewType === "temp-edit" ? "var(--teal-2)" : undefined,
-      }}
-    >
-      <div className="flex flex-col flex-1">
-        {object instanceof GraphNode ? (
-          <div className="flex ">
-            <NodeContentEditor />
-            {treatAsLink && isHovered && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setViewType("temp-edit");
-                  viewController.setFocusedNode(pathToNodeStr);
-                }}
-              >
-                <Edit2 size={16} />
-              </button>
-            )}
-          </div>
-        ) : (
-          <span className="italic">{object.text}</span>
-        )}
+    return (
+      <div
+        ref={ref}
+        style={{
+          gap: "5px",
+          display: "flex",
+          alignItems: "flex-start",
+          flex: 1,
+          color: treatAsLink ? "#0b0b79" : undefined,
+          textDecoration: treatAsLink ? "underline #cecece" : undefined,
+          backgroundColor: viewType === "temp-edit" ? "var(--teal-2)" : undefined,
+        }}
+      >
+        <div className="flex flex-col flex-1">
+          {object instanceof GraphNode ? (
+            <div className="flex ">
+              <NodeContentEditor indent={indentationWidth} />
+              {treatAsLink && isHovered && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setViewType("temp-edit");
+                    viewController.setFocusedNode(pathToNodeStr);
+                  }}
+                >
+                  <Edit2 size={16} />
+                </button>
+              )}
+            </div>
+          ) : (
+            <span
+              className="italic"
+              // style={{ textIndent: indentationWidth, position: "relative", left: `-${indentationWidth}` }}
+            >
+              {object.text}
+            </span>
+          )}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 const RelatedObjectDetails = observer(() => {
   const graphStore = useGraphStore();
@@ -467,12 +571,16 @@ function ReplaceRelatedNodeView() {
         node.id !== currentObject.id &&
         keywords.every((keyword) => node.text.toLowerCase().includes(keyword.toLowerCase())),
     );
+    sortByPrefixMatch(nodeOptions, filter);
+
     const relationOptions = graph.relations.filter(
       (r) =>
         r.id !== currentObject.id &&
         r.id !== relation.id &&
         keywords.every((keyword) => r.text.toLowerCase().includes(keyword.toLowerCase())),
     );
+    sortByPrefixMatch(relationOptions, filter);
+
     const optionsGrouped: {
       type: "nodes" | "relations";
       options: { index: number; object: GraphObject; text: string }[];

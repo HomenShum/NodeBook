@@ -25,6 +25,7 @@ import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPl
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
+import { PastePlugin } from "./plugins/pastePlugin";
 
 const theme = {
   // Theme styling goes here
@@ -37,7 +38,7 @@ const onError = (error: any) => {
   console.error(error);
 };
 
-export const NodeContentEditor = observer(() => {
+export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
   const view = useViewController();
   const graphStore = useGraphStore();
   const { object: node, relation, pathToNodeStr, pathToParentRelations, isChild, viewType } = useRelationAtPath();
@@ -80,7 +81,11 @@ export const NodeContentEditor = observer(() => {
     !mentionDropdownOpen &&
     (view.searchAndReplaceDropdown === "all" || (view.searchAndReplaceDropdown === "labelled-only" && !isChild));
   return (
-    <div ref={ref} className={cn(styles.EditorWrapper, view.showAtSignOnMention && styles.showAtSignPrefix)}>
+    <div
+      ref={ref}
+      className={cn(styles.EditorWrapper, view.showAtSignOnMention && styles.showAtSignPrefix)}
+      // style={{ textIndent: indent, position: "relative", left: `-${indent}` }}
+    >
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
@@ -91,6 +96,7 @@ export const NodeContentEditor = observer(() => {
         <ClearEditorPlugin />
         <SyncWithGraphPlugin node={node} />
         <KeyboardOverridesPlugin />
+        <PastePlugin />
         <RelationPlugin />
         <MentionPlugin setDropdownOpen={setMentionDropdownOpen} />
         <NodeEventPlugin

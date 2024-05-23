@@ -103,12 +103,12 @@ export const RelationCombobox = observer(
           }
         }}
       >
-        <PopoverTrigger asChild>
+        <PopoverTrigger className="z-10">
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={isOpen}
-            className={`border-none text-md justify-between h-4 p-0 m-0 font-normal text-gray-400 ${
+            className={`border-none z-10 text-md justify-between h-4 p-0 m-0 font-normal text-gray-400 ${
               isParent ? "" : ""
             }`}
           >

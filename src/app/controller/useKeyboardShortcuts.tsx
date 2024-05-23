@@ -1,15 +1,17 @@
 // Hook for app-level keyboard shortcuts, NOT for keyboard shortcuts triggered within editor. Those are handled in KeyboardOverridesPlugin
 
 import { useCallback, useEffect } from "react";
+import { useCurView } from "../util";
 import { ViewType } from "./ViewController";
 import { useViewController } from "./useViewController";
 
 export const useKeyboardShortcuts = () => {
   const viewController = useViewController();
+  const curView = useCurView();
 
   const createNode = useCallback(() => {
-    viewController.createChildNode();
-  }, [viewController]);
+    viewController.createChildNode({ focusAfterCreate: true, targetView: curView });
+  }, [curView, viewController]);
 
   const deleteNodes = useCallback(() => {
     // TODO
@@ -42,7 +44,7 @@ export const useKeyboardShortcuts = () => {
       }
 
       // Outline-only shortcuts
-      if (viewController.curView === ViewType.OUTLINE || viewController.curView === ViewType.SPLIT) {
+      if (curView === ViewType.OUTLINE || curView === ViewType.SPLIT) {
         // Indent on tab
         if (!e.shiftKey && e.key === "Tab" && viewController.selectedNodes.length > 1) {
           e.preventDefault();
@@ -55,7 +57,7 @@ export const useKeyboardShortcuts = () => {
         }
       }
     },
-    [viewController, createNode, deleteNodes, indentNodes, unindentNodes],
+    [viewController.selectedNodes.length, curView, createNode, deleteNodes, indentNodes, unindentNodes],
   );
 
   useEffect(() => {

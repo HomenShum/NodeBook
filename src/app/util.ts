@@ -1,7 +1,9 @@
 "use client";
 import { generateKeyBetween } from "fractional-indexing";
 import { autorun, toJS } from "mobx";
+import { usePathname } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
+import { ViewType } from "./controller/ViewController";
 import { GraphObject } from "./model/GraphObject";
 import { GraphRelation } from "./model/GraphRelation";
 
@@ -102,4 +104,36 @@ export function formatDate(date: Date | undefined): string {
       year: "2-digit",
     });
   }
+}
+
+export function useCurView() {
+  const pathname = usePathname();
+  const firstElement = pathname.split("/")[1];
+  switch (firstElement) {
+    case "outline":
+      return ViewType.OUTLINE;
+    case "stream":
+      return ViewType.THOUGHTSTREAM;
+    case "split":
+      return ViewType.SPLIT;
+    default:
+      return ViewType.OUTLINE;
+  }
+}
+
+export function relationsToURLPath(relations: GraphRelation[]) {
+  return `/${relations.map((x) => x.id).join("/")}`;
+}
+
+export function sortByPrefixMatch(objects: GraphObject[], query: string) {
+  const isPrefixMatch: { [key: string]: number } = {};
+  for (const o of objects) {
+    if (o.text.toLowerCase().startsWith(query.toLowerCase())) {
+      isPrefixMatch[o.id] = 0;
+    } else {
+      isPrefixMatch[o.id] = 1;
+    }
+  }
+
+  objects.sort((a, b) => isPrefixMatch[a.id] - isPrefixMatch[b.id]);
 }

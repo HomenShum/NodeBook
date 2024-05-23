@@ -1,13 +1,13 @@
 import { useViewController } from "@/app/controller/useViewController";
 import { useGraphStore } from "@/app/store/useGraphStore";
 import { observer } from "mobx-react-lite";
-import { useRef } from "react";
+import { ClearData } from "../DataDialog/ClearData";
+import { ImportDialog } from "../DataDialog/ImportDialog";
 import { Button } from "../ui/button";
 
 export const DevTools = observer(() => {
   const graphStore = useGraphStore();
   const viewController = useViewController();
-  const fileInputRef = useRef(null);
 
   const searchAndReplaceDropdownOptions: {
     label: string;
@@ -18,7 +18,7 @@ export const DevTools = observer(() => {
     { label: "None", value: "none" },
   ];
   return (
-    <div className="p-2 mb-0 max-h-96 overflow-y-auto flex flex-col">
+    <div className="p-2 mb-0 overflow-y-auto flex flex-col flex-initial">
       <h1 className="text-xl font-bold mb-2">Dev Tools</h1>
       <div className="flex flex-col gap-2">
         <label className="cursor-pointer">
@@ -132,6 +132,24 @@ export const DevTools = observer(() => {
         <label>
           <input
             type="checkbox"
+            checked={viewController.addStreamLabeledRelationsToMyLists}
+            onChange={(e) => viewController.setAddStreamLabeledRelationsToMyLists(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Add stream labeled relations to My Lists
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={viewController.allowShiftTabAboveViewRoot}
+            onChange={(e) => viewController.setAllowShiftTabAboveViewRoot(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Allow shift tab above view root
+        </label>
+        <label>
+          <input
+            type="checkbox"
             checked={viewController.disableCycles}
             onChange={(e) => viewController.setDisableCycles(e.target.checked)}
             className="mr-2 mb-2"
@@ -156,6 +174,15 @@ export const DevTools = observer(() => {
           />
           On removing node as direct child of thoughtstream, delete the node everywhere
         </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={viewController.atSignTriggerToReplaceObject}
+            onChange={(e) => viewController.setAtSignTriggerToReplaceObject(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Enable @ sign to trigger replacing current object
+        </label>
         <div className="flex gap-2">
           <label>Search and replace dropdown:</label>
           <select
@@ -169,6 +196,7 @@ export const DevTools = observer(() => {
             ))}
           </select>
         </div>
+        <ImportDialog />
         <Button
           size={"sm"}
           style={{ maxWidth: "fit-content" }}
@@ -191,46 +219,11 @@ export const DevTools = observer(() => {
         >
           Export as JSON
         </Button>
-        <Button
-          size={"sm"}
-          style={{ maxWidth: "fit-content" }}
-          onClick={() => {
-            (fileInputRef.current! as HTMLInputElement).click();
-          }}
-        >
-          Import JSON
-        </Button>
-        <input
-          type="file"
-          accept=".json"
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={(event) => {
-            const file = event.target.files![0];
-            const reader = new FileReader();
-
-            reader.onload = (event) => {
-              const fileContent = event.target!.result;
-              graphStore.deserializeInPlace(JSON.parse(fileContent as string));
-            };
-
-            reader.readAsText(file);
+        <ClearData
+          onConfirm={() => {
+            graphStore.clear();
           }}
         />
-        <Button
-          size={"sm"}
-          variant={"destructive"}
-          style={{ maxWidth: "fit-content" }}
-          onClick={() => {
-            throw new Error("Not implemented");
-            // if (!confirm("Really delete all data?")) {
-            //   return;
-            // }
-            // graphStore.remote?.deleteAll();
-          }}
-        >
-          Delete all remote data
-        </Button>
       </div>
     </div>
   );
