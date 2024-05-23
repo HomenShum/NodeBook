@@ -17,17 +17,26 @@ export const RelatedObjectChildren = observer(
   ({
     pathToParentRelations,
     searchResult,
+    searchResultDate,
   }: {
     pathToParentRelations: GraphRelation[];
     searchResult?: Map<string, SearchResult>;
+    searchResultDate: Date;
   }) => {
     const settingsStore = useSettingsStore();
     const depth = pathToParentRelations.length;
     const graphStore = useGraphStore();
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
-    const children = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, false);
+    const children = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, searchResultDate, false);
 
-    const pinnedChildren = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, true);
+    const pinnedChildren = getFilteredChildrenAtPath(
+      pathToParent,
+      settingsStore,
+      searchResult,
+      searchResultDate,
+      true,
+    );
+
     const [isPinnedVisible, setIsPinnedVisible] = useState(true);
     const togglePinnedVisibility = () => setIsPinnedVisible(!isPinnedVisible);
 
@@ -73,6 +82,7 @@ export const RelatedObjectChildren = observer(
                           siblingAbove={pinnedChildren[i - 1]?.relation}
                           siblingBelow={pinnedChildren[i + 1]?.relation}
                           searchResult={searchResult}
+                          searchResultDate={searchResultDate}
                         />
                       </div>
                     );
@@ -112,6 +122,7 @@ export const RelatedObjectChildren = observer(
                 siblingAbove={children[i - 1]?.relation}
                 siblingBelow={children[i + 1]?.relation}
                 searchResult={searchResult}
+                searchResultDate={searchResultDate}
               />
             </div>
           );
@@ -125,6 +136,7 @@ export const getFilteredChildrenAtPath = (
   path: PathLink[],
   settingsStore: SettingsStore,
   searchResult: Map<string, SearchResult> | undefined,
+  searchResultDate: Date,
   pinned: boolean,
 ) => {
   if (path.length === 0) {
@@ -152,7 +164,9 @@ export const getFilteredChildrenAtPath = (
       return (
         !(settingsStore.hideBundles && isBundle) &&
         filterFocusedNodesRelations(settingsStore, relation, childNode, grandparent) &&
-        (!searchResult || (searchResult.get(childNode.id)?.display && objectCount === 0))
+        (!searchResult ||
+          relation.createdAt > searchResultDate ||
+          (searchResult.get(childNode.id)?.display && objectCount === 0))
       );
     });
 };

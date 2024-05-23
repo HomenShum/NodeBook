@@ -41,6 +41,9 @@ export const ThoughtstreamView = observer(() => {
     [thoughstreamNode, viewController.searchQuery],
   );
 
+  // eslint-disable-next-line
+  const searchResultDate = useMemo(() => new Date(), [viewController.searchQuery]);
+
   const createChild = useCallback(() => {
     viewController.createChildNode({ focusAfterCreate: true, targetView: ViewType.THOUGHTSTREAM });
   }, [viewController]);
@@ -129,7 +132,11 @@ export const ThoughtstreamView = observer(() => {
         </div>
       </div>
       <div className={stylesList.relatedObjectsContainer}>
-        <RelatedObjectChildren pathToParentRelations={relations} searchResult={searchResult} />
+        <RelatedObjectChildren
+          pathToParentRelations={relations}
+          searchResult={searchResult}
+          searchResultDate={searchResultDate}
+        />
       </div>
     </div>
   );

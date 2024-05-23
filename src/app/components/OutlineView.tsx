@@ -8,7 +8,7 @@ import {
 import { ChevronRight, Ellipsis, HomeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { ViewType } from "../controller/ViewController";
 import { useViewController } from "../controller/useViewController";
 import { useGraphStore } from "../model/useGraphStore";
@@ -49,6 +49,9 @@ export const OutlineView = observer(() => {
   const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
   const router = useRouter();
   const curView = useCurView();
+
+  // eslint-disable-next-line
+  const searchResultDate = useMemo(() => new Date(), [viewController.searchQuery]);
 
   return (
     <div className={s.OutlineView}>
@@ -131,7 +134,11 @@ export const OutlineView = observer(() => {
             <span className={s.AddButtonIcon}>+</span>
           </button>
         </div>
-        <RelatedObjectChildren pathToParentRelations={relations} searchResult={searchResult} />
+        <RelatedObjectChildren
+          pathToParentRelations={relations}
+          searchResult={searchResult}
+          searchResultDate={searchResultDate}
+        />
       </div>
     </div>
   );

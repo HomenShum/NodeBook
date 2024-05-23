@@ -65,12 +65,14 @@ export const RelatedObjectView = observer(
     siblingAbove,
     siblingBelow,
     searchResult,
+    searchResultDate,
   }: {
     path: GraphRelation[];
     position: Position;
     siblingAbove?: GraphRelation;
     siblingBelow?: GraphRelation;
     searchResult?: Map<string, SearchResult>;
+    searchResultDate: Date;
   }) => {
     const settingsStore = useSettingsStore();
     const viewController = useViewController();
@@ -92,7 +94,7 @@ export const RelatedObjectView = observer(
     // children state
     const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
     const [searchExpansion, setSearchExpansion] = useState(false);
-    const children = getFilteredChildrenAtPath(pathObjects, settingsStore, searchResult, false);
+    const children = getFilteredChildrenAtPath(pathObjects, settingsStore, searchResult, searchResultDate, false);
     const hasChildren = children.length > 0;
     useEffect(() => {
       if (!hasChildren) {
@@ -325,6 +327,7 @@ export const RelatedObjectView = observer(
             <RelatedObjectChildren
               pathToParentRelations={[...pathToParentRelations, relation]}
               searchResult={searchResult}
+              searchResultDate={searchResultDate}
             />
           )}
         </div>
