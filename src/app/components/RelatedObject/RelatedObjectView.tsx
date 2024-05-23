@@ -214,8 +214,8 @@ export const RelatedObjectView = observer(
                 {!object.isPrivate &&
                   viewController.hideThoughtstreamBullets &&
                   parent === graphStore.thoughtstreamRoot && (
-                    <div className="relative right-[10px] pl-1  translate-y-[0.5px] flex text-[--teal-7] bg-white">
-                      <GlobeIcon size={13} strokeWidth={2} />
+                    <div className="relative right-[6px] pl-1  translate-y-[0.5px] flex text-[--teal-7] bg-white">
+                      <GlobeIcon size={12} strokeWidth={2} />
                     </div>
                   )}
               </div>
@@ -315,7 +315,7 @@ export const RelatedObjectView = observer(
                 {viewController.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
               </div>
               {object.relations.length > 1 && (
-                <div className="relative -top-[2px] border text-gray-400 px-1">{object.relations.length - 1}</div>
+                <div className="relative h-6 bg-[--gray-1] text-[--gray-8] px-1">{object.relations.length - 1}</div>
               )}
             </div>
           </RelationAtPathProvider>
