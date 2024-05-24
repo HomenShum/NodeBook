@@ -75,6 +75,7 @@ export const RelationCombobox = observer(
       ])
       .flat()
       .filter(({ label }) => label.toLowerCase().includes(search.toLowerCase()));
+
     if (search.length > 0 && parent !== null) {
       items.push({
         key: "new",
@@ -88,6 +89,14 @@ export const RelationCombobox = observer(
         },
       });
     }
+
+    items.push({
+      key: "delete",
+      label: "Delete relation",
+      onSelect: () => {
+        graphStore.deleteRelation(relation);
+      },
+    });
 
     const label = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
     const isParent = relation.relationType.id === defaultRelationTypes.child.id && isForward;
