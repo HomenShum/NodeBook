@@ -141,7 +141,7 @@ export function checkForMentionMatch(text: string): MenuTextMatch | null {
     "(^|\\s|\\()(" + "[" + TRIGGERS + "]" + "((?:" + VALID_CHARS + "){0," + ALIAS_LENGTH_LIMIT + "})" + ")$",
   );
 
-  const minMatchLength = 0;
+  const minMatchLength = 3;
   let match = AtSignMentionsRegex.exec(text);
   if (match === null) {
     match = AtSignMentionsRegexAliasRegex.exec(text);
