@@ -417,7 +417,7 @@ const RelatedObjectEditor = observer(
   ({ isHovered, indentationWidth }: { isHovered: boolean; indentationWidth: string }) => {
     const graph = useGraphStore();
     const viewController = useViewController();
-    const { object, viewType, setViewType, pathToNodeStr } = useRelationAtPath();
+    const { object, viewType, setViewType, pathToNodeStr, pathToParentRelations, relation } = useRelationAtPath();
     const ref = useRef<HTMLDivElement>(null);
     const treatAsLink =
       object instanceof GraphNode && graph.shouldTreatObjectAsLink(object) && viewType !== "temp-edit";
@@ -436,6 +436,7 @@ const RelatedObjectEditor = observer(
         };
       }
     }, [object.id, setViewType, viewType, viewController, pathToNodeStr]);
+    const router = useRouter();
 
     return (
       <div
@@ -452,7 +453,16 @@ const RelatedObjectEditor = observer(
       >
         <div className="flex flex-col flex-1">
           {object instanceof GraphNode ? (
-            <div className="flex min-w-64">
+            <div
+              className={cn("flex min-w-64", treatAsLink && "cursor-pointer")}
+              onClick={
+                treatAsLink
+                  ? (e) => {
+                      router.push(`/outline${relationsToURLPath([...pathToParentRelations, relation])}`);
+                    }
+                  : undefined
+              }
+            >
               <NodeContentEditor indent={indentationWidth} />
               {treatAsLink && isHovered && (
                 <button
