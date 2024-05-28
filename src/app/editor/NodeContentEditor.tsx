@@ -22,6 +22,7 @@ import { JumpSelectionPlugin } from "./plugins/JumpSelectionPluigin";
 import { KeyboardOverridesPlugin } from "./plugins/KeyboardOverridesPlugin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
+import { ReplaceObjectPlugin } from "./plugins/ReplaceObjectPlugin";
 import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
@@ -99,6 +100,7 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
         <ClearEditorPlugin />
         <SyncWithGraphPlugin node={node} />
         <KeyboardOverridesPlugin />
+        <ReplaceObjectPlugin />
         <PastePlugin />
         <RelationPlugin />
         <MentionPlugin setDropdownOpen={setMentionDropdownOpen} />

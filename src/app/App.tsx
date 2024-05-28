@@ -77,7 +77,7 @@ export default observer(
             <div className={s.MainContainer}>
               <main className={`${s.Main} ${viewController.leftSidebarOpen ? s.LeftShift : ""}`}>{children}</main>
               {viewController.rightSidebarOpen && (
-                <aside className={"flex flex-col max-h-screen w-1/3 bg-[--gray-2] border-l absolute right-0 pt-12"}>
+                <aside className={s.DevToolsSidebar}>
                   <DevTools />
                   <NodeTable />
                   <RelationTable />

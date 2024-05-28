@@ -183,7 +183,16 @@ export const DevTools = observer(() => {
             onChange={(e) => settingsStore.setAtSignTriggerToReplaceObject(e.target.checked)}
             className="mr-2 mb-2"
           />
-          Enable @ sign to trigger replacing current object
+          Type @ in an empty editor to trigger search and replace for current object
+        </label>
+        <label className="cursor-pointer mb-2">
+          <input
+            type="checkbox"
+            checked={settingsStore.semicolonTriggerToReplaceObject}
+            onChange={(e) => settingsStore.setSemicolonTriggerToReplaceObject(e.target.checked)}
+            className="mr-2 mb-2"
+          />
+          Type ; in an empty editor to trigger search and replace for current object
         </label>
         <div className="flex gap-2">
           <label>Search and replace dropdown:</label>

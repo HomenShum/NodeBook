@@ -19,6 +19,7 @@ type SerializedUserSettings = {
   searchAndReplaceDropdown?: "labelled-only" | "all" | "none";
   disableCycles?: boolean;
   atSignTriggerToReplaceObject?: boolean;
+  semicolonTriggerToReplaceObject?: boolean;
   addStreamLabeledRelationsToMyLists?: boolean;
   allowShiftTabAboveViewRoot?: boolean;
 };
@@ -46,6 +47,7 @@ export class SettingsStore {
   public searchAndReplaceDropdown: "labelled-only" | "all" | "none" = "labelled-only";
   public disableCycles = true;
   public atSignTriggerToReplaceObject = false;
+  public semicolonTriggerToReplaceObject = true;
   public addStreamLabeledRelationsToMyLists = true;
   public allowShiftTabAboveViewRoot = false;
 
@@ -71,6 +73,7 @@ export class SettingsStore {
     this.searchAndReplaceDropdown = "labelled-only";
     this.disableCycles = true;
     this.atSignTriggerToReplaceObject = false;
+    this.semicolonTriggerToReplaceObject = true;
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
   }
@@ -212,6 +215,10 @@ export class SettingsStore {
 
   setAtSignTriggerToReplaceObject(value: boolean) {
     this.atSignTriggerToReplaceObject = value;
+  }
+
+  setSemicolonTriggerToReplaceObject(value: boolean) {
+    this.semicolonTriggerToReplaceObject = value;
   }
 
   setAddStreamLabeledRelationsToMyLists(value: boolean) {
