@@ -8,7 +8,7 @@ import { SearchResult } from "@/app/store/search";
 import { PathLink, comparePositions, formatDate, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { GraphRelation } from "../../model/GraphRelation";
 import { PinCustom } from "../icons/icons";
 import { RelatedObjectView } from "./RelatedObjectView";
@@ -18,10 +18,14 @@ export const RelatedObjectChildren = observer(
     pathToParentRelations,
     searchResult,
     searchResultDate,
+    showAll = true,
+    setShowAll,
   }: {
     pathToParentRelations: GraphRelation[];
     searchResult?: Map<string, SearchResult>;
     searchResultDate: Date;
+    showAll?: boolean;
+    setShowAll?: Dispatch<SetStateAction<boolean>>;
   }) => {
     const settingsStore = useSettingsStore();
     const depth = pathToParentRelations.length;
@@ -29,13 +33,7 @@ export const RelatedObjectChildren = observer(
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
     const children = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, searchResultDate, false);
 
-    const pinnedChildren = getFilteredChildrenAtPath(
-      pathToParent,
-      settingsStore,
-      searchResult,
-      searchResultDate,
-      true,
-    );
+    const pinnedChildren = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, searchResultDate, true);
 
     const [isPinnedVisible, setIsPinnedVisible] = useState(true);
     const togglePinnedVisibility = () => setIsPinnedVisible(!isPinnedVisible);
@@ -91,7 +89,7 @@ export const RelatedObjectChildren = observer(
             )}
           </>
         )}
-        {children.map(({ relation: childRelation, position }, i) => {
+        {(showAll ? children : children.slice(0, 100)).map(({ relation: childRelation, position }, i) => {
           const firstBundle = findRelationsFirstBundle(childRelation);
           const newBundle = firstBundle?.id !== lastBundleId;
           const currentDate = formatDate(firstBundle?.createdAt);
@@ -127,6 +125,11 @@ export const RelatedObjectChildren = observer(
             </div>
           );
         })}
+        {!showAll && children.length > 100 && (
+          <button onClick={() => setShowAll && setShowAll(true)} className="text-blue-400">
+            Show all
+          </button>
+        )}
       </div>
     );
   },

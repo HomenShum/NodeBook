@@ -7,7 +7,7 @@ import {
 import { ChevronRight, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ViewType } from "../controller/ViewController";
 import { useViewController } from "../controller/useViewController";
 import { useGraphStore } from "../model/useGraphStore";
@@ -51,6 +51,7 @@ export const ThoughtstreamView = observer(() => {
   const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
   const curView = useCurView();
   const router = useRouter();
+  const [showAll, setShowAll] = useState(false);
 
   return (
     <div tabIndex={0} className={stylesStream.StreamContainer}>
@@ -136,6 +137,8 @@ export const ThoughtstreamView = observer(() => {
       </div>
       <div className={stylesList.relatedObjectsContainer}>
         <RelatedObjectChildren
+          showAll={showAll}
+          setShowAll={setShowAll}
           pathToParentRelations={relations}
           searchResult={searchResult}
           searchResultDate={searchResultDate}
