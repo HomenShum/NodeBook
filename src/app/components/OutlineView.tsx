@@ -123,6 +123,9 @@ export const OutlineView = observer(() => {
                 </span>
               ) : null;
             })}
+            <span className={s.Chevron}>
+              <ChevronRight size={14} strokeWidth={2} />
+            </span>
           </div>
         )}
 

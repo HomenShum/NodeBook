@@ -120,6 +120,9 @@ export const ThoughtstreamView = observer(() => {
                 </span>
               ) : null;
             })}
+            <span className={stylesList.Chevron}>
+              <ChevronRight size={14} strokeWidth={2} />
+            </span>
           </div>
         )}
         <div className={stylesList.TitleContainer}>
