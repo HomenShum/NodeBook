@@ -150,7 +150,7 @@ export const RelationCombobox = observer(
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <div>
+          <div className="overflow-y-scroll max-h-64">
             {items.map(({ key, label, onSelect }) => (
               <div
                 key={key}
