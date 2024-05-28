@@ -72,6 +72,12 @@
   user-select: none;
 }
 
+.Chevron {
+  align-items: center;
+  user-select: none;
+  align-self: center;
+}
+
 .Breadcrumb:hover {
   color: var(--teal-8);
 }
