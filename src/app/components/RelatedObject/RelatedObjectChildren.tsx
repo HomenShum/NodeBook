@@ -159,7 +159,8 @@ export const getFilteredChildrenAtPath = (
       } else if (relation.to.id === node.id) {
         childNode = relation.from;
       } else {
-        throw new Error("Relation does not connect to parent");
+        console.error("Relation does not connect to parent", relation.id, node.id);
+        return [];
       }
 
       const objectCount = path.reduce((acc, { child }) => (child.id === childNode.id ? acc + 1 : acc), 0);
