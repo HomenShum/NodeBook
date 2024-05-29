@@ -10,7 +10,7 @@ import { DevTools } from "./components/dev/DevTools";
 import { NodeTable } from "./components/dev/NodeTable";
 import { RelationTable } from "./components/dev/RelationTable";
 import { RelationTypeTable } from "./components/dev/RelationTypeTable";
-import { ListIcon, SidebarIcon, SplitIcon, StreamIcon } from "./components/icons/icons";
+import { ListIcon, SidebarIcon, SplitIcon, StreamIcon } from "./components/icons";
 import { ViewType } from "./controller/ViewController";
 import { useKeyboardShortcuts } from "./controller/useKeyboardShortcuts";
 import { useViewController } from "./controller/useViewController";

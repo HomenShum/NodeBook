@@ -1,7 +1,6 @@
-import { PinCustom } from "@/app/components/icons/icons";
+import { PinCustom } from "@/app/components/icons";
 import { ViewType } from "@/app/controller/ViewController";
 import { useViewController } from "@/app/controller/useViewController";
-import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
@@ -11,16 +10,19 @@ import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { Position, relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
 import { cn } from "@/lib/utils";
 import * as HoverCard from "@radix-ui/react-hover-card";
-import { Circle, Dot, Edit2, GlobeIcon, Play } from "lucide-react";
+import { Circle, Dot, GlobeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../OutlineView.module.css";
 import { RelatedObjectChildren } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
+import { RelatedObjectDetails } from "./RelatedObjectDetails";
+import { RelatedObjectEditor } from "./RelatedObjectEditor";
 import { RelatedObjectMenu } from "./RelatedObjectMenu";
 import { RelationCombobox } from "./RelationCombobox";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
+import Toggle from "./Toggle";
 import { getFilteredChildrenAtPath } from "./getFilteredChildrenAtPath";
 
 /**
@@ -328,167 +330,6 @@ export const RelatedObjectView = observer(
           )}
         </div>
       </>
-    );
-  },
-);
-
-const RelatedObjectEditor = observer(
-  ({ isHovered, indentationWidth }: { isHovered: boolean; indentationWidth: string }) => {
-    const graph = useGraphStore();
-    const viewController = useViewController();
-    const { object, viewType, setViewType, pathToNodeStr, pathToParentRelations, relation } = useRelationAtPath();
-    const ref = useRef<HTMLDivElement>(null);
-    const treatAsLink =
-      object instanceof GraphNode && graph.shouldTreatObjectAsLink(object) && viewType !== "temp-edit";
-
-    // close the temp edit view when clicking outside of it
-    useEffect(() => {
-      if (viewType === "temp-edit") {
-        const handleClick = (e: MouseEvent) => {
-          if (ref.current && !ref.current.contains(e.target as Node)) {
-            setViewType("edit");
-          }
-        };
-        window.addEventListener("click", handleClick);
-        return () => {
-          window.removeEventListener("click", handleClick);
-        };
-      }
-    }, [object.id, setViewType, viewType, viewController, pathToNodeStr]);
-    const router = useRouter();
-
-    return (
-      <div
-        ref={ref}
-        style={{
-          gap: "5px",
-          display: "flex",
-          alignItems: "flex-start",
-          flex: 1,
-          color: treatAsLink ? "#0b0b79" : undefined,
-          textDecoration: treatAsLink ? "underline #cecece" : undefined,
-          backgroundColor: viewType === "temp-edit" ? "var(--teal-2)" : undefined,
-        }}
-      >
-        <div className="flex flex-col flex-1">
-          {object instanceof GraphNode ? (
-            <div
-              className={cn("flex min-w-64", treatAsLink && "cursor-pointer")}
-              onClick={
-                treatAsLink
-                  ? (e) => {
-                      router.push(`/outline${relationsToURLPath([...pathToParentRelations, relation])}`);
-                    }
-                  : undefined
-              }
-            >
-              <NodeContentEditor indent={indentationWidth} />
-              {treatAsLink && isHovered && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setViewType("temp-edit");
-                    viewController.setFocusedNode(pathToNodeStr);
-                  }}
-                >
-                  <Edit2 size={16} />
-                </button>
-              )}
-            </div>
-          ) : (
-            <span
-              className="italic"
-              // style={{ textIndent: indentationWidth, position: "relative", left: `-${indentationWidth}` }}
-            >
-              {object.text}
-            </span>
-          )}
-        </div>
-      </div>
-    );
-  },
-);
-
-const RelatedObjectDetails = observer(() => {
-  const graphStore = useGraphStore();
-  const { object, relation, position } = useRelationAtPath();
-  const bundles = graphStore.relationToBundles.get(relation.id);
-
-  const parentZones = Array.from(
-    new Set(
-      relation.relations
-        .filter(
-          (r) =>
-            // is parent relation
-            r.relationType.id === defaultRelationTypes.child.id &&
-            r.to.id === relation.id &&
-            // and parent is a zone
-            r.from instanceof GraphNode &&
-            r.from.isZone,
-        )
-        .map((r) => r.from),
-    ),
-  );
-
-  return (
-    <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>
-      {position && (
-        <span style={{ color: "gray" }}>
-          position: {position.int}-{position.frac}
-        </span>
-      )}
-      <span style={{ color: "gray" }}>id: {object.id}</span>
-      <span style={{ color: "gray" }}>relationId: {relation.id}</span>
-      <span style={{ color: "gray" }}>createdAt: {object.createdAt.toISOString()}</span>
-      {object instanceof GraphNode && object.isBundle && <span style={{ color: "gray" }}>#BUNDLE</span>}
-      {object instanceof GraphNode && object.isZone && <span style={{ color: "gray" }}>#ZONE</span>}
-      {bundles && <span style={{ color: "gray" }}>part of bundle: {bundles.map((b) => b.id).join(", ")}</span>}
-      {parentZones.length > 0 && (
-        <span style={{ color: "gray" }}>zones: {parentZones.map((z) => `${z.id}:"${z.text}"`).join(", ")}</span>
-      )}
-    </div>
-  );
-});
-
-const Toggle = observer(
-  ({
-    isSearching,
-    searchExpansion,
-    setSearchExpansion,
-  }: {
-    searchExpansion: boolean;
-    setSearchExpansion: Dispatch<SetStateAction<boolean>>;
-    isSearching: boolean;
-  }) => {
-    const { pathToNodeStr } = useRelationAtPath();
-    const graphStore = useGraphStore();
-    const isExpanded = isSearching ? searchExpansion : graphStore.isPathExpanded(pathToNodeStr);
-    return (
-      <button
-        style={{
-          backgroundColor: "white",
-          border: "none",
-          width: "0",
-          height: "1rem",
-          color: "var(--gray-8)",
-          cursor: "pointer",
-          userSelect: "none",
-        }}
-        className="relative right-[4px]"
-        onClick={() => {
-          if (isSearching) {
-            setSearchExpansion(!searchExpansion);
-          } else {
-            graphStore.togglePathExpanded(pathToNodeStr);
-          }
-        }}
-      >
-        {isExpanded ? (
-          <Play size={8} fill="currentColor" className="rotate-90" />
-        ) : (
-          <Play size={8} fill="currentColor" />
-        )}
-      </button>
     );
   },
 );

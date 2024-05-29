@@ -7,7 +7,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { Dispatch, SetStateAction, useState } from "react";
 import { GraphRelation } from "../../model/GraphRelation";
-import { PinCustom } from "../icons/icons";
+import { PinCustom } from "../icons";
 import { RelatedObjectView } from "./RelatedObjectView";
 import { getFilteredChildrenAtPath } from "./getFilteredChildrenAtPath";
 
