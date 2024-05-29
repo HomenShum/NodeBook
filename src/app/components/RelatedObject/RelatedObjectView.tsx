@@ -259,11 +259,13 @@ export const RelatedObjectView = observer(
               </div>
               {/* relation and node */}
               <div className="flex flex-col flex-1 relative -top-[2px]">
-                <div className="flex w-full gap-1 items-baseline pb-2">
+                <div className="flex flex-row flex-wrap w-full gap-1 items-baseline pb-2">
                   <HoverCard.Root>
-                    <HoverCard.Trigger className="z-10">
-                      {showRelationType ? <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} /> : null}
-                    </HoverCard.Trigger>
+                    {showRelationType && (
+                      <HoverCard.Trigger className="z-10">
+                        <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} />
+                      </HoverCard.Trigger>
+                    )}
                     <HoverCard.Portal>
                       <HoverCard.Content
                         align={"start"}
