@@ -64,8 +64,8 @@ export class GraphStore {
     this.settingsStore = settingsStore;
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     makeAutoObservable(this);
-    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
     this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
+    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
     this.thoughtstreamRoot = this.createNode({
       id: THOUGHTSTREAM_ROOT_ID,
       content: [{ type: "text", value: "Stream" }],
@@ -1029,6 +1029,92 @@ export class GraphStore {
             bundlesArray.map((bundle) => this.nodesById.get(bundle.id)).filter((b) => !!b) as GraphNode[],
           );
         }
+      }
+    }
+  }
+
+  private gatherSubtree(root: GraphObject): GraphObject[] {
+    const visited = new Set();
+    const result: GraphObject[] = [];
+    const queue: GraphObject[] = [root];
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+      if (visited.has(node.id)) continue;
+      visited.add(node.id);
+      result.push(node);
+      const relations = this.getRelationList(node)
+        .values()
+        .map((v) => v.item);
+      for (const relation of relations) {
+        if (relation.relationType.id === this.relationTypesById.child.id && relation.to.id === node.id) {
+          // Don't expand parents
+          continue;
+        }
+        queue.push(relation);
+        queue.push(relation.from);
+        queue.push(relation.to);
+      }
+    }
+    return result;
+  }
+
+  serializeSubtree(root: GraphObject): SerializedGraphStore {
+    const relationTypesById: Record<string, GraphRelationType> = {};
+    const nodesById = new Map<string, GraphNode>();
+    const relationsById = new Map<string, GraphRelation>();
+    const relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
+    const pinnedRelationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
+    const relationToBundles = new Map<string, GraphNode[]>();
+
+    const subtreeObjects = this.gatherSubtree(root);
+
+    for (const obj of subtreeObjects) {
+      if (obj instanceof GraphNode) {
+        nodesById.set(obj.id, obj);
+        relationsByNodeId.set(obj.id, this.relationsByNodeId.get(obj.id) || new FractionalPositionedList());
+        pinnedRelationsByNodeId.set(obj.id, new FractionalPositionedList());
+      } else if (obj instanceof GraphRelation) {
+        relationTypesById[obj.relationType.id] = obj.relationType;
+        relationsById.set(obj.id, obj);
+        relationToBundles.set(obj.id, this.relationToBundles.get(obj.id) || []);
+      }
+    }
+
+    // Need a relation between the subtree root and outline root so it shows up after import
+    const subtreeRootRelation = new GraphRelation(this, {
+      from: this.outlineRoot,
+      to: root,
+      relationType: this.relationTypesById.child,
+    });
+    relationsById.set(subtreeRootRelation.id, subtreeRootRelation);
+    relationsByNodeId.get(root.id)!.add(subtreeRootRelation);
+    if (!nodesById.has(OUTLINE_ROOT_ID)) {
+      nodesById.set(OUTLINE_ROOT_ID, this.outlineRoot);
+      const newList = new FractionalPositionedList<GraphRelation>();
+      newList.add(subtreeRootRelation);
+      relationsByNodeId.set(OUTLINE_ROOT_ID, newList);
+      pinnedRelationsByNodeId.set(OUTLINE_ROOT_ID, new FractionalPositionedList());
+    } else {
+      relationsByNodeId.get(OUTLINE_ROOT_ID)!.add(subtreeRootRelation);
+    }
+
+    return {
+      relationTypesById: toJS(relationTypesById),
+      nodesById: serializeMap(nodesById),
+      relationsById: serializeMap(relationsById),
+      relationsByNodeId: serializeMap(relationsByNodeId),
+      pinnedRelationsByNodeId: serializeMap(pinnedRelationsByNodeId),
+      relationToBundles: serializeMapWithArrayValues(relationToBundles),
+    };
+  }
+
+  deleteSubtree(root: GraphObject) {
+    const subtreeObjects = this.gatherSubtree(root);
+    for (const obj of subtreeObjects) {
+      if (obj instanceof GraphNode) {
+        this.deleteNode(obj.id);
+      } else if (obj instanceof GraphRelation) {
+        this.deleteRelation(obj);
       }
     }
   }

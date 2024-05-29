@@ -112,7 +112,7 @@ export const RelationCombobox = observer(
           }
         }}
       >
-        <PopoverTrigger className="z-10">
+        <PopoverTrigger className="z-10" asChild>
           <Button
             variant="outline"
             role="combobox"

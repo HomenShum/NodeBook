@@ -1,40 +1,28 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
+import * as HoverCard from "@radix-ui/react-hover-card";
+import { Circle, Dot, Edit2, GlobeIcon, Play } from "lucide-react";
+import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { PinCustom } from "@/app/components/icons/icons";
+import { ViewType } from "@/app/controller/ViewController";
+import { useViewController } from "@/app/controller/useViewController";
+import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
-import { SearchResult } from "@/app/store/search";
-import {
-  Position,
-  relationsPathToParentChild,
-  relationsToPathStr,
-  relationsToURLPath,
-  sortByPrefixMatch,
-  useCurView,
-} from "@/app/util";
-import { cn } from "@/lib/utils";
-import * as HoverCard from "@radix-ui/react-hover-card";
-import { Circle, Dot, Edit2, Ellipsis, GlobeIcon, Play } from "lucide-react";
-import { action } from "mobx";
-import { observer } from "mobx-react-lite";
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useViewController } from "../../controller/useViewController";
-import { NodeContentEditor } from "../../editor/NodeContentEditor";
-import { useGraphStore } from "../../model/useGraphStore";
-import styles from "../OutlineView.module.css";
-
-import { ViewType } from "@/app/controller/ViewController";
-import { GraphObject } from "@/app/model/GraphObject";
+import { useGraphStore } from "@/app/model/useGraphStore";
 import { useSettingsStore } from "@/app/model/useSettingsStore";
-import { useRouter } from "next/navigation";
-import { PinCustom } from "../icons/icons";
+import { SearchResult } from "@/app/store/search";
+import { Position, relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
+import { cn } from "@/lib/utils";
 import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
+import { RelatedObjectMenu } from "./RelatedObjectMenu";
 import { RelationCombobox } from "./RelationCombobox";
+
+import styles from "../OutlineView.module.css";
+import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
 
 /**
  * The view type of the related object. This determines what is displayed in the
@@ -345,83 +333,6 @@ export const RelatedObjectView = observer(
   },
 );
 
-const RelatedObjectMenu = observer(
-  // ({ bullet, setUpdatingRelationType }: { bullet: Bullet; setUpdatingRelationType: (v: boolean) => void }) => {
-  ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {
-    const viewController = useViewController();
-    const graphStore = useGraphStore();
-    const { object, parent, relation, pathToParentRelations, siblingAbove, viewType, setViewType } =
-      useRelationAtPath();
-
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger className="mx-2">
-          <Ellipsis size={18} className={cn(isHovered ? "text-[var(--gray-8)] bg-white" : "text-transparent")} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
-          <DropdownMenuItem
-            onSelect={action(() => {
-              graphStore.deleteRelation(relation);
-              if (siblingAbove) {
-                const pathStr = relationsToPathStr([...pathToParentRelations, siblingAbove]);
-                viewController.setFocusedNode(pathStr);
-              }
-            })}
-          >
-            Delete relation
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setViewType("replace")}>Replace related object</DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={action(() => {
-              object.setIsPrivate(!object.isPrivate);
-            })}
-          >
-            {object.isPrivate ? "Make public" : "Make private"}
-          </DropdownMenuItem>
-          {viewType !== "edit" && (
-            <DropdownMenuItem
-              onSelect={() => {
-                setViewType("edit");
-              }}
-            >
-              Set to edit view
-            </DropdownMenuItem>
-          )}
-          {parent.isRelationPinned(relation) ? (
-            <DropdownMenuItem onSelect={() => parent.unpinChildRelation(relation)}>Unpin</DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem onSelect={() => parent.pinChildRelation(relation)}>Pin</DropdownMenuItem>
-          )}
-          {/* toggle bundle */}
-          {object instanceof GraphNode &&
-            (object.isBundle ? (
-              <DropdownMenuItem onSelect={() => object.setIsBundle(false)}>unset as bundle</DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onSelect={() => object.setIsBundle(true)}>set as bundle</DropdownMenuItem>
-            ))}
-          {/* toggle zone */}
-          {object instanceof GraphNode &&
-            (object.isZone ? (
-              <DropdownMenuItem onSelect={() => object.setIsZone(false)}>unset as zone</DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem onSelect={() => object.setIsZone(true)}>set as zone</DropdownMenuItem>
-            ))}
-          <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>Change relation type</DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={action(() => {
-              graphStore.createChildNode(object);
-              const pathStr = relationsToPathStr([...pathToParentRelations, relation]);
-              graphStore.setPathExpanded(pathStr, true);
-            })}
-          >
-            Add child
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  },
-);
-
 const RelatedObjectEditor = observer(
   ({ isHovered, indentationWidth }: { isHovered: boolean; indentationWidth: string }) => {
     const graph = useGraphStore();
@@ -582,151 +493,6 @@ const Toggle = observer(
     );
   },
 );
-
-function ReplaceRelatedNodeView() {
-  const graph = useGraphStore();
-  const [filter, setFilter] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
-  const { object: currentObject, setViewType, relation, pathToParentRelations } = useRelationAtPath();
-  const { optionsFlat: options, optionsGrouped } = useMemo(() => {
-    const keywords = filter.split(/\s+/);
-    const nodeOptions = graph.nodes.filter(
-      (node) =>
-        node.id !== currentObject.id &&
-        keywords.every((keyword) => node.text.toLowerCase().includes(keyword.toLowerCase())),
-    );
-    sortByPrefixMatch(nodeOptions, filter);
-
-    const relationOptions = graph.relations.filter(
-      (r) =>
-        r.id !== currentObject.id &&
-        r.id !== relation.id &&
-        keywords.every((keyword) => r.text.toLowerCase().includes(keyword.toLowerCase())),
-    );
-    sortByPrefixMatch(relationOptions, filter);
-
-    const optionsGrouped: {
-      type: "nodes" | "relations";
-      options: { index: number; object: GraphObject; text: string }[];
-    }[] = [];
-    let index = 0;
-    if (nodeOptions.length > 0) {
-      optionsGrouped.push({
-        type: "nodes",
-        options: nodeOptions.map((node) => ({ index: index++, object: node, text: node.text })),
-      });
-    }
-    if (relationOptions.length > 0) {
-      optionsGrouped.push({
-        type: "relations",
-        options: relationOptions.map((relation) => ({ index: index++, object: relation, text: relation.text })),
-      });
-    }
-    return {
-      optionsFlat: [...nodeOptions, ...relationOptions],
-      optionsGrouped,
-    };
-  }, [graph, currentObject, relation, filter]);
-  const [selected, setSelected] = useState<number | null>(optionsGrouped.length === 0 ? null : 0);
-
-  const onSelect = useCallback(
-    (obj: GraphObject) => {
-      graph.setGraphNodeAtPath([...pathToParentRelations, relation], obj);
-      setViewType("edit");
-    },
-    [graph, relation, pathToParentRelations, setViewType],
-  );
-
-  // TODO hack
-  useEffect(() => {
-    setTimeout(() => {
-      ref.current?.querySelector("input")?.focus();
-    }, 0);
-  }, []);
-
-  // TODO hack
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setViewType("edit");
-      }
-    };
-    // for some reason, when I click "replace" which renders this component, that click
-    // was picked up here and immediately closed the dropdown.
-    setTimeout(() => {
-      window.addEventListener("click", handleClick);
-    }, 0);
-    return () => {
-      window.removeEventListener("click", handleClick);
-    };
-  }, [setViewType]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setViewType("edit");
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        if (selected !== null) {
-          onSelect(options[selected]);
-        } else {
-          setViewType("edit");
-        }
-      } else if (e.key === "ArrowDown") {
-        if (selected === null) {
-          setSelected(0);
-        } else {
-          setSelected((selected + 1) % options.length);
-        }
-      } else if (e.key === "ArrowUp") {
-        if (selected === null) {
-          setSelected(options.length - 1);
-        } else {
-          setSelected((selected - 1 + options.length) % options.length);
-        }
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [setViewType, onSelect, selected, options]);
-
-  return (
-    <div className="ml-0 flex-1">
-      <div ref={ref} className="relative flex flex-col z-10">
-        <input
-          placeholder="Search nodes..."
-          autoFocus
-          className="px-2 h-8 outline-none bg-[--teal-a2] rounded text-[--teal-a9]"
-          type="text"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        />
-        <div className="absolute top-8 p-1 left-0 w-full bg-[white] border border-[--teal-3] rounded-sm flex flex-col gap-4">
-          {optionsGrouped.map((group) => (
-            <div key={group.type}>
-              <div className="px-2 py-0 uppercase text-sm text-[--gray-6] pointer-events-none">{group.type}</div>
-              {group.options.map(
-                ({ index, object, text }) =>
-                  text && ( // avoiding empty nodes being rendered into the search results
-                    <div
-                      key={object.id}
-                      onClick={() => onSelect(object)}
-                      onMouseEnter={() => setSelected(index)}
-                      className={`px-2 py-1 rounded ${selected === index ? "bg-[--teal-2]" : ""} `}
-                    >
-                      {text}
-                    </div>
-                  ),
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 const SearchOrCreateNodeView = observer(() => {
   const graph = useGraphStore();
