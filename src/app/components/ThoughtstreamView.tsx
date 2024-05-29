@@ -69,12 +69,6 @@ export const ThoughtstreamView = observer(() => {
                     onClick={() => {
                       if (curView !== ViewType.SPLIT) {
                         router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1))}`);
-                      } else {
-                        router.push(
-                          `/split/outline${relationsToURLPath(
-                            viewController.currentOutlineViewRoot!,
-                          )}/stream${relationsToURLPath(relations.slice(0, i + 1))}`,
-                        );
                       }
                     }}
                   >
@@ -101,12 +95,6 @@ export const ThoughtstreamView = observer(() => {
                           onSelect={() => {
                             if (curView !== ViewType.SPLIT) {
                               router.push(`/stream${relationsToURLPath(relations.slice(0, index + 2))}`);
-                            } else {
-                              router.push(
-                                `/split/outline${relationsToURLPath(
-                                  viewController.currentOutlineViewRoot!,
-                                )}/stream${relationsToURLPath(relations.slice(0, index + 2))}`,
-                              );
                             }
                           }}
                         >
@@ -125,12 +113,6 @@ export const ThoughtstreamView = observer(() => {
                   onClick={() => {
                     if (curView !== ViewType.SPLIT) {
                       router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1))}`);
-                    } else {
-                      router.push(
-                        `/split/outline${relationsToURLPath(
-                          viewController.currentOutlineViewRoot!,
-                        )}/stream${relationsToURLPath(relations.slice(0, i + 1))}`,
-                      );
                     }
                   }}
                 >

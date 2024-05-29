@@ -70,12 +70,6 @@ export const OutlineView = observer(() => {
                     onClick={() => {
                       if (curView !== ViewType.SPLIT) {
                         router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1))}`);
-                      } else {
-                        router.push(
-                          `/split/outline${relationsToURLPath(relations.slice(0, i + 1))}/stream${relationsToURLPath(
-                            viewController.currentStreamViewRoot!,
-                          )}`,
-                        );
                       }
                     }}
                   >
@@ -103,12 +97,6 @@ export const OutlineView = observer(() => {
                           onSelect={() => {
                             if (curView !== ViewType.SPLIT) {
                               router.push(`/outline${relationsToURLPath(relations.slice(0, index + 2))}`);
-                            } else {
-                              router.push(
-                                `/split/outline${relationsToURLPath(
-                                  relations.slice(0, index + 2),
-                                )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!)}`,
-                              );
                             }
                           }}
                         >
@@ -127,12 +115,6 @@ export const OutlineView = observer(() => {
                   onClick={() => {
                     if (curView !== ViewType.SPLIT) {
                       router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1))}`);
-                    } else {
-                      router.push(
-                        `/split/outline${relationsToURLPath(relations.slice(0, i + 1))}/stream${relationsToURLPath(
-                          viewController.currentStreamViewRoot!,
-                        )}`,
-                      );
                     }
                   }}
                 >
