@@ -2,6 +2,7 @@
 import { ArrowLeft, SettingsIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef } from "react";
 import s from "./app.module.css";
 import { SearchBar } from "./components/SearchBar/SearchBar";
@@ -43,6 +44,7 @@ export default observer(
         </Link>
       </>
     );
+    const router = useRouter();
 
     return (
       <div className={s.App}>
@@ -62,7 +64,7 @@ export default observer(
               </button>
 
               <div className={`${s.HeaderNav} ${viewController.leftSidebarOpen ? s.LeftShift : ""}`}>
-                <div className={`${s.BackButton}`}>
+                <div className={`${s.BackButton}`} onClick={() => router.back()}>
                   <ArrowLeft size={18} />
                 </div>
                 <SearchBar />
