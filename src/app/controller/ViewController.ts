@@ -1,10 +1,10 @@
 import { LexicalEditor } from "lexical";
 import { makeAutoObservable } from "mobx";
 import { JUMP_TO_START } from "../editor/plugins/JumpSelectionPluigin";
+import { Box } from "../editor/selection/utils";
 import { GraphRelation } from "../model/GraphRelation";
 import { GraphStore, Path } from "../model/GraphStore";
 import { SettingsStore } from "../model/SettingsStore";
-import { Box } from "../selection/utils";
 import { makeAutoSaving, relationsPathToParentChild, relationsToPathStr } from "../util";
 
 export enum ViewType {

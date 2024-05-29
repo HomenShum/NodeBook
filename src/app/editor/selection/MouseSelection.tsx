@@ -1,5 +1,5 @@
 import { RefObject, useCallback, useEffect, useRef } from "react";
-import { useViewController } from "../controller/useViewController";
+import { useViewController } from "../../controller/useViewController";
 import { Coordinate } from "./utils";
 
 interface Props {

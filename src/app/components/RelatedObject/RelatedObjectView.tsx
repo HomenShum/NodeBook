@@ -1,9 +1,3 @@
-import * as HoverCard from "@radix-ui/react-hover-card";
-import { Circle, Dot, Edit2, GlobeIcon, Play } from "lucide-react";
-import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import { PinCustom } from "@/app/components/icons/icons";
 import { ViewType } from "@/app/controller/ViewController";
 import { useViewController } from "@/app/controller/useViewController";
@@ -11,18 +5,23 @@ import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
+import { SearchResult } from "@/app/model/search";
 import { useGraphStore } from "@/app/model/useGraphStore";
 import { useSettingsStore } from "@/app/model/useSettingsStore";
-import { SearchResult } from "@/app/store/search";
 import { Position, relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
 import { cn } from "@/lib/utils";
-import { RelatedObjectChildren, getFilteredChildrenAtPath } from "./RelatedObjectChildren";
+import * as HoverCard from "@radix-ui/react-hover-card";
+import { Circle, Dot, Edit2, GlobeIcon, Play } from "lucide-react";
+import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import styles from "../OutlineView.module.css";
+import { RelatedObjectChildren } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
 import { RelatedObjectMenu } from "./RelatedObjectMenu";
 import { RelationCombobox } from "./RelationCombobox";
-
-import styles from "../OutlineView.module.css";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
+import { getFilteredChildrenAtPath } from "./getFilteredChildrenAtPath";
 
 /**
  * The view type of the related object. This determines what is displayed in the
