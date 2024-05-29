@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
+} from "@/app/components/ui/DropdownMenu";
 import { useViewController } from "@/app/controller/useViewController";
 import { GraphNode } from "@/app/model/GraphNode";
 import { useGraphStore } from "@/app/model/useGraphStore";

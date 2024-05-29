@@ -3,8 +3,8 @@
 import { Check } from "lucide-react";
 import * as React from "react";
 
-import { Button } from "@/app/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
+import { Button } from "@/app/components/ui/Button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/Popover";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";

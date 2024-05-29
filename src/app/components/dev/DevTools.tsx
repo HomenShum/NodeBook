@@ -4,7 +4,7 @@ import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { observer } from "mobx-react-lite";
 import { ClearData } from "../DataDialog/ClearData";
 import { ImportDialog } from "../DataDialog/ImportDialog";
-import { Button } from "../ui/button";
+import { Button } from "../ui/Button";
 
 export const DevTools = observer(() => {
   const settingsStore = useSettingsStore();
