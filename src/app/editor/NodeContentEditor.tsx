@@ -19,7 +19,6 @@ import { useSettingsStore } from "../model/useSettingsStore";
 import styles from "./Editor.module.css";
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { JumpSelectionPlugin } from "./plugins/JumpSelectionPluigin";
-import { KeyboardOverridesPlugin } from "./plugins/KeyboardOverridesPlugin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
 import { ReplaceObjectPlugin } from "./plugins/ReplaceObjectPlugin";
@@ -27,6 +26,15 @@ import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPl
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
+import { ArrowKeyExpandCollapsePlugin } from "./plugins/keyboard/ArrowKeyExpandCollapsePlugin";
+import { ArrowKeyMoveNodePlugin } from "./plugins/keyboard/ArrowKeyMoveNodePlugin";
+import { ArrowKeyNavPlugin } from "./plugins/keyboard/ArrowKeyNavPlugin";
+import { BackspaceMergeNodesPlugin } from "./plugins/keyboard/BackspaceMergeNodesPlugin";
+import { EnterKeyPlugin } from "./plugins/keyboard/EnterKeyPlugin";
+import { EnterTempEditPlugin } from "./plugins/keyboard/EnterTempEditPlugin";
+import { ExitTempEditPlugin } from "./plugins/keyboard/ExitTempEditPlugin";
+import { SetNodeAsRootPlugin } from "./plugins/keyboard/SetNodeAsRootPlugin";
+import { TabAndBulletPlugin } from "./plugins/keyboard/TabAndBulletPlugin";
 import { PastePlugin } from "./plugins/pastePlugin";
 
 const theme = {
@@ -99,7 +107,15 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
         <HistoryPlugin />
         <ClearEditorPlugin />
         <SyncWithGraphPlugin node={node} />
-        <KeyboardOverridesPlugin />
+        <ArrowKeyNavPlugin />
+        <ArrowKeyExpandCollapsePlugin />
+        <ArrowKeyMoveNodePlugin />
+        <EnterKeyPlugin />
+        <TabAndBulletPlugin />
+        <BackspaceMergeNodesPlugin />
+        <SetNodeAsRootPlugin />
+        <EnterTempEditPlugin />
+        <ExitTempEditPlugin />
         <ReplaceObjectPlugin />
         <PastePlugin />
         <RelationPlugin />

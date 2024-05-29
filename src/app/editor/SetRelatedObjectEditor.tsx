@@ -1,5 +1,4 @@
 import { useViewController } from "@/app/controller/useViewController";
-import { KeyboardOverridesPlugin } from "@/app/editor/plugins/KeyboardOverridesPlugin";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
 import { Chip } from "@/app/model/GraphNode";
 import { $createMentionNode } from "@/app/model/MentionNode";
@@ -33,6 +32,15 @@ import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpa
 import { ReplaceObjectPlugin } from "./plugins/ReplaceObjectPlugin";
 import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
+import { ArrowKeyExpandCollapsePlugin } from "./plugins/keyboard/ArrowKeyExpandCollapsePlugin";
+import { ArrowKeyMoveNodePlugin } from "./plugins/keyboard/ArrowKeyMoveNodePlugin";
+import { ArrowKeyNavPlugin } from "./plugins/keyboard/ArrowKeyNavPlugin";
+import { BackspaceMergeNodesPlugin } from "./plugins/keyboard/BackspaceMergeNodesPlugin";
+import { EnterKeyPlugin } from "./plugins/keyboard/EnterKeyPlugin";
+import { EnterTempEditPlugin } from "./plugins/keyboard/EnterTempEditPlugin";
+import { ExitTempEditPlugin } from "./plugins/keyboard/ExitTempEditPlugin";
+import { SetNodeAsRootPlugin } from "./plugins/keyboard/SetNodeAsRootPlugin";
+import { TabAndBulletPlugin } from "./plugins/keyboard/TabAndBulletPlugin";
 import { createContentMatchingParagraph, graphNodeMatchesParagraph } from "./utils";
 
 /**
@@ -93,7 +101,15 @@ export const SetRelatedObjectEditor = observer(() => {
         <SetRelationTypeOnColonPlugin />
         <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
         <HistoryPlugin />
-        <KeyboardOverridesPlugin />
+        <ArrowKeyNavPlugin />
+        <ArrowKeyExpandCollapsePlugin />
+        <ArrowKeyMoveNodePlugin />
+        <EnterKeyPlugin />
+        <TabAndBulletPlugin />
+        <BackspaceMergeNodesPlugin />
+        <SetNodeAsRootPlugin />
+        <EnterTempEditPlugin />
+        <ExitTempEditPlugin />
         <ReplaceObjectPlugin />
         <ClearEditorPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
