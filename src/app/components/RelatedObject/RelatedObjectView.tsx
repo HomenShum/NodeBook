@@ -124,14 +124,23 @@ export const RelatedObjectView = observer(
       if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
         if (curView === ViewType.THOUGHTSTREAM) {
           router.push(`/stream${relationsToURLPath([...pathToParentRelations, relation])}`);
-        } else {
-          viewController.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
+        } else if (curView === ViewType.SPLIT) {
+          router.push(
+            `/split/outline${relationsToURLPath(viewController.currentOutlineViewRoot!)}/stream${relationsToURLPath([
+              ...pathToParentRelations,
+              relation,
+            ])}`,
+          );
         }
       } else if (viewRoot.id === graphStore.outlineRoot.id) {
         if (curView === ViewType.OUTLINE) {
           router.push(`/outline${relationsToURLPath([...pathToParentRelations, relation])}`);
-        } else {
-          viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+        } else if (curView === ViewType.SPLIT) {
+          router.push(
+            `/split/outline${relationsToURLPath([...pathToParentRelations, relation])}/stream${relationsToURLPath(
+              viewController.currentStreamViewRoot!,
+            )}`,
+          );
         }
       } else {
         throw new Error("Unknown view root");
