@@ -7,7 +7,7 @@ import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { isPlaceholder } from "./PlaceholderGraphObject";
-import { SerializedGraphStore } from "./SerializedData";
+import { SerializedGraphStore, SerializedRelation } from "./SerializedData";
 import { SettingsStore } from "./SettingsStore";
 import { serializeMap, serializeMapWithArrayValues } from "./serialization";
 
@@ -829,30 +829,31 @@ export class GraphStore {
       }
     }
 
+    const serializedToRelation = (data: string | SerializedRelation) => {
+      if (typeof data === "string") {
+        return relationsById.get(data) ?? null;
+      } else if (typeof data === "object") {
+        return relationsById.get(data.id) ?? null;
+      }
+      return null;
+    };
     const relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
     for (const [key, value] of Object.entries(data.relationsByNodeId)) {
-      relationsByNodeId.set(
-        key,
-        FractionalPositionedList.deserialize<GraphRelation>(value, (data) =>
-          GraphRelation.deserialize(data, this, getObjectById, getRelationTypeById, true),
-        ),
-      );
+      relationsByNodeId.set(key, FractionalPositionedList.deserialize<GraphRelation>(value, serializedToRelation));
     }
 
     const pinnedRelationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
     for (const [key, value] of Object.entries(data.pinnedRelationsByNodeId)) {
       pinnedRelationsByNodeId.set(
         key,
-        FractionalPositionedList.deserialize<GraphRelation>(value, (data) =>
-          GraphRelation.deserialize(data, this, getObjectById, getRelationTypeById, true),
-        ),
+        FractionalPositionedList.deserialize<GraphRelation>(value, serializedToRelation),
       );
     }
 
     const correspondingObjectsForPinned = new Map<string, GraphRelation>();
     if (data.correspondingObjectsForPinned) {
       for (const [key, value] of Object.entries(data.correspondingObjectsForPinned)) {
-        const rel = GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById, true);
+        const rel = serializedToRelation(value);
         if (rel) {
           correspondingObjectsForPinned.set(key, rel);
         }
@@ -862,7 +863,7 @@ export class GraphStore {
     const correspondingPinnedForObjects = new Map<string, GraphRelation>();
     if (data.correspondingPinnedForObjects) {
       for (const [key, value] of Object.entries(data.correspondingPinnedForObjects)) {
-        const rel = GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById, true);
+        const rel = serializedToRelation(value);
         if (rel) {
           correspondingPinnedForObjects.set(key, rel);
         }
