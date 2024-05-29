@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
-import { $createRangeSelection, $getRoot, $setSelection, COMMAND_PRIORITY_LOW, createCommand } from "lexical";
+import { $getRoot, COMMAND_PRIORITY_NORMAL, createCommand } from "lexical";
 import { useEffect } from "react";
 
 export const JUMP_TO_START = createCommand("JUMP_TO_START");
@@ -14,25 +14,18 @@ export const JumpSelectionPlugin = () => {
       editor.registerCommand(
         JUMP_TO_START,
         () => {
-          const selection = $createRangeSelection();
-          // Newly created selection will be at start of editor by default
-          $setSelection(selection);
+          $getRoot().getFirstDescendant()?.selectStart();
           return true;
         },
-        COMMAND_PRIORITY_LOW,
+        COMMAND_PRIORITY_NORMAL,
       ),
       editor.registerCommand(
         JUMP_TO_END,
         () => {
-          const selection = $createRangeSelection();
-          const lastNode = $getRoot().getLastDescendant();
-          if (!lastNode) return false;
-          selection.anchor.key = lastNode.getKey();
-          selection.anchor.offset = lastNode.getTextContentSize();
-          $setSelection(selection);
+          $getRoot().getLastDescendant()?.selectEnd();
           return true;
         },
-        COMMAND_PRIORITY_LOW,
+        COMMAND_PRIORITY_NORMAL,
       ),
     );
   }, [editor]);

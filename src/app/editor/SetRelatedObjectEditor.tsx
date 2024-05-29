@@ -31,7 +31,7 @@ import { useGraphStore } from "../model/useGraphStore";
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { ReplaceObjectPlugin } from "./plugins/ReplaceObjectPlugin";
 import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
-import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
+import { TrackFocusedPathPlugin } from "./plugins/TrackFocusedPathPlugin";
 import { ArrowKeyExpandCollapsePlugin } from "./plugins/keyboard/ArrowKeyExpandCollapsePlugin";
 import { ArrowKeyMoveNodePlugin } from "./plugins/keyboard/ArrowKeyMoveNodePlugin";
 import { ArrowKeyNavPlugin } from "./plugins/keyboard/ArrowKeyNavPlugin";
@@ -113,7 +113,7 @@ export const SetRelatedObjectEditor = observer(() => {
         <ReplaceObjectPlugin />
         <ClearEditorPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
-        <TrackFocusedPath pathToNodeStr={pathToNodeStr} />
+        <TrackFocusedPathPlugin pathToNodeStr={pathToNodeStr} />
       </LexicalComposer>
     </div>
   );

@@ -1,10 +1,11 @@
-import { useViewController } from "@/app/controller/useViewController";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
-import { BLUR_COMMAND, COMMAND_PRIORITY_LOW, FOCUS_COMMAND } from "lexical";
+import { BLUR_COMMAND, COMMAND_PRIORITY_EDITOR, FOCUS_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-export const TrackFocusedPath = ({ pathToNodeStr }: { pathToNodeStr: string }) => {
+import { useViewController } from "@/app/controller/useViewController";
+
+export const TrackFocusedPathPlugin = ({ pathToNodeStr }: { pathToNodeStr: string }) => {
   const viewController = useViewController();
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
@@ -15,7 +16,7 @@ export const TrackFocusedPath = ({ pathToNodeStr }: { pathToNodeStr: string }) =
           viewController.trackFocusedNode(null);
           return false;
         },
-        COMMAND_PRIORITY_LOW,
+        COMMAND_PRIORITY_EDITOR,
       ),
       editor.registerCommand(
         FOCUS_COMMAND,
@@ -23,7 +24,7 @@ export const TrackFocusedPath = ({ pathToNodeStr }: { pathToNodeStr: string }) =
           viewController.trackFocusedNode(pathToNodeStr);
           return false;
         },
-        COMMAND_PRIORITY_LOW,
+        COMMAND_PRIORITY_EDITOR,
       ),
     );
   }, [pathToNodeStr, editor, viewController]);

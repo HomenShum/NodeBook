@@ -1,6 +1,5 @@
 import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 
-import { cn } from "@/lib/utils";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -10,13 +9,14 @@ import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
-import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "../controller/useViewController";
-import { GraphNode } from "../model/GraphNode";
-import { MentionNode } from "../model/MentionNode";
-import { useGraphStore } from "../model/useGraphStore";
-import { useSettingsStore } from "../model/useSettingsStore";
-import styles from "./Editor.module.css";
+
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useViewController } from "@/app/controller/useViewController";
+import { GraphNode } from "@/app/model/GraphNode";
+import { MentionNode } from "@/app/model/MentionNode";
+import { useGraphStore } from "@/app/model/useGraphStore";
+import { useSettingsStore } from "@/app/model/useSettingsStore";
+import { cn } from "@/lib/utils";
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { JumpSelectionPlugin } from "./plugins/JumpSelectionPluigin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
@@ -24,7 +24,7 @@ import { RelationPlugin } from "./plugins/RelationPlugin";
 import { ReplaceObjectPlugin } from "./plugins/ReplaceObjectPlugin";
 import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
-import { TrackFocusedPath } from "./plugins/TrackFocusedPath";
+import { TrackFocusedPathPlugin } from "./plugins/TrackFocusedPathPlugin";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
 import { ArrowKeyExpandCollapsePlugin } from "./plugins/keyboard/ArrowKeyExpandCollapsePlugin";
 import { ArrowKeyMoveNodePlugin } from "./plugins/keyboard/ArrowKeyMoveNodePlugin";
@@ -36,6 +36,8 @@ import { ExitTempEditPlugin } from "./plugins/keyboard/ExitTempEditPlugin";
 import { SetNodeAsRootPlugin } from "./plugins/keyboard/SetNodeAsRootPlugin";
 import { TabAndBulletPlugin } from "./plugins/keyboard/TabAndBulletPlugin";
 import { PastePlugin } from "./plugins/pastePlugin";
+
+import styles from "./Editor.module.css";
 
 const theme = {
   // Theme styling goes here
@@ -124,14 +126,13 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
           nodeType={MentionNode}
           eventType={"click"}
           eventListener={(e: Event) => {
-            console.log(e.target);
             setPathToNodeAsRoot((e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!);
           }}
         />
         {showSearchAndReplaceDropdown && <AutocompleteDropdownPlugin parentRef={ref} />}
         <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
-        <TrackFocusedPath pathToNodeStr={pathToNodeStr} />
+        <TrackFocusedPathPlugin pathToNodeStr={pathToNodeStr} />
         <JumpSelectionPlugin />
       </LexicalComposer>
     </div>
