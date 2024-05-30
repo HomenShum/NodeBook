@@ -2,7 +2,6 @@ import { useViewController } from "@/app/controller/useViewController";
 import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/model/GraphNode";
 import { useGraphStore } from "@/app/model/useGraphStore";
-import { relationsToURLPath } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { Edit2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
@@ -52,13 +51,7 @@ export const RelatedObjectEditor = observer(
           {object instanceof GraphNode ? (
             <div
               className={cn("flex min-w-64", treatAsLink && "cursor-pointer")}
-              onClick={
-                treatAsLink
-                  ? (e) => {
-                      router.push(`/outline${relationsToURLPath([...pathToParentRelations, relation])}`);
-                    }
-                  : undefined
-              }
+              onClick={treatAsLink ? (e) => graph.togglePathExpanded(pathToNodeStr) : undefined}
             >
               <NodeContentEditor indent={indentationWidth} />
               {treatAsLink && isHovered && (
