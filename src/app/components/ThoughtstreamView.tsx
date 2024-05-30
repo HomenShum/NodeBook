@@ -68,12 +68,13 @@ export const ThoughtstreamView = observer(() => {
                     key={relation.id}
                     onClick={() => {
                       if (curView !== ViewType.SPLIT) {
-                        router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1))}`);
+                        router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
                       } else {
                         router.push(
                           `/split/outline${relationsToURLPath(
                             viewController.currentOutlineViewRoot!,
-                          )}/stream${relationsToURLPath(relations.slice(0, i + 1))}`,
+                            graphStore,
+                          )}/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`,
                         );
                       }
                     }}
@@ -100,12 +101,13 @@ export const ThoughtstreamView = observer(() => {
                           className={stylesList.BreadcrumbMenuItem}
                           onSelect={() => {
                             if (curView !== ViewType.SPLIT) {
-                              router.push(`/stream${relationsToURLPath(relations.slice(0, index + 2))}`);
+                              router.push(`/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`);
                             } else {
                               router.push(
                                 `/split/outline${relationsToURLPath(
                                   viewController.currentOutlineViewRoot!,
-                                )}/stream${relationsToURLPath(relations.slice(0, index + 2))}`,
+                                  graphStore,
+                                )}/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`,
                               );
                             }
                           }}
@@ -124,12 +126,13 @@ export const ThoughtstreamView = observer(() => {
                   key={relation.id}
                   onClick={() => {
                     if (curView !== ViewType.SPLIT) {
-                      router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1))}`);
+                      router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
                     } else {
                       router.push(
                         `/split/outline${relationsToURLPath(
                           viewController.currentOutlineViewRoot!,
-                        )}/stream${relationsToURLPath(relations.slice(0, i + 1))}`,
+                          graphStore,
+                        )}/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`,
                       );
                     }
                   }}

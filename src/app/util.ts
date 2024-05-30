@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ViewType } from "./controller/ViewController";
 import { GraphObject } from "./model/GraphObject";
 import { GraphRelation } from "./model/GraphRelation";
+import { GraphStore } from "./model/GraphStore";
 
 export const uuid = () => uuidv4().slice(0, 8);
 
@@ -121,8 +122,9 @@ export function useCurView() {
   }
 }
 
-export function relationsToURLPath(relations: GraphRelation[]) {
-  return `/${relations.map((x) => x.id).join("/")}`;
+export function relationsToURLPath(relations: GraphRelation[], graphStore: GraphStore) {
+  const unpinnedRelations = relations.map((r) => graphStore.correspondingObjectsForPinned.get(r.id) || r);
+  return `/${unpinnedRelations.map((x) => x.id).join("/")}`;
 }
 
 export function sortByPrefixMatch(objects: GraphObject[], query: string) {

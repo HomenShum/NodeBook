@@ -69,12 +69,13 @@ export const OutlineView = observer(() => {
                     key={relation.id}
                     onClick={() => {
                       if (curView !== ViewType.SPLIT) {
-                        router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1))}`);
+                        router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
                       } else {
                         router.push(
-                          `/split/outline${relationsToURLPath(relations.slice(0, i + 1))}/stream${relationsToURLPath(
-                            viewController.currentStreamViewRoot!,
-                          )}`,
+                          `/split/outline${relationsToURLPath(
+                            relations.slice(0, i + 1),
+                            graphStore,
+                          )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!, graphStore)}`,
                         );
                       }
                     }}
@@ -102,12 +103,13 @@ export const OutlineView = observer(() => {
                           className={s.BreadcrumbMenuItem}
                           onSelect={() => {
                             if (curView !== ViewType.SPLIT) {
-                              router.push(`/outline${relationsToURLPath(relations.slice(0, index + 2))}`);
+                              router.push(`/outline${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`);
                             } else {
                               router.push(
                                 `/split/outline${relationsToURLPath(
                                   relations.slice(0, index + 2),
-                                )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!)}`,
+                                  graphStore,
+                                )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!, graphStore)}`,
                               );
                             }
                           }}
@@ -126,12 +128,13 @@ export const OutlineView = observer(() => {
                   key={relation.id}
                   onClick={() => {
                     if (curView !== ViewType.SPLIT) {
-                      router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1))}`);
+                      router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
                     } else {
                       router.push(
-                        `/split/outline${relationsToURLPath(relations.slice(0, i + 1))}/stream${relationsToURLPath(
-                          viewController.currentStreamViewRoot!,
-                        )}`,
+                        `/split/outline${relationsToURLPath(
+                          relations.slice(0, i + 1),
+                          graphStore,
+                        )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!, graphStore)}`,
                       );
                     }
                   }}

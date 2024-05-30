@@ -124,23 +124,24 @@ export const RelatedObjectView = observer(
     const setPathToThisAsRoot = useCallback(() => {
       if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
         if (curView === ViewType.THOUGHTSTREAM) {
-          router.push(`/stream${relationsToURLPath([...pathToParentRelations, relation])}`);
+          router.push(`/stream${relationsToURLPath([...pathToParentRelations, relation], graphStore)}`);
         } else if (curView === ViewType.SPLIT) {
           router.push(
-            `/split/outline${relationsToURLPath(viewController.currentOutlineViewRoot!)}/stream${relationsToURLPath([
-              ...pathToParentRelations,
-              relation,
-            ])}`,
+            `/split/outline${relationsToURLPath(
+              viewController.currentOutlineViewRoot!,
+              graphStore,
+            )}/stream${relationsToURLPath([...pathToParentRelations, relation], graphStore)}`,
           );
         }
       } else if (viewRoot.id === graphStore.outlineRoot.id) {
         if (curView === ViewType.OUTLINE) {
-          router.push(`/outline${relationsToURLPath([...pathToParentRelations, relation])}`);
+          router.push(`/outline${relationsToURLPath([...pathToParentRelations, relation], graphStore)}`);
         } else if (curView === ViewType.SPLIT) {
           router.push(
-            `/split/outline${relationsToURLPath([...pathToParentRelations, relation])}/stream${relationsToURLPath(
-              viewController.currentStreamViewRoot!,
-            )}`,
+            `/split/outline${relationsToURLPath(
+              [...pathToParentRelations, relation],
+              graphStore,
+            )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!, graphStore)}`,
           );
         }
       } else {
@@ -302,7 +303,7 @@ export const RelatedObjectView = observer(
                             from:{" "}
                             <span
                               onClick={() => {
-                                router.push(`/outline${relationsToURLPath([object])}`);
+                                router.push(`/outline${relationsToURLPath([object], graphStore)}`);
                               }}
                             >
                               {object.from.text}
