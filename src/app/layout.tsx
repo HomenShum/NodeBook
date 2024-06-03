@@ -2,6 +2,7 @@
 import { autorun, toJS } from "mobx";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import { DataLoadProvider } from "./DataLoadContext";
 import { ViewController } from "./controller/ViewController";
 import { ViewControllerProvider } from "./controller/useViewController";
 import { env } from "./envFrontend";
@@ -75,13 +76,13 @@ export default function RootTemplate({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const persistedData = useRef<string | null>(null);
   const curView = useCurView();
 
   useEffect(() => {
     if (!env.isPersistenceEnabled) {
-      setIsLoading(false);
+      setHasLoaded(true);
       return;
     }
     async function setupSync() {
@@ -89,7 +90,7 @@ export default function RootTemplate({
       if (data !== null) {
         graphStore.deserializeInPlace(data);
       }
-      setIsLoading(false);
+      setHasLoaded(true);
       setInterval(() => {
         const newDataString = JSON.stringify(graphStore.serialize());
         if (newDataString !== persistedData.current) {
@@ -103,15 +104,17 @@ export default function RootTemplate({
 
   return (
     <html>
-      <SettingsStoreProvider value={settingsStore}>
-        <GraphStoreProvider value={graphStore}>
-          <ViewControllerProvider value={viewController}>
-            <body>
-              <App curView={curView}>{children}</App>
-            </body>
-          </ViewControllerProvider>
-        </GraphStoreProvider>
-      </SettingsStoreProvider>
+      <DataLoadProvider value={hasLoaded}>
+        <SettingsStoreProvider value={settingsStore}>
+          <GraphStoreProvider value={graphStore}>
+            <ViewControllerProvider value={viewController}>
+              <body>
+                <App curView={curView}>{children}</App>
+              </body>
+            </ViewControllerProvider>
+          </GraphStoreProvider>
+        </SettingsStoreProvider>
+      </DataLoadProvider>
     </html>
   );
 }

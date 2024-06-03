@@ -1,11 +1,12 @@
 "use client";
+import { DataLoadContext } from "@/app/DataLoadContext";
 import { useViewController } from "@/app/controller/useViewController";
 import { GraphStore } from "@/app/model/GraphStore";
 import { useGraphStore } from "@/app/model/useGraphStore";
 import { relationsPathToParentChild } from "@/app/util";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 
 const OutlineView = dynamic(() => import("../../components/OutlineView").then((x) => x.OutlineView), {
   ssr: false,
@@ -47,8 +48,11 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
   const viewController = useViewController();
   const graphStore = useGraphStore();
   const router = useRouter();
+  const hasLoaded = useContext(DataLoadContext);
 
   useEffect(() => {
+    if (!hasLoaded) return;
+
     // redirect to / if viewName is bad
     if (viewName !== "outline" && viewName !== "stream" && viewName !== "split") {
       router.push("/");
@@ -116,7 +120,9 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
     ) {
       viewController.setCurrentStreamViewRoot(newStreamRoot);
     }
-  }, [graphStore, path, router, viewController, viewName]);
+  }, [graphStore, hasLoaded, path, router, viewController, viewName]);
+
+  if (!hasLoaded) return <div className="p-4">Loading...</div>;
 
   if (viewName === "stream") {
     return <ThoughtstreamView></ThoughtstreamView>;

@@ -1,7 +1,8 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
+import { DataLoadContext } from "./DataLoadContext";
 import { useViewController } from "./controller/useViewController";
 import { useGraphStore } from "./model/useGraphStore";
 
@@ -15,5 +16,9 @@ export default function Page() {
   useEffect(() => {
     viewController.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
   });
+
+  const hasLoaded = useContext(DataLoadContext);
+  if (!hasLoaded) return <div className="p-4">Loading...</div>;
+
   return <OutlineView />;
 }
