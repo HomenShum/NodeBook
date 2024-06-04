@@ -25,6 +25,7 @@ export const TabAndBulletPlugin = () => {
     parent,
   } = useRelationAtPath();
 
+  const viewRoot = pathToParentNodes[0].child;
   const tabBullet = useCallback(
     (event: KeyboardEvent | null) => {
       if (!graphStore) return false;
@@ -124,7 +125,7 @@ export const TabAndBulletPlugin = () => {
       editor.registerCommand(
         KEY_DOWN_COMMAND,
         (event) => {
-          if (event.key === "-") {
+          if (event.key === "-" && viewRoot.id === graphStore.thoughtstreamRoot.id) {
             const selection = $getSelection();
             if (!$isRangeSelection(selection)) return false;
 
