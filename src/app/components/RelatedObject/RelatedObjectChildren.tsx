@@ -28,7 +28,10 @@ export const RelatedObjectChildren = observer(
     const settingsStore = useSettingsStore();
     const graphStore = useGraphStore();
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
-    const children = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, searchResultDate, false);
+    let children = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, searchResultDate, false);
+    if (settingsStore.hidePinnedItems) {
+      children = children.filter((c) => !graphStore.correspondingPinnedForObjects.has(c.relation.id));
+    }
     const pinnedChildren = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, searchResultDate, true);
 
     const [isPinnedVisible, setIsPinnedVisible] = useState(true);

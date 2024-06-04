@@ -10,6 +10,7 @@
   position: relative;
   overflow-y: scroll;
   align-items: flex-start;
+  padding-bottom: 4em;
 }
 
 .LeftAside {

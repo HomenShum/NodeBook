@@ -22,6 +22,7 @@ type SerializedUserSettings = {
   semicolonTriggerToReplaceObject?: boolean;
   addStreamLabeledRelationsToMyLists?: boolean;
   allowShiftTabAboveViewRoot?: boolean;
+  hidePinnedItems?: boolean;
 };
 
 export class SettingsStore {
@@ -50,6 +51,7 @@ export class SettingsStore {
   public semicolonTriggerToReplaceObject = true;
   public addStreamLabeledRelationsToMyLists = true;
   public allowShiftTabAboveViewRoot = false;
+  public hidePinnedItems = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -76,6 +78,7 @@ export class SettingsStore {
     this.semicolonTriggerToReplaceObject = true;
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
+    this.hidePinnedItems = false;
   }
 
   saveToLocalStorage() {
@@ -118,6 +121,7 @@ export class SettingsStore {
       atSignTriggerToReplaceObject: this.atSignTriggerToReplaceObject,
       addStreamLabeledRelationsToMyLists: this.addStreamLabeledRelationsToMyLists,
       allowShiftTabAboveViewRoot: this.allowShiftTabAboveViewRoot,
+      hidePinnedItems: this.hidePinnedItems,
     };
   }
 
@@ -147,6 +151,7 @@ export class SettingsStore {
     this.addStreamLabeledRelationsToMyLists =
       data.addStreamLabeledRelationsToMyLists ?? this.addStreamLabeledRelationsToMyLists;
     this.allowShiftTabAboveViewRoot = data.allowShiftTabAboveViewRoot ?? this.allowShiftTabAboveViewRoot;
+    this.hidePinnedItems = data.hidePinnedItems ?? this.hidePinnedItems;
   }
 
   setAddThoughtstreamDirectChildrenToOutline(value: boolean) {
@@ -227,5 +232,9 @@ export class SettingsStore {
 
   setAllowShiftTabAboveViewRoot(value: boolean) {
     this.allowShiftTabAboveViewRoot = value;
+  }
+
+  setHidePinnedItems(value: boolean) {
+    this.hidePinnedItems = value;
   }
 }
