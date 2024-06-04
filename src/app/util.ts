@@ -127,6 +127,19 @@ export function relationsToURLPath(relations: GraphRelation[], graphStore: Graph
   return `/${unpinnedRelations.map((x) => x.id).join("/")}`;
 }
 
+export function pathToNodeSet(path: GraphRelation[]) {
+  const nodes = new Set();
+  for (const relation of path) {
+    nodes.add(relation.from.id);
+    nodes.add(relation.to.id);
+  }
+  return nodes;
+}
+
+export function countOccurrencesInPath(object: GraphObject, path: PathLink[]) {
+  return path.reduce((acc, { child }) => (child.id === object.id ? acc + 1 : acc), 0);
+}
+
 export function sortByPrefixMatch(objects: GraphObject[], query: string) {
   const isPrefixMatch: { [key: string]: number } = {};
   for (const o of objects) {

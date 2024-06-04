@@ -7,7 +7,15 @@ import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { SearchResult } from "@/app/model/search";
 import { useGraphStore } from "@/app/model/useGraphStore";
 import { useSettingsStore } from "@/app/model/useSettingsStore";
-import { Position, relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
+import {
+  Position,
+  countOccurrencesInPath,
+  pathToNodeSet,
+  relationsPathToParentChild,
+  relationsToPathStr,
+  relationsToURLPath,
+  useCurView,
+} from "@/app/util";
 import { cn } from "@/lib/utils";
 import * as HoverCard from "@radix-ui/react-hover-card";
 import { Circle, Dot, GlobeIcon } from "lucide-react";
@@ -91,11 +99,7 @@ export const RelatedObjectView = observer(
       }
     }, [graphStore, hasChildren, pathToNodeStr]);
 
-    const allNodesInPath = new Set();
-    for (const pathRelation of path) {
-      allNodesInPath.add(pathRelation.from.id);
-      allNodesInPath.add(pathRelation.to.id);
-    }
+    const allNodesInPath = pathToNodeSet(path);
 
     const hasNewChildren =
       children.filter((c) => !allNodesInPath.has(c.relation.from === object ? c.relation.to.id : c.relation.from.id))
@@ -105,7 +109,7 @@ export const RelatedObjectView = observer(
     const isSelected = false;
     const isBackwards = relation.from.id === object.id;
     const isChild = relation.relationType.id === defaultRelationTypes.child.id && !isBackwards;
-    const objectCount = pathObjects.reduce((acc, { child }) => (child.id === object.id ? acc + 1 : acc), 0);
+    const objectCount = countOccurrencesInPath(object, pathObjects);
 
     useEffect(() => {
       if (

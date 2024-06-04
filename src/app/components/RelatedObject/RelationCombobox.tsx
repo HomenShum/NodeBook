@@ -25,9 +25,7 @@ export const RelationCombobox = observer(
     const [isOpen, setIsOpen] = React.useState(false);
     const [search, setSearch] = React.useState("");
     const [selected, setSelected] = React.useState(`${relation.relationType.id}-${isForward ? "forward" : "reverse"}`);
-    const open = () => {
-      setIsOpen(true);
-    };
+
     const close = () => {
       setIsOpen(false);
       setUpdatingRelationType(false);
@@ -104,9 +102,9 @@ export const RelationCombobox = observer(
     return (
       <Popover
         open={isOpen}
-        onOpenChange={(isOpen) => {
-          if (isOpen) {
-            open();
+        onOpenChange={(newIsOpen) => {
+          if (newIsOpen) {
+            setIsOpen(true);
           } else {
             close();
           }

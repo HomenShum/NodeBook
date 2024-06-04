@@ -5,7 +5,6 @@ import { useGraphStore } from "@/app/model/useGraphStore";
 import { cn } from "@/lib/utils";
 import { Edit2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useRelationAtPath } from "./RelatedObjectContext";
 
@@ -13,7 +12,7 @@ export const RelatedObjectEditor = observer(
   ({ isHovered, indentationWidth }: { isHovered: boolean; indentationWidth: string }) => {
     const graph = useGraphStore();
     const viewController = useViewController();
-    const { object, viewType, setViewType, pathToNodeStr, pathToParentRelations, relation } = useRelationAtPath();
+    const { object, viewType, setViewType, pathToNodeStr } = useRelationAtPath();
     const ref = useRef<HTMLDivElement>(null);
     const treatAsLink =
       object instanceof GraphNode && graph.shouldTreatObjectAsLink(object) && viewType !== "temp-edit";
@@ -32,7 +31,6 @@ export const RelatedObjectEditor = observer(
         };
       }
     }, [object.id, setViewType, viewType, viewController, pathToNodeStr]);
-    const router = useRouter();
 
     return (
       <div

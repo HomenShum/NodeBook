@@ -1,15 +1,12 @@
 import { GraphNode } from "@/app/model/GraphNode";
+import { GraphRelation } from "@/app/model/GraphRelation";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { useGraphStore } from "@/app/model/useGraphStore";
 import { observer } from "mobx-react-lite";
 import { useRelationAtPath } from "./RelatedObjectContext";
 
-export const RelatedObjectDetails = observer(() => {
-  const graphStore = useGraphStore();
-  const { object, relation, position } = useRelationAtPath();
-  const bundles = graphStore.relationToBundles.get(relation.id);
-
-  const parentZones = Array.from(
+function getParentZones(relation: GraphRelation) {
+  return Array.from(
     new Set(
       relation.relations
         .filter(
@@ -24,6 +21,13 @@ export const RelatedObjectDetails = observer(() => {
         .map((r) => r.from),
     ),
   );
+}
+
+export const RelatedObjectDetails = observer(() => {
+  const graphStore = useGraphStore();
+  const { object, relation, position } = useRelationAtPath();
+  const bundles = graphStore.relationToBundles.get(relation.id);
+  const parentZones = getParentZones(relation);
 
   return (
     <div style={{ display: "flex", fontSize: "0.75rem", gap: "10px" }}>

@@ -26,18 +26,14 @@ export const RelatedObjectChildren = observer(
     setShowAll?: Dispatch<SetStateAction<boolean>>;
   }) => {
     const settingsStore = useSettingsStore();
-    const depth = pathToParentRelations.length;
     const graphStore = useGraphStore();
     const pathToParent = relationsPathToParentChild(pathToParentRelations);
     const children = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, searchResultDate, false);
-
     const pinnedChildren = getFilteredChildrenAtPath(pathToParent, settingsStore, searchResult, searchResultDate, true);
 
     const [isPinnedVisible, setIsPinnedVisible] = useState(true);
-    const togglePinnedVisibility = () => setIsPinnedVisible(!isPinnedVisible);
 
     const parent = pathToParent[pathToParent.length - 1].child;
-
     const bundles = parent.children.filter((c) => c instanceof GraphNode && c.isBundle);
     const findRelationsFirstBundle = (r: GraphRelation) =>
       bundles.find((b) => b.children.map((o) => o.id).includes(r.id));
@@ -46,11 +42,11 @@ export const RelatedObjectChildren = observer(
     let lastDisplayedDate: string | undefined;
 
     return (
-      <div className={depth > 0 ? "ml-[16px]" : ""}>
+      <div className={pathToParentRelations.length > 0 ? "ml-[16px]" : ""}>
         {pinnedChildren.length > 0 && (
           <>
             <button
-              onClick={togglePinnedVisibility}
+              onClick={() => setIsPinnedVisible(!isPinnedVisible)}
               className={`flex gap-[2px] relative top-0  uppercase text-xs  w-fit px-1 py-1 rounded-md text-[--gray-7] z-10 ${
                 parent === graphStore.thoughtstreamRoot ? "left-0" : "left-1"
               }  ${
