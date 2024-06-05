@@ -4,6 +4,7 @@ import { action } from "mobx";
 import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
 import { useViewController } from "@/app/controller/useViewController";
 import { useGraphStore } from "@/app/model/useGraphStore";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -15,7 +16,8 @@ export const ExitTempEditPlugin = () => {
   const graphStore = useGraphStore();
   const viewController = useViewController();
   const [editor] = useLexicalComposerContext();
-  const { pathToNodeStr, viewType, setViewType } = useRelationAtPath();
+  const { pathToNodeStr } = useRelationAtPath();
+  const { setViewType, viewType } = useViewType();
 
   useEffect(() => {
     return mergeRegister(

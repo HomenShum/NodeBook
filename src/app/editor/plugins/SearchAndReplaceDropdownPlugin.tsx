@@ -1,3 +1,4 @@
+import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
 import { useViewController } from "@/app/controller/useViewController";
 import { GraphNode } from "@/app/model/GraphNode";
 import { GraphRelation, GraphRelationType } from "@/app/model/GraphRelation";
@@ -31,7 +32,8 @@ import { useGraphStore } from "../../model/useGraphStore";
 export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) => {
   const graph = useGraphStore();
   const viewController = useViewController();
-  const { object, relation, pathToParentRelations, pathToNodeStr, isChild, viewType } = useRelationAtPath();
+  const { object, relation, pathToParentRelations, pathToNodeStr, isChild } = useRelationAtPath();
+  const { viewType } = useViewType();
   const [editor] = useLexicalComposerContext();
   const [selected, setSelected] = useState<string | number | null>(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);

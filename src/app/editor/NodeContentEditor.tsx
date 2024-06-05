@@ -54,7 +54,7 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
   const settingsStore = useSettingsStore();
   const view = useViewController();
   const graphStore = useGraphStore();
-  const { object: node, relation, pathToNodeStr, pathToParentRelations, isChild, viewType } = useRelationAtPath();
+  const { object: node, pathToNodeStr, isChild } = useRelationAtPath();
   const [mentionDropdownOpen, setMentionDropdownOpen] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);

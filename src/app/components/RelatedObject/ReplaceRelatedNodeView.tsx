@@ -1,14 +1,23 @@
 import { GraphObject } from "@/app/model/GraphObject";
+import { GraphRelation } from "@/app/model/GraphRelation";
 import { useGraphStore } from "@/app/model/useGraphStore";
 import { sortByPrefixMatch } from "@/app/util";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRelationAtPath } from "./RelatedObjectContext";
+import { useViewType } from "./ViewTypeContext";
 
-export const ReplaceRelatedNodeView = () => {
+export const ReplaceRelatedNodeView = ({
+  object: currentObject,
+  relation,
+  pathToParentRelations,
+}: {
+  object: GraphObject;
+  relation: GraphRelation;
+  pathToParentRelations: GraphRelation[];
+}) => {
   const graph = useGraphStore();
   const [filter, setFilter] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  const { object: currentObject, setViewType, relation, pathToParentRelations } = useRelationAtPath();
+  const { setViewType } = useViewType();
   const { optionsFlat: options, optionsGrouped } = useMemo(() => {
     const keywords = filter.split(/\s+/);
     const nodeOptions = graph.nodes.filter(

@@ -1,4 +1,5 @@
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
 import { useViewController } from "@/app/controller/useViewController";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { compare } from "fast-json-patch";
@@ -88,8 +89,8 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
   const viewController = useViewController();
-  const { pathToParentRelations, pathToParentWithOrderedObjects, pathToNodeStr, relation, viewType } =
-    useRelationAtPath();
+  const { pathToParentRelations, pathToParentWithOrderedObjects, pathToNodeStr, relation } = useRelationAtPath();
+  const { viewType } = useViewType();
   const root = pathToParentWithOrderedObjects[0].child;
   const parent = pathToParentWithOrderedObjects.slice(-1)[0].child;
   if (node.type !== "node") {

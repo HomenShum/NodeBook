@@ -5,21 +5,29 @@ import * as React from "react";
 
 import { Button } from "@/app/components/ui/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/Popover";
+import { GraphObject } from "@/app/model/GraphObject";
 import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
-import { GraphRelationType } from "../../model/GraphRelation";
+import { GraphRelation, GraphRelationType } from "../../model/GraphRelation";
 import { useGraphStore } from "../../model/useGraphStore";
-import { useRelationAtPath } from "./RelatedObjectContext";
 
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
   `${relationType.id}-${isForward ? "forward" : "reverse"}`;
 
 export const RelationCombobox = observer(
-  ({ setUpdatingRelationType }: { setUpdatingRelationType: (updating: boolean) => void }) => {
+  ({
+    setUpdatingRelationType,
+    object,
+    parent,
+    relation,
+  }: {
+    setUpdatingRelationType: (updating: boolean) => void;
+    object: GraphObject;
+    parent: GraphObject;
+    relation: GraphRelation;
+  }) => {
     const graphStore = useGraphStore();
-
-    const { object, parent, relation } = useRelationAtPath();
     const isForward = relation.to.id === object.id;
 
     const [isOpen, setIsOpen] = React.useState(false);

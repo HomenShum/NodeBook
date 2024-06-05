@@ -14,13 +14,14 @@ import { useGraphStore } from "@/app/model/useGraphStore";
 import { relationsToPathStr } from "@/app/util";
 import { cn } from "@/lib/utils";
 import { useRelationAtPath } from "./RelatedObjectContext";
+import { useViewType } from "./ViewTypeContext";
 
 export const RelatedObjectMenu = observer(
   ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {
     const viewController = useViewController();
     const graphStore = useGraphStore();
-    const { object, parent, relation, pathToParentRelations, siblingAbove, viewType, setViewType } =
-      useRelationAtPath();
+    const { object, parent, relation, pathToParentRelations, siblingAbove } = useRelationAtPath();
+    const { viewType, setViewType } = useViewType();
 
     return (
       <DropdownMenu>

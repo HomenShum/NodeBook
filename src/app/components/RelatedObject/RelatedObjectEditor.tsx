@@ -1,18 +1,29 @@
 import { useViewController } from "@/app/controller/useViewController";
 import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/model/GraphNode";
+import { GraphObject } from "@/app/model/GraphObject";
 import { useGraphStore } from "@/app/model/useGraphStore";
 import { cn } from "@/lib/utils";
 import { Edit2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef } from "react";
-import { useRelationAtPath } from "./RelatedObjectContext";
+import { useViewType } from "./ViewTypeContext";
 
 export const RelatedObjectEditor = observer(
-  ({ isHovered, indentationWidth }: { isHovered: boolean; indentationWidth: string }) => {
+  ({
+    isHovered,
+    indentationWidth,
+    object,
+    pathToNodeStr,
+  }: {
+    isHovered: boolean;
+    indentationWidth: string;
+    object: GraphObject;
+    pathToNodeStr: string;
+  }) => {
     const graph = useGraphStore();
     const viewController = useViewController();
-    const { object, viewType, setViewType, pathToNodeStr } = useRelationAtPath();
+    const { viewType, setViewType } = useViewType();
     const ref = useRef<HTMLDivElement>(null);
     const treatAsLink =
       object instanceof GraphNode && graph.shouldTreatObjectAsLink(object) && viewType !== "temp-edit";

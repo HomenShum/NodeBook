@@ -31,6 +31,7 @@ import { RelatedObjectMenu } from "./RelatedObjectMenu";
 import { RelationCombobox } from "./RelationCombobox";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
 import Toggle from "./Toggle";
+import { ViewTypeProvider } from "./ViewTypeContext";
 import { getFilteredChildrenAtPath } from "./getFilteredChildrenAtPath";
 
 /**
@@ -170,164 +171,179 @@ export const RelatedObjectView = observer(
     return (
       <>
         <div id={pathToNodeStr} className={cn(styles.OutlineObject, isSelected && styles.Selected)}>
-          <RelationAtPathProvider
-            value={{
-              pathToParentRelations,
-              pathToParentWithOrderedObjects: pathObjects.slice(0, pathObjects.length - 1),
-              pathToNodeStr,
-              object,
-              parent,
-              position,
-              relation,
-              siblingAbove,
-              siblingBelow,
-              viewType,
-              setViewType,
-              isBackwards,
-              isChild,
-            }}
-          >
-            <div
-              className={cn(
-                styles.OutlineObjectContent,
-                !object.isPrivate &&
-                  settingsStore.hideThoughtstreamBullets &&
-                  parent === graphStore.thoughtstreamRoot &&
-                  styles.OutlineObjectContentPublic,
-              )}
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
+          <ViewTypeProvider value={{ viewType, setViewType }}>
+            <RelationAtPathProvider
+              value={{
+                pathToParentRelations,
+                pathToParentWithOrderedObjects: pathObjects.slice(0, pathObjects.length - 1),
+                pathToNodeStr,
+                object,
+                parent,
+                relation,
+                siblingAbove,
+                siblingBelow,
+                isChild,
+              }}
             >
-              <div className={styles.OutlineObjectLeftArea} />
-              {/* toggle, bullet, menu */}
-              <div className="flex items-center gap-1 absolute right-full">
-                <div className="flex items-center gap-1">
-                  {hasChildren && (objectCount === 1 || !settingsStore.disableCycles) && isHovered && (
-                    <Toggle
-                      isSearching={!!searchResult}
-                      searchExpansion={searchExpansion}
-                      setSearchExpansion={setSearchExpansion}
-                    />
-                  )}
-                  <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
-                </div>
-
-                {parent.isRelationPinned(relation) && graphStore.correspondingPinnedForObjects.has(relation.id) && (
-                  <button className={styles.PinIcon} onClick={() => parent.unpinChildRelation(relation)}>
-                    <PinCustom />
-                  </button>
-                )}
-
-                {!object.isPrivate &&
-                  settingsStore.hideThoughtstreamBullets &&
-                  parent === graphStore.thoughtstreamRoot && (
-                    <div className="relative right-[6px] pl-1  translate-y-[0.5px] flex text-[--teal-7] bg-white">
-                      <GlobeIcon size={12} strokeWidth={2} />
-                    </div>
-                  )}
-              </div>
-
               <div
                 className={cn(
-                  "w-4 relative right-2 h-4 flex",
-                  settingsStore.hideThoughtstreamBullets && parent === graphStore.thoughtstreamRoot && "hidden",
+                  styles.OutlineObjectContent,
+                  !object.isPrivate &&
+                    settingsStore.hideThoughtstreamBullets &&
+                    parent === graphStore.thoughtstreamRoot &&
+                    styles.OutlineObjectContentPublic,
                 )}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
               >
-                {hasChildren &&
-                  !showChildren &&
-                  (objectCount === 1 || !settingsStore.disableCycles) &&
-                  (!settingsStore.hideBulletBackgroundIfParentsOnly || hasNewChildren) && (
-                    <Dot
-                      stroke={!object.isPrivate ? "var(--teal-4)" : "var(--gray-4)"}
-                      height={16}
-                      strokeWidth={17}
-                      className={cn("cursor-pointer absolute top-0 left-0")}
-                    />
-                  )}
-                {objectCount === 1 ? (
-                  <Dot
-                    strokeWidth={5}
-                    color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
-                    height={16}
-                    className={cn("cursor-pointer absolute top-0")}
-                    onClick={setPathToThisAsRoot}
-                  />
-                ) : objectCount > 1 ? (
-                  <Circle
-                    strokeWidth={6}
-                    color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
-                    height={8}
-                    className={cn("cursor-pointer absolute top-1")}
-                    onClick={setPathToThisAsRoot}
-                  />
-                ) : null}
-              </div>
-              {/* relation and node */}
-              <div className="flex flex-col flex-1 relative -top-[2px]">
-                <div className="flex flex-row flex-wrap w-full gap-1 items-baseline pb-2">
-                  <HoverCard.Root>
-                    {showRelationType && (
-                      <HoverCard.Trigger className="z-10">
-                        <RelationCombobox setUpdatingRelationType={setUpdatingRelationType} />
-                      </HoverCard.Trigger>
+                <div className={styles.OutlineObjectLeftArea} />
+                {/* toggle, bullet, menu */}
+                <div className="flex items-center gap-1 absolute right-full">
+                  <div className="flex items-center gap-1">
+                    {hasChildren && (objectCount === 1 || !settingsStore.disableCycles) && isHovered && (
+                      <Toggle
+                        pathToNodeStr={pathToNodeStr}
+                        isSearching={!!searchResult}
+                        searchExpansion={searchExpansion}
+                        setSearchExpansion={setSearchExpansion}
+                      />
                     )}
-                    <HoverCard.Portal>
-                      <HoverCard.Content
-                        align={"start"}
-                        className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
-                      >
-                        {relation.connectedObjects().length > 0 ? (
-                          <>
-                            <div>Connected objects:</div>
-                            {relation.connectedObjects().map((o) => (
-                              <div key={o.id}>{o.text}</div>
-                            ))}
-                          </>
-                        ) : (
-                          <div>No connected objects</div>
-                        )}
-                      </HoverCard.Content>
-                    </HoverCard.Portal>
-                  </HoverCard.Root>
-                  <HoverCard.Root>
-                    <HoverCard.Trigger>
-                      {viewType === "replace" ? (
-                        <ReplaceRelatedNodeView />
-                      ) : (
-                        <RelatedObjectEditor isHovered={isHovered} indentationWidth={relationTypeTextWidth} />
+                    <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
+                  </div>
+
+                  {parent.isRelationPinned(relation) && graphStore.correspondingPinnedForObjects.has(relation.id) && (
+                    <button className={styles.PinIcon} onClick={() => parent.unpinChildRelation(relation)}>
+                      <PinCustom />
+                    </button>
+                  )}
+
+                  {!object.isPrivate &&
+                    settingsStore.hideThoughtstreamBullets &&
+                    parent === graphStore.thoughtstreamRoot && (
+                      <div className="relative right-[6px] pl-1  translate-y-[0.5px] flex text-[--teal-7] bg-white">
+                        <GlobeIcon size={12} strokeWidth={2} />
+                      </div>
+                    )}
+                </div>
+
+                <div
+                  className={cn(
+                    "w-4 relative right-2 h-4 flex",
+                    settingsStore.hideThoughtstreamBullets && parent === graphStore.thoughtstreamRoot && "hidden",
+                  )}
+                >
+                  {hasChildren &&
+                    !showChildren &&
+                    (objectCount === 1 || !settingsStore.disableCycles) &&
+                    (!settingsStore.hideBulletBackgroundIfParentsOnly || hasNewChildren) && (
+                      <Dot
+                        stroke={!object.isPrivate ? "var(--teal-4)" : "var(--gray-4)"}
+                        height={16}
+                        strokeWidth={17}
+                        className={cn("cursor-pointer absolute top-0 left-0")}
+                      />
+                    )}
+                  {objectCount === 1 ? (
+                    <Dot
+                      strokeWidth={5}
+                      color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
+                      height={16}
+                      className={cn("cursor-pointer absolute top-0")}
+                      onClick={setPathToThisAsRoot}
+                    />
+                  ) : objectCount > 1 ? (
+                    <Circle
+                      strokeWidth={6}
+                      color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
+                      height={8}
+                      className={cn("cursor-pointer absolute top-1")}
+                      onClick={setPathToThisAsRoot}
+                    />
+                  ) : null}
+                </div>
+                {/* relation and node */}
+                <div className="flex flex-col flex-1 relative -top-[2px]">
+                  <div className="flex flex-row flex-wrap w-full gap-1 items-baseline pb-2">
+                    <HoverCard.Root>
+                      {showRelationType && (
+                        <HoverCard.Trigger className="z-10">
+                          <RelationCombobox
+                            setUpdatingRelationType={setUpdatingRelationType}
+                            object={object}
+                            parent={parent}
+                            relation={relation}
+                          />
+                        </HoverCard.Trigger>
                       )}
-                    </HoverCard.Trigger>
-                    {object instanceof GraphRelation && (
                       <HoverCard.Portal>
                         <HoverCard.Content
                           align={"start"}
                           className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
                         >
-                          <div>
-                            from:{" "}
-                            <span
-                              onClick={() => {
-                                router.push(`/outline${relationsToURLPath([object], graphStore)}`);
-                              }}
-                            >
-                              {object.from.text}
-                            </span>
-                          </div>
-                          <div>
-                            to: <span>{object.to.text}</span>
-                          </div>
+                          {relation.connectedObjects().length > 0 ? (
+                            <>
+                              <div>Connected objects:</div>
+                              {relation.connectedObjects().map((o) => (
+                                <div key={o.id}>{o.text}</div>
+                              ))}
+                            </>
+                          ) : (
+                            <div>No connected objects</div>
+                          )}
                         </HoverCard.Content>
                       </HoverCard.Portal>
-                    )}
-                  </HoverCard.Root>
+                    </HoverCard.Root>
+                    <HoverCard.Root>
+                      <HoverCard.Trigger>
+                        {viewType === "replace" ? (
+                          <ReplaceRelatedNodeView
+                            object={object}
+                            relation={relation}
+                            pathToParentRelations={pathToParentRelations}
+                          />
+                        ) : (
+                          <RelatedObjectEditor
+                            isHovered={isHovered}
+                            indentationWidth={relationTypeTextWidth}
+                            object={object}
+                            pathToNodeStr={pathToNodeStr}
+                          />
+                        )}
+                      </HoverCard.Trigger>
+                      {object instanceof GraphRelation && (
+                        <HoverCard.Portal>
+                          <HoverCard.Content
+                            align={"start"}
+                            className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
+                          >
+                            <div>
+                              from:{" "}
+                              <span
+                                onClick={() => {
+                                  router.push(`/outline${relationsToURLPath([object], graphStore)}`);
+                                }}
+                              >
+                                {object.from.text}
+                              </span>
+                            </div>
+                            <div>
+                              to: <span>{object.to.text}</span>
+                            </div>
+                          </HoverCard.Content>
+                        </HoverCard.Portal>
+                      )}
+                    </HoverCard.Root>
+                  </div>
+                  {settingsStore.showNodeDetails && viewType !== "replace" && (
+                    <RelatedObjectDetails position={position} object={object} relation={relation} />
+                  )}
                 </div>
-                {settingsStore.showNodeDetails && viewType !== "replace" && <RelatedObjectDetails />}
+                {object.relations.length > 1 && (
+                  <div className="relative h-6 bg-[--gray-1] text-[--gray-8] px-1">{object.relations.length - 1}</div>
+                )}
               </div>
-              {object.relations.length > 1 && (
-                <div className="relative h-6 bg-[--gray-1] text-[--gray-8] px-1">{object.relations.length - 1}</div>
-              )}
-            </div>
-          </RelationAtPathProvider>
+            </RelationAtPathProvider>
+          </ViewTypeProvider>
           {showChildren && (
             <RelatedObjectChildren
               pathToParentRelations={[...pathToParentRelations, relation]}

@@ -3,6 +3,7 @@ import { action } from "mobx";
 import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
 import { useGraphStore } from "@/app/model/useGraphStore";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
@@ -12,7 +13,8 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 export const EnterTempEditPlugin = () => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
-  const { object, setViewType } = useRelationAtPath();
+  const { object } = useRelationAtPath();
+  const { setViewType } = useViewType();
 
   useEffect(() => {
     return editor.registerCommand(

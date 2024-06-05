@@ -1,8 +1,7 @@
 import { GraphObject } from "@/app/model/GraphObject";
 import { GraphRelation } from "@/app/model/GraphRelation";
-import { PathLink, Position } from "@/app/util";
+import { PathLink } from "@/app/util";
 import { createContext, useContext } from "react";
-import { RelatedObjectViewType } from "./RelatedObjectView";
 
 export type RelationPathAndSiblings = {
   /** Ordered list of relations from the root to this relation's parent */
@@ -21,11 +20,7 @@ export type RelationPathAndSiblings = {
   siblingAbove?: GraphRelation;
   /** Sibling relation below this one */
   siblingBelow?: GraphRelation;
-  position: Position;
-  viewType: RelatedObjectViewType;
-  setViewType: (v: RelatedObjectViewType) => void;
   isChild: boolean;
-  isBackwards: boolean;
 };
 
 const RelationAtPathContext = createContext<RelationPathAndSiblings | null>(null);

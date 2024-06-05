@@ -1,4 +1,5 @@
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
 import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
@@ -7,7 +8,8 @@ import { useEffect } from "react";
 export const ReplaceObjectPlugin = () => {
   const settingsStore = useSettingsStore();
   const [editor] = useLexicalComposerContext();
-  const { object, setViewType } = useRelationAtPath();
+  const { object } = useRelationAtPath();
+  const { setViewType } = useViewType();
 
   useEffect(() => {
     return editor.registerCommand(

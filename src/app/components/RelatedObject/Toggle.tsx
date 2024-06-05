@@ -2,19 +2,19 @@ import { useGraphStore } from "@/app/model/useGraphStore";
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { Dispatch, SetStateAction } from "react";
-import { useRelationAtPath } from "./RelatedObjectContext";
 
 export default observer(
   ({
     isSearching,
     searchExpansion,
     setSearchExpansion,
+    pathToNodeStr,
   }: {
     searchExpansion: boolean;
     setSearchExpansion: Dispatch<SetStateAction<boolean>>;
     isSearching: boolean;
+    pathToNodeStr: string;
   }) => {
-    const { pathToNodeStr } = useRelationAtPath();
     const graphStore = useGraphStore();
     const isExpanded = isSearching ? searchExpansion : graphStore.isPathExpanded(pathToNodeStr);
     return (

@@ -4,6 +4,7 @@ import { action } from "mobx";
 import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
 import { useViewController } from "@/app/controller/useViewController";
 import { GraphNode } from "@/app/model/GraphNode";
 import { useGraphStore } from "@/app/model/useGraphStore";
@@ -23,9 +24,8 @@ export const EnterKeyPlugin = () => {
     pathToParentWithOrderedObjects: pathToParentNodes,
     pathToNodeStr,
     parent,
-    viewType,
-    setViewType,
   } = useRelationAtPath();
+  const { viewType, setViewType } = useViewType();
 
   useEffect(() => {
     return editor.registerCommand(
