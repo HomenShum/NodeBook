@@ -147,6 +147,13 @@ export const RelationCombobox = observer(
                 item.onSelect();
                 close();
               }
+            } else if (e.key === "Backspace" && search === "") {
+              const targetKey = isForward ? "child" : "parent";
+              const item = items.find(({ label }) => label === targetKey);
+              if (item) {
+                item.onSelect();
+                close();
+              }
             }
           }}
         >
