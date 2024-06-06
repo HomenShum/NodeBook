@@ -21,6 +21,7 @@ export type RelationPathAndSiblings = {
   /** Sibling relation below this one */
   siblingBelow?: GraphRelation;
   isChild: boolean;
+  openRelationTypeMenu: () => void;
 };
 
 const RelationAtPathContext = createContext<RelationPathAndSiblings | null>(null);

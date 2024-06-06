@@ -167,6 +167,7 @@ export const RelatedObjectView = observer(
     const relationTypeTextWidth = showRelationType
       ? `${getTextWidth(`${relation.relationType.label}:`, "normal 17.5px ui-sans-serif") + 3}px`
       : "0px";
+    const [relationComboboxIsOpen, setRelationComboboxIsOpen] = useState(false);
 
     return (
       <>
@@ -183,6 +184,7 @@ export const RelatedObjectView = observer(
                 siblingAbove,
                 siblingBelow,
                 isChild,
+                openRelationTypeMenu: () => setRelationComboboxIsOpen(true),
               }}
             >
               <div
@@ -272,6 +274,8 @@ export const RelatedObjectView = observer(
                             object={object}
                             parent={parent}
                             relation={relation}
+                            isOpen={relationComboboxIsOpen}
+                            setIsOpen={setRelationComboboxIsOpen}
                           />
                         </HoverCard.Trigger>
                       )}

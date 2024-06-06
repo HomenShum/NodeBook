@@ -21,17 +21,20 @@ export const RelationCombobox = observer(
     object,
     parent,
     relation,
+    isOpen,
+    setIsOpen,
   }: {
     setUpdatingRelationType: (updating: boolean) => void;
     object: GraphObject;
     parent: GraphObject;
     relation: GraphRelation;
+    isOpen: boolean;
+    setIsOpen: (value: boolean) => void;
   }) => {
     const graphStore = useGraphStore();
     const isForward = relation.to.id === object.id;
 
-    const [isOpen, setIsOpen] = React.useState(false);
-    const [search, setSearch] = React.useState("");
+    const [search, setSearch] = React.useState(relation.relationType.label);
     const [selected, setSelected] = React.useState(`${relation.relationType.id}-${isForward ? "forward" : "reverse"}`);
 
     const close = () => {

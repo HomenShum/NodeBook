@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useViewController } from "@/app/controller/useViewController";
 import { GraphNode } from "@/app/model/GraphNode";
+import { defaultRelationTypes } from "@/app/model/GraphStore";
 import { useGraphStore } from "@/app/model/useGraphStore";
 import { relationsToPathStr } from "@/app/util";
 
@@ -22,6 +23,7 @@ export const BackspaceMergeNodesPlugin = () => {
     pathToParentWithOrderedObjects: pathToParentNodes,
     siblingAbove,
     parent,
+    openRelationTypeMenu,
   } = useRelationAtPath();
 
   useEffect(() => {
@@ -54,6 +56,11 @@ export const BackspaceMergeNodesPlugin = () => {
 
         // Offset is 0 when at start of text
         if (selectionStart.offset !== 0 || selectionEnd.offset !== 0) return false;
+
+        if (relation.relationType.id !== defaultRelationTypes.child.id) {
+          openRelationTypeMenu();
+          return true;
+        }
         let targetNode = null;
         let targetPath = null;
         if (siblingAbove) {
