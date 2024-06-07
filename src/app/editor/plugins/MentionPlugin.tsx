@@ -6,7 +6,7 @@ import {
   MenuRenderFn,
   MenuTextMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
-import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
+import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
@@ -106,7 +106,8 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
       }}
       options={options}
       menuRenderFn={menuRenderFn}
-      commandPriority={COMMAND_PRIORITY_NORMAL}
+      // High priority so it takes precedence over the split on enter command
+      commandPriority={COMMAND_PRIORITY_HIGH}
     />
   );
 }
