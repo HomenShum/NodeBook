@@ -30,11 +30,9 @@ export const RelationPlugin = () => {
         }
         event.preventDefault();
         event.stopPropagation();
-        const [selectionLeft, selectionRight] = getSelectionPositions(editor).sort((a, b) =>
-          a.index === b.index ? a.offset - b.offset : a.index - b.index,
-        );
+        const [selectionLeft, selectionRight] = getSelectionPositions(editor);
         // Set the relation type to the text before the cursor
-        const textBefore = $getText({ index: 0, offset: 0 }, selectionLeft).trim();
+        const textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft }).trim();
         let [relationType, direction] = graphStore.getOrCreateRelationTypeByLabel(textBefore);
         relation.setType(relationType);
         if (direction === "reverse") {

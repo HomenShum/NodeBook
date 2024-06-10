@@ -7,6 +7,7 @@ import {
   $isTextNode,
   LexicalEditor,
   LexicalNode,
+  LineBreakNode,
   ParagraphNode,
   TextNode,
 } from "lexical";
@@ -36,10 +37,12 @@ export function getSelectionPositions(editor: LexicalEditor): [LexicalEditorPosi
     if (selectionStartIndex === -1 || selectionEndIndex === -1) {
       throw new Error("Selection points don't match any nodes");
     }
-    return [
+    const positions = [
       { index: selectionStartIndex, offset: points[0].offset },
       { index: selectionEndIndex, offset: points[1].offset },
-    ];
+    ].sort((a, b) => (a.index === b.index ? a.offset - b.offset : a.index - b.index));
+    // Need to do typecast here because sort breaks the type inference
+    return positions as [LexicalEditorPosition, LexicalEditorPosition];
   });
 }
 
@@ -66,27 +69,31 @@ function $getNodes(): LexicalNode[] {
 /**
  * Returns the text content of the active editor (optionally between two positions).
  */
-export function $getText(from?: LexicalEditorPosition, to?: LexicalEditorPosition): string {
+export function $getText({ from, to }: { from?: LexicalEditorPosition; to?: LexicalEditorPosition }): string {
   const nodes: LexicalNode[] = $getNodes();
-  if (!from) {
-    return nodes.map((node) => node.getTextContent()).join("");
-  }
+  if (!nodes.length) return "";
+  const fromDefined = from || { index: 0, offset: 0 };
   const toDefined = to || { index: nodes.length - 1, offset: nodes[nodes.length - 1].getTextContent().length };
-  return nodes
-    .map((node, i) => {
-      if (i < from.index || i > toDefined!.index) {
-        return "";
-      } else if (i === from.index && i === toDefined.index) {
-        return node.getTextContent().slice(from.offset, toDefined.offset);
-      } else if (i === from.index) {
-        return node.getTextContent().slice(from.offset);
-      } else if (i === toDefined.index) {
-        return node.getTextContent().slice(0, toDefined.offset);
-      } else {
-        return node.getTextContent();
-      }
-    })
-    .join("");
+  const nodesText = nodes.map((node, i) => {
+    if (i < fromDefined.index || i > toDefined.index) {
+      return "";
+    } else if (i === fromDefined.index && i === toDefined.index) {
+      return node.getTextContent().slice(fromDefined.offset, toDefined.offset);
+    } else if (i === fromDefined.index) {
+      return node.getTextContent().slice(fromDefined.offset);
+    } else if (i === toDefined.index) {
+      return node.getTextContent().slice(0, toDefined.offset);
+    } else {
+      return node.getTextContent();
+    }
+  });
+  if (nodesText[nodesText.length - 1] === "\n") {
+    // Sometimes the editor can get into a slightly odd state where the last node is a text node with just "\n"
+    // in it. This is related to our handling of mention nodes.
+    // In this case, we just remove the trailing newline because it breaks other logic.
+    nodesText.pop();
+  }
+  return nodesText.join("");
 }
 
 /**
@@ -202,6 +209,8 @@ export function nodeToChip(node: LexicalNode): Chip {
     return { type: "mention", value: node.mentionedGraphNodeId };
   } else if (node instanceof TextNode) {
     return { type: "text", value: node.getTextContent() };
+  } else if (node instanceof LineBreakNode) {
+    return { type: "linebreak", value: node.getTextContent() };
   } else {
     throw new Error("Unsupported node type");
   }

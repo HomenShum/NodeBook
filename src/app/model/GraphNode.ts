@@ -7,7 +7,7 @@ import { SerializedGraphNode } from "./SerializedData";
 import { Serializable } from "./serialization";
 
 export type Chip = {
-  type: "text" | "mention";
+  type: "text" | "mention" | "linebreak";
   value: string;
 };
 
@@ -124,6 +124,7 @@ export class GraphNode implements Serializable, GraphObject {
       .map((chip) => {
         switch (chip.type) {
           case "text":
+          case "linebreak":
             return chip.value;
           case "mention":
             const referencedNode = this.store.getNode(chip.value);

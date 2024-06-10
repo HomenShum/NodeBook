@@ -14,6 +14,7 @@ import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useViewController } from "@/app/controller/useViewController";
+import { $getText, getSelectionPositions } from "@/app/editor/utils";
 
 /**
  * Plugin to jump focus to other editors using arrow keys.
@@ -21,14 +22,18 @@ import { useViewController } from "@/app/controller/useViewController";
 export const ArrowKeyNavPlugin = () => {
   const viewController = useViewController();
   const [editor] = useLexicalComposerContext();
-  const { pathToParentRelations, siblingAbove, siblingBelow } = useRelationAtPath();
+  const { object, pathToParentRelations, siblingAbove, siblingBelow } = useRelationAtPath();
 
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
-          const focusedMoved = viewController.focusNextEditor();
+          const [selectionLeft, _] = getSelectionPositions(editor);
+          const textAfter = $getText({ from: selectionLeft });
+          if (textAfter.includes("\n")) return false;
+
+          const focusedMoved = viewController.focusNextEditor({ focusAt: "start" });
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -38,7 +43,11 @@ export const ArrowKeyNavPlugin = () => {
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
         (event) => {
-          const focusedMoved = viewController.focusPrevEditor();
+          const [selectionLeft, _] = getSelectionPositions(editor);
+          const textBefore = $getText({ to: selectionLeft });
+          if (textBefore.includes("\n")) return false;
+
+          const focusedMoved = viewController.focusPrevEditor({ focusAt: "end" });
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;

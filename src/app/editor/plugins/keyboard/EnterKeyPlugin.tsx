@@ -33,6 +33,7 @@ export const EnterKeyPlugin = () => {
       action((event) => {
         if (!event || !graphStore) return false;
         if (viewType === "temp-edit") return false;
+        if (event.shiftKey) return false;
 
         event.preventDefault();
         const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
