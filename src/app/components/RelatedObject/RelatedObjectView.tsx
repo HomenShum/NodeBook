@@ -298,7 +298,7 @@ export const RelatedObjectView = observer(
                       </HoverCard.Portal>
                     </HoverCard.Root>
                     <HoverCard.Root>
-                      <HoverCard.Trigger>
+                      <HoverCard.Trigger className="flex-1">
                         {viewType === "replace" ? (
                           <ReplaceRelatedNodeView
                             object={object}
