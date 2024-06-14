@@ -3,17 +3,17 @@ import { mergeRegister } from "@lexical/utils";
 import { BLUR_COMMAND, COMMAND_PRIORITY_EDITOR, FOCUS_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useViewController } from "@/app/controller/useViewController";
+import { useRenderController } from "@/app/render/useRenderController";
 
 export const TrackFocusedPathPlugin = ({ pathToNodeStr }: { pathToNodeStr: string }) => {
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
         BLUR_COMMAND,
         () => {
-          viewController.trackFocusedNode(null);
+          renderController.trackFocusedNode(null);
           return false;
         },
         COMMAND_PRIORITY_EDITOR,
@@ -21,12 +21,12 @@ export const TrackFocusedPathPlugin = ({ pathToNodeStr }: { pathToNodeStr: strin
       editor.registerCommand(
         FOCUS_COMMAND,
         () => {
-          viewController.trackFocusedNode(pathToNodeStr);
+          renderController.trackFocusedNode(pathToNodeStr);
           return false;
         },
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [pathToNodeStr, editor, viewController]);
+  }, [pathToNodeStr, editor, renderController]);
   return null;
 };

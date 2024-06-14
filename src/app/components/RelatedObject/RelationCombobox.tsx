@@ -1,16 +1,16 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { observer } from "mobx-react-lite";
 import * as React from "react";
 
 import { Button } from "@/app/components/ui/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/Popover";
-import { GraphObject } from "@/app/model/GraphObject";
-import { defaultRelationTypes } from "@/app/model/GraphStore";
+import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
+import { defaultRelationTypes } from "@/app/graph/GraphStore";
+import { useGraphStore } from "@/app/graph/useGraphStore";
 import { cn } from "@/lib/utils";
-import { observer } from "mobx-react-lite";
-import { GraphRelation, GraphRelationType } from "../../model/GraphRelation";
-import { useGraphStore } from "../../model/useGraphStore";
 
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
   `${relationType.id}-${isForward ? "forward" : "reverse"}`;

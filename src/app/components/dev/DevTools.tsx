@@ -1,15 +1,18 @@
-import { useViewController } from "@/app/controller/useViewController";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { observer } from "mobx-react-lite";
-import { ClearData } from "../DataDialog/ClearData";
-import { ImportDialog } from "../DataDialog/ImportDialog";
-import { Button } from "../ui/Button";
+
+import { ClearData } from "@/app/components/DataDialog/ClearData";
+import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
+import { Button } from "@/app/components/ui/Button";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { useRenderController } from "@/app/render/useRenderController";
+import { useViewStore } from "@/app/view/useViewStore";
 
 export const DevTools = observer(() => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
-  const viewController = useViewController();
+  const viewStore = useViewStore();
+  const renderController = useRenderController();
 
   const searchAndReplaceDropdownOptions: {
     label: string;
@@ -243,6 +246,7 @@ export const DevTools = observer(() => {
         <ClearData
           onConfirm={() => {
             graphStore.clear();
+            viewStore.clear();
           }}
         />
         <hr />

@@ -1,10 +1,11 @@
-import { GraphNode } from "@/app/model/GraphNode";
-import { GraphObject } from "@/app/model/GraphObject";
-import { GraphRelation } from "@/app/model/GraphRelation";
-import { defaultRelationTypes } from "@/app/model/GraphStore";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { Position } from "@/app/util";
 import { observer } from "mobx-react-lite";
+
+import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation } from "@/app/graph/GraphRelation";
+import { defaultRelationTypes } from "@/app/graph/GraphStore";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { Position } from "@/app/util";
 
 function getParentZones(relation: GraphRelation) {
   return Array.from(

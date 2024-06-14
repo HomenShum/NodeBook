@@ -1,5 +1,6 @@
 import { search } from "fast-fuzzy";
-import { GraphObject } from "../model/GraphObject";
+
+import { GraphObject } from "@/app/graph/GraphObject";
 
 export type SearchResult = { display: boolean; expandChildren: boolean };
 type TemporarySearchResult = SearchResult | null;

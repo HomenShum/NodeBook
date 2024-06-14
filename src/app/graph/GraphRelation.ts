@@ -1,11 +1,13 @@
 import { makeAutoObservable } from "mobx";
-import { comparePositions, uuid } from "../util";
+
+import { SerializedRelation } from "@/app/persistence/SerializedData";
+import { Serializable } from "@/app/persistence/serialization";
+import { comparePositions, uuid } from "@/app/util";
+
 import { PositionedRelation } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
 import { PlaceholderGraphObject, isPlaceholder } from "./PlaceholderGraphObject";
-import { SerializedRelation } from "./SerializedData";
-import { Serializable } from "./serialization";
 
 export type GraphRelationType = {
   id: string;

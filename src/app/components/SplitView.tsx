@@ -1,7 +1,9 @@
 import { observer } from "mobx-react-lite";
+
 import { OutlineView } from "./OutlineView";
-import s from "./Splitview.module.css";
 import { ThoughtstreamView } from "./ThoughtstreamView";
+
+import s from "./Splitview.module.css";
 
 export const SplitView = observer(() => {
   return (

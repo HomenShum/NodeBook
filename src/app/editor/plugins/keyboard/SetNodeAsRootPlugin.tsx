@@ -3,15 +3,15 @@ import { COMMAND_PRIORITY_EDITOR, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "@/app/controller/useViewController";
-import { useGraphStore } from "@/app/model/useGraphStore";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useViewStore } from "@/app/view/useViewStore";
 
 /**
  * Plugin to set the current node as the view root when the user presses Cmd+. (Mac) or Ctrl+. (Windows).
  */
 export const SetNodeAsRootPlugin = () => {
   const graphStore = useGraphStore();
-  const viewController = useViewController();
+  const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
   const { pathToParentRelations, relation, pathToParentWithOrderedObjects: pathToParentNodes } = useRelationAtPath();
 
@@ -24,9 +24,9 @@ export const SetNodeAsRootPlugin = () => {
 
         const viewRoot = pathToParentNodes[0].child;
         if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
-          viewController.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
+          viewStore.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
         } else if (viewRoot.id === graphStore.outlineRoot.id) {
-          viewController.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+          viewStore.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
         } else {
           throw new Error("Unknown view root");
         }
@@ -41,7 +41,7 @@ export const SetNodeAsRootPlugin = () => {
     pathToParentNodes,
     pathToParentRelations,
     relation,
-    viewController,
+    viewStore,
   ]);
 
   return null;

@@ -1,7 +1,8 @@
-import { GraphObject } from "@/app/model/GraphObject";
-import { GraphRelation } from "@/app/model/GraphRelation";
-import { PathLink } from "@/app/util";
 import { createContext, useContext } from "react";
+
+import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation } from "@/app/graph/GraphRelation";
+import { PathLink } from "@/app/util";
 
 export type RelationPathAndSiblings = {
   /** Ordered list of relations from the root to this relation's parent */

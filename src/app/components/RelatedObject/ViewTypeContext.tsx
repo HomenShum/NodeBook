@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+
 import { RelatedObjectViewType } from "./RelatedObjectView";
 
 export type ViewTypeContextType = {

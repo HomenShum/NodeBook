@@ -5,17 +5,19 @@ import { action } from "mobx";
 import { useCallback, useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "@/app/controller/useViewController";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { useSettingsStore } from "@/app/model/useSettingsStore";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
 /**
  * Plugin to move current node using Tab/Shift+Tab. Also handles bulleting by typing '-' at the start of a line.
  */
 export const TabAndBulletPlugin = () => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
-  const viewController = useViewController();
+  const renderController = useRenderController();
+  const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
   const {
     pathToParentRelations,
@@ -46,9 +48,9 @@ export const TabAndBulletPlugin = () => {
         const viewRoot = pathToParentNodes[0].child;
         let visibleRootRelations;
         if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
-          visibleRootRelations = viewController.currentStreamViewRoot;
+          visibleRootRelations = viewStore.currentStreamViewRoot;
         } else if (viewRoot.id === graphStore.outlineRoot.id) {
-          visibleRootRelations = viewController.currentOutlineViewRoot;
+          visibleRootRelations = viewStore.currentOutlineViewRoot;
         } else {
           throw new Error("Unknown view root");
         }
@@ -84,7 +86,7 @@ export const TabAndBulletPlugin = () => {
         }
         // Position the relation under the parent
         graphStore.getRelationList(grandparentNode).move([baseRelation], parentRelation);
-        viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), baseRelation]));
+        renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), baseRelation]));
         return true;
       } else {
         if (!siblingAbove) {
@@ -102,21 +104,22 @@ export const TabAndBulletPlugin = () => {
         graphStore.getRelationList(siblingAboveNode).move([baseRelation], "bottom");
         // toggle open sibling
         const relationPathToSibling = [...pathToParentRelations, siblingAbove];
-        graphStore.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
+        viewStore.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
         // set focus at the relations new path
-        viewController.setFocusedNode(relationsToPathStr([...relationPathToSibling, baseRelation]));
+        renderController.setFocusedNode(relationsToPathStr([...relationPathToSibling, baseRelation]));
         return true;
       }
     },
     [
+      viewStore,
       graphStore,
       parent,
-      pathToParentNodes,
-      pathToParentRelations,
       relation,
+      pathToParentNodes,
       settingsStore.allowShiftTabAboveViewRoot,
+      pathToParentRelations,
+      renderController,
       siblingAbove,
-      viewController,
     ],
   );
 
@@ -148,7 +151,7 @@ export const TabAndBulletPlugin = () => {
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, siblingAbove, tabBullet]);
+  }, [editor, graphStore.thoughtstreamRoot.id, siblingAbove, tabBullet, viewRoot.id]);
 
   return null;
 };

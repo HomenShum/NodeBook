@@ -3,18 +3,20 @@ import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_NORMAL, KEY_BACKSPAC
 import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "@/app/controller/useViewController";
-import { GraphNode } from "@/app/model/GraphNode";
-import { defaultRelationTypes } from "@/app/model/GraphStore";
-import { useGraphStore } from "@/app/model/useGraphStore";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { defaultRelationTypes } from "@/app/graph/GraphStore";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
 
 /**
  * Plugin to merge nodes when backspace is pressed at the start of a node.
  */
 export const BackspaceMergeNodesPlugin = () => {
   const graphStore = useGraphStore();
-  const viewController = useViewController();
+  const viewStore = useViewStore();
+  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const {
     object,
@@ -37,9 +39,9 @@ export const BackspaceMergeNodesPlugin = () => {
           if (parentRelation) {
             graphStore.deleteRelation(relation);
             if (siblingAbove) {
-              viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]));
+              renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]));
             } else {
-              viewController.setFocusedNode(relationsToPathStr(pathToParentRelations));
+              renderController.setFocusedNode(relationsToPathStr(pathToParentRelations));
             }
             return true;
           }
@@ -73,9 +75,9 @@ export const BackspaceMergeNodesPlugin = () => {
           const viewRoot = pathToParentNodes[0].child;
           let visibleRootRelations;
           if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
-            visibleRootRelations = viewController.currentStreamViewRoot;
+            visibleRootRelations = viewStore.currentStreamViewRoot;
           } else if (viewRoot.id === graphStore.outlineRoot.id) {
-            visibleRootRelations = viewController.currentOutlineViewRoot;
+            visibleRootRelations = viewStore.currentOutlineViewRoot;
           } else {
             throw new Error("Unknown view root");
           }
@@ -94,7 +96,7 @@ export const BackspaceMergeNodesPlugin = () => {
           targetNode.setContent(targetNode.content.concat(object.content));
           graphStore.deleteNode(object.id);
           graphStore.deleteRelation(relation);
-          viewController.setFocusedNode(targetPath!);
+          renderController.setFocusedNode(targetPath!);
           return true;
         }
 
@@ -111,7 +113,10 @@ export const BackspaceMergeNodesPlugin = () => {
     pathToParentRelations,
     relation,
     siblingAbove,
-    viewController,
+    renderController,
+    openRelationTypeMenu,
+    viewStore.currentStreamViewRoot,
+    viewStore.currentOutlineViewRoot,
   ]);
 
   return null;

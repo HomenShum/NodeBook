@@ -1,8 +1,9 @@
-import { GraphObject } from "@/app/model/GraphObject";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
+
+import { GraphObject } from "@/app/graph/GraphObject";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { cn } from "@/lib/utils";
 
 const objectToString = (obj: GraphObject) => {
   return `"${obj.text}" (${obj.id.slice(0, 8)})`;

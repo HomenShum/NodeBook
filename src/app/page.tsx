@@ -2,19 +2,20 @@
 
 import dynamic from "next/dynamic";
 import { useContext, useEffect } from "react";
+
 import { DataLoadContext } from "./DataLoadContext";
-import { useViewController } from "./controller/useViewController";
-import { useGraphStore } from "./model/useGraphStore";
+import { useGraphStore } from "./graph/useGraphStore";
+import { useViewStore } from "./view/useViewStore";
 
 const OutlineView = dynamic(() => import("./components/OutlineView").then((x) => x.OutlineView), {
   ssr: false,
 });
 
 export default function Page() {
-  const viewController = useViewController();
+  const viewStore = useViewStore();
   const graphStore = useGraphStore();
   useEffect(() => {
-    viewController.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
+    viewStore.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
   });
 
   const hasLoaded = useContext(DataLoadContext);

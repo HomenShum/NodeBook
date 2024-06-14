@@ -1,12 +1,18 @@
+import * as HoverCard from "@radix-ui/react-hover-card";
+import { Circle, Dot, GlobeIcon } from "lucide-react";
+import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import styles from "@/app/components/OutlineView.module.css";
 import { PinCustom } from "@/app/components/icons";
-import { ViewType } from "@/app/controller/ViewController";
-import { useViewController } from "@/app/controller/useViewController";
-import { GraphNode } from "@/app/model/GraphNode";
-import { GraphRelation } from "@/app/model/GraphRelation";
-import { defaultRelationTypes } from "@/app/model/GraphStore";
-import { SearchResult } from "@/app/model/search";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { useSettingsStore } from "@/app/model/useSettingsStore";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphRelation } from "@/app/graph/GraphRelation";
+import { defaultRelationTypes } from "@/app/graph/GraphStore";
+import { SearchResult } from "@/app/graph/search";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { useRenderController } from "@/app/render/useRenderController";
 import {
   Position,
   countOccurrencesInPath,
@@ -16,13 +22,10 @@ import {
   relationsToURLPath,
   useCurView,
 } from "@/app/util";
+import { ViewType } from "@/app/view/ViewType";
+import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import * as HoverCard from "@radix-ui/react-hover-card";
-import { Circle, Dot, GlobeIcon } from "lucide-react";
-import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import styles from "../OutlineView.module.css";
+
 import { RelatedObjectChildren } from "./RelatedObjectChildren";
 import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
 import { RelatedObjectDetails } from "./RelatedObjectDetails";
@@ -73,7 +76,8 @@ export const RelatedObjectView = observer(
     searchResultDate: Date;
   }) => {
     const settingsStore = useSettingsStore();
-    const viewController = useViewController();
+    const viewStore = useViewStore();
+    const renderController = useRenderController();
     const graphStore = useGraphStore();
 
     // computed values
@@ -90,15 +94,15 @@ export const RelatedObjectView = observer(
     const [viewType, setViewType] = useState<RelatedObjectViewType>("edit");
 
     // children state
-    const isExpanded = graphStore.isPathExpanded(pathToNodeStr);
+    const isExpanded = viewStore.isPathExpanded(pathToNodeStr);
     const [searchExpansion, setSearchExpansion] = useState(false);
     const children = getFilteredChildrenAtPath(pathObjects, settingsStore, searchResult, searchResultDate, false);
     const hasChildren = children.length > 0;
     useEffect(() => {
       if (!hasChildren) {
-        graphStore.setPathExpanded(pathToNodeStr, false);
+        viewStore.setPathExpanded(pathToNodeStr, false);
       }
-    }, [graphStore, hasChildren, pathToNodeStr]);
+    }, [viewStore, hasChildren, pathToNodeStr]);
 
     const allNodesInPath = pathToNodeSet(path);
 
@@ -106,7 +110,7 @@ export const RelatedObjectView = observer(
       children.filter((c) => !allNodesInPath.has(c.relation.from === object ? c.relation.to.id : c.relation.from.id))
         .length > 0;
 
-    // const isSelected = viewController.selectedNodes.has(bullet);
+    // const isSelected = renderController.selectedNodes.has(bullet);
     const isSelected = false;
     const isBackwards = relation.from.id === object.id;
     const isChild = relation.relationType.id === defaultRelationTypes.child.id && !isBackwards;
@@ -133,7 +137,7 @@ export const RelatedObjectView = observer(
         } else if (curView === ViewType.SPLIT) {
           router.push(
             `/split/outline${relationsToURLPath(
-              viewController.currentOutlineViewRoot!,
+              viewStore.currentOutlineViewRoot!,
               graphStore,
             )}/stream${relationsToURLPath([...pathToParentRelations, relation], graphStore)}`,
           );
@@ -146,7 +150,7 @@ export const RelatedObjectView = observer(
             `/split/outline${relationsToURLPath(
               [...pathToParentRelations, relation],
               graphStore,
-            )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!, graphStore)}`,
+            )}/stream${relationsToURLPath(viewStore.currentStreamViewRoot!, graphStore)}`,
           );
         }
       } else {
@@ -154,13 +158,13 @@ export const RelatedObjectView = observer(
       }
     }, [
       viewRoot.id,
-      graphStore.thoughtstreamRoot.id,
-      graphStore.outlineRoot.id,
+      graphStore,
       curView,
       router,
       pathToParentRelations,
       relation,
-      viewController,
+      viewStore.currentOutlineViewRoot,
+      viewStore.currentStreamViewRoot,
     ]);
 
     const showRelationType = !isChild || updatingRelationType;
@@ -363,7 +367,7 @@ export const RelatedObjectView = observer(
 
 const SearchOrCreateNodeView = observer(() => {
   const graph = useGraphStore();
-  const view = useViewController();
+  const renderController = useRenderController();
   const { object, relation, parent, pathToParentRelations } = useRelationAtPath();
   const [search, setSearch] = useState(object.text);
   const [selected, setSelected] = useState<number | null>(null);
@@ -378,9 +382,9 @@ const SearchOrCreateNodeView = observer(() => {
     (node: GraphNode) => {
       graph.setGraphNodeAtPath([...pathToParentRelations, relation], node);
       setSearch(node.text);
-      view.setFocusedNode(relationsToPathStr([...pathToParentRelations, relation]));
+      renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations, relation]));
     },
-    [graph, relation, pathToParentRelations, view],
+    [graph, relation, pathToParentRelations, renderController],
   );
 
   // Filter nodes that match the search
@@ -425,7 +429,7 @@ const SearchOrCreateNodeView = observer(() => {
               e.preventDefault();
               const { relation: newRelation } = graph.createChildNode(parent);
               graph.getRelationList(parent).move([newRelation], relation);
-              view.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
+              renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
             }
           }
         }}

@@ -1,6 +1,8 @@
 import { createPool } from "@vercel/postgres";
 import { drizzle, VercelPgDatabase } from "drizzle-orm/vercel-postgres";
-import { env } from "../envBackend";
+
+import { env } from "@/envBackend";
+
 import * as schema from "./schema";
 
 // Originally, I just instantiated and exported the db here instead of using a getter function.

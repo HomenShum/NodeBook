@@ -3,10 +3,11 @@ import { generateKeyBetween } from "fractional-indexing";
 import { autorun, toJS } from "mobx";
 import { usePathname } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
-import { ViewType } from "./controller/ViewController";
-import { GraphObject } from "./model/GraphObject";
-import { GraphRelation } from "./model/GraphRelation";
-import { GraphStore } from "./model/GraphStore";
+
+import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation } from "@/app/graph/GraphRelation";
+import { GraphStore } from "@/app/graph/GraphStore";
+import { ViewType } from "@/app/view/ViewType";
 
 export const uuid = () => uuidv4().slice(0, 8);
 

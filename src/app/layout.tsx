@@ -2,16 +2,23 @@
 import { autorun, toJS } from "mobx";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { DataLoadProvider } from "./DataLoadContext";
-import { ViewController } from "./controller/ViewController";
-import { ViewControllerProvider } from "./controller/useViewController";
-import { env } from "./envFrontend";
+
+import { DataLoadProvider } from "@/app/DataLoadContext";
+import { env } from "@/app/envFrontend";
+import { GraphStore } from "@/app/graph/GraphStore";
+import { SettingsStore } from "@/app/graph/SettingsStore";
+import { GraphStoreProvider } from "@/app/graph/useGraphStore";
+import { SettingsStoreProvider } from "@/app/graph/useSettingsStore";
+import { loadGraphData } from "@/app/persistence/loadGraphData";
+import { persistGraphData } from "@/app/persistence/persistGraphData";
+import { storesToDataString } from "@/app/persistence/serialization";
+import { RenderController } from "@/app/render/RenderController";
+import { RenderControllerProvider } from "@/app/render/useRenderController";
+import { useCurView } from "@/app/util";
+import { ViewStore } from "@/app/view/ViewStore";
+import { ViewStoreProvider } from "@/app/view/useViewStore";
+
 import "./global.css";
-import { GraphStore } from "./model/GraphStore";
-import { SettingsStore } from "./model/SettingsStore";
-import { GraphStoreProvider } from "./model/useGraphStore";
-import { SettingsStoreProvider } from "./model/useSettingsStore";
-import { useCurView } from "./util";
 
 const App = dynamic(() => import("./App"), {
   ssr: false,
@@ -21,52 +28,23 @@ const App = dynamic(() => import("./App"), {
 const settingsStore = new SettingsStore();
 settingsStore.loadFromLocalStorage();
 const graphStore = new GraphStore(settingsStore);
-const viewController = new ViewController(settingsStore, graphStore);
+const viewStore = new ViewStore(settingsStore, graphStore);
+const renderController = new RenderController(settingsStore, viewStore, graphStore);
 
 autorun(() => {
   settingsStore.saveToLocalStorage();
 });
 
-// Expose stores to the window for debugging
+// Expose stores to the window for debuggingf
 if (typeof window !== "undefined" && env.env !== "production") {
   window.mew = {
     env,
     toJS,
     graphStore,
-    viewController,
+    renderController,
   };
 }
 
-function persistGraphData(dataString: string) {
-  if (env.persistTo === "local") {
-    localStorage.setItem("data", dataString);
-  } else if (env.persistTo === "server") {
-    fetch("/api/persist", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ data: dataString }),
-    });
-  } else {
-    return env.persistTo satisfies never;
-  }
-}
-
-async function loadGraphData() {
-  let dataString: string | null = null;
-  if (env.persistTo === "local") {
-    dataString = localStorage.getItem("data");
-  } else if (env.persistTo === "server") {
-    try {
-      const json = await fetch("/api/persist").then((res) => res.json());
-      dataString = json.data;
-    } catch (e) {
-      console.error("Error loading data from server", e);
-    }
-  }
-  return dataString ? JSON.parse(dataString) : null;
-}
 /**
  * The root component which wraps every page in the application
  * and provides the app stores.
@@ -86,13 +64,10 @@ export default function RootTemplate({
       return;
     }
     async function setupSync() {
-      const data = await loadGraphData();
-      if (data !== null) {
-        graphStore.deserializeInPlace(data);
-      }
+      await loadGraphData(graphStore, viewStore);
       setHasLoaded(true);
       setInterval(() => {
-        const newDataString = JSON.stringify(graphStore.serialize());
+        const newDataString = storesToDataString(graphStore, viewStore);
         if (newDataString !== persistedData.current) {
           persistedData.current = newDataString;
           persistGraphData(newDataString);
@@ -107,11 +82,13 @@ export default function RootTemplate({
       <DataLoadProvider value={hasLoaded}>
         <SettingsStoreProvider value={settingsStore}>
           <GraphStoreProvider value={graphStore}>
-            <ViewControllerProvider value={viewController}>
-              <body>
-                <App curView={curView}>{children}</App>
-              </body>
-            </ViewControllerProvider>
+            <ViewStoreProvider value={viewStore}>
+              <RenderControllerProvider value={renderController}>
+                <body>
+                  <App curView={curView}>{children}</App>
+                </body>
+              </RenderControllerProvider>
+            </ViewStoreProvider>
           </GraphStoreProvider>
         </SettingsStoreProvider>
       </DataLoadProvider>

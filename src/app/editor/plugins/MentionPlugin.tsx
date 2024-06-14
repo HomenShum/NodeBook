@@ -1,4 +1,3 @@
-import { sortByPrefixMatch, useCurView } from "@/app/util";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
   LexicalTypeaheadMenuPlugin,
@@ -9,12 +8,15 @@ import {
 import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
-import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "../../controller/useViewController";
-import { GraphNode } from "../../model/GraphNode";
-import { GraphObject } from "../../model/GraphObject";
-import { $createMentionNode } from "../../model/MentionNode";
-import { useGraphStore } from "../../model/useGraphStore";
+
+import { sortByPrefixMatch, useCurView } from "@/app/util";
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphObject } from "@/app/graph/GraphObject";
+import { $createMentionNode } from "@/app/graph/MentionNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
+
 import styles from "./MentionPlugin.module.css";
 
 // Much of this implementation is copied from:
@@ -37,7 +39,7 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
 
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const curView = useCurView();
   const onSelectOption = useCallback(
     (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {

@@ -1,5 +1,3 @@
-import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
-
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
@@ -7,16 +5,18 @@ import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "@/app/controller/useViewController";
-import { GraphNode } from "@/app/model/GraphNode";
-import { MentionNode } from "@/app/model/MentionNode";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { useSettingsStore } from "@/app/model/useSettingsStore";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { MentionNode } from "@/app/graph/MentionNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { JumpSelectionPlugin } from "./plugins/JumpSelectionPluigin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
@@ -52,7 +52,7 @@ const onError = (error: any) => {
 
 export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
   const settingsStore = useSettingsStore();
-  const view = useViewController();
+  const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const { object: node, pathToNodeStr, isChild } = useRelationAtPath();
   const [mentionDropdownOpen, setMentionDropdownOpen] = useState(false);
@@ -85,9 +85,9 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
       if (!node) {
         return;
       }
-      view.setCurrentOutlineViewRoot(node.getPath());
+      viewStore.setCurrentOutlineViewRoot(node.getPath());
     },
-    [view, graphStore],
+    [viewStore, graphStore],
   );
 
   const showSearchAndReplaceDropdown =

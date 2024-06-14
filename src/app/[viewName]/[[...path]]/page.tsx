@@ -1,20 +1,21 @@
 "use client";
-import { DataLoadContext } from "@/app/DataLoadContext";
-import { useViewController } from "@/app/controller/useViewController";
-import { GraphStore } from "@/app/model/GraphStore";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { relationsPathToParentChild } from "@/app/util";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useContext, useEffect } from "react";
 
-const OutlineView = dynamic(() => import("../../components/OutlineView").then((x) => x.OutlineView), {
+import { DataLoadContext } from "@/app/DataLoadContext";
+import { GraphStore } from "@/app/graph/GraphStore";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { relationsPathToParentChild } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
+
+const OutlineView = dynamic(() => import("@/app/components/OutlineView").then((x) => x.OutlineView), {
   ssr: false,
 });
-const ThoughtstreamView = dynamic(() => import("../../components/ThoughtstreamView").then((x) => x.ThoughtstreamView), {
+const ThoughtstreamView = dynamic(() => import("@/app/components/ThoughtstreamView").then((x) => x.ThoughtstreamView), {
   ssr: false,
 });
-const SplitView = dynamic(() => import("../../components/SplitView").then((x) => x.SplitView), {
+const SplitView = dynamic(() => import("@/app/components/SplitView").then((x) => x.SplitView), {
   ssr: false,
 });
 
@@ -45,7 +46,7 @@ function arrayEqual<T>(a: T[], b: T[]) {
 }
 
 export default function Page({ params: { viewName, path } }: { params: { viewName: string; path: string[] } }) {
-  const viewController = useViewController();
+  const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const router = useRouter();
   const hasLoaded = useContext(DataLoadContext);
@@ -65,8 +66,8 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
     if (viewName === "split") {
       // split view URL is structured as /split/outline/.../stream/...
       if (!path || path.length === 0) {
-        viewController.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
-        viewController.setCurrentStreamViewRoot([graphStore.thoughtstreamRootRelationFromUserRoot]);
+        viewStore.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
+        viewStore.setCurrentStreamViewRoot([graphStore.thoughtstreamRootRelationFromUserRoot]);
         return;
       }
 
@@ -86,7 +87,7 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
       }
     } else if (viewName === "outline") {
       if (!path || path.length === 0) {
-        viewController.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
+        viewStore.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
         return;
       }
       newOutlineRoot = pathToRelationList(path, graphStore);
@@ -96,7 +97,7 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
       }
     } else if (viewName === "stream") {
       if (!path || path.length === 0) {
-        viewController.setCurrentStreamViewRoot([graphStore.thoughtstreamRootRelationFromUserRoot]);
+        viewStore.setCurrentStreamViewRoot([graphStore.thoughtstreamRootRelationFromUserRoot]);
         return;
       }
       newStreamRoot = pathToRelationList(path, graphStore);
@@ -109,18 +110,18 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
     // if the path is different from the outline/stream view root, update the latter
     if (
       newOutlineRoot &&
-      (!viewController.currentOutlineViewRoot || !arrayEqual(viewController.currentOutlineViewRoot, newOutlineRoot))
+      (!viewStore.currentOutlineViewRoot || !arrayEqual(viewStore.currentOutlineViewRoot, newOutlineRoot))
     ) {
-      viewController.setCurrentOutlineViewRoot(newOutlineRoot);
+      viewStore.setCurrentOutlineViewRoot(newOutlineRoot);
     }
 
     if (
       newStreamRoot &&
-      (!viewController.currentStreamViewRoot || !arrayEqual(viewController.currentStreamViewRoot, newStreamRoot))
+      (!viewStore.currentStreamViewRoot || !arrayEqual(viewStore.currentStreamViewRoot, newStreamRoot))
     ) {
-      viewController.setCurrentStreamViewRoot(newStreamRoot);
+      viewStore.setCurrentStreamViewRoot(newStreamRoot);
     }
-  }, [graphStore, hasLoaded, path, router, viewController, viewName]);
+  }, [graphStore, hasLoaded, path, router, viewName, viewStore]);
 
   if (!hasLoaded) return <div className="p-4">Loading...</div>;
 

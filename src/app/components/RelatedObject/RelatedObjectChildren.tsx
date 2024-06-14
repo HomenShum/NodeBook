@@ -1,13 +1,15 @@
-import { GraphNode } from "@/app/model/GraphNode";
-import { SearchResult } from "@/app/model/search";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { useSettingsStore } from "@/app/model/useSettingsStore";
-import { formatDate, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { Dispatch, SetStateAction, useState } from "react";
-import { GraphRelation } from "../../model/GraphRelation";
-import { PinCustom } from "../icons";
+
+import { PinCustom } from "@/app/components/icons";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphRelation } from "@/app/graph/GraphRelation";
+import { SearchResult } from "@/app/graph/search";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { formatDate, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
+
 import { RelatedObjectView } from "./RelatedObjectView";
 import { getFilteredChildrenAtPath } from "./getFilteredChildrenAtPath";
 

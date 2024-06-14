@@ -1,8 +1,9 @@
-import { cn } from "@/lib/utils";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { GraphNode } from "../../model/GraphNode";
-import { useGraphStore } from "../../model/useGraphStore";
+
+import { GraphNode } from "@/app/graph/GraphNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { cn } from "@/lib/utils";
 
 function relationsFromNodesPerspective(node: GraphNode) {
   return node.relations.map((relation) => {

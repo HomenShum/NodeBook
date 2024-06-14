@@ -1,5 +1,7 @@
 import { RefObject, useCallback, useEffect, useRef } from "react";
-import { useViewController } from "../../controller/useViewController";
+
+import { useRenderController } from "@/app/render/useRenderController";
+
 import { Coordinate } from "./utils";
 
 interface Props {
@@ -7,7 +9,7 @@ interface Props {
 }
 
 export const MouseSelection = ({ appContainerRef }: Props) => {
-  const viewController = useViewController();
+  const renderController = useRenderController();
 
   const isSelecting = useRef(false);
   const selectionBoxRef = useRef<HTMLDivElement>(null);
@@ -38,10 +40,10 @@ export const MouseSelection = ({ appContainerRef }: Props) => {
         selectionBoxRef.current?.style.setProperty("left", `${left}px`);
         selectionBoxRef.current?.style.setProperty("height", `${height}px`);
         selectionBoxRef.current?.style.setProperty("width", `${width}px`);
-        viewController.maybeSelectNodes({ left, top, height, width });
+        renderController.maybeSelectNodes({ left, top, height, width });
       });
     },
-    [viewController],
+    [renderController],
   );
 
   const handleMouseUp = useCallback(
@@ -51,9 +53,9 @@ export const MouseSelection = ({ appContainerRef }: Props) => {
       selectionBoxRef.current?.style.setProperty("display", "none");
 
       if (!selectionBox) return;
-      viewController.maybeSelectNodes(selectionBox);
+      renderController.maybeSelectNodes(selectionBox);
     },
-    [viewController],
+    [renderController],
   );
 
   useEffect(() => {

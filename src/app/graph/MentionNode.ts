@@ -1,6 +1,4 @@
 import type { Spread } from "lexical";
-import styles from "../editor/Editor.module.css";
-
 import {
   $applyNodeReplacement,
   TextNode,
@@ -11,6 +9,8 @@ import {
   type LexicalNode,
   type SerializedTextNode,
 } from "lexical";
+
+import styles from "@/app/editor/Editor.module.css";
 
 // Much of this implementation is copied from:
 // https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/nodes/MentionNode.ts

@@ -1,17 +1,18 @@
-import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
-import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "../../controller/useViewController";
-import { GraphNode } from "../../model/GraphNode";
-import { useGraphStore } from "../../model/useGraphStore";
-import { $getChips, $getText, getSelectionPositions } from "../utils";
+
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { $getChips, $getText, getSelectionPositions } from "@/app/editor/utils";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { useRenderController } from "@/app/render/useRenderController";
 
 export const RelationPlugin = () => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const { object, relation, pathToNodeStr } = useRelationAtPath();
   if (!(object instanceof GraphNode)) {
@@ -53,11 +54,11 @@ export const RelationPlugin = () => {
           chipsRight[0].value = chipsRight[0].value.trimStart(); // Remove leading whitespace
         }
         object.setContent(chipsRight);
-        viewController.setFocusedNode(pathToNodeStr);
+        renderController.setFocusedNode(pathToNodeStr);
         return true;
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [graphStore, settingsStore, viewController, editor, object, relation, pathToNodeStr]);
+  }, [graphStore, settingsStore, renderController, editor, object, relation, pathToNodeStr]);
   return null;
 };

@@ -1,26 +1,19 @@
 import { LexicalEditor } from "lexical";
 import { makeAutoObservable } from "mobx";
-import { JUMP_TO_END, JUMP_TO_START } from "../editor/plugins/JumpSelectionPluigin";
-import { Box } from "../editor/selection/utils";
-import { GraphRelation } from "../model/GraphRelation";
-import { GraphStore, Path } from "../model/GraphStore";
-import { SettingsStore } from "../model/SettingsStore";
-import { makeAutoSaving, relationsPathToParentChild, relationsToPathStr } from "../util";
 
-export enum ViewType {
-  OUTLINE = "outline",
-  THOUGHTSTREAM = "thoughtstream",
-  SPLIT = "split",
-}
+import { JUMP_TO_END, JUMP_TO_START } from "@/app/editor/plugins/JumpSelectionPluigin";
+import { Box } from "@/app/editor/selection/utils";
+import { GraphStore, Path } from "@/app/graph/GraphStore";
+import { SettingsStore } from "@/app/graph/SettingsStore";
+import { makeAutoSaving, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
+import { ViewStore } from "@/app/view/ViewStore";
+import { ViewType } from "@/app/view/ViewType";
 
-interface ChildNodeOptions {
-  focusAfterCreate: boolean;
-  targetView: ViewType;
-  alwaysAddToOutline?: boolean;
-}
-
-export class ViewController {
+export class RenderController {
   private settingsStore: SettingsStore;
+  private viewStore: ViewStore;
+
+  // TODO: Remove tie-in to underlying GraphStore, as Render layer should only ever talk to View layer
   private graphStore: GraphStore;
 
   public focusedNode: Path | null = null;
@@ -38,14 +31,10 @@ export class ViewController {
   // TODO do we need this right now?
   public relatedNodesViewType: "all" | "pinned" = "all";
 
-  public currentOutlineViewRoot: GraphRelation[] | null = null;
-  public currentStreamViewRoot: GraphRelation[] | null = null;
-
-  constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
+  constructor(settingsStore: SettingsStore, viewStore: ViewStore, graphStore: GraphStore) {
     this.settingsStore = settingsStore;
+    this.viewStore = viewStore;
     this.graphStore = graphStore;
-    this.currentOutlineViewRoot = [graphStore.outlineRootRelationFromUserRoot];
-    this.currentStreamViewRoot = [graphStore.thoughtstreamRootRelationFromUserRoot];
     makeAutoObservable(this);
     makeAutoSaving(this, {
       leftSidebarOpen: true,
@@ -55,14 +44,6 @@ export class ViewController {
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
-  }
-
-  setCurrentStreamViewRoot(root: GraphRelation[] | null) {
-    this.currentStreamViewRoot = root;
-  }
-
-  setCurrentOutlineViewRoot(root: GraphRelation[] | null) {
-    this.currentOutlineViewRoot = root;
   }
 
   toggleLeftSidebar() {
@@ -183,13 +164,24 @@ export class ViewController {
     this.editorsByPath.delete(pathStr);
   }
 
+  private selectionBoxToEvaluate: Box | null = null;
+
+  maybeSelectNodes(selectionBox: Box) {
+    this.selectionBoxToEvaluate = selectionBox;
+    // Use setTimeout to effectively throttle the selection box evaluation to no more than once every 100ms
+    setTimeout(() => {
+      // this.evaluateSelectionBox();
+    }, 100);
+  }
+
+  // TODO: Move all create node logic to ViewStore
   private createOutlineChildNode(focus: boolean = true) {
-    const path = relationsPathToParentChild(this.currentOutlineViewRoot!);
+    const path = relationsPathToParentChild(this.viewStore.currentOutlineViewRoot!);
     const root = path[path.length - 1].child;
     const { node, relation } = this.graphStore.createChildNode(root);
 
     if (focus) {
-      this.setFocusedNode(relationsToPathStr([...this.currentOutlineViewRoot!, relation]));
+      this.setFocusedNode(relationsToPathStr([...this.viewStore.currentOutlineViewRoot!, relation]));
     }
 
     if (this.settingsStore.addAllOutlineDescendantsToThoughtstream) {
@@ -199,6 +191,7 @@ export class ViewController {
     return node;
   }
 
+  // TODO: Move all create node logic to ViewStore
   private createThoughtstreamChildNode(focus: boolean = true, ensureInOutline: boolean = false) {
     const { node, relationToThoughtstream } = this.graphStore.createThoughtstreamChild();
 
@@ -218,11 +211,20 @@ export class ViewController {
     return node;
   }
 
+  // TODO: Move all create node logic to ViewStore
   /**
    * Create a child node in the specified view, or in the current view if no view is specified.
    * In split view, the child node will be created in the same view as the focused node.
    */
-  createChildNode({ focusAfterCreate, targetView, alwaysAddToOutline }: ChildNodeOptions) {
+  createChildNode({
+    focusAfterCreate,
+    targetView,
+    alwaysAddToOutline,
+  }: {
+    focusAfterCreate: boolean;
+    targetView: ViewType;
+    alwaysAddToOutline?: boolean;
+  }) {
     const view = targetView;
     switch (view) {
       case ViewType.OUTLINE:
@@ -244,38 +246,5 @@ export class ViewController {
           throw new Error("Unsupported split view root node");
         }
     }
-  }
-
-  private selectionBoxToEvaluate: Box | null = null;
-
-  // todo can we do this without editorsByViewId?
-  private evaluateSelectionBox() {
-    throw new Error("Method not implemented.");
-    // const selectionBox = this.selectionBoxToEvaluate;
-    // if (!selectionBox) return;
-
-    // this.selectedNodes.clear();
-
-    // // Assume user didn't mean to select anything if the selection area is very small
-    // if (selectionBox.height * selectionBox.width < 25) return;
-
-    // for (const [viewId, editor] of this.editorsByViewId.entries()) {
-    //   const editorBox = editor.getRootElement()?.getBoundingClientRect();
-    //   if (!editorBox) continue;
-    //   if (boxesIntersect(selectionBox, editorBox)) {
-    //     const view = this.graphStore.bulletsById.get(viewId);
-    //     this.selectedNodes.add(view!);
-    //   }
-    // }
-
-    // this.selectionBoxToEvaluate = null;
-  }
-
-  maybeSelectNodes(selectionBox: Box) {
-    this.selectionBoxToEvaluate = selectionBox;
-    // Use setTimeout to effectively throttle the selection box evaluation to no more than once every 100ms
-    setTimeout(() => {
-      this.evaluateSelectionBox();
-    }, 100);
   }
 }

@@ -1,7 +1,8 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getRoot, COMMAND_PRIORITY_LOW, KEY_SPACE_COMMAND } from "lexical";
 import { useEffect } from "react";
-import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
+
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 
 /**
  * Ignore space at the start of the editor.

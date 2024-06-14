@@ -1,10 +1,12 @@
 import { makeAutoObservable, toJS } from "mobx";
-import { Position, comparePositions, uuid } from "../util";
+
+import { SerializedGraphNode } from "@/app/persistence/SerializedData";
+import { Serializable } from "@/app/persistence/serialization";
+import { Position, comparePositions, uuid } from "@/app/util";
+
 import { GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
-import { SerializedGraphNode } from "./SerializedData";
-import { Serializable } from "./serialization";
 
 export type Chip = {
   type: "text" | "mention" | "linebreak";

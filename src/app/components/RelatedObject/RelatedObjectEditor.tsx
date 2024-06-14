@@ -1,12 +1,15 @@
-import { useViewController } from "@/app/controller/useViewController";
-import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
-import { GraphNode } from "@/app/model/GraphNode";
-import { GraphObject } from "@/app/model/GraphObject";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { cn } from "@/lib/utils";
 import { Edit2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef } from "react";
+
+import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphObject } from "@/app/graph/GraphObject";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
+import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
+
 import { useViewType } from "./ViewTypeContext";
 
 export const RelatedObjectEditor = observer(
@@ -21,12 +24,13 @@ export const RelatedObjectEditor = observer(
     object: GraphObject;
     pathToNodeStr: string;
   }) => {
-    const graph = useGraphStore();
-    const viewController = useViewController();
+    const graphStore = useGraphStore();
+    const viewStore = useViewStore();
+    const renderController = useRenderController();
     const { viewType, setViewType } = useViewType();
     const ref = useRef<HTMLDivElement>(null);
     const treatAsLink =
-      object instanceof GraphNode && graph.shouldTreatObjectAsLink(object) && viewType !== "temp-edit";
+      object instanceof GraphNode && graphStore.shouldTreatObjectAsLink(object) && viewType !== "temp-edit";
 
     // close the temp edit view when clicking outside of it
     useEffect(() => {
@@ -41,7 +45,7 @@ export const RelatedObjectEditor = observer(
           window.removeEventListener("click", handleClick);
         };
       }
-    }, [object.id, setViewType, viewType, viewController, pathToNodeStr]);
+    }, [object.id, setViewType, viewType, renderController, pathToNodeStr]);
 
     return (
       <div
@@ -60,7 +64,7 @@ export const RelatedObjectEditor = observer(
           {object instanceof GraphNode ? (
             <div
               className={cn("flex min-w-64", treatAsLink && "cursor-pointer")}
-              onClick={treatAsLink ? (e) => graph.togglePathExpanded(pathToNodeStr) : undefined}
+              onClick={treatAsLink ? (e) => viewStore.togglePathExpanded(pathToNodeStr) : undefined}
             >
               <NodeContentEditor indent={indentationWidth} />
               {treatAsLink && isHovered && (
@@ -68,7 +72,7 @@ export const RelatedObjectEditor = observer(
                   onClick={(e) => {
                     e.stopPropagation();
                     setViewType("temp-edit");
-                    viewController.setFocusedNode(pathToNodeStr);
+                    renderController.setFocusedNode(pathToNodeStr);
                   }}
                 >
                   <Edit2 size={16} />

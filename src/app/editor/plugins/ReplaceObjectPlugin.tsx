@@ -1,9 +1,10 @@
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
-import { useSettingsStore } from "@/app/model/useSettingsStore";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
+
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
 
 export const ReplaceObjectPlugin = () => {
   const settingsStore = useSettingsStore();

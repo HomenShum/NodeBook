@@ -2,19 +2,19 @@ import { mergeRegister } from "@lexical/utils";
 import { COMMAND_PRIORITY_EDITOR, COMMAND_PRIORITY_NORMAL, KEY_ENTER_COMMAND, KEY_ESCAPE_COMMAND } from "lexical";
 import { action } from "mobx";
 import { useEffect } from "react";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
-import { useViewController } from "@/app/controller/useViewController";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
 
 /**
  * Plugin to exit temporary edit mode when user presses Enter or Escape key.
  */
 export const ExitTempEditPlugin = () => {
   const graphStore = useGraphStore();
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const { pathToNodeStr } = useRelationAtPath();
   const { setViewType, viewType } = useViewType();
@@ -29,7 +29,7 @@ export const ExitTempEditPlugin = () => {
 
           event.preventDefault();
           setViewType("edit");
-          viewController.setFocusedNode(pathToNodeStr);
+          renderController.setFocusedNode(pathToNodeStr);
           return true;
         }),
         COMMAND_PRIORITY_NORMAL,
@@ -40,7 +40,7 @@ export const ExitTempEditPlugin = () => {
           if (viewType === "temp-edit") {
             event.preventDefault();
             setViewType("edit");
-            viewController.setFocusedNode(pathToNodeStr);
+            renderController.setFocusedNode(pathToNodeStr);
             return true;
           }
           return false;
@@ -48,7 +48,7 @@ export const ExitTempEditPlugin = () => {
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, graphStore, pathToNodeStr, setViewType, viewController, viewType]);
+  }, [editor, graphStore, pathToNodeStr, setViewType, renderController, viewType]);
 
   return null;
 };

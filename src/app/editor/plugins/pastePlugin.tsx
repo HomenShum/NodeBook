@@ -1,10 +1,11 @@
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "@/app/controller/useViewController";
-import { GraphNode } from "@/app/model/GraphNode";
-import { useGraphStore } from "@/app/model/useGraphStore";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_LOW, PASTE_COMMAND } from "lexical";
 import { useEffect } from "react";
+
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
 
 /**
  * Plugin that allows pasting multiple lines of text into a node.
@@ -12,7 +13,7 @@ import { useEffect } from "react";
 export const PastePlugin = () => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const { object, relation, parent, pathToNodeStr } = useRelationAtPath();
   useEffect(() => {
     return editor.registerCommand<ClipboardEvent>(
@@ -32,13 +33,13 @@ export const PastePlugin = () => {
             children.map((c) => c.relation),
             relation,
           );
-          viewController.setFocusedNode(pathToNodeStr);
+          renderController.setFocusedNode(pathToNodeStr);
           return true;
         }
         return false;
       },
       COMMAND_PRIORITY_LOW,
     );
-  }, [object, parent, relation, graphStore, editor, viewController, pathToNodeStr]);
+  }, [object, parent, relation, graphStore, editor, renderController, pathToNodeStr]);
   return null;
 };

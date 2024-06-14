@@ -4,18 +4,20 @@ import { observer } from "mobx-react-lite";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef } from "react";
-import s from "./app.module.css";
-import { SearchBar } from "./components/SearchBar/SearchBar";
-import SidebarTree from "./components/SidebarTree";
-import { DevTools } from "./components/dev/DevTools";
-import { NodeTable } from "./components/dev/NodeTable";
-import { RelationTable } from "./components/dev/RelationTable";
-import { RelationTypeTable } from "./components/dev/RelationTypeTable";
-import { ListIcon, SidebarIcon, SplitIcon, StreamIcon } from "./components/icons";
-import { ViewType } from "./controller/ViewController";
-import { useKeyboardShortcuts } from "./controller/useKeyboardShortcuts";
-import { useViewController } from "./controller/useViewController";
+
+import { SearchBar } from "@/app/components/SearchBar/SearchBar";
+import SidebarTree from "@/app/components/SidebarTree";
+import { DevTools } from "@/app/components/dev/DevTools";
+import { NodeTable } from "@/app/components/dev/NodeTable";
+import { RelationTable } from "@/app/components/dev/RelationTable";
+import { RelationTypeTable } from "@/app/components/dev/RelationTypeTable";
+import { ListIcon, SidebarIcon, SplitIcon, StreamIcon } from "@/app/components/icons";
+import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
+import { useRenderController } from "@/app/render/useRenderController";
+import { ViewType } from "@/app/view/ViewType";
+
 import "./global.css";
+import s from "./app.module.css";
 
 export default observer(
   ({
@@ -26,7 +28,7 @@ export default observer(
     curView: ViewType;
   }>) => {
     const appContainerRef = useRef<HTMLDivElement>(null);
-    const viewController = useViewController();
+    const renderController = useRenderController();
     useKeyboardShortcuts();
 
     const ButtonNavigation = () => (
@@ -49,7 +51,7 @@ export default observer(
     return (
       <div className={s.App}>
         <div ref={appContainerRef} className={s.AppContainer}>
-          <aside className={`${s.LeftAside} ${viewController.leftSidebarOpen ? s.AsideVisible : ""}`}>
+          <aside className={`${s.LeftAside} ${renderController.leftSidebarOpen ? s.AsideVisible : ""}`}>
             {/* for now keeping this as tailwind bc it handles wisely the gaps in both axis */}
             <div className="flex items-start flex-col w-full gap-x-2 gap-y-1 py-1">
               <ButtonNavigation />
@@ -59,11 +61,11 @@ export default observer(
 
           <div className={s.Container}>
             <header className={s.Header}>
-              <button className={s.LeftSidebarIcon} onClick={() => viewController.toggleLeftSidebar()}>
+              <button className={s.LeftSidebarIcon} onClick={() => renderController.toggleLeftSidebar()}>
                 <SidebarIcon />
               </button>
 
-              <div className={`${s.HeaderNav} ${viewController.leftSidebarOpen ? s.LeftShift : ""}`}>
+              <div className={`${s.HeaderNav} ${renderController.leftSidebarOpen ? s.LeftShift : ""}`}>
                 <div className={`${s.BackButton}`} onClick={() => router.back()}>
                   <ArrowLeft size={18} />
                 </div>
@@ -72,13 +74,13 @@ export default observer(
                   <ButtonNavigation />
                 </div>
               </div>
-              <button onClick={() => viewController.toggleRightSidebar()}>
+              <button onClick={() => renderController.toggleRightSidebar()}>
                 <SettingsIcon size={18} strokeWidth={1.5} className="absolute top-[16px] right-4" />
               </button>
             </header>
             <div className={s.MainContainer}>
-              <main className={`${s.Main} ${viewController.leftSidebarOpen ? s.LeftShift : ""}`}>{children}</main>
-              {viewController.rightSidebarOpen && (
+              <main className={`${s.Main} ${renderController.leftSidebarOpen ? s.LeftShift : ""}`}>{children}</main>
+              {renderController.rightSidebarOpen && (
                 <aside className={s.DevToolsSidebar}>
                   <DevTools />
                   <NodeTable />

@@ -8,18 +8,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/DropdownMenu";
-import { useViewController } from "@/app/controller/useViewController";
-import { GraphNode } from "@/app/model/GraphNode";
-import { useGraphStore } from "@/app/model/useGraphStore";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+
 import { useRelationAtPath } from "./RelatedObjectContext";
 import { useViewType } from "./ViewTypeContext";
 
 export const RelatedObjectMenu = observer(
   ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {
-    const viewController = useViewController();
+    const renderController = useRenderController();
     const graphStore = useGraphStore();
+    const viewStore = useViewStore();
     const { object, parent, relation, pathToParentRelations, siblingAbove } = useRelationAtPath();
     const { viewType, setViewType } = useViewType();
 
@@ -39,7 +42,7 @@ export const RelatedObjectMenu = observer(
               graphStore.deleteRelation(relation);
               if (siblingAbove) {
                 const pathStr = relationsToPathStr([...pathToParentRelations, siblingAbove]);
-                viewController.setFocusedNode(pathStr);
+                renderController.setFocusedNode(pathStr);
               }
             })}
           >
@@ -67,7 +70,7 @@ export const RelatedObjectMenu = observer(
             onSelect={action(() => {
               graphStore.createChildNode(object);
               const pathStr = relationsToPathStr([...pathToParentRelations, relation]);
-              graphStore.setPathExpanded(pathStr, true);
+              viewStore.setPathExpanded(pathStr, true);
             })}
           >
             Add child

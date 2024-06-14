@@ -1,3 +1,6 @@
+import { GraphStore } from "@/app/graph/GraphStore";
+import { ViewStore } from "@/app/view/ViewStore";
+
 export interface Serializable {
   serialize(): any;
 }
@@ -21,3 +24,10 @@ export function serializeMapWithArrayValues<T extends Serializable>(
   }
   return result;
 }
+
+export const storesToDataString = (graphStore: GraphStore, viewStore: ViewStore) => {
+  return JSON.stringify({
+    graphStore: graphStore.serialize(),
+    viewStore: viewStore.serialize(),
+  });
+};

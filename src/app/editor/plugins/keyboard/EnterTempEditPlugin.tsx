@@ -1,11 +1,11 @@
 import { COMMAND_PRIORITY_EDITOR, KEY_DOWN_COMMAND } from "lexical";
 import { action } from "mobx";
 import { useEffect } from "react";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { useGraphStore } from "@/app/graph/useGraphStore";
 
 /**
  * Plugin to enter temporary edit mode when user presses Alt + Shift + R.

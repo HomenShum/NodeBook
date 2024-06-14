@@ -1,15 +1,17 @@
 import { BaseSelection, LexicalNode } from "lexical";
 import { makeAutoObservable, toJS } from "mobx";
-import { nodeToChip } from "../editor/utils";
-import { comparePositions, relationsPathToParentChild, uuid } from "../util";
+
+import { nodeToChip } from "@/app/editor/utils";
+import { SerializedGraphStore, SerializedRelation } from "@/app/persistence/SerializedData";
+import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
+import { comparePositions, relationsPathToParentChild, uuid } from "@/app/util";
+
 import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
 import { isPlaceholder } from "./PlaceholderGraphObject";
-import { SerializedGraphStore, SerializedRelation } from "./SerializedData";
 import { SettingsStore } from "./SettingsStore";
-import { serializeMap, serializeMapWithArrayValues } from "./serialization";
 
 export const defaultRelationTypes = {
   child: { id: "child", label: "child", reverseLabel: "parent" },
@@ -32,7 +34,6 @@ export const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
  *   - author: B
  */
 export type Path = string;
-export type PathData = { isExpanded: boolean };
 
 export class GraphStore {
   private settingsStore: SettingsStore;
@@ -48,8 +49,6 @@ export class GraphStore {
   correspondingPinnedForObjects: Map<string, GraphRelation> = new Map();
   /** Relation id to list of bundle-nodes that contain it */
   relationToBundles: Map<string, GraphNode[]> = new Map();
-
-  pathData: Map<Path, PathData> = new Map();
 
   // Default nodes and relations
   userRoot: GraphNode;
@@ -91,7 +90,6 @@ export class GraphStore {
     this.relationTypesById = {};
     this.relationsByNodeId.clear();
     this.pinnedRelationsByNodeId.clear();
-    this.pathData.clear();
     this.relationToBundles.clear();
     this.correspondingObjectsForPinned.clear();
     this.correspondingPinnedForObjects.clear();
@@ -156,22 +154,6 @@ export class GraphStore {
 
   isRoot(obj: GraphObject) {
     return obj.id === this.userRoot.id || obj.id === this.outlineRoot.id || obj.id === this.thoughtstreamRoot.id;
-  }
-
-  isPathExpanded(path: Path): boolean {
-    return this.pathData.get(path)?.isExpanded || false;
-  }
-
-  togglePathExpanded(path: Path) {
-    const oldData = this.pathData.get(path);
-    this.pathData.set(path, {
-      ...oldData,
-      isExpanded: !oldData?.isExpanded,
-    });
-  }
-
-  setPathExpanded(path: Path, isExpanded: boolean) {
-    this.pathData.set(path, { isExpanded });
   }
 
   get nodes(): GraphNode[] {
@@ -581,7 +563,7 @@ export class GraphStore {
     relation: GraphRelation,
     nodeToSplit: GraphNode,
     selection: BaseSelection,
-    pathToNodeStr: string,
+    shouldCreateChild: boolean,
     { splitToNewBundle } = { splitToNewBundle: false },
   ) {
     const parent = relation.to.id === nodeToSplit.id ? relation.from : relation.to;
@@ -667,7 +649,7 @@ export class GraphStore {
       chipsAfter.push(...nodes.slice(end.index + 1).map(nodeToChip));
 
       nodeToSplit.setContent(chipsBefore);
-      if (this.isPathExpanded(pathToNodeStr)) {
+      if (shouldCreateChild) {
         child = this.createChildNode(nodeToSplit, { content: chipsAfter });
         this.getRelationList(nodeToSplit).move([child.relation], "top");
         nested = true;
@@ -782,7 +764,6 @@ export class GraphStore {
       relationTypesById,
       relationsByNodeId,
       pinnedRelationsByNodeId,
-      pathData: Object.fromEntries(this.pathData.entries()),
       relationToBundles,
       correspondingObjectsForPinned,
       correspondingPinnedForObjects,
@@ -870,13 +851,6 @@ export class GraphStore {
       }
     }
 
-    const pathData = new Map<Path, PathData>();
-    if (data.pathData) {
-      for (const [key, value] of Object.entries(data.pathData)) {
-        pathData.set(key, value);
-      }
-    }
-
     const relationToBundles = new Map<string, GraphNode[]>();
     if (data.relationToBundles) {
       for (const [relationId, bundlesArray] of Object.entries(data.relationToBundles)) {
@@ -893,7 +867,6 @@ export class GraphStore {
     this.relationTypesById = relationTypesById;
     this.relationsByNodeId = relationsByNodeId;
     this.pinnedRelationsByNodeId = pinnedRelationsByNodeId;
-    this.pathData = pathData;
     this.relationToBundles = relationToBundles;
     this.correspondingObjectsForPinned = correspondingObjectsForPinned;
     this.correspondingPinnedForObjects = correspondingPinnedForObjects;
@@ -997,15 +970,6 @@ export class GraphStore {
         if (!this.pinnedRelationsByNodeId.has(relation.id)) {
           const newList = new FractionalPositionedList<GraphRelation>();
           this.pinnedRelationsByNodeId.set(relation.id, newList);
-        }
-      }
-    }
-
-    const pathData = new Map<Path, PathData>();
-    if (data.pathData) {
-      for (const [key, value] of Object.entries(data.pathData)) {
-        if (!this.pathData.has(key)) {
-          pathData.set(key, value);
         }
       }
     }

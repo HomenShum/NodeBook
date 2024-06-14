@@ -1,14 +1,16 @@
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
-import { useViewController } from "@/app/controller/useViewController";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { compare } from "fast-json-patch";
 import { $getRoot, $setSelection, EditorState, ParagraphNode } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect } from "react";
-import { GraphNode } from "../../model/GraphNode";
-import { useGraphStore } from "../../model/useGraphStore";
-import { $getChips, createParagraphMatchingGraphNode, graphNodeMatchesParagraph } from "../utils";
+
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
+import { $getChips, createParagraphMatchingGraphNode, graphNodeMatchesParagraph } from "@/app/editor/utils";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
+
 import { checkForMentionMatch } from "./MentionPlugin";
 
 function accessPropertyByPath(obj: any, path: string) {
@@ -88,7 +90,7 @@ const detectSpaceOrMentionChange = (editorState: EditorState, prevEditorState: E
 export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const { pathToParentRelations, pathToParentWithOrderedObjects, pathToNodeStr, relation } = useRelationAtPath();
   const { viewType } = useViewType();
   const root = pathToParentWithOrderedObjects[0].child;
@@ -140,10 +142,21 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
         const newNode = graphStore.createNode({ content: chips });
         graphStore.setGraphNodeAtPath([...pathToParentRelations, relation], newNode);
         graphStore.addElsewhereAfterCreate(newNode, parent, root);
-        viewController.setFocusedNode(pathToNodeStr);
+        renderController.setFocusedNode(pathToNodeStr);
       }
     },
-    [editor, graphStore, node, pathToNodeStr, pathToParentRelations, relation, viewType, parent, root, viewController],
+    [
+      editor,
+      graphStore,
+      node,
+      pathToNodeStr,
+      pathToParentRelations,
+      relation,
+      viewType,
+      parent,
+      root,
+      renderController,
+    ],
   );
 
   const setEditorToGraphNodeText = useCallback(

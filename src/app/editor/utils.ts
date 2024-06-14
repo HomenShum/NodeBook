@@ -11,9 +11,10 @@ import {
   ParagraphNode,
   TextNode,
 } from "lexical";
-import { Chip, GraphNode } from "../model/GraphNode";
-import { GraphStore } from "../model/GraphStore";
-import { $createMentionNode, $isMentionNode, MentionNode } from "../model/MentionNode";
+
+import { Chip, GraphNode } from "@/app/graph/GraphNode";
+import { GraphStore } from "@/app/graph/GraphStore";
+import { $createMentionNode, $isMentionNode, MentionNode } from "@/app/graph/MentionNode";
 
 type LexicalEditorPosition = { index: number; offset: number };
 

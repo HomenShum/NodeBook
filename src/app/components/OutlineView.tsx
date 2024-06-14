@@ -1,21 +1,25 @@
 "use client";
+import { ChevronRight, Ellipsis, HomeIcon } from "lucide-react";
+import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo } from "react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/DropdownMenu";
-import { ChevronRight, Ellipsis, HomeIcon } from "lucide-react";
-import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
-import { useCallback, useMemo } from "react";
-import { ViewType } from "../controller/ViewController";
-import { useViewController } from "../controller/useViewController";
-import { searchGraph } from "../model/search";
-import { useGraphStore } from "../model/useGraphStore";
-import { relationsPathToParentChild, relationsToURLPath, useCurView } from "../util";
-import s from "./OutlineView.module.css";
+import { searchGraph } from "@/app/graph/search";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
+import { relationsPathToParentChild, relationsToURLPath, useCurView } from "@/app/util";
+import { ViewType } from "@/app/view/ViewType";
+import { useViewStore } from "@/app/view/useViewStore";
+
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
+
+import s from "./OutlineView.module.css";
 
 // Function to truncate text if it's too long
 const truncateText = (text: string, maxLength: number) => {
@@ -26,32 +30,35 @@ const truncateText = (text: string, maxLength: number) => {
 };
 
 export const OutlineView = observer(() => {
-  const viewController = useViewController();
+  const renderController = useRenderController();
+  const viewStore = useViewStore();
   const graphStore = useGraphStore();
 
-  const relations = viewController.currentOutlineViewRoot;
+  const relations = viewStore.currentOutlineViewRoot;
   if (relations === null) {
     return <div>Root path is null</div>;
   }
 
   const path = relationsPathToParentChild(relations);
   const nodeAtPathEnd = path[path.length - 1].child;
-  const searchResult = viewController.searchQuery ? searchGraph(nodeAtPathEnd, viewController.searchQuery) : undefined;
+  const searchResult = renderController.searchQuery
+    ? searchGraph(nodeAtPathEnd, renderController.searchQuery)
+    : undefined;
 
   if (!nodeAtPathEnd) {
     return <div>Missing root node</div>;
   }
 
   const createChild = useCallback(() => {
-    viewController.createChildNode({ focusAfterCreate: true, targetView: ViewType.OUTLINE });
-  }, [viewController]);
+    renderController.createChildNode({ focusAfterCreate: true, targetView: ViewType.OUTLINE });
+  }, [renderController]);
 
   const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
   const router = useRouter();
   const curView = useCurView();
 
   // eslint-disable-next-line
-  const searchResultDate = useMemo(() => new Date(), [viewController.searchQuery]);
+  const searchResultDate = useMemo(() => new Date(), [renderController.searchQuery]);
 
   return (
     <div className={s.OutlineView}>
@@ -75,7 +82,7 @@ export const OutlineView = observer(() => {
                           `/split/outline${relationsToURLPath(
                             relations.slice(0, i + 1),
                             graphStore,
-                          )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!, graphStore)}`,
+                          )}/stream${relationsToURLPath(viewStore.currentStreamViewRoot!, graphStore)}`,
                         );
                       }
                     }}
@@ -109,7 +116,7 @@ export const OutlineView = observer(() => {
                                 `/split/outline${relationsToURLPath(
                                   relations.slice(0, index + 2),
                                   graphStore,
-                                )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!, graphStore)}`,
+                                )}/stream${relationsToURLPath(viewStore.currentStreamViewRoot!, graphStore)}`,
                               );
                             }
                           }}
@@ -134,7 +141,7 @@ export const OutlineView = observer(() => {
                         `/split/outline${relationsToURLPath(
                           relations.slice(0, i + 1),
                           graphStore,
-                        )}/stream${relationsToURLPath(viewController.currentStreamViewRoot!, graphStore)}`,
+                        )}/stream${relationsToURLPath(viewStore.currentStreamViewRoot!, graphStore)}`,
                       );
                     }
                   }}

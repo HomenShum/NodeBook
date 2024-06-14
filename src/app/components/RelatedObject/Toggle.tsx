@@ -1,7 +1,9 @@
-import { useGraphStore } from "@/app/model/useGraphStore";
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { Dispatch, SetStateAction } from "react";
+
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useViewStore } from "@/app/view/useViewStore";
 
 export default observer(
   ({
@@ -16,7 +18,8 @@ export default observer(
     pathToNodeStr: string;
   }) => {
     const graphStore = useGraphStore();
-    const isExpanded = isSearching ? searchExpansion : graphStore.isPathExpanded(pathToNodeStr);
+    const viewStore = useViewStore();
+    const isExpanded = isSearching ? searchExpansion : viewStore.isPathExpanded(pathToNodeStr);
     return (
       <button
         style={{
@@ -33,7 +36,7 @@ export default observer(
           if (isSearching) {
             setSearchExpansion(!searchExpansion);
           } else {
-            graphStore.togglePathExpanded(pathToNodeStr);
+            viewStore.togglePathExpanded(pathToNodeStr);
           }
         }}
       >

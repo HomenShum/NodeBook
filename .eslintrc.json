@@ -1,3 +1,31 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": ["next"],
+  "plugins": ["@typescript-eslint", "import"],
+  "rules": {
+    "import/order": [
+      "error",
+      {
+        "pathGroups": [
+          {
+            "pattern": "./*.css",
+            "group": "object",
+            "position": "after"
+          },
+          {
+            "pattern": "../*.css",
+            "group": "object",
+            "position": "after"
+          }
+        ],
+        "groups": ["builtin", "external", "internal", "parent", "sibling", "index", "object"],
+        "newlines-between": "always"
+      }
+    ],
+    "import/no-relative-parent-imports": [
+      "error",
+      {
+        "ignore": ["@/*"]
+      }
+    ]
+  }
 }

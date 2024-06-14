@@ -1,17 +1,19 @@
 // Hook for app-level keyboard shortcuts, NOT for keyboard shortcuts triggered within editor. Those are handled in KeyboardOverridesPlugin
 
 import { useCallback, useEffect } from "react";
-import { useCurView } from "../util";
-import { ViewType } from "./ViewController";
-import { useViewController } from "./useViewController";
+
+import { useCurView } from "@/app/util";
+import { ViewType } from "@/app/view/ViewType";
+
+import { useRenderController } from "./useRenderController";
 
 export const useKeyboardShortcuts = () => {
-  const viewController = useViewController();
   const curView = useCurView();
+  const renderController = useRenderController();
 
   const createNode = useCallback(() => {
-    viewController.createChildNode({ focusAfterCreate: true, targetView: curView });
-  }, [curView, viewController]);
+    renderController.createChildNode({ focusAfterCreate: true, targetView: curView });
+  }, [curView, renderController]);
 
   const deleteNodes = useCallback(() => {
     // TODO
@@ -37,7 +39,7 @@ export const useKeyboardShortcuts = () => {
         createNode();
       }
 
-      if (e.key === "Backspace" && viewController.selectedNodes.length > 1) {
+      if (e.key === "Backspace" && renderController.selectedNodes.length > 1) {
         // TODO: here and elsewhere, want to allow for action on a single selected node but avoid conflict with editor text inputs
         e.preventDefault();
         deleteNodes();
@@ -46,18 +48,18 @@ export const useKeyboardShortcuts = () => {
       // Outline-only shortcuts
       if (curView === ViewType.OUTLINE || curView === ViewType.SPLIT) {
         // Indent on tab
-        if (!e.shiftKey && e.key === "Tab" && viewController.selectedNodes.length > 1) {
+        if (!e.shiftKey && e.key === "Tab" && renderController.selectedNodes.length > 1) {
           e.preventDefault();
           indentNodes();
         }
         // Unindent on shift + tab
-        if (e.shiftKey && e.key === "Tab" && viewController.selectedNodes.length > 1) {
+        if (e.shiftKey && e.key === "Tab" && renderController.selectedNodes.length > 1) {
           e.preventDefault();
           unindentNodes();
         }
       }
     },
-    [viewController.selectedNodes.length, curView, createNode, deleteNodes, indentNodes, unindentNodes],
+    [renderController.selectedNodes.length, curView, createNode, deleteNodes, indentNodes, unindentNodes],
   );
 
   useEffect(() => {

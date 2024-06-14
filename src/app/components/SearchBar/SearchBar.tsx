@@ -1,13 +1,13 @@
 import { Search, X } from "lucide-react";
 import { useState } from "react";
-
-import { useViewController } from "@/app/controller/useViewController";
-
 import { observer } from "mobx-react-lite";
+
+import { useRenderController } from "@/app/render/useRenderController";
+
 import styles from "./SearchBar.module.css";
 
 export const SearchBar = observer(() => {
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const [searchFocused, setSearchFocused] = useState(false);
   return (
     <div
@@ -20,11 +20,11 @@ export const SearchBar = observer(() => {
         type="search"
         placeholder="Search..."
         className={styles.SearchContent}
-        value={viewController.searchQuery}
-        onChange={(e) => viewController.setSearchQuery(e.target.value)}
+        value={renderController.searchQuery}
+        onChange={(e) => renderController.setSearchQuery(e.target.value)}
       />
-      {viewController.searchQuery && (
-        <button onClick={() => viewController.setSearchQuery("")}>
+      {renderController.searchQuery && (
+        <button onClick={() => renderController.setSearchQuery("")}>
           <X size={18} className={styles.CancelSearch} />
         </button>
       )}

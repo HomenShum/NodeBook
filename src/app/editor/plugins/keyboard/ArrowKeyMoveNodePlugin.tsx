@@ -3,7 +3,7 @@ import { COMMAND_PRIORITY_EDITOR, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useGraphStore } from "@/app/model/useGraphStore";
+import { useGraphStore } from "@/app/graph/useGraphStore";
 /**
  * Plugin to move current node using Cmd + Shift + ArrowUp/ArrowDown.
  */

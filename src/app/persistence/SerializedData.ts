@@ -1,7 +1,6 @@
-import { Position } from "../util";
-import { Chip } from "./GraphNode";
-import { GraphRelationType } from "./GraphRelation";
-import { PathData } from "./GraphStore";
+import { Chip } from "@/app/graph/GraphNode";
+import { GraphRelationType } from "@/app/graph/GraphRelation";
+import { Position } from "@/app/util";
 
 export type SerializedGraphNode = {
   id: string;
@@ -35,8 +34,13 @@ export type SerializedGraphStore = {
   relationsById: Record<string, SerializedRelation>;
   relationsByNodeId: SerializedRelationsByNodeId;
   pinnedRelationsByNodeId: SerializedRelationsByNodeId;
-  pathData?: Record<string, PathData>;
   relationToBundles?: Record<string, SerializedBundle[]>;
   correspondingObjectsForPinned?: Record<string, SerializedRelation>;
   correspondingPinnedForObjects?: Record<string, SerializedRelation>;
+};
+
+type SerializedPathData = { isExpanded: boolean };
+
+export type SerializedViewStore = {
+  pathData?: Record<string, SerializedPathData>;
 };

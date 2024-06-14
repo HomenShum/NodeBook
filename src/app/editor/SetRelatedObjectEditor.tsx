@@ -1,9 +1,3 @@
-import { useViewController } from "@/app/controller/useViewController";
-import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
-import { Chip } from "@/app/model/GraphNode";
-import { $createMentionNode } from "@/app/model/MentionNode";
-import { relationsToPathStr } from "@/app/util";
-import { cn } from "@/lib/utils";
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { InitialConfigType, LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
@@ -26,8 +20,16 @@ import {
 } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import { useRelationAtPath } from "../components/RelatedObject/RelatedObjectContext";
-import { useGraphStore } from "../model/useGraphStore";
+
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
+import { Chip } from "@/app/graph/GraphNode";
+import { $createMentionNode } from "@/app/graph/MentionNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
+import { relationsToPathStr } from "@/app/util";
+import { cn } from "@/lib/utils";
+
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
 import { ReplaceObjectPlugin } from "./plugins/ReplaceObjectPlugin";
 import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
@@ -121,7 +123,7 @@ export const SetRelatedObjectEditor = observer(() => {
 
 const SetRelationTypeOnColonPlugin = () => {
   const graph = useGraphStore();
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const { object, relation, pathToNodeStr } = useRelationAtPath();
   const [editor] = useLexicalComposerContext();
 
@@ -170,7 +172,7 @@ const SetRelationTypeOnColonPlugin = () => {
           setEditorToContent(editor, editorText.slice(end));
           // TODO somehow get rid of need for this
           // setDropdownOpen(false);
-          viewController.setFocusedNode(pathToNodeStr);
+          renderController.setFocusedNode(pathToNodeStr);
 
           return true;
         }
@@ -178,7 +180,7 @@ const SetRelationTypeOnColonPlugin = () => {
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, graph, object, relation, viewController, pathToNodeStr]);
+  }, [editor, graph, object, relation, renderController, pathToNodeStr]);
 
   return null;
 };
@@ -189,7 +191,7 @@ const SetRelationTypeOnColonPlugin = () => {
  */
 const SplitOnEnterPlugin = () => {
   const graph = useGraphStore();
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const { parent, object, relation, pathToParentRelations, pathToParentWithOrderedObjects } = useRelationAtPath();
   useEffect(() => {
@@ -209,12 +211,21 @@ const SplitOnEnterPlugin = () => {
         const relationList = graph.getRelationList(parent);
         relationList.move([child.relation], relation);
         // set focused node to new node
-        viewController.setFocusedNode(relationsToPathStr([...pathToParentRelations, child.relation]));
+        renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations, child.relation]));
         return true;
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, graph, parent, object, relation, pathToParentRelations, pathToParentWithOrderedObjects, viewController]);
+  }, [
+    editor,
+    graph,
+    parent,
+    object,
+    relation,
+    pathToParentRelations,
+    pathToParentWithOrderedObjects,
+    renderController,
+  ]);
   return null;
 };
 

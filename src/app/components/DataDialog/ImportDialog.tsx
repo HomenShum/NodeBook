@@ -2,9 +2,10 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { useCallback, useRef, useState } from "react";
 
 import { Button } from "@/app/components/ui/Button";
+import { useGraphStore } from "@/app/graph/useGraphStore";
 
-import { useGraphStore } from "@/app/model/useGraphStore";
 import { ConfirmReplace } from "./ConfirmReplace";
+
 import styles from "./DataDialog.module.css";
 
 export const ImportDialog = () => {
@@ -59,12 +60,12 @@ export const ImportDialog = () => {
             <Button
               size={"sm"}
               style={{ maxWidth: "fit-content" }}
-              variant={!!file ? "outline" : "default"}
+              variant={file ? "outline" : "default"}
               onClick={() => {
                 (fileInputRef.current! as HTMLInputElement).click();
               }}
             >
-              {!!file ? "Change file" : "Select file"}
+              {file ? "Change file" : "Select file"}
             </Button>
             <input
               type="file"

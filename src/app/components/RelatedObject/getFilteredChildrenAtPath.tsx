@@ -1,9 +1,9 @@
-import { GraphNode } from "@/app/model/GraphNode";
-import { GraphObject } from "@/app/model/GraphObject";
-import { GraphRelation } from "@/app/model/GraphRelation";
-import { defaultRelationTypes } from "@/app/model/GraphStore";
-import { SettingsStore } from "@/app/model/SettingsStore";
-import { SearchResult } from "@/app/model/search";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation } from "@/app/graph/GraphRelation";
+import { defaultRelationTypes } from "@/app/graph/GraphStore";
+import { SettingsStore } from "@/app/graph/SettingsStore";
+import { SearchResult } from "@/app/graph/search";
 import { PathLink, comparePositions } from "@/app/util";
 
 export const getFilteredChildrenAtPath = (

@@ -1,11 +1,12 @@
-import { cn } from "@/lib/utils";
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
-import { ViewType } from "../controller/ViewController";
-import { GraphObject } from "../model/GraphObject";
-import { useGraphStore } from "../model/useGraphStore";
-import { useCurView } from "../util";
+
+import { GraphObject } from "@/app/graph/GraphObject";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useCurView } from "@/app/util";
+import { ViewType } from "@/app/view/ViewType";
+import { cn } from "@/lib/utils";
 
 const TreeElement = observer(({ object }: { object: GraphObject }) => {
   const [isExpanded, setIsExpanded] = useState(false);

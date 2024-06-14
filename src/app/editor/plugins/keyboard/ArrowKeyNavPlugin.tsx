@@ -13,14 +13,14 @@ import {
 import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewController } from "@/app/controller/useViewController";
 import { $getText, getSelectionPositions } from "@/app/editor/utils";
+import { useRenderController } from "@/app/render/useRenderController";
 
 /**
  * Plugin to jump focus to other editors using arrow keys.
  */
 export const ArrowKeyNavPlugin = () => {
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const { object, pathToParentRelations, siblingAbove, siblingBelow } = useRelationAtPath();
 
@@ -33,7 +33,7 @@ export const ArrowKeyNavPlugin = () => {
           const textAfter = $getText({ from: selectionLeft });
           if (textAfter.includes("\n")) return false;
 
-          const focusedMoved = viewController.focusNextEditor({ focusAt: "start" });
+          const focusedMoved = renderController.focusNextEditor({ focusAt: "start" });
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -47,7 +47,7 @@ export const ArrowKeyNavPlugin = () => {
           const textBefore = $getText({ to: selectionLeft });
           if (textBefore.includes("\n")) return false;
 
-          const focusedMoved = viewController.focusPrevEditor({ focusAt: "end" });
+          const focusedMoved = renderController.focusPrevEditor({ focusAt: "end" });
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -61,7 +61,7 @@ export const ArrowKeyNavPlugin = () => {
           // Offset is 0 when at start of text
           if (!selectionStart || selectionStart.offset !== 0) return false;
 
-          const focusedMoved = viewController.focusPrevEditor({ focusAt: "end" });
+          const focusedMoved = renderController.focusPrevEditor({ focusAt: "end" });
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -82,7 +82,7 @@ export const ArrowKeyNavPlugin = () => {
             return false;
           }
 
-          const focusedMoved = viewController.focusNextEditor({ focusAt: "start" });
+          const focusedMoved = renderController.focusNextEditor({ focusAt: "start" });
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -90,7 +90,7 @@ export const ArrowKeyNavPlugin = () => {
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, pathToParentRelations, siblingAbove, siblingBelow, viewController]);
+  }, [editor, pathToParentRelations, siblingAbove, siblingBelow, renderController]);
 
   return null;
 };

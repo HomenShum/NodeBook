@@ -1,8 +1,10 @@
-import { GraphObject } from "@/app/model/GraphObject";
-import { GraphRelation } from "@/app/model/GraphRelation";
-import { useGraphStore } from "@/app/model/useGraphStore";
-import { sortByPrefixMatch } from "@/app/util";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation } from "@/app/graph/GraphRelation";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { sortByPrefixMatch } from "@/app/util";
+
 import { useViewType } from "./ViewTypeContext";
 
 export const ReplaceRelatedNodeView = ({

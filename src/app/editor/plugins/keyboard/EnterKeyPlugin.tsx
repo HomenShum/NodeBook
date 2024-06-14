@@ -5,17 +5,19 @@ import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
-import { useViewController } from "@/app/controller/useViewController";
-import { GraphNode } from "@/app/model/GraphNode";
-import { useGraphStore } from "@/app/model/useGraphStore";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
 
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.
  */
 export const EnterKeyPlugin = () => {
   const graphStore = useGraphStore();
-  const viewController = useViewController();
+  const viewStore = useViewStore();
+  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const {
     object,
@@ -43,10 +45,11 @@ export const EnterKeyPlugin = () => {
         if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
 
         if (object instanceof GraphNode) {
+          const shouldCreateChild = viewStore.isPathExpanded(pathToNodeStr);
           let {
             child: { node: newNode, relation: newRelation },
             nested,
-          } = graphStore.splitRelatedNode(relation, object, selection, pathToNodeStr, {
+          } = graphStore.splitRelatedNode(relation, object, selection, shouldCreateChild, {
             splitToNewBundle,
           });
           if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
@@ -61,7 +64,7 @@ export const EnterKeyPlugin = () => {
           } else {
             newPath = [...pathToParentRelations, newRelation];
           }
-          viewController.setFocusedNode(relationsToPathStr(newPath));
+          renderController.setFocusedNode(relationsToPathStr(newPath));
           return true;
         } else {
           // TODO handle related relations
@@ -73,6 +76,7 @@ export const EnterKeyPlugin = () => {
   }, [
     editor,
     graphStore,
+    viewStore,
     object,
     parent,
     pathToNodeStr,
@@ -80,7 +84,7 @@ export const EnterKeyPlugin = () => {
     pathToParentRelations,
     relation,
     setViewType,
-    viewController,
+    renderController,
     viewType,
   ]);
 

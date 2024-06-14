@@ -1,7 +1,8 @@
 import { generateNKeysBetween } from "fractional-indexing";
 import { action, computed, makeObservable, observable } from "mobx";
-import { Position, comparePositions, generateDefaultPosition } from "../util";
-import { Serializable } from "./serialization";
+
+import { Serializable } from "@/app/persistence/serialization";
+import { Position, comparePositions, generateDefaultPosition } from "@/app/util";
 
 type ItemWithPosition<T> = {
   item: T;

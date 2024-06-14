@@ -1,20 +1,24 @@
+import { ChevronRight, Ellipsis } from "lucide-react";
+import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/DropdownMenu";
-import { ChevronRight, Ellipsis } from "lucide-react";
-import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
-import { ViewType } from "../controller/ViewController";
-import { useViewController } from "../controller/useViewController";
-import { searchGraph } from "../model/search";
-import { useGraphStore } from "../model/useGraphStore";
-import { relationsPathToParentChild, relationsToURLPath, useCurView } from "../util";
-import stylesList from "./OutlineView.module.css";
+import { searchGraph } from "@/app/graph/search";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
+import { relationsPathToParentChild, relationsToURLPath, useCurView } from "@/app/util";
+import { ViewType } from "@/app/view/ViewType";
+import { useViewStore } from "@/app/view/useViewStore";
+
 import RelatedObjectChildren from "./RelatedObject/RelatedObjectChildren";
+
+import stylesList from "./OutlineView.module.css";
 import stylesStream from "./ThoughtstreamView.module.css";
 
 const truncateText = (text: string, maxLength: number) => {
@@ -25,10 +29,11 @@ const truncateText = (text: string, maxLength: number) => {
 };
 
 export const ThoughtstreamView = observer(() => {
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const graphStore = useGraphStore();
+  const viewStore = useViewStore();
 
-  const relations = viewController.currentStreamViewRoot;
+  const relations = viewStore.currentStreamViewRoot;
   if (relations === null) {
     return <div>Stream path is null</div>;
   }
@@ -37,16 +42,16 @@ export const ThoughtstreamView = observer(() => {
 
   const thoughstreamNode = graphStore.thoughtstreamRoot;
   const searchResult = useMemo(
-    () => (viewController.searchQuery ? searchGraph(thoughstreamNode, viewController.searchQuery) : undefined),
-    [thoughstreamNode, viewController.searchQuery],
+    () => (renderController.searchQuery ? searchGraph(thoughstreamNode, renderController.searchQuery) : undefined),
+    [thoughstreamNode, renderController.searchQuery],
   );
 
   // eslint-disable-next-line
-  const searchResultDate = useMemo(() => new Date(), [viewController.searchQuery]);
+  const searchResultDate = useMemo(() => new Date(), [renderController.searchQuery]);
 
   const createChild = useCallback(() => {
-    viewController.createChildNode({ focusAfterCreate: true, targetView: ViewType.THOUGHTSTREAM });
-  }, [viewController]);
+    renderController.createChildNode({ focusAfterCreate: true, targetView: ViewType.THOUGHTSTREAM });
+  }, [renderController]);
 
   const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
   const curView = useCurView();
@@ -72,7 +77,7 @@ export const ThoughtstreamView = observer(() => {
                       } else {
                         router.push(
                           `/split/outline${relationsToURLPath(
-                            viewController.currentOutlineViewRoot!,
+                            viewStore.currentOutlineViewRoot!,
                             graphStore,
                           )}/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`,
                         );
@@ -105,7 +110,7 @@ export const ThoughtstreamView = observer(() => {
                             } else {
                               router.push(
                                 `/split/outline${relationsToURLPath(
-                                  viewController.currentOutlineViewRoot!,
+                                  viewStore.currentOutlineViewRoot!,
                                   graphStore,
                                 )}/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`,
                               );
@@ -130,7 +135,7 @@ export const ThoughtstreamView = observer(() => {
                     } else {
                       router.push(
                         `/split/outline${relationsToURLPath(
-                          viewController.currentOutlineViewRoot!,
+                          viewStore.currentOutlineViewRoot!,
                           graphStore,
                         )}/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`,
                       );

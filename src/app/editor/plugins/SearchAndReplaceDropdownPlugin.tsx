@@ -1,8 +1,3 @@
-import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
-import { useViewController } from "@/app/controller/useViewController";
-import { GraphNode } from "@/app/model/GraphNode";
-import { GraphRelation, GraphRelationType } from "@/app/model/GraphRelation";
-import { cn } from "@/lib/utils";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
@@ -18,8 +13,14 @@ import {
 } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRelationAtPath } from "../../components/RelatedObject/RelatedObjectContext";
-import { useGraphStore } from "../../model/useGraphStore";
+
+import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
+import { useRenderController } from "@/app/render/useRenderController";
+import { cn } from "@/lib/utils";
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useGraphStore } from "@/app/graph/useGraphStore";
 
 /**
  * Dropdown options:
@@ -31,7 +32,7 @@ import { useGraphStore } from "../../model/useGraphStore";
  */
 export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) => {
   const graph = useGraphStore();
-  const viewController = useViewController();
+  const renderController = useRenderController();
   const { object, relation, pathToParentRelations, pathToNodeStr, isChild } = useRelationAtPath();
   const { viewType } = useViewType();
   const [editor] = useLexicalComposerContext();
@@ -156,7 +157,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
         }
         if (object instanceof GraphNode) {
           object.setContent("");
-          viewController.setFocusedNode(pathToNodeStr);
+          renderController.setFocusedNode(pathToNodeStr);
         }
       } else {
         // replace the current object with the selected object
@@ -166,14 +167,14 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
             : option.object;
 
         graph.setGraphNodeAtPath([...pathToParentRelations, relation], newObject);
-        viewController.setFocusedNode(pathToNodeStr);
+        renderController.setFocusedNode(pathToNodeStr);
         if (object.relations.every((r) => r.from.id === graph.thoughtstreamRoot.id)) {
           graph.deleteNode(object.id);
         }
       }
       closeDropdown();
     },
-    [graph, pathToParentRelations, relation, viewController, pathToNodeStr, closeDropdown, object],
+    [graph, pathToParentRelations, relation, renderController, pathToNodeStr, closeDropdown, object],
   );
 
   // Register keyboard commands for the dropdown
