@@ -87,7 +87,6 @@ export const RelatedObjectView = observer(
     const { parent, child: object } = pathObjects[pathObjects.length - 1];
     const viewRoot = pathObjects[0].child;
 
-    // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [viewType, setViewType] = useState<RelatedObjectViewType>("edit");
