@@ -2,18 +2,10 @@ import { LexicalEditor } from "lexical";
 import { makeAutoObservable } from "mobx";
 
 import { JUMP_TO_END, JUMP_TO_START } from "@/app/editor/plugins/JumpSelectionPluigin";
-import { GraphStore, Path } from "@/app/graph/GraphStore";
-import { SettingsStore } from "@/app/graph/SettingsStore";
+import { Path } from "@/app/graph/GraphStore";
 import { makeAutoSaving } from "@/app/util";
-import { ViewStore } from "@/app/view/ViewStore";
 
 export class RenderController {
-  private settingsStore: SettingsStore;
-  private viewStore: ViewStore;
-
-  // TODO: Remove tie-in to underlying GraphStore, as Render layer should only ever talk to View layer
-  private graphStore: GraphStore;
-
   public focusedNode: Path | null = null;
   public hoveredNode: Path | null = null;
 
@@ -26,13 +18,7 @@ export class RenderController {
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
 
-  // TODO do we need this right now?
-  public relatedNodesViewType: "all" | "pinned" = "all";
-
-  constructor(settingsStore: SettingsStore, viewStore: ViewStore, graphStore: GraphStore) {
-    this.settingsStore = settingsStore;
-    this.viewStore = viewStore;
-    this.graphStore = graphStore;
+  constructor() {
     makeAutoObservable(this);
     makeAutoSaving(this, {
       leftSidebarOpen: true,
