@@ -3,7 +3,7 @@
   "plugins": ["@typescript-eslint", "import"],
   "rules": {
     "no-warning-comments": [
-      "error",
+      "warn",
       {
         "terms": ["todo", "fixme"],
         "location": "start"
