@@ -298,12 +298,7 @@ export const RelatedObjectView = observer(
                             pathToParentRelations={pathToParentRelations}
                           />
                         ) : (
-                          <RelatedObjectEditor
-                            isHovered={isHovered}
-                            indentationWidth={relationTypeTextWidth}
-                            object={object}
-                            pathToNodeStr={pathToNodeStr}
-                          />
+                          <RelatedObjectEditor indentationWidth={relationTypeTextWidth} object={object} />
                         )}
                       </HoverCard.Trigger>
                       {object instanceof GraphRelation && (

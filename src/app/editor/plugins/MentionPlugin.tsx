@@ -9,13 +9,13 @@ import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
-import { sortByPrefixMatch, useCurView } from "@/app/util";
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
+import { sortByPrefixMatch, useCurView } from "@/app/util";
 
 import styles from "./MentionPlugin.module.css";
 
@@ -114,7 +114,7 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
   );
 }
 
-export function checkForMentionMatch(text: string): MenuTextMatch | null {
+function checkForMentionMatch(text: string): MenuTextMatch | null {
   const PUNC = "\\.,\\+\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
   const TRIGGERS = "@";
 

@@ -710,41 +710,6 @@ export class GraphStore {
     list?.move([relation], sibling);
   }
 
-  /**
-   * By default, object renderings are treated as the object themselves, and
-   * edits change the object's content. But in some cases, we want to treat them
-   * more like a link to the object. This method determines if an object should
-   * be treated as a link.
-   *
-   * Roughly speaking, if an object appears in multiple places, we treat it as a
-   * link.
-   *
-   * More specifically, we treat an object as a link if it is involved in
-   * multiple relations, excluding it's children. There's also a special case
-   * where if there are exactly two relations to the object, and one of them is
-   * from the thoughtstream, then we return false. If we don't do this, then
-   * every node created gets treated as a link (since all nodes are added to the
-   * thoughtstream) which is not what we want.
-   *
-   * @see
-   * https://linear.app/ideaflow/issue/ENT-3404/update-to-blue-underline-logic
-   *
-   * TODO: This whole thing is conceptually messy and should be rethought.
-   */
-  shouldTreatObjectAsLink(obj: GraphObject): boolean {
-    const relationsExceptChildren = obj.relations.filter(
-      (r) => !(r.relationType.id === defaultRelationTypes.child.id && r.from.id === obj.id),
-    );
-    const fromStream = relationsExceptChildren.filter((r) => r.from.id === this.thoughtstreamRoot.id);
-    if (relationsExceptChildren.length <= 1) {
-      return false;
-    } else if (relationsExceptChildren.length === 2 && fromStream.length === 1) {
-      return false;
-    } else {
-      return true;
-    }
-  }
-
   serialize(): SerializedGraphStore {
     const nodesById = serializeMap(this.nodesById);
     const relationsById = serializeMap(this.relationsById);
