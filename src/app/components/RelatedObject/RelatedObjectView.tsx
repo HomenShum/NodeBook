@@ -85,7 +85,6 @@ export const RelatedObjectView = observer(
     const pathToNodeStr = relationsToPathStr(path);
     const pathObjects = relationsPathToParentChild(path);
     const { parent, child: object } = pathObjects[pathObjects.length - 1];
-    const viewRoot = pathObjects[0].child;
 
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
