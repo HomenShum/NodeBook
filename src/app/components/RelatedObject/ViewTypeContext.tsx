@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 
 import { RelatedObjectViewType } from "./RelatedObjectView";
 
-export type ViewTypeContextType = {
+type ViewTypeContextType = {
   viewType: RelatedObjectViewType;
   setViewType: (v: RelatedObjectViewType) => void;
 };

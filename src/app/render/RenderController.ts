@@ -2,7 +2,6 @@ import { LexicalEditor } from "lexical";
 import { makeAutoObservable } from "mobx";
 
 import { JUMP_TO_END, JUMP_TO_START } from "@/app/editor/plugins/JumpSelectionPluigin";
-import { Box } from "@/app/editor/selection/utils";
 import { GraphStore, Path } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { makeAutoSaving } from "@/app/util";
@@ -161,15 +160,5 @@ export class RenderController {
 
   removeEditor(pathStr: Path) {
     this.editorsByPath.delete(pathStr);
-  }
-
-  private selectionBoxToEvaluate: Box | null = null;
-
-  maybeSelectNodes(selectionBox: Box) {
-    this.selectionBoxToEvaluate = selectionBox;
-    // Use setTimeout to effectively throttle the selection box evaluation to no more than once every 100ms
-    setTimeout(() => {
-      // this.evaluateSelectionBox();
-    }, 100);
   }
 }

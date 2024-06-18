@@ -16,7 +16,7 @@ import { relationsPathToParentChild, relationsToPathStr, relationsToURLPath, use
 import { Tree, TreeContext } from "@/app/view/Outline";
 import { ViewType } from "@/app/view/ViewType";
 
-import RelatedObjectChildren from "./RelatedObject/RelatedObjectChildren";
+import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
 import stylesList from "./OutlineView.module.css";
 import stylesStream from "./ThoughtstreamView.module.css";

@@ -4,7 +4,7 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { PathLink } from "@/app/util";
 
-export type RelationPathAndSiblings = {
+type RelationPathAndSiblings = {
   /** Ordered list of relations from the root to this relation's parent */
   pathToParentRelations: GraphRelation[];
   /** Ordered list of nodes from the root to this relation's parent */

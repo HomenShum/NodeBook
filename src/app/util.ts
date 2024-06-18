@@ -11,18 +11,6 @@ import { ViewType } from "@/app/view/ViewType";
 
 export const uuid = () => uuidv4().slice(0, 8);
 
-/**
- * Sorter for fractional indexes.
- * See https://www.npmjs.com/package/fractional-indexing
- *
- * TODO: the need for null handling feels wrong. leaving for now
- */
-export function compareFractionIndices(a: string | null, b: string | null) {
-  if (a === null) return -1;
-  if (b === null) return 1;
-  return a < b ? -1 : 1;
-}
-
 export function comparePositions(a: Position | null, b: Position | null) {
   if (a === null) return -1;
   if (b === null) return 1;
@@ -31,10 +19,6 @@ export function comparePositions(a: Position | null, b: Position | null) {
   } else {
     return a.int > b.int ? -1 : 1;
   }
-}
-
-export function generatePositionBetween(a: Position, b: Position | null) {
-  return { int: a.int, frac: generateKeyBetween(a.frac, a.int === b?.int ? b.frac : null) };
 }
 
 export function generateDefaultPosition(createdAt: Date) {

@@ -133,5 +133,3 @@ export const RelatedObjectChildren = observer(
     );
   },
 );
-
-export default RelatedObjectChildren;

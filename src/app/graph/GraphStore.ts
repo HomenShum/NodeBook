@@ -19,9 +19,9 @@ export const defaultRelationTypes = {
   empty: { id: "empty", label: "", reverseLabel: "" },
 };
 
-export const USER_ROOT_ID = "user-root-id";
-export const OUTLINE_ROOT_ID = "outline-root-id";
-export const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
+const USER_ROOT_ID = "user-root-id";
+const OUTLINE_ROOT_ID = "outline-root-id";
+const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
 
 /**
  * Forward slash delimited relation ids.

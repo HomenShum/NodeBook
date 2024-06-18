@@ -22,11 +22,6 @@ export type GraphNodeProps = {
   isPrivate?: boolean;
 };
 
-export type RelativePositionProps = {
-  target?: GraphRelation;
-  side?: "above" | "below";
-};
-
 export type PositionedRelation = {
   position: Position;
   relation: GraphRelation;

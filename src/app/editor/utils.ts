@@ -195,16 +195,6 @@ export const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: Gr
   return paragraph;
 };
 
-export const createContentMatchingParagraph = (paragraph: ParagraphNode): Chip[] => {
-  return paragraph
-    .getChildren()
-    .map((child) =>
-      $isMentionNode(child)
-        ? { type: "mention", value: child.mentionedGraphNodeId }
-        : { type: "text", value: child.getTextContent() },
-    );
-};
-
 export function nodeToChip(node: LexicalNode): Chip {
   if (node instanceof MentionNode) {
     return { type: "mention", value: node.mentionedGraphNodeId };

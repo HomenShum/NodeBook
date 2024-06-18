@@ -2,7 +2,7 @@ import { loadEnvConfig } from "@next/env";
 import { z } from "zod";
 loadEnvConfig(process.cwd());
 
-export const processEnvSchema = z
+const processEnvSchema = z
   .object({
     NODE_ENV: z.string().default("development"),
     POSTGRES_URL: z.string().optional(),
@@ -21,5 +21,3 @@ export const env = Object.freeze({
   POSTGRES_CONNECTION_STRING:
     process.env.POSTGRES_CONNECTION_STRING || process.env.POSTGRES_CUSTOM_URL || process.env.POSTGRES_URL || "",
 });
-
-console.log("Backend env variables:", env);
