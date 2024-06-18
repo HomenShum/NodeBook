@@ -1,7 +1,7 @@
 import { ChevronRight, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import {
   DropdownMenu,
@@ -12,9 +12,9 @@ import {
 import { searchGraph } from "@/app/graph/search";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { relationsPathToParentChild, relationsToURLPath, useCurView } from "@/app/util";
+import { relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
+import { Tree, TreeContext } from "@/app/view/Outline";
 import { ViewType } from "@/app/view/ViewType";
-import { useViewStore } from "@/app/view/useViewStore";
 
 import RelatedObjectChildren from "./RelatedObject/RelatedObjectChildren";
 
@@ -28,12 +28,11 @@ const truncateText = (text: string, maxLength: number) => {
   return text;
 };
 
-export const ThoughtstreamView = observer(() => {
+export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
   const renderController = useRenderController();
   const graphStore = useGraphStore();
-  const viewStore = useViewStore();
 
-  const relations = viewStore.currentStreamViewRoot;
+  const relations = outline.root;
   if (relations === null) {
     return <div>Stream path is null</div>;
   }
@@ -49,25 +48,80 @@ export const ThoughtstreamView = observer(() => {
   // eslint-disable-next-line
   const searchResultDate = useMemo(() => new Date(), [renderController.searchQuery]);
 
-  const createChild = useCallback(() => {
-    renderController.createChildNode({ focusAfterCreate: true, targetView: ViewType.THOUGHTSTREAM });
-  }, [renderController]);
-
   const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
   const curView = useCurView();
   const router = useRouter();
   const [showAll, setShowAll] = useState(false);
 
   return (
-    <div tabIndex={0} className={stylesStream.StreamContainer}>
-      <div className={stylesStream.ContentSection}>
-        {path.length > 1 && (
-          <div className={stylesList.BreadcrumbContainer}>
-            {path.slice(0, -1).map(({ relation, child }, i) => {
-              const isFirst = i === 0;
-              const isSecondLast = i === path.length - 2;
-              if (isFirst || isSecondLast) {
-                return (
+    <TreeContext.Provider value={outline}>
+      <div tabIndex={0} className={stylesStream.StreamContainer}>
+        <div className={stylesStream.ContentSection}>
+          {path.length > 1 && (
+            <div className={stylesList.BreadcrumbContainer}>
+              {path.slice(0, -1).map(({ relation, child }, i) => {
+                const isFirst = i === 0;
+                const isSecondLast = i === path.length - 2;
+                if (isFirst || isSecondLast) {
+                  return (
+                    <span
+                      className={stylesList.Breadcrumb}
+                      key={relation.id}
+                      onClick={() => {
+                        if (curView !== ViewType.SPLIT) {
+                          router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
+                        } else {
+                          router.push(
+                            `/split/outline${relationsToURLPath(outline.root, graphStore)}/stream${relationsToURLPath(
+                              relations.slice(0, i + 1),
+                              graphStore,
+                            )}`,
+                          );
+                        }
+                      }}
+                    >
+                      {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
+                      <span>{truncateText(child.text, 20)}</span>
+                    </span>
+                  );
+                }
+
+                if (isLong && i === 1) {
+                  return (
+                    <DropdownMenu key="ellipsis">
+                      <DropdownMenuTrigger asChild>
+                        <span className={stylesList.Breadcrumb}>
+                          <ChevronRight size={14} />
+                          <Ellipsis size={14} />
+                        </span>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className={stylesList.BreadcrumbDropdownMenu} align="start" sideOffset={5}>
+                        {path.slice(1, -1).map(({ relation, child }, index) => (
+                          <DropdownMenuItem
+                            key={relation.id}
+                            className={stylesList.BreadcrumbMenuItem}
+                            onSelect={() => {
+                              if (curView !== ViewType.SPLIT) {
+                                router.push(`/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`);
+                              } else {
+                                router.push(
+                                  `/split/outline${relationsToURLPath(
+                                    outline.root,
+                                    graphStore,
+                                  )}/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`,
+                                );
+                              }
+                            }}
+                          >
+                            {truncateText(child.text, 20)}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                }
+
+                return !isLong ? (
                   <span
                     className={stylesList.Breadcrumb}
                     key={relation.id}
@@ -76,100 +130,49 @@ export const ThoughtstreamView = observer(() => {
                         router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
                       } else {
                         router.push(
-                          `/split/outline${relationsToURLPath(
-                            viewStore.currentOutlineViewRoot!,
+                          `/split/outline${relationsToURLPath(outline.root, graphStore)}/stream${relationsToURLPath(
+                            relations.slice(0, i + 1),
                             graphStore,
-                          )}/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`,
+                          )}`,
                         );
                       }
                     }}
                   >
-                    {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
+                    <ChevronRight size={14} strokeWidth={2} />
                     <span>{truncateText(child.text, 20)}</span>
                   </span>
-                );
-              }
-
-              if (isLong && i === 1) {
-                return (
-                  <DropdownMenu key="ellipsis">
-                    <DropdownMenuTrigger asChild>
-                      <span className={stylesList.Breadcrumb}>
-                        <ChevronRight size={14} />
-                        <Ellipsis size={14} />
-                      </span>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className={stylesList.BreadcrumbDropdownMenu} align="start" sideOffset={5}>
-                      {path.slice(1, -1).map(({ relation, child }, index) => (
-                        <DropdownMenuItem
-                          key={relation.id}
-                          className={stylesList.BreadcrumbMenuItem}
-                          onSelect={() => {
-                            if (curView !== ViewType.SPLIT) {
-                              router.push(`/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`);
-                            } else {
-                              router.push(
-                                `/split/outline${relationsToURLPath(
-                                  viewStore.currentOutlineViewRoot!,
-                                  graphStore,
-                                )}/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`,
-                              );
-                            }
-                          }}
-                        >
-                          {truncateText(child.text, 20)}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                );
-              }
-
-              return !isLong ? (
-                <span
-                  className={stylesList.Breadcrumb}
-                  key={relation.id}
-                  onClick={() => {
-                    if (curView !== ViewType.SPLIT) {
-                      router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
-                    } else {
-                      router.push(
-                        `/split/outline${relationsToURLPath(
-                          viewStore.currentOutlineViewRoot!,
-                          graphStore,
-                        )}/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`,
-                      );
-                    }
-                  }}
-                >
-                  <ChevronRight size={14} strokeWidth={2} />
-                  <span>{truncateText(child.text, 20)}</span>
-                </span>
-              ) : null;
-            })}
-            <span className={stylesList.Chevron}>
-              <ChevronRight size={14} strokeWidth={2} />
-            </span>
-          </div>
-        )}
-        <div className={stylesList.TitleContainer}>
-          {(curView === ViewType.SPLIT || path.length > 1) && (
-            <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 40)}</h1>
+                ) : null;
+              })}
+              <span className={stylesList.Chevron}>
+                <ChevronRight size={14} strokeWidth={2} />
+              </span>
+            </div>
           )}
-          <button className={stylesList.AddButton} onClick={createChild}>
-            <span className={stylesList.AddButtonIcon}>+</span>
-          </button>
+          <div className={stylesList.TitleContainer}>
+            {(curView === ViewType.SPLIT || path.length > 1) && (
+              <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 40)}</h1>
+            )}
+            <button
+              className={stylesList.AddButton}
+              onClick={() => {
+                const { path } = outline.createChildNode();
+                renderController.setFocusedNode(relationsToPathStr(path));
+              }}
+            >
+              <span className={stylesList.AddButtonIcon}>+</span>
+            </button>
+          </div>
+        </div>
+        <div className={stylesList.relatedObjectsContainer}>
+          <RelatedObjectChildren
+            showAll={showAll}
+            setShowAll={setShowAll}
+            pathToParentRelations={relations}
+            searchResult={searchResult}
+            searchResultDate={searchResultDate}
+          />
         </div>
       </div>
-      <div className={stylesList.relatedObjectsContainer}>
-        <RelatedObjectChildren
-          showAll={showAll}
-          setShowAll={setShowAll}
-          pathToParentRelations={relations}
-          searchResult={searchResult}
-          searchResultDate={searchResultDate}
-        />
-      </div>
-    </div>
+    </TreeContext.Provider>
   );
 });

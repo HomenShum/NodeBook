@@ -12,7 +12,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
-import { useViewStore } from "@/app/view/useViewStore";
+import { useTree } from "@/app/view/Outline";
 import { cn } from "@/lib/utils";
 
 import { useRelationAtPath } from "./RelatedObjectContext";
@@ -22,7 +22,7 @@ export const RelatedObjectMenu = observer(
   ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {
     const renderController = useRenderController();
     const graphStore = useGraphStore();
-    const viewStore = useViewStore();
+    const tree = useTree();
     const { object, parent, relation, pathToParentRelations, siblingAbove } = useRelationAtPath();
     const { viewType, setViewType } = useViewType();
 
@@ -70,7 +70,7 @@ export const RelatedObjectMenu = observer(
             onSelect={action(() => {
               graphStore.createChildNode(object);
               const pathStr = relationsToPathStr([...pathToParentRelations, relation]);
-              viewStore.setPathExpanded(pathStr, true);
+              tree.setPathExpanded(pathStr, true);
             })}
           >
             Add child

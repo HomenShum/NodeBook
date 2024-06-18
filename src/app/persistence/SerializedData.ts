@@ -41,6 +41,18 @@ export type SerializedGraphStore = {
 
 type SerializedPathData = { isExpanded: boolean };
 
-export type SerializedViewStore = {
+export type SerializedTree = {
+  root: string;
   pathData?: Record<string, SerializedPathData>;
+};
+
+export type SerializedViewStore = {
+  mainStreamView: SerializedTree;
+  mainOutlineView: SerializedTree;
+  sidebarOutlineViews: SerializedTree[];
+};
+
+export type SerializedStores = {
+  graphStore: SerializedGraphStore;
+  viewStore: SerializedViewStore;
 };

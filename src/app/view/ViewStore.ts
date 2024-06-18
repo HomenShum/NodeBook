@@ -1,73 +1,56 @@
 import { makeAutoObservable } from "mobx";
 
 import { GraphRelation } from "@/app/graph/GraphRelation";
-import { GraphStore, Path } from "@/app/graph/GraphStore";
+import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
+import { Tree } from "@/app/view/Outline";
 
-type PathData = { isExpanded: boolean };
+export type PathData = { isExpanded: boolean };
 
 export class ViewStore {
   private settingsStore: SettingsStore;
   private graphStore: GraphStore;
 
-  public currentOutlineViewRoot: GraphRelation[] | null = null;
-  public currentStreamViewRoot: GraphRelation[] | null = null;
-
-  private pathData: Map<Path, PathData> = new Map();
+  public mainStreamView: Tree;
+  public mainOutlineView: Tree;
+  public sidebarOutlineViews: Tree[] = [];
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
-    this.currentOutlineViewRoot = [graphStore.outlineRootRelationFromUserRoot];
-    this.currentStreamViewRoot = [graphStore.thoughtstreamRootRelationFromUserRoot];
+    this.mainStreamView = new Tree(graphStore, [graphStore.thoughtstreamRootRelationFromUserRoot]);
+    this.mainOutlineView = new Tree(graphStore, [graphStore.outlineRootRelationFromUserRoot]);
     makeAutoObservable(this);
   }
 
+  openSidebarOutlineView(path: GraphRelation[]) {
+    const newView = new Tree(this.graphStore, path);
+    this.sidebarOutlineViews.unshift(newView);
+    return newView;
+  }
+
   clear() {
-    this.pathData.clear();
-    this.currentOutlineViewRoot = [this.graphStore.outlineRootRelationFromUserRoot];
-    this.currentStreamViewRoot = [this.graphStore.thoughtstreamRootRelationFromUserRoot];
-  }
-
-  setCurrentStreamViewRoot(root: GraphRelation[] | null) {
-    this.currentStreamViewRoot = root;
-  }
-
-  setCurrentOutlineViewRoot(root: GraphRelation[] | null) {
-    this.currentOutlineViewRoot = root;
-  }
-
-  isPathExpanded(path: Path): boolean {
-    return this.pathData.get(path)?.isExpanded || false;
-  }
-
-  togglePathExpanded(path: Path) {
-    const oldData = this.pathData.get(path);
-    this.pathData.set(path, {
-      ...oldData,
-      isExpanded: !oldData?.isExpanded,
-    });
-  }
-
-  setPathExpanded(path: Path, isExpanded: boolean) {
-    this.pathData.set(path, { isExpanded });
+    this.mainOutlineView.clear([this.graphStore.outlineRootRelationFromUserRoot]);
+    this.mainStreamView.clear([this.graphStore.thoughtstreamRootRelationFromUserRoot]);
+    this.sidebarOutlineViews = [];
   }
 
   serialize(): SerializedViewStore {
     return {
-      pathData: Object.fromEntries(this.pathData.entries()),
+      mainStreamView: this.mainStreamView.serialize(),
+      mainOutlineView: this.mainOutlineView.serialize(),
+      sidebarOutlineViews: this.sidebarOutlineViews.map((view) => view.serialize()),
     };
   }
 
   deserializeInPlace(data: SerializedViewStore) {
-    const pathData = new Map<Path, PathData>();
-    if (data.pathData) {
-      for (const [key, value] of Object.entries(data.pathData)) {
-        pathData.set(key, value);
-      }
-    }
-
-    this.pathData = pathData;
+    this.mainStreamView.deserializeInPlace(data.mainStreamView);
+    this.mainOutlineView.deserializeInPlace(data.mainOutlineView);
+    this.sidebarOutlineViews = data.sidebarOutlineViews.map((viewData) => {
+      const view = new Tree(this.graphStore, []);
+      view.deserializeInPlace(viewData);
+      return view;
+    });
   }
 }

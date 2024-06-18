@@ -9,7 +9,7 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
-import { useViewStore } from "@/app/view/useViewStore";
+import { useTree } from "@/app/view/Outline";
 /**
  * Plugin to move current node using Tab/Shift+Tab. Also handles bulleting by typing '-' at the start of a line.
  */
@@ -17,7 +17,7 @@ export const TabAndBulletPlugin = () => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const renderController = useRenderController();
-  const viewStore = useViewStore();
+  const tree = useTree();
   const [editor] = useLexicalComposerContext();
   const {
     pathToParentRelations,
@@ -45,21 +45,7 @@ export const TabAndBulletPlugin = () => {
       }
 
       if (event?.shiftKey) {
-        const viewRoot = pathToParentNodes[0].child;
-        let visibleRootRelations;
-        if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
-          visibleRootRelations = viewStore.currentStreamViewRoot;
-        } else if (viewRoot.id === graphStore.outlineRoot.id) {
-          visibleRootRelations = viewStore.currentOutlineViewRoot;
-        } else {
-          throw new Error("Unknown view root");
-        }
-
-        if (
-          !settingsStore.allowShiftTabAboveViewRoot &&
-          visibleRootRelations &&
-          visibleRootRelations.length == pathToParentNodes.length
-        ) {
+        if (!settingsStore.allowShiftTabAboveViewRoot && tree.root.length == pathToParentNodes.length) {
           console.log("Can't shift tab because grandparent is above view root");
           return false;
         }
@@ -104,14 +90,13 @@ export const TabAndBulletPlugin = () => {
         graphStore.getRelationList(siblingAboveNode).move([baseRelation], "bottom");
         // toggle open sibling
         const relationPathToSibling = [...pathToParentRelations, siblingAbove];
-        viewStore.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
+        tree.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
         // set focus at the relations new path
         renderController.setFocusedNode(relationsToPathStr([...relationPathToSibling, baseRelation]));
         return true;
       }
     },
     [
-      viewStore,
       graphStore,
       parent,
       relation,
@@ -120,6 +105,7 @@ export const TabAndBulletPlugin = () => {
       pathToParentRelations,
       renderController,
       siblingAbove,
+      tree,
     ],
   );
 

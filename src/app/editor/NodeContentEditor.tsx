@@ -10,11 +10,12 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { CreateNodeAtTopPlugin } from "@/app/editor/plugins/keyboard/CreateNodeAtTopPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
-import { useViewStore } from "@/app/view/useViewStore";
+import { useTree } from "@/app/view/Outline";
 import { cn } from "@/lib/utils";
 
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
@@ -52,7 +53,7 @@ const onError = (error: any) => {
 
 export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
   const settingsStore = useSettingsStore();
-  const viewStore = useViewStore();
+  const tree = useTree();
   const graphStore = useGraphStore();
   const { object: node, pathToNodeStr, isChild } = useRelationAtPath();
   const [mentionDropdownOpen, setMentionDropdownOpen] = useState(false);
@@ -85,9 +86,9 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
       if (!node) {
         return;
       }
-      viewStore.setCurrentOutlineViewRoot(node.getPath());
+      tree.setRoot(node.getPath());
     },
-    [viewStore, graphStore],
+    [tree, graphStore],
   );
 
   const showSearchAndReplaceDropdown =
@@ -115,6 +116,7 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
         <EnterKeyPlugin />
         <TabAndBulletPlugin />
         <BackspaceMergeNodesPlugin />
+        <CreateNodeAtTopPlugin />
         <SetNodeAsRootPlugin />
         <EnterTempEditPlugin />
         <ExitTempEditPlugin />

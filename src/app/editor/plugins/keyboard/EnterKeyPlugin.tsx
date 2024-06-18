@@ -9,6 +9,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
+import { useTree } from "@/app/view/Outline";
 import { useViewStore } from "@/app/view/useViewStore";
 
 /**
@@ -28,6 +29,7 @@ export const EnterKeyPlugin = () => {
     parent,
   } = useRelationAtPath();
   const { viewType, setViewType } = useViewType();
+  const tree = useTree();
 
   useEffect(() => {
     return editor.registerCommand(
@@ -45,7 +47,7 @@ export const EnterKeyPlugin = () => {
         if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
 
         if (object instanceof GraphNode) {
-          const shouldCreateChild = viewStore.isPathExpanded(pathToNodeStr);
+          const shouldCreateChild = tree.isPathExpanded(pathToNodeStr);
           let {
             child: { node: newNode, relation: newRelation },
             nested,
@@ -76,7 +78,7 @@ export const EnterKeyPlugin = () => {
   }, [
     editor,
     graphStore,
-    viewStore,
+    tree,
     object,
     parent,
     pathToNodeStr,

@@ -23,7 +23,7 @@ export const DevTools = observer(() => {
     { label: "None", value: "none" },
   ];
   return (
-    <div className="p-2 mb-0 overflow-y-auto flex flex-col flex-initial">
+    <div className="p-2 mb-0 flex flex-col flex-initial">
       <h1 className="text-xl font-bold mb-2">Dev Tools</h1>
       <div className="flex flex-col gap-2">
         <label className="cursor-pointer">

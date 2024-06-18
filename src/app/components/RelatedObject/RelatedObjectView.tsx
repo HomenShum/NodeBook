@@ -22,6 +22,7 @@ import {
   relationsToURLPath,
   useCurView,
 } from "@/app/util";
+import { useTree } from "@/app/view/Outline";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -76,6 +77,7 @@ export const RelatedObjectView = observer(
     searchResultDate: Date;
   }) => {
     const settingsStore = useSettingsStore();
+    const tree = useTree();
     const viewStore = useViewStore();
     const renderController = useRenderController();
     const graphStore = useGraphStore();
@@ -94,15 +96,15 @@ export const RelatedObjectView = observer(
     const [viewType, setViewType] = useState<RelatedObjectViewType>("edit");
 
     // children state
-    const isExpanded = viewStore.isPathExpanded(pathToNodeStr);
+    const isExpanded = tree.isPathExpanded(pathToNodeStr);
     const [searchExpansion, setSearchExpansion] = useState(false);
     const children = getFilteredChildrenAtPath(pathObjects, settingsStore, searchResult, searchResultDate, false);
     const hasChildren = children.length > 0;
     useEffect(() => {
       if (!hasChildren) {
-        viewStore.setPathExpanded(pathToNodeStr, false);
+        tree.setPathExpanded(pathToNodeStr, false);
       }
-    }, [viewStore, hasChildren, pathToNodeStr]);
+    }, [tree, hasChildren, pathToNodeStr]);
 
     const allNodesInPath = pathToNodeSet(path);
 
@@ -130,42 +132,28 @@ export const RelatedObjectView = observer(
     const curView = useCurView();
     const router = useRouter();
 
-    const setPathToThisAsRoot = useCallback(() => {
-      if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
-        if (curView === ViewType.THOUGHTSTREAM) {
-          router.push(`/stream${relationsToURLPath([...pathToParentRelations, relation], graphStore)}`);
-        } else if (curView === ViewType.SPLIT) {
-          router.push(
-            `/split/outline${relationsToURLPath(
-              viewStore.currentOutlineViewRoot!,
-              graphStore,
-            )}/stream${relationsToURLPath([...pathToParentRelations, relation], graphStore)}`,
-          );
+    const handleBulletClick = useCallback(
+      (e: React.MouseEvent) => {
+        if (e.shiftKey) {
+          viewStore.openSidebarOutlineView(path);
+        } else {
+          switch (curView) {
+            case ViewType.OUTLINE:
+              router.push(`/outline${relationsToURLPath(path, graphStore)}`);
+              break;
+            case ViewType.THOUGHTSTREAM:
+              router.push(`/stream${relationsToURLPath(path, graphStore)}`);
+              break;
+            case ViewType.SPLIT:
+              tree.setRoot(path);
+              break;
+            default:
+              curView satisfies never;
+          }
         }
-      } else if (viewRoot.id === graphStore.outlineRoot.id) {
-        if (curView === ViewType.OUTLINE) {
-          router.push(`/outline${relationsToURLPath([...pathToParentRelations, relation], graphStore)}`);
-        } else if (curView === ViewType.SPLIT) {
-          router.push(
-            `/split/outline${relationsToURLPath(
-              [...pathToParentRelations, relation],
-              graphStore,
-            )}/stream${relationsToURLPath(viewStore.currentStreamViewRoot!, graphStore)}`,
-          );
-        }
-      } else {
-        throw new Error("Unknown view root");
-      }
-    }, [
-      viewRoot.id,
-      graphStore,
-      curView,
-      router,
-      pathToParentRelations,
-      relation,
-      viewStore.currentOutlineViewRoot,
-      viewStore.currentStreamViewRoot,
-    ]);
+      },
+      [tree, curView, router, path, graphStore, viewStore],
+    );
 
     const showRelationType = !isChild || updatingRelationType;
     const relationTypeTextWidth = showRelationType
@@ -255,7 +243,7 @@ export const RelatedObjectView = observer(
                       color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
                       height={16}
                       className={cn("cursor-pointer absolute top-0")}
-                      onClick={setPathToThisAsRoot}
+                      onClick={handleBulletClick}
                     />
                   ) : objectCount > 1 ? (
                     <Circle
@@ -263,7 +251,7 @@ export const RelatedObjectView = observer(
                       color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
                       height={8}
                       className={cn("cursor-pointer absolute top-1")}
-                      onClick={setPathToThisAsRoot}
+                      onClick={handleBulletClick}
                     />
                   ) : null}
                 </div>

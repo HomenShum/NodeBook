@@ -15,11 +15,11 @@ export default function Page() {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   useEffect(() => {
-    viewStore.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
-  });
+    viewStore.mainOutlineView.setRoot([graphStore.outlineRootRelationFromUserRoot]);
+  }, [graphStore.outlineRootRelationFromUserRoot, viewStore.mainOutlineView]);
 
   const hasLoaded = useContext(DataLoadContext);
   if (!hasLoaded) return <div className="p-4">Loading...</div>;
 
-  return <OutlineView />;
+  return <OutlineView outline={viewStore.mainOutlineView} />;
 }

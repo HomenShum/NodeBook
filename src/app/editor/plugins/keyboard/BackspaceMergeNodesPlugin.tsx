@@ -8,6 +8,7 @@ import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
+import { useTree } from "@/app/view/Outline";
 import { useViewStore } from "@/app/view/useViewStore";
 
 /**
@@ -27,6 +28,7 @@ export const BackspaceMergeNodesPlugin = () => {
     parent,
     openRelationTypeMenu,
   } = useRelationAtPath();
+  const tree = useTree();
 
   useEffect(() => {
     return editor.registerCommand(
@@ -72,21 +74,7 @@ export const BackspaceMergeNodesPlugin = () => {
             targetPath = relationsToPathStr([...pathToParentRelations, siblingAbove]);
           }
         } else {
-          const viewRoot = pathToParentNodes[0].child;
-          let visibleRootRelations;
-          if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
-            visibleRootRelations = viewStore.currentStreamViewRoot;
-          } else if (viewRoot.id === graphStore.outlineRoot.id) {
-            visibleRootRelations = viewStore.currentOutlineViewRoot;
-          } else {
-            throw new Error("Unknown view root");
-          }
-
-          if (
-            visibleRootRelations &&
-            visibleRootRelations.length < pathToParentNodes.length &&
-            parent instanceof GraphNode
-          ) {
+          if (tree.root.length < pathToParentNodes.length && parent instanceof GraphNode) {
             targetNode = parent;
             targetPath = relationsToPathStr([...pathToParentRelations]);
           }
@@ -115,8 +103,7 @@ export const BackspaceMergeNodesPlugin = () => {
     siblingAbove,
     renderController,
     openRelationTypeMenu,
-    viewStore.currentStreamViewRoot,
-    viewStore.currentOutlineViewRoot,
+    tree.root,
   ]);
 
   return null;

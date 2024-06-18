@@ -3,13 +3,13 @@ import { COMMAND_PRIORITY_EDITOR, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewStore } from "@/app/view/useViewStore";
+import { useTree } from "@/app/view/Outline";
 
 /**
  * Plugin to expand/collapse current node using Cmd + ArrowDown/ArrowUp.
  */
 export const ArrowKeyExpandCollapsePlugin = () => {
-  const viewStore = useViewStore();
+  const tree = useTree();
   const [editor] = useLexicalComposerContext();
   const { pathToNodeStr } = useRelationAtPath();
 
@@ -20,18 +20,18 @@ export const ArrowKeyExpandCollapsePlugin = () => {
         const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
         if (metaOrCtrl && !event.shiftKey && event.key === "ArrowDown") {
           event.preventDefault();
-          viewStore.setPathExpanded(pathToNodeStr, true);
+          tree.setPathExpanded(pathToNodeStr, true);
           return true;
         } else if (metaOrCtrl && !event.shiftKey && event.key === "ArrowUp") {
           event.preventDefault();
-          viewStore.setPathExpanded(pathToNodeStr, false);
+          tree.setPathExpanded(pathToNodeStr, false);
           return true;
         }
         return false;
       },
       COMMAND_PRIORITY_EDITOR,
     );
-  }, [editor, viewStore, pathToNodeStr]);
+  }, [editor, tree, pathToNodeStr]);
 
   return null;
 };

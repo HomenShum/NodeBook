@@ -6,6 +6,7 @@
     "source.removeUnusedImports",
     "source.organizeImports"
   ],
+  "typescript.preferences.importModuleSpecifier": "non-relative",
   "editor.formatOnSave": true,
   "editor.tabSize": 2
 }

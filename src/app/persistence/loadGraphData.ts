@@ -1,5 +1,6 @@
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
+import { SerializedStores } from "@/app/persistence/SerializedData";
 import { ViewStore } from "@/app/view/ViewStore";
 
 export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore) {
@@ -16,15 +17,11 @@ export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore
   }
   if (!dataString) return;
 
-  const data = JSON.parse(dataString);
+  const data = JSON.parse(dataString) as SerializedStores;
   if (data.graphStore) {
     graphStore.deserializeInPlace(data.graphStore);
   }
   if (data.viewStore) {
     viewStore.deserializeInPlace(data.viewStore);
-  } else if (data.pathData) {
-    // Legacy persistence format from before viewStore was split out
-    graphStore.deserializeInPlace(data);
-    viewStore.deserializeInPlace({ pathData: data.pathData });
   }
 }

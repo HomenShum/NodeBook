@@ -5,9 +5,8 @@ import { JUMP_TO_END, JUMP_TO_START } from "@/app/editor/plugins/JumpSelectionPl
 import { Box } from "@/app/editor/selection/utils";
 import { GraphStore, Path } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { makeAutoSaving, relationsPathToParentChild, relationsToPathStr } from "@/app/util";
+import { makeAutoSaving } from "@/app/util";
 import { ViewStore } from "@/app/view/ViewStore";
-import { ViewType } from "@/app/view/ViewType";
 
 export class RenderController {
   private settingsStore: SettingsStore;
@@ -172,79 +171,5 @@ export class RenderController {
     setTimeout(() => {
       // this.evaluateSelectionBox();
     }, 100);
-  }
-
-  // TODO: Move all create node logic to ViewStore
-  private createOutlineChildNode(focus: boolean = true) {
-    const path = relationsPathToParentChild(this.viewStore.currentOutlineViewRoot!);
-    const root = path[path.length - 1].child;
-    const { node, relation } = this.graphStore.createChildNode(root);
-
-    if (focus) {
-      this.setFocusedNode(relationsToPathStr([...this.viewStore.currentOutlineViewRoot!, relation]));
-    }
-
-    if (this.settingsStore.addAllOutlineDescendantsToThoughtstream) {
-      this.graphStore.addToThoughtstream(node);
-    }
-
-    return node;
-  }
-
-  // TODO: Move all create node logic to ViewStore
-  private createThoughtstreamChildNode(focus: boolean = true, ensureInOutline: boolean = false) {
-    const { node, relationToThoughtstream } = this.graphStore.createThoughtstreamChild();
-
-    if (focus) {
-      this.setFocusedNode(
-        relationsToPathStr([this.graphStore.thoughtstreamRootRelationFromUserRoot, relationToThoughtstream]),
-      );
-    }
-
-    if (ensureInOutline || this.settingsStore.addThoughtstreamDirectChildrenToOutline) {
-      this.graphStore.createRelation({
-        from: this.graphStore.outlineRoot,
-        to: node,
-        relationType: this.graphStore.relationTypesById.child,
-      });
-    }
-    return node;
-  }
-
-  // TODO: Move all create node logic to ViewStore
-  /**
-   * Create a child node in the specified view, or in the current view if no view is specified.
-   * In split view, the child node will be created in the same view as the focused node.
-   */
-  createChildNode({
-    focusAfterCreate,
-    targetView,
-    alwaysAddToOutline,
-  }: {
-    focusAfterCreate: boolean;
-    targetView: ViewType;
-    alwaysAddToOutline?: boolean;
-  }) {
-    const view = targetView;
-    switch (view) {
-      case ViewType.OUTLINE:
-        return this.createOutlineChildNode(focusAfterCreate);
-      case ViewType.THOUGHTSTREAM:
-        return this.createThoughtstreamChildNode(focusAfterCreate, alwaysAddToOutline);
-      case ViewType.SPLIT:
-      default:
-        const id = this.focusedNode?.split("/")?.[0] ?? "";
-        const focusedViewRoot = this.graphStore.relationsById.get(id)?.to;
-        if (!focusedViewRoot) {
-          // default to creating a child in Thoughtstream (e.g. when cmd + k is pressed)
-          return this.createThoughtstreamChildNode(focusAfterCreate, alwaysAddToOutline);
-        } else if (focusedViewRoot.id === this.graphStore.thoughtstreamRoot.id) {
-          return this.createThoughtstreamChildNode(focusAfterCreate, alwaysAddToOutline);
-        } else if (focusedViewRoot.id === this.graphStore.outlineRoot.id) {
-          return this.createOutlineChildNode(focusAfterCreate);
-        } else {
-          throw new Error("Unsupported split view root node");
-        }
-    }
   }
 }

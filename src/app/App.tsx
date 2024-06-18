@@ -7,17 +7,17 @@ import { useRef } from "react";
 
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import SidebarTree from "@/app/components/SidebarTree";
-import { DevTools } from "@/app/components/dev/DevTools";
-import { NodeTable } from "@/app/components/dev/NodeTable";
-import { RelationTable } from "@/app/components/dev/RelationTable";
-import { RelationTypeTable } from "@/app/components/dev/RelationTypeTable";
 import { ListIcon, SidebarIcon, SplitIcon, StreamIcon } from "@/app/components/icons";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useRenderController } from "@/app/render/useRenderController";
 import { ViewType } from "@/app/view/ViewType";
 
-import "./global.css";
+import { DevTools } from "./components/dev/DevTools";
+import { SidebarOutlines } from "./components/dev/SidebarOutlines";
+
 import s from "./app.module.css";
+
+import "./global.css";
 
 export default observer(
   ({
@@ -82,10 +82,8 @@ export default observer(
               <main className={`${s.Main} ${renderController.leftSidebarOpen ? s.LeftShift : ""}`}>{children}</main>
               {renderController.rightSidebarOpen && (
                 <aside className={s.DevToolsSidebar}>
+                  <SidebarOutlines />
                   <DevTools />
-                  <NodeTable />
-                  <RelationTable />
-                  <RelationTypeTable />
                 </aside>
               )}
             </div>

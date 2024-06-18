@@ -1,4 +1,5 @@
 import { GraphStore } from "@/app/graph/GraphStore";
+import { SerializedStores } from "@/app/persistence/SerializedData";
 import { ViewStore } from "@/app/view/ViewStore";
 
 export interface Serializable {
@@ -29,5 +30,5 @@ export const storesToDataString = (graphStore: GraphStore, viewStore: ViewStore)
   return JSON.stringify({
     graphStore: graphStore.serialize(),
     viewStore: viewStore.serialize(),
-  });
+  } satisfies SerializedStores);
 };

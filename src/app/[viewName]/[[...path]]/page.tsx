@@ -66,8 +66,8 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
     if (viewName === "split") {
       // split view URL is structured as /split/outline/.../stream/...
       if (!path || path.length === 0) {
-        viewStore.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
-        viewStore.setCurrentStreamViewRoot([graphStore.thoughtstreamRootRelationFromUserRoot]);
+        viewStore.mainOutlineView.setRoot([graphStore.outlineRootRelationFromUserRoot]);
+        viewStore.mainStreamView.setRoot([graphStore.thoughtstreamRootRelationFromUserRoot]);
         return;
       }
 
@@ -87,7 +87,7 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
       }
     } else if (viewName === "outline") {
       if (!path || path.length === 0) {
-        viewStore.setCurrentOutlineViewRoot([graphStore.outlineRootRelationFromUserRoot]);
+        viewStore.mainOutlineView.setRoot([graphStore.outlineRootRelationFromUserRoot]);
         return;
       }
       newOutlineRoot = pathToRelationList(path, graphStore);
@@ -97,7 +97,7 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
       }
     } else if (viewName === "stream") {
       if (!path || path.length === 0) {
-        viewStore.setCurrentStreamViewRoot([graphStore.thoughtstreamRootRelationFromUserRoot]);
+        viewStore.mainStreamView.setRoot([graphStore.thoughtstreamRootRelationFromUserRoot]);
         return;
       }
       newStreamRoot = pathToRelationList(path, graphStore);
@@ -108,27 +108,21 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
     }
 
     // if the path is different from the outline/stream view root, update the latter
-    if (
-      newOutlineRoot &&
-      (!viewStore.currentOutlineViewRoot || !arrayEqual(viewStore.currentOutlineViewRoot, newOutlineRoot))
-    ) {
-      viewStore.setCurrentOutlineViewRoot(newOutlineRoot);
+    if (newOutlineRoot && !arrayEqual(viewStore.mainOutlineView.root, newOutlineRoot)) {
+      viewStore.mainOutlineView.setRoot(newOutlineRoot);
     }
 
-    if (
-      newStreamRoot &&
-      (!viewStore.currentStreamViewRoot || !arrayEqual(viewStore.currentStreamViewRoot, newStreamRoot))
-    ) {
-      viewStore.setCurrentStreamViewRoot(newStreamRoot);
+    if (newStreamRoot && !arrayEqual(viewStore.mainStreamView.root, newStreamRoot)) {
+      viewStore.mainStreamView.setRoot(newStreamRoot);
     }
   }, [graphStore, hasLoaded, path, router, viewName, viewStore]);
 
   if (!hasLoaded) return <div className="p-4">Loading...</div>;
 
   if (viewName === "stream") {
-    return <ThoughtstreamView></ThoughtstreamView>;
+    return <ThoughtstreamView outline={viewStore.mainStreamView}></ThoughtstreamView>;
   } else if (viewName === "outline") {
-    return <OutlineView></OutlineView>;
+    return <OutlineView outline={viewStore.mainOutlineView}></OutlineView>;
   } else if (viewName === "split") {
     return <SplitView></SplitView>;
   }

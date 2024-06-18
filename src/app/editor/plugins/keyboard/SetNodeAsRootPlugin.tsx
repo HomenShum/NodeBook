@@ -4,14 +4,14 @@ import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useViewStore } from "@/app/view/useViewStore";
+import { useTree } from "@/app/view/Outline";
 
 /**
  * Plugin to set the current node as the view root when the user presses Cmd+. (Mac) or Ctrl+. (Windows).
  */
 export const SetNodeAsRootPlugin = () => {
   const graphStore = useGraphStore();
-  const viewStore = useViewStore();
+  const tree = useTree();
   const [editor] = useLexicalComposerContext();
   const { pathToParentRelations, relation, pathToParentWithOrderedObjects: pathToParentNodes } = useRelationAtPath();
 
@@ -24,9 +24,9 @@ export const SetNodeAsRootPlugin = () => {
 
         const viewRoot = pathToParentNodes[0].child;
         if (viewRoot.id === graphStore.thoughtstreamRoot.id) {
-          viewStore.setCurrentStreamViewRoot([...pathToParentRelations, relation]);
+          tree.setRoot([...pathToParentRelations, relation]);
         } else if (viewRoot.id === graphStore.outlineRoot.id) {
-          viewStore.setCurrentOutlineViewRoot([...pathToParentRelations, relation]);
+          tree.setRoot([...pathToParentRelations, relation]);
         } else {
           throw new Error("Unknown view root");
         }
@@ -41,7 +41,7 @@ export const SetNodeAsRootPlugin = () => {
     pathToParentNodes,
     pathToParentRelations,
     relation,
-    viewStore,
+    tree,
   ]);
 
   return null;

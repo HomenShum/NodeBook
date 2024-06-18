@@ -23,6 +23,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
+import { TabAndBulletPlugin } from "@/app/editor/plugins/keyboard/TabAndBulletPlugin";
 import { Chip } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -42,7 +43,6 @@ import { EnterKeyPlugin } from "./plugins/keyboard/EnterKeyPlugin";
 import { EnterTempEditPlugin } from "./plugins/keyboard/EnterTempEditPlugin";
 import { ExitTempEditPlugin } from "./plugins/keyboard/ExitTempEditPlugin";
 import { SetNodeAsRootPlugin } from "./plugins/keyboard/SetNodeAsRootPlugin";
-import { TabAndBulletPlugin } from "./plugins/keyboard/TabAndBulletPlugin";
 import { createContentMatchingParagraph, graphNodeMatchesParagraph } from "./utils";
 
 /**

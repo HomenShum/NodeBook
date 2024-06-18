@@ -7,7 +7,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { useViewStore } from "@/app/view/useViewStore";
+import { useTree } from "@/app/view/Outline";
 import { cn } from "@/lib/utils";
 
 import { useViewType } from "./ViewTypeContext";
@@ -25,7 +25,7 @@ export const RelatedObjectEditor = observer(
     pathToNodeStr: string;
   }) => {
     const graphStore = useGraphStore();
-    const viewStore = useViewStore();
+    const tree = useTree();
     const renderController = useRenderController();
     const { viewType, setViewType } = useViewType();
     const ref = useRef<HTMLDivElement>(null);
@@ -64,7 +64,7 @@ export const RelatedObjectEditor = observer(
           {object instanceof GraphNode ? (
             <div
               className={cn("flex min-w-64", treatAsLink && "cursor-pointer")}
-              onClick={treatAsLink ? (e) => viewStore.togglePathExpanded(pathToNodeStr) : undefined}
+              onClick={treatAsLink ? (e) => tree.togglePathExpanded(pathToNodeStr) : undefined}
             >
               <NodeContentEditor indent={indentationWidth} />
               {treatAsLink && isHovered && (
