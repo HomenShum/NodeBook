@@ -32,6 +32,8 @@ import { ArrowKeyMoveNodePlugin } from "./plugins/keyboard/ArrowKeyMoveNodePlugi
 import { ArrowKeyNavPlugin } from "./plugins/keyboard/ArrowKeyNavPlugin";
 import { BackspaceMergeNodesPlugin } from "./plugins/keyboard/BackspaceMergeNodesPlugin";
 import { EnterKeyPlugin } from "./plugins/keyboard/EnterKeyPlugin";
+import { EnterTempEditPlugin } from "./plugins/keyboard/EnterTempEditPlugin";
+import { ExitTempEditPlugin } from "./plugins/keyboard/ExitTempEditPlugin";
 import { SetNodeAsRootPlugin } from "./plugins/keyboard/SetNodeAsRootPlugin";
 import { TabAndBulletPlugin } from "./plugins/keyboard/TabAndBulletPlugin";
 import { PastePlugin } from "./plugins/pastePlugin";
@@ -116,6 +118,8 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
         <BackspaceMergeNodesPlugin />
         <CreateNodeAtTopPlugin />
         <SetNodeAsRootPlugin />
+        <EnterTempEditPlugin />
+        <ExitTempEditPlugin />
         <ReplaceObjectPlugin />
         <PastePlugin />
         <RelationPlugin />
