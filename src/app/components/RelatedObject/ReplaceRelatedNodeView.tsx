@@ -69,14 +69,12 @@ export const ReplaceRelatedNodeView = ({
     [graph, relation, pathToParentRelations, setViewType],
   );
 
-  // TODO hack
   useEffect(() => {
     setTimeout(() => {
       ref.current?.querySelector("input")?.focus();
     }, 0);
   }, []);
 
-  // TODO hack
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
