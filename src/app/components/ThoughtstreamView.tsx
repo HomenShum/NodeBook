@@ -56,7 +56,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
   return (
     <TreeContext.Provider value={outline}>
       <div tabIndex={0} className={stylesStream.StreamContainer}>
-        <div className={stylesStream.ContentSection}>
+        <div>
           {path.length > 1 && (
             <div className={stylesList.BreadcrumbContainer}>
               {path.slice(0, -1).map(({ relation, child }, i) => {
@@ -163,7 +163,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
             </button>
           </div>
         </div>
-        <div className={stylesList.relatedObjectsContainer}>
+        <div>
           <RelatedObjectChildren
             showAll={showAll}
             setShowAll={setShowAll}

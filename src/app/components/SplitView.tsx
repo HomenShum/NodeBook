@@ -12,7 +12,7 @@ export const SplitView = observer(() => {
   const renderController = useRenderController();
   const viewStore = useViewStore();
   return (
-    <div className={`${s.container} ${s.containerLarge}`}>
+    <div className={`${s.container}`}>
       <div className={s.mainContent}>
         <div className={s.halfWidth}>
           <ThoughtstreamView outline={viewStore.mainStreamView} />
