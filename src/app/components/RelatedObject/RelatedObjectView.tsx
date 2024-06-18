@@ -85,7 +85,7 @@ export const RelatedObjectView = observer(
     const pathToNodeStr = relationsToPathStr(path);
     const pathObjects = relationsPathToParentChild(path);
     const { parent, child: object } = pathObjects[pathObjects.length - 1];
-    const viewRoot = pathObjects[0].child; // TODO messy conceptually
+    const viewRoot = pathObjects[0].child;
 
     // TODO: this was really shoehorned in here for demo day and should be refactored
     const [updatingRelationType, setUpdatingRelationType] = useState(false);
