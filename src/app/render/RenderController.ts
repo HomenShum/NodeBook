@@ -89,7 +89,6 @@ export class RenderController {
     if (curEditorDiv.getBoundingClientRect().top > nextEditorDiv.getBoundingClientRect().top) {
       // This is a hack to prevent jumping "across the divide" (e.g. from Thoughtstream to Outline) when in split view.
       // If the "next" editor is not actually below the current editor, we don't move focus.
-      // TODO: figure out something better, or decide this is Correct, Actually.
       return false;
     }
 
@@ -121,7 +120,6 @@ export class RenderController {
     if (curEditorDiv.getBoundingClientRect().top < prevEditorDiv.getBoundingClientRect().top) {
       // This is a hack to prevent jumping "across the divide" (e.g. from Outline to Thoughtstream) when in split view.
       // If the "previous" editor is not actually above the current editor, we don't move focus.
-      // TODO: figure out something better, or decide this is Correct, Actually.
       return false;
     }
 
