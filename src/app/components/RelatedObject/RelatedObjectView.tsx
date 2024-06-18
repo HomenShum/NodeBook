@@ -45,11 +45,8 @@ import { getFilteredChildrenAtPath } from "./getFilteredChildrenAtPath";
  *   new object when it's rendered as a link)
  * - `replace`: The view where the user can replace the object with another
  *   object.
- * - `temp-edit`: When an object is rendered as a link, you can drop into a
- *   temporary edit mode to edit the object content
- * TODO: this should be refactored
  */
-export type RelatedObjectViewType = "edit" | "replace" | "temp-edit";
+export type RelatedObjectViewType = "edit" | "replace";
 
 const canvas = document.createElement("canvas");
 
@@ -298,12 +295,7 @@ export const RelatedObjectView = observer(
                             pathToParentRelations={pathToParentRelations}
                           />
                         ) : (
-                          <RelatedObjectEditor
-                            isHovered={isHovered}
-                            indentationWidth={relationTypeTextWidth}
-                            object={object}
-                            pathToNodeStr={pathToNodeStr}
-                          />
+                          <RelatedObjectEditor indentationWidth={relationTypeTextWidth} object={object} />
                         )}
                       </HoverCard.Trigger>
                       {object instanceof GraphRelation && (

@@ -36,7 +36,6 @@ export const EnterKeyPlugin = () => {
       KEY_ENTER_COMMAND,
       action((event) => {
         if (!event || !graphStore) return false;
-        if (viewType === "temp-edit") return false;
         if (event.shiftKey) return false;
 
         event.preventDefault();

@@ -14,13 +14,13 @@ import {
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
+import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { cn } from "@/lib/utils";
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 
 /**
  * Dropdown options:
@@ -179,9 +179,6 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
 
   // Register keyboard commands for the dropdown
   useEffect(() => {
-    if (viewType === "temp-edit") {
-      return;
-    }
     const unsubscribe = mergeRegister(
       editor.registerCommand<KeyboardEvent>(
         KEY_ARROW_UP_COMMAND,
@@ -291,7 +288,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
   }, [editor, object.text, closeDropdown]);
 
   const selectedIdx = findSelectionIdx(objectsMatchingSearch, selected);
-  return hasFocus && dropdownOpen && viewType !== "temp-edit" && objectsMatchingSearch.length > 0 ? (
+  return hasFocus && dropdownOpen && objectsMatchingSearch.length > 0 ? (
     <div className="absolute top-6 left-0 w-full bg-white border border-gray-300 z-10">
       {objectsMatchingSearch.map((option, i) => {
         return (
