@@ -11,8 +11,8 @@ import { PlaceholderGraphObject, isPlaceholder } from "./PlaceholderGraphObject"
 
 export type GraphRelationType = {
   id: string;
-  label: string;
-  reverseLabel: string;
+  label: string; // e.g. author
+  reverseLabel: string; // e.g. authored by
 };
 
 export type GraphRelationProps = {

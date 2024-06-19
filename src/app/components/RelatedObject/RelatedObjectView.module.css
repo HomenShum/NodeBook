@@ -1,0 +1,148 @@
+.RelatedObjectContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+}
+
+.RelatedObject.Selected {
+  background-color: var(--teal-a2);
+}
+
+.RelatedObjectContent {
+  display: flex;
+  align-items: baseline;
+  position: relative;
+  margin: 0 12px;
+  min-height: 32px;
+}
+
+.RelatedObjectContentPublic {
+  color: inherit;
+  /* Leaving this empty in case Jacob wants to add extra styles for the public content */
+}
+
+.RelatedObjectLeftArea {
+  position: absolute;
+  height: 100%;
+  width: 100px;
+  right: 100%;
+}
+
+/* Pin Icon of each bullet */
+.PinIcon {
+  position: relative;
+  top: 0;
+  padding: 0 1px 0 0;
+  right: 4px;
+  transform: scale(0.8) translateY(-0.5px);
+  color: var(--gray-6);
+}
+
+.RelatedObjectLeftHandler {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  position: absolute;
+  right: 100%;
+}
+
+.RelatedObjectActions {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.RelatedObjectPublic {
+  position: relative;
+  right: 6px;
+  padding-left: 1px;
+  transform: translateY(0.5px);
+  display: flex;
+  color: var(--teal-7);
+  background-color: white;
+}
+
+.RelatedObjectBulletContainer {
+  width: 16px;
+  position: relative;
+  right: 8px;
+  height: 16px;
+  display: flex;
+}
+
+.RelatedObjectBulletContainer.Hidden {
+  display: none;
+}
+
+.Dot {
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.DotOutsidePublic {
+  stroke: var(--teal-4);
+}
+
+.DotOutsidePrivate {
+  stroke: var(--gray-4);
+}
+
+.DotInsidePrivate {
+  fill: var(--gray-10);
+}
+.DotInsidePublic {
+  stroke: var(--teal-10);
+}
+
+.Circle {
+  cursor: pointer;
+  position: absolute;
+  top: 4px;
+  stroke: var(--teal-10);
+}
+
+.CirclePrivate {
+  stroke: var(--gray-10);
+}
+
+.RelatedObjectNode {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative;
+  top: -2px;
+}
+
+.RelatedObjectNodeContent {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 2px;
+  align-items: baseline;
+  padding-bottom: 8px;
+}
+
+.RelationHoverCard {
+  background-color: white;
+  padding: 4px 12px;
+  border: 0.5px solid var(--gray-3);
+  box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
+  border-radius: 4px;
+  z-index: 50;
+}
+
+.RelationCounter {
+  position: relative;
+  align-self: flex-start;
+  margin-top: 2px;
+  height: 16px;
+  background-color: var(--gray-1);
+  color: var(--gray-8);
+  font-size: 12px;
+  border-radius: 2px;
+  padding-left: 4px;
+  padding-right: 4px;
+}

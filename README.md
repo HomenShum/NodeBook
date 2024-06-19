@@ -7,6 +7,12 @@ Prerequisites
 - [Node.js](https://nodejs.org/en/download)
 - [Yarn](https://yarnpkg.com/getting-started/install)
 
+(Optional) Install recommended VSCode extensions:
+
+- Open the extensions sidebar in VSCode
+- Search for `@recommended`
+- Install all listed extensions
+
 Install dependencies:
 
 ```bash

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
-import { useTree } from "@/app/view/Outline";
+import { useTree } from "@/app/view/Tree";
 
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.
@@ -20,8 +20,9 @@ export const CreateNodeAtTopPlugin = () => {
         if (event.key === "k" && event.metaKey) {
           event.preventDefault();
           event.stopPropagation();
-          const { path } = tree.createChildNode();
-          renderController.setFocusedNode(relationsToPathStr(path));
+          tree.createChildNode().then(({ path }) => {
+            renderController.setFocusedNode(relationsToPathStr(path));
+          });
           return true;
         }
         return false;

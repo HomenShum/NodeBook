@@ -12,7 +12,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
-import { useTree } from "@/app/view/Outline";
+import { useTree } from "@/app/view/Tree";
 import { cn } from "@/lib/utils";
 
 import { useRelationAtPath } from "./RelatedObjectContext";
@@ -67,8 +67,8 @@ export const RelatedObjectMenu = observer(
           )}
           <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>Change relation type</DropdownMenuItem>
           <DropdownMenuItem
-            onSelect={action(() => {
-              graphStore.createChildNode(object);
+            onSelect={action(async () => {
+              await graphStore.addChildNode({ parentId: object.id });
               const pathStr = relationsToPathStr([...pathToParentRelations, relation]);
               tree.setPathExpanded(pathStr, true);
             })}

@@ -28,12 +28,20 @@ export const PastePlugin = () => {
             object.setContent(line);
           }
           // then for the remaining lines, create children positioned after the parent
-          const children = lines.map((line) => graphStore.createChildNode(parent, { content: line }));
-          graphStore.getRelationList(parent).move(
-            children.map((c) => c.relation),
-            relation,
-          );
-          renderController.setFocusedNode(pathToNodeStr);
+          Promise.all(
+            lines.map((line) =>
+              graphStore.addChildNode({
+                parentId: parent.id,
+                nodeProps: { content: line },
+              }),
+            ),
+          ).then((children) => {
+            graphStore.getRelationList(parent).move(
+              children.map((c) => c.relation),
+              relation,
+            );
+            renderController.setFocusedNode(pathToNodeStr);
+          });
           return true;
         }
         return false;

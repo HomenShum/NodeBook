@@ -13,6 +13,8 @@ import { formatDate, relationsPathToParentChild, relationsToPathStr } from "@/ap
 import { RelatedObjectView } from "./RelatedObjectView";
 import { getFilteredChildrenAtPath } from "./getFilteredChildrenAtPath";
 
+import styles from "./RelatedObjectChildren.module.css";
+
 export const RelatedObjectChildren = observer(
   ({
     pathToParentRelations,
@@ -47,28 +49,26 @@ export const RelatedObjectChildren = observer(
     let lastDisplayedDate: string | undefined;
 
     return (
-      <div className={pathToParentRelations.length > 0 ? "ml-[16px]" : ""}>
+      <div className={pathToParentRelations.length > 0 ? styles.NodeIndentation : ""}>
         {pinnedChildren.length > 0 && (
           <>
             <button
               onClick={() => setIsPinnedVisible(!isPinnedVisible)}
-              className={`flex gap-[2px] relative top-0  uppercase text-xs  w-fit px-1 py-1 rounded-md text-[--gray-7] z-10 ${
-                parent === graphStore.thoughtstreamRoot ? "left-0" : "left-1"
-              }  ${
-                isPinnedVisible ? "bg-[--teal-1] hover:bg-[--teal-2] mb-0" : "bg-[--gray-1] hover:bg-[--gray-2] mb-3"
+              className={`${styles.PinnedToggleButton}  ${
+                isPinnedVisible ? styles.PinnedToggleButton_PinnedVisible : styles.PinnedToggleButton_PinnedHidden
               }`}
             >
-              <span className={` scale-[0.80] ${isPinnedVisible ? "text-[--teal-9]" : "text-[--gray-7]"}`}>
+              <span
+                className={`${styles.PinIcon} ${
+                  isPinnedVisible ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
+                }`}
+              >
                 <PinCustom />
               </span>
               {isPinnedVisible ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </button>
             {isPinnedVisible && (
-              <div
-                className={`border-[--teal-4] border-b  pt-3  ${
-                  parent === graphStore.thoughtstreamRoot ? "-mb-2 pb-4" : "mb-3 pb-0"
-                } `}
-              >
+              <div className={styles.PinSection}>
                 {isPinnedVisible &&
                   pinnedChildren.map(({ relation: childRelation, position }, i) => {
                     return (
@@ -84,6 +84,11 @@ export const RelatedObjectChildren = observer(
                       </div>
                     );
                   })}
+                <div
+                  className={`${styles.PinSectionSeparator} ${
+                    parent === graphStore.thoughtstreamRoot ? styles.StreamSpacing : styles.DefaultSpacing
+                  }`}
+                />
               </div>
             )}
           </>
@@ -102,13 +107,17 @@ export const RelatedObjectChildren = observer(
               {newBundle && (
                 <>
                   <div
-                    className={`border-t border-dashed border-[--gray-5] ${
-                      i === 0 ? `mt-2 pt-2 border-none ${displayDate ? "pb-4" : "mb-2"}` : "mt-3 mb-4 pt-2"
+                    className={`${styles.BundleSeparator} ${
+                      i === 0
+                        ? `${styles.FirstBundle} ${
+                            displayDate ? styles.FirstBundle_WithDate : styles.FirstBundle_NoDate
+                          }`
+                        : styles.DefaultBundle
                     }`}
                   />
                   {displayDate && (
-                    <div className="relative -translate-y-8 w-fit left-1/2 text-[--gray-8] text-[12px] -translate-x-1/2 z-10 h-0">
-                      <span className="bg-white px-1">{currentDate}</span>
+                    <div className={styles.DateLabel}>
+                      <span className={styles.DateLabelContent}>{currentDate}</span>
                     </div>
                   )}
                 </>
@@ -125,7 +134,7 @@ export const RelatedObjectChildren = observer(
           );
         })}
         {!showAll && children.length > 100 && (
-          <button onClick={() => setShowAll && setShowAll(true)} className="text-blue-400">
+          <button onClick={() => setShowAll && setShowAll(true)} className={styles.ShowAll}>
             Show all
           </button>
         )}

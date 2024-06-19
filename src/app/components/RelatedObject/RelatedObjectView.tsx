@@ -2,11 +2,10 @@ import * as HoverCard from "@radix-ui/react-hover-card";
 import { Circle, Dot, GlobeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import styles from "@/app/components/OutlineView.module.css";
+import styles from "@/app/components/RelatedObject/RelatedObjectView.module.css";
 import { PinCustom } from "@/app/components/icons";
-import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { SearchResult } from "@/app/graph/search";
@@ -22,13 +21,13 @@ import {
   relationsToURLPath,
   useCurView,
 } from "@/app/util";
-import { useTree } from "@/app/view/Outline";
+import { useTree } from "@/app/view/Tree";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
 import { RelatedObjectChildren } from "./RelatedObjectChildren";
-import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
+import { RelationAtPathProvider } from "./RelatedObjectContext";
 import { RelatedObjectDetails } from "./RelatedObjectDetails";
 import { RelatedObjectEditor } from "./RelatedObjectEditor";
 import { RelatedObjectMenu } from "./RelatedObjectMenu";
@@ -152,13 +151,13 @@ export const RelatedObjectView = observer(
 
     const showRelationType = !isChild || updatingRelationType;
     const relationTypeTextWidth = showRelationType
-      ? `${getTextWidth(`${relation.relationType.label}:`, "normal 17.5px ui-sans-serif") + 3}px`
+      ? `${getTextWidth(`${relation.relationType.label}:`, "normal 17.5px ui-sans-serif text-red-500") + 3}px`
       : "0px";
     const [relationComboboxIsOpen, setRelationComboboxIsOpen] = useState(false);
 
     return (
       <>
-        <div id={pathToNodeStr} className={cn(styles.OutlineObject, isSelected && styles.Selected)}>
+        <div id={pathToNodeStr} className={cn(styles.RelatedObjectContainer, isSelected && styles.Selected)}>
           <ViewTypeProvider value={{ viewType, setViewType }}>
             <RelationAtPathProvider
               value={{
@@ -176,19 +175,19 @@ export const RelatedObjectView = observer(
             >
               <div
                 className={cn(
-                  styles.OutlineObjectContent,
+                  styles.RelatedObjectContent,
                   !object.isPrivate &&
                     settingsStore.hideThoughtstreamBullets &&
                     parent === graphStore.thoughtstreamRoot &&
-                    styles.OutlineObjectContentPublic,
+                    styles.RelatedObjectContentPublic,
                 )}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
               >
-                <div className={styles.OutlineObjectLeftArea} />
+                <div className={styles.RelatedObjectLeftArea} />
                 {/* toggle, bullet, menu */}
-                <div className="flex items-center gap-1 absolute right-full">
-                  <div className="flex items-center gap-1">
+                <div className={styles.RelatedObjectLeftHandler}>
+                  <div className={styles.RelatedObjectActions}>
                     {hasChildren && (objectCount === 1 || !settingsStore.disableCycles) && isHovered && (
                       <Toggle
                         pathToNodeStr={pathToNodeStr}
@@ -209,7 +208,7 @@ export const RelatedObjectView = observer(
                   {!object.isPrivate &&
                     settingsStore.hideThoughtstreamBullets &&
                     parent === graphStore.thoughtstreamRoot && (
-                      <div className="relative right-[6px] pl-1  translate-y-[0.5px] flex text-[--teal-7] bg-white">
+                      <div className={styles.RelatedObjectPublic}>
                         <GlobeIcon size={12} strokeWidth={2} />
                       </div>
                     )}
@@ -217,8 +216,8 @@ export const RelatedObjectView = observer(
 
                 <div
                   className={cn(
-                    "w-4 relative right-2 h-4 flex",
-                    settingsStore.hideThoughtstreamBullets && parent === graphStore.thoughtstreamRoot && "hidden",
+                    styles.RelatedObjectBulletContainer,
+                    settingsStore.hideThoughtstreamBullets && parent === graphStore.thoughtstreamRoot && styles.Hidden,
                   )}
                 >
                   {hasChildren &&
@@ -226,36 +225,39 @@ export const RelatedObjectView = observer(
                     (objectCount === 1 || !settingsStore.disableCycles) &&
                     (!settingsStore.hideBulletBackgroundIfParentsOnly || hasNewChildren) && (
                       <Dot
-                        stroke={!object.isPrivate ? "var(--teal-4)" : "var(--gray-4)"}
                         height={16}
                         strokeWidth={17}
-                        className={cn("cursor-pointer absolute top-0 left-0")}
+                        className={cn(styles.Dot, {
+                          [styles.DotOutsidePublic]: !object.isPrivate,
+                          [styles.DotOutsidePrivate]: object.isPrivate,
+                        })}
                       />
                     )}
                   {objectCount === 1 ? (
                     <Dot
                       strokeWidth={5}
-                      color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
                       height={16}
-                      className={cn("cursor-pointer absolute top-0")}
+                      className={cn(styles.Dot, {
+                        [styles.DotInsidePublic]: !object.isPrivate,
+                        [styles.DotInsidePrivate]: object.isPrivate,
+                      })}
                       onClick={handleBulletClick}
                     />
                   ) : objectCount > 1 ? (
                     <Circle
                       strokeWidth={6}
-                      color={!object.isPrivate ? "var(--teal-10)" : "var(--gray-10)"}
                       height={8}
-                      className={cn("cursor-pointer absolute top-1")}
+                      className={cn(styles.Circle, { [styles.CirclePrivate]: object.isPrivate })}
                       onClick={handleBulletClick}
                     />
                   ) : null}
                 </div>
                 {/* relation and node */}
-                <div className="flex flex-col flex-1 relative -top-[2px]">
-                  <div className="flex flex-row flex-wrap w-full gap-1 items-baseline pb-2">
+                <div className={styles.RelatedObjectNode}>
+                  <div className={styles.RelatedObjectNodeContent}>
                     <HoverCard.Root>
                       {showRelationType && (
-                        <HoverCard.Trigger className="z-10">
+                        <HoverCard.Trigger>
                           <RelationCombobox
                             setUpdatingRelationType={setUpdatingRelationType}
                             object={object}
@@ -267,10 +269,7 @@ export const RelatedObjectView = observer(
                         </HoverCard.Trigger>
                       )}
                       <HoverCard.Portal>
-                        <HoverCard.Content
-                          align={"start"}
-                          className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
-                        >
+                        <HoverCard.Content align={"start"} className={styles.RelationHoverCard}>
                           {relation.connectedObjects().length > 0 ? (
                             <>
                               <div>Connected objects:</div>
@@ -285,7 +284,7 @@ export const RelatedObjectView = observer(
                       </HoverCard.Portal>
                     </HoverCard.Root>
                     <HoverCard.Root>
-                      <HoverCard.Trigger className="flex-1">
+                      <HoverCard.Trigger>
                         {viewType === "replace" ? (
                           <ReplaceRelatedNodeView
                             object={object}
@@ -298,10 +297,7 @@ export const RelatedObjectView = observer(
                       </HoverCard.Trigger>
                       {object instanceof GraphRelation && (
                         <HoverCard.Portal>
-                          <HoverCard.Content
-                            align={"start"}
-                            className="bg-white border-gray-300 border p-2 rounded-md shadow z-50"
-                          >
+                          <HoverCard.Content align={"start"} className={styles.RelationHoverCard}>
                             <div>
                               from:{" "}
                               <span
@@ -325,7 +321,7 @@ export const RelatedObjectView = observer(
                   )}
                 </div>
                 {object.relations.length > 1 && (
-                  <div className="relative h-6 bg-[--gray-1] text-[--gray-8] px-1">{object.relations.length - 1}</div>
+                  <div className={styles.RelationCounter}>{object.relations.length - 1}</div>
                 )}
               </div>
             </RelationAtPathProvider>
@@ -342,111 +338,3 @@ export const RelatedObjectView = observer(
     );
   },
 );
-
-const SearchOrCreateNodeView = observer(() => {
-  const graph = useGraphStore();
-  const renderController = useRenderController();
-  const { object, relation, parent, pathToParentRelations } = useRelationAtPath();
-  const [search, setSearch] = useState(object.text);
-  const [selected, setSelected] = useState<number | null>(null);
-  const ref = useRef<HTMLInputElement>(null);
-  const [inputFocused, setInputFocused] = useState(false);
-
-  // Keep the search input in sync with the object's text
-  useEffect(() => setSearch(object.text), [object.text]);
-
-  // Replace the current object with the selected node
-  const onSelect = useCallback(
-    (node: GraphNode) => {
-      graph.setGraphNodeAtPath([...pathToParentRelations, relation], node);
-      setSearch(node.text);
-      renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations, relation]));
-    },
-    [graph, relation, pathToParentRelations, renderController],
-  );
-
-  // Filter nodes that match the search
-  const nodesMatchingSearch = useMemo(() => {
-    return graph.nodes.filter((n) => n.id !== object.id && n.text.toLowerCase().includes(search.toLowerCase()));
-  }, [graph.nodes, search, object]);
-
-  return (
-    <div className="flex flex-col relative">
-      <input
-        ref={ref}
-        className=" text-[--teal-10] hover:bg-[--teal-a2] rounded-sm outline-none underline decoration-[--gray-6]"
-        value={search}
-        placeholder="Search or create node..."
-        onFocus={() => setInputFocused(true)}
-        onBlur={() => setInputFocused(false)}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            ref.current?.blur();
-          }
-          if (nodesMatchingSearch.length > 0) {
-            if (e.key === "Enter" && selected !== null) {
-              e.preventDefault();
-              onSelect(nodesMatchingSearch[selected]);
-            } else if (e.key === "ArrowDown") {
-              e.preventDefault();
-              if (selected === null) {
-                setSelected(0);
-              } else {
-                setSelected((selected + 1) % nodesMatchingSearch.length);
-              }
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              if (selected === null) {
-                setSelected(nodesMatchingSearch.length - 1);
-              } else {
-                setSelected((selected - 1 + nodesMatchingSearch.length) % nodesMatchingSearch.length);
-              }
-            }
-          } else {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              const { relation: newRelation } = graph.createChildNode(parent);
-              graph.getRelationList(parent).move([newRelation], relation);
-              renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
-            }
-          }
-        }}
-        onChange={(e) => {
-          const search = e.target.value;
-          let newNode = graph.nodes.find((n) => n.text !== "" && n.text === search);
-          if (!newNode) {
-            newNode = graph.createNode({ content: search });
-          }
-          graph.setGraphNodeAtPath([...pathToParentRelations, relation], newNode);
-          // If the node has no relations, or is only related to the thoughtstream, delete it
-          if (
-            object.relations.length === 0 ||
-            object.relations.every((r) => {
-              const other = r.from.id === object.id ? r.to : r.from;
-              return other.id === graph.thoughtstreamRoot.id;
-            })
-          ) {
-            graph.deleteNode(object.id);
-          }
-          setSearch(search);
-        }}
-      />
-      {inputFocused && nodesMatchingSearch.length > 0 && (
-        <div className="absolute top-6 left-0 w-full bg-white border border-[--teal-3] text-[--gray-10] rounded-md z-10">
-          {nodesMatchingSearch.map((node, i) => (
-            <div
-              key={node.id}
-              onClick={() => {
-                onSelect(node);
-              }}
-              onMouseEnter={() => setSelected(i)}
-              className={`px-4 py-2 rounded-sm cursor-pointer ${selected === i ? "bg-[--teal-1]" : ""}`}
-            >
-              {node.text}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-});

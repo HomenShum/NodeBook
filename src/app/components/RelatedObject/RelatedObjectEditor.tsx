@@ -4,28 +4,21 @@ import { useRef } from "react";
 import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
-import { cn } from "@/lib/utils";
+
+import styles from "./RelatedObjectEditor.module.css";
 
 export const RelatedObjectEditor = observer(
   ({ indentationWidth, object }: { indentationWidth: string; object: GraphObject }) => {
     const ref = useRef<HTMLDivElement>(null);
     return (
-      <div
-        ref={ref}
-        style={{
-          gap: "5px",
-          display: "flex",
-          alignItems: "flex-start",
-          flex: 1,
-        }}
-      >
-        <div className="flex flex-col flex-1">
+      <div ref={ref} className={styles.Container}>
+        <div className={styles.ColumnContainer}>
           {object instanceof GraphNode ? (
-            <div className={cn("flex min-w-64")}>
+            <div className={styles.FlexContainer}>
               <NodeContentEditor indent={indentationWidth} />
             </div>
           ) : (
-            <span className="italic">{object.text}</span>
+            <span className={styles.TextContent}>{object.text}</span>
           )}
         </div>
       </div>

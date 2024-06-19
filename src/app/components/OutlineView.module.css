@@ -7,6 +7,10 @@
   margin: 0 auto;
 }
 
+.OutlineViewContainer {
+  margin-left: 0.5rem;
+}
+
 .OutlineObject {
   display: flex;
   flex-direction: column;
@@ -37,10 +41,6 @@
   right: 100%;
 }
 
-.OutlineContainer {
-  margin-left: 0.5rem;
-}
-
 /* Pin Icon of each bullet */
 .PinIcon {
   position: relative;
@@ -53,14 +53,13 @@
 
 .BreadcrumbContainer {
   display: flex;
-  padding-left: 16px;
+  padding-left: 32px;
   gap: 4px;
   color: var(--gray-8);
 }
 
 .BreadcrumbContainer > :first-child > :first-child {
   margin-right: 4px;
-  transform: translateY(-1px);
 }
 
 .Breadcrumb {
@@ -108,7 +107,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 0 0 22px;
+  padding: 0 8px 0 32px;
   height: 52px;
   color: var(--teal-10);
   gap: 8px;

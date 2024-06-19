@@ -9,7 +9,7 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
-import { useTree } from "@/app/view/Outline";
+import { useTree } from "@/app/view/Tree";
 /**
  * Plugin to move current node using Tab/Shift+Tab. Also handles bulleting by typing '-' at the start of a line.
  */

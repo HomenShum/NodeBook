@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getChips, $getText, getSelectionPositions } from "@/app/editor/utils";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
@@ -40,21 +41,28 @@ export const RelationPlugin = () => {
           graphStore.reverseRelation(relation);
         }
 
+        // Make sure the relation is there before the rest of this handler is executed
+        let promise: Promise<{ relation: GraphRelation } | void> = Promise.resolve();
+
         const parent = relation.to.id === object.id ? relation.from : relation.to;
         if (settingsStore.addStreamLabeledRelationsToMyLists && parent === graphStore.thoughtstreamRoot) {
-          graphStore.createRelation({
-            from: graphStore.thoughtstreamRoot,
-            to: object,
+          promise = graphStore.addRelation({
+            fromId: graphStore.thoughtstreamRoot.id,
+            toId: object.id,
           });
         }
 
-        // Set the content to the content after the cursor and focus
-        const chipsRight = $getChips(selectionRight);
-        if (chipsRight.length) {
-          chipsRight[0].value = chipsRight[0].value.trimStart(); // Remove leading whitespace
-        }
-        object.setContent(chipsRight);
-        renderController.setFocusedNode(pathToNodeStr);
+        // TODO: if possible, make it one transaction with the above
+        promise.then(() => {
+          // Set the content to the content after the cursor and focus
+          const chipsRight = $getChips(selectionRight);
+          if (chipsRight.length) {
+            chipsRight[0].value = chipsRight[0].value.trimStart(); // Remove leading whitespace
+          }
+          object.setContent(chipsRight);
+          renderController.setFocusedNode(pathToNodeStr);
+        });
+
         return true;
       },
       COMMAND_PRIORITY_NORMAL,

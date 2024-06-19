@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useTree } from "@/app/view/Outline";
+import { useTree } from "@/app/view/Tree";
 
 /**
  * Plugin to set the current node as the view root when the user presses Cmd+. (Mac) or Ctrl+. (Windows).

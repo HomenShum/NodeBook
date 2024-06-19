@@ -14,7 +14,7 @@ import { searchGraph } from "@/app/graph/search";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
-import { Tree, TreeContext } from "@/app/view/Outline";
+import { Tree, TreeContext } from "@/app/view/Tree";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -60,7 +60,7 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
   return (
     <TreeContext.Provider value={outline}>
       <div className={s.OutlineView}>
-        <div className={s.OutlineContainer}>
+        <div className={s.OutlineViewContainer}>
           {path.length > 1 && (
             <div className={s.BreadcrumbContainer}>
               {path.slice(0, -1).map(({ relation, child }, i) => {
@@ -161,8 +161,8 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
 
             <button
               className={s.AddButton}
-              onClick={() => {
-                const { path } = outline.createChildNode();
+              onClick={async () => {
+                const { path } = await outline.createChildNode();
                 renderController.setFocusedNode(relationsToPathStr(path));
               }}
             >

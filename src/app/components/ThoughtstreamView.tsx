@@ -13,7 +13,7 @@ import { searchGraph } from "@/app/graph/search";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
-import { Tree, TreeContext } from "@/app/view/Outline";
+import { Tree, TreeContext } from "@/app/view/Tree";
 import { ViewType } from "@/app/view/ViewType";
 
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
@@ -154,8 +154,8 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
             )}
             <button
               className={stylesList.AddButton}
-              onClick={() => {
-                const { path } = outline.createChildNode();
+              onClick={async () => {
+                const { path } = await outline.createChildNode();
                 renderController.setFocusedNode(relationsToPathStr(path));
               }}
             >
