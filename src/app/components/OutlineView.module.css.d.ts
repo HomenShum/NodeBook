@@ -8,9 +8,14 @@ declare const styles: {
   readonly "Chevron": string;
   readonly "HomeIcon": string;
   readonly "OutlineContainer": string;
+  readonly "OutlineObject": string;
   readonly "OutlineObjectContent": string;
+  readonly "OutlineObjectContentPublic": string;
+  readonly "OutlineObjectLeftArea": string;
   readonly "OutlineView": string;
   readonly "OutlineViewContainer": string;
+  readonly "PinIcon": string;
+  readonly "Selected": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
 };
