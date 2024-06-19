@@ -23,20 +23,20 @@ export const useKeyboardShortcuts = () => {
     // The children of the selected nodes don't need to be updated as their position is defined relative to the parent.
   }, []);
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
+    async (e: KeyboardEvent) => {
       const metaOrCtrl = e.metaKey || e.ctrlKey; // Command key on Mac, Ctrl key on Windows
       // Create note shortcut when it's not already handled by an editor
       if (metaOrCtrl && e.key === "k") {
         e.preventDefault();
         switch (curView) {
           case ViewType.OUTLINE: {
-            const { path } = viewStore.mainOutlineView.createChildNode();
+            const { path } = await viewStore.mainOutlineView.createChildNode();
             renderController.setFocusedNode(relationsToPathStr(path));
             break;
           }
           case ViewType.THOUGHTSTREAM:
           case ViewType.SPLIT: {
-            const { path } = viewStore.mainStreamView.createChildNode();
+            const { path } = await viewStore.mainStreamView.createChildNode();
             renderController.setFocusedNode(relationsToPathStr(path));
             break;
           }

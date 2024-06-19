@@ -20,8 +20,9 @@ export const CreateNodeAtTopPlugin = () => {
         if (event.key === "k" && event.metaKey) {
           event.preventDefault();
           event.stopPropagation();
-          const { path } = tree.createChildNode();
-          renderController.setFocusedNode(relationsToPathStr(path));
+          tree.createChildNode().then(({ path }) => {
+            renderController.setFocusedNode(relationsToPathStr(path));
+          });
           return true;
         }
         return false;

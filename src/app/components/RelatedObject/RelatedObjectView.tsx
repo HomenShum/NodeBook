@@ -2,11 +2,10 @@ import * as HoverCard from "@radix-ui/react-hover-card";
 import { Circle, Dot, GlobeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import styles from "@/app/components/OutlineView.module.css";
 import { PinCustom } from "@/app/components/icons";
-import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { SearchResult } from "@/app/graph/search";
@@ -28,7 +27,7 @@ import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
 import { RelatedObjectChildren } from "./RelatedObjectChildren";
-import { RelationAtPathProvider, useRelationAtPath } from "./RelatedObjectContext";
+import { RelationAtPathProvider } from "./RelatedObjectContext";
 import { RelatedObjectDetails } from "./RelatedObjectDetails";
 import { RelatedObjectEditor } from "./RelatedObjectEditor";
 import { RelatedObjectMenu } from "./RelatedObjectMenu";
@@ -344,111 +343,3 @@ export const RelatedObjectView = observer(
     );
   },
 );
-
-const SearchOrCreateNodeView = observer(() => {
-  const graph = useGraphStore();
-  const renderController = useRenderController();
-  const { object, relation, parent, pathToParentRelations } = useRelationAtPath();
-  const [search, setSearch] = useState(object.text);
-  const [selected, setSelected] = useState<number | null>(null);
-  const ref = useRef<HTMLInputElement>(null);
-  const [inputFocused, setInputFocused] = useState(false);
-
-  // Keep the search input in sync with the object's text
-  useEffect(() => setSearch(object.text), [object.text]);
-
-  // Replace the current object with the selected node
-  const onSelect = useCallback(
-    (node: GraphNode) => {
-      graph.setGraphNodeAtPath([...pathToParentRelations, relation], node);
-      setSearch(node.text);
-      renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations, relation]));
-    },
-    [graph, relation, pathToParentRelations, renderController],
-  );
-
-  // Filter nodes that match the search
-  const nodesMatchingSearch = useMemo(() => {
-    return graph.nodes.filter((n) => n.id !== object.id && n.text.toLowerCase().includes(search.toLowerCase()));
-  }, [graph.nodes, search, object]);
-
-  return (
-    <div className="flex flex-col relative">
-      <input
-        ref={ref}
-        className=" text-[--teal-10] hover:bg-[--teal-a2] rounded-sm outline-none underline decoration-[--gray-6]"
-        value={search}
-        placeholder="Search or create node..."
-        onFocus={() => setInputFocused(true)}
-        onBlur={() => setInputFocused(false)}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") {
-            ref.current?.blur();
-          }
-          if (nodesMatchingSearch.length > 0) {
-            if (e.key === "Enter" && selected !== null) {
-              e.preventDefault();
-              onSelect(nodesMatchingSearch[selected]);
-            } else if (e.key === "ArrowDown") {
-              e.preventDefault();
-              if (selected === null) {
-                setSelected(0);
-              } else {
-                setSelected((selected + 1) % nodesMatchingSearch.length);
-              }
-            } else if (e.key === "ArrowUp") {
-              e.preventDefault();
-              if (selected === null) {
-                setSelected(nodesMatchingSearch.length - 1);
-              } else {
-                setSelected((selected - 1 + nodesMatchingSearch.length) % nodesMatchingSearch.length);
-              }
-            }
-          } else {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              const { relation: newRelation } = graph.createChildNode(parent);
-              graph.getRelationList(parent).move([newRelation], relation);
-              renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations, newRelation]));
-            }
-          }
-        }}
-        onChange={(e) => {
-          const search = e.target.value;
-          let newNode = graph.nodes.find((n) => n.text !== "" && n.text === search);
-          if (!newNode) {
-            newNode = graph.createNode({ content: search });
-          }
-          graph.setGraphNodeAtPath([...pathToParentRelations, relation], newNode);
-          // If the node has no relations, or is only related to the thoughtstream, delete it
-          if (
-            object.relations.length === 0 ||
-            object.relations.every((r) => {
-              const other = r.from.id === object.id ? r.to : r.from;
-              return other.id === graph.thoughtstreamRoot.id;
-            })
-          ) {
-            graph.deleteNode(object.id);
-          }
-          setSearch(search);
-        }}
-      />
-      {inputFocused && nodesMatchingSearch.length > 0 && (
-        <div className="absolute top-6 left-0 w-full bg-white border border-[--teal-3] text-[--gray-10] rounded-md z-10">
-          {nodesMatchingSearch.map((node, i) => (
-            <div
-              key={node.id}
-              onClick={() => {
-                onSelect(node);
-              }}
-              onMouseEnter={() => setSelected(i)}
-              className={`px-4 py-2 rounded-sm cursor-pointer ${selected === i ? "bg-[--teal-1]" : ""}`}
-            >
-              {node.text}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-});

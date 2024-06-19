@@ -42,18 +42,19 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
   const renderController = useRenderController();
   const curView = useCurView();
   const onSelectOption = useCallback(
-    (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
+    async (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
       let graphNode: GraphNode; // For some reason have to declare this way to make TSC happy
       if (selectedOption.graphNode) {
         graphNode = selectedOption.graphNode;
       } else {
         // Create a new node
-        const newNodeAndRelation = graphStore.createChildNode(graphStore.outlineRoot, {
-          content: selectedOption.name.slice("Create new node: ".length),
+        const newNodeAndRelation = await graphStore.addChildNode({
+          parentId: graphStore.outlineRoot.id,
+          nodeProps: { content: selectedOption.name.slice("Create new node: ".length) },
         });
         graphNode = newNodeAndRelation.node;
       }
-      editor.update(() => {
+      editor.update(async () => {
         const mentionNode = $createMentionNode(graphNode.id, graphNode.text);
         if (nodeToReplace) {
           nodeToReplace.replace(mentionNode);
@@ -66,9 +67,9 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
               relation.to == node,
           )
         ) {
-          graphStore.createRelation({
-            from: graphNode,
-            to: node,
+          graphStore.addRelation({
+            fromId: graphNode.id,
+            toId: node.id,
             relationType: graphStore.relationTypesById.child,
           });
         }

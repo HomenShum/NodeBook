@@ -22,6 +22,17 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { cn } from "@/lib/utils";
 
+function resolveReplacementType(optionType: DropdownOption["type"]): "existing-node" | "existing-relation" {
+  switch (optionType) {
+    case "node":
+      return "existing-node";
+    case "relation":
+      return "existing-relation";
+    default:
+      throw new Error(`Invalid option type: ${optionType}`);
+  }
+}
+
 /**
  * Dropdown options:
  * - Replace the current object with the selected object
@@ -33,7 +44,7 @@ import { cn } from "@/lib/utils";
 export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) => {
   const graph = useGraphStore();
   const renderController = useRenderController();
-  const { object, relation, pathToParentRelations, pathToNodeStr, isChild } = useRelationAtPath();
+  const { object, relation, pathToNodeStr, isChild } = useRelationAtPath();
   const { viewType } = useViewType();
   const [editor] = useLexicalComposerContext();
   const [selected, setSelected] = useState<string | number | null>(0);
@@ -148,7 +159,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
   }, []);
 
   const onSelect = useCallback(
-    (option: DropdownOption) => {
+    async (option: DropdownOption) => {
       if (option.type === "relationType") {
         // update the relation type of the current relation
         graph.updateRelationsType(relation, option.object);
@@ -160,21 +171,19 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
           renderController.setFocusedNode(pathToNodeStr);
         }
       } else {
-        // replace the current object with the selected object
-        const newObject: GraphNode | GraphRelation =
-          option.type === "action" && option.id === "create-new-node"
-            ? graph.createNode({ content: object.text })
-            : option.object;
-
-        graph.setGraphNodeAtPath([...pathToParentRelations, relation], newObject);
+        const needNewNode = option.type === "action" && option.id === "create-new-node";
+        await graph.replaceRelationLink({
+          direction: relation.from.id === option.id ? "from" : "to",
+          relationId: relation.id,
+          replaceWith: needNewNode
+            ? { type: "new-node", nodeProps: { content: object.text } }
+            : { type: resolveReplacementType(option.type), id: option.id },
+        });
         renderController.setFocusedNode(pathToNodeStr);
-        if (object.relations.every((r) => r.from.id === graph.thoughtstreamRoot.id)) {
-          graph.deleteNode(object.id);
-        }
       }
       closeDropdown();
     },
-    [graph, pathToParentRelations, relation, renderController, pathToNodeStr, closeDropdown, object],
+    [graph, relation, renderController, pathToNodeStr, closeDropdown, object],
   );
 
   // Register keyboard commands for the dropdown

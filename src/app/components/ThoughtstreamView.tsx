@@ -154,8 +154,8 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
             )}
             <button
               className={stylesList.AddButton}
-              onClick={() => {
-                const { path } = outline.createChildNode();
+              onClick={async () => {
+                const { path } = await outline.createChildNode();
                 renderController.setFocusedNode(relationsToPathStr(path));
               }}
             >

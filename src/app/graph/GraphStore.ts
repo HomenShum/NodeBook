@@ -10,6 +10,7 @@ import { FractionalPositionedList } from "./FractionalPositionedList";
 import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
+import { TxAddChildNode, TxAddRelation, TxReplaceRelationLink } from "./GraphTransactionTypes";
 import { isPlaceholder } from "./PlaceholderGraphObject";
 import { SettingsStore } from "./SettingsStore";
 
@@ -35,6 +36,13 @@ const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
  */
 export type Path = string;
 
+/**
+ * GraphStore is a collection of nodes and relations.
+ *
+ * All public methods are either:
+ * - read-only (e.g. getters, assertions, etc)
+ * - asynchronous and transactional (i.e. they return a new state of the graph)
+ */
 export class GraphStore {
   private settingsStore: SettingsStore;
 
@@ -83,6 +91,140 @@ export class GraphStore {
     const { node } = this.createChildNode(this.outlineRoot);
     this.addToThoughtstream(node);
   }
+
+  /**
+   * Add a node with a child relation to some existing graph object.
+   */
+  async addChildNode(tx: TxAddChildNode): Promise<{ node: GraphNode; relation: GraphRelation }> {
+    const wannaBeParent = this.nodesById.get(tx.parentId);
+    if (!wannaBeParent) {
+      throw new Error(`Parent with id ${tx.parentId} does not exist`);
+    }
+
+    return this.createChildNode(wannaBeParent, tx.nodeProps);
+  }
+
+  /**
+   * Create a new relation between two existing objects.
+   */
+  async addRelation(tx: TxAddRelation): Promise<{ relation: GraphRelation }> {
+    const from = this.nodesById.get(tx.fromId);
+    const to = this.nodesById.get(tx.toId);
+    if (!from || !to) {
+      throw new Error(`GraphObject with id ${from ? tx.toId : tx.fromId} does not exist`);
+    }
+
+    return { relation: this.createRelation({ from, to, relationType: tx.relationType }) };
+  }
+
+  /**
+   * Replace a relation link with a new or existing graph object.
+   */
+  async replaceRelationLink(tx: TxReplaceRelationLink): Promise<{ object: GraphObject; relation: GraphRelation }> {
+    const relation = this.relationsById.get(tx.relationId);
+    if (!relation) {
+      throw new Error(`Relation with id ${tx.relationId} does not exist`);
+    }
+
+    const oldObject = relation[tx.direction];
+
+    // TODO: if something similar is to happen in another transaction, consider moving this to a separate method
+    let newObject;
+    if (tx.replaceWith.type === "new-node") {
+      newObject = this.createNode(tx.replaceWith.nodeProps || {});
+    } else {
+      if (tx.replaceWith.type === "existing-node") {
+        newObject = this.nodesById.get(tx.replaceWith.id);
+      } else if (tx.replaceWith.type === "existing-relation") {
+        newObject = this.relationsById.get(tx.replaceWith.id);
+      }
+
+      if (!newObject) throw new Error(`Object with id ${tx.replaceWith.id} does not exist`);
+    }
+
+    if (tx.direction === "from") {
+      this.updateRelationFrom(relation, newObject);
+    } else {
+      this.updateRelationTo(relation, newObject);
+    }
+
+    this.deleteIfNoRelations(oldObject);
+
+    return { object: newObject, relation };
+  }
+
+  private createNode(props: GraphNodeProps): GraphNode {
+    const node = new GraphNode(this, {
+      id: props.id || uuid(),
+      content: props.content,
+    });
+
+    this.nodesById.set(node.id, node);
+    this.relationsByNodeId.set(node.id, new FractionalPositionedList());
+    this.pinnedRelationsByNodeId.set(node.id, new FractionalPositionedList());
+
+    if (node.id === OUTLINE_ROOT_ID) {
+      this.outlineRoot = node;
+    } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
+      this.thoughtstreamRoot = node;
+    } else if (node.id === USER_ROOT_ID) {
+      this.userRoot = node;
+    }
+
+    return node;
+  }
+
+  private createChildNode(
+    parent: GraphObject,
+    props: GraphNodeProps = {},
+  ): { node: GraphNode; relation: GraphRelation } {
+    const node = this.createNode(props);
+    const relation = this.createRelation({
+      from: parent,
+      to: node,
+      relationType: defaultRelationTypes.child,
+    });
+
+    return { node, relation };
+  }
+
+  private createRelation(relationProps: GraphRelationProps): GraphRelation {
+    const relation = new GraphRelation(this, relationProps);
+    if (this.relationsById.has(relation.id)) {
+      throw new Error(`Relation with id ${relation.id} already exists`);
+    }
+
+    this.assertExists(relation.from, relation.to);
+    this.relationsById.set(relation.id, relation);
+
+    this.getRelationList(relation.from).add(relation);
+    this.getRelationList(relation.to).add(relation);
+
+    const newList = new FractionalPositionedList<GraphRelation>();
+    this.pinnedRelationsByNodeId.set(relation.id, newList);
+
+    return relation;
+  }
+
+  private deleteIfNoRelations(object: GraphObject) {
+    if (object.relations.length === 0 || this.doAllRelationsPointTo(object, this.thoughtstreamRoot)) {
+      this.deleteNode(object.id); // TODO: probably not only a Node
+    }
+  }
+
+  // TODO: move to the graph utils library
+  private doAllRelationsPointTo(object: GraphObject, pointTo: GraphObject): boolean {
+    return object.relations.every((r) => {
+      const other = r.from.id === object.id ? r.to : r.from;
+      return other.id === pointTo.id;
+    });
+  }
+
+  // --- ### ---
+
+  // MOST THINGS ABOVE THIS LINE HAVE BEEN REFACTORED
+
+  // --- ### ---
 
   clear() {
     this.nodesById.clear();
@@ -173,34 +315,6 @@ export class GraphStore {
     return relationIds.map((id) => this.relationsById.get(id)).filter((r) => r) as GraphRelation[];
   }
 
-  createNode(props: GraphNodeProps = {}): GraphNode {
-    const node = new GraphNode(this, {
-      id: props.id || uuid(),
-      content: props.content,
-    });
-    this.nodesById.set(node.id, node);
-    this.relationsByNodeId.set(node.id, new FractionalPositionedList());
-    this.pinnedRelationsByNodeId.set(node.id, new FractionalPositionedList());
-    if (node.id === OUTLINE_ROOT_ID) {
-      this.outlineRoot = node;
-    } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
-      this.thoughtstreamRoot = node;
-    } else if (node.id === USER_ROOT_ID) {
-      this.userRoot = node;
-    }
-    return node;
-  }
-
-  createChildNode(parent: GraphObject, props: GraphNodeProps = {}) {
-    const node = this.createNode(props);
-    const relation = this.createRelation({
-      from: parent,
-      to: node,
-      relationType: defaultRelationTypes.child,
-    });
-    return { node, relation };
-  }
-
   /**
    * Create a new node, with child relation to thoughtstream, and a new bundle
    * which contains it.
@@ -269,26 +383,6 @@ export class GraphStore {
 
   getNode(id: string): GraphNode | undefined {
     return this.nodesById.get(id);
-  }
-
-  createRelation(props: GraphRelationProps): GraphRelation {
-    return this.insertRelation(new GraphRelation(this, props));
-  }
-
-  insertRelation(relation: GraphRelation): GraphRelation {
-    if (this.relationsById.has(relation.id)) {
-      throw new Error(`Relation with id ${relation.id} already exists`);
-    }
-    this.assertExists(relation.from, relation.to);
-    this.relationsById.set(relation.id, relation);
-
-    this.getRelationList(relation.from).add(relation);
-    this.getRelationList(relation.to).add(relation);
-
-    const newList = new FractionalPositionedList<GraphRelation>();
-    this.pinnedRelationsByNodeId.set(relation.id, newList);
-
-    return relation;
   }
 
   createPinnedVersionOfRelation(relation: GraphRelation, direction: "from" | "to"): GraphRelation {

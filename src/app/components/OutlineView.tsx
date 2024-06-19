@@ -161,8 +161,8 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
 
             <button
               className={s.AddButton}
-              onClick={() => {
-                const { path } = outline.createChildNode();
+              onClick={async () => {
+                const { path } = await outline.createChildNode();
                 renderController.setFocusedNode(relationsToPathStr(path));
               }}
             >

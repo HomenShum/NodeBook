@@ -67,8 +67,8 @@ export const RelatedObjectMenu = observer(
           )}
           <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>Change relation type</DropdownMenuItem>
           <DropdownMenuItem
-            onSelect={action(() => {
-              graphStore.createChildNode(object);
+            onSelect={action(async () => {
+              await graphStore.addChildNode({ parentId: object.id });
               const pathStr = relationsToPathStr([...pathToParentRelations, relation]);
               tree.setPathExpanded(pathStr, true);
             })}

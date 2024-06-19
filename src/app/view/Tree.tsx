@@ -44,10 +44,10 @@ export class Tree {
     });
   }
 
-  createChildNode() {
+  async createChildNode() {
     const path = relationsPathToParentChild(this.root);
     const root = path[path.length - 1].child;
-    const { node, relation } = this.graphStore.createChildNode(root);
+    const { node, relation } = await this.graphStore.addChildNode({ parentId: root.id });
     return { node, relation, path: [...this.root, relation] };
   }
 
