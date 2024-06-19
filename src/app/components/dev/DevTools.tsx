@@ -8,15 +8,39 @@ import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { useViewStore } from "@/app/view/useViewStore";
 
+function SelectSearchAndReplaceDropdown() {
+  const settingsStore = useSettingsStore();
+  const searchAndReplaceDropdownOptions: { label: string; value: typeof settingsStore.searchAndReplaceDropdown }[] = [
+    { label: "Only after labelled relations", value: "labelled-only" },
+    { label: "All", value: "all" },
+    { label: "None", value: "none" },
+  ];
+  return (
+    <select
+      value={settingsStore.searchAndReplaceDropdown}
+      onChange={(e) =>
+        settingsStore.setSearchAndReplaceDropdown(e.target.value as typeof settingsStore.searchAndReplaceDropdown)
+      }
+    >
+      {searchAndReplaceDropdownOptions.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export const DevTools = observer(() => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
   const renderController = useRenderController();
 
+  type searchAndReplaceDropdownValue = typeof settingsStore.searchAndReplaceDropdown;
   const searchAndReplaceDropdownOptions: {
     label: string;
-    value: typeof settingsStore.searchAndReplaceDropdown;
+    value: searchAndReplaceDropdownValue;
   }[] = [
     { label: "Only after labelled relations", value: "labelled-only" },
     { label: "All", value: "all" },
@@ -208,16 +232,7 @@ export const DevTools = observer(() => {
         </label>
         <div className="flex gap-2">
           <label>Search and replace dropdown:</label>
-          <select
-            value={settingsStore.searchAndReplaceDropdown}
-            onChange={(e) => settingsStore.setSearchAndReplaceDropdown(e.target.value as any)} // TODO "as any" bad
-          >
-            {searchAndReplaceDropdownOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+          <SelectSearchAndReplaceDropdown />
         </div>
         <hr />
         <ImportDialog />

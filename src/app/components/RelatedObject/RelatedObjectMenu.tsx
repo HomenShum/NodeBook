@@ -91,7 +91,7 @@ export const RelatedObjectMenu = observer(
             ))}
           <DropdownMenuItem
             onSelect={() => {
-              const subtreeData = JSON.stringify(graphStore.serializeSubtree(object)); // TODO
+              const subtreeData = JSON.stringify(graphStore.serializeSubtree(object));
               const blob = new Blob([subtreeData], { type: "application/json" });
 
               // Create a temporary URL for the Blob

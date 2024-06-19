@@ -29,7 +29,7 @@ const settingsStore = new SettingsStore();
 settingsStore.loadFromLocalStorage();
 const graphStore = new GraphStore(settingsStore);
 const viewStore = new ViewStore(settingsStore, graphStore);
-const renderController = new RenderController(settingsStore, viewStore, graphStore);
+const renderController = new RenderController();
 
 autorun(() => {
   settingsStore.saveToLocalStorage();

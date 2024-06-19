@@ -68,8 +68,10 @@ export const EnterKeyPlugin = () => {
           renderController.setFocusedNode(relationsToPathStr(newPath));
           return true;
         } else {
-          // TODO handle related relations
-          throw new Error("Splitting relations not yet implemented");
+          // For now, we don't support splitting relations. In ENT-3653, we'll
+          // decide if and how to support this.
+          console.log("Splitting relations is not supported yet.");
+          return false;
         }
       }),
       COMMAND_PRIORITY_NORMAL,

@@ -2,6 +2,13 @@
   "extends": ["next"],
   "plugins": ["@typescript-eslint", "import"],
   "rules": {
+    "no-warning-comments": [
+      "warn",
+      {
+        "terms": ["todo", "fixme"],
+        "location": "start"
+      }
+    ],
     "import/order": [
       "error",
       {
