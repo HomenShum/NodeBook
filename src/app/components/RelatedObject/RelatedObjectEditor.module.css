@@ -1,0 +1,22 @@
+.Container {
+  display: flex;
+  gap: 5px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.ColumnContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.FlexContainer {
+  display: flex;
+  min-width: 64px;
+}
+
+.TextContent {
+  font-style: italic;
+  color: inherit;
+}
