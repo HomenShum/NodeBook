@@ -48,9 +48,10 @@ export class GraphNode implements Serializable, GraphObject {
     }: GraphNodeProps,
   ) {
     this.id = id;
-    // TODO:
-    // - make behavior the same for the cases when `content = []` and `content = ""`
-    this.content = typeof content === "string" ? [{ type: "text", value: content }] : content;
+    this.content =
+      Array.isArray(content) && content.length > 0
+        ? content
+        : [{ type: "text", value: typeof content === "string" ? content : "" }];
     this.createdAt = createdAt;
     this.isBundle = isBundle;
     this.isZone = isZone;
