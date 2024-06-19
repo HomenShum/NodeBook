@@ -1,0 +1,129 @@
+.NodeIndentation {
+  margin-left: 25px;
+}
+
+/* Pinned Toggle */
+
+.PinnedToggleButton {
+  display: flex;
+  gap: 2px;
+  position: relative;
+  top: 0;
+  left: 5px;
+  font-size: 12px;
+  width: fit-content;
+  padding: 4px;
+  border-radius: 6px;
+  color: var(--gray-7);
+  z-index: 10;
+}
+
+.PinnedToggleButton_PinnedVisible {
+  margin-bottom: 0;
+}
+
+.PinnedToggleButton_PinnedVisible:hover {
+  background-color: var(--teal-2);
+}
+
+.PinnedToggleButton_PinnedHidden {
+  margin-bottom: 12px;
+}
+
+.PinnedToggleButton_PinnedHidden:hover {
+  background-color: var(--gray-2);
+}
+
+.PinIcon {
+  transform: scale(0.7);
+  transition: all 0.3s ease;
+}
+
+.PinIcon_PinnedVisible {
+  transform: scale(0.7) rotate(45deg);
+  color: var(--teal-9);
+}
+
+.PinIcon_PinnedHidden {
+  color: var(--gray-7);
+}
+
+/* Pin Section */
+
+.PinSection {
+  padding-top: 12px;
+}
+
+.PinSectionSeparator {
+  margin-left: 12px;
+  border-bottom: 1px solid var(--teal-4);
+}
+
+.StreamSpacing {
+  margin-bottom: -11px;
+  padding-bottom: 16px;
+}
+
+.DefaultSpacing {
+  margin-bottom: 12px;
+  padding-bottom: 0;
+}
+
+/* Stream Bundle */
+
+.BundleSeparator {
+  border-top: 1px dashed var(--gray-5);
+}
+
+.FirstBundle {
+  margin-top: 8px;
+  padding-top: 8px;
+  border: none;
+}
+
+.FirstBundle_NoDate {
+  margin-bottom: 8px;
+}
+
+.FirstBundle_WithDate {
+  padding-bottom: 16px;
+}
+
+.DefaultBundle {
+  margin-top: 12px;
+  margin-bottom: 16px;
+  padding-top: 8px;
+}
+
+.DateLabel {
+  position: relative;
+  transform: translateY(-32px) translateX(-50%);
+  width: fit-content;
+  left: 50%;
+  color: var(--gray-8);
+  font-size: 12px;
+  z-index: 10;
+  height: 0;
+}
+
+.DateLabelContent {
+  background-color: white;
+  padding-left: 4px; /* px-1 */
+  padding-right: 4px; /* px-1 */
+}
+
+/* ShowAll Button */
+
+.ShowAll {
+  color: var(--teal-9);
+  font-size: 14px;
+  width: fit-content;
+  margin: 12px 0 0 6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background-color: var(--gray-2);
+}
+
+.ShowAll:hover {
+  background-color: var(--gray-1);
+}
