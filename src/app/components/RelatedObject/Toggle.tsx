@@ -2,7 +2,7 @@ import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { Dispatch, SetStateAction } from "react";
 
-import { useTree } from "@/app/view/Outline";
+import { useTree } from "@/app/view/Tree";
 
 export default observer(
   ({

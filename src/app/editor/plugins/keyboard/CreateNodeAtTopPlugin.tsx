@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr } from "@/app/util";
-import { useTree } from "@/app/view/Outline";
+import { useTree } from "@/app/view/Tree";
 
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.

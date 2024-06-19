@@ -22,7 +22,7 @@ import {
   relationsToURLPath,
   useCurView,
 } from "@/app/util";
-import { useTree } from "@/app/view/Outline";
+import { useTree } from "@/app/view/Tree";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
