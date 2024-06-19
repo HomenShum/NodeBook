@@ -60,7 +60,7 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
   return (
     <TreeContext.Provider value={outline}>
       <div className={s.OutlineView}>
-        <div className={s.OutlineContainer}>
+        <div className={s.OutlineViewContainer}>
           {path.length > 1 && (
             <div className={s.BreadcrumbContainer}>
               {path.slice(0, -1).map(({ relation, child }, i) => {
