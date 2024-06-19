@@ -4,6 +4,8 @@ import { Dispatch, SetStateAction } from "react";
 
 import { useTree } from "@/app/view/Tree";
 
+import styles from "./Toggle.module.css";
+
 export default observer(
   ({
     isSearching,
@@ -20,16 +22,7 @@ export default observer(
     const isExpanded = isSearching ? searchExpansion : tree.isPathExpanded(pathToNodeStr);
     return (
       <button
-        style={{
-          backgroundColor: "white",
-          border: "none",
-          width: "0",
-          height: "1rem",
-          color: "var(--gray-8)",
-          cursor: "pointer",
-          userSelect: "none",
-        }}
-        className="relative right-[4px]"
+        className={styles.ToggleButton}
         onClick={() => {
           if (isSearching) {
             setSearchExpansion(!searchExpansion);
@@ -38,11 +31,7 @@ export default observer(
           }
         }}
       >
-        {isExpanded ? (
-          <Play size={8} fill="currentColor" className="rotate-90" />
-        ) : (
-          <Play size={8} fill="currentColor" />
-        )}
+        <Play size={8} className={`${styles.Icon} ${isExpanded ? styles.ToggleExpanded : ""}`} />
       </button>
     );
   },

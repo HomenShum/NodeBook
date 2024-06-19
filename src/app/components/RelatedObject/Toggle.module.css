@@ -1,0 +1,21 @@
+.ToggleButton {
+  background-color: white; /* TODO: Should standarize bg-colors */
+  border: none;
+  width: 0;
+  height: 1rem;
+  color: var(--gray-8);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  right: 4px;
+}
+
+.Icon {
+  fill: currentColor;
+  transition: transform 0.15s ease;
+  will-change: transform;
+}
+
+.ToggleExpanded {
+  transform: rotate(90deg);
+}
