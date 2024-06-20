@@ -1,0 +1,49 @@
+.SidebarTreeContainer {
+  margin-left: 4px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.SidebarTreeBlock {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  height: 28px;
+  padding: 2px 4px;
+  align-items: center;
+  color: var(--gray-9);
+  border-radius: 4px;
+  width: 100%;
+  max-width: 180px;
+}
+
+.SidebarTreeBlock:hover {
+  background-color: var(--gray-3);
+}
+
+.SidebarTreeChildren {
+  padding-left: 16px;
+}
+
+.SidebarTreeContent {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.IconBox {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.IconBox:hover {
+  background-color: var(--gray-5);
+}
+
+.IconExpanded {
+  transform: rotate(90deg);
+}
