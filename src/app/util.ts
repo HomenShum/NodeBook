@@ -137,3 +137,7 @@ export function sortByPrefixMatch(objects: GraphObject[], query: string) {
 
   objects.sort((a, b) => isPrefixMatch[a.id] - isPrefixMatch[b.id]);
 }
+
+export function toast(message: string) {
+  alert(message);
+}

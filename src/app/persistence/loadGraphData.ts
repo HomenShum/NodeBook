@@ -6,14 +6,12 @@ import { ViewStore } from "@/app/view/ViewStore";
 export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore) {
   let dataString: string | null = null;
   if (env.persistTo === "local") {
+    console.debug("Loading data from local storage");
     dataString = localStorage.getItem("data");
   } else if (env.persistTo === "server") {
-    try {
-      const json = await fetch("/api/persist").then((res) => res.json());
-      dataString = json.data;
-    } catch (e) {
-      console.error("Error loading data from server", e);
-    }
+    console.debug("Loading data from server");
+    const json = await fetch("/api/persist").then((res) => res.json());
+    dataString = json.data;
   }
   if (!dataString) return;
 
@@ -24,4 +22,5 @@ export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore
   if (data.viewStore) {
     viewStore.deserializeInPlace(data.viewStore);
   }
+  console.debug(`Successfully loaded data from ${env.persistTo}`);
 }

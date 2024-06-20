@@ -14,7 +14,7 @@ import { persistGraphData } from "@/app/persistence/persistGraphData";
 import { storesToDataString } from "@/app/persistence/serialization";
 import { RenderController } from "@/app/render/RenderController";
 import { RenderControllerProvider } from "@/app/render/useRenderController";
-import { useCurView } from "@/app/util";
+import { toast, useCurView } from "@/app/util";
 import { ViewStore } from "@/app/view/ViewStore";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 
@@ -55,6 +55,7 @@ export default function RootTemplate({
   children: React.ReactNode;
 }>) {
   const [hasLoaded, setHasLoaded] = useState(false);
+  const isLoadingRef = useRef(false);
   const persistedData = useRef<string | null>(null);
   const curView = useCurView();
 
@@ -63,16 +64,27 @@ export default function RootTemplate({
       setHasLoaded(true);
       return;
     }
+    if (isLoadingRef.current) return;
     async function setupSync() {
-      await loadGraphData(graphStore, viewStore);
-      setHasLoaded(true);
-      setInterval(() => {
-        const newDataString = storesToDataString(graphStore, viewStore);
-        if (newDataString !== persistedData.current) {
-          persistedData.current = newDataString;
-          persistGraphData(newDataString);
-        }
-      }, 500);
+      try {
+        isLoadingRef.current = true;
+        await loadGraphData(graphStore, viewStore);
+      } catch (e) {
+        graphStore.clear();
+        viewStore.clear();
+        toast("Failed to load data from server. Starting with an empty graph.");
+        throw e;
+      } finally {
+        setHasLoaded(true);
+        isLoadingRef.current = false;
+        setInterval(() => {
+          const newDataString = storesToDataString(graphStore, viewStore);
+          if (newDataString !== persistedData.current) {
+            persistedData.current = newDataString;
+            persistGraphData(newDataString);
+          }
+        }, 500);
+      }
     }
     setupSync();
   }, []);
