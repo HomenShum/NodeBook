@@ -156,6 +156,12 @@
   }
 }
 
+.SettingsButton {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+}
+
 .MainContainer {
   display: flex;
   flex-direction: row;

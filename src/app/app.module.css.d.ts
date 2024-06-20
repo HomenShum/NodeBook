@@ -16,6 +16,7 @@ declare const styles: {
   readonly "Main": string;
   readonly "MainContainer": string;
   readonly "Selected": string;
+  readonly "SettingsButton": string;
 };
 export = styles;
 

@@ -15,8 +15,7 @@ import { ViewType } from "@/app/view/ViewType";
 import { DevTools } from "./components/dev/DevTools";
 import { SidebarOutlines } from "./components/dev/SidebarOutlines";
 
-import s from "./app.module.css";
-
+import styles from "./app.module.css";
 import "./global.css";
 
 export default observer(
@@ -33,25 +32,28 @@ export default observer(
 
     const ButtonNavigation = () => (
       <>
-        <Link className={`${s.Button} ${curView === ViewType.OUTLINE ? s.Selected : ""}`} href="/outline">
-          <ListIcon className={s.ButtonIcon} />
+        <Link className={`${styles.Button} ${curView === ViewType.OUTLINE ? styles.Selected : ""}`} href="/outline">
+          <ListIcon className={styles.ButtonIcon} />
           List
         </Link>
-        <Link className={`${s.Button} ${curView === ViewType.THOUGHTSTREAM ? s.Selected : ""}`} href="/stream">
-          <StreamIcon className={s.ButtonIcon} />
+        <Link
+          className={`${styles.Button} ${curView === ViewType.THOUGHTSTREAM ? styles.Selected : ""}`}
+          href="/stream"
+        >
+          <StreamIcon className={styles.ButtonIcon} />
           Stream
         </Link>
-        <Link className={`${s.Button} ${curView === ViewType.SPLIT ? s.Selected : ""}`} href="/split">
-          <SplitIcon className={s.ButtonIcon} /> Split
+        <Link className={`${styles.Button} ${curView === ViewType.SPLIT ? styles.Selected : ""}`} href="/split">
+          <SplitIcon className={styles.ButtonIcon} /> Split
         </Link>
       </>
     );
     const router = useRouter();
 
     return (
-      <div className={s.App}>
-        <div ref={appContainerRef} className={s.AppContainer}>
-          <aside className={`${s.LeftAside} ${renderController.leftSidebarOpen ? s.AsideVisible : ""}`}>
+      <div className={styles.App}>
+        <div ref={appContainerRef} className={styles.AppContainer}>
+          <aside className={`${styles.LeftAside} ${renderController.leftSidebarOpen ? styles.AsideVisible : ""}`}>
             {/* for now keeping this as tailwind bc it handles wisely the gaps in both axis */}
             <div className="flex items-start flex-col w-full gap-x-2 gap-y-1 py-1">
               <ButtonNavigation />
@@ -59,29 +61,31 @@ export default observer(
             </div>
           </aside>
 
-          <div className={s.Container}>
-            <header className={s.Header}>
-              <button className={s.LeftSidebarIcon} onClick={() => renderController.toggleLeftSidebar()}>
+          <div className={styles.Container}>
+            <header className={styles.Header}>
+              <button className={styles.LeftSidebarIcon} onClick={() => renderController.toggleLeftSidebar()}>
                 <SidebarIcon />
               </button>
 
-              <div className={`${s.HeaderNav} ${renderController.leftSidebarOpen ? s.LeftShift : ""}`}>
-                <div className={`${s.BackButton}`} onClick={() => router.back()}>
+              <div className={`${styles.HeaderNav} ${renderController.leftSidebarOpen ? styles.LeftShift : ""}`}>
+                <div className={`${styles.BackButton}`} onClick={() => router.back()}>
                   <ArrowLeft size={18} />
                 </div>
                 <SearchBar />
-                <div className={s.HeaderNavButtons}>
+                <div className={styles.HeaderNavButtons}>
                   <ButtonNavigation />
                 </div>
               </div>
               <button onClick={() => renderController.toggleRightSidebar()}>
-                <SettingsIcon size={18} strokeWidth={1.5} className="absolute top-[16px] right-4" />
+                <SettingsIcon size={18} strokeWidth={1.5} className={styles.SettingsButton} />
               </button>
             </header>
-            <div className={s.MainContainer}>
-              <main className={`${s.Main} ${renderController.leftSidebarOpen ? s.LeftShift : ""}`}>{children}</main>
+            <div className={styles.MainContainer}>
+              <main className={`${styles.Main} ${renderController.leftSidebarOpen ? styles.LeftShift : ""}`}>
+                {children}
+              </main>
               {renderController.rightSidebarOpen && (
-                <aside className={s.DevToolsSidebar}>
+                <aside className={styles.DevToolsSidebar}>
                   <SidebarOutlines />
                   <DevTools />
                 </aside>

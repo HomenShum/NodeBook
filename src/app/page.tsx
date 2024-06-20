@@ -7,6 +7,8 @@ import { DataLoadContext } from "./DataLoadContext";
 import { useGraphStore } from "./graph/useGraphStore";
 import { useViewStore } from "./view/useViewStore";
 
+import styles from "./page.module.css";
+
 const OutlineView = dynamic(() => import("./components/OutlineView").then((x) => x.OutlineView), {
   ssr: false,
 });
@@ -19,7 +21,12 @@ export default function Page() {
   }, [graphStore.outlineRootRelationFromUserRoot, viewStore.mainOutlineView]);
 
   const hasLoaded = useContext(DataLoadContext);
-  if (!hasLoaded) return <div className="p-4">Loading...</div>;
+  if (!hasLoaded)
+    return (
+      <div className={styles.LoaderContainer}>
+        <span className={styles.Loader}></span> Loading
+      </div>
+    );
 
   return <OutlineView outline={viewStore.mainOutlineView} />;
 }
