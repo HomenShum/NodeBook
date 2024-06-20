@@ -1,7 +1,5 @@
-import { BaseSelection, LexicalNode } from "lexical";
 import { makeAutoObservable, toJS } from "mobx";
 
-import { nodeToChip } from "@/app/editor/utils";
 import { SerializedGraphStore, SerializedRelation } from "@/app/persistence/SerializedData";
 import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
 import { comparePositions, relationsPathToParentChild, uuid } from "@/app/util";
@@ -656,7 +654,8 @@ export class GraphStore {
   splitRelatedNode(
     relation: GraphRelation,
     nodeToSplit: GraphNode,
-    selection: BaseSelection,
+    chipsBefore: Chip[],
+    chipsAfter: Chip[],
     shouldCreateChild: boolean,
     { splitToNewBundle } = { splitToNewBundle: false },
   ) {
@@ -665,35 +664,6 @@ export class GraphStore {
       ? this.correspondingObjectsForPinned.get(relation.id)!
       : relation;
     const pinnedRelation = this.correspondingPinnedForObjects.get(unpinnedRelation.id);
-
-    // Get selection start and end points
-    let start = { index: 0, offset: 0 };
-    let end = { index: 0, offset: 0 };
-    let nodes: LexicalNode[] = [];
-    const nonEmptyEditor = selection.getNodes()[0]?.getParents()[0]?.getTextContent() !== "";
-    if (nonEmptyEditor) {
-      const points = selection?.getStartEndPoints();
-      if (!points) {
-        throw new Error("No selection points");
-      }
-
-      const selectionNodes = selection.getNodes();
-      const firstNode = selectionNodes[0];
-      const lastNode = selectionNodes[selectionNodes.length - 1];
-
-      const paragraphNode = firstNode.getParent();
-      nodes = paragraphNode.getChildren();
-
-      const firstNodeIndexInParagraph = nodes.findIndex((node) => node === firstNode);
-      const lastNodeIndexInParagraph = nodes.findIndex((node) => node === lastNode);
-
-      const selectionEnds = [
-        { index: firstNodeIndexInParagraph, offset: points[0].offset },
-        { index: lastNodeIndexInParagraph, offset: points[1].offset },
-      ];
-      start = selection.isBackward() ? selectionEnds[1] : selectionEnds[0];
-      end = selection.isBackward() ? selectionEnds[0] : selectionEnds[1];
-    }
 
     const relationsList = this.getRelationList(parent);
     const relations = Array.from(relationsList.values())
@@ -705,13 +675,12 @@ export class GraphStore {
 
     let child: { node: GraphNode; relation: GraphRelation };
     let nested = false;
-    const isCollapsedAndAtStart =
-      start.index === end.index && start.offset === end.offset && start.index === 0 && start.offset === 0;
-    if (isCollapsedAndAtStart && nodeToSplit.content.length > 0) {
-      // Insert a new blank node just above the current node
-      // (we do this by getting the sibling above and moving the new node after it,
-      // because FractionalPositionedList.move can only place nodes after another node.
-      // TODO: add a moveBefore method or something to FractionalPositionedList)
+
+    if (chipsBefore.length === 0 && chipsAfter.length > 0) {
+      // If the selection is at the start of a non-empty node, insert a new
+      // blank node just above the current node (we do this by getting the
+      // sibling above and moving the new node after it, because
+      // FractionalPositionedList.move can only place nodes after another node.
       child = this.createChildNode(parent);
       if (siblingAbove) relationsList.move([child.relation], siblingAbove);
       if (pinnedRelation && relation === pinnedRelation) {
@@ -722,26 +691,6 @@ export class GraphStore {
         pinnedRelationsList.move([newPinnedRelation], this.correspondingPinnedForObjects.get(siblingAbove.id)!);
       }
     } else {
-      const chipsBefore: Chip[] = [];
-      // Collect nodes before the selection
-      chipsBefore.push(...nodes.slice(0, start.index).map(nodeToChip));
-      // and the first part of the node the selection start
-      if (nodes[start.index]) {
-        if (start.offset < nodes[start.index].getTextContent().length) {
-          chipsBefore.push({ type: "text", value: nodes[start.index].getTextContent().substring(0, start.offset) });
-        } else {
-          chipsBefore.push(nodeToChip(nodes[start.index]));
-        }
-      }
-
-      const chipsAfter: Chip[] = [];
-      // Collect the last part of the node after the selection end
-      if (nodes[end.index] && end.offset < nodes[end.index].getTextContent().length) {
-        chipsAfter.push({ type: "text", value: nodes[end.index].getTextContent().substring(end.offset) });
-      }
-      // and all the nodes after that
-      chipsAfter.push(...nodes.slice(end.index + 1).map(nodeToChip));
-
       nodeToSplit.setContent(chipsBefore);
       if (shouldCreateChild) {
         child = this.createChildNode(nodeToSplit, { content: chipsAfter });
