@@ -6,6 +6,7 @@ import { useContext, useEffect } from "react";
 import { DataLoadContext } from "@/app/DataLoadContext";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
+import styles from "@/app/page.module.css";
 import { relationsPathToParentChild } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -117,7 +118,12 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
     }
   }, [graphStore, hasLoaded, path, router, viewName, viewStore]);
 
-  if (!hasLoaded) return <div className="p-4">Loading...</div>;
+  if (!hasLoaded)
+    return (
+      <div className={styles.LoaderContainer}>
+        <span className={styles.Loader}></span> Loading
+      </div>
+    );
 
   if (viewName === "stream") {
     return <ThoughtstreamView tree={viewStore.mainStreamView}></ThoughtstreamView>;
