@@ -118,9 +118,9 @@
 
 .RelatedObjectNode {
   display: flex;
-  flex-direction: column;
-  flex: 1;
+  flex: 1 1 0%;
   position: relative;
+  width: 100%;
   top: -2px;
 }
 
@@ -132,6 +132,10 @@
   gap: 2px;
   align-items: baseline;
   padding-bottom: 8px;
+}
+
+.HoverCardTrigger {
+  flex: 1 1 0%;
 }
 
 .RelationHoverCard {
@@ -147,7 +151,7 @@
   position: relative;
   align-self: flex-start;
   margin-top: 2px;
-  height: 16px;
+  height: 18px;
   background-color: var(--gray-1);
   color: var(--gray-8);
   font-size: 12px;

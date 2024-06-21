@@ -2,13 +2,13 @@
   display: flex;
   gap: 5px;
   align-items: flex-start;
-  flex: 1;
+  flex: 1 1 0%;
 }
 
 .ColumnContainer {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 1 0%;
 }
 
 .FlexContainer {
