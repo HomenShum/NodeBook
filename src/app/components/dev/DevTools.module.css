@@ -1,0 +1,31 @@
+.DevToolsContainer {
+  padding: 16px;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: initial;
+}
+
+.DevToolsHeader {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.SettingsGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.LabelSetting {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.SearchReplaceContainer {
+  display: flex;
+  gap: 8px;
+}

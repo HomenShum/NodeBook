@@ -5,8 +5,9 @@ import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import { Button } from "@/app/components/ui/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { useViewStore } from "@/app/view/useViewStore";
+
+import styles from "./DevTools.module.css";
 
 function SelectSearchAndReplaceDropdown() {
   const settingsStore = useSettingsStore();
@@ -35,202 +36,172 @@ export const DevTools = observer(() => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
-  const renderController = useRenderController();
 
-  type searchAndReplaceDropdownValue = typeof settingsStore.searchAndReplaceDropdown;
-  const searchAndReplaceDropdownOptions: {
-    label: string;
-    value: searchAndReplaceDropdownValue;
-  }[] = [
-    { label: "Only after labelled relations", value: "labelled-only" },
-    { label: "All", value: "all" },
-    { label: "None", value: "none" },
-  ];
   return (
-    <div className="p-2 mb-0 flex flex-col flex-initial">
-      <h1 className="text-xl font-bold mb-2">Dev Tools</h1>
-      <div className="flex flex-col gap-2">
-        <label className="cursor-pointer">
+    <div className={styles.DevToolsContainer}>
+      <h1 className={styles.DevToolsHeader}>Dev Tools</h1>
+      <div className={styles.SettingsGroup}>
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.showNodeDetails}
             onChange={(e) => settingsStore.setShowNodeDetails(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Show node details in view
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.hideDirectParent}
             onChange={(e) => settingsStore.setHideDirectParent(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Hide relations to direct parent
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.hideAllRootParents}
             onChange={(e) => settingsStore.setHideAllRootParents(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Hide all root parents
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.hideAllParents}
             onChange={(e) => settingsStore.setHideAllParents(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Hide all parents
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.hideBackrelations}
             onChange={(e) => settingsStore.setHideBackrelations(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Hide backrelations
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.hideBundles}
             onChange={(e) => settingsStore.setHideBundles(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Hide bundles
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.hideZones}
             onChange={(e) => settingsStore.setHideZones(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Hide zones
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.showAtSignOnMention}
             onChange={(e) => settingsStore.setShowAtSignOnMention(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Show @ sign on mention
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.addAllOutlineDescendantsToThoughtstream}
             onChange={(e) => settingsStore.setAddAllOutlineDescendantsToThoughtstream(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Add all outline descendants to thoughtstream
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.addThoughtstreamDirectChildrenToOutline}
             onChange={(e) => settingsStore.setAddThoughtstreamDirectChildrenToOutline(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Add thoughtstream direct children to outline
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.addThoughtstreamNestedChildrenToThoughtstream}
             onChange={(e) => settingsStore.setAddThoughtstreamNestedChildrenToThoughtstream(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Add thoughtstream nested children as direct children of thoughtstream
         </label>
-        <label>
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.hideThoughtstreamBullets}
             onChange={(e) => settingsStore.setHideThoughtstreamBullets(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Hide bullets in thoughtstream view
         </label>
-        <label>
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.addStreamLabeledRelationsToMyLists}
             onChange={(e) => settingsStore.setAddStreamLabeledRelationsToMyLists(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Add stream labeled relations to My Lists
         </label>
-        <label>
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.allowShiftTabAboveViewRoot}
             onChange={(e) => settingsStore.setAllowShiftTabAboveViewRoot(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Allow shift tab above view root
         </label>
-        <label>
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.disableCycles}
             onChange={(e) => settingsStore.setDisableCycles(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Disable expanding cycles
         </label>
-        <label>
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.hideBulletBackgroundIfParentsOnly}
             onChange={(e) => settingsStore.setHideBulletBackgroundIfParentsOnly(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Hide bullet backgrounds if it contains only parents
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.removingNodeAsDirectChildOfThoughtstreamDeletesIt}
             onChange={(e) => settingsStore.setRemovingNodeAsDirectChildOfThoughtstreamDeletesIt(e.target.checked)}
-            className="mr-2 mb-2"
           />
           On removing node as direct child of thoughtstream, delete the node everywhere
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.atSignTriggerToReplaceObject}
             onChange={(e) => settingsStore.setAtSignTriggerToReplaceObject(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Type @ in an empty editor to trigger search and replace for current object
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.semicolonTriggerToReplaceObject}
             onChange={(e) => settingsStore.setSemicolonTriggerToReplaceObject(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Type ; in an empty editor to trigger search and replace for current object
         </label>
-        <label className="cursor-pointer mb-2">
+        <label className={styles.LabelSetting}>
           <input
             type="checkbox"
             checked={settingsStore.hidePinnedItems}
             onChange={(e) => settingsStore.setHidePinnedItems(e.target.checked)}
-            className="mr-2 mb-2"
           />
           Hide pinned items from the main list
         </label>
-        <div className="flex gap-2">
+        <div className={styles.SearchReplaceContainer}>
           <label>Search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />
         </div>
