@@ -9,7 +9,7 @@ import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { $createMentionNode } from "@/app/graph/MentionNode";
@@ -34,9 +34,9 @@ class MentionTypeaheadOption extends MenuOption {
 }
 
 export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: boolean) => void }): JSX.Element | null {
-  const { object: node } = useRelationAtPath();
+  const { treeNode } = useTreeNode();
   const [queryString, setQueryString] = useState<string | null>(null);
-
+  const node = treeNode.object;
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
   const renderController = useRenderController();

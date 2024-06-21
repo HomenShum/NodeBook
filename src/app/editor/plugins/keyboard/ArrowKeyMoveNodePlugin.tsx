@@ -2,7 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { COMMAND_PRIORITY_EDITOR, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 /**
  * Plugin to move current node using Cmd + Shift + ArrowUp/ArrowDown.
@@ -10,8 +10,11 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 export const ArrowKeyMoveNodePlugin = () => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
-  const { relation, pathToNodeStr, siblingAbove, siblingBelow, parent } = useRelationAtPath();
-
+  const { treeNode } = useTreeNode();
+  const parent = treeNode.parent.object;
+  const relation = treeNode.relationWithParent;
+  const siblingAbove = treeNode.siblingAbove;
+  const siblingBelow = treeNode.siblingBelow;
   useEffect(() => {
     return editor.registerCommand(
       KEY_DOWN_COMMAND,
@@ -20,10 +23,10 @@ export const ArrowKeyMoveNodePlugin = () => {
         if (metaOrCtrl && event.shiftKey && event.key === "ArrowUp") {
           if (!siblingAbove) return false;
           event.preventDefault();
-          graphStore.getRelationList(parent).move([siblingAbove], relation);
+          graphStore.getRelationList(parent).move([siblingAbove.relationWithParent], relation);
           // While in thoughtstream view, move relation into the same bundle as the sibling above
           if (parent.id === graphStore.thoughtstreamRoot.id) {
-            const siblingAboveBundle = graphStore.relationToBundles.get(siblingAbove.id)?.[0];
+            const siblingAboveBundle = graphStore.relationToBundles.get(siblingAbove.object.id)?.[0];
             const thisBundle = graphStore.relationToBundles.get(relation.id)?.[0];
             if (siblingAboveBundle && thisBundle?.id !== siblingAboveBundle?.id) {
               if (thisBundle) {
@@ -36,10 +39,10 @@ export const ArrowKeyMoveNodePlugin = () => {
         } else if (metaOrCtrl && event.shiftKey && event.key === "ArrowDown") {
           if (!siblingBelow) return false;
           event.preventDefault();
-          graphStore.getRelationList(parent).move([relation], siblingBelow);
+          graphStore.getRelationList(parent).move([relation], siblingBelow.relationWithParent);
           // While in thoughtstream view, move relation into the same bundle as the sibling below
           if (parent.id === graphStore.thoughtstreamRoot.id) {
-            const siblingBelowBundle = graphStore.relationToBundles.get(siblingBelow.id)?.[0];
+            const siblingBelowBundle = graphStore.relationToBundles.get(siblingBelow.object.id)?.[0];
             const thisBundle = graphStore.relationToBundles.get(relation.id)?.[0];
             if (siblingBelowBundle && thisBundle?.id !== siblingBelowBundle?.id) {
               if (thisBundle) {
@@ -54,7 +57,7 @@ export const ArrowKeyMoveNodePlugin = () => {
       },
       COMMAND_PRIORITY_EDITOR,
     );
-  }, [editor, graphStore, parent, pathToNodeStr, relation, siblingAbove, siblingBelow]);
+  }, [editor, graphStore, parent, relation, siblingAbove, siblingBelow]);
 
   return null;
 };

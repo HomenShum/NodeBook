@@ -2,7 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getChips, $getText, getSelectionPositions } from "@/app/editor/utils";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -14,10 +14,13 @@ export const RelationPlugin = () => {
   const graphStore = useGraphStore();
   const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
-  const { object, relation, pathToNodeStr } = useRelationAtPath();
-  if (!(object instanceof GraphNode)) {
+  const { treeNode } = useTreeNode();
+  if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
+  const object = treeNode.object;
+  const relation = treeNode.relationWithParent;
+  const pathToNodeStr = treeNode.path;
   useEffect(() => {
     return editor.registerCommand(
       KEY_DOWN_COMMAND,

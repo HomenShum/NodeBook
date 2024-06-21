@@ -108,11 +108,11 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
     }
 
     // if the path is different from the outline/stream view root, update the latter
-    if (newOutlineRoot && !arrayEqual(viewStore.mainOutlineView.root, newOutlineRoot)) {
+    if (newOutlineRoot && !arrayEqual(viewStore.mainOutlineView.pathToRoot, newOutlineRoot)) {
       viewStore.mainOutlineView.setRoot(newOutlineRoot);
     }
 
-    if (newStreamRoot && !arrayEqual(viewStore.mainStreamView.root, newStreamRoot)) {
+    if (newStreamRoot && !arrayEqual(viewStore.mainStreamView.pathToRoot, newStreamRoot)) {
       viewStore.mainStreamView.setRoot(newStreamRoot);
     }
   }, [graphStore, hasLoaded, path, router, viewName, viewStore]);
@@ -120,9 +120,9 @@ export default function Page({ params: { viewName, path } }: { params: { viewNam
   if (!hasLoaded) return <div className="p-4">Loading...</div>;
 
   if (viewName === "stream") {
-    return <ThoughtstreamView outline={viewStore.mainStreamView}></ThoughtstreamView>;
+    return <ThoughtstreamView tree={viewStore.mainStreamView}></ThoughtstreamView>;
   } else if (viewName === "outline") {
-    return <OutlineView outline={viewStore.mainOutlineView}></OutlineView>;
+    return <OutlineView tree={viewStore.mainOutlineView}></OutlineView>;
   } else if (viewName === "split") {
     return <SplitView></SplitView>;
   }

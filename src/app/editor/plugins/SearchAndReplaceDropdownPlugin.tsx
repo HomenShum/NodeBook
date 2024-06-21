@@ -14,12 +14,12 @@ import {
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
+import { isUnlabelledChild } from "@/app/view/Tree";
 import { cn } from "@/lib/utils";
 
 function resolveReplacementType(optionType: DropdownOption["type"]): "existing-node" | "existing-relation" {
@@ -44,13 +44,15 @@ function resolveReplacementType(optionType: DropdownOption["type"]): "existing-n
 export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) => {
   const graph = useGraphStore();
   const renderController = useRenderController();
-  const { object, relation, pathToNodeStr, isChild } = useRelationAtPath();
-  const { viewType } = useViewType();
+  const { treeNode, viewType } = useTreeNode();
   const [editor] = useLexicalComposerContext();
   const [selected, setSelected] = useState<string | number | null>(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hasFocus, setHasFocus] = useState(editor.getRootElement()?.contains(document.activeElement) ?? false);
   const [mouseHasMoved, setMouseHasMoved] = useState(false);
+  const object = treeNode.object;
+  const relation = treeNode.relationWithParent;
+  const pathToNodeStr = treeNode.path;
 
   // Track whether the mouse has moved after the dropdown was opened. We only want to
   // set the selection to the mouse position if the mouse was intentionally moved there.
@@ -111,7 +113,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
     );
     // Filter relation types that match the search
     let relationTypeOptions: DropdownOption[] = [];
-    if (isChild && keywords.length > 0) {
+    if (isUnlabelledChild(treeNode) && keywords.length > 0) {
       graph.relationTypes.forEach((rt) => {
         if (rt.id === relation.relationType.id) {
           return;
@@ -133,15 +135,15 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
       ...actionOptions,
     ];
   }, [
+    hasFocus,
+    object.text,
+    object.id,
     graph.nodes,
     graph.relations,
     graph.relationTypes,
-    object.id,
-    object.text,
+    treeNode,
     relation.id,
-    hasFocus,
     relation.relationType.id,
-    isChild,
   ]);
 
   /**

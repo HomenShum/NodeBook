@@ -2,7 +2,8 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $getRoot, COMMAND_PRIORITY_LOW, KEY_SPACE_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { isUnlabelledChild } from "@/app/view/Tree";
 
 /**
  * Ignore space at the start of the editor.
@@ -10,9 +11,9 @@ import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectC
  */
 export const IgnoreSpaceAtStartOfLabelledRelationsPlugin = () => {
   const [editor] = useLexicalComposerContext();
-  const { isChild } = useRelationAtPath();
+  const { treeNode } = useTreeNode();
   useEffect(() => {
-    if (isChild) return;
+    if (isUnlabelledChild(treeNode)) return;
     return editor.registerCommand(
       KEY_SPACE_COMMAND,
       (event) => {
@@ -25,6 +26,6 @@ export const IgnoreSpaceAtStartOfLabelledRelationsPlugin = () => {
       },
       COMMAND_PRIORITY_LOW,
     );
-  }, [editor, isChild]);
+  }, [editor, treeNode]);
   return null;
 };

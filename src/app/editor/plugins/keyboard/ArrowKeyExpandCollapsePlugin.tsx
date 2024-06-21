@@ -2,7 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { COMMAND_PRIORITY_EDITOR, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useTree } from "@/app/view/Tree";
 
 /**
@@ -11,8 +11,8 @@ import { useTree } from "@/app/view/Tree";
 export const ArrowKeyExpandCollapsePlugin = () => {
   const tree = useTree();
   const [editor] = useLexicalComposerContext();
-  const { pathToNodeStr } = useRelationAtPath();
-
+  const { treeNode } = useTreeNode();
+  const pathToNodeStr = treeNode.path;
   useEffect(() => {
     return editor.registerCommand(
       KEY_DOWN_COMMAND,

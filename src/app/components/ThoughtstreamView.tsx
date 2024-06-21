@@ -26,19 +26,19 @@ const truncateText = (text: string, maxLength: number) => {
   return text;
 };
 
-export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
+export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
   const renderController = useRenderController();
   const graphStore = useGraphStore();
   const curView = useCurView();
   const router = useRouter();
 
-  const treeNode = outline.rootTreeNode;
+  const treeNode = tree.rootTreeNode;
   const ancestors = getAncestorsAsArray(treeNode);
   const isLong = treeNode.depth > 5 || ancestors.reduce((total, { object }) => total + object.text.length, 0) > 50;
   const relations = ancestors.map((a) => a.relationToChild);
 
   return (
-    <TreeContext.Provider value={outline}>
+    <TreeContext.Provider value={tree}>
       <div tabIndex={0} className={stylesStream.StreamContainer}>
         <div>
           {ancestors.length > 1 && (
@@ -56,10 +56,10 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
                           router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
                         } else {
                           router.push(
-                            `/split/outline${relationsToURLPath(outline.root, graphStore)}/stream${relationsToURLPath(
-                              relations.slice(0, i + 1),
+                            `/split/outline${relationsToURLPath(
+                              tree.pathToRoot,
                               graphStore,
-                            )}`,
+                            )}/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`,
                           );
                         }
                       }}
@@ -90,7 +90,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
                               } else {
                                 router.push(
                                   `/split/outline${relationsToURLPath(
-                                    outline.root,
+                                    tree.pathToRoot,
                                     graphStore,
                                   )}/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`,
                                 );
@@ -114,7 +114,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
                         router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
                       } else {
                         router.push(
-                          `/split/outline${relationsToURLPath(outline.root, graphStore)}/stream${relationsToURLPath(
+                          `/split/outline${relationsToURLPath(tree.pathToRoot, graphStore)}/stream${relationsToURLPath(
                             relations.slice(0, i + 1),
                             graphStore,
                           )}`,
@@ -139,7 +139,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
             <button
               className={stylesList.AddButton}
               onClick={async () => {
-                const { path } = await outline.createChildNode();
+                const { path } = await tree.createChildNode();
                 renderController.setFocusedNode(relationsToPathStr(path));
               }}
             >

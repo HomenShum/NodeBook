@@ -9,13 +9,13 @@ import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { CreateNodeAtTopPlugin } from "@/app/editor/plugins/keyboard/CreateNodeAtTopPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
-import { useTree } from "@/app/view/Tree";
+import { isUnlabelledChild, useTree } from "@/app/view/Tree";
 import { cn } from "@/lib/utils";
 
 import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
@@ -53,11 +53,11 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
   const settingsStore = useSettingsStore();
   const tree = useTree();
   const graphStore = useGraphStore();
-  const { object: node, pathToNodeStr, isChild } = useRelationAtPath();
+  const { treeNode } = useTreeNode();
   const [mentionDropdownOpen, setMentionDropdownOpen] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
-  if (!(node instanceof GraphNode)) {
+  if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
   const initialConfig = {
@@ -67,24 +67,22 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
     nodes: [MentionNode],
     editorState: () => {
       const paragraph = $createParagraphNode();
-      const text = $createTextNode(node.text);
+      const text = $createTextNode(treeNode.object.text);
       paragraph.append(text);
       $getRoot().append(paragraph);
     },
     editable:
-      node.id !== graphStore.outlineRoot.id &&
-      node.id !== graphStore.thoughtstreamRoot.id &&
-      node.id !== graphStore.userRoot.id,
+      treeNode.object.id !== graphStore.outlineRoot.id &&
+      treeNode.object.id !== graphStore.thoughtstreamRoot.id &&
+      treeNode.object.id !== graphStore.userRoot.id,
   };
 
   const setPathToNodeAsRoot = useCallback(
     (nodeId: string) => {
-      console.log("setPathToNodeAsRoot", nodeId);
       const node = graphStore.getNode(nodeId);
-      if (!node) {
-        return;
+      if (node) {
+        tree.setRoot(node.getPath());
       }
-      tree.setRoot(node.getPath());
     },
     [tree, graphStore],
   );
@@ -92,7 +90,7 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
   const showSearchAndReplaceDropdown =
     !mentionDropdownOpen &&
     (settingsStore.searchAndReplaceDropdown === "all" ||
-      (settingsStore.searchAndReplaceDropdown === "labelled-only" && !isChild));
+      (settingsStore.searchAndReplaceDropdown === "labelled-only" && !isUnlabelledChild(treeNode)));
   return (
     <div
       ref={ref}
@@ -102,12 +100,12 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable className="outline-none" data-nodeid={node.id} />}
+          contentEditable={<ContentEditable className="outline-none" data-nodeid={treeNode.object.id} />}
           placeholder={null}
         />
         <HistoryPlugin />
         <ClearEditorPlugin />
-        <SyncWithGraphPlugin node={node} />
+        {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
         <ArrowKeyNavPlugin />
         <ArrowKeyExpandCollapsePlugin />
         <ArrowKeyMoveNodePlugin />
@@ -129,8 +127,8 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
         />
         {showSearchAndReplaceDropdown && <AutocompleteDropdownPlugin parentRef={ref} />}
         <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
-        <ViewControllerRegistryPlugin pathToNodeStr={pathToNodeStr} />
-        <TrackFocusedPathPlugin pathToNodeStr={pathToNodeStr} />
+        <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
+        <TrackFocusedPathPlugin pathToNodeStr={treeNode.path} />
         <JumpSelectionPlugin />
       </LexicalComposer>
     </div>

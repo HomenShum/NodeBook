@@ -12,7 +12,6 @@ import {
 } from "lexical";
 import { useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getText, getSelectionPositions } from "@/app/editor/utils";
 import { useRenderController } from "@/app/render/useRenderController";
 
@@ -22,8 +21,6 @@ import { useRenderController } from "@/app/render/useRenderController";
 export const ArrowKeyNavPlugin = () => {
   const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
-  const { object, pathToParentRelations, siblingAbove, siblingBelow } = useRelationAtPath();
-
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
@@ -90,7 +87,7 @@ export const ArrowKeyNavPlugin = () => {
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, pathToParentRelations, siblingAbove, siblingBelow, renderController]);
+  }, [editor, renderController]);
 
   return null;
 };

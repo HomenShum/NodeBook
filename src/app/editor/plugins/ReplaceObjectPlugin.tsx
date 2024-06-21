@@ -2,16 +2,14 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 
 export const ReplaceObjectPlugin = () => {
   const settingsStore = useSettingsStore();
   const [editor] = useLexicalComposerContext();
-  const { object } = useRelationAtPath();
-  const { setViewType } = useViewType();
-
+  const { treeNode, setViewType } = useTreeNode();
+  const object = treeNode.object;
   useEffect(() => {
     return editor.registerCommand(
       KEY_DOWN_COMMAND,

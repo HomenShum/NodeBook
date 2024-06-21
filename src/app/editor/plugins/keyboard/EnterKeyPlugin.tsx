@@ -3,14 +3,12 @@ import { $getSelection, BaseSelection, COMMAND_PRIORITY_NORMAL, KEY_ENTER_COMMAN
 import { action } from "mobx";
 import { useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useViewType } from "@/app/components/RelatedObject/ViewTypeContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { nodeToChip } from "@/app/editor/utils";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { createPath, useTree } from "@/app/view/Tree";
-import { useViewStore } from "@/app/view/useViewStore";
 
 function getChipsAroundSelection(selection: BaseSelection) {
   // Get selection start and end points
@@ -74,21 +72,15 @@ function getChipsAroundSelection(selection: BaseSelection) {
  */
 export const EnterKeyPlugin = () => {
   const graphStore = useGraphStore();
-  const viewStore = useViewStore();
   const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
-  const {
-    object,
-    pathToParentRelations,
-    relation,
-    pathToParentWithOrderedObjects: pathToParentNodes,
-    pathToNodeStr,
-    parent,
-  } = useRelationAtPath();
-  const { viewType, setViewType } = useViewType();
+  const { treeNode, viewType, setViewType } = useTreeNode();
   const tree = useTree();
-  const { treeNode } = useRelationAtPath();
-
+  const object = treeNode.object;
+  const parent = treeNode.parent.object;
+  const relation = treeNode.relationWithParent;
+  const pathToNodeStr = treeNode.path;
+  const pathToParentNodes = treeNode.parent.path;
   useEffect(() => {
     return editor.registerCommand(
       KEY_ENTER_COMMAND,
@@ -117,13 +109,7 @@ export const EnterKeyPlugin = () => {
           }
 
           // Add to outline if necessary
-          graphStore.addElsewhereAfterCreate(newNode, parent, pathToParentNodes[0].child);
-          let newPath;
-          if (nested) {
-            newPath = [...pathToParentRelations, relation, newRelation];
-          } else {
-            newPath = [...pathToParentRelations, newRelation];
-          }
+          graphStore.addElsewhereAfterCreate(newNode, parent, tree.rootObject);
           const id = createPath(treeNode.parent.path, treeNode.group, newRelation.id);
           renderController.setFocusedNode(id);
           return true;
@@ -144,7 +130,6 @@ export const EnterKeyPlugin = () => {
     parent,
     pathToNodeStr,
     pathToParentNodes,
-    pathToParentRelations,
     relation,
     setViewType,
     renderController,

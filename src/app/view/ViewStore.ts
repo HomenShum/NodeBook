@@ -15,7 +15,7 @@ export class ViewStore {
 
   public mainStreamView: Tree;
   public mainOutlineView: Tree;
-  public sidebarOutlineViews: Tree[] = [];
+  public sidebarTrees: Tree[] = [];
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.settingsStore = settingsStore;
@@ -27,35 +27,35 @@ export class ViewStore {
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
-    [this.mainStreamView, this.mainOutlineView, ...this.sidebarOutlineViews].forEach((view) =>
+    [this.mainStreamView, this.mainOutlineView, ...this.sidebarTrees].forEach((view) =>
       view.updateFilter({ search: query }),
     );
   }
 
   openSidebarOutlineView(path: GraphRelation[]) {
     const newView = new Tree(this.graphStore, this.settingsStore, path);
-    this.sidebarOutlineViews.unshift(newView);
+    this.sidebarTrees.unshift(newView);
     return newView;
   }
 
   clear() {
     this.mainOutlineView.clear([this.graphStore.outlineRootRelationFromUserRoot]);
     this.mainStreamView.clear([this.graphStore.thoughtstreamRootRelationFromUserRoot]);
-    this.sidebarOutlineViews = [];
+    this.sidebarTrees = [];
   }
 
   serialize(): SerializedViewStore {
     return {
       mainStreamView: this.mainStreamView.serialize(),
       mainOutlineView: this.mainOutlineView.serialize(),
-      sidebarOutlineViews: this.sidebarOutlineViews.map((view) => view.serialize()),
+      sidebarOutlineViews: this.sidebarTrees.map((view) => view.serialize()),
     };
   }
 
   deserializeInPlace(data: SerializedViewStore) {
     this.mainStreamView.deserializeInPlace(data.mainStreamView);
     this.mainOutlineView.deserializeInPlace(data.mainOutlineView);
-    this.sidebarOutlineViews = data.sidebarOutlineViews.map((viewData) => {
+    this.sidebarTrees = data.sidebarOutlineViews.map((viewData) => {
       const view = new Tree(this.graphStore, this.settingsStore, []);
       view.deserializeInPlace(viewData);
       return view;

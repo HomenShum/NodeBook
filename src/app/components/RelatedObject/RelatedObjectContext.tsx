@@ -1,58 +1,35 @@
 import { createContext, useContext } from "react";
 
-import { GraphObject } from "@/app/graph/GraphObject";
-import { GraphRelation } from "@/app/graph/GraphRelation";
-import { PathLink, relationsPathToParentChild } from "@/app/util";
-import { DescendantTreeNode, getAncestorsAsArray, isUnlabelledChild } from "@/app/view/Tree";
+import { DescendantTreeNode } from "@/app/view/Tree";
 
-type RelationPathAndSiblings = {
-  treeNode: DescendantTreeNode;
-  /** Ordered list of relations from the root to this relation's parent */
-  pathToParentRelations: GraphRelation[];
-  /** Ordered list of nodes from the root to this relation's parent */
-  pathToParentWithOrderedObjects: PathLink[];
-  /** Path to this node as a string */
-  pathToNodeStr: string;
-  /** The node at the end of this path */
-  object: GraphObject;
-  /** Parent node of this in path */
-  parent: GraphObject;
-  /** The relation connecting the parent to this node */
-  relation: GraphRelation;
-  /** Sibling relation above this one */
-  siblingAbove?: GraphRelation;
-  /** Sibling relation below this one */
-  siblingBelow?: GraphRelation;
-  isChild: boolean;
-  openRelationTypeMenu: () => void;
-};
+/**
+ * The view type of the related object. This determines what is displayed in the
+ * related object view.
+ * - `edit`: The default view where edits update the object content (or create a
+ *   new object when it's rendered as a link)
+ * - `replace`: The view where the user can replace the object with another
+ *   object.
+ */
+export type RelatedObjectViewType = "edit" | "replace";
 
-const RelationAtPathContext = createContext<{
+const TreeNodeContext = createContext<{
   treeNode: DescendantTreeNode;
-  openRelationTypeMenu: () => void;
+  relationComboboxIsOpen: boolean;
+  setRelationComboboxIsOpen: (isOpen: boolean) => void;
+  updatingRelationType: boolean;
+  setUpdatingRelationType: (updating: boolean) => void;
+  isHovered: boolean;
+  setIsHovered: (isHovered: boolean) => void;
+  viewType: RelatedObjectViewType;
+  setViewType: (viewType: RelatedObjectViewType) => void;
 } | null>(null);
 
-export const useRelationAtPath = (): RelationPathAndSiblings => {
-  const context = useContext(RelationAtPathContext);
+export const useTreeNode = () => {
+  const context = useContext(TreeNodeContext);
   if (!context) {
     throw new Error("useRelationAtPath must be used within a RelationAtPathContext provider");
   }
-  const { treeNode, openRelationTypeMenu } = context;
-  const pathToParentRelations = getAncestorsAsArray(treeNode.parent).map((p) => p.relationToChild);
-  const pathToParentWithOrderedObjects = relationsPathToParentChild(pathToParentRelations);
-  return {
-    treeNode: treeNode,
-    object: treeNode.object,
-    relation: treeNode.relationWithParent,
-    parent: treeNode.parent.object,
-    pathToNodeStr: treeNode.path,
-    pathToParentRelations,
-    pathToParentWithOrderedObjects,
-    siblingAbove: treeNode.siblingAbove?.relationWithParent,
-    siblingBelow: treeNode.siblingBelow?.relationWithParent,
-    isChild: isUnlabelledChild(treeNode),
-    openRelationTypeMenu,
-  };
+  return context;
 };
 
-export const RelationAtPathProvider = RelationAtPathContext.Provider;
+export const TreeNodeProvider = TreeNodeContext.Provider;

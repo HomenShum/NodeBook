@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { sortByPrefixMatch } from "@/app/util";
 import { DescendantTreeNode, getAncestorsAsArray } from "@/app/view/Tree";
-
-import { useViewType } from "./ViewTypeContext";
 
 export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const currentObject = treeNode.object;
@@ -13,7 +12,7 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
   const graph = useGraphStore();
   const [filter, setFilter] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  const { setViewType } = useViewType();
+  const { setViewType } = useTreeNode();
   const { optionsFlat: options, optionsGrouped } = useMemo(() => {
     const keywords = filter.split(/\s+/);
     const nodeOptions = graph.nodes.filter(

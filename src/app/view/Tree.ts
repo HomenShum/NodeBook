@@ -146,7 +146,7 @@ export const createPath = (parentPath: string, group: RelatedObjectsGroup, relat
  */
 export class Tree {
   public rootObject: GraphObject;
-  public root: GraphRelation[] = [];
+  public pathToRoot: GraphRelation[] = [];
 
   public filter: Partial<Filter> = observable.object({});
   constructor(
@@ -158,14 +158,14 @@ export class Tree {
   ) {
     if (Array.isArray(root)) {
       this.rootObject = relationsPathToParentChild(root).slice(-1)[0]?.child;
-      this.root = root;
+      this.pathToRoot = root;
     } else {
       this.rootObject = root;
-      this.root = [];
+      this.pathToRoot = [];
     }
     makeObservable(this, {
       rootObject: observable,
-      root: observable,
+      pathToRoot: observable,
       setRoot: action,
       pathData: observable,
       setPathExpanded: action,
@@ -215,10 +215,10 @@ export class Tree {
     if (Array.isArray(root)) {
       const path = relationsPathToParentChild(root);
       this.rootObject = path[path.length - 1].child;
-      this.root = root;
+      this.pathToRoot = root;
     } else {
       this.rootObject = root;
-      this.root = [];
+      this.pathToRoot = [];
     }
   }
 
@@ -389,8 +389,8 @@ export class Tree {
     // walk up the path of relations above the root and hydrate with nodes
     let topPathNode: PathToRootNode | null = null;
     let prevNode: PathToRootNode | RootTreeNode = root;
-    for (let i = this.root.length - 1; i >= 0; i--) {
-      const relation = this.root[i];
+    for (let i = this.pathToRoot.length - 1; i >= 0; i--) {
+      const relation = this.pathToRoot[i];
       const nextNode: PathToRootNode = {
         type: "path",
         object: getOtherObject(relation, prevNode.object.id),
@@ -460,10 +460,10 @@ export class Tree {
   }
 
   async createChildNode() {
-    const path = relationsPathToParentChild(this.root);
+    const path = relationsPathToParentChild(this.pathToRoot);
     const root = path[path.length - 1].child;
     const { node, relation } = await this.graphStore.addChildNode({ parentId: root.id });
-    return { node, relation, path: [...this.root, relation] };
+    return { node, relation, path: [...this.pathToRoot, relation] };
   }
 
   setPathExpanded(path: Path, isExpanded: boolean) {
@@ -477,13 +477,13 @@ export class Tree {
   }
 
   clear(root: GraphRelation[]) {
-    this.root = root;
+    this.pathToRoot = root;
     this.pathData.clear();
   }
 
   serialize(): SerializedTree {
     return {
-      root: this.root.map((r) => r.id).join("/"),
+      root: this.pathToRoot.map((r) => r.id).join("/"),
       pathData: Object.fromEntries(this.pathData.entries()),
     };
   }
@@ -503,12 +503,12 @@ export class Tree {
     for (const id of data.root.split("/")) {
       const relation = this.graphStore.relationsById.get(id);
       if (!relation) {
-        this.root = [this.graphStore.outlineRootRelationFromUserRoot];
+        this.pathToRoot = [this.graphStore.outlineRootRelationFromUserRoot];
         return false;
       }
       relations.push(relation);
     }
-    this.root = relations;
+    this.pathToRoot = relations;
     return true;
   }
 }

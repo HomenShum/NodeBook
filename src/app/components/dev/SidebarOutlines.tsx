@@ -7,8 +7,8 @@ export const SidebarOutlines = observer(() => {
   const viewStore = useViewStore();
   return (
     <div>
-      {viewStore.sidebarOutlineViews.map((outline, i) => (
-        <OutlineView key={i} outline={outline} />
+      {viewStore.sidebarTrees.map((tree, i) => (
+        <OutlineView key={i} tree={tree} />
       ))}
     </div>
   );

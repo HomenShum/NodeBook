@@ -15,9 +15,6 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  if (node.type !== "node") {
-    throw new Error("Expected object to be a GraphNode");
-  }
 
   const updateGraphOnEditorChange = useCallback(
     (editorState: EditorState) => {

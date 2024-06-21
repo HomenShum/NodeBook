@@ -28,5 +28,5 @@ export default function Page() {
       </div>
     );
 
-  return <OutlineView outline={viewStore.mainOutlineView} />;
+  return <OutlineView tree={viewStore.mainOutlineView} />;
 }

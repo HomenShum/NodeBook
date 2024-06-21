@@ -2,34 +2,26 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_NORMAL, KEY_BACKSPACE_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { relationsToPathStr } from "@/app/util";
 import { useTree } from "@/app/view/Tree";
-import { useViewStore } from "@/app/view/useViewStore";
 
 /**
  * Plugin to merge nodes when backspace is pressed at the start of a node.
  */
 export const BackspaceMergeNodesPlugin = () => {
   const graphStore = useGraphStore();
-  const viewStore = useViewStore();
   const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
-  const {
-    object,
-    pathToParentRelations,
-    relation,
-    pathToParentWithOrderedObjects: pathToParentNodes,
-    siblingAbove,
-    parent,
-    openRelationTypeMenu,
-  } = useRelationAtPath();
   const tree = useTree();
+  const { treeNode, setRelationComboboxIsOpen } = useTreeNode();
 
+  const object = treeNode.object;
+  const parent = treeNode.parent.object;
+  const relation = treeNode.relationWithParent;
   useEffect(() => {
     return editor.registerCommand(
       KEY_BACKSPACE_COMMAND,
@@ -37,13 +29,12 @@ export const BackspaceMergeNodesPlugin = () => {
         if (!graphStore) return false;
         event.preventDefault();
         if (object.text === "") {
-          const parentRelation = pathToParentRelations[pathToParentRelations.length - 1];
-          if (parentRelation) {
+          if (treeNode.relationWithParent) {
             graphStore.deleteRelation(relation);
-            if (siblingAbove) {
-              renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations, siblingAbove]));
+            if (treeNode.siblingAbove) {
+              renderController.setFocusedNode(treeNode.siblingAbove.path);
             } else {
-              renderController.setFocusedNode(relationsToPathStr(pathToParentRelations));
+              renderController.setFocusedNode(treeNode.parent.path);
             }
             return true;
           }
@@ -62,21 +53,21 @@ export const BackspaceMergeNodesPlugin = () => {
         if (selectionStart.offset !== 0 || selectionEnd.offset !== 0) return false;
 
         if (relation.relationType.id !== defaultRelationTypes.child.id) {
-          openRelationTypeMenu();
+          setRelationComboboxIsOpen(true);
           return true;
         }
+
         let targetNode = null;
         let targetPath = null;
-        if (siblingAbove) {
-          const node = siblingAbove.from.id === parent.id ? siblingAbove.to : siblingAbove.from;
-          if (node instanceof GraphNode) {
-            targetNode = node;
-            targetPath = relationsToPathStr([...pathToParentRelations, siblingAbove]);
+        if (treeNode.siblingAbove) {
+          if (treeNode.siblingAbove.object instanceof GraphNode) {
+            targetNode = treeNode.siblingAbove.object;
+            targetPath = treeNode.siblingAbove.path;
           }
         } else {
-          if (tree.root.length < pathToParentNodes.length && parent instanceof GraphNode) {
-            targetNode = parent;
-            targetPath = relationsToPathStr([...pathToParentRelations]);
+          if (treeNode.parent.parent && treeNode.parent.object instanceof GraphNode) {
+            targetNode = treeNode.parent.object;
+            targetPath = treeNode.parent.path;
           }
         }
 
@@ -97,13 +88,15 @@ export const BackspaceMergeNodesPlugin = () => {
     graphStore,
     object,
     parent,
-    pathToParentNodes,
-    pathToParentRelations,
     relation,
-    siblingAbove,
     renderController,
-    openRelationTypeMenu,
-    tree.root,
+    tree.pathToRoot,
+    treeNode.siblingAbove,
+    treeNode.relationWithParent,
+    treeNode.parent.path,
+    treeNode.parent.parent,
+    treeNode.parent.object,
+    setRelationComboboxIsOpen,
   ]);
 
   return null;

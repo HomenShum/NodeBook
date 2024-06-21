@@ -2,7 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { COMMAND_PRIORITY_LOW, PASTE_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
@@ -14,7 +14,9 @@ export const PastePlugin = () => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
   const renderController = useRenderController();
-  const { object, relation, parent, pathToNodeStr } = useRelationAtPath();
+  const { treeNode } = useTreeNode();
+  const { object, relationWithParent: relation, path } = treeNode;
+  const parent = treeNode.parent.object;
   useEffect(() => {
     return editor.registerCommand<ClipboardEvent>(
       PASTE_COMMAND,
@@ -40,7 +42,7 @@ export const PastePlugin = () => {
               children.map((c) => c.relation),
               relation,
             );
-            renderController.setFocusedNode(pathToNodeStr);
+            renderController.setFocusedNode(path);
           });
           return true;
         }
@@ -48,6 +50,6 @@ export const PastePlugin = () => {
       },
       COMMAND_PRIORITY_LOW,
     );
-  }, [object, parent, relation, graphStore, editor, renderController, pathToNodeStr]);
+  }, [object, parent, relation, graphStore, editor, renderController, path]);
   return null;
 };

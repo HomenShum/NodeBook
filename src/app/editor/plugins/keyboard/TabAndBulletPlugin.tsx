@@ -4,7 +4,7 @@ import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_EDITOR, KEY_DOWN_COM
 import { action } from "mobx";
 import { useCallback, useEffect } from "react";
 
-import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
@@ -18,9 +18,9 @@ export const TabAndBulletPlugin = () => {
   const renderController = useRenderController();
   const tree = useTree();
   const [editor] = useLexicalComposerContext();
-  const { treeNode, relation, pathToParentWithOrderedObjects: pathToParentNodes, parent } = useRelationAtPath();
-
-  const viewRoot = pathToParentNodes[0].child;
+  const { treeNode } = useTreeNode();
+  const parent = treeNode.parent.object;
+  const relation = treeNode.relationWithParent;
   const tabBullet = useCallback(
     (event: KeyboardEvent | null) => {
       if (!graphStore) return false;
@@ -38,7 +38,7 @@ export const TabAndBulletPlugin = () => {
       }
 
       if (event?.shiftKey) {
-        if (!settingsStore.allowShiftTabAboveViewRoot && tree.root.length == pathToParentNodes.length) {
+        if (!settingsStore.allowShiftTabAboveViewRoot && tree.rootObject.id === treeNode.parent.object.id) {
           console.log("Can't shift tab because grandparent is above view root");
           return false;
         }
@@ -91,16 +91,7 @@ export const TabAndBulletPlugin = () => {
         return true;
       }
     },
-    [
-      graphStore,
-      parent,
-      relation,
-      pathToParentNodes,
-      settingsStore.allowShiftTabAboveViewRoot,
-      renderController,
-      tree,
-      treeNode,
-    ],
+    [graphStore, parent, relation, settingsStore.allowShiftTabAboveViewRoot, renderController, tree, treeNode],
   );
 
   useEffect(() => {
@@ -108,7 +99,7 @@ export const TabAndBulletPlugin = () => {
       editor.registerCommand(
         KEY_DOWN_COMMAND,
         (event) => {
-          if (event.key === "-" && viewRoot.id === graphStore.thoughtstreamRoot.id) {
+          if (event.key === "-" && tree.rootObject.id === graphStore.thoughtstreamRoot.id) {
             const selection = $getSelection();
             if (!$isRangeSelection(selection)) return false;
 
@@ -131,7 +122,7 @@ export const TabAndBulletPlugin = () => {
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, graphStore.thoughtstreamRoot.id, treeNode, tabBullet, viewRoot.id]);
+  }, [editor, graphStore.thoughtstreamRoot.id, treeNode, tabBullet, tree.rootObject.id]);
 
   return null;
 };
