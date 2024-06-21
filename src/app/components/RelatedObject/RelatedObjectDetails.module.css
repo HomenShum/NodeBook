@@ -1,0 +1,9 @@
+.DetailsContainer {
+  display: flex;
+  font-size: 12px;
+  gap: 12px;
+}
+
+.DetailsContainer * {
+  color: var(--gray-8);
+}
