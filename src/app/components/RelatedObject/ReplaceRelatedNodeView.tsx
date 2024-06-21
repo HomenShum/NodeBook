@@ -1,21 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { GraphObject } from "@/app/graph/GraphObject";
-import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { sortByPrefixMatch } from "@/app/util";
+import { DescendantTreeNode, getAncestorsAsArray } from "@/app/view/Tree";
 
 import { useViewType } from "./ViewTypeContext";
 
-export const ReplaceRelatedNodeView = ({
-  object: currentObject,
-  relation,
-  pathToParentRelations,
-}: {
-  object: GraphObject;
-  relation: GraphRelation;
-  pathToParentRelations: GraphRelation[];
-}) => {
+export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeNode }) => {
+  const currentObject = treeNode.object;
+  const relation = treeNode.relationWithParent;
   const graph = useGraphStore();
   const [filter, setFilter] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -63,10 +57,11 @@ export const ReplaceRelatedNodeView = ({
 
   const onSelect = useCallback(
     (obj: GraphObject) => {
-      graph.setGraphNodeAtPath([...pathToParentRelations, relation], obj);
+      const path = getAncestorsAsArray(treeNode).map((p) => p.relationToChild);
+      graph.setGraphNodeAtPath(path, obj);
       setViewType("edit");
     },
-    [graph, relation, pathToParentRelations, setViewType],
+    [treeNode, graph, setViewType],
   );
 
   useEffect(() => {

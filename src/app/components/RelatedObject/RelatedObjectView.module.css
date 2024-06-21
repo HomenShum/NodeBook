@@ -74,11 +74,20 @@
   display: none;
 }
 
-.Dot {
+.Bullet {
   cursor: pointer;
   position: absolute;
   top: 0;
   left: 0;
+  z-index: 10;
+}
+
+.BulletShadow {
+  cursor: pointer;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
 }
 
 .DotOutsidePublic {

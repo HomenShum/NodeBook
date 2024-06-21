@@ -1,5 +1,5 @@
 "use client";
-import { autorun, toJS } from "mobx";
+import { autorun, getDependencyTree, getObserverTree, toJS } from "mobx";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 
@@ -41,7 +41,10 @@ if (typeof window !== "undefined" && env.env !== "production") {
     env,
     toJS,
     graphStore,
+    viewStore,
     renderController,
+    getDependencyTree,
+    getObserverTree,
   };
 }
 

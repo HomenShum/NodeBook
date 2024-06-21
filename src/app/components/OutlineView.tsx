@@ -2,7 +2,6 @@
 import { ChevronRight, Ellipsis, HomeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
 
 import {
   DropdownMenu,
@@ -10,11 +9,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/DropdownMenu";
-import { searchGraph } from "@/app/graph/search";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
-import { Tree, TreeContext } from "@/app/view/Tree";
+import { relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
+import { Tree, TreeContext, getAncestorsAsArray } from "@/app/view/Tree";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -34,36 +32,25 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
   const renderController = useRenderController();
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
-
-  const relations = outline.root;
-  if (relations === null) {
-    return <div>Root path is null</div>;
-  }
-
-  const path = relationsPathToParentChild(relations);
-  const nodeAtPathEnd = path[path.length - 1].child;
-  const searchResult = renderController.searchQuery
-    ? searchGraph(nodeAtPathEnd, renderController.searchQuery)
-    : undefined;
-
-  if (!nodeAtPathEnd) {
-    return <div>Missing root node</div>;
-  }
-
-  const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
   const router = useRouter();
   const curView = useCurView();
 
-  // eslint-disable-next-line
-  const searchResultDate = useMemo(() => new Date(), [renderController.searchQuery]);
+  const treeNode = outline.rootTreeNode;
+  if (treeNode === null) {
+    return <div>Root path is empty</div>;
+  }
 
+  const ancestors = getAncestorsAsArray(treeNode);
+  const isLong = treeNode.depth > 5 || ancestors.reduce((total, { object }) => total + object.text.length, 0) > 50;
+
+  const relations = ancestors.map((a) => a.relationToChild);
   return (
     <TreeContext.Provider value={outline}>
       <div className={s.OutlineView}>
         <div className={s.OutlineViewContainer}>
-          {path.length > 1 && (
+          {ancestors.length > 1 && (
             <div className={s.BreadcrumbContainer}>
-              {path.slice(0, -1).map(({ relation, child }, i) => {
+              {ancestors.slice(1).map(({ object, path }, i) => {
                 const isFirst = i === 0;
                 const isSecondLast = i === path.length - 2;
 
@@ -71,7 +58,7 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
                   return (
                     <span
                       className={s.Breadcrumb}
-                      key={relation.id}
+                      key={path}
                       onClick={() => {
                         if (curView !== ViewType.SPLIT) {
                           router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
@@ -87,7 +74,7 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
                     >
                       {isFirst && <HomeIcon size={14} />}
                       {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
-                      <span>{truncateText(child.text, 20)}</span>
+                      <span>{truncateText(object.text, 20)}</span>
                     </span>
                   );
                 }
@@ -102,9 +89,9 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
                         </span>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className={s.BreadcrumbDropdownMenu} align="start" sideOffset={5}>
-                        {path.slice(1, -1).map(({ relation, child }, index) => (
+                        {ancestors.slice(1, -1).map(({ object, relationToChild, path }, index) => (
                           <DropdownMenuItem
-                            key={relation.id}
+                            key={path}
                             className={s.BreadcrumbMenuItem}
                             onSelect={() => {
                               if (curView !== ViewType.SPLIT) {
@@ -119,7 +106,7 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
                               }
                             }}
                           >
-                            {truncateText(child.text, 20)}
+                            {truncateText(object.text, 20)}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
@@ -130,7 +117,7 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
                 return !isLong ? (
                   <span
                     className={s.Breadcrumb}
-                    key={relation.id}
+                    key={path}
                     onClick={() => {
                       if (curView !== ViewType.SPLIT) {
                         router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
@@ -145,7 +132,7 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
                     }}
                   >
                     <ChevronRight size={14} strokeWidth={2} />
-                    <span>{truncateText(child.text, 20)}</span>
+                    <span>{truncateText(object.text, 20)}</span>
                   </span>
                 ) : null;
               })}
@@ -156,8 +143,8 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
           )}
 
           <div className={s.TitleContainer}>
-            {nodeAtPathEnd.id === graphStore.outlineRoot.id && <HomeIcon className={s.HomeIcon} size={20} />}
-            <h1 className={s.TitleText}>{truncateText(nodeAtPathEnd.text, 40)}</h1>
+            {treeNode.object.id === graphStore.outlineRoot.id && <HomeIcon className={s.HomeIcon} size={20} />}
+            <h1 className={s.TitleText}>{truncateText(treeNode.object.text, 40)}</h1>
 
             <button
               className={s.AddButton}
@@ -170,9 +157,9 @@ export const OutlineView = observer(({ outline }: { outline: Tree }) => {
             </button>
           </div>
           <RelatedObjectChildren
-            pathToParentRelations={relations}
-            searchResult={searchResult}
-            searchResultDate={searchResultDate}
+            treeNode={treeNode}
+            // searchResult={searchResult}
+            // searchResultDate={searchResultDate}
           />
         </div>
       </div>

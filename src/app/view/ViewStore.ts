@@ -6,11 +6,12 @@ import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { Tree } from "@/app/view/Tree";
 
-export type PathData = { isExpanded: boolean };
+export type PathData = { isExpanded: boolean; isPinnedExpanded: boolean };
 
 export class ViewStore {
   private settingsStore: SettingsStore;
   private graphStore: GraphStore;
+  public searchQuery: string = "";
 
   public mainStreamView: Tree;
   public mainOutlineView: Tree;
@@ -19,13 +20,20 @@ export class ViewStore {
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
-    this.mainStreamView = new Tree(graphStore, [graphStore.thoughtstreamRootRelationFromUserRoot]);
-    this.mainOutlineView = new Tree(graphStore, [graphStore.outlineRootRelationFromUserRoot]);
+    this.mainStreamView = new Tree(graphStore, this.settingsStore, [graphStore.thoughtstreamRootRelationFromUserRoot]);
+    this.mainOutlineView = new Tree(graphStore, this.settingsStore, [graphStore.outlineRootRelationFromUserRoot]);
     makeAutoObservable(this);
   }
 
+  setSearchQuery(query: string) {
+    this.searchQuery = query;
+    [this.mainStreamView, this.mainOutlineView, ...this.sidebarOutlineViews].forEach((view) =>
+      view.updateFilter({ search: query }),
+    );
+  }
+
   openSidebarOutlineView(path: GraphRelation[]) {
-    const newView = new Tree(this.graphStore, path);
+    const newView = new Tree(this.graphStore, this.settingsStore, path);
     this.sidebarOutlineViews.unshift(newView);
     return newView;
   }
@@ -48,7 +56,7 @@ export class ViewStore {
     this.mainStreamView.deserializeInPlace(data.mainStreamView);
     this.mainOutlineView.deserializeInPlace(data.mainOutlineView);
     this.sidebarOutlineViews = data.sidebarOutlineViews.map((viewData) => {
-      const view = new Tree(this.graphStore, []);
+      const view = new Tree(this.graphStore, this.settingsStore, []);
       view.deserializeInPlace(viewData);
       return view;
     });

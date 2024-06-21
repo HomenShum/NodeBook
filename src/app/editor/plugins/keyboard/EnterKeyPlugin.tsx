@@ -9,8 +9,7 @@ import { nodeToChip } from "@/app/editor/utils";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { relationsToPathStr } from "@/app/util";
-import { useTree } from "@/app/view/Tree";
+import { createPath, useTree } from "@/app/view/Tree";
 import { useViewStore } from "@/app/view/useViewStore";
 
 function getChipsAroundSelection(selection: BaseSelection) {
@@ -88,6 +87,7 @@ export const EnterKeyPlugin = () => {
   } = useRelationAtPath();
   const { viewType, setViewType } = useViewType();
   const tree = useTree();
+  const { treeNode } = useRelationAtPath();
 
   useEffect(() => {
     return editor.registerCommand(
@@ -124,7 +124,8 @@ export const EnterKeyPlugin = () => {
           } else {
             newPath = [...pathToParentRelations, newRelation];
           }
-          renderController.setFocusedNode(relationsToPathStr(newPath));
+          const id = createPath(treeNode.parent.path, treeNode.group, newRelation.id);
+          renderController.setFocusedNode(id);
           return true;
         } else {
           // For now, we don't support splitting relations. In ENT-3653, we'll
@@ -148,6 +149,7 @@ export const EnterKeyPlugin = () => {
     setViewType,
     renderController,
     viewType,
+    treeNode,
   ]);
 
   return null;

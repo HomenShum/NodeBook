@@ -6,10 +6,10 @@ import * as React from "react";
 
 import { Button } from "@/app/components/ui/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/Popover";
-import { GraphObject } from "@/app/graph/GraphObject";
-import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
+import { GraphRelationType } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
+import { DescendantTreeNode } from "@/app/view/Tree";
 import { cn } from "@/lib/utils";
 
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
@@ -18,19 +18,18 @@ const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
 export const RelationCombobox = observer(
   ({
     setUpdatingRelationType,
-    object,
-    parent,
-    relation,
+    treeNode,
     isOpen,
     setIsOpen,
   }: {
     setUpdatingRelationType: (updating: boolean) => void;
-    object: GraphObject;
-    parent: GraphObject;
-    relation: GraphRelation;
+    treeNode: DescendantTreeNode;
     isOpen: boolean;
     setIsOpen: (value: boolean) => void;
   }) => {
+    const object = treeNode.object;
+    const parent = treeNode.parent.object;
+    const relation = treeNode.relationWithParent;
     const graphStore = useGraphStore();
     const isForward = relation.to.id === object.id;
 

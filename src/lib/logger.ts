@@ -4,7 +4,7 @@ const logLevels = Object.freeze(["debug", "info", "warn", "error"] as const);
 type LogLevel = (typeof logLevels)[number];
 
 type LogMessage = {
-  level: LogLevel;
+  level?: LogLevel;
   message: string;
   optionalParams?: any[];
   service?: string;
@@ -104,23 +104,24 @@ class Logger {
   }
 
   private log(logMessage: LogMessage): void {
-    if (gte(logMessage.level, this.options.level) && gte(logMessage.level, globalLoggerFilter.level)) {
-      logMessage = { ...logMessage, service: this.options.service || logMessage.service };
-      switch (logMessage.level) {
+    const level = logMessage.level || "info";
+    if (gte(level, this.options.level) && gte(level, globalLoggerFilter.level)) {
+      logMessage = { ...logMessage, service: this.options.service || logMessage.service, level };
+      switch (level) {
         case "debug":
-          console.debug(this.options.formatter(logMessage));
+          console.debug(...this.options.formatter(logMessage));
           break;
         case "info":
-          console.info(this.options.formatter(logMessage));
+          console.info(...this.options.formatter(logMessage));
           break;
         case "warn":
-          console.warn(this.options.formatter(logMessage));
+          console.warn(...this.options.formatter(logMessage));
           break;
         case "error":
-          console.error(this.options.formatter(logMessage));
+          console.error(...this.options.formatter(logMessage));
           break;
         default:
-          logMessage.level satisfies never;
+          level satisfies never;
       }
     }
   }
@@ -158,4 +159,6 @@ class Logger {
  * updateGlobalFilter({ level: "info" });
  * logger.debug("This message will not be logged");
  */
-export const logger = new Logger({ level: "debug" });
+const logger = new Logger({ level: "debug" });
+
+export default logger;

@@ -8,8 +8,7 @@ import { useRelationAtPath } from "@/app/components/RelatedObject/RelatedObjectC
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { relationsToPathStr } from "@/app/util";
-import { useTree } from "@/app/view/Tree";
+import { createPath, useTree } from "@/app/view/Tree";
 /**
  * Plugin to move current node using Tab/Shift+Tab. Also handles bulleting by typing '-' at the start of a line.
  */
@@ -19,13 +18,7 @@ export const TabAndBulletPlugin = () => {
   const renderController = useRenderController();
   const tree = useTree();
   const [editor] = useLexicalComposerContext();
-  const {
-    pathToParentRelations,
-    relation,
-    pathToParentWithOrderedObjects: pathToParentNodes,
-    siblingAbove,
-    parent,
-  } = useRelationAtPath();
+  const { treeNode, relation, pathToParentWithOrderedObjects: pathToParentNodes, parent } = useRelationAtPath();
 
   const viewRoot = pathToParentNodes[0].child;
   const tabBullet = useCallback(
@@ -50,49 +43,51 @@ export const TabAndBulletPlugin = () => {
           return false;
         }
 
-        const grandparentNode = pathToParentNodes[pathToParentNodes.length - 1].parent;
-        const parentRelation = pathToParentRelations[pathToParentRelations.length - 1];
-        if (!grandparentNode) {
+        const parent = treeNode.parent;
+        const grandparent = parent?.parent;
+        if (!grandparent) {
           console.log("Can't shift tab because no grandparent to move to");
           return false;
         }
-        if (grandparentNode.id === graphStore.userRoot.id) {
+        if (grandparent.object.id === graphStore.userRoot.id) {
           console.log("Can't move relation to user root");
           return false;
         }
-        if (!parent) {
-          console.log("Can't shift tab because no parent to move to");
+        if (!parent.relationWithParent) {
+          console.log("Can't shift tab because no visible parent to move to");
           return false;
         }
         // Replace the relations pointer to the parent with the grandparent
-        if (baseRelation.from.id === parent.id) {
-          graphStore.updateRelationFrom(baseRelation, grandparentNode);
+        if (baseRelation.from.id === parent.object.id) {
+          graphStore.updateRelationFrom(baseRelation, grandparent.object);
         } else {
-          graphStore.updateRelationTo(baseRelation, grandparentNode);
+          graphStore.updateRelationTo(baseRelation, grandparent.object);
         }
         // Position the relation under the parent
-        graphStore.getRelationList(grandparentNode).move([baseRelation], parentRelation);
-        renderController.setFocusedNode(relationsToPathStr([...pathToParentRelations.slice(0, -1), baseRelation]));
+        graphStore.getRelationList(grandparent.object).move([baseRelation], parent.relationWithParent);
+
+        const id = createPath(grandparent.path, treeNode.group, baseRelation.id);
+        renderController.setFocusedNode(id);
         return true;
       } else {
+        const siblingAbove = treeNode.siblingAbove;
         if (!siblingAbove) {
           console.log("Sibling not found");
           return false;
         }
-        const siblingAboveNode = siblingAbove.from.id === parent.id ? siblingAbove.to : siblingAbove?.from;
         // Change the relation's parent to the sibling above
-        if (baseRelation.from.id === parent.id) {
-          graphStore.updateRelationFrom(baseRelation, siblingAboveNode);
+        if (!treeNode.isBackrelation) {
+          graphStore.updateRelationFrom(baseRelation, siblingAbove.object);
         } else {
-          graphStore.updateRelationTo(baseRelation, siblingAboveNode);
+          graphStore.updateRelationTo(baseRelation, siblingAbove.object);
         }
         // Position the relation at the bottom of the siblings list
-        graphStore.getRelationList(siblingAboveNode).move([baseRelation], "bottom");
+        graphStore.getRelationList(siblingAbove.object).move([baseRelation], "bottom");
         // toggle open sibling
-        const relationPathToSibling = [...pathToParentRelations, siblingAbove];
-        tree.setPathExpanded(relationsToPathStr(relationPathToSibling), true);
+        tree.setPathExpanded(siblingAbove.path, true);
         // set focus at the relations new path
-        renderController.setFocusedNode(relationsToPathStr([...relationPathToSibling, baseRelation]));
+        const id = createPath(siblingAbove.path, treeNode.group, baseRelation.id);
+        renderController.setFocusedNode(id);
         return true;
       }
     },
@@ -102,10 +97,9 @@ export const TabAndBulletPlugin = () => {
       relation,
       pathToParentNodes,
       settingsStore.allowShiftTabAboveViewRoot,
-      pathToParentRelations,
       renderController,
-      siblingAbove,
       tree,
+      treeNode,
     ],
   );
 
@@ -124,7 +118,7 @@ export const TabAndBulletPlugin = () => {
 
             // Offset is 0 when at start of text
             if (selectionStart.offset !== 0 || selectionEnd.offset !== 0) return false;
-            if (!siblingAbove) return false;
+            if (!treeNode.siblingAbove) return false;
             tabBullet(null);
           }
           return false;
@@ -137,7 +131,7 @@ export const TabAndBulletPlugin = () => {
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, graphStore.thoughtstreamRoot.id, siblingAbove, tabBullet, viewRoot.id]);
+  }, [editor, graphStore.thoughtstreamRoot.id, treeNode, tabBullet, viewRoot.id]);
 
   return null;
 };

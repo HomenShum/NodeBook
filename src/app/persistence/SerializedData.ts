@@ -39,7 +39,7 @@ export type SerializedGraphStore = {
   correspondingPinnedForObjects?: Record<string, SerializedRelation>;
 };
 
-type SerializedPathData = { isExpanded: boolean };
+type SerializedPathData = { isExpanded: boolean; isPinnedExpanded: boolean };
 
 export type SerializedTree = {
   root: string;

@@ -1,7 +1,6 @@
 import { ChevronRight, Ellipsis } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
 
 import {
   DropdownMenu,
@@ -9,11 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/DropdownMenu";
-import { searchGraph } from "@/app/graph/search";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { relationsPathToParentChild, relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
-import { Tree, TreeContext } from "@/app/view/Tree";
+import { relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
+import { Tree, TreeContext, getAncestorsAsArray } from "@/app/view/Tree";
 import { ViewType } from "@/app/view/ViewType";
 
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
@@ -31,42 +29,28 @@ const truncateText = (text: string, maxLength: number) => {
 export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
   const renderController = useRenderController();
   const graphStore = useGraphStore();
-
-  const relations = outline.root;
-  if (relations === null) {
-    return <div>Stream path is null</div>;
-  }
-  const path = relationsPathToParentChild(relations);
-  const nodeAtPathEnd = path[path.length - 1].child;
-
-  const thoughstreamNode = graphStore.thoughtstreamRoot;
-  const searchResult = useMemo(
-    () => (renderController.searchQuery ? searchGraph(thoughstreamNode, renderController.searchQuery) : undefined),
-    [thoughstreamNode, renderController.searchQuery],
-  );
-
-  // eslint-disable-next-line
-  const searchResultDate = useMemo(() => new Date(), [renderController.searchQuery]);
-
-  const isLong = path.length > 5 || path.reduce((total, { child }) => total + child.text.length, 0) > 50;
   const curView = useCurView();
   const router = useRouter();
-  const [showAll, setShowAll] = useState(false);
+
+  const treeNode = outline.rootTreeNode;
+  const ancestors = getAncestorsAsArray(treeNode);
+  const isLong = treeNode.depth > 5 || ancestors.reduce((total, { object }) => total + object.text.length, 0) > 50;
+  const relations = ancestors.map((a) => a.relationToChild);
 
   return (
     <TreeContext.Provider value={outline}>
       <div tabIndex={0} className={stylesStream.StreamContainer}>
         <div>
-          {path.length > 1 && (
+          {ancestors.length > 1 && (
             <div className={stylesList.BreadcrumbContainer}>
-              {path.slice(0, -1).map(({ relation, child }, i) => {
+              {ancestors.slice(0, -1).map(({ object, path }, i) => {
                 const isFirst = i === 0;
-                const isSecondLast = i === path.length - 2;
+                const isSecondLast = i === ancestors.length - 2;
                 if (isFirst || isSecondLast) {
                   return (
                     <span
                       className={stylesList.Breadcrumb}
-                      key={relation.id}
+                      key={path}
                       onClick={() => {
                         if (curView !== ViewType.SPLIT) {
                           router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
@@ -81,7 +65,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
                       }}
                     >
                       {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
-                      <span>{truncateText(child.text, 20)}</span>
+                      <span>{truncateText(object.text, 20)}</span>
                     </span>
                   );
                 }
@@ -96,9 +80,9 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
                         </span>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent className={stylesList.BreadcrumbDropdownMenu} align="start" sideOffset={5}>
-                        {path.slice(1, -1).map(({ relation, child }, index) => (
+                        {ancestors.slice(1, -1).map(({ object, relationToChild, path }, index) => (
                           <DropdownMenuItem
-                            key={relation.id}
+                            key={path}
                             className={stylesList.BreadcrumbMenuItem}
                             onSelect={() => {
                               if (curView !== ViewType.SPLIT) {
@@ -113,7 +97,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
                               }
                             }}
                           >
-                            {truncateText(child.text, 20)}
+                            {truncateText(object.text, 20)}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
@@ -124,7 +108,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
                 return !isLong ? (
                   <span
                     className={stylesList.Breadcrumb}
-                    key={relation.id}
+                    key={path}
                     onClick={() => {
                       if (curView !== ViewType.SPLIT) {
                         router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
@@ -139,7 +123,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
                     }}
                   >
                     <ChevronRight size={14} strokeWidth={2} />
-                    <span>{truncateText(child.text, 20)}</span>
+                    <span>{truncateText(object.text, 20)}</span>
                   </span>
                 ) : null;
               })}
@@ -149,8 +133,8 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
             </div>
           )}
           <div className={stylesList.TitleContainer}>
-            {(curView === ViewType.SPLIT || path.length > 1) && (
-              <h1 className={stylesList.TitleText}>{truncateText(nodeAtPathEnd.text, 40)}</h1>
+            {(curView === ViewType.SPLIT || ancestors.length > 1) && (
+              <h1 className={stylesList.TitleText}>{truncateText(treeNode.object.text, 40)}</h1>
             )}
             <button
               className={stylesList.AddButton}
@@ -164,13 +148,7 @@ export const ThoughtstreamView = observer(({ outline }: { outline: Tree }) => {
           </div>
         </div>
         <div>
-          <RelatedObjectChildren
-            showAll={showAll}
-            setShowAll={setShowAll}
-            pathToParentRelations={relations}
-            searchResult={searchResult}
-            searchResultDate={searchResultDate}
-          />
+          <RelatedObjectChildren treeNode={treeNode} />
         </div>
       </div>
     </TreeContext.Provider>

@@ -1,7 +1,8 @@
 declare const styles: {
+  readonly "Bullet": string;
+  readonly "BulletShadow": string;
   readonly "Circle": string;
   readonly "CirclePrivate": string;
-  readonly "Dot": string;
   readonly "DotInsidePrivate": string;
   readonly "DotInsidePublic": string;
   readonly "DotOutsidePrivate": string;

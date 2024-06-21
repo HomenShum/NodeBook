@@ -69,7 +69,7 @@ export const relationsPathToParentChild = (relations: GraphRelation[]): PathLink
 };
 
 export const relationsToPathStr = (relations: GraphRelation[]) => {
-  return relations.map((r) => r.id).join("/");
+  return "/" + relations.map((r) => r.id).join("/");
 };
 
 export function formatDate(date: Date | undefined): string {
