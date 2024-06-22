@@ -104,9 +104,6 @@ export const EnterKeyPlugin = () => {
           } = graphStore.splitRelatedNode(relation, object, chipsBefore, chipsAfter, shouldCreateChild, {
             splitToNewBundle,
           });
-          if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
-            newRelation = graphStore.correspondingPinnedForObjects.get(newRelation.id)!;
-          }
 
           // Add to outline if necessary
           graphStore.addElsewhereAfterCreate(newNode, parent, tree.rootObject);

@@ -238,11 +238,13 @@ export class Tree {
       pathToRoot: observable,
       setRoot: action,
       expansions: observable,
-      setPathExpanded: action,
-      togglePathExpanded: action,
       rootTreeNode: computed,
       search: observable,
       setSearch: action,
+      setPathExpanded: action,
+      togglePathExpanded: action,
+      setGroupExpanded: action,
+      toggleGroupExpanded: action,
     });
   }
 
@@ -291,13 +293,13 @@ export class Tree {
 
   // For groups, we default to expanded.
   isGroupExpanded(group: Group) {
-    return this.expansions.get(group.path) || true;
+    return this.expansions.get(group.path) ?? true;
   }
   setGroupExpanded(group: Group, isExpanded: boolean) {
     this.expansions.set(group.path, isExpanded);
   }
   toggleGroupExpanded(group: Group) {
-    this.expansions.set(group.path, !this.expansions.get(group.path));
+    this.expansions.set(group.path, !this.isGroupExpanded(group));
   }
 
   // filter and search
@@ -357,6 +359,8 @@ export class Tree {
         group.id === "pinned"
           ? parentNode.object.pinnedRelationsWithPositions
           : parentNode.object.relationsWithPositions;
+      group.path = parentNode.path + "/" + group.id;
+      group.isExpanded = this.isGroupExpanded(group);
       group.nodes = positionedRelations.map((positionedRelation) => {
         const object = getOtherObject(positionedRelation.relation, parentNode.object.id);
         const instanceCountInPath = (objectIdCountsInPath[object.id] || 0) + 1;

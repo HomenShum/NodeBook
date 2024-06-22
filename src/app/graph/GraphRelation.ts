@@ -119,7 +119,7 @@ export class GraphRelation implements Serializable, GraphObject {
   }
 
   pinChildRelation(childRelation: GraphRelation) {
-    this.store.createPinnedVersionOfRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
+    this.store.pinRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
   }
 
   unpinChildRelation(childRelation: GraphRelation) {
@@ -127,10 +127,7 @@ export class GraphRelation implements Serializable, GraphObject {
   }
 
   isRelationPinned(childRelation: GraphRelation) {
-    const correspondingRelation = this.store.getCorrespondingRelation(childRelation);
-    if (!correspondingRelation) return false;
-
-    return this.pinnedRelationsList.has(childRelation.id) || this.pinnedRelationsList.has(correspondingRelation.id);
+    return this.pinnedRelationsList.has(childRelation.id);
   }
 
   serialize(): SerializedRelation {

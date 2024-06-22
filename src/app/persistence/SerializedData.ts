@@ -35,8 +35,6 @@ export type SerializedGraphStore = {
   relationsByNodeId: SerializedRelationsByNodeId;
   pinnedRelationsByNodeId: SerializedRelationsByNodeId;
   relationToBundles?: Record<string, SerializedBundle[]>;
-  correspondingObjectsForPinned?: Record<string, SerializedRelation>;
-  correspondingPinnedForObjects?: Record<string, SerializedRelation>;
 };
 
 type SerializedPathData = { isExpanded: boolean; isPinnedExpanded: boolean };

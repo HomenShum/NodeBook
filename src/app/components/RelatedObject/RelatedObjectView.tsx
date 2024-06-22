@@ -218,9 +218,9 @@ const Controls = observer(() => {
             isHovered && <Toggle treeNode={treeNode} />}
           <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
         </div>
-
-        {treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) &&
-          graphStore.correspondingPinnedForObjects.has(treeNode.relationWithParent.id) && (
+        {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
+        {treeNode.parentGroup.id !== "pinned" &&
+          treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) && (
             <button
               className={styles.PinIcon}
               onClick={() => treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent)}
@@ -228,7 +228,6 @@ const Controls = observer(() => {
               <PinCustom />
             </button>
           )}
-
         {!treeNode.object.isPrivate &&
           settingsStore.hideThoughtstreamBullets &&
           treeNode.parent.object === graphStore.thoughtstreamRoot && ( // TODO: what is this for?

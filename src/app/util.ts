@@ -108,8 +108,7 @@ export function useCurView() {
 }
 
 export function relationsToURLPath(relations: GraphRelation[], graphStore: GraphStore) {
-  const unpinnedRelations = relations.map((r) => graphStore.correspondingObjectsForPinned.get(r.id) || r);
-  return `/${unpinnedRelations.map((x) => x.id).join("/")}`;
+  return `/${relations.map((x) => x.id).join("/")}`;
 }
 
 export function pathToNodeSet(path: GraphRelation[]) {

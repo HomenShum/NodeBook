@@ -27,24 +27,11 @@ export const TabAndBulletPlugin = () => {
     (event: KeyboardEvent | null) => {
       if (!graphStore) return false;
       event?.preventDefault();
-      let baseRelation;
-      if (parent.isRelationPinned(relation)) {
-        if (graphStore.correspondingObjectsForPinned.has(relation.id)) {
-          baseRelation = graphStore.correspondingObjectsForPinned.get(relation.id)!;
-        } else {
-          baseRelation = relation;
-        }
-        parent.unpinChildRelation(relation);
-      } else {
-        baseRelation = relation;
-      }
-
       if (event?.shiftKey) {
         if (!settingsStore.allowShiftTabAboveViewRoot && tree.rootObject.id === treeNode.parent.object.id) {
           logger.debug("Can't shift tab because grandparent is above view root");
           return false;
         }
-
         const parent = treeNode.parent;
         const grandparent = parent?.parent;
         if (!grandparent) {
@@ -60,15 +47,15 @@ export const TabAndBulletPlugin = () => {
           return false;
         }
         // Replace the relations pointer to the parent with the grandparent
-        if (baseRelation.from.id === parent.object.id) {
-          graphStore.updateRelationFrom(baseRelation, grandparent.object);
+        if (relation.from.id === parent.object.id) {
+          graphStore.updateRelationFrom(relation, grandparent.object);
         } else {
-          graphStore.updateRelationTo(baseRelation, grandparent.object);
+          graphStore.updateRelationTo(relation, grandparent.object);
         }
         // Position the relation under the parent
-        graphStore.getRelationList(grandparent.object).move([baseRelation], parent.relationWithParent);
+        graphStore.getRelationList(grandparent.object).move([relation], parent.relationWithParent);
 
-        const id = parent.parentGroup.path + "/" + baseRelation.id;
+        const id = parent.parentGroup.path + "/" + relation.id;
         renderController.setFocusedNode(id);
         return true;
       } else {
@@ -79,18 +66,18 @@ export const TabAndBulletPlugin = () => {
         }
         // Change the relation's parent to the sibling above
         if (!treeNode.isBackrelation) {
-          graphStore.updateRelationFrom(baseRelation, siblingAbove.object);
+          graphStore.updateRelationFrom(relation, siblingAbove.object);
         } else {
-          graphStore.updateRelationTo(baseRelation, siblingAbove.object);
+          graphStore.updateRelationTo(relation, siblingAbove.object);
         }
         // Position the relation at the bottom of the siblings list
-        graphStore.getRelationList(siblingAbove.object).move([baseRelation], "bottom");
+        graphStore.getRelationList(siblingAbove.object).move([relation], "bottom");
         // toggle open sibling
         tree.setPathExpanded(siblingAbove.path, true);
         // set focus at the relations new path
 
         const targetGroupPath = siblingAbove.childrenGroupsById.all.path;
-        const id = targetGroupPath + "/" + baseRelation.id;
+        const id = targetGroupPath + "/" + relation.id;
 
         console.log("Setting focused node", id);
         renderController.setFocusedNode(id);

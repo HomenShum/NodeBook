@@ -40,30 +40,32 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
   return (
     <>
       <button
-        onClick={() => tree.togglePathExpanded(group.path)}
+        onClick={() => tree.toggleGroupExpanded(group)}
         className={`${styles.PinnedToggleButton}  ${
-          tree.isPathExpanded(group.path)
-            ? styles.PinnedToggleButton_PinnedVisible
-            : styles.PinnedToggleButton_PinnedHidden
+          tree.isGroupExpanded(group) ? styles.PinnedToggleButton_PinnedVisible : styles.PinnedToggleButton_PinnedHidden
         }`}
       >
         <span
           className={`${styles.PinIcon} ${
-            tree.isPathExpanded(group.path) ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
+            group.isExpanded ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
           }`}
         >
           <PinCustom />
         </span>
-        {tree.isPathExpanded(group.path) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        {group.isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
       </button>
       <div className={styles.PinSection}>
-        {group.nodes.map((treeNode, i) => {
-          return (
-            <div key={treeNode.path}>
-              <RelatedObjectView treeNode={treeNode} />
-            </div>
-          );
-        })}
+        {/* TODO I don't like that this react component needs to thing about whether
+        the group is expanded or not. would be nice if there was a prop of nodes that
+        was either empty or not depending on expansion so component can be dumber  */}
+        {group.isExpanded &&
+          group.nodes.map((treeNode, i) => {
+            return (
+              <div key={treeNode.path}>
+                <RelatedObjectView treeNode={treeNode} />
+              </div>
+            );
+          })}
         <div
           className={`${styles.PinSectionSeparator} ${
             parentNode.parent?.object === graphStore.thoughtstreamRoot ? styles.StreamSpacing : styles.DefaultSpacing
