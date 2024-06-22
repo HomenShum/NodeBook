@@ -11,7 +11,8 @@ import {
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
-import { Tree, TreeContext, getAncestorsAsArray } from "@/app/view/Tree";
+import { Tree, getAncestorsAsArray } from "@/app/view/Tree";
+import { TreeContext } from "@/app/view/TreeContext";
 import { ViewType } from "@/app/view/ViewType";
 
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";

@@ -8,7 +8,7 @@ import { nodeToChip } from "@/app/editor/utils";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { createPath, useTree } from "@/app/view/Tree";
+import { useTree } from "@/app/view/TreeContext";
 
 function getChipsAroundSelection(selection: BaseSelection) {
   // Get selection start and end points
@@ -110,7 +110,7 @@ export const EnterKeyPlugin = () => {
 
           // Add to outline if necessary
           graphStore.addElsewhereAfterCreate(newNode, parent, tree.rootObject);
-          const id = createPath(treeNode.parent.path, treeNode.group, newRelation.id);
+          const id = treeNode.parentGroup.path + "/" + newRelation.id;
           renderController.setFocusedNode(id);
           return true;
         } else {

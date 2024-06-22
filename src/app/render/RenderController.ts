@@ -4,6 +4,9 @@ import { makeAutoObservable } from "mobx";
 import { JUMP_TO_END, JUMP_TO_START } from "@/app/editor/plugins/JumpSelectionPluigin";
 import { Path } from "@/app/graph/GraphStore";
 import { makeAutoSaving } from "@/app/util";
+import appLogger from "@/lib/logger";
+
+const logger = appLogger.child({ service: "RenderController" });
 
 export class RenderController {
   public focusedNode: Path | null = null;
@@ -36,6 +39,7 @@ export class RenderController {
    * Moves the focus to the given node.
    */
   setFocusedNode(path: Path | null, { focusAt }: { focusAt?: "start" | "end" } = {}) {
+    logger.debug("setFocusedNode", path);
     this.focusedNode = path;
     setTimeout(() => {
       if (!path || this.focusedNode !== path) return;

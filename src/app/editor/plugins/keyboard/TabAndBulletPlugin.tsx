@@ -8,7 +8,9 @@ import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { createPath, useTree } from "@/app/view/Tree";
+import { RootTreeNode } from "@/app/view/Tree";
+import { useTree } from "@/app/view/TreeContext";
+import logger from "@/lib/logger";
 /**
  * Plugin to move current node using Tab/Shift+Tab. Also handles bulleting by typing '-' at the start of a line.
  */
@@ -39,22 +41,22 @@ export const TabAndBulletPlugin = () => {
 
       if (event?.shiftKey) {
         if (!settingsStore.allowShiftTabAboveViewRoot && tree.rootObject.id === treeNode.parent.object.id) {
-          console.log("Can't shift tab because grandparent is above view root");
+          logger.debug("Can't shift tab because grandparent is above view root");
           return false;
         }
 
         const parent = treeNode.parent;
         const grandparent = parent?.parent;
         if (!grandparent) {
-          console.log("Can't shift tab because no grandparent to move to");
+          logger.debug("Can't shift tab because no grandparent to move to");
           return false;
         }
         if (grandparent.object.id === graphStore.userRoot.id) {
-          console.log("Can't move relation to user root");
+          logger.debug("Can't move relation to user root");
           return false;
         }
-        if (!parent.relationWithParent) {
-          console.log("Can't shift tab because no visible parent to move to");
+        if (parent instanceof RootTreeNode) {
+          logger.debug("Can't shift tab because no visible parent to move to");
           return false;
         }
         // Replace the relations pointer to the parent with the grandparent
@@ -66,13 +68,13 @@ export const TabAndBulletPlugin = () => {
         // Position the relation under the parent
         graphStore.getRelationList(grandparent.object).move([baseRelation], parent.relationWithParent);
 
-        const id = createPath(grandparent.path, treeNode.group, baseRelation.id);
+        const id = parent.parentGroup.path + "/" + baseRelation.id;
         renderController.setFocusedNode(id);
         return true;
       } else {
         const siblingAbove = treeNode.siblingAbove;
         if (!siblingAbove) {
-          console.log("Sibling not found");
+          logger.debug("Sibling not found");
           return false;
         }
         // Change the relation's parent to the sibling above
@@ -86,7 +88,11 @@ export const TabAndBulletPlugin = () => {
         // toggle open sibling
         tree.setPathExpanded(siblingAbove.path, true);
         // set focus at the relations new path
-        const id = createPath(siblingAbove.path, treeNode.group, baseRelation.id);
+
+        const targetGroupPath = siblingAbove.childrenGroupsById.all.path;
+        const id = targetGroupPath + "/" + baseRelation.id;
+
+        console.log("Setting focused node", id);
         renderController.setFocusedNode(id);
         return true;
       }

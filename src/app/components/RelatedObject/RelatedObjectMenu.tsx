@@ -11,7 +11,7 @@ import {
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { useTree } from "@/app/view/Tree";
+import { useTree } from "@/app/view/TreeContext";
 import { cn } from "@/lib/utils";
 
 import { useTreeNode } from "./RelatedObjectContext";

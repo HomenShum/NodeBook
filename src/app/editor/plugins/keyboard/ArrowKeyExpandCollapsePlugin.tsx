@@ -3,7 +3,7 @@ import { COMMAND_PRIORITY_EDITOR, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useTree } from "@/app/view/Tree";
+import { useTree } from "@/app/view/TreeContext";
 
 /**
  * Plugin to expand/collapse current node using Cmd + ArrowDown/ArrowUp.

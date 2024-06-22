@@ -1,5 +1,6 @@
 import { observer } from "mobx-react-lite";
 
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import styles from "@/app/components/RelatedObject/RelatedObjectDetails.module.css";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
@@ -29,18 +30,20 @@ function getParentZones(relation: GraphRelation) {
 export const RelatedObjectDetails = observer(
   ({ position, object, relation }: { position: Position; object: GraphObject; relation: GraphRelation }) => {
     const graphStore = useGraphStore();
+    const { treeNode } = useTreeNode();
     const bundles = graphStore.relationToBundles.get(relation.id);
     const parentZones = getParentZones(relation);
 
     return (
       <div className={styles.DetailsContainer}>
+        <span>path: {treeNode.path} </span>
+        <span>objectId: {object.id}</span>
+        <span>relationId: {relation.id}</span>
         {position && (
           <span>
             position: {position.int}-{position.frac}
           </span>
         )}
-        <span>id: {object.id}</span>
-        <span>relationId: {relation.id}</span>
         <span>createdAt: {object.createdAt.toISOString()}</span>
         {object instanceof GraphNode && object.isBundle && <span>#BUNDLE</span>}
         {object instanceof GraphNode && object.isZone && <span>#ZONE</span>}

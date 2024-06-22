@@ -6,8 +6,6 @@ import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { Tree } from "@/app/view/Tree";
 
-export type PathData = { isExpanded: boolean; isPinnedExpanded: boolean };
-
 export class ViewStore {
   private settingsStore: SettingsStore;
   private graphStore: GraphStore;
@@ -27,9 +25,7 @@ export class ViewStore {
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
-    [this.mainStreamView, this.mainOutlineView, ...this.sidebarTrees].forEach((view) =>
-      view.updateFilter({ search: query }),
-    );
+    [this.mainStreamView, this.mainOutlineView, ...this.sidebarTrees].forEach((view) => view.setSearch(query));
   }
 
   openSidebarOutlineView(path: GraphRelation[]) {

@@ -6,68 +6,78 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { formatDate } from "@/app/util";
-import { TreeNode, useTree } from "@/app/view/Tree";
+import { AllGroup, DescendantTreeNode, PinnedGroup, TreeNode } from "@/app/view/Tree";
+import { useTree } from "@/app/view/TreeContext";
 
 import { RelatedObjectView } from "./RelatedObjectView";
 
 import styles from "./RelatedObjectChildren.module.css";
 
 export const RelatedObjectChildren = observer(({ treeNode }: { treeNode: TreeNode }) => {
+  const children = treeNode.childrenGroups;
   return (
     <div className={treeNode.depth > 0 ? styles.NodeIndentation : ""}>
-      {treeNode.pinnedChildCount > 0 && <PinnedSection treeNode={treeNode} />}
-      <AllSection treeNode={treeNode} />
+      {children.map((group) => {
+        switch (group.id) {
+          case "pinned":
+            return <PinnedSection key={group.id} parentNode={treeNode} group={group} />;
+          case "all":
+            return <AllSection key={group.id} parentNode={treeNode} group={group} />;
+          default:
+            return group satisfies never;
+        }
+      })}
     </div>
   );
 });
 
-const PinnedSection = observer(({ treeNode }: { treeNode: TreeNode }) => {
+const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: PinnedGroup }) => {
   const tree = useTree();
   const graphStore = useGraphStore();
+  if (group.nodes.length === 0) {
+    return null;
+  }
   return (
     <>
       <button
-        onClick={() => tree.togglePinnedPathExpanded(treeNode.path)}
+        onClick={() => tree.togglePathExpanded(group.path)}
         className={`${styles.PinnedToggleButton}  ${
-          treeNode.isPinnedExpanded ? styles.PinnedToggleButton_PinnedVisible : styles.PinnedToggleButton_PinnedHidden
+          tree.isPathExpanded(group.path)
+            ? styles.PinnedToggleButton_PinnedVisible
+            : styles.PinnedToggleButton_PinnedHidden
         }`}
       >
         <span
           className={`${styles.PinIcon} ${
-            treeNode.isPinnedExpanded ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
+            tree.isPathExpanded(group.path) ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
           }`}
         >
           <PinCustom />
         </span>
-        {treeNode.isPinnedExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        {tree.isPathExpanded(group.path) ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
       </button>
-      {treeNode.isPinnedExpanded && (
-        <div className={styles.PinSection}>
-          {treeNode.isPinnedExpanded &&
-            treeNode.pinnedChildren.map((treeNode, i) => {
-              return (
-                <div key={treeNode.path}>
-                  <RelatedObjectView treeNode={treeNode} />
-                </div>
-              );
-            })}
-          <div
-            className={`${styles.PinSectionSeparator} ${
-              treeNode.parent?.object === graphStore.thoughtstreamRoot ? styles.StreamSpacing : styles.DefaultSpacing
-            }`}
-          />
-        </div>
-      )}
+      <div className={styles.PinSection}>
+        {group.nodes.map((treeNode, i) => {
+          return (
+            <div key={treeNode.path}>
+              <RelatedObjectView treeNode={treeNode} />
+            </div>
+          );
+        })}
+        <div
+          className={`${styles.PinSectionSeparator} ${
+            parentNode.parent?.object === graphStore.thoughtstreamRoot ? styles.StreamSpacing : styles.DefaultSpacing
+          }`}
+        />
+      </div>
     </>
   );
 });
 
-const AllSection = observer(({ treeNode }: { treeNode: TreeNode }) => {
+const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: AllGroup }) => {
   const bundles =
-    treeNode.type === "descendant" && treeNode.parent.type === "descendant" // TODO: ugly
-      ? treeNode.parent.children
-          .filter(({ object }) => object instanceof GraphNode && object.isBundle)
-          .map(({ object }) => object)
+    parentNode instanceof DescendantTreeNode && parentNode.parent instanceof DescendantTreeNode // TODO: ugly
+      ? parentNode.parent.object.children.filter((object) => object instanceof GraphNode && object.isBundle)
       : [];
   const findRelationsFirstBundle = (r: GraphRelation) =>
     bundles.find((b) => b.children.map((o) => o.id).includes(r.id));
@@ -76,7 +86,7 @@ const AllSection = observer(({ treeNode }: { treeNode: TreeNode }) => {
   let lastDisplayedDate: string | undefined;
   return (
     <div>
-      {treeNode.children.map((childTreeNode, i) => {
+      {group.nodes.map((childTreeNode, i) => {
         const childRelation = childTreeNode.relationWithParent;
         const firstBundle = findRelationsFirstBundle(childRelation);
         const newBundle = firstBundle?.id !== lastBundleId;

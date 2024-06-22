@@ -8,7 +8,8 @@ import { PinCustom } from "@/app/components/icons";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { relationsToURLPath, useCurView } from "@/app/util";
-import { DescendantTreeNode, getAncestorsAsArray, isUnlabelledChild, useTree } from "@/app/view/Tree";
+import { DescendantTreeNode, getAncestorsAsArray, isUnlabelledChild } from "@/app/view/Tree";
+import { useTree } from "@/app/view/TreeContext";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
@@ -31,7 +32,7 @@ export const RelatedObjectView = observer(({ treeNode }: { treeNode: DescendantT
         <Bullet />
         <Content />
       </Main>
-      {treeNode.children.length > 0 && <RelatedObjectChildren treeNode={treeNode} />}
+      {treeNode.isExpanded && <RelatedObjectChildren treeNode={treeNode} />}
     </div>
   );
 });

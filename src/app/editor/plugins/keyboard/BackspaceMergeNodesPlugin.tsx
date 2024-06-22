@@ -7,7 +7,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { useTree } from "@/app/view/Tree";
+import { useTree } from "@/app/view/TreeContext";
 
 /**
  * Plugin to merge nodes when backspace is pressed at the start of a node.

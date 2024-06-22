@@ -4,7 +4,8 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { getAncestorsAsArray, useTree } from "@/app/view/Tree";
+import { getAncestorsAsArray } from "@/app/view/Tree";
+import { useTree } from "@/app/view/TreeContext";
 
 /**
  * Plugin to set the current node as the view root when the user presses Cmd+. (Mac) or Ctrl+. (Windows).
