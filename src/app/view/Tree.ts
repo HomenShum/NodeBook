@@ -538,6 +538,51 @@ export class Tree {
     return { node, relation, path: [...this.pathToRoot, relation] };
   }
 
+  /**
+   * Move the node to the sibling above.
+   * @returns The new path of the node after the move
+   */
+  indentNode(treeNode: DescendantTreeNode): string | undefined {
+    const siblingAbove = treeNode.siblingAbove;
+    if (!siblingAbove) {
+      return;
+    }
+    // Change the relation's parent to the sibling above
+    if (!treeNode.isBackrelation) {
+      this.graphStore.updateRelationFrom(treeNode.relationWithParent, siblingAbove.object);
+    } else {
+      this.graphStore.updateRelationTo(treeNode.relationWithParent, siblingAbove.object);
+    }
+    // Position the relation at the bottom of the siblings list
+    this.graphStore.getRelationList(siblingAbove.object).move([treeNode.relationWithParent], "bottom");
+    // toggle open sibling
+    this.setPathExpanded(siblingAbove.path, true);
+    // return expected new path to tree node
+    return siblingAbove.childrenGroupsById.all.path + "/" + treeNode.relationWithParent.id;
+  }
+
+  /**
+   * Move the node to the parent.
+   * @returns The new path of the node after the move
+   */
+  dedentNode(treeNode: DescendantTreeNode): string | undefined {
+    const parent = treeNode.parent;
+    if (parent instanceof RootTreeNode) {
+      logger.debug("Can't shift tab because no visible parent to move to");
+      return;
+    }
+    const grandparent = parent.parent;
+    // Replace the relations pointer to the parent with the grandparent
+    if (treeNode.isBackrelation) {
+      this.graphStore.updateRelationTo(treeNode.relationWithParent, grandparent.object);
+    } else {
+      this.graphStore.updateRelationFrom(treeNode.relationWithParent, grandparent.object);
+    }
+    // Position the relation under the parent
+    this.graphStore.getRelationList(grandparent.object).move([treeNode.relationWithParent], parent.relationWithParent);
+    return parent.parentGroup.path + "/" + treeNode.relationWithParent.id;
+  }
+
   clear(root: GraphRelation[]) {
     this.pathToRoot = root;
     this.expansions.clear();
