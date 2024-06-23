@@ -4,7 +4,6 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { getAncestorsAsArray } from "@/app/view/Tree";
 import { useTree } from "@/app/view/TreeContext";
 
 /**
@@ -22,8 +21,7 @@ export const SetNodeAsRootPlugin = () => {
       (event) => {
         const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
         if (!metaOrCtrl || event.key !== ".") return false;
-        const relationsPath = getAncestorsAsArray(treeNode).map((node) => node.relationToChild);
-        tree.setRoot(relationsPath);
+        tree.setRoot(treeNode);
         return true;
       },
       COMMAND_PRIORITY_EDITOR,

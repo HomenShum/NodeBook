@@ -1,8 +1,10 @@
 import { generateNKeysBetween } from "fractional-indexing";
 import { action, computed, makeObservable, observable } from "mobx";
 
+import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { Serializable } from "@/app/persistence/serialization";
 import { Position, comparePositions, generateDefaultPosition } from "@/app/util";
+import logger from "@/lib/logger";
 
 type ItemWithPosition<T> = {
   item: T;
@@ -48,27 +50,27 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
     return Array.from(this.map.keys());
   }
 
-  /** Add items to the top of the list */
-  add(...items: T[]) {
-    if (this.map.size === 0) {
-      const int = Math.max(...Array.from(items).map((item) => item.createdAt.getTime()));
-      const fracs = generateNKeysBetween(null, null, items.length);
-      items.forEach((item, i) => {
-        this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
-      });
+  /**
+   * Add one or more items to the list. The `after` parameter can specify an
+   * existing item in the list to insert the new items after. If not provided,
+   * the items will be added to the top of the list.
+   */
+  add(item: T | T[], after?: Positioner<T>) {
+    const items = Array.isArray(item) ? item : [item];
+    let int: number, fracs: string[];
+    if (this.map.size === 0 || !after) {
+      int = Math.max(...Array.from(items).map((item) => item.createdAt.getTime()));
+      fracs = generateNKeysBetween(null, null, items.length);
     } else {
-      const positionedRelations = Array.from(this.map.values()).sort((a, b) =>
-        comparePositions(a.position, b.position),
-      );
-      const topPosition = positionedRelations[0].position;
-      const int = Math.max(topPosition.int, ...items.map((item) => item.createdAt.getTime()));
-      const fracs = generateNKeysBetween(null, topPosition.int === int ? topPosition.frac : null, items.length);
-      items.forEach((item, i) => {
-        // don't re-insert items; that would reset their position (ENT-3361)
-        if (this.map.has(item.id)) return;
-        this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
-      });
+      const position = this.positionerToPosition(after);
+      int = position.int;
+      fracs = generateNKeysBetween(position.fracBefore, position.fracAfter, items.length);
     }
+    items.forEach((item, i) => {
+      // don't re-insert items; that would reset their position (ENT-3361)
+      if (this.map.has(item.id)) return;
+      this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
+    });
   }
 
   delete(id: string) {
@@ -81,34 +83,46 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
    * The `to` parameter can specify an item to position the items after, or
    * "top" or "bottom" to move to the top or bottom of the list.
    */
-  move(items: T[], to: T | "top" | "bottom" | ((v: ItemWithPosition<T>) => boolean)) {
-    let posInt: number;
-    let posFracBefore: string | null = null;
-    let posFracAfter: string | null = null;
-    const positionedRelations = Array.from(this.map.values()).sort((a, b) => comparePositions(a.position, b.position));
-    if (to === "top") {
-      posInt = positionedRelations[0]?.position.int ?? items[0].createdAt.getTime();
-      posFracBefore = null;
-      posFracAfter = positionedRelations[0]?.position.frac ?? null;
-    } else if (to === "bottom") {
-      posInt = positionedRelations[positionedRelations.length - 1]?.position.int ?? items[0].createdAt.getTime();
-      posFracBefore = positionedRelations[positionedRelations.length - 1]?.position.frac ?? null;
-      posFracAfter = null;
+  move(items: T[], after?: Positioner<T>) {
+    let int: number, fracs: string[];
+    if (!after) {
+      int = Date.now();
+      fracs = generateNKeysBetween(null, null, items.length);
     } else {
-      // Move item after the specified item
-      const predicate = typeof to === "function" ? to : (v: ItemWithPosition<T>) => v.item.id === to.id;
-      const index = positionedRelations.findIndex(predicate);
-      const itemBefore = positionedRelations[index];
-      const itemAfter = positionedRelations[index + 1];
-      posInt = itemBefore?.position.int ?? items[0].createdAt.getTime();
-      posFracBefore = itemBefore?.position.frac ?? null;
-      // It's only when the items have the same int position part that we need to consider the fractional part
-      posFracAfter = itemBefore?.position.int === itemAfter?.position.int ? itemAfter?.position.frac ?? null : null;
+      const positions = this.positionerToPosition(after);
+      int = positions.int;
+      fracs = generateNKeysBetween(positions.fracBefore, positions.fracAfter, items.length);
     }
-    const newFractionalPositions = generateNKeysBetween(posFracBefore, posFracAfter, items.length);
     items.forEach((item, i) => {
-      this.map.set(item.id, { position: { int: posInt, frac: newFractionalPositions[i] }, item });
+      if (!this.map.has(item.id)) {
+        logger.error("Attempted to move item that is not in the list");
+        return;
+      }
+      this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
     });
+  }
+
+  private positionerToPosition(positioner: Positioner<T>): {
+    int: number;
+    fracBefore: string | null;
+    fracAfter: string | null;
+  } {
+    const items = Array.from(this.map.values()).sort((a, b) => comparePositions(a.position, b.position));
+    let i: number;
+    if (typeof positioner === "number") {
+      i = positioner > 0 ? Math.min(positioner, items.length - 1) : Math.max(0, items.length + positioner);
+    } else {
+      const predicate =
+        typeof positioner === "string"
+          ? (v: ItemWithPosition<T>) => v.item.id === positioner
+          : (v: ItemWithPosition<T>) => v.item.id === positioner.id;
+      i = items.findIndex(predicate);
+    }
+    return {
+      int: items[i]?.position.int ?? 0,
+      fracBefore: items[i]?.position.frac ?? null,
+      fracAfter: items[i]?.position.int === items[i + 1]?.position.int ? items[i + 1]?.position.frac ?? null : null,
+    };
   }
 
   serialize() {

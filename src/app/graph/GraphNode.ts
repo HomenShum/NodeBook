@@ -1,5 +1,6 @@
 import { makeAutoObservable, toJS } from "mobx";
 
+import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SerializedGraphNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { Position, comparePositions, uuid } from "@/app/util";
@@ -143,8 +144,8 @@ export class GraphNode implements Serializable, GraphObject {
     return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
   }
 
-  pinChildRelation(childRelation: GraphRelation) {
-    this.store.pinRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
+  pinChildRelation(childRelation: GraphRelation, after?: Positioner<GraphRelation>) {
+    this.store.pinRelation(childRelation, this.id === childRelation.from.id ? "from" : "to", after);
   }
 
   unpinChildRelation(childRelation: GraphRelation) {

@@ -1,10 +1,11 @@
 import { IReactionDisposer, action, computed, makeObservable, observable, reaction } from "mobx";
 
-import { GraphNode } from "@/app/graph/GraphNode";
+import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore, Path, defaultRelationTypes } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
+import { getOtherObjectOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { Position, comparePositions, relationsPathToParentChild } from "@/app/util";
 import appLogger from "@/lib/logger";
@@ -252,17 +253,20 @@ export class Tree {
   private settingsStore: SettingsStore;
 
   /**
-   * Set the root of the tree. You can either pass be a single object
-   * or a contigous path of relations. In the latter case, whatever
-   * object is at the end of the path will be considered the "root",
-   * and the path will be shown as breadcrumbs above in the UI.
+   * Set the root of the tree.
+   *
+   * If an array of relations is given, it must be a contiguous path,
+   * and the object at the end of the path will be considered the "root".
    */
-  setRoot(root: GraphObject | GraphRelation[]) {
+  setRoot(root: GraphObject | DescendantTreeNode | GraphRelation[]) {
     logger.debug("Setting tree root", root);
     if (Array.isArray(root)) {
       const path = relationsPathToParentChild(root);
       this.rootObject = path[path.length - 1].child;
       this.pathToRoot = root;
+    } else if (root instanceof DescendantTreeNode) {
+      this.rootObject = root.object;
+      this.pathToRoot = getAncestorsAsArray(root).map((node) => node.relationToChild);
     } else {
       this.rootObject = root;
       this.pathToRoot = [];
@@ -362,7 +366,7 @@ export class Tree {
       group.path = parentNode.path + "/" + group.id;
       group.isExpanded = this.isGroupExpanded(group);
       group.nodes = positionedRelations.map((positionedRelation) => {
-        const object = getOtherObject(positionedRelation.relation, parentNode.object.id);
+        const object = getOtherObjectOrThrow(positionedRelation.relation, parentNode.object.id);
         const instanceCountInPath = (objectIdCountsInPath[object.id] || 0) + 1;
         const path = group.path + "/" + positionedRelation.relation.id;
         const child = new DescendantTreeNode({
@@ -400,7 +404,7 @@ export class Tree {
     for (let i = this.pathToRoot.length - 1; i >= 0; i--) {
       const relation = this.pathToRoot[i];
       const nextNode: PathToRootNode = new PathToRootNode({
-        object: getOtherObject(relation, prevNode.object.id),
+        object: getOtherObjectOrThrow(relation, prevNode.object.id),
         relationToChild: relation,
         child: prevNode,
       });
@@ -583,6 +587,67 @@ export class Tree {
     return parent.parentGroup.path + "/" + treeNode.relationWithParent.id;
   }
 
+  /**
+   * Splits a node and returns the newly created graph object, relation, and
+   * expected path to it in the tree.
+   *
+   * If the selection was at the start of a non-empty node, insert a new blank
+   * node just above the current node.
+   *
+   * If the current node is expanded, split it and place the new node as it's
+   * first child.
+   *
+   * Otherwise, split the node at the selection and place the new node as the
+   * next sibling.
+   *
+   * @DesignNote We leave the responsibility of generating the content for the new
+   * and existing nodes to the caller, as opposed to taking a position and
+   * determining the split content here. This method is intended to be used
+   * by the editor, and the editor may include rendered text which isn't part
+   * of the node content. For example, the text of @ mentions aren't part of
+   * the node's content, but if you place the caret in the middle of an @ mention
+   * and split the node, you expect the mention text to get split accordingly.
+   * So we let the editor determine the split content and pass it to this method.
+   */
+  async splitNode(
+    treeNode: DescendantTreeNode,
+    contentBeforeSelection: Chip[],
+    contentAfterSelection: Chip[],
+  ): Promise<{ node: GraphObject; relation: GraphRelation; path: string }> {
+    if (!(treeNode.object instanceof GraphNode)) {
+      throw new Error("Only splitting nodes is supported for now.");
+    }
+    if (contentBeforeSelection.length === 0 && contentAfterSelection.length > 0) {
+      const newNode = await this.graphStore.addChildNode({
+        parentId: treeNode.parent.object.id,
+        after: treeNode.siblingAbove?.relationWithParent,
+      });
+      if (treeNode.parentGroup.id === "pinned") {
+        treeNode.parent.object.pinChildRelation(newNode.relation, treeNode.siblingAbove?.relationWithParent);
+      }
+      return { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
+    } else {
+      treeNode.object.setContent(contentBeforeSelection);
+      if (treeNode.isExpanded && treeNode.childCount > 0) {
+        const newNode = await this.graphStore.addChildNode({
+          parentId: treeNode.object.id,
+          nodeProps: { content: contentAfterSelection },
+        });
+        return { ...newNode, path: treeNode.childrenGroupsById.all.path + "/" + newNode.relation.id };
+      } else {
+        const newNode = await this.graphStore.addChildNode({
+          parentId: treeNode.parent.object.id,
+          nodeProps: { content: contentAfterSelection },
+          after: treeNode.relationWithParent,
+        });
+        if (treeNode.parentGroup.id === "pinned") {
+          treeNode.parent.object.pinChildRelation(newNode.relation, treeNode.relationWithParent);
+        }
+        return { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
+      }
+    }
+  }
+
   clear(root: GraphRelation[]) {
     this.pathToRoot = root;
     this.expansions.clear();
@@ -653,23 +718,6 @@ export const getAncestorsAsArray = (
   // Reverse the array so it goes from furthest to closest
   return ancestors.reverse();
 };
-
-/**
- * Given a relation and the id of one of the objects in the relation,
- * returns the other object in the relation.
- *
- * @throws if the id is not in the relation
- */
-export const getOtherObject = (relation: GraphRelation, id: string) => {
-  if (relation.from.id === id) {
-    return relation.to;
-  } else if (relation.to.id === id) {
-    return relation.from;
-  } else {
-    throw new Error("Id is not in relation");
-  }
-};
-
 export const isUnlabelledChild = (node: DescendantTreeNode) => {
   return node.relationWithParent.relationType.id === "child" && !node.isBackrelation;
 };

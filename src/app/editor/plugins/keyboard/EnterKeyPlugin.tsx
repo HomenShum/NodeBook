@@ -87,35 +87,20 @@ export const EnterKeyPlugin = () => {
       action((event) => {
         if (!event || !graphStore) return false;
         if (event.shiftKey) return false;
-
-        event.preventDefault();
-        const metaOrCtrl = event.metaKey || event.ctrlKey; // Command key on Mac, Ctrl key on Windows
-        const splitToNewBundle = !!metaOrCtrl;
-
         const selection = $getSelection();
         if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
-
-        if (object instanceof GraphNode) {
-          const shouldCreateChild = tree.isPathExpanded(pathToNodeStr);
-          const { chipsBefore, chipsAfter } = getChipsAroundSelection(selection);
-          let {
-            child: { node: newNode, relation: newRelation },
-            nested,
-          } = graphStore.splitRelatedNode(relation, object, chipsBefore, chipsAfter, shouldCreateChild, {
-            splitToNewBundle,
-          });
-
-          // Add to outline if necessary
-          graphStore.addElsewhereAfterCreate(newNode, parent, tree.rootObject);
-          const id = treeNode.parentGroup.path + "/" + newRelation.id;
-          renderController.setFocusedNode(id);
-          return true;
-        } else {
+        if (!(object instanceof GraphNode)) {
           // For now, we don't support splitting relations. In ENT-3653, we'll
           // decide if and how to support this.
           console.log("Splitting relations is not supported yet.");
           return false;
         }
+        event.preventDefault();
+        const { chipsBefore, chipsAfter } = getChipsAroundSelection(selection);
+        tree.splitNode(treeNode, chipsBefore, chipsAfter).then(({ path }) => {
+          renderController.setFocusedNode(path);
+        });
+        return true;
       }),
       COMMAND_PRIORITY_NORMAL,
     );

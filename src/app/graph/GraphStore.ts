@@ -2,13 +2,13 @@ import { makeAutoObservable, toJS } from "mobx";
 
 import { SerializedGraphStore, SerializedRelation } from "@/app/persistence/SerializedData";
 import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
-import { comparePositions, relationsPathToParentChild, uuid } from "@/app/util";
+import { relationsPathToParentChild, uuid } from "@/app/util";
 
 import { FractionalPositionedList } from "./FractionalPositionedList";
-import { Chip, GraphNode, GraphNodeProps } from "./GraphNode";
+import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
-import { TxAddChildNode, TxAddRelation, TxReplaceRelationLink } from "./GraphTransactionTypes";
+import { Positioner, TxAddChildNode, TxAddRelation, TxReplaceRelationLink } from "./GraphTransactionTypes";
 import { isPlaceholder } from "./PlaceholderGraphObject";
 import { SettingsStore } from "./SettingsStore";
 
@@ -96,8 +96,7 @@ export class GraphStore {
     if (!wannaBeParent) {
       throw new Error(`Parent with id ${tx.parentId} does not exist`);
     }
-
-    return this.createChildNode(wannaBeParent, tx.nodeProps);
+    return this.createChildNode(wannaBeParent, tx.nodeProps, tx.after);
   }
 
   /**
@@ -173,6 +172,7 @@ export class GraphStore {
   private createChildNode(
     parent: GraphObject,
     props: GraphNodeProps = {},
+    after?: Positioner<GraphRelation>,
   ): { node: GraphNode; relation: GraphRelation } {
     const node = this.createNode(props);
     const relation = this.createRelation({
@@ -180,7 +180,9 @@ export class GraphStore {
       to: node,
       relationType: defaultRelationTypes.child,
     });
-
+    if (after) {
+      this.getRelationList(parent).move([relation], after);
+    }
     return { node, relation };
   }
 
@@ -403,10 +405,10 @@ export class GraphStore {
     return [this.createRelationType({ label: labelText }), "forward"];
   }
 
-  pinRelation(relation: GraphRelation, direction: "from" | "to") {
+  pinRelation(relation: GraphRelation, direction: "from" | "to", after?: Positioner<GraphRelation>) {
     const list = this.getPinnedRelationList(relation[direction]);
     if (!list.has(relation.id)) {
-      list.add(relation);
+      list.add(relation, after);
     }
   }
 
@@ -484,6 +486,15 @@ export class GraphStore {
     // add the relations to the new to node
     this.getRelationList(newTo).add(relation);
     this.deleteNodeIfEmptyAndUnrelated(oldTo);
+  }
+
+  updateRelationTarget(relation: GraphRelation, { from, to }: { from?: GraphObject; to?: GraphObject }) {
+    if (from) {
+      this.updateRelationFrom(relation, from);
+    }
+    if (to) {
+      this.updateRelationTo(relation, to);
+    }
   }
 
   setGraphNodeAtPath(path: GraphRelation[], newGraphObject: GraphObject) {
@@ -568,89 +579,6 @@ export class GraphStore {
         this.deleteNode(obj.id);
       }
     });
-  }
-
-  splitRelatedNode(
-    relation: GraphRelation,
-    nodeToSplit: GraphNode,
-    chipsBefore: Chip[],
-    chipsAfter: Chip[],
-    shouldCreateChild: boolean,
-    { splitToNewBundle } = { splitToNewBundle: false },
-  ) {
-    const parent = relation.to.id === nodeToSplit.id ? relation.from : relation.to;
-
-    const relationsList = this.getRelationList(parent);
-    const relations = Array.from(relationsList.values())
-      .sort((a, b) => comparePositions(a.position, b.position))
-      .map((v) => v.item);
-    const relationIndex = relations.findIndex((r) => r.id === relation.id);
-    const siblingAbove = relations[relationIndex - 1];
-    const siblingsBelow = relations.slice(relationIndex + 1);
-
-    let child: { node: GraphNode; relation: GraphRelation };
-    let nested = false;
-
-    if (chipsBefore.length === 0 && chipsAfter.length > 0) {
-      // If the selection is at the start of a non-empty node, insert a new
-      // blank node just above the current node (we do this by getting the
-      // sibling above and moving the new node after it, because
-      // FractionalPositionedList.move can only place nodes after another node.
-      child = this.createChildNode(parent);
-      if (siblingAbove) relationsList.move([child.relation], siblingAbove);
-    } else {
-      nodeToSplit.setContent(chipsBefore);
-      if (shouldCreateChild) {
-        child = this.createChildNode(nodeToSplit, { content: chipsAfter });
-        this.getRelationList(nodeToSplit).move([child.relation], "top");
-        nested = true;
-      } else {
-        // Create a new related node below the current one with the text after the cursor
-        child = this.createChildNode(parent, { content: chipsAfter });
-        relationsList.move([child.relation], relation);
-      }
-    }
-
-    if (splitToNewBundle) {
-      // Make a new bundle
-      const newBundle = this.createChildNode(this.thoughtstreamRoot).node;
-      newBundle.setIsBundle(true);
-
-      // Add the new node to the new bundle
-      this.addToBundle(child.relation, newBundle);
-
-      const oldBundles = this.relationToBundles.get(relation.id);
-      for (const sibling of siblingsBelow) {
-        const oldBundlesForSibling = (this.relationToBundles.get(sibling.id) || []).filter((b) =>
-          oldBundles?.includes(b),
-        );
-        if (oldBundlesForSibling.length === 0) {
-          // If the sibling is not in the same bundle as the split node, we've hit the end of the bundle we're splitting and can stop
-          // TODO: this is hack-y because we don't have a concept of a "main" bundle that we're splitting here. Revisit at some point
-          break;
-        }
-        // Add siblings below the split node to the new bundle and remove them from the old bundle
-        this.addToBundle(sibling, newBundle);
-        oldBundlesForSibling?.forEach((bundle) => {
-          this.removeFromBundle(sibling, bundle);
-        });
-      }
-    } else {
-      // Add new node to the same bundles as the original
-      const bundles = this.relationToBundles.get(relation.id);
-      bundles?.forEach((bundle) => {
-        this.createRelation({ from: bundle, to: child.relation });
-        const existingBundles = this.relationToBundles.get(child.relation.id) || [];
-        this.relationToBundles.set(child.relation.id, [...existingBundles, bundle]);
-      });
-    }
-
-    return { child, nested };
-  }
-
-  moveRelationAfterSibling(node: GraphNode, relation: GraphRelation, sibling: GraphRelation) {
-    const list = this.relationsByNodeId.get(node.id);
-    list?.move([relation], sibling);
   }
 
   serialize(): SerializedGraphStore {

@@ -1,5 +1,6 @@
 import { PositionedRelation } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
+import { Positioner } from "./GraphTransactionTypes";
 
 export interface GraphObject {
   id: string;
@@ -17,7 +18,7 @@ export interface GraphObject {
 
   // pinned objects
   pinnedRelationsWithPositions: PositionedRelation[];
-  pinChildRelation(relation: GraphRelation): void;
+  pinChildRelation(relation: GraphRelation, after?: Positioner<GraphRelation>): void;
   unpinChildRelation(relation: GraphRelation): void;
   isRelationPinned(relation: GraphRelation): boolean;
 }
