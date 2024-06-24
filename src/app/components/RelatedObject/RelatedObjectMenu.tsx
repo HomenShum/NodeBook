@@ -16,6 +16,8 @@ import { cn } from "@/lib/utils";
 
 import { useTreeNode } from "./RelatedObjectContext";
 
+import styles from "./RelatedObjectMenu.module.css";
+
 export const RelatedObjectMenu = observer(
   ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {
     const renderController = useRenderController();
@@ -27,8 +29,8 @@ export const RelatedObjectMenu = observer(
     const relation = treeNode.relationWithParent;
     return (
       <DropdownMenu>
-        <DropdownMenuTrigger className="mx-2">
-          <Ellipsis size={18} className={cn(isHovered ? "text-[var(--gray-8)] bg-[--gray-1]" : "text-transparent")} />
+        <DropdownMenuTrigger className={styles.DropdownMenuTrigger}>
+          <Ellipsis size={18} className={cn(isHovered ? styles.DropdownMenuIcon : styles.Transparent)} />
         </DropdownMenuTrigger>
         <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
           {parent.isRelationPinned(relation) ? (
