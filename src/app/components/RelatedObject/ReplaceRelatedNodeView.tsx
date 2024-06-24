@@ -7,6 +7,8 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { sortByPrefixMatch } from "@/app/util";
 import { DescendantTreeNode } from "@/app/view/Tree";
 
+import styles from "./ReplaceRelatedNodeView.module.css";
+
 export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const currentObject = treeNode.object;
   const relation = treeNode.relationWithParent;
@@ -122,20 +124,20 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
   }, [setViewType, onSelect, selected, options]);
 
   return (
-    <div className="ml-0 flex-1">
-      <div ref={ref} className="relative flex flex-col z-10">
+    <div className={styles.ReplaceRelatedDropdown}>
+      <div ref={ref} className={styles.ReplaceRelatedDropdownContainer}>
         <input
           placeholder="Search nodes..."
           autoFocus
-          className="px-2 h-8 outline-none bg-[--teal-a2] rounded text-[--teal-a9]"
+          className={styles.ReplaceRelatedInput}
           type="text"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
-        <div className="absolute top-8 p-1 left-0 w-full bg-[white] border border-[--teal-3] rounded-sm flex flex-col gap-4">
+        <div className={styles.ReplaceRelatedContent}>
           {optionsGrouped.map((group) => (
             <div key={group.type}>
-              <div className="px-2 py-0 uppercase text-sm text-[--gray-6] pointer-events-none">{group.type}</div>
+              <div className={styles.ReplaceRelatedLabel}>{group.type}</div>
               {group.options.map(
                 ({ index, object, text }) =>
                   text && ( // avoiding empty nodes being rendered into the search results
@@ -143,7 +145,9 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
                       key={object.id}
                       onClick={() => onSelect(object)}
                       onMouseEnter={() => setSelected(index)}
-                      className={`px-2 py-1 rounded ${selected === index ? "bg-[--teal-2]" : ""} `}
+                      className={`${styles.ReplaceRelatedItem} ${
+                        selected === index && styles.ReplaceRelatedItemSelected
+                      } `}
                     >
                       {text}
                     </div>
