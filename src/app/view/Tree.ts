@@ -5,7 +5,7 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore, Path, defaultRelationTypes } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { getOtherObjectOrThrow } from "@/app/graph/utils";
+import { getOtherObjectOrThrow, getOtherSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { Position, comparePositions, relationsPathToParentChild } from "@/app/util";
 import appLogger from "@/lib/logger";
@@ -546,17 +546,17 @@ export class Tree {
    * Move the node to the sibling above.
    * @returns The new path of the node after the move
    */
-  indentNode(treeNode: DescendantTreeNode): string | undefined {
+  async indentNode(treeNode: DescendantTreeNode): Promise<string | undefined> {
     const siblingAbove = treeNode.siblingAbove;
     if (!siblingAbove) {
       return;
     }
     // Change the relation's parent to the sibling above
-    if (!treeNode.isBackrelation) {
-      this.graphStore.updateRelationFrom(treeNode.relationWithParent, siblingAbove.object);
-    } else {
-      this.graphStore.updateRelationTo(treeNode.relationWithParent, siblingAbove.object);
-    }
+    await this.graphStore.replaceRelationLink({
+      direction: getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id),
+      relationId: treeNode.relationWithParent.id,
+      replaceWith: { type: "existing-node", id: siblingAbove.object.id },
+    });
     // Position the relation at the bottom of the siblings list
     this.graphStore.getRelationList(siblingAbove.object).move([treeNode.relationWithParent], "bottom");
     // toggle open sibling
@@ -569,19 +569,18 @@ export class Tree {
    * Move the node to the parent.
    * @returns The new path of the node after the move
    */
-  dedentNode(treeNode: DescendantTreeNode): string | undefined {
+  async dedentNode(treeNode: DescendantTreeNode): Promise<string | undefined> {
     const parent = treeNode.parent;
     if (parent instanceof RootTreeNode) {
       logger.debug("Can't shift tab because no visible parent to move to");
       return;
     }
     const grandparent = parent.parent;
-    // Replace the relations pointer to the parent with the grandparent
-    if (treeNode.isBackrelation) {
-      this.graphStore.updateRelationTo(treeNode.relationWithParent, grandparent.object);
-    } else {
-      this.graphStore.updateRelationFrom(treeNode.relationWithParent, grandparent.object);
-    }
+    await this.graphStore.replaceRelationLink({
+      direction: getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id),
+      relationId: treeNode.relationWithParent.id,
+      replaceWith: { type: "existing-node", id: grandparent.object.id },
+    });
     // Position the relation under the parent
     this.graphStore.getRelationList(grandparent.object).move([treeNode.relationWithParent], parent.relationWithParent);
     return parent.parentGroup.path + "/" + treeNode.relationWithParent.id;

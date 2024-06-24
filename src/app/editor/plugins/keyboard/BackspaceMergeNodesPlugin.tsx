@@ -73,9 +73,11 @@ export const BackspaceMergeNodesPlugin = () => {
 
         if (targetNode && object instanceof GraphNode) {
           targetNode.setContent(targetNode.content.concat(object.content));
-          graphStore.deleteNode(object.id);
-          graphStore.deleteRelation(relation);
-          renderController.setFocusedNode(targetPath!);
+          graphStore.removeNode({ nodeId: object.id }).then(() => {
+            // TODO: make relation deletion a compound transaction with the above
+            graphStore.deleteRelation(relation);
+            renderController.setFocusedNode(targetPath!);
+          });
           return true;
         }
 

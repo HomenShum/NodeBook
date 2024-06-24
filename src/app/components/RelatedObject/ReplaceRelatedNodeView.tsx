@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { sortByPrefixMatch } from "@/app/util";
-import { DescendantTreeNode, getAncestorsAsArray } from "@/app/view/Tree";
+import { DescendantTreeNode } from "@/app/view/Tree";
 
 export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const currentObject = treeNode.object;
@@ -55,9 +56,13 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
   const [selected, setSelected] = useState<number | null>(optionsGrouped.length === 0 ? null : 0);
 
   const onSelect = useCallback(
-    (obj: GraphObject) => {
-      const path = getAncestorsAsArray(treeNode).map((p) => p.relationToChild);
-      graph.setGraphNodeAtPath(path, obj);
+    async (obj: GraphObject) => {
+      await graph.replaceRelationLink({
+        direction: treeNode.relationWithParent.to.id === treeNode.object.id ? "to" : "from",
+        relationId: treeNode.relationWithParent.id,
+        replaceWith:
+          obj instanceof GraphNode ? { type: "existing-node", id: obj.id } : { type: "existing-relation", id: obj.id },
+      });
       setViewType("edit");
     },
     [treeNode, graph, setViewType],

@@ -15,6 +15,10 @@ export type TxAddChildNode = {
   after?: Positioner<GraphRelation>;
 };
 
+export type TxRemoveNode = {
+  nodeId: string;
+};
+
 export type TxAddRelation = {
   fromId: string;
   toId: string;

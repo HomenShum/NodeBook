@@ -156,10 +156,6 @@ export class GraphNode implements Serializable, GraphObject {
     return this.pinnedRelationsList.has(childRelation.id);
   }
 
-  delete() {
-    this.store.deleteNode(this.id);
-  }
-
   toString() {
     return `Node(${this.id.slice(0, 8)}: ${this.text.slice(0, 8)})`;
   }

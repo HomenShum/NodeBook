@@ -16,15 +16,15 @@ export const TabAndBulletPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const { treeNode } = useTreeNode();
 
-  const indentAndFocus = useCallback(() => {
-    const path = tree.indentNode(treeNode);
+  const indentAndFocus = useCallback(async () => {
+    const path = await tree.indentNode(treeNode);
     if (!path) return false;
     renderController.setFocusedNode(path);
     return true;
   }, [renderController, tree, treeNode]);
 
-  const dedentAndFocus = useCallback(() => {
-    const path = tree.dedentNode(treeNode);
+  const dedentAndFocus = useCallback(async () => {
+    const path = await tree.dedentNode(treeNode);
     if (!path) return false;
     renderController.setFocusedNode(path);
     return true;
@@ -56,7 +56,12 @@ export const TabAndBulletPlugin = () => {
         KEY_TAB_COMMAND,
         action((event: KeyboardEvent) => {
           event.preventDefault();
-          return event.shiftKey ? dedentAndFocus() : indentAndFocus();
+          if (event.shiftKey) {
+            dedentAndFocus();
+          } else {
+            indentAndFocus();
+          }
+          return true;
         }),
         COMMAND_PRIORITY_EDITOR,
       ),
