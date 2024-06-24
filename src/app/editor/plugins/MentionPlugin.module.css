@@ -1,5 +1,5 @@
 .TypeaheadPopover {
-  background: #fff;
+  background: var(--gray-1);
   border: solid 1px var(--teal-4);
   padding: 2px;
   border-radius: 4px;

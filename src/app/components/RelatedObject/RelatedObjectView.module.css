@@ -59,7 +59,7 @@
   transform: translateY(0.5px);
   display: flex;
   color: var(--teal-7);
-  background-color: white;
+  background-color: var(--gray-1);
 }
 
 .RelatedObjectBulletContainer {
@@ -91,18 +91,18 @@
 }
 
 .DotOutsidePublic {
-  stroke: var(--teal-4);
+  stroke: var(--teal-5);
 }
 
 .DotOutsidePrivate {
-  stroke: var(--gray-4);
+  stroke: var(--gray-5);
 }
 
 .DotInsidePrivate {
-  fill: var(--gray-10);
+  stroke: var(--gray-11);
 }
 .DotInsidePublic {
-  stroke: var(--teal-10);
+  stroke: var(--teal-11);
 }
 
 .Circle {
@@ -123,6 +123,7 @@
   position: relative;
   width: 100%;
   top: -2px;
+  color: var(--gray-12);
 }
 
 .RelatedObjectNodeContent {
@@ -140,7 +141,7 @@
 }
 
 .RelationHoverCard {
-  background-color: white;
+  background-color: var(--gray-1);
   padding: 4px 12px;
   border: 0.5px solid var(--gray-3);
   box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
@@ -152,9 +153,14 @@
   position: relative;
   align-self: flex-start;
   margin-top: 2px;
+  width: 16px;
   height: 18px;
-  background-color: var(--gray-1);
-  color: var(--gray-8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background-color: var(--gray-3);
+  color: var(--gray-9);
   font-size: 12px;
   border-radius: 2px;
   padding-left: 4px;

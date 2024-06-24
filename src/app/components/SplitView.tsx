@@ -5,18 +5,18 @@ import { useViewStore } from "@/app/view/useViewStore";
 import { OutlineView } from "./OutlineView";
 import { ThoughtstreamView } from "./ThoughtstreamView";
 
-import s from "./Splitview.module.css";
+import styles from "./Splitview.module.css";
 
 export const SplitView = observer(() => {
   const viewStore = useViewStore();
   return (
-    <div className={`${s.container}`}>
-      <div className={s.mainContent}>
-        <div className={s.halfWidth}>
-          <ThoughtstreamView tree={viewStore.mainStreamView} />
+    <div className={`${styles.Container}`}>
+      <div className={styles.SplitContent}>
+        <div className={styles.HalfWidth}>
+         <ThoughtstreamView tree={viewStore.mainStreamView} />
         </div>
-        <div className={s.divider}></div>
-        <div className={s.halfWidth}>
+        <div className={styles.Divider}></div>
+        <div className={styles.HalfWidth}>
           <OutlineView tree={viewStore.mainOutlineView} />
         </div>
       </div>

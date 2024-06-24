@@ -51,7 +51,7 @@ export default observer(
     const router = useRouter();
 
     return (
-      <div className={styles.App}>
+      <div className={`${styles.App}`}>
         <div ref={appContainerRef} className={styles.AppContainer}>
           <aside className={`${styles.LeftAside} ${renderController.leftSidebarOpen ? styles.AsideVisible : ""}`}>
             {/* for now keeping this as tailwind bc it handles wisely the gaps in both axis */}

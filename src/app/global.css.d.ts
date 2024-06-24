@@ -4,7 +4,6 @@ declare const styles: {
   readonly "dark-theme": string;
   readonly "light": string;
   readonly "light-theme": string;
-  readonly "radix-themes": string;
 };
 export = styles;
 

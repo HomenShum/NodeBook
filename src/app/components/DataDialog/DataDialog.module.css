@@ -16,7 +16,7 @@
 }
 
 .DialogContent {
-  background-color: white;
+  background-color: var(--gray-1);
   border-radius: 6px;
   box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
   position: fixed;
@@ -45,7 +45,6 @@
 .DialogContent:focus {
   outline: none;
 }
-
 
 .DialogTitle {
   margin: 0;
@@ -80,7 +79,6 @@
   box-shadow: 0 0 0 2px var(--teal-4);
 }
 
-
 .Fieldset {
   display: flex;
   gap: 20px;
@@ -101,7 +99,7 @@
   font-size: 0.8em;
 }
 
-.SelectedFileLabel>button {
+.SelectedFileLabel > button {
   display: inline-block;
   border-radius: 50%;
   color: red;

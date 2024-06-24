@@ -1,22 +1,22 @@
-.container {
+.Container {
   display: flex;
   width: 100%;
   margin: 0 auto;
   max-width: 72rem;
 }
 
-.mainContent {
+.SplitContent {
   display: flex;
   width: 100%;
   justify-content: space-between;
   gap: 2rem;
 }
 
-.halfWidth {
+.HalfWidth {
   width: 50%;
 }
 
-.divider {
+.Divider {
   width: 0;
   border-left: 1px dashed var(--gray-5);
   height: 100vh;

@@ -28,7 +28,7 @@ export const RelatedObjectMenu = observer(
     return (
       <DropdownMenu>
         <DropdownMenuTrigger className="mx-2">
-          <Ellipsis size={18} className={cn(isHovered ? "text-[var(--gray-8)] bg-white" : "text-transparent")} />
+          <Ellipsis size={18} className={cn(isHovered ? "text-[var(--gray-8)] bg-[--gray-1]" : "text-transparent")} />
         </DropdownMenuTrigger>
         <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
           {parent.isRelationPinned(relation) ? (
