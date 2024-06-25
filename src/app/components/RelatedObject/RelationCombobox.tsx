@@ -101,8 +101,8 @@ export const RelationCombobox = observer(
     items.push({
       key: "delete",
       label: "Delete relation",
-      onSelect: () => {
-        graphStore.deleteRelation(relation);
+      onSelect: async () => {
+        await graphStore.removeRelation({ relationId: relation.id });
       },
     });
 

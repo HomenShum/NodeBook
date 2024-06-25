@@ -25,6 +25,10 @@ export type TxAddRelation = {
   relationType?: GraphRelationType;
 };
 
+export type TxRemoveRelation = {
+  relationId: string;
+};
+
 export type TxReplaceRelationLink = {
   direction: RelationDirectionForObject;
   relationId: string;
@@ -33,3 +37,40 @@ export type TxReplaceRelationLink = {
     | { type: "existing-node"; id: string }
     | { type: "existing-relation"; id: string };
 };
+
+type TxMapping = {
+  addChildNode: TxAddChildNode;
+  removeNode: TxRemoveNode;
+  addRelation: TxAddRelation;
+  removeRelation: TxRemoveRelation;
+  replaceRelationLink: TxReplaceRelationLink;
+};
+
+// TODO: probably can be done with less boilerplate code?
+type TxCombinedPart =
+  | {
+      type: "addChildNode";
+      transaction: TxAddChildNode;
+    }
+  | {
+      type: "removeNode";
+      transaction: TxRemoveNode;
+    }
+  | {
+      type: "addRelation";
+      transaction: TxAddRelation;
+    }
+  | {
+      type: "removeRelation";
+      transaction: TxRemoveRelation;
+    }
+  | {
+      type: "replaceRelationLink";
+      transaction: TxReplaceRelationLink;
+    };
+
+/**
+ * The field `type` in each element refers to a method on GraphStore.
+ * The field `transaction` refers to the transaction type.
+ */
+export type TxCombined = TxCombinedPart[];

@@ -39,8 +39,8 @@ export const RelatedObjectMenu = observer(
             <DropdownMenuItem onSelect={() => parent.pinChildRelation(relation)}>Pin</DropdownMenuItem>
           )}
           <DropdownMenuItem
-            onSelect={action(() => {
-              graphStore.deleteRelation(relation);
+            onSelect={action(async () => {
+              await graphStore.removeRelation({ relationId: relation.id });
               if (treeNode.siblingAbove) {
                 renderController.setFocusedNode(treeNode.siblingAbove.path);
               }

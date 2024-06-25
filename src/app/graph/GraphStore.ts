@@ -3,6 +3,7 @@ import { makeAutoObservable, toJS } from "mobx";
 import { SerializedGraphStore, SerializedRelation } from "@/app/persistence/SerializedData";
 import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
 import { uuid } from "@/app/util";
+import logger from "@/lib/logger";
 
 import { FractionalPositionedList } from "./FractionalPositionedList";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
@@ -12,7 +13,9 @@ import {
   Positioner,
   TxAddChildNode,
   TxAddRelation,
+  TxCombined,
   TxRemoveNode,
+  TxRemoveRelation,
   TxReplaceRelationLink,
 } from "./GraphTransactionTypes";
 import { isPlaceholder } from "./PlaceholderGraphObject";
@@ -94,9 +97,44 @@ export class GraphStore {
   }
 
   /**
+   * Apply a combined transaction to the graph.
+   *
+   * If at some point the transaction start containing preparatory async logic
+   * we should split them into prep and call methods, and for the combined ones,
+   * execute first all the prep methods and then all the call ones.
+   */
+  async applyCombinedTransaction(txs: TxCombined): Promise<any[]> {
+    const results = [];
+    for (const { type, transaction } of txs) {
+      switch (type) {
+        // Checking for the async method but calling the corresponding sync one
+        case "addChildNode":
+          results.push(this._addChildNode(transaction));
+          break;
+        case "removeNode":
+          results.push(this._removeNode(transaction));
+          break;
+        case "addRelation":
+          results.push(this._addRelation(transaction));
+          break;
+        case "removeRelation":
+          results.push(this._removeRelation(transaction));
+          break;
+        case "replaceRelationLink":
+          results.push(this._replaceRelationLink(transaction));
+          break;
+        default:
+          throw new Error(`Invalid transaction type: ${type}`);
+      }
+    }
+    return results;
+  }
+
+  /**
    * Add a node with a child relation to some existing graph object.
    */
-  async addChildNode(tx: TxAddChildNode): Promise<{ node: GraphNode; relation: GraphRelation }> {
+  addChildNode = async (tx: TxAddChildNode) => this._addChildNode(tx);
+  private _addChildNode(tx: TxAddChildNode): { node: GraphNode; relation: GraphRelation } {
     const wannaBeParent = this.nodesById.get(tx.parentId);
     if (!wannaBeParent) {
       throw new Error(`Parent with id ${tx.parentId} does not exist`);
@@ -104,14 +142,24 @@ export class GraphStore {
     return this.createChildNode(wannaBeParent, tx.nodeProps, tx.after);
   }
 
-  async removeNode(tx: TxRemoveNode): Promise<void> {
-    this.deleteNode(tx.nodeId);
+  /**
+   * Remove a node from the graph, then delete the object if it is no longer related to anything.
+   */
+  removeNode = async (tx: TxRemoveNode) => this._removeNode(tx);
+  private _removeNode(tx: TxRemoveNode): void {
+    const node = this.nodesById.get(tx.nodeId);
+    if (!node) {
+      throw new Error(`Node with id ${tx.nodeId} does not exist`);
+    }
+
+    this.deleteNode(node);
   }
 
   /**
    * Create a new relation between two existing objects.
    */
-  async addRelation(tx: TxAddRelation): Promise<{ relation: GraphRelation }> {
+  addRelation = async (tx: TxAddRelation) => this._addRelation(tx);
+  private _addRelation(tx: TxAddRelation): { relation: GraphRelation } {
     const from = this.nodesById.get(tx.fromId);
     const to = this.nodesById.get(tx.toId);
     if (!from || !to) {
@@ -122,17 +170,28 @@ export class GraphStore {
   }
 
   /**
-   * Replace a relation link with a new or existing graph object.
+   * Remove a relation from the graph, then delete the objects if they are no longer related to anything.
    */
-  async replaceRelationLink(tx: TxReplaceRelationLink): Promise<{ object: GraphObject; relation: GraphRelation }> {
+  removeRelation = async (tx: TxRemoveRelation) => this._removeRelation(tx);
+  private _removeRelation(tx: TxRemoveRelation): void {
     const relation = this.relationsById.get(tx.relationId);
     if (!relation) {
       throw new Error(`Relation with id ${tx.relationId} does not exist`);
     }
 
-    const oldObject = relation[tx.direction];
+    this.deleteRelation(relation);
+  }
 
-    // TODO: if something similar is to happen in another transaction, consider moving this to a separate method
+  /**
+   * Replace a relation link with a new or existing graph object.
+   */
+  replaceRelationLink = async (tx: TxReplaceRelationLink) => this._replaceRelationLink(tx);
+  private _replaceRelationLink(tx: TxReplaceRelationLink): { object: GraphObject; relation: GraphRelation } {
+    const relation = this.relationsById.get(tx.relationId);
+    if (!relation) {
+      throw new Error(`Relation with id ${tx.relationId} does not exist`);
+    }
+
     let newObject;
     if (tx.replaceWith.type === "new-node") {
       newObject = this.createNode(tx.replaceWith.nodeProps || {});
@@ -152,30 +211,31 @@ export class GraphStore {
       this.updateRelationTo(relation, newObject);
     }
 
-    this.deleteIfNoRelations(oldObject);
-
     return { object: newObject, relation };
   }
 
   private createNode(props: GraphNodeProps): GraphNode {
-    const node = new GraphNode(this, {
-      id: props.id || uuid(),
-      content: props.content,
-    });
+    let node;
 
-    this.nodesById.set(node.id, node);
-    this.relationsByNodeId.set(node.id, new FractionalPositionedList());
-    this.pinnedRelationsByNodeId.set(node.id, new FractionalPositionedList());
+    try {
+      node = new GraphNode(this, {
+        id: props.id || uuid(),
+        content: props.content,
+      });
 
-    if (node.id === OUTLINE_ROOT_ID) {
-      this.outlineRoot = node;
-    } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
-      this.thoughtstreamRoot = node;
-    } else if (node.id === USER_ROOT_ID) {
-      this.userRoot = node;
+      this.nodesById.set(node.id, node);
+      this.relationsByNodeId.set(node.id, new FractionalPositionedList());
+      this.pinnedRelationsByNodeId.set(node.id, new FractionalPositionedList());
+
+      return node;
+    } catch (e) {
+      if (node) {
+        this.nodesById.delete(node.id);
+        this.relationsByNodeId.delete(node.id);
+        this.pinnedRelationsByNodeId.delete(node.id);
+      }
+      throw e;
     }
-
-    return node;
   }
 
   private createChildNode(
@@ -183,63 +243,105 @@ export class GraphStore {
     props: GraphNodeProps = {},
     after?: Positioner<GraphRelation>,
   ): { node: GraphNode; relation: GraphRelation } {
-    const node = this.createNode(props);
-    const relation = this.createRelation({
-      from: parent,
-      to: node,
-      relationType: defaultRelationTypes.child,
-    });
-    if (after) {
-      this.getRelationList(parent).move([relation], after);
+    let node;
+    let relation;
+
+    try {
+      node = this.createNode(props);
+      relation = this.createRelation({
+        from: parent,
+        to: node,
+        relationType: defaultRelationTypes.child,
+      });
+
+      if (after) {
+        this.getRelationList(parent).move([relation], after);
+      }
+
+      return { node, relation };
+    } catch (e) {
+      if (node) {
+        this.nodesById.delete(node.id);
+        this.relationsByNodeId.delete(node.id);
+        this.pinnedRelationsByNodeId.delete(node.id);
+      }
+      if (relation) {
+        this.relationsById.delete(relation.id);
+      }
+      throw e;
     }
-    return { node, relation };
   }
 
-  private deleteNode(id: string) {
-    const node = this.nodesById.get(id);
+  private deleteNode(node: GraphNode) {
     if (!node) return;
-    node.relations.forEach((r) => this.deleteRelation(r));
-    this.nodesById.delete(node.id);
-    this.relationsByNodeId.delete(node.id);
+
+    try {
+      node.relations.forEach((r) => this.deleteRelation(r));
+      this.nodesById.delete(node.id);
+      this.relationsByNodeId.delete(node.id);
+    } catch (e) {
+      // TODO: implement rollback
+      throw e;
+    }
   }
 
   private createRelation(relationProps: GraphRelationProps): GraphRelation {
-    const relation = new GraphRelation(this, relationProps);
-    if (this.relationsById.has(relation.id)) {
-      throw new Error(`Relation with id ${relation.id} already exists`);
+    let relation;
+
+    try {
+      relation = new GraphRelation(this, relationProps);
+      if (this.relationsById.has(relation.id)) {
+        const relationId = relation.id;
+        relation = null; // So that it's not deleted in the catch block
+        throw new Error(`Relation with id ${relationId} already exists`);
+      }
+
+      this.assertExists(relation.from, relation.to);
+      this.relationsById.set(relation.id, relation);
+
+      this.getRelationList(relation.from).add(relation);
+      this.getRelationList(relation.to).add(relation);
+
+      const newList = new FractionalPositionedList<GraphRelation>();
+      this.pinnedRelationsByNodeId.set(relation.id, newList);
+
+      return relation;
+    } catch (e) {
+      if (relation) {
+        this.relationsById.delete(relation.id);
+        this.getRelationList(relation.from).delete(relation.id);
+        this.getRelationList(relation.to).delete(relation.id);
+        this.pinnedRelationsByNodeId.delete(relation.id);
+      }
+      throw e;
     }
-
-    this.assertExists(relation.from, relation.to);
-    this.relationsById.set(relation.id, relation);
-
-    this.getRelationList(relation.from).add(relation);
-    this.getRelationList(relation.to).add(relation);
-
-    const newList = new FractionalPositionedList<GraphRelation>();
-    this.pinnedRelationsByNodeId.set(relation.id, newList);
-
-    return relation;
   }
 
-  deleteRelation(relation: GraphRelation) {
-    const { from: fromNode, to: toNode } = relation;
+  private deleteRelation(relation: GraphRelation) {
+    try {
+      const { from: fromNode, to: toNode } = relation;
 
-    // Remove the relation from the nodes
-    this.getRelationList(fromNode).delete(relation.id);
-    this.getRelationList(toNode).delete(relation.id);
-    this.getPinnedRelationList(fromNode).delete(relation.id);
-    this.getPinnedRelationList(toNode).delete(relation.id);
+      // Remove the relation from the nodes
+      this.getRelationList(fromNode).delete(relation.id);
+      this.getRelationList(toNode).delete(relation.id);
+      this.getPinnedRelationList(fromNode).delete(relation.id);
+      this.getPinnedRelationList(toNode).delete(relation.id);
 
-    // Remove relation from all bundles
-    const bundles = this.relationToBundles.get(relation.id) || [];
-    bundles.forEach((bundle) => {
-      this.removeFromBundle(relation, bundle);
-    });
+      // Remove relation from all bundles
+      const bundles = this.relationToBundles.get(relation.id) || [];
+      bundles.forEach((bundle) => {
+        this.removeFromBundle(relation, bundle);
+      });
 
-    // Delete the relation itself
-    this.relationsById.delete(relation.id);
+      // Delete the relation itself
+      this.relationsById.delete(relation.id);
 
-    this.deleteNodeIfEmptyAndUnrelated(fromNode, toNode);
+      this.deleteIfNoRelations(fromNode);
+      this.deleteIfNoRelations(toNode);
+    } catch (e) {
+      // TODO: implement rollback
+      throw e;
+    }
   }
 
   /**
@@ -248,17 +350,23 @@ export class GraphStore {
    * to reflect the changes.
    */
   private updateRelationFrom(relation: GraphRelation, newFrom: GraphObject) {
-    // remove the relations from their old from nodes
-    const oldFrom = relation.from;
-    this.getRelationList(oldFrom).delete(relation.id);
-    if (this.getPinnedRelationList(oldFrom).has(relation.id)) {
-      this.unpinRelation(relation, "from");
+    try {
+      // remove the relations from their old from nodes
+      const oldFrom = relation.from;
+      this.getRelationList(oldFrom).delete(relation.id);
+      if (this.getPinnedRelationList(oldFrom).has(relation.id)) {
+        this.unpinRelation(relation, "from");
+      }
+      // update the relations from property
+      relation.setFrom(newFrom);
+      // add the relations to the new from node
+      this.getRelationList(newFrom).add(relation);
+      this.deleteIfNoRelations(oldFrom);
+    } catch (e) {
+      // TODO: implement rollback
+      // Phil: I don't like how this messes up with the `createNode` in the replaceRelationLink method
+      throw e;
     }
-    // update the relations from property
-    relation.setFrom(newFrom);
-    // add the relations to the new from node
-    this.getRelationList(newFrom).add(relation);
-    this.deleteNodeIfEmptyAndUnrelated(oldFrom);
   }
 
   /**
@@ -267,22 +375,32 @@ export class GraphStore {
    * to reflect the changes.
    */
   private updateRelationTo(relation: GraphRelation, newTo: GraphObject) {
-    // remove the relations from their old to nodes
-    const oldTo = relation.to;
-    this.getRelationList(oldTo).delete(relation.id);
-    if (this.getPinnedRelationList(oldTo).has(relation.id)) {
-      this.unpinRelation(relation, "to");
+    try {
+      // remove the relations from their old to nodes
+      const oldTo = relation.to;
+      this.getRelationList(oldTo).delete(relation.id);
+      if (this.getPinnedRelationList(oldTo).has(relation.id)) {
+        this.unpinRelation(relation, "to");
+      }
+      // update the relations to property
+      relation.setTo(newTo);
+      // add the relations to the new to node
+      this.getRelationList(newTo).add(relation);
+      this.deleteIfNoRelations(oldTo);
+    } catch (e) {
+      // TODO: implement rollback
+      // Phil: I don't like how this messes up with the `createNode` in the replaceRelationLink method
+      throw e;
     }
-    // update the relations to property
-    relation.setTo(newTo);
-    // add the relations to the new to node
-    this.getRelationList(newTo).add(relation);
-    this.deleteNodeIfEmptyAndUnrelated(oldTo);
   }
 
   private deleteIfNoRelations(object: GraphObject) {
     if (object.relations.length === 0 || this.doAllRelationsPointTo(object, this.thoughtstreamRoot)) {
-      this.deleteNode(object.id); // TODO: probably not only a Node
+      if (object instanceof GraphNode) {
+        this.deleteNode(object);
+      } else {
+        logger.warn("Attempt to delete a GraphObject that is not a GraphNode", object);
+      }
     }
   }
 
@@ -357,7 +475,7 @@ export class GraphStore {
     // If bundle is empty after removing relation, delete it
     // (Bundle is empty if it only has relation to Thoughtstream)
     if (this.getRelationList(bundle).values().length === 1) {
-      this.deleteNode(bundle.id);
+      this.deleteNode(bundle);
     }
 
     // Update relation to bundles map
@@ -536,21 +654,6 @@ export class GraphStore {
         }
       } else {
         throw new Error("Invalid object type");
-      }
-    });
-  }
-
-  /**
-   * Deletes a node if it is empty and not related to anything other than the thoughtstream root.
-   */
-  private deleteNodeIfEmptyAndUnrelated(...objects: GraphObject[]) {
-    objects.forEach((obj) => {
-      if (
-        obj instanceof GraphNode &&
-        obj.text === "" &&
-        obj.relations.every((r) => r.from.id === this.thoughtstreamRoot.id)
-      ) {
-        this.deleteNode(obj.id);
       }
     });
   }
@@ -859,7 +962,7 @@ export class GraphStore {
     const subtreeObjects = this.gatherSubtree(root);
     for (const obj of subtreeObjects) {
       if (obj instanceof GraphNode) {
-        this.deleteNode(obj.id);
+        this.deleteNode(obj);
       } else if (obj instanceof GraphRelation) {
         this.deleteRelation(obj);
       }

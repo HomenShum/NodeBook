@@ -30,12 +30,13 @@ export const BackspaceMergeNodesPlugin = () => {
         event.preventDefault();
         if (object.text === "") {
           if (treeNode.relationWithParent) {
-            graphStore.deleteRelation(relation);
-            if (treeNode.siblingAbove) {
-              renderController.setFocusedNode(treeNode.siblingAbove.path);
-            } else {
-              renderController.setFocusedNode(treeNode.parent.path);
-            }
+            graphStore.removeRelation({ relationId: relation.id }).then(() => {
+              if (treeNode.siblingAbove) {
+                renderController.setFocusedNode(treeNode.siblingAbove.path);
+              } else {
+                renderController.setFocusedNode(treeNode.parent.path);
+              }
+            });
             return true;
           }
           return false;
@@ -73,11 +74,15 @@ export const BackspaceMergeNodesPlugin = () => {
 
         if (targetNode && object instanceof GraphNode) {
           targetNode.setContent(targetNode.content.concat(object.content));
-          graphStore.removeNode({ nodeId: object.id }).then(() => {
-            // TODO: make relation deletion a compound transaction with the above
-            graphStore.deleteRelation(relation);
-            renderController.setFocusedNode(targetPath!);
-          });
+          graphStore
+            .applyCombinedTransaction([
+              { type: "removeNode", transaction: { nodeId: object.id } },
+              { type: "removeRelation", transaction: { relationId: relation.id } },
+            ])
+            .catch(() => {}) // TODO: investigate missing relation error
+            .finally(() => {
+              renderController.setFocusedNode(targetPath);
+            });
           return true;
         }
 

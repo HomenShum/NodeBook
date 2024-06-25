@@ -78,10 +78,6 @@ export class GraphRelation implements Serializable, GraphObject {
     this.isPrivate = value;
   }
 
-  delete() {
-    this.store.deleteRelation(this);
-  }
-
   updateType(newType: GraphRelationType) {
     this.store.updateRelationsType(this, newType);
   }
