@@ -10,7 +10,6 @@ import {
 } from "@/app/components/ui/DropdownMenu";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/view/TreeContext";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +19,6 @@ import styles from "./RelatedObjectMenu.module.css";
 
 export const RelatedObjectMenu = observer(
   ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {
-    const renderController = useRenderController();
     const graphStore = useGraphStore();
     const tree = useTree();
     const { treeNode, viewType, setViewType } = useTreeNode();
@@ -42,7 +40,7 @@ export const RelatedObjectMenu = observer(
             onSelect={action(async () => {
               await graphStore.removeRelation({ relationId: relation.id });
               if (treeNode.siblingAbove) {
-                renderController.setFocusedNode(treeNode.siblingAbove.path);
+                tree.setFocusedNode(treeNode.siblingAbove.path);
               }
             })}
           >

@@ -2,15 +2,13 @@
 
 import { useCallback, useEffect } from "react";
 
-import { useRenderController } from "@/app/render/useRenderController";
-import { relationsToPathStr, useCurView } from "@/app/util";
+import { useCurView } from "@/app/util";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 
 export const useKeyboardShortcuts = () => {
   const curView = useCurView();
   const viewStore = useViewStore();
-  const renderController = useRenderController();
   const handleKeyDown = useCallback(
     async (e: KeyboardEvent) => {
       const metaOrCtrl = e.metaKey || e.ctrlKey; // Command key on Mac, Ctrl key on Windows
@@ -19,14 +17,12 @@ export const useKeyboardShortcuts = () => {
         e.preventDefault();
         switch (curView) {
           case ViewType.OUTLINE: {
-            const { path } = await viewStore.mainOutlineView.createChildNode();
-            renderController.setFocusedNode(relationsToPathStr(path));
+            await viewStore.mainOutlineView.createChildNodeAndFocus();
             break;
           }
           case ViewType.THOUGHTSTREAM:
           case ViewType.SPLIT: {
-            const { path } = await viewStore.mainStreamView.createChildNode();
-            renderController.setFocusedNode(relationsToPathStr(path));
+            await viewStore.mainStreamView.createChildNodeAndFocus();
             break;
           }
           default:
@@ -34,7 +30,7 @@ export const useKeyboardShortcuts = () => {
         }
       }
     },
-    [renderController, curView, viewStore],
+    [curView, viewStore],
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);

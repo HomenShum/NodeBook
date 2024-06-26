@@ -13,14 +13,14 @@ import {
 import { useEffect } from "react";
 
 import { $getText, getSelectionPositions } from "@/app/editor/utils";
-import { useRenderController } from "@/app/render/useRenderController";
+import { useTree } from "@/app/view/TreeContext";
 
 /**
  * Plugin to jump focus to other editors using arrow keys.
  */
 export const ArrowKeyNavPlugin = () => {
-  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
+  const tree = useTree();
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
@@ -29,8 +29,7 @@ export const ArrowKeyNavPlugin = () => {
           const [selectionLeft, _] = getSelectionPositions(editor);
           const textAfter = $getText({ from: selectionLeft });
           if (textAfter.includes("\n")) return false;
-
-          const focusedMoved = renderController.focusNextEditor({ focusAt: "start" });
+          const focusedMoved = tree.moveSelectionDown();
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -43,8 +42,7 @@ export const ArrowKeyNavPlugin = () => {
           const [selectionLeft, _] = getSelectionPositions(editor);
           const textBefore = $getText({ to: selectionLeft });
           if (textBefore.includes("\n")) return false;
-
-          const focusedMoved = renderController.focusPrevEditor({ focusAt: "end" });
+          const focusedMoved = tree.moveSelectionUp();
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -57,8 +55,7 @@ export const ArrowKeyNavPlugin = () => {
           const selectionStart = $getSelection()?.getStartEndPoints()?.[0];
           // Offset is 0 when at start of text
           if (!selectionStart || selectionStart.offset !== 0) return false;
-
-          const focusedMoved = renderController.focusPrevEditor({ focusAt: "end" });
+          const focusedMoved = tree.moveSelectionUp();
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -78,8 +75,7 @@ export const ArrowKeyNavPlugin = () => {
             // Selection not at end of editor
             return false;
           }
-
-          const focusedMoved = renderController.focusNextEditor({ focusAt: "start" });
+          const focusedMoved = tree.moveSelectionDown();
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -87,7 +83,7 @@ export const ArrowKeyNavPlugin = () => {
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, renderController]);
+  }, [editor]);
 
   return null;
 };

@@ -97,9 +97,7 @@ export const EnterKeyPlugin = () => {
         }
         event.preventDefault();
         const { chipsBefore, chipsAfter } = getChipsAroundSelection(selection);
-        tree.splitNode(treeNode, chipsBefore, chipsAfter).then(({ path }) => {
-          renderController.setFocusedNode(path);
-        });
+        tree.splitNode(treeNode, chipsBefore, chipsAfter);
         return true;
       }),
       COMMAND_PRIORITY_NORMAL,

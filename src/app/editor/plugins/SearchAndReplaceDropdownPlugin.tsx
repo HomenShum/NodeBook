@@ -20,6 +20,7 @@ import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { isUnlabelledChild } from "@/app/view/Tree";
+import { useTree } from "@/app/view/TreeContext";
 import { cn } from "@/lib/utils";
 
 function resolveReplacementType(optionType: DropdownOption["type"]): "existing-node" | "existing-relation" {
@@ -44,6 +45,7 @@ function resolveReplacementType(optionType: DropdownOption["type"]): "existing-n
 export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) => {
   const graph = useGraphStore();
   const renderController = useRenderController();
+  const tree = useTree();
   const { treeNode, viewType } = useTreeNode();
   const [editor] = useLexicalComposerContext();
   const [selected, setSelected] = useState<string | number | null>(0);
@@ -170,7 +172,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
         }
         if (object instanceof GraphNode) {
           object.setContent("");
-          renderController.setFocusedNode(pathToNodeStr);
+          tree.setFocusedNode(pathToNodeStr);
         }
       } else {
         const needNewNode = option.type === "action" && option.id === "create-new-node";
@@ -181,11 +183,11 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
             ? { type: "new-node", nodeProps: { content: object.text } }
             : { type: resolveReplacementType(option.type), id: option.id },
         });
-        renderController.setFocusedNode(pathToNodeStr);
+        tree.setFocusedNode(pathToNodeStr);
       }
       closeDropdown();
     },
-    [graph, relation, renderController, pathToNodeStr, closeDropdown, object],
+    [tree, graph, relation, pathToNodeStr, closeDropdown, object],
   );
 
   // Register keyboard commands for the dropdown

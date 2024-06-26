@@ -2,8 +2,6 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useRenderController } from "@/app/render/useRenderController";
-import { relationsToPathStr } from "@/app/util";
 import { useTree } from "@/app/view/TreeContext";
 
 /**
@@ -12,7 +10,6 @@ import { useTree } from "@/app/view/TreeContext";
 export const CreateNodeAtTopPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
-  const renderController = useRenderController();
   useEffect(() => {
     return editor.registerCommand(
       KEY_DOWN_COMMAND,
@@ -20,15 +17,13 @@ export const CreateNodeAtTopPlugin = () => {
         if (event.key === "k" && event.metaKey) {
           event.preventDefault();
           event.stopPropagation();
-          tree.createChildNode().then(({ path }) => {
-            renderController.setFocusedNode(relationsToPathStr(path));
-          });
+          tree.createChildNodeAndFocus();
           return true;
         }
         return false;
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [tree, editor, renderController]);
+  }, [tree, editor]);
   return null;
 };

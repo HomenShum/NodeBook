@@ -6,7 +6,6 @@ import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext
 import { GraphNode } from "@/app/graph/GraphNode";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/view/TreeContext";
 
 /**
@@ -14,7 +13,6 @@ import { useTree } from "@/app/view/TreeContext";
  */
 export const BackspaceMergeNodesPlugin = () => {
   const graphStore = useGraphStore();
-  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   const { treeNode, setRelationComboboxIsOpen } = useTreeNode();
@@ -32,9 +30,9 @@ export const BackspaceMergeNodesPlugin = () => {
           if (treeNode.relationWithParent) {
             graphStore.removeRelation({ relationId: relation.id }).then(() => {
               if (treeNode.siblingAbove) {
-                renderController.setFocusedNode(treeNode.siblingAbove.path);
+                tree.setFocusedNode(treeNode.siblingAbove.path);
               } else {
-                renderController.setFocusedNode(treeNode.parent.path);
+                tree.setFocusedNode(treeNode.parent.path);
               }
             });
             return true;
@@ -81,7 +79,7 @@ export const BackspaceMergeNodesPlugin = () => {
             ])
             .catch(() => {}) // TODO: investigate missing relation error
             .finally(() => {
-              renderController.setFocusedNode(targetPath);
+              tree.setFocusedNode(targetPath);
             });
           return true;
         }
@@ -96,7 +94,6 @@ export const BackspaceMergeNodesPlugin = () => {
     object,
     parent,
     relation,
-    renderController,
     tree.pathToRoot,
     treeNode.siblingAbove,
     treeNode.relationWithParent,
@@ -104,6 +101,7 @@ export const BackspaceMergeNodesPlugin = () => {
     treeNode.parent.parent,
     treeNode.parent.object,
     setRelationComboboxIsOpen,
+    tree,
   ]);
 
   return null;

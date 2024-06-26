@@ -7,7 +7,7 @@ import { GraphStore, Path, defaultRelationTypes } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { getOtherObjectOrThrow, getOtherSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
-import { Position, comparePositions, relationsPathToParentChild } from "@/app/util";
+import { Position, comparePositions, relationsPathToParentChild, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
 const logger = appLogger.child({ service: "tree" });
@@ -16,7 +16,6 @@ const logger = appLogger.child({ service: "tree" });
 export type PinnedGroup = { id: "pinned"; path: string; nodes: DescendantTreeNode[]; isExpanded: boolean };
 export type AllGroup = { id: "all"; path: string; nodes: DescendantTreeNode[]; isExpanded: boolean };
 type ChildrenGroups = [PinnedGroup, AllGroup];
-type ChildrenGroupsById = { pinned: PinnedGroup; all: AllGroup };
 type Group = PinnedGroup | AllGroup;
 
 type PathToRootNodeProps = {
@@ -56,11 +55,11 @@ export class PathToRootNode {
 
 // TODO: proper type
 export class BaseTreeNode {
+  id: string;
   object: GraphObject;
   depth: number;
   path: string;
   childrenGroups: ChildrenGroups;
-  childrenGroupsById: ChildrenGroupsById;
   isExpanded: boolean;
   constructor({
     object,
@@ -78,16 +77,34 @@ export class BaseTreeNode {
     depth?: number;
     isExpanded?: boolean;
   }) {
+    this.id = path;
     this.object = object;
     this.path = path;
     this.depth = depth;
     this.childrenGroups = childrenGroups;
-    this.childrenGroupsById = { pinned: childrenGroups[0], all: childrenGroups[1] };
     this.isExpanded = isExpanded;
   }
 
+  get childrenGroupsById() {
+    return { pinned: this.childrenGroups[0], all: this.childrenGroups[1] };
+  }
+
+  /**
+   * Count of children nodes across all groups. These children may be hidden if this
+   * node is collapsed. To get the count of visible children, use `visibleChildren`.
+   */
   get childCount(): number {
     return this.childrenGroups.reduce((acc, group) => acc + group.nodes.length, 0);
+  }
+
+  /**
+   * Returns list of visible children nodes. If this node is collapsed, it will
+   * return an empty list.
+   */
+  get visibleChildren(): DescendantTreeNode[] {
+    return this.isExpanded
+      ? this.childrenGroups.reduce((acc, group) => acc.concat(group.nodes), [] as DescendantTreeNode[])
+      : [];
   }
 }
 
@@ -185,7 +202,8 @@ export class DescendantTreeNode extends BaseTreeNode {
       throw new Error("Node not found in group");
     } else if (i === this.parentGroup.nodes.length - 1) {
       // get first node in next group
-      const nextGroup = this.parent.childrenGroups[i + 1];
+      const nextGroupIndex = this.parent.childrenGroups.indexOf(this.parentGroup) + 1;
+      const nextGroup = this.parent.childrenGroups[nextGroupIndex];
       return nextGroup?.nodes[0] || null;
     } else {
       return this.parentGroup.nodes[i + 1] || null;
@@ -198,6 +216,18 @@ export class DescendantTreeNode extends BaseTreeNode {
 }
 
 export type TreeNode = RootTreeNode | DescendantTreeNode;
+
+type TreeSelection =
+  | {
+      type: "editor";
+      treeNodeId: string;
+      startPos?: number;
+      endPos?: number;
+    }
+  | {
+      type: "node";
+      treeNodeIds: Set<string>;
+    };
 
 /**
  * Represents a view of the graph, starting from a root path and expanding
@@ -213,15 +243,20 @@ export class Tree {
     settingsStore: SettingsStore,
     root: GraphObject | GraphRelation[],
     {
+      id = uuid(),
       search = "",
       filter = {},
       expansions = new Map(),
+      selection = null,
     }: {
+      id?: string;
       search?: string;
       filter?: Partial<Filter>;
       expansions?: Map<string, boolean>;
+      selection?: TreeSelection | null;
     } = {},
   ) {
+    this.id = id;
     this.graphStore = graphStore;
     this.settingsStore = settingsStore;
     if (Array.isArray(root)) {
@@ -233,24 +268,103 @@ export class Tree {
     }
     this.search = search;
     this.partialFilter = filter;
-    this.expansions = expansions;
+    this.expansionsByPath = expansions;
+    this.selection = selection;
     makeObservable(this, {
       rootObject: observable,
       pathToRoot: observable,
       setRoot: action,
-      expansions: observable,
-      rootTreeNode: computed,
+      expansionsByPath: observable,
+      state: computed,
       search: observable,
       setSearch: action,
       setPathExpanded: action,
       togglePathExpanded: action,
       setGroupExpanded: action,
       toggleGroupExpanded: action,
+      selection: observable,
+      setFocusedNode: action,
     });
   }
 
+  readonly id: string;
+
   private graphStore: GraphStore;
+
   private settingsStore: SettingsStore;
+
+  /** The current selection in the tree. This can be a node selection or an editor selection. */
+  selection: TreeSelection | null;
+
+  /** The root object of the tree. */
+  public rootObject: GraphObject;
+
+  /** Connected path of relations leading to the root object. */
+  public pathToRoot: GraphRelation[] = [];
+
+  public search: string = "";
+
+  readonly partialFilter: Partial<Filter> = observable.object({}); // TODO the way I'm defining observerable is weird
+
+  /** Expanded paths in the tree. */
+  public expansionsByPath: Map<string, boolean>;
+
+  /**
+   * Cache of object texts which we only update when the search input changes
+   * (but *before* the search filter is applied to the tree). We reference these
+   * texts when filtering the tree to avoid re-computing the tree every time the
+   * real object text changes.
+   *
+   * TODO: This may make more sense in the graph store. I'm guessing we'll want a
+   * text cache for the graph store as well.
+   */
+  private cache = { cacheLastUpdated: 0, textsLastUpdated: 0, texts: new Map<string, string>() };
+
+  private disposers: Map<string, IReactionDisposer> = new Map();
+
+  get filter(): Filter {
+    return {
+      hideBackrelations: this.settingsStore.hideBackrelations,
+      hideBundles: this.settingsStore.hideBundles,
+      hideAllParents: this.settingsStore.hideAllParents,
+      hideAllRootParents: this.settingsStore.hideAllRootParents,
+      hideDirectParent: this.settingsStore.hideDirectParent,
+      ...this.partialFilter,
+    };
+  }
+
+  /**
+   * Returns a computed tree state based on the latest graph and expansion
+   * states. This method is memoized and will only recompute when it's
+   * dependencies change.
+   */
+  get state() {
+    logger.debug("Creating tree");
+    this.resetObjectTextWatchers();
+    const rootTreeNode = new RootTreeNode({
+      object: this.rootObject,
+      childrenGroups: this.createChildrenGroups(""),
+    });
+    this.hydratePathToRoot(rootTreeNode);
+    this.hydrateTreeNode(rootTreeNode);
+    this.applyFilter(rootTreeNode);
+    this.applySearch(rootTreeNode);
+    this.applySort(rootTreeNode);
+    return {
+      root: rootTreeNode,
+      descendantTreeNodesById: createDescendantTreeNodesById(rootTreeNode),
+    };
+  }
+
+  /** Set the selection to the editor of the given node. */
+  setFocusedNode(treeNodeId: string | null) {
+    this.selection = treeNodeId ? { type: "editor", treeNodeId, startPos: 0, endPos: 0 } : null;
+  }
+
+  /** Returns true if the given node's editor is focused. */
+  isNodeFocused(treeNodeId: string) {
+    return this.selection?.type === "editor" && this.selection.treeNodeId === treeNodeId;
+  }
 
   /**
    * Set the root of the tree.
@@ -272,42 +386,33 @@ export class Tree {
       this.pathToRoot = [];
     }
   }
-  /** The root object of the tree. */
-  public rootObject: GraphObject;
-  /** Connected path of relations leading to the root object. */
-  public pathToRoot: GraphRelation[] = [];
 
-  /**
-   * Expanded paths in the tree.
-   *
-   * @example
-   * { "noGrouping": {"/root/1": true }, "groupByPinned": {"/root/pinned/1": false, "/root/all/1": true } }
-   */
-  public expansions: Map<string, boolean>;
   // For objects, we default to collapsed.
   isPathExpanded(path: Path): boolean {
-    return this.expansions.get(path) || false;
+    return this.expansionsByPath.get(path) || false;
   }
+
   setPathExpanded(path: Path, isExpanded: boolean) {
-    this.expansions.set(path, isExpanded);
+    this.expansionsByPath.set(path, isExpanded);
   }
+
   togglePathExpanded(path: Path) {
-    this.expansions.set(path, !this.expansions.get(path));
+    this.expansionsByPath.set(path, !this.expansionsByPath.get(path));
   }
 
   // For groups, we default to expanded.
   isGroupExpanded(group: Group) {
-    return this.expansions.get(group.path) ?? true;
-  }
-  setGroupExpanded(group: Group, isExpanded: boolean) {
-    this.expansions.set(group.path, isExpanded);
-  }
-  toggleGroupExpanded(group: Group) {
-    this.expansions.set(group.path, !this.isGroupExpanded(group));
+    return this.expansionsByPath.get(group.path) ?? true;
   }
 
-  // filter and search
-  public search: string = "";
+  setGroupExpanded(group: Group, isExpanded: boolean) {
+    this.expansionsByPath.set(group.path, isExpanded);
+  }
+
+  toggleGroupExpanded(group: Group) {
+    this.expansionsByPath.set(group.path, !this.isGroupExpanded(group));
+  }
+
   setSearch(search: string) {
     logger.debug(`Setting search to "${search}"`);
     if (this.cache.cacheLastUpdated === 0 || this.cache.cacheLastUpdated !== this.cache.textsLastUpdated) {
@@ -316,7 +421,7 @@ export class Tree {
         textsLastUpdated: this.cache.textsLastUpdated,
       });
       this.cache.cacheLastUpdated = this.cache.textsLastUpdated;
-      const root = this.rootTreeNode;
+      const { root } = this.state;
       const visited = new Set<string>();
       const walk = (node: TreeNode) => {
         if (!visited.has(node.object.id)) {
@@ -330,34 +435,22 @@ export class Tree {
     }
     this.search = search;
   }
-  readonly partialFilter: Partial<Filter> = observable.object({}); // TODO the way I'm defining observerable is weird
+
   updateFilter(filter: Partial<Filter>) {
     Object.assign(this.partialFilter, filter);
   }
 
   /**
-   * Returns an object representing the state of the tree.
-   * TODO: add query
-   */
-  get rootTreeNode() {
-    logger.debug("Creating tree");
-    this.resetObjectTextWatchers();
-    const rootTreeNode = new RootTreeNode({
-      object: this.rootObject,
-      childrenGroups: this.createChildrenGroups(""),
-    });
-    this.hydratePathToRoot(rootTreeNode);
-    this.hydrateTreeNode(rootTreeNode);
-    this.applyFilter(rootTreeNode);
-    this.applySearch(rootTreeNode);
-    this.applySort(rootTreeNode);
-    return rootTreeNode;
-  }
-
-  /**
    * Hydrates the tree node with children and siblings recursively.
+   *
+   * TODO this method is too long and complicated. tell Taylor to refactor it.
    */
-  private hydrateTreeNode(parentNode: TreeNode, objectIdCountsInPath: { [key: string]: number } = {}) {
+  private hydrateTreeNode(
+    parentNode: TreeNode,
+    objectIdCountsInPath: { [key: string]: number } = {},
+    nodesById: Map<string, TreeNode> = new Map(),
+  ) {
+    nodesById.set(parentNode.path, parentNode);
     parentNode.childrenGroups.forEach((group) => {
       const positionedRelations =
         group.id === "pinned"
@@ -384,10 +477,14 @@ export class Tree {
         if (parentNode.isExpanded && group.isExpanded) {
           // Only hydrate children if the parent is expanded. This is important, since we
           // allow circular references in the graph, and we don't want to infinitely recurse.
-          this.hydrateTreeNode(child, {
-            ...objectIdCountsInPath,
-            [object.id]: instanceCountInPath,
-          });
+          this.hydrateTreeNode(
+            child,
+            {
+              ...objectIdCountsInPath,
+              [object.id]: instanceCountInPath,
+            },
+            nodesById,
+          );
         }
 
         return child;
@@ -397,6 +494,11 @@ export class Tree {
     return parentNode;
   }
 
+  /**
+   * Hydrates the path to the root node with nodes.
+   *
+   * TODO this method is too long and complicated. tell Taylor to refactor it.
+   */
   private hydratePathToRoot(root: RootTreeNode) {
     // walk up the path of relations above the root and hydrate with nodes
     let topPathNode: PathToRootNode | null = null;
@@ -415,6 +517,7 @@ export class Tree {
     if (topPathNode) {
       // then walk back down updating relevant fields
       let node = topPathNode;
+      node.path = "/" + this.id;
       while (node.child instanceof PathToRootNode) {
         node.child.path = node.path + "/" + node.relationToChild.id;
         node.child.depth = node.depth + 1;
@@ -425,6 +528,8 @@ export class Tree {
       root.depth = node.depth + 1;
       root.relationWithParent = node.relationToChild;
       root.childrenGroups = this.createChildrenGroups(root.path);
+    } else {
+      root.path = "/" + this.id;
     }
     return root;
   }
@@ -492,17 +597,6 @@ export class Tree {
     walk(treeNode);
   }
 
-  get filter(): Filter {
-    return {
-      hideBackrelations: this.settingsStore.hideBackrelations,
-      hideBundles: this.settingsStore.hideBundles,
-      hideAllParents: this.settingsStore.hideAllParents,
-      hideAllRootParents: this.settingsStore.hideAllRootParents,
-      hideDirectParent: this.settingsStore.hideDirectParent,
-      ...this.partialFilter,
-    };
-  }
-
   private createChildrenGroups(parentPath: string): ChildrenGroups {
     const groups: ChildrenGroups = [
       { id: "pinned", path: "", nodes: [], isExpanded: true },
@@ -515,12 +609,6 @@ export class Tree {
     return groups;
   }
 
-  // Cache of object texts which we only update when the search input changes
-  // (but *before* the search filter is applied to the tree). We reference these
-  // texts when filtering the tree to avoid re-computing the tree every time the
-  // real object text changes.
-  private cache = { cacheLastUpdated: 0, textsLastUpdated: 0, texts: new Map<string, string>() };
-  private disposers: Map<string, IReactionDisposer> = new Map();
   private watchObjectText(object: GraphObject) {
     if (!this.disposers.has(object.id)) {
       const disposer = reaction(
@@ -535,11 +623,12 @@ export class Tree {
     this.disposers.clear();
   }
 
-  async createChildNode() {
-    const path = relationsPathToParentChild(this.pathToRoot);
-    const root = path[path.length - 1].child;
-    const { node, relation } = await this.graphStore.addChildNode({ parentId: root.id });
-    return { node, relation, path: [...this.pathToRoot, relation] };
+  async createChildNodeAndFocus() {
+    const rootTreeNode = this.state.root;
+    const { node, relation } = await this.graphStore.addChildNode({ parentId: rootTreeNode.object.id });
+    const path = rootTreeNode.childrenGroupsById.all.path + "/" + relation.id;
+    this.setFocusedNode(path);
+    return { node, relation, path };
   }
 
   /**
@@ -561,8 +650,12 @@ export class Tree {
     this.graphStore.getRelationList(siblingAbove.object).move([treeNode.relationWithParent], "bottom");
     // toggle open sibling
     this.setPathExpanded(siblingAbove.path, true);
-    // return expected new path to tree node
-    return siblingAbove.childrenGroupsById.all.path + "/" + treeNode.relationWithParent.id;
+    const path = siblingAbove.childrenGroupsById.all.path + "/" + treeNode.relationWithParent.id;
+    // Maintain focus
+    if (this.isNodeFocused(treeNode.path)) {
+      this.setFocusedNode(path);
+    }
+    return path;
   }
 
   /**
@@ -583,7 +676,12 @@ export class Tree {
     });
     // Position the relation under the parent
     this.graphStore.getRelationList(grandparent.object).move([treeNode.relationWithParent], parent.relationWithParent);
-    return parent.parentGroup.path + "/" + treeNode.relationWithParent.id;
+    const path = parent.parentGroup.path + "/" + treeNode.relationWithParent.id;
+    // Maintain focus
+    if (this.isNodeFocused(treeNode.path)) {
+      this.setFocusedNode(path);
+    }
+    return path;
   }
 
   /**
@@ -613,6 +711,7 @@ export class Tree {
     contentBeforeSelection: Chip[],
     contentAfterSelection: Chip[],
   ): Promise<{ node: GraphObject; relation: GraphRelation; path: string }> {
+    let result: { node: GraphObject; relation: GraphRelation; path: string };
     if (!(treeNode.object instanceof GraphNode)) {
       throw new Error("Only splitting nodes is supported for now.");
     }
@@ -624,7 +723,7 @@ export class Tree {
       if (treeNode.parentGroup.id === "pinned") {
         treeNode.parent.object.pinChildRelation(newNode.relation, treeNode.siblingAbove?.relationWithParent);
       }
-      return { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
+      result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
     } else {
       treeNode.object.setContent(contentBeforeSelection);
       if (treeNode.isExpanded && treeNode.childCount > 0) {
@@ -632,7 +731,7 @@ export class Tree {
           parentId: treeNode.object.id,
           nodeProps: { content: contentAfterSelection },
         });
-        return { ...newNode, path: treeNode.childrenGroupsById.all.path + "/" + newNode.relation.id };
+        result = { ...newNode, path: treeNode.childrenGroupsById.all.path + "/" + newNode.relation.id };
       } else {
         const newNode = await this.graphStore.addChildNode({
           parentId: treeNode.parent.object.id,
@@ -642,14 +741,111 @@ export class Tree {
         if (treeNode.parentGroup.id === "pinned") {
           treeNode.parent.object.pinChildRelation(newNode.relation, treeNode.relationWithParent);
         }
-        return { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
+        result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
       }
     }
+    // If the node was focused, focus the new node
+    if (this.isNodeFocused(treeNode.path)) {
+      this.setFocusedNode(result.path);
+    }
+    return result;
+  }
+
+  moveNodeWithSelectionUp(): boolean {
+    const { descendantTreeNodesById } = this.state;
+    if (this.selection?.type !== "editor") {
+      // TODO: Implement moving selection up for node selection
+      return false;
+    }
+    const treeNode = descendantTreeNodesById.get(this.selection.treeNodeId);
+    if (!treeNode) {
+      logger.error("Can't move up because node not found");
+      return false;
+    }
+    return this.moveNodeUp(treeNode);
+  }
+
+  moveNodeWithSelectionDown(): boolean {
+    const { descendantTreeNodesById } = this.state;
+    if (this.selection?.type !== "editor") {
+      // TODO: Implement moving selection up for node selection
+      return false;
+    }
+    const treeNode = descendantTreeNodesById.get(this.selection.treeNodeId);
+    if (!treeNode) {
+      logger.error("Can't move up because node not found");
+      return false;
+    }
+    return this.moveNodeDown(treeNode);
+  }
+
+  private moveNodeUp(treeNode: DescendantTreeNode): boolean {
+    const siblingAbove = treeNode.siblingAbove;
+    if (!siblingAbove) {
+      logger.debug("No sibling above to move to");
+      return false;
+    }
+    this.graphStore
+      .getRelationList(treeNode.parent.object)
+      .move([siblingAbove.relationWithParent], treeNode.relationWithParent);
+    return true;
+  }
+
+  private moveNodeDown(treeNode: DescendantTreeNode): boolean {
+    const siblingBelow = treeNode.siblingBelow;
+    if (!siblingBelow) {
+      logger.debug("No sibling below to move to");
+      return false;
+    }
+    this.graphStore
+      .getRelationList(treeNode.parent.object)
+      .move([treeNode.relationWithParent], siblingBelow.relationWithParent);
+    return true;
+  }
+
+  /**
+   * Move selection from the current node to the next one up.
+   */
+  moveSelectionUp(): boolean {
+    const { descendantTreeNodesById } = this.state;
+    if (this.selection?.type !== "editor") {
+      // TODO: Implement moving selection up for node selection
+      return false;
+    }
+    const treeNode = descendantTreeNodesById.get(this.selection.treeNodeId);
+    if (!treeNode) {
+      logger.error("Can't move selection up because node not found", this.selection.treeNodeId);
+      return false;
+    }
+    const next = getNextAbove(treeNode);
+    if (!next) return false;
+    this.setFocusedNode(next.path);
+    return true;
+  }
+
+  /**
+   * Move selection from the current node to the next one down.
+   */
+  moveSelectionDown(): boolean {
+    const { descendantTreeNodesById } = this.state;
+    if (this.selection?.type !== "editor") {
+      // TODO: Implement moving selection up for node selection
+      return false;
+    }
+    const treeNode = descendantTreeNodesById.get(this.selection.treeNodeId);
+    if (!treeNode) {
+      logger.error("Can't move selection down because node not found", this.selection.treeNodeId);
+      return false;
+    }
+    const next = getNextBelow(treeNode);
+    if (!next) return false;
+    this.setFocusedNode(next.path);
+    return true;
   }
 
   clear(root: GraphRelation[]) {
     this.pathToRoot = root;
-    this.expansions.clear();
+    this.expansionsByPath.clear();
   }
 
   serialize(): SerializedTree {
@@ -720,3 +916,69 @@ export const getAncestorsAsArray = (
 export const isUnlabelledChild = (node: DescendantTreeNode) => {
   return node.relationWithParent.relationType.id === "child" && !node.isBackrelation;
 };
+
+/**
+ * When the tree is rendered as an outline, this function returns the node
+ * rendered directly above the given node.
+ */
+function getNextAbove(treeNode: TreeNode): DescendantTreeNode | undefined {
+  if (treeNode instanceof RootTreeNode) {
+    return;
+  }
+  if (treeNode.siblingAbove) {
+    // get last descendant of sibling above
+    let current = treeNode.siblingAbove;
+    let next = current;
+    while (next) {
+      current = next;
+      const children = current.visibleChildren;
+      next = children[children.length - 1];
+    }
+    return current;
+  } else if (treeNode.parent instanceof DescendantTreeNode) {
+    return treeNode.parent;
+  }
+}
+
+/**
+ * When the tree is rendered as an outline, this function returns the node
+ * rendered directly below the given node.
+ */
+function getNextBelow(treeNode: TreeNode): DescendantTreeNode | undefined {
+  const firstChild = treeNode.visibleChildren[0];
+  if (firstChild) {
+    return firstChild;
+  } else if (treeNode instanceof RootTreeNode) {
+    return;
+  } else {
+    if (treeNode.siblingBelow) {
+      return treeNode.siblingBelow;
+    } else {
+      // get sibling below of nearest ancestor
+      let current = treeNode;
+      while (current.parent instanceof DescendantTreeNode) {
+        if (current.parent.siblingBelow) {
+          return current.parent.siblingBelow;
+        }
+        current = current.parent;
+      }
+      return;
+    }
+  }
+}
+
+function createDescendantTreeNodesById(root: TreeNode) {
+  const nodesById = new Map<string, DescendantTreeNode>();
+  const stack: TreeNode[] = [root];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (!node) continue;
+    if (node instanceof DescendantTreeNode) {
+      nodesById.set(node.path, node);
+    }
+    node.childrenGroups.forEach((group) => {
+      group.nodes.forEach((child) => stack.push(child));
+    });
+  }
+  return nodesById;
+}

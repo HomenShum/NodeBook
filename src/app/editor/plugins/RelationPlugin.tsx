@@ -8,12 +8,14 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
+import { useTree } from "@/app/view/TreeContext";
 
 export const RelationPlugin = () => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
+  const tree = useTree();
   const { treeNode } = useTreeNode();
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
@@ -49,7 +51,7 @@ export const RelationPlugin = () => {
           chipsRight[0].value = chipsRight[0].value.trimStart(); // Remove leading whitespace
         }
         object.setContent(chipsRight);
-        renderController.setFocusedNode(pathToNodeStr);
+        tree.setFocusedNode(pathToNodeStr);
 
         // TODO: if reasonable, make this one transaction with the above
         const parent = relation.to.id === object.id ? relation.from : relation.to;
@@ -64,6 +66,6 @@ export const RelationPlugin = () => {
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [graphStore, settingsStore, renderController, editor, object, relation, pathToNodeStr]);
+  }, [tree, graphStore, settingsStore, renderController, editor, object, relation, pathToNodeStr]);
   return null;
 };

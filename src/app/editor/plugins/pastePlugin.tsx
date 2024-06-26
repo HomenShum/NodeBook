@@ -6,6 +6,7 @@ import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
+import { useTree } from "@/app/view/TreeContext";
 
 /**
  * Plugin that allows pasting multiple lines of text into a node.
@@ -14,6 +15,7 @@ export const PastePlugin = () => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
   const renderController = useRenderController();
+  const tree = useTree();
   const { treeNode } = useTreeNode();
   const { object, relationWithParent: relation, path } = treeNode;
   const parent = treeNode.parent.object;
@@ -42,7 +44,7 @@ export const PastePlugin = () => {
               children.map((c) => c.relation),
               relation,
             );
-            renderController.setFocusedNode(path);
+            tree.setFocusedNode(path);
           });
           return true;
         }
@@ -50,6 +52,6 @@ export const PastePlugin = () => {
       },
       COMMAND_PRIORITY_LOW,
     );
-  }, [object, parent, relation, graphStore, editor, renderController, path]);
+  }, [object, parent, relation, graphStore, editor, renderController, path, tree]);
   return null;
 };

@@ -29,7 +29,6 @@ import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { TrackFocusedPathPlugin } from "./plugins/TrackFocusedPathPlugin";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
 import { ArrowKeyExpandCollapsePlugin } from "./plugins/keyboard/ArrowKeyExpandCollapsePlugin";
-import { ArrowKeyMoveNodePlugin } from "./plugins/keyboard/ArrowKeyMoveNodePlugin";
 import { ArrowKeyNavPlugin } from "./plugins/keyboard/ArrowKeyNavPlugin";
 import { BackspaceMergeNodesPlugin } from "./plugins/keyboard/BackspaceMergeNodesPlugin";
 import { EnterKeyPlugin } from "./plugins/keyboard/EnterKeyPlugin";
@@ -109,7 +108,6 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
         {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
         <ArrowKeyNavPlugin />
         <ArrowKeyExpandCollapsePlugin />
-        <ArrowKeyMoveNodePlugin />
         <EnterKeyPlugin />
         <TabAndBulletPlugin />
         <BackspaceMergeNodesPlugin />

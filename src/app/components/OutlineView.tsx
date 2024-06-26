@@ -1,7 +1,9 @@
 "use client";
 import { ChevronRight, Ellipsis, HomeIcon } from "lucide-react";
+import { autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
+import { KeyboardEventHandler, useCallback, useEffect } from "react";
 
 import {
   DropdownMenu,
@@ -11,11 +13,12 @@ import {
 } from "@/app/components/ui/DropdownMenu";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
+import { relationsToURLPath, useCurView } from "@/app/util";
 import { Tree, TreeNode, getAncestorsAsArray } from "@/app/view/Tree";
 import { TreeContext } from "@/app/view/TreeContext";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
+import logger from "@/lib/logger";
 
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
@@ -23,11 +26,29 @@ import s from "./OutlineView.module.css";
 
 export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   const graphStore = useGraphStore();
-  const treeNode = tree.rootTreeNode;
+  const { root: treeNode } = tree.state;
   const ancestors = getAncestorsAsArray(treeNode);
+  const shortcutsHandler = useShortcutsHandler({ tree });
+  const renderController = useRenderController();
+
+  // Whenever the tree selection changes, focus the editor that corresponds to the selection
+  useEffect(() => {
+    const disposer = autorun(() => {
+      if (tree.selection?.type !== "editor") return;
+      const editor = renderController.editorsByPath.get(tree.selection.treeNodeId);
+      if (!editor) return;
+      const hasFocus = editor.getRootElement()?.contains(document.activeElement);
+      if (!hasFocus) {
+        logger.debug("Focusing editor to match selection", { treeNodeId: tree.selection.treeNodeId });
+        editor.focus();
+      }
+    });
+    return disposer;
+  }, [tree, renderController]);
+
   return (
     <TreeContext.Provider value={tree}>
-      <div className={s.OutlineView}>
+      <div className={s.OutlineView} onKeyDown={shortcutsHandler}>
         <div className={s.OutlineViewContainer}>
           {ancestors.length > 1 && <Breadcrumbs treeNode={treeNode} />}
           <div className={s.TitleContainer}>
@@ -43,13 +64,11 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
 });
 
 function CreateNewButton({ tree }: { tree: Tree }) {
-  const renderController = useRenderController();
   return (
     <button
       className={s.AddButton}
       onClick={async () => {
-        const { path } = await tree.createChildNode();
-        renderController.setFocusedNode(relationsToPathStr(path));
+        await tree.createChildNodeAndFocus();
       }}
     >
       <span className={s.AddButtonIcon}>+</span>
@@ -164,3 +183,19 @@ const truncate = (text: string, maxLength: number) => {
   }
   return text;
 };
+
+function useShortcutsHandler({ tree }: { tree: Tree }): KeyboardEventHandler {
+  const renderController = useRenderController();
+  return useCallback(
+    (e) => {
+      const metaOrCtrl = e.metaKey || e.ctrlKey; // Command key on Mac, Ctrl key on Windows
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        if (metaOrCtrl && e.shiftKey) {
+          const moved = e.key === "ArrowUp" ? tree.moveNodeWithSelectionDown() : tree.moveNodeWithSelectionDown();
+          if (moved) e.preventDefault();
+        }
+      }
+    },
+    [tree, renderController],
+  );
+}

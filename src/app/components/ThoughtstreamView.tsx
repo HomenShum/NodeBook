@@ -10,7 +10,7 @@ import {
 } from "@/app/components/ui/DropdownMenu";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { relationsToPathStr, relationsToURLPath, useCurView } from "@/app/util";
+import { relationsToURLPath, useCurView } from "@/app/util";
 import { Tree, getAncestorsAsArray } from "@/app/view/Tree";
 import { TreeContext } from "@/app/view/TreeContext";
 import { ViewType } from "@/app/view/ViewType";
@@ -33,7 +33,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
   const curView = useCurView();
   const router = useRouter();
 
-  const treeNode = tree.rootTreeNode;
+  const { root: treeNode } = tree.state;
   const ancestors = getAncestorsAsArray(treeNode);
   const isLong = treeNode.depth > 5 || ancestors.reduce((total, { object }) => total + object.text.length, 0) > 50;
   const relations = ancestors.map((a) => a.relationToChild);
@@ -140,8 +140,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
             <button
               className={stylesList.AddButton}
               onClick={async () => {
-                const { path } = await tree.createChildNode();
-                renderController.setFocusedNode(relationsToPathStr(path));
+                await tree.createChildNodeAndFocus();
               }}
             >
               <span className={stylesList.AddButtonIcon}>+</span>
