@@ -9,6 +9,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { ViewType } from "@/app/view/ViewType";
 
+// TODO: what should we actually use for this?
 export const uuid = () => uuidv4().slice(0, 8);
 
 export function comparePositions(a: Position | null, b: Position | null) {
