@@ -1,5 +1,6 @@
 "use client";
-import { ArrowLeft, SettingsIcon } from "lucide-react";
+import { ArrowLeft, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
+import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,6 +12,7 @@ import { ListIcon, SidebarIcon, SplitIcon, StreamIcon } from "@/app/components/i
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useRenderController } from "@/app/render/useRenderController";
 import { ViewType } from "@/app/view/ViewType";
+import { cn } from "@/lib/utils";
 
 import { DevTools } from "./components/dev/DevTools";
 import { SidebarOutlines } from "./components/dev/SidebarOutlines";
@@ -51,7 +53,7 @@ export default observer(
     const router = useRouter();
 
     return (
-      <div className={`${styles.App}`}>
+      <div className={cn(styles.App, renderController.isDarkMode && "dark")}>
         <div ref={appContainerRef} className={styles.AppContainer}>
           <aside className={`${styles.LeftAside} ${renderController.leftSidebarOpen ? styles.AsideVisible : ""}`}>
             {/* for now keeping this as tailwind bc it handles wisely the gaps in both axis */}
@@ -75,6 +77,14 @@ export default observer(
                 <div className={styles.HeaderNavButtons}>
                   <ButtonNavigation />
                 </div>
+                <button
+                  onClick={action(() => {
+                    renderController.isDarkMode = !renderController.isDarkMode;
+                  })}
+                  className={styles.Button}
+                >
+                  {renderController.isDarkMode ? <SunIcon size={16} /> : <MoonIcon size={16} />}
+                </button>
               </div>
               <button onClick={() => renderController.toggleRightSidebar()}>
                 <SettingsIcon size={18} strokeWidth={1.5} className={styles.SettingsButton} />

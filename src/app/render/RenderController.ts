@@ -17,12 +17,14 @@ export class RenderController {
 
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
+  public isDarkMode = false;
 
   constructor() {
     makeAutoObservable(this);
     makeAutoSaving(this, {
       leftSidebarOpen: true,
       rightSidebarOpen: true,
+      isDarkMode: true,
     });
   }
 
