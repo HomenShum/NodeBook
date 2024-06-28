@@ -1,13 +1,25 @@
 .ToggleButton {
-  background-color: var(--gray-1); /* TODO: Should standarize bg-colors */
   border: none;
-  width: 0;
-  height: 1rem;
-  color: var(--gray-8);
+  width: 12px;
+  height: 14px;
   cursor: pointer;
+  color: transparent;
   user-select: none;
   position: relative;
-  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  margin: 0 4px;
+}
+
+.Hovered {
+  color: var(--gray-8);
+}
+
+.ToggleButton:hover {
+  background-color: var(--gray-3);
+  color: var(--gray-10);
 }
 
 .Icon {

@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/app/components/ui/DropdownMenu";
+} from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToURLPath, useCurView } from "@/app/util";
@@ -80,11 +80,10 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
                           <Ellipsis size={14} />
                         </span>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className={stylesList.BreadcrumbDropdownMenu} align="start" sideOffset={5}>
+                      <DropdownMenuContent align="start" sideOffset={5}>
                         {ancestors.slice(1, -1).map(({ object, relationToChild, path }, index) => (
                           <DropdownMenuItem
                             key={path}
-                            className={stylesList.BreadcrumbMenuItem}
                             onSelect={() => {
                               if (curView !== ViewType.SPLIT) {
                                 router.push(`/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`);

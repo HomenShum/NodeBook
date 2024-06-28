@@ -1,16 +1,18 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Search } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import * as React from "react";
 
-import { Button } from "@/app/components/ui/Button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/Popover";
+import { Button } from "@/app/components/UIPrimitives/Button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { GraphRelationType } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/view/Tree";
 import { cn } from "@/lib/utils";
+
+import styles from "./RelationCombobox.module.css";
 
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
   `${relationType.id}-${isForward ? "forward" : "reverse"}`;
@@ -120,20 +122,17 @@ export const RelationCombobox = observer(
           }
         }}
       >
-        <PopoverTrigger className="z-10" asChild>
+        <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={isOpen}
-            className={`border-none z-10 text-md justify-between h-4 p-0 m-0 font-normal text-gray-400 ${
-              isParent ? "" : ""
-            }`}
+            className={`${styles.RelationComboboxLabel} ${isParent ? "" : ""}`}
           >
             {label}:
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="w-[200px] p-0"
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") {
               e.preventDefault();
@@ -159,17 +158,20 @@ export const RelationCombobox = observer(
             }
           }}
         >
-          <input
-            placeholder="Search relation types..."
-            className="flex items-center border-b px-3"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <div className="overflow-y-scroll max-h-64">
+          <div className={styles.RelationComboboxInput}>
+            <Search size={14} />
+            <input
+              placeholder="Search relation types..."
+              className={styles.RelationComboboxInputContent}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className={styles.RelationComboboxGroup}>
             {items.map(({ key, label, onSelect }) => (
               <div
                 key={key}
-                className={cn("flex items-center p-2", selected === key ? "bg-gray-200" : "")}
+                className={cn(styles.RelationComboboxItem, selected === key && styles.Selected)}
                 onMouseEnter={() => setSelected(key)}
                 onClick={() => {
                   onSelect();
@@ -177,9 +179,9 @@ export const RelationCombobox = observer(
                 }}
               >
                 <Check
+                  size={14}
                   className={cn(
-                    "mr-2 h-4 w-4",
-                    relToKey(relation.relationType, isForward) === key ? "opacity-100" : "opacity-0",
+                    relToKey(relation.relationType, isForward) === key ? styles.SelectedIcon : styles.Transparent,
                   )}
                 />
                 <div>{label}</div>

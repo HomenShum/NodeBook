@@ -2,7 +2,7 @@ import { observer } from "mobx-react-lite";
 
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
-import { Button } from "@/app/components/ui/Button";
+import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useViewStore } from "@/app/view/useViewStore";

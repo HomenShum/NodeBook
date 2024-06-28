@@ -10,7 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/app/components/ui/DropdownMenu";
+} from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { relationsToURLPath, useCurView } from "@/app/util";
@@ -48,16 +48,14 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
 
   return (
     <TreeContext.Provider value={tree}>
-      <div className={s.OutlineView} onKeyDown={shortcutsHandler}>
-        <div className={s.OutlineViewContainer}>
-          {ancestors.length > 1 && <Breadcrumbs treeNode={treeNode} />}
-          <div className={s.TitleContainer}>
-            {treeNode.object.id === graphStore.outlineRoot.id && <HomeIcon className={s.HomeIcon} size={20} />}
-            <h1 className={s.TitleText}>{truncate(treeNode.object.text, 40)}</h1>
-            <CreateNewButton tree={tree} />
-          </div>
-          <RelatedObjectChildren treeNode={treeNode} />
+      <div className={s.OutlineView}>
+        {ancestors.length > 1 && <Breadcrumbs treeNode={treeNode} />}
+        <div className={s.TitleContainer}>
+          {treeNode.object.id === graphStore.outlineRoot.id && <HomeIcon size={20} />}
+          <h1 className={s.TitleText}>{truncate(treeNode.object.text, 40)}</h1>
+          <CreateNewButton tree={tree} />
         </div>
+        <RelatedObjectChildren treeNode={treeNode} />
       </div>
     </TreeContext.Provider>
   );
@@ -123,11 +121,10 @@ function Breadcrumbs({ treeNode }: { treeNode: TreeNode }) {
                   <Ellipsis size={14} />
                 </span>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className={s.BreadcrumbDropdownMenu} align="start" sideOffset={5}>
+              <DropdownMenuContent sideOffset={4}>
                 {ancestors.slice(1, -1).map(({ object, relationToChild, path }, index) => (
                   <DropdownMenuItem
                     key={path}
-                    className={s.BreadcrumbMenuItem}
                     onSelect={() => {
                       if (curView !== ViewType.SPLIT) {
                         router.push(`/outline${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`);

@@ -21,6 +21,7 @@ declare const styles: {
   readonly "RelatedObjectNode": string;
   readonly "RelatedObjectNodeContent": string;
   readonly "RelatedObjectPublic": string;
+  readonly "RelatedObjectRightArea": string;
   readonly "RelationCounter": string;
   readonly "RelationHoverCard": string;
   readonly "Selected": string;

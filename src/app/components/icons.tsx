@@ -1,4 +1,4 @@
-export const PinCustom = () => (
+export const PinCustomIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor">
     <path
       d="m6 2.58 2.89 2.9a2.64 2.64 0 0 0 3.37.3l.37.37-3.08 3.07 3.77 3.76v.34h-.34L9.21 9.56 6.16 12.6l-.37-.37a2.64 2.64 0 0 0-.3-3.36l-2.9-2.89-.85.85a.24.24 0 0 1-.34-.34l5.1-5.1c.1-.09.25-.09.34 0 .1.1.1.25 0 .35L6 2.58Z"

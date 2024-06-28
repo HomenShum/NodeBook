@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
 import styles from "@/app/components/RelatedObject/RelatedObjectView.module.css";
-import { PinCustom } from "@/app/components/icons";
+import { PinCustomIcon } from "@/app/components/icons";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { relationsToURLPath, useCurView } from "@/app/util";
@@ -85,6 +85,7 @@ const Content = observer(() => {
     setUpdatingRelationType,
     viewType,
   } = useTreeNode();
+  const graphStore = useGraphStore();
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
   const relationTypeTextWidth = showRelationType
     ? `${getTextWidth(`${treeNode.relationWithParent?.relationType.label}:`, "normal 17.5px ui-sans-serif") + 3}px`
@@ -115,9 +116,28 @@ const Content = observer(() => {
           />
         )}
       </div>
-      {treeNode.object.relations.length > 1 && (
-        <div className={styles.RelationCounter}>{treeNode.object.relations.length - 1}</div>
-      )}
+      <div className={styles.RelatedObjectRightArea}>
+        {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
+        {treeNode.parentGroup.id !== "pinned" &&
+          treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) && (
+            <button
+              className={styles.PinIcon}
+              onClick={() => treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent)}
+            >
+              <PinCustomIcon />
+            </button>
+          )}
+        {!treeNode.object.isPrivate &&
+          settingsStore.hideThoughtstreamBullets &&
+          treeNode.parent.object === graphStore.thoughtstreamRoot && ( // TODO: what is this for?
+            <div className={styles.RelatedObjectPublic}>
+              <GlobeIcon size={12} strokeWidth={2} />
+            </div>
+          )}
+        {treeNode.object.relations.length > 1 && (
+          <div className={styles.RelationCounter}>{treeNode.object.relations.length - 1}</div>
+        )}
+      </div>
     </>
   );
 });
@@ -213,28 +233,12 @@ const Controls = observer(() => {
       {/* toggle, bullet, menu */}
       <div className={styles.RelatedObjectLeftHandler}>
         <div className={styles.RelatedObjectActions}>
-          {treeNode.childCount > 0 &&
-            // (treeNode.instanceCountInPath === 1 || !settingsStore.disableCycles) &&
-            isHovered && <Toggle treeNode={treeNode} />}
           <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
+          {treeNode.childCount > 0 && (
+            // (treeNode.instanceCountInPath === 1 || !settingsStore.disableCycles) &&
+            <Toggle treeNode={treeNode} isHovered={isHovered} />
+          )}
         </div>
-        {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
-        {treeNode.parentGroup.id !== "pinned" &&
-          treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) && (
-            <button
-              className={styles.PinIcon}
-              onClick={() => treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent)}
-            >
-              <PinCustom />
-            </button>
-          )}
-        {!treeNode.object.isPrivate &&
-          settingsStore.hideThoughtstreamBullets &&
-          treeNode.parent.object === graphStore.thoughtstreamRoot && ( // TODO: what is this for?
-            <div className={styles.RelatedObjectPublic}>
-              <GlobeIcon size={12} strokeWidth={2} />
-            </div>
-          )}
       </div>
     </>
   );

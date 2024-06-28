@@ -54,6 +54,7 @@ export default observer(
 
     return (
       <div className={cn(styles.App, renderController.isDarkMode && "dark")}>
+
         <div ref={appContainerRef} className={styles.AppContainer}>
           <aside className={`${styles.LeftAside} ${renderController.leftSidebarOpen ? styles.AsideVisible : ""}`}>
             {/* for now keeping this as tailwind bc it handles wisely the gaps in both axis */}

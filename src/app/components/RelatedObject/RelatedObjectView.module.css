@@ -10,9 +10,10 @@
 
 .RelatedObjectContent {
   display: flex;
-  align-items: baseline;
+  gap: 4px;
+  align-items: center;
   position: relative;
-  margin: 0 12px;
+  padding: 0 0px;
   min-height: 32px;
 }
 
@@ -21,6 +22,10 @@
   /* Leaving this empty in case Jacob wants to add extra styles for the public content */
 }
 
+/* 
+Left Area 
+*/
+
 .RelatedObjectLeftArea {
   position: absolute;
   height: 100%;
@@ -28,20 +33,9 @@
   right: 100%;
 }
 
-/* Pin Icon of each bullet */
-.PinIcon {
-  position: relative;
-  top: 0;
-  padding: 0 1px 0 0;
-  right: 4px;
-  transform: scale(0.8) translateY(-0.5px);
-  color: var(--gray-6);
-}
-
 .RelatedObjectLeftHandler {
   display: flex;
   align-items: center;
-  gap: 1px;
   position: absolute;
   right: 100%;
 }
@@ -52,22 +46,15 @@
   gap: 1px;
 }
 
-.RelatedObjectPublic {
-  position: relative;
-  right: 6px;
-  padding-left: 1px;
-  transform: translateY(0.5px);
-  display: flex;
-  color: var(--teal-7);
-  background-color: var(--gray-1);
-}
+/* 
+Bullet
+*/
 
 .RelatedObjectBulletContainer {
-  width: 16px;
   position: relative;
-  right: 8px;
-  height: 16px;
   display: flex;
+  width: 16px;
+  height: 16px;
 }
 
 .RelatedObjectBulletContainer.Hidden {
@@ -77,6 +64,8 @@
 .Bullet {
   cursor: pointer;
   position: absolute;
+  width: 16px;
+  height: 16px;
   top: 0;
   left: 0;
   z-index: 10;
@@ -85,6 +74,8 @@
 .BulletShadow {
   cursor: pointer;
   position: absolute;
+  width: 16px;
+  height: 16px;
   top: 0;
   left: 0;
   z-index: 0;
@@ -92,6 +83,8 @@
 
 .DotOutsidePublic {
   stroke: var(--teal-5);
+  width: 16px;
+  height: 16px;
 }
 
 .DotOutsidePrivate {
@@ -102,7 +95,7 @@
   stroke: var(--gray-11);
 }
 .DotInsidePublic {
-  stroke: var(--teal-11);
+  stroke: var(--teal-10);
 }
 
 .Circle {
@@ -116,13 +109,17 @@
   stroke: var(--gray-10);
 }
 
+/* 
+Node
+*/
+
 .RelatedObjectNode {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   flex: 1 1 0%;
+  align-items: center;
   position: relative;
   width: 100%;
-  top: -2px;
   color: var(--gray-12);
 }
 
@@ -131,9 +128,8 @@
   flex-direction: row;
   flex-wrap: wrap;
   width: 100%;
-  gap: 2px;
-  align-items: baseline;
-  padding-bottom: 8px;
+  gap: 4px;
+  align-items: center;
 }
 
 .HoverCardTrigger {
@@ -149,10 +145,38 @@
   z-index: 50;
 }
 
+/* 
+Right Area 
+*/
+
+.RelatedObjectRightArea {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Pin Icon of each bullet */
+.PinIcon {
+  position: relative;
+  top: 0;
+  padding: 0 0;
+  transform: scale(0.8) translateY(-0.5px);
+  color: var(--gray-6);
+}
+
+.PinIcon:hover {
+  color: var(--tomato-6);
+}
+
+.RelatedObjectPublic {
+  padding: 0 0;
+  color: var(--teal-7);
+  background-color: var(--gray-1);
+}
+
 .RelationCounter {
   position: relative;
   align-self: flex-start;
-  margin-top: 2px;
   width: 16px;
   height: 18px;
   display: flex;
@@ -165,4 +189,5 @@
   border-radius: 2px;
   padding-left: 4px;
   padding-right: 4px;
+  cursor: default;
 }

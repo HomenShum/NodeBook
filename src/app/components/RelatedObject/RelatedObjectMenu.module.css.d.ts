@@ -1,6 +1,6 @@
 declare const styles: {
-  readonly "DropdownMenuIcon": string;
-  readonly "DropdownMenuTrigger": string;
+  readonly "TrailMenuIcon": string;
+  readonly "TrailMenuTrigger": string;
   readonly "Transparent": string;
 };
 export = styles;

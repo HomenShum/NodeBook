@@ -1,10 +1,12 @@
 .TypeaheadPopover {
   background: var(--gray-1);
-  border: solid 1px var(--teal-4);
+  border: solid 0.5px var(--teal-4);
   padding: 2px;
   border-radius: 4px;
   position: fixed;
   max-width: 380px;
+  z-index: 10;
+  box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
 }
 
 .TypeaheadPopover ul {

@@ -1,7 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { useCallback, useRef, useState } from "react";
 
-import { Button } from "@/app/components/ui/Button";
+import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 
 import { ConfirmReplace } from "./ConfirmReplace";

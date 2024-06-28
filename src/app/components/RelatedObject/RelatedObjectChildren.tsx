@@ -1,13 +1,14 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
-import { PinCustom } from "@/app/components/icons";
+import { PinCustomIcon } from "@/app/components/icons";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { formatDate } from "@/app/util";
-import { AllGroup, DescendantTreeNode, PinnedGroup, TreeNode } from "@/app/view/Tree";
+import { AllGroup, DescendantTreeNode, PinnedGroup, RootTreeNode, TreeNode } from "@/app/view/Tree";
 import { useTree } from "@/app/view/TreeContext";
+import { cn } from "@/lib/utils";
 
 import { RelatedObjectView } from "./RelatedObjectView";
 
@@ -15,8 +16,9 @@ import styles from "./RelatedObjectChildren.module.css";
 
 export const RelatedObjectChildren = observer(({ treeNode }: { treeNode: TreeNode }) => {
   const children = treeNode.childrenGroups;
+  const isRoot = treeNode instanceof RootTreeNode;
   return (
-    <div className={treeNode.depth > 0 ? styles.NodeIndentation : ""}>
+    <div className={cn(!isRoot && styles.NodeIndentation)}>
       {children.map((group) => {
         switch (group.id) {
           case "pinned":
@@ -50,7 +52,7 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
             group.isExpanded ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
           }`}
         >
-          <PinCustom />
+          <PinCustomIcon />
         </span>
         {group.isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
       </button>
@@ -58,19 +60,22 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
         {/* TODO I don't like that this react component needs to thing about whether
         the group is expanded or not. would be nice if there was a prop of nodes that
         was either empty or not depending on expansion so component can be dumber  */}
-        {group.isExpanded &&
-          group.nodes.map((treeNode, i) => {
-            return (
+        {group.isExpanded && (
+          <>
+            {group.nodes.map((treeNode) => (
               <div key={treeNode.path}>
                 <RelatedObjectView treeNode={treeNode} />
               </div>
-            );
-          })}
-        <div
-          className={`${styles.PinSectionSeparator} ${
-            parentNode.parent?.object === graphStore.thoughtstreamRoot ? styles.StreamSpacing : styles.DefaultSpacing
-          }`}
-        />
+            ))}
+            <div
+              className={`${styles.PinSectionSeparator} ${
+                parentNode.parent?.object === graphStore.thoughtstreamRoot
+                  ? styles.StreamSpacing
+                  : styles.DefaultSpacing
+              }`}
+            />
+          </>
+        )}
       </div>
     </>
   );
