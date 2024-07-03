@@ -11,9 +11,9 @@
 .RelatedObjectContent {
   display: flex;
   gap: 4px;
-  align-items: center;
+  align-items: start;
   position: relative;
-  padding: 0 0px;
+  padding: 3px 6px 2px 0px;
   min-height: 32px;
 }
 
@@ -38,6 +38,7 @@ Left Area
   align-items: center;
   position: absolute;
   right: 100%;
+  top: 8px;
 }
 
 .RelatedObjectActions {
@@ -55,6 +56,7 @@ Bullet
   display: flex;
   width: 16px;
   height: 16px;
+  top: 4px;
 }
 
 .RelatedObjectBulletContainer.Hidden {
@@ -129,7 +131,7 @@ Node
   flex-wrap: wrap;
   width: 100%;
   gap: 4px;
-  align-items: center;
+  align-items: baseline;
 }
 
 .HoverCardTrigger {
@@ -153,6 +155,7 @@ Right Area
   display: flex;
   gap: 8px;
   align-items: center;
+  padding-top: 4px;
 }
 
 /* Pin Icon of each bullet */
