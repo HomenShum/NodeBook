@@ -71,5 +71,6 @@
     "typescript": "^5.4.5",
     "typescript-eslint": "^7.13.0",
     "vercel": "^33.5.5"
-  }
+  },
+  "packageManager": "yarn@4.3.1"
 }

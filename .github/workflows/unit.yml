@@ -1,0 +1,23 @@
+name: Unit
+on:
+  push:
+    paths:
+      - "src/**"
+      - ".github/workflows/unit.yml"
+
+jobs:
+  test:
+    name: Unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+      - run: yarn
+      - run: yarn lint
+      - run: yarn test

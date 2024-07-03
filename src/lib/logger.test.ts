@@ -1,7 +1,7 @@
 import path from "path";
 
 import logger from "@/lib/logger";
-import { testAllExamplesInFileExecute } from "@/lib/test";
+import { testAllExamplesInFileExecute } from "@/lib/testAllExamplesInFileExecute";
 
 describe("logger", () => {
   describe("examples should run", () => {
