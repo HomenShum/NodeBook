@@ -1,7 +1,8 @@
-import { ChevronRight, Ellipsis } from "lucide-react";
+import { ChevronRight, Ellipsis, Plus } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 
+import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -136,14 +137,15 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
             {(curView === ViewType.SPLIT || ancestors.length > 1) && (
               <h1 className={stylesList.TitleText}>{truncateText(treeNode.object.text, 40)}</h1>
             )}
-            <button
-              className={stylesList.AddButton}
+            <Button
+              variant="default"
+              size="icon"
               onClick={async () => {
                 await tree.createChildNodeAndFocus();
               }}
             >
-              <span className={stylesList.AddButtonIcon}>+</span>
-            </button>
+              <Plus size={16}></Plus>
+            </Button>
           </div>
         </div>
         <div>

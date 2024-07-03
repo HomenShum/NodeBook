@@ -1,4 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -15,7 +16,7 @@ export const ClearData = ({ onConfirm }: Props) => {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <Button variant="destructive" size={"sm"} style={{ maxWidth: "fit-content" }}>
+        <Button variant="destructive" size="default">
           Clear all data
         </Button>
       </Dialog.Trigger>
@@ -27,9 +28,9 @@ export const ClearData = ({ onConfirm }: Props) => {
             Really delete all existing graph data?
           </Dialog.Description>
           <Dialog.Close asChild>
-            <button className={styles.DialogCloseButton} aria-label="close">
-              X
-            </button>
+            <Button variant="ghost" size="icon" className={styles.DialogCloseButton} aria-label="close">
+              <X size={12} />
+            </Button>
           </Dialog.Close>
           <div style={{ display: "flex", gap: 5, marginTop: 25, justifyContent: "flex-end" }}>
             <Dialog.Close asChild>

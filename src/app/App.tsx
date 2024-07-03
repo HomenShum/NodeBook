@@ -8,6 +8,7 @@ import { useRef } from "react";
 
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import SidebarTree from "@/app/components/SidebarTree";
+import { Button } from "@/app/components/UIPrimitives/Button";
 import { ListIcon, SidebarIcon, SplitIcon, StreamIcon } from "@/app/components/icons";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useRenderController } from "@/app/render/useRenderController";
@@ -18,6 +19,7 @@ import { DevTools } from "./components/dev/DevTools";
 import { SidebarOutlines } from "./components/dev/SidebarOutlines";
 
 import styles from "./app.module.css";
+
 import "./global.css";
 
 export default observer(
@@ -34,18 +36,18 @@ export default observer(
 
     const ButtonNavigation = () => (
       <>
-        <Link className={`${styles.Button} ${curView === ViewType.OUTLINE ? styles.Selected : ""}`} href="/outline">
+        <Link className={`${styles.Button} ${curView === ViewType.OUTLINE && styles.Selected}`} href="/outline">
           <ListIcon className={styles.ButtonIcon} />
           List
         </Link>
-        <Link
-          className={`${styles.Button} ${curView === ViewType.THOUGHTSTREAM ? styles.Selected : ""}`}
-          href="/stream"
-        >
+        <Link className={`${styles.Button} ${curView === ViewType.THOUGHTSTREAM && styles.Selected}`} href="/stream">
           <StreamIcon className={styles.ButtonIcon} />
           Stream
         </Link>
-        <Link className={`${styles.Button} ${curView === ViewType.SPLIT ? styles.Selected : ""}`} href="/split">
+        <Link
+          className={`${styles.Button} ${styles.Hidden} ${curView === ViewType.SPLIT ? styles.Selected : ""}`}
+          href="/split"
+        >
           <SplitIcon className={styles.ButtonIcon} /> Split
         </Link>
       </>
@@ -54,11 +56,9 @@ export default observer(
 
     return (
       <div className={cn(styles.App, renderController.isDarkMode && "dark")}>
-
         <div ref={appContainerRef} className={styles.AppContainer}>
-          <aside className={`${styles.LeftAside} ${renderController.leftSidebarOpen ? styles.AsideVisible : ""}`}>
-            {/* for now keeping this as tailwind bc it handles wisely the gaps in both axis */}
-            <div className="flex items-start flex-col w-full gap-x-2 gap-y-1 py-1">
+          <aside className={`${styles.LeftAside} ${renderController.leftSidebarOpen && styles.AsideVisible}`}>
+            <div className={styles.AsideContent}>
               <ButtonNavigation />
               <SidebarTree />
             </div>
@@ -66,33 +66,45 @@ export default observer(
 
           <div className={styles.Container}>
             <header className={styles.Header}>
-              <button className={styles.LeftSidebarIcon} onClick={() => renderController.toggleLeftSidebar()}>
+              <Button
+                variant="ghost"
+                size="icon"
+                // className={styles.LeftSidebarIcon}
+                onClick={() => renderController.toggleLeftSidebar()}
+              >
                 <SidebarIcon />
-              </button>
-
-              <div className={`${styles.HeaderNav} ${renderController.leftSidebarOpen ? styles.LeftShift : ""}`}>
-                <div className={`${styles.BackButton}`} onClick={() => router.back()}>
-                  <ArrowLeft size={18} />
-                </div>
+              </Button>
+              <div className={`${styles.HeaderNav} ${renderController.leftSidebarOpen && styles.ShiftNav}`}>
+                <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                  <ArrowLeft size={16} />
+                </Button>
                 <SearchBar />
                 <div className={styles.HeaderNavButtons}>
                   <ButtonNavigation />
                 </div>
-                <button
+              </div>
+              <div className={styles.RightNav}>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={action(() => {
                     renderController.isDarkMode = !renderController.isDarkMode;
                   })}
-                  className={styles.Button}
+                  // className={styles.Button}
                 >
-                  {renderController.isDarkMode ? <SunIcon size={16} /> : <MoonIcon size={16} />}
-                </button>
+                  {renderController.isDarkMode ? (
+                    <SunIcon size={16} strokeWidth={1.5} />
+                  ) : (
+                    <MoonIcon size={16} strokeWidth={1.5} />
+                  )}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => renderController.toggleRightSidebar()}>
+                  <SettingsIcon size={16} strokeWidth={1.5} />
+                </Button>
               </div>
-              <button onClick={() => renderController.toggleRightSidebar()}>
-                <SettingsIcon size={18} strokeWidth={1.5} className={styles.SettingsButton} />
-              </button>
             </header>
             <div className={styles.MainContainer}>
-              <main className={`${styles.Main} ${renderController.leftSidebarOpen ? styles.LeftShift : ""}`}>
+              <main className={`${styles.Main} ${renderController.leftSidebarOpen && styles.ShiftMain}`}>
                 {children}
               </main>
               {renderController.rightSidebarOpen && (

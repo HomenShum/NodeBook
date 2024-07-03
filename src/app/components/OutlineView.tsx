@@ -1,11 +1,12 @@
 "use client";
-import { ChevronRight, Ellipsis, HomeIcon } from "lucide-react";
+import { ChevronRight, Ellipsis, HomeIcon, Plus } from "lucide-react";
 import { autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Options, useHotkeys } from "react-hotkeys-hook";
 
+import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,14 +49,15 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
 
 function CreateNewButton({ tree }: { tree: Tree }) {
   return (
-    <button
-      className={s.AddButton}
+    <Button
+      variant="default"
+      size="icon"
       onClick={async () => {
         await tree.createChildNodeAndFocus();
       }}
     >
-      <span className={s.AddButtonIcon}>+</span>
-    </button>
+      <Plus size={16}></Plus>
+    </Button>
   );
 }
 

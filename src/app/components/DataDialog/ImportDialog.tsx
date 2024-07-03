@@ -1,4 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -42,7 +43,7 @@ export const ImportDialog = () => {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Trigger asChild>
-        <Button size={"sm"} style={{ maxWidth: "fit-content" }}>
+        <Button size="default" variant="default" style={{ maxWidth: "fit-content" }}>
           Import data
         </Button>
       </Dialog.Trigger>
@@ -52,9 +53,9 @@ export const ImportDialog = () => {
           <Dialog.Title className={styles.DialogTitle}>Import data</Dialog.Title>
           <Dialog.Description className={styles.DialogDescription}>Import data into Mew.</Dialog.Description>
           <Dialog.Close asChild>
-            <button className={styles.DialogCloseButton} aria-label="close">
-              X
-            </button>
+            <Button variant="ghost" size="icon" className={styles.DialogCloseButton} aria-label="close">
+              <X size={12} />
+            </Button>
           </Dialog.Close>
           <fieldset className={styles.FileFieldset}>
             <Button

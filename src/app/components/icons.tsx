@@ -35,7 +35,7 @@ export const StreamIcon = ({ className }: { className: string }) => (
 );
 
 export const SidebarIcon = () => (
-  <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="16" height="16" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       d="M3.895 4h.01m.01 6h-.01m2.629 3H11a2 2 0 0 0 2-2V3a2 2 0 0 0-2-2H6.534v12Zm0 0H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h3.404M3.895 7h.01"
       stroke="currentColor"

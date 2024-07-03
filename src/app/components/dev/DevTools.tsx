@@ -208,7 +208,8 @@ export const DevTools = observer(() => {
         <hr />
         <ImportDialog />
         <Button
-          size={"sm"}
+          size="default"
+          variant="accent"
           style={{ maxWidth: "fit-content" }}
           onClick={() => {
             // Create a Blob with the JSON string
@@ -237,7 +238,8 @@ export const DevTools = observer(() => {
         />
         <hr />
         <Button
-          size={"sm"}
+          size="default"
+          variant="default"
           style={{ maxWidth: "fit-content" }}
           onClick={() => {
             settingsStore.resetToDefaults();
