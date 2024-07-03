@@ -333,7 +333,7 @@ export class Tree {
     });
   }
 
-  readonly id: string;
+  private id: string;
   private graphStore: GraphStore;
 
   private settingsStore: SettingsStore;
@@ -1052,36 +1052,37 @@ export class Tree {
   }
 
   serialize(): SerializedTree {
-    throw new Error("Method not implemented.");
-    // return {
-    //   root: this.pathToRoot.map((r) => r.id).join("/"),
-    //   pathData: Object.fromEntries(this.expansions.entries()),
-    // };
+    return {
+      id: this.id,
+      pathToRootIds: this.pathToRoot.map((r) => r.id),
+      rootObjectId: this.rootObject.id,
+      expansionsByPath: Object.fromEntries(this.expansionsByPath.entries()),
+    };
   }
 
   /**
    * Returns true if the deserialization was successful.
    */
   deserializeInPlace(data: SerializedTree): boolean {
-    throw new Error("Method not implemented.");
-    // const pathData = new Map<Path, PathData>();
-    // if (data.pathData) {
-    //   for (const [key, value] of Object.entries(data.pathData)) {
-    //     pathData.set(key, value);
-    //   }
-    // }
-    // this.expansions = pathData;
-    // const relations: GraphRelation[] = [];
-    // for (const id of data.root.split("/")) {
-    //   const relation = this.graphStore.relationsById.get(id);
-    //   if (!relation) {
-    //     this.pathToRoot = [this.graphStore.outlineRootRelationFromUserRoot];
-    //     return false;
-    //   }
-    //   relations.push(relation);
-    // }
-    // this.pathToRoot = relations;
-    // return true;
+    const expansionsByPath = new Map<string, boolean>();
+    Object.entries(data.expansionsByPath ?? {}).forEach(([key, value]) => expansionsByPath.set(key, value));
+    let pathToRoot: GraphRelation[] = [];
+    for (const id of data.pathToRootIds) {
+      const relation = this.graphStore.relationsById.get(id);
+      if (!relation) {
+        return false;
+      }
+      pathToRoot.push(relation);
+    }
+    const rootObject = this.graphStore.getObject(data.rootObjectId);
+    if (!rootObject) {
+      return false;
+    }
+    this.id = data.id;
+    this.pathToRoot = pathToRoot;
+    this.rootObject = rootObject;
+    this.expansionsByPath = expansionsByPath;
+    return true;
   }
 }
 

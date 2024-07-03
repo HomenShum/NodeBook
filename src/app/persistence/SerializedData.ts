@@ -37,11 +37,11 @@ export type SerializedGraphStore = {
   relationToBundles?: Record<string, SerializedBundle[]>;
 };
 
-type SerializedPathData = { isExpanded: boolean; isPinnedExpanded: boolean };
-
 export type SerializedTree = {
-  root: string;
-  pathData?: Record<string, SerializedPathData>;
+  id: string;
+  rootObjectId: string;
+  pathToRootIds: string[];
+  expansionsByPath: Record<string, boolean>;
 };
 
 export type SerializedViewStore = {

@@ -541,6 +541,10 @@ export class GraphStore {
     return this.nodesById.get(id);
   }
 
+  getObject(id: string): GraphObject | undefined {
+    return this.nodesById.get(id) || this.relationsById.get(id);
+  }
+
   /**
    * Finds the first relation type whose label (or reverseLabel) matches the provided text.
    *
