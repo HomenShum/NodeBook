@@ -1,9 +1,10 @@
-import { IReactionDisposer, action, computed, makeObservable, observable, reaction } from "mobx";
+import { IReactionDisposer, makeAutoObservable, reaction, toJS } from "mobx";
 
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore, Path, defaultRelationTypes } from "@/app/graph/GraphStore";
+import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { getOtherObjectOrThrow, getOtherSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
@@ -12,11 +13,30 @@ import appLogger from "@/lib/logger";
 
 const logger = appLogger.child({ service: "tree" });
 
-// TODO Can define a type for this?
-export type PinnedGroup = { id: "pinned"; path: string; nodes: DescendantTreeNode[]; isExpanded: boolean };
-export type AllGroup = { id: "all"; path: string; nodes: DescendantTreeNode[]; isExpanded: boolean };
-type ChildrenGroups = [PinnedGroup, AllGroup];
+/**
+ * When you expand a node in the tree, it's children are shown in distinct
+ * groups. For now, that's just "pinned" and "all", but you can imagine later
+ * having "suggested" or "related" groups as well. Or even having supporting
+ * groupby operations like "by type" or "by relation" (similar to Linear).
+ */
 type Group = PinnedGroup | AllGroup;
+// TODO Can define a type for this?
+export type PinnedGroup = {
+  id: "pinned";
+  parent: BaseTreeNode;
+  path: string;
+  nodes: DescendantTreeNode[];
+  isExpanded: boolean;
+};
+export type AllGroup = {
+  id: "all";
+  parent: BaseTreeNode;
+  path: string;
+  nodes: DescendantTreeNode[];
+  isExpanded: boolean;
+};
+type ChildrenGroups = [PinnedGroup, AllGroup];
+type ChildrenGroupsOmitParent = [Omit<PinnedGroup, "parent">, Omit<AllGroup, "parent">];
 
 type PathToRootNodeProps = {
   object: GraphObject;
@@ -72,7 +92,7 @@ export class BaseTreeNode {
     isExpanded = false,
   }: {
     object: GraphObject;
-    childrenGroups?: ChildrenGroups;
+    childrenGroups?: ChildrenGroupsOmitParent;
     path?: string;
     depth?: number;
     isExpanded?: boolean;
@@ -81,7 +101,10 @@ export class BaseTreeNode {
     this.object = object;
     this.path = path;
     this.depth = depth;
-    this.childrenGroups = childrenGroups;
+    this.childrenGroups = [
+      { ...childrenGroups[0], parent: this },
+      { ...childrenGroups[1], parent: this },
+    ];
     this.isExpanded = isExpanded;
   }
 
@@ -121,7 +144,7 @@ export class RootTreeNode extends BaseTreeNode {
     isExpanded = true,
   }: {
     object: GraphObject;
-    childrenGroups: ChildrenGroups;
+    childrenGroups: ChildrenGroupsOmitParent;
     parent?: PathToRootNode | null;
     relationWithParent?: GraphRelation | null;
     depth?: number;
@@ -165,7 +188,7 @@ export class DescendantTreeNode extends BaseTreeNode {
     position: DescendantTreeNode["position"];
     relationWithParent: GraphRelation;
     group: Group;
-    childrenGroups: ChildrenGroups;
+    childrenGroups: ChildrenGroupsOmitParent;
     instanceCountInPath: number;
     path: string;
     depth: number;
@@ -217,17 +240,52 @@ export class DescendantTreeNode extends BaseTreeNode {
 
 export type TreeNode = RootTreeNode | DescendantTreeNode;
 
-type TreeSelection =
-  | {
-      type: "editor";
-      treeNodeId: string;
-      startPos?: number;
-      endPos?: number;
-    }
-  | {
-      type: "node";
-      treeNodeIds: Set<string>;
-    };
+type EditorSelection = {
+  type: "editor";
+  treeNodeId: string;
+  startPos?: number;
+  endPos?: number;
+};
+type NodeSelection = {
+  type: "node";
+  anchorNodeId: string;
+  headNodeId: string;
+};
+/**
+ * Tree selection. This can either be a single node whose editor is focused or a
+ * range of nodes that are selected.
+ *
+ * If the selection is a range of nodes, the `anchor` and `head` nodes are the
+ * subtrees where the selection starts and ends. A subtree refers to a node and
+ * all it's descendants. So when a node is in the selection, all it's
+ * descendants are also considered selected.
+ *
+ * The `anchor` and `head` must not be descendants of each other. This is
+ * important to contraint to make maintaining the tree across moves easier. See
+ * `Tree.moveNodesIntoGroup` and
+ * `Tree.updateSubtreeExpansionAndSelectionPathState` for more details.
+ */
+type TreeSelection = EditorSelection | NodeSelection;
+/**
+ * Tree selection with nodes resolved. See {@link TreeSelection} for more
+ * details.
+ */
+type TreeSelectionWithNodes =
+  | (EditorSelection & { treeNode: DescendantTreeNode })
+  | (NodeSelection & {
+      /** The subtree where the selection starts. */
+      anchor: DescendantTreeNode;
+      /** The subtree where the selection ends */
+      head: DescendantTreeNode;
+      /** The top-most subtree in the selection */
+      top: DescendantTreeNode;
+      /** The bottom-most subtree in the selection */
+      bottom: DescendantTreeNode;
+      /** All the nodes in the selection, including subtree descendants */
+      nodes: DescendantTreeNode[];
+      /** All the subtrees in the selection */
+      subtreeRoots: DescendantTreeNode[];
+    });
 
 /**
  * Represents a view of the graph, starting from a root path and expanding
@@ -270,25 +328,12 @@ export class Tree {
     this.partialFilter = filter;
     this.expansionsByPath = expansions;
     this.selection = selection;
-    makeObservable(this, {
-      rootObject: observable,
-      pathToRoot: observable,
-      setRoot: action,
-      expansionsByPath: observable,
-      state: computed,
-      search: observable,
-      setSearch: action,
-      setPathExpanded: action,
-      togglePathExpanded: action,
-      setGroupExpanded: action,
-      toggleGroupExpanded: action,
-      selection: observable,
-      setFocusedNode: action,
+    makeAutoObservable<Tree, "cache">(this, {
+      cache: false,
     });
   }
 
   readonly id: string;
-
   private graphStore: GraphStore;
 
   private settingsStore: SettingsStore;
@@ -304,23 +349,12 @@ export class Tree {
 
   public search: string = "";
 
-  readonly partialFilter: Partial<Filter> = observable.object({}); // TODO the way I'm defining observerable is weird
+  readonly partialFilter: Partial<Filter> = {};
 
   /** Expanded paths in the tree. */
   public expansionsByPath: Map<string, boolean>;
 
-  /**
-   * Cache of object texts which we only update when the search input changes
-   * (but *before* the search filter is applied to the tree). We reference these
-   * texts when filtering the tree to avoid re-computing the tree every time the
-   * real object text changes.
-   *
-   * TODO: This may make more sense in the graph store. I'm guessing we'll want a
-   * text cache for the graph store as well.
-   */
-  private cache = { cacheLastUpdated: 0, textsLastUpdated: 0, texts: new Map<string, string>() };
-
-  private disposers: Map<string, IReactionDisposer> = new Map();
+  private textsCache = new TextCache();
 
   get filter(): Filter {
     return {
@@ -340,13 +374,13 @@ export class Tree {
    */
   get state() {
     logger.debug("Creating tree");
-    this.resetObjectTextWatchers();
     const rootTreeNode = new RootTreeNode({
       object: this.rootObject,
       childrenGroups: this.createChildrenGroups(""),
     });
     this.hydratePathToRoot(rootTreeNode);
     this.hydrateTreeNode(rootTreeNode);
+    this.textsCache.updateIfStale(rootTreeNode); // Important to update cache before applying filters
     this.applyFilter(rootTreeNode);
     this.applySearch(rootTreeNode);
     this.applySort(rootTreeNode);
@@ -354,6 +388,68 @@ export class Tree {
       root: rootTreeNode,
       descendantTreeNodesById: createDescendantTreeNodesById(rootTreeNode),
     };
+  }
+
+  /**
+   * Returns selection with referenced nodes resolved.
+   */
+  get selectionWithNodes(): TreeSelectionWithNodes | null {
+    if (!this.selection) {
+      return null;
+    } else if (this.selection.type === "editor") {
+      const node = this.state.descendantTreeNodesById.get(this.selection.treeNodeId);
+      if (!node) {
+        logger.warn("Selection node not found", this.selection.treeNodeId);
+        return null;
+      }
+      return { ...this.selection, treeNode: node };
+    } else {
+      const state = this.state;
+      logger.debug("Recomputing selected nodes", { selection: toJS(this.selection), state });
+      const anchor = state.descendantTreeNodesById.get(this.selection.anchorNodeId);
+      const head = state.descendantTreeNodesById.get(this.selection.headNodeId);
+      if (!anchor || !head) {
+        logger.warn("Selection anchor or head not found", {
+          anchor,
+          head,
+          anchorId: this.selection.anchorNodeId,
+          headId: this.selection.headNodeId,
+        });
+        return null;
+      }
+      // TODO find a way to do this without walking the tree twice
+      let top: DescendantTreeNode | undefined;
+      walkTree(this.state.root, (n) => {
+        if (!top && n instanceof DescendantTreeNode && (n.id === anchor.id || n.id === head.id)) {
+          top = n;
+        }
+      });
+      if (!top) {
+        logger.warn("Selection start not found in tree", { anchor, head });
+        return null;
+      }
+      const bottom = top === anchor ? head : anchor;
+      // walk from the top node to the bottom node, selecting all nodes along the way
+      const subtreeRoots = getSubtreesBetween(top, bottom);
+      const allNodes = subtreeRoots.flatMap((root) => {
+        const nodes: DescendantTreeNode[] = [];
+        walkTree(root, (n) => {
+          if (n instanceof DescendantTreeNode) {
+            nodes.push(n);
+          }
+        });
+        return nodes;
+      });
+      return {
+        ...this.selection,
+        top,
+        bottom,
+        anchor,
+        head,
+        nodes: allNodes,
+        subtreeRoots,
+      };
+    }
   }
 
   /** Set the selection to the editor of the given node. */
@@ -364,6 +460,12 @@ export class Tree {
   /** Returns true if the given node's editor is focused. */
   isNodeFocused(treeNodeId: string) {
     return this.selection?.type === "editor" && this.selection.treeNodeId === treeNodeId;
+  }
+
+  isNodeSelected(treeNodeId: string) {
+    return (
+      this.selectionWithNodes?.type === "node" && this.selectionWithNodes.nodes.some((node) => node.id === treeNodeId)
+    );
   }
 
   /**
@@ -401,38 +503,20 @@ export class Tree {
   }
 
   // For groups, we default to expanded.
-  isGroupExpanded(group: Group) {
-    return this.expansionsByPath.get(group.path) ?? true;
+  isGroupExpanded(path: Path) {
+    return this.expansionsByPath.get(path) ?? true;
   }
 
-  setGroupExpanded(group: Group, isExpanded: boolean) {
-    this.expansionsByPath.set(group.path, isExpanded);
+  setGroupExpanded(path: Path, isExpanded: boolean) {
+    this.expansionsByPath.set(path, isExpanded);
   }
 
-  toggleGroupExpanded(group: Group) {
-    this.expansionsByPath.set(group.path, !this.isGroupExpanded(group));
+  toggleGroupExpanded(path: Path) {
+    this.expansionsByPath.set(path, !this.isGroupExpanded(path));
   }
 
   setSearch(search: string) {
     logger.debug(`Setting search to "${search}"`);
-    if (this.cache.cacheLastUpdated === 0 || this.cache.cacheLastUpdated !== this.cache.textsLastUpdated) {
-      logger.debug("Text cache is outdated. Updating...", {
-        cacheLastUpdated: this.cache.cacheLastUpdated,
-        textsLastUpdated: this.cache.textsLastUpdated,
-      });
-      this.cache.cacheLastUpdated = this.cache.textsLastUpdated;
-      const { root } = this.state;
-      const visited = new Set<string>();
-      const walk = (node: TreeNode) => {
-        if (!visited.has(node.object.id)) {
-          this.cache.texts.set(node.object.id, node.object.text.toLocaleLowerCase());
-        }
-        node.childrenGroups.forEach((group) => {
-          group.nodes.forEach((child) => walk(child));
-        });
-      };
-      walk(root);
-    }
     this.search = search;
   }
 
@@ -457,7 +541,7 @@ export class Tree {
           ? parentNode.object.pinnedRelationsWithPositions
           : parentNode.object.relationsWithPositions;
       group.path = parentNode.path + "/" + group.id;
-      group.isExpanded = this.isGroupExpanded(group);
+      group.isExpanded = this.isGroupExpanded(group.path);
       group.nodes = positionedRelations.map((positionedRelation) => {
         const object = getOtherObjectOrThrow(positionedRelation.relation, parentNode.object.id);
         const instanceCountInPath = (objectIdCountsInPath[object.id] || 0) + 1;
@@ -490,7 +574,6 @@ export class Tree {
         return child;
       });
     });
-    this.watchObjectText(parentNode.object);
     return parentNode;
   }
 
@@ -527,7 +610,10 @@ export class Tree {
       root.path = node.path + "/" + node.relationToChild.id;
       root.depth = node.depth + 1;
       root.relationWithParent = node.relationToChild;
-      root.childrenGroups = this.createChildrenGroups(root.path);
+      root.childrenGroups = [
+        { ...root.childrenGroups[0], parent: root, path: root.path + "/pinned" },
+        { ...root.childrenGroups[1], parent: root, path: root.path + "/all" },
+      ];
     } else {
       root.path = "/" + this.id;
     }
@@ -568,7 +654,7 @@ export class Tree {
     if (!this.search) return;
     logger.debug("Applying search:", `"${this.search}"`);
     const search = this.search;
-    const texts = this.cache.texts;
+    const texts = this.textsCache.texts;
     function walk(treeNode: TreeNode) {
       let searchMatchInDescendants = false;
       treeNode.childrenGroups.forEach((group) => {
@@ -597,30 +683,16 @@ export class Tree {
     walk(treeNode);
   }
 
-  private createChildrenGroups(parentPath: string): ChildrenGroups {
-    const groups: ChildrenGroups = [
+  private createChildrenGroups(parentPath: string): ChildrenGroupsOmitParent {
+    const groups: ChildrenGroupsOmitParent = [
       { id: "pinned", path: "", nodes: [], isExpanded: true },
       { id: "all", path: "", nodes: [], isExpanded: true },
     ];
     groups.forEach((group) => {
       group.path = parentPath + "/" + group.id;
-      group.isExpanded = this.isGroupExpanded(group);
+      group.isExpanded = this.isGroupExpanded(group.path);
     });
     return groups;
-  }
-
-  private watchObjectText(object: GraphObject) {
-    if (!this.disposers.has(object.id)) {
-      const disposer = reaction(
-        () => object.text,
-        () => (this.cache.textsLastUpdated = Date.now()),
-      );
-      this.disposers.set(object.id, disposer);
-    }
-  }
-  private resetObjectTextWatchers() {
-    this.disposers.forEach((disposer) => disposer());
-    this.disposers.clear();
   }
 
   async createChildNodeAndFocus() {
@@ -631,57 +703,82 @@ export class Tree {
     return { node, relation, path };
   }
 
-  /**
-   * Move the node to the sibling above.
-   * @returns The new path of the node after the move
-   */
-  async indentNode(treeNode: DescendantTreeNode): Promise<string | undefined> {
-    const siblingAbove = treeNode.siblingAbove;
-    if (!siblingAbove) {
-      return;
+  async deleteSelection() {
+    const selection = this.selectionWithNodes;
+    if (selection?.type === "node") {
+      for (const treeNode of selection.nodes) {
+        await this.graphStore.removeRelation({ relationId: treeNode.relationWithParent.id });
+      }
+      const node = getNextAbove(selection.top);
+      if (node) {
+        this.setFocusedNode(node.path);
+      }
     }
-    // Change the relation's parent to the sibling above
-    await this.graphStore.replaceRelationLink({
-      direction: getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id),
-      relationId: treeNode.relationWithParent.id,
-      replaceWith: { type: "existing-node", id: siblingAbove.object.id },
-    });
-    // Position the relation at the bottom of the siblings list
-    this.graphStore.getRelationList(siblingAbove.object).move([treeNode.relationWithParent], "bottom");
-    // toggle open sibling
-    this.setPathExpanded(siblingAbove.path, true);
-    const path = siblingAbove.childrenGroupsById.all.path + "/" + treeNode.relationWithParent.id;
-    // Maintain focus
-    if (this.isNodeFocused(treeNode.path)) {
-      this.setFocusedNode(path);
-    }
-    return path;
+  }
+
+  indentSelection(): boolean {
+    return this.dentSelection("indent");
+  }
+
+  dedentSelection(): boolean {
+    return this.dentSelection("dedent");
   }
 
   /**
-   * Move the node to the parent.
-   * @returns The new path of the node after the move
+   * Indents or dedents the current selection.
    */
-  async dedentNode(treeNode: DescendantTreeNode): Promise<string | undefined> {
-    const parent = treeNode.parent;
-    if (parent instanceof RootTreeNode) {
-      logger.debug("Can't shift tab because no visible parent to move to");
-      return;
+  private dentSelection(dir: "indent" | "dedent"): boolean {
+    const selection = this.selectionWithNodes;
+    if (selection === null) return false;
+    const subtrees = selection.type === "editor" ? [selection.treeNode] : selection.subtreeRoots;
+    // move each group of siblings together
+    for (const subtreeSiblings of groupSiblings(subtrees)) {
+      let targetGroup: Group;
+      let after: Positioner<GraphRelation> | undefined;
+      if (dir === "indent") {
+        // target bottom of the sibling above
+        const siblingAbove = subtreeSiblings[0].siblingAbove;
+        if (!siblingAbove) continue; // can't indent the top nodes
+        targetGroup = siblingAbove.childrenGroupsById.all;
+        after = -1;
+      } else {
+        // target grandparent, just below the current parent
+        const parent = subtreeSiblings[0].parent;
+        if (parent instanceof RootTreeNode) continue; // can't dedent past the root
+        targetGroup = parent.parent.childrenGroupsById.all;
+        after = parent.relationWithParent;
+      }
+      this.moveNodesIntoGroup(subtreeSiblings, targetGroup, after);
+      this.setPathExpanded(targetGroup.parent.path, true);
     }
-    const grandparent = parent.parent;
-    await this.graphStore.replaceRelationLink({
-      direction: getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id),
-      relationId: treeNode.relationWithParent.id,
-      replaceWith: { type: "existing-node", id: grandparent.object.id },
+    return true;
+  }
+
+  /**
+   * Moves the nodes into the given group while maintaining any expanded or
+   * selected states.
+   *
+   * Note: If any of the provided nodes are descendants of each other, the
+   * expansions and selections may not be preserved correctly. See
+   * {@link updateSubtreeExpansionAndSelectionPathState} for more details.
+   */
+  private moveNodesIntoGroup(treeNodes: DescendantTreeNode[], group: Group, after?: Positioner<GraphRelation>) {
+    treeNodes.forEach((node) => {
+      const newPath = group.path + "/" + node.relationWithParent.id;
+      this.updateSubtreeExpansionAndSelectionPathState(node.path, newPath);
     });
-    // Position the relation under the parent
-    this.graphStore.getRelationList(grandparent.object).move([treeNode.relationWithParent], parent.relationWithParent);
-    const path = parent.parentGroup.path + "/" + treeNode.relationWithParent.id;
-    // Maintain focus
-    if (this.isNodeFocused(treeNode.path)) {
-      this.setFocusedNode(path);
+    const newParent = group.parent;
+    for (const treeNode of treeNodes) {
+      // move the node to the new parent
+      this.graphStore.updateRelationTarget(treeNode.relationWithParent, {
+        [getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id)]: newParent.object,
+      });
     }
-    return path;
+    // Position the relation at the bottom of the siblings list
+    this.graphStore.getRelationList(newParent.object).move(
+      treeNodes.map((n) => n.relationWithParent),
+      after,
+    );
   }
 
   /**
@@ -751,72 +848,133 @@ export class Tree {
     return result;
   }
 
-  moveNodeWithSelectionUp(): boolean {
-    const { descendantTreeNodesById } = this.state;
-    if (this.selection?.type !== "editor") {
-      // TODO: Implement moving selection up for node selection
-      return false;
+  /**
+   * Moves the selected or focused nodes up one step.
+   */
+  moveSelectedNodesUp(): boolean {
+    const selection = this.selectionWithNodes;
+    if (!selection) return false;
+    // Get the nodes to move
+    let subtreeRoots: DescendantTreeNode[];
+    let top: DescendantTreeNode;
+    if (selection.type === "node") {
+      subtreeRoots = selection.subtreeRoots;
+      top = selection.top;
+    } else if (selection.type === "editor") {
+      subtreeRoots = [selection.treeNode];
+      top = selection.treeNode;
+    } else {
+      return selection satisfies never;
     }
-    const treeNode = descendantTreeNodesById.get(this.selection.treeNodeId);
-    if (!treeNode) {
-      logger.error("Can't move up because node not found");
-      return false;
+    if (top.siblingAbove) {
+      // Move the nodes above the sibling above the top node
+      this.moveNodesIntoGroup(subtreeRoots, top.parentGroup, top.siblingAbove?.siblingAbove?.relationWithParent);
+      return true;
+    } else if (top.parent instanceof DescendantTreeNode && top.parent.siblingAbove) {
+      // Move the nodes to the bottom of the sibling above the current parent
+      const newGroup = top.parent.siblingAbove.childrenGroupsById.all;
+      this.moveNodesIntoGroup(subtreeRoots, newGroup, -1);
+      this.setPathExpanded(newGroup.parent.path, true);
+      return true;
     }
-    return this.moveNodeUp(treeNode);
+    return false;
   }
 
-  moveNodeWithSelectionDown(): boolean {
-    const { descendantTreeNodesById } = this.state;
-    if (this.selection?.type !== "editor") {
-      // TODO: Implement moving selection up for node selection
-      return false;
+  /**
+   * Moves the selected or focused nodes down one step.
+   */
+  moveSelectedNodesDown(): boolean {
+    const selection = this.selectionWithNodes;
+    if (!selection) return false;
+    // Get the nodes to move
+    let subtreeRoots: DescendantTreeNode[];
+    let bottom: DescendantTreeNode;
+    if (selection.type === "node") {
+      subtreeRoots = selection.subtreeRoots;
+      bottom = selection.bottom;
+    } else if (selection.type === "editor") {
+      subtreeRoots = [selection.treeNode];
+      bottom = selection.treeNode;
+    } else {
+      return selection satisfies never;
     }
-    const treeNode = descendantTreeNodesById.get(this.selection.treeNodeId);
-    if (!treeNode) {
-      logger.error("Can't move up because node not found");
-      return false;
+    if (bottom.siblingBelow) {
+      // Move the nodes below the sibling below the bottom node
+      this.moveNodesIntoGroup(subtreeRoots, bottom.parentGroup, bottom.siblingBelow?.relationWithParent);
+      return true;
+    } else if (bottom.parent instanceof DescendantTreeNode && bottom.parent.siblingBelow) {
+      // Move the nodes to the bottom of the sibling below the current parent
+      const newGroup = bottom.parent.siblingBelow.childrenGroupsById.all;
+      this.moveNodesIntoGroup(subtreeRoots, newGroup, 0);
+      this.setPathExpanded(newGroup.parent.path, true);
+      return true;
     }
-    return this.moveNodeDown(treeNode);
+    return false;
   }
 
-  private moveNodeUp(treeNode: DescendantTreeNode): boolean {
-    const siblingAbove = treeNode.siblingAbove;
-    if (!siblingAbove) {
-      logger.debug("No sibling above to move to");
-      return false;
-    }
-    this.graphStore
-      .getRelationList(treeNode.parent.object)
-      .move([siblingAbove.relationWithParent], treeNode.relationWithParent);
-    return true;
+  /**
+   * Moves the head of the node selection up. If it's currently
+   * an editor selection, it will convert it to a node selection.
+   */
+  moveNodeSelectionHeadUp(): boolean {
+    return this.moveNodeSelectionHead("up");
   }
 
-  private moveNodeDown(treeNode: DescendantTreeNode): boolean {
-    const siblingBelow = treeNode.siblingBelow;
-    if (!siblingBelow) {
-      logger.debug("No sibling below to move to");
-      return false;
+  /**
+   * Moves the head of the node selection down. If it's currently
+   * an editor selection, it will convert it to a node selection.
+   */
+  moveNodeSelectionHeadDown(): boolean {
+    return this.moveNodeSelectionHead("down");
+  }
+
+  // TODO: feels like this could be simplified
+  private moveNodeSelectionHead(dir: "up" | "down"): boolean {
+    const selection = this.selectionWithNodes;
+    if (selection?.type === "editor") {
+      // convert editor selection to node selection
+      const head = selection.treeNode;
+      this.selection = { type: "node", anchorNodeId: head.id, headNodeId: head.id };
+      return true;
+    } else if (selection?.type === "node") {
+      // Get the next node in the given direction from the head. This is either
+      // the next node directly aboven/below the head or if that's already
+      // selected then sibling above/below the head
+      const { anchor, head } = selection;
+      let newHead: DescendantTreeNode | null = null;
+      let newAnchor: DescendantTreeNode | null = null;
+      if (dir === "up") {
+        newHead = getNextAbove(head) ?? null;
+        newHead = newHead && this.isNodeSelected(newHead.path) ? head.siblingAbove : newHead;
+        if (newHead && anchor.path.startsWith(newHead.path)) {
+          newAnchor = newHead;
+        }
+      } else {
+        newHead = getNextBelow(head) ?? null;
+        newHead = newHead && this.isNodeSelected(newHead.path) ? head.siblingBelow : newHead;
+      }
+      if (this.selection?.type !== "node") {
+        logger.warn(`Expected node selection type "node" but seeing "${this.selection?.type}"`);
+        return false;
+      }
+      if (newHead) {
+        this.selection.headNodeId = newHead.path;
+      }
+      if (newAnchor) {
+        this.selection.anchorNodeId = newAnchor.path;
+      }
+      return true;
     }
-    this.graphStore
-      .getRelationList(treeNode.parent.object)
-      .move([treeNode.relationWithParent], siblingBelow.relationWithParent);
-    return true;
+    return false;
   }
 
   /**
    * Move selection from the current node to the next one up.
    */
-  moveSelectionUp(): boolean {
-    const { descendantTreeNodesById } = this.state;
-    if (this.selection?.type !== "editor") {
-      // TODO: Implement moving selection up for node selection
-      return false;
-    }
-    const treeNode = descendantTreeNodesById.get(this.selection.treeNodeId);
-    if (!treeNode) {
-      logger.error("Can't move selection up because node not found", this.selection.treeNodeId);
-      return false;
-    }
+  moveEditorSelectionUp(): boolean {
+    const selection = this.selectionWithNodes;
+    if (!selection) return false;
+    const treeNode = selection.type === "editor" ? selection.treeNode : selection.top;
     const next = getNextAbove(treeNode);
     if (!next) return false;
     this.setFocusedNode(next.path);
@@ -826,26 +984,71 @@ export class Tree {
   /**
    * Move selection from the current node to the next one down.
    */
-  moveSelectionDown(): boolean {
-    const { descendantTreeNodesById } = this.state;
-    if (this.selection?.type !== "editor") {
-      // TODO: Implement moving selection up for node selection
-      return false;
-    }
-    const treeNode = descendantTreeNodesById.get(this.selection.treeNodeId);
-    if (!treeNode) {
-      logger.error("Can't move selection down because node not found", this.selection.treeNodeId);
-      return false;
-    }
-    const next = getNextBelow(treeNode);
+  moveEditorSelectionDown(): boolean {
+    const selection = this.selectionWithNodes;
+    if (!selection) return false;
+    const next = selection.type === "editor" ? getNextBelow(selection.treeNode) : getNextSubtreeBelow(selection.bottom);
     if (!next) return false;
     this.setFocusedNode(next.path);
     return true;
   }
 
+  /**
+   * Convert a node selection to an editor selection or and editor selection to
+   * no selection.
+   */
+  escapeSelection() {
+    if (this.selection === null) {
+      return;
+    } else if (this.selection?.type === "editor") {
+      this.selection = null;
+    } else {
+      this.setFocusedNode(this.selection.headNodeId);
+    }
+  }
+
+  /**
+   * When you move a tree node to a new position, it's path will be different on
+   * the next render. If the node or any of it's descendants were expanded or
+   * selected, we want to keep it that way. These states are stored by path so we
+   * need to move them to the new path.
+   *
+   * @DesignNote If you try to separately indent a node and one of it's deeply
+   * nested descendants, and hope this method can adjust both paths, you're
+   * gonna have a bad time. While moving multiple nodes, you only have access to
+   * stale path values. If you indent a node and a deeply nested, you would need
+   * to consider where the ancestor moved to in order to update the descendant's
+   * path correctly. We could imagine a more complicated design where we keep
+   * around our path mappings and then map descendants through all of them, but
+   * that seems like overkill for now. Avoiding that situation is why we only
+   * support selecting and indenting entire subtrees right now.
+   */
+  private updateSubtreeExpansionAndSelectionPathState(path: Path, newPath: Path) {
+    if (path === newPath) return;
+    const pathAndDescendants = Array.from(this.expansionsByPath.keys()).filter((p) => p.startsWith(path));
+    for (const p of pathAndDescendants) {
+      const state = this.expansionsByPath.get(p);
+      if (state !== undefined) {
+        this.expansionsByPath.set(p.replace(path, newPath), state);
+        this.expansionsByPath.delete(p);
+      }
+    }
+    if (this.selection?.type === "node") {
+      if (this.selection.anchorNodeId === path) {
+        this.selection.anchorNodeId = newPath;
+      }
+      if (this.selection.headNodeId === path) {
+        this.selection.headNodeId = newPath;
+      }
+    } else if (this.selection?.type === "editor" && this.selection.treeNodeId === path) {
+      this.selection.treeNodeId = newPath;
+    }
+  }
+
   clear(root: GraphRelation[]) {
     this.pathToRoot = root;
     this.expansionsByPath.clear();
+    this.textsCache.clear();
   }
 
   serialize(): SerializedTree {
@@ -879,6 +1082,57 @@ export class Tree {
     // }
     // this.pathToRoot = relations;
     // return true;
+  }
+}
+
+/**
+ * Cache of object texts for tree search filtering.
+ *
+ * When computing the tree state, if there's a search input, we need
+ * to filter out nodes that don't match the search. But if we reference the
+ * object texts directly, mobx will recompute the tree every time the object
+ * text changes, which we don't want. So we cache the object texts and reference
+ * the cache during the search filter. When any object text changes, we mark the
+ * cache as stale and recompute it before applying the next search filter.
+ *
+ * TODO: This may make more sense in the graph store. I'm guessing we'll want a
+ * text cache for the graph store as well.
+ */
+class TextCache {
+  texts = new Map<string, string>();
+  disposers = new Map<string, IReactionDisposer>();
+  isStale = true;
+
+  updateIfStale(root: RootTreeNode) {
+    if (!this.isStale) return;
+    logger.debug("Text cache is outdated. Updating...");
+    this.clear();
+    walkTree(root, (node) => {
+      // cache current texts
+      if (!this.texts.has(node.object.id)) {
+        this.texts.set(node.object.id, node.object.text.toLocaleLowerCase());
+      }
+      // mark as stale if any text changes
+      if (!this.disposers.has(node.object.id)) {
+        const disposer = reaction(
+          () => node.object.text,
+          () => {
+            this.isStale = true;
+            this.disposers.clear();
+            logger.debug("Text cache is now stale");
+          },
+        );
+        this.disposers.set(node.object.id, disposer);
+      }
+    });
+    this.isStale = false;
+  }
+
+  clear() {
+    this.texts.clear();
+    this.disposers.forEach((disposer) => disposer());
+    this.disposers.clear();
+    this.isStale = true;
   }
 }
 
@@ -981,4 +1235,50 @@ function createDescendantTreeNodesById(root: TreeNode) {
     });
   }
   return nodesById;
+}
+
+function groupSiblings(treeNodes: DescendantTreeNode[]): DescendantTreeNode[][] {
+  const siblingGroups = new Map<string, DescendantTreeNode[]>();
+  treeNodes.forEach((node) => {
+    const group = siblingGroups.get(node.parentGroup.path);
+    if (group) {
+      group.push(node);
+    } else {
+      siblingGroups.set(node.parentGroup.path, [node]);
+    }
+  });
+  return Array.from(siblingGroups.values());
+}
+
+/**
+ * Get the next subtree below. Like {@link getNextBelow} but it skips
+ * the given nodes descendants.
+ */
+function getNextSubtreeBelow(treeNode: DescendantTreeNode): DescendantTreeNode | null {
+  return treeNode.siblingBelow || (treeNode.parent instanceof DescendantTreeNode ? treeNode.parent.siblingBelow : null);
+}
+
+/**
+ * Walks the tree from top to bottom, returning the nodes in order
+ * excluding their descendants.
+ */
+function getSubtreesBetween(top: DescendantTreeNode, bottom: DescendantTreeNode) {
+  const subtrees: DescendantTreeNode[] = [];
+  let next: DescendantTreeNode | null = top;
+  while (next && next !== bottom) {
+    subtrees.push(next);
+    next = getNextSubtreeBelow(next);
+  }
+  subtrees.push(bottom);
+  return subtrees;
+}
+
+/**
+ * Executes a callback on each node in the tree, starting with the given node.
+ * If the callback returns false, the walk won't descend that node.
+ */
+function walkTree(treeNode: TreeNode, callback: (node: TreeNode) => boolean | void) {
+  const res = callback(treeNode);
+  if (res === false) return;
+  treeNode.visibleChildren.forEach((child) => walkTree(child, callback));
 }

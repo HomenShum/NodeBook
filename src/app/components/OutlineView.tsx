@@ -3,7 +3,8 @@ import { ChevronRight, Ellipsis, HomeIcon } from "lucide-react";
 import { autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { KeyboardEventHandler, useCallback, useEffect } from "react";
+import { useEffect } from "react";
+import { Options, useHotkeys } from "react-hotkeys-hook";
 
 import {
   DropdownMenu,
@@ -26,26 +27,10 @@ import s from "./OutlineView.module.css";
 
 export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   const graphStore = useGraphStore();
-  const { root: treeNode } = tree.state;
+  useOutlineHotkeys({ tree });
+  useBindEditorFocusToTree({ tree });
+  const treeNode = tree.state.root;
   const ancestors = getAncestorsAsArray(treeNode);
-  const shortcutsHandler = useShortcutsHandler({ tree });
-  const renderController = useRenderController();
-
-  // Whenever the tree selection changes, focus the editor that corresponds to the selection
-  useEffect(() => {
-    const disposer = autorun(() => {
-      if (tree.selection?.type !== "editor") return;
-      const editor = renderController.editorsByPath.get(tree.selection.treeNodeId);
-      if (!editor) return;
-      const hasFocus = editor.getRootElement()?.contains(document.activeElement);
-      if (!hasFocus) {
-        logger.debug("Focusing editor to match selection", { treeNodeId: tree.selection.treeNodeId });
-        editor.focus();
-      }
-    });
-    return disposer;
-  }, [tree, renderController]);
-
   return (
     <TreeContext.Provider value={tree}>
       <div className={s.OutlineView}>
@@ -74,7 +59,7 @@ function CreateNewButton({ tree }: { tree: Tree }) {
   );
 }
 
-function Breadcrumbs({ treeNode }: { treeNode: TreeNode }) {
+const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
   const router = useRouter();
   const curView = useCurView();
   const graphStore = useGraphStore();
@@ -172,7 +157,7 @@ function Breadcrumbs({ treeNode }: { treeNode: TreeNode }) {
       </span>
     </div>
   );
-}
+});
 
 const truncate = (text: string, maxLength: number) => {
   if (text.length > maxLength) {
@@ -181,18 +166,40 @@ const truncate = (text: string, maxLength: number) => {
   return text;
 };
 
-function useShortcutsHandler({ tree }: { tree: Tree }): KeyboardEventHandler {
+const useBindEditorFocusToTree = ({ tree }: { tree: Tree }) => {
   const renderController = useRenderController();
-  return useCallback(
-    (e) => {
-      const metaOrCtrl = e.metaKey || e.ctrlKey; // Command key on Mac, Ctrl key on Windows
-      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
-        if (metaOrCtrl && e.shiftKey) {
-          const moved = e.key === "ArrowUp" ? tree.moveNodeWithSelectionDown() : tree.moveNodeWithSelectionDown();
-          if (moved) e.preventDefault();
+  useEffect(() => {
+    const disposer = autorun(() => {
+      if (tree.selection?.type === "editor") {
+        const editor = renderController.editorsByPath.get(tree.selection.treeNodeId);
+        if (!editor) return;
+        const hasFocus = editor.getRootElement()?.contains(document.activeElement);
+        if (!hasFocus) {
+          logger.debug("Focusing editor to match selection", { treeNodeId: tree.selection.treeNodeId });
+          editor.focus();
+        }
+      } else {
+        if (document.activeElement instanceof HTMLElement && document.activeElement?.dataset.lexicalEditor === "true") {
+          logger.debug("Blurring editor to match selection", { type: tree.selection?.type });
+          document.activeElement.blur();
         }
       }
-    },
-    [tree, renderController],
-  );
+    });
+    return disposer;
+  }, [tree, renderController]);
+};
+
+function useOutlineHotkeys({ tree }: { tree: Tree }) {
+  const defaults: Options = { enableOnContentEditable: true, preventDefault: true };
+  useHotkeys("mod+shift+ArrowUp", () => tree.moveSelectedNodesUp(), defaults, [tree]);
+  useHotkeys("mod+shift+ArrowDown", () => tree.moveSelectedNodesDown(), defaults, [tree]);
+  useHotkeys("ArrowUp", () => tree.moveEditorSelectionUp(), defaults, [tree]);
+  useHotkeys("ArrowDown", () => tree.moveEditorSelectionDown(), defaults, [tree]);
+  useHotkeys("shift+ArrowUp", () => tree.moveNodeSelectionHeadUp(), defaults, [tree]);
+  useHotkeys("shift+ArrowDown", () => tree.moveNodeSelectionHeadDown(), defaults, [tree]);
+  useHotkeys("delete", () => tree.deleteSelection(), [tree]);
+  useHotkeys("backspace", () => tree.deleteSelection(), [tree]);
+  useHotkeys("tab", () => tree.indentSelection(), defaults, [tree]);
+  useHotkeys("shift+tab", () => tree.dedentSelection(), defaults, [tree]);
+  useHotkeys("esc", () => tree.escapeSelection(), defaults, [tree]);
 }

@@ -77,6 +77,7 @@ const Main = observer(({ treeNode, children }: { treeNode: DescendantTreeNode; c
 
 const Content = observer(() => {
   const settingsStore = useSettingsStore();
+  const tree = useTree();
   const {
     treeNode,
     relationComboboxIsOpen,
@@ -92,7 +93,12 @@ const Content = observer(() => {
     : "0px";
   return (
     <>
-      <div className={styles.RelatedObjectNode}>
+      <div
+        style={{
+          backgroundColor: tree.isNodeSelected(treeNode.id) ? "rgba(0, 0, 255, 0.1)" : "transparent",
+        }}
+        className={styles.RelatedObjectNode}
+      >
         <div className={styles.RelatedObjectNodeContent}>
           {showRelationType && (
             <RelationCombobox

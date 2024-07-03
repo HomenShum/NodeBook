@@ -18,7 +18,9 @@ export const TrackFocusedPathPlugin = ({ pathToNodeStr }: { pathToNodeStr: strin
       editor.registerCommand(
         BLUR_COMMAND,
         action(() => {
-          tree.setFocusedNode(null);
+          if (tree.selection?.type === "editor") {
+            tree.setFocusedNode(null);
+          }
           return false;
         }),
         COMMAND_PRIORITY_EDITOR,

@@ -1,7 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
-import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_EDITOR, KEY_DOWN_COMMAND, KEY_TAB_COMMAND } from "lexical";
-import { action } from "mobx";
+import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_EDITOR, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
@@ -30,18 +29,10 @@ export const TabAndBulletPlugin = () => {
             // Offset is 0 when at start of text
             if (selectionStart.offset !== 0 || selectionEnd.offset !== 0) return false;
             if (!treeNode.siblingAbove) return false;
-            tree.indentNode(treeNode);
+            tree.indentSelection(); // TODO indent this node, not selection
           }
           return false;
         },
-        COMMAND_PRIORITY_EDITOR,
-      ),
-      editor.registerCommand(
-        KEY_TAB_COMMAND,
-        action((event: KeyboardEvent) => {
-          event.preventDefault();
-          return event.shiftKey ? !!tree.dedentNode(treeNode) : !!tree.indentNode(treeNode);
-        }),
         COMMAND_PRIORITY_EDITOR,
       ),
     );
