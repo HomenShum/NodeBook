@@ -1,13 +1,12 @@
-name: Unit
+name: CI Tests
 on:
   push:
     paths:
       - "src/**"
-      - ".github/workflows/unit.yml"
+      - ".github/workflows/ci-tests.yml"
 
 jobs:
   test:
-    name: Unit
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

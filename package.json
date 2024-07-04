@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
+    "ci-tests": "yarn lint && yarn unit-test",
     "typecheck": "tsc --noEmit --watch",
     "tcm:generate-types": "tcm src",
     "tcm:check-up-to-date-types": "tcm src --listDifferent",
