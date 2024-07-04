@@ -33,3 +33,17 @@
 .TypeaheadPopover ul li.Selected {
   background: var(--teal-2);
 }
+
+.TypeaheadPopoverItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.TypeaheadPopoverItemPath {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 14px;
+  color: var(--gray-9);
+  height: 20px;
+}

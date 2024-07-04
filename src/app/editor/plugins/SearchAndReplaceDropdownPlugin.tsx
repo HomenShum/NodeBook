@@ -23,6 +23,8 @@ import { isUnlabelledChild } from "@/app/view/Tree";
 import { useTree } from "@/app/view/TreeContext";
 import { cn } from "@/lib/utils";
 
+import styles from "./SearchAndReplaceDropdownPlugin.module.css";
+
 function resolveReplacementType(optionType: DropdownOption["type"]): "existing-node" | "existing-relation" {
   switch (optionType) {
     case "node":
@@ -302,7 +304,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
 
   const selectedIdx = findSelectionIdx(objectsMatchingSearch, selected);
   return hasFocus && dropdownOpen && objectsMatchingSearch.length > 0 ? (
-    <div className="absolute top-6 left-0 w-full bg-white border border-gray-300 z-10">
+    <div className={styles.DropdownContainer}>
       {objectsMatchingSearch.map((option, i) => {
         return (
           <div
@@ -312,16 +314,14 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
               onSelect(option);
             }}
             onMouseEnter={() => mouseHasMoved && setSelected(option.id)}
-            className={cn(i === selectedIdx ? "bg-gray-200" : "")}
+            className={cn(styles.DropdownItem, i === selectedIdx && styles.Selected)}
           >
             {option.type === "action" && option.id === "create-new-node" ? (
               `Create new node "${object.text}"`
             ) : option.type === "node" ? (
               option.object.text
             ) : option.type === "relationType" ? (
-              <span className="text-gray-400">
-                {option.isForward ? option.object.label : option.object.reverseLabel}:
-              </span>
+              <span>{option.isForward ? option.object.label : option.object.reverseLabel}:</span>
             ) : option.type === "relation" ? (
               <span>{option.object.text}</span>
             ) : null}

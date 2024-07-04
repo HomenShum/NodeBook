@@ -245,14 +245,14 @@ function MentionsTypeaheadMenuItem({
       onMouseEnter={onMouseEnter}
       onClick={onClick}
     >
-      <div className="flex flex-col">
+      <div className={styles.TypeaheadPopoverItem}>
         <div>{option.name}</div>
         {path.length > 0 && (
-          <div className="flex items-center text-sm text-[--gray-9] h-[20px]">
+          <div className={styles.TypeaheadPopoverItemPath}>
             {path.map(({ key, text }) => (
               <span key={key}>
                 {text}
-                <span className="px-1">/</span>
+                <span> /</span>
               </span>
             ))}
           </div>

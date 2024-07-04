@@ -124,7 +124,7 @@ export const RelationCombobox = observer(
       >
         <PopoverTrigger asChild>
           <Button
-            variant="outline"
+            variant="ghost"
             role="combobox"
             aria-expanded={isOpen}
             className={`${styles.RelationComboboxLabel} ${isParent ? "" : ""}`}

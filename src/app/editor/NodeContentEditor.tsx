@@ -100,7 +100,7 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable className="outline-none" data-nodeid={treeNode.object.id} />}
+          contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
           placeholder={null}
         />
         <HistoryPlugin />
