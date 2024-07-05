@@ -939,7 +939,6 @@ export class Tree {
       this.setPathExpanded(newGroup.parent.path, true);
       return true;
     }
-    console.log(toJS(this.selection));
     return false;
   }
 
