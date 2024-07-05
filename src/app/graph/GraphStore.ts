@@ -349,16 +349,10 @@ export class GraphStore {
    * also updates the list of relations on the old and new `from` nodes
    * to reflect the changes.
    */
-  private updateRelationFrom(relation: GraphRelation, newFrom: GraphObject) {
+  private updateRelationFrom(relation: GraphRelation, newFrom: GraphObject, after?: Positioner<GraphRelation>) {
     try {
-      // remove the relations from their old from nodes
       const oldFrom = relation.from;
-      this.getRelationList(oldFrom).delete(relation.id);
-      this.getPinnedRelationList(oldFrom).delete(relation.id);
-      // update the relations from property
       relation.setFrom(newFrom);
-      // add the relations to the new from node
-      this.getRelationList(newFrom).add(relation);
       this.deleteIfNoRelations(oldFrom);
     } catch (e) {
       // TODO: implement rollback
@@ -372,16 +366,10 @@ export class GraphStore {
    * also updates the list of relations on the old and new `to` nodes
    * to reflect the changes.
    */
-  private updateRelationTo(relation: GraphRelation, newTo: GraphObject) {
+  private updateRelationTo(relation: GraphRelation, newTo: GraphObject, after?: Positioner<GraphRelation>) {
     try {
-      // remove the relations from their old to nodes
       const oldTo = relation.to;
-      this.getRelationList(oldTo).delete(relation.id);
-      this.getPinnedRelationList(oldTo).delete(relation.id);
-      // update the relations to property
-      relation.setTo(newTo);
-      // add the relations to the new to node
-      this.getRelationList(newTo).add(relation);
+      relation.setTo(newTo, after);
       this.deleteIfNoRelations(oldTo);
     } catch (e) {
       // TODO: implement rollback

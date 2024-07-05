@@ -1,71 +1,58 @@
+import { FractionalPositionedList } from "@/app/graph/FractionalPositionedList";
+import { PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
+import { Positioner } from "@/app/graph/GraphTransactionTypes";
+import { getOtherObjectOrThrow, getOtherSideOrThrow } from "@/app/graph/utils";
+import { Tree } from "@/app/tree/Tree";
 import { Position } from "@/app/util";
 
 export class PathToRootNode {
   object: GraphObject;
   relationToChild: GraphRelation;
-  parent: PathToRootNode | null;
   child: PathToRootNode | TreeNode;
-  path: string;
-  depth: number;
+  parent: PathToRootNode | null = null;
 
   constructor({
     object,
     relationToChild,
     child,
-    parent = null,
-    path = "",
-    depth = 0,
   }: {
     object: GraphObject;
     relationToChild: GraphRelation;
     child: PathToRootNode | RootTreeNode;
-    parent?: PathToRootNode | null;
-    path?: string;
-    depth?: number;
   }) {
     this.object = object;
     this.relationToChild = relationToChild;
-    this.parent = parent;
     this.child = child;
-    this.path = path;
-    this.depth = depth;
+  }
+
+  get path(): string {
+    return this.parent ? this.parent.path + "/" + this.relationToChild.id : "";
+  }
+
+  get depth(): number {
+    return this.parent ? this.parent.depth + 1 : 0;
   }
 }
 
-export class BaseTreeNode {
-  id: string;
+export abstract class BaseTreeNode {
+  tree: Tree;
   object: GraphObject;
-  depth: number;
-  path: string;
-  childrenGroups: ChildrenGroups;
-  isExpanded: boolean;
-  constructor({
-    object,
-    childrenGroups = [
-      { id: "pinned", path: "", nodes: [], isExpanded: true },
-      { id: "all", path: "", nodes: [], isExpanded: true },
-    ],
-    path = "",
-    depth = 0,
-    isExpanded = false,
-  }: {
-    object: GraphObject;
-    childrenGroups?: ChildrenGroupsOmitParent;
-    path?: string;
-    depth?: number;
-    isExpanded?: boolean;
-  }) {
-    this.id = path;
+  abstract childrenGroups: ChildrenGroups;
+  abstract relationWithParent: GraphRelation | null;
+  abstract path: string;
+  constructor({ tree, object }: { tree: Tree; object: GraphObject }) {
+    this.tree = tree;
     this.object = object;
-    this.path = path;
-    this.depth = depth;
-    this.childrenGroups = [
-      { ...childrenGroups[0], parent: this },
-      { ...childrenGroups[1], parent: this },
-    ];
-    this.isExpanded = isExpanded;
+  }
+
+  pinChild(child: DescendantTreeNode | DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+    const children = Array.isArray(child) ? child : [child];
+    this.object.pinChildRelation(
+      children.map((c) => c.relationWithParent),
+      after instanceof DescendantTreeNode ? after.relationWithParent : after,
+    );
   }
 
   get childrenGroupsById() {
@@ -89,31 +76,9 @@ export class BaseTreeNode {
       ? this.childrenGroups.reduce((acc, group) => acc.concat(group.nodes), [] as DescendantTreeNode[])
       : [];
   }
-}
 
-export class RootTreeNode extends BaseTreeNode {
-  parent: PathToRootNode | null;
-  relationWithParent: GraphRelation | null;
-  constructor({
-    object,
-    childrenGroups,
-    path,
-    depth,
-    parent = null,
-    relationWithParent = null,
-    isExpanded = true,
-  }: {
-    object: GraphObject;
-    childrenGroups: ChildrenGroupsOmitParent;
-    parent?: PathToRootNode | null;
-    relationWithParent?: GraphRelation | null;
-    depth?: number;
-    path?: string;
-    isExpanded?: boolean;
-  }) {
-    super({ object, path, depth, childrenGroups, isExpanded });
-    this.parent = parent;
-    this.relationWithParent = relationWithParent;
+  get isExpanded() {
+    return this.tree.isPathExpanded(this.path);
   }
 
   get isBackrelation(): boolean {
@@ -121,49 +86,123 @@ export class RootTreeNode extends BaseTreeNode {
   }
 }
 
+export class RootTreeNode extends BaseTreeNode {
+  id: string = "";
+  path: string = "";
+  depth: number = 0;
+  childrenGroups: ChildrenGroups;
+  parent: PathToRootNode | null = null;
+  relationWithParent: GraphRelation | null = null;
+  constructor({ tree }: { tree: Tree }) {
+    super({ tree, object: tree.rootObject });
+    this.childrenGroups = [new PinnedGroup({ tree, parent: this }), new AllGroup({ tree, parent: this })];
+  }
+
+  hydrate() {
+    this.hydrateAncestors(this.tree.pathToRoot);
+    this.path = this.parent && this.relationWithParent ? this.parent.path + "/" + this.relationWithParent.id : "";
+    this.id = this.path;
+    this.depth = this.parent ? this.parent.depth + 1 : 0;
+    this.hydrateChildren();
+    return this;
+  }
+
+  private hydrateAncestors(pathToRoot: GraphRelation[]) {
+    let prevNode: PathToRootNode | RootTreeNode = this;
+    for (let i = pathToRoot.length - 1; i >= 0; i--) {
+      const relation = pathToRoot[i];
+      const nextNode: PathToRootNode = new PathToRootNode({
+        object: getOtherObjectOrThrow(relation, prevNode.object.id),
+        relationToChild: relation,
+        child: prevNode,
+      });
+      prevNode.parent = nextNode;
+      if (prevNode instanceof RootTreeNode) {
+        prevNode.relationWithParent = nextNode.relationToChild;
+      }
+      prevNode = nextNode;
+    }
+  }
+
+  private hydrateChildren() {
+    this.childrenGroups.forEach((group) => group.hydrate());
+  }
+
+  get isExpanded() {
+    return true;
+  }
+}
+
 export class DescendantTreeNode extends BaseTreeNode {
-  parent: RootTreeNode | DescendantTreeNode;
-  relationWithParent: GraphRelation;
-  position: Position;
-  instanceCountInPath: number;
   parentGroup: Group;
+  relationWithParent: GraphRelation;
+  childrenGroups: ChildrenGroups;
+  position: Position;
   isSearchMatch: boolean;
   searchMatchInDescendants: boolean;
+  path: string;
+  depth: number;
+  id: string;
   constructor({
     object,
-    parent,
     position,
     relationWithParent,
     group,
-    childrenGroups,
-    instanceCountInPath,
-    path,
-    depth,
     isSearchMatch = false,
     searchMatchInDescendants = false,
-    isExpanded = false,
   }: {
-    object: DescendantTreeNode["object"];
-    parent: DescendantTreeNode["parent"];
-    position: DescendantTreeNode["position"];
+    object: GraphObject;
+    position: Position;
     relationWithParent: GraphRelation;
     group: Group;
-    childrenGroups: ChildrenGroupsOmitParent;
-    instanceCountInPath: number;
-    path: string;
-    depth: number;
     isSearchMatch?: boolean;
     searchMatchInDescendants?: boolean;
-    isExpanded?: boolean;
   }) {
-    super({ object, path, depth, childrenGroups, isExpanded });
-    this.parent = parent;
-    this.instanceCountInPath = instanceCountInPath;
+    super({ tree: group.tree, object });
+    this.path = group.path + "/" + relationWithParent.id;
+    this.id = this.path;
+    this.depth = group.parent.depth + 1;
+    this.childrenGroups = [
+      new PinnedGroup({ tree: group.tree, parent: this }),
+      new AllGroup({ tree: group.tree, parent: this }),
+    ];
     this.parentGroup = group;
     this.isSearchMatch = isSearchMatch;
     this.searchMatchInDescendants = searchMatchInDescendants;
     this.relationWithParent = relationWithParent;
     this.position = position;
+  }
+
+  hydrate() {
+    this.childrenGroups.forEach((group) => group.hydrate());
+  }
+
+  get parent() {
+    return this.parentGroup.parent;
+  }
+
+  get isExpanded() {
+    return this.tree.isPathExpanded(this.path);
+  }
+
+  get instanceCountInPath() {
+    let n = 1;
+    let parent: TreeNode | null = this.parent;
+    while (parent) {
+      if (parent.object.id === this.object.id) {
+        n++;
+      }
+      parent = parent.parent instanceof PathToRootNode ? null : parent.parent;
+    }
+    return n;
+  }
+
+  get parentSideOfRelation(): "from" | "to" {
+    return getOtherSideOrThrow(this.relationWithParent, this.object.id);
+  }
+
+  get thisSideOfRelation(): "from" | "to" {
+    return getOtherSideOrThrow(this.relationWithParent, this.parent.object.id);
   }
 
   get siblingAbove(): DescendantTreeNode | null {
@@ -206,8 +245,23 @@ export class DescendantTreeNode extends BaseTreeNode {
     return node?.parentGroup === this.parentGroup ? node : null;
   }
 
-  get isBackrelation(): boolean {
-    return this.parent.object.id === this.relationWithParent.to.id;
+  /**
+   * Set new parent in tree by pointing the relation to the current parent
+   * to the new parent. If `after` is provided, the node will be positioned
+   * after the given node in the new parent's children.
+   */
+  setParent(parent: BaseTreeNode, after?: Positioner<DescendantTreeNode>) {
+    if (this.parent.object === parent.object) return;
+    const afterRelation = after instanceof DescendantTreeNode ? after.relationWithParent : after;
+    const parentSide = getOtherSideOrThrow(this.relationWithParent, this.object.id);
+    this.relationWithParent.setTarget(parentSide, parent.object, afterRelation);
+  }
+
+  /**
+   * Moves the node to the given position in the parent's children.
+   */
+  addChildren(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+    this.childrenGroupsById.all.add(nodes, after);
   }
 }
 
@@ -219,21 +273,122 @@ export type TreeNode = RootTreeNode | DescendantTreeNode;
  * having "suggested" or "related" groups as well. Or even having supporting
  * groupby operations like "by type" or "by relation" (similar to Linear).
  */
-export type Group = PinnedGroup | AllGroup;
+export abstract class Group {
+  tree: Tree;
+  parent: TreeNode;
+  nodes: DescendantTreeNode[];
+  abstract id: string;
+  abstract relationsWithPositions: PositionedRelation[];
+  abstract relationsList: FractionalPositionedList<GraphRelation>;
+  abstract path: string;
+  abstract add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>): void;
+
+  constructor({ tree, parent, nodes = [] }: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
+    this.tree = tree;
+    this.parent = parent;
+    this.nodes = nodes;
+  }
+
+  hydrate() {
+    this.nodes = this.relationsWithPositions.map(({ relation, position }) => {
+      const node = new DescendantTreeNode({
+        object: getOtherObjectOrThrow(relation, this.parent.object.id),
+        position,
+        relationWithParent: relation,
+        group: this,
+      });
+      // Only hydrate children if the parent is expanded. This is important to avoid
+      // infinite recursion since we allow circular references in the graph.
+      if (this.parent.isExpanded && this.isExpanded) {
+        node.hydrate();
+      }
+      return node;
+    });
+  }
+
+  get isExpanded() {
+    return this.tree.isGroupExpanded(this.path);
+  }
+
+  createChildPath(node: DescendantTreeNode): string {
+    return this.path + "/" + node.relationWithParent.id;
+  }
+
+  move(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+    this.relationsList.move(
+      nodes.map((n) => n.relationWithParent),
+      after instanceof DescendantTreeNode ? after.relationWithParent : after,
+    );
+  }
+}
 // TODO Can define a type for this?
-export type PinnedGroup = {
-  id: "pinned";
-  parent: BaseTreeNode;
-  path: string;
-  nodes: DescendantTreeNode[];
-  isExpanded: boolean;
-};
-export type AllGroup = {
-  id: "all";
-  parent: BaseTreeNode;
-  path: string;
-  nodes: DescendantTreeNode[];
-  isExpanded: boolean;
-};
+
+export class PinnedGroup extends Group {
+  id = "pinned"; // TODO shouldn't be necessary
+  constructor(props: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
+    super(props);
+  }
+
+  get path() {
+    return this.parent.path + "/pinned";
+  }
+
+  get relationsList() {
+    return this.parent.object.pinnedRelationsList;
+  }
+
+  get relationsWithPositions() {
+    return this.parent.object.pinnedRelationsWithPositions;
+  }
+
+  /**
+   * Moves the nodes into the given group while maintaining any expanded or
+   * selected states.
+   */
+  add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+    for (const node of nodes) {
+      // add the nodes as children of the parent, at the bottom (if they're not already there)
+      node.setParent(this.parent, -1);
+      // then add to pinned group by pinning (at the specified position if provided)
+      this.parent.pinChild(node, after);
+      this.tree.updateSubtreeExpansionAndSelectionPathState(node.path, this.createChildPath(node));
+      after = node;
+    }
+    this.tree.setPathExpanded(this.parent.path, true);
+  }
+}
+
+export class AllGroup extends Group {
+  id = "all"; // TODO shouldn't be necessary
+  constructor(props: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
+    super(props);
+  }
+
+  get path() {
+    return this.parent.path + "/all";
+  }
+
+  get relationsList() {
+    return this.parent.object.allRelationsList;
+  }
+
+  get relationsWithPositions() {
+    return this.parent.object.relationsWithPositions;
+  }
+
+  /**
+   * Moves the nodes into the given group while maintaining any expanded or
+   * selected states.
+   */
+  add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+    for (const node of nodes) {
+      node.setParent(this.parent, after);
+      this.tree.updateSubtreeExpansionAndSelectionPathState(node.path, this.createChildPath(node));
+      after = node;
+    }
+    this.tree.setPathExpanded(this.parent.path, true);
+  }
+}
+
 export type ChildrenGroups = [PinnedGroup, AllGroup];
 export type ChildrenGroupsOmitParent = [Omit<PinnedGroup, "parent">, Omit<AllGroup, "parent">];

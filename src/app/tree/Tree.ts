@@ -4,14 +4,12 @@ import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore, Path, defaultRelationTypes } from "@/app/graph/GraphStore";
-import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { getOtherObjectOrThrow, getOtherSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { comparePositions, relationsPathToParentChild, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
-import { ChildrenGroupsOmitParent, DescendantTreeNode, Group, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
+import { DescendantTreeNode, RootTreeNode, TreeNode } from "./nodes";
 import { TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
@@ -113,12 +111,7 @@ export class Tree {
    */
   get state() {
     logger.debug("Creating tree");
-    const rootTreeNode = new RootTreeNode({
-      object: this.rootObject,
-      childrenGroups: this.createChildrenGroups(""),
-    });
-    this.hydratePathToRoot(rootTreeNode);
-    this.hydrateTreeNode(rootTreeNode);
+    const rootTreeNode = new RootTreeNode({ tree: this }).hydrate();
     this.textsCache.updateIfStale(rootTreeNode); // Important to update cache before applying filters
     this.applyFilter(rootTreeNode);
     this.applySearch(rootTreeNode);
@@ -141,7 +134,7 @@ export class Tree {
         logger.warn("Selection node not found", this.selection.treeNodeId);
         return null;
       }
-      return { ...this.selection, treeNode: node };
+      return { ...this.selection, treeNode: node, subtreeRoots: [node], top: node, bottom: node };
     } else {
       const state = this.state;
       logger.debug("Recomputing selected nodes", { selection: toJS(this.selection), state });
@@ -263,102 +256,6 @@ export class Tree {
     Object.assign(this.partialFilter, filter);
   }
 
-  /**
-   * Hydrates the tree node with children and siblings recursively.
-   *
-   * TODO this method is too long and complicated. tell Taylor to refactor it.
-   */
-  private hydrateTreeNode(
-    parentNode: TreeNode,
-    objectIdCountsInPath: { [key: string]: number } = {},
-    nodesById: Map<string, TreeNode> = new Map(),
-  ) {
-    nodesById.set(parentNode.path, parentNode);
-    parentNode.childrenGroups.forEach((group) => {
-      const positionedRelations =
-        group.id === "pinned"
-          ? parentNode.object.pinnedRelationsWithPositions
-          : parentNode.object.relationsWithPositions;
-      group.path = parentNode.path + "/" + group.id;
-      group.isExpanded = this.isGroupExpanded(group.path);
-      group.nodes = positionedRelations.map((positionedRelation) => {
-        const object = getOtherObjectOrThrow(positionedRelation.relation, parentNode.object.id);
-        const instanceCountInPath = (objectIdCountsInPath[object.id] || 0) + 1;
-        const path = group.path + "/" + positionedRelation.relation.id;
-        const child = new DescendantTreeNode({
-          object,
-          parent: parentNode,
-          position: positionedRelation.position,
-          relationWithParent: positionedRelation.relation,
-          group,
-          instanceCountInPath,
-          path,
-          depth: parentNode.depth + 1,
-          childrenGroups: this.createChildrenGroups(path),
-          isExpanded: this.isPathExpanded(path),
-        });
-        if (parentNode.isExpanded && group.isExpanded) {
-          // Only hydrate children if the parent is expanded. This is important, since we
-          // allow circular references in the graph, and we don't want to infinitely recurse.
-          this.hydrateTreeNode(
-            child,
-            {
-              ...objectIdCountsInPath,
-              [object.id]: instanceCountInPath,
-            },
-            nodesById,
-          );
-        }
-
-        return child;
-      });
-    });
-    return parentNode;
-  }
-
-  /**
-   * Hydrates the path to the root node with nodes.
-   *
-   * TODO this method is too long and complicated. tell Taylor to refactor it.
-   */
-  private hydratePathToRoot(root: RootTreeNode) {
-    // walk up the path of relations above the root and hydrate with nodes
-    let topPathNode: PathToRootNode | null = null;
-    let prevNode: PathToRootNode | RootTreeNode = root;
-    for (let i = this.pathToRoot.length - 1; i >= 0; i--) {
-      const relation = this.pathToRoot[i];
-      const nextNode: PathToRootNode = new PathToRootNode({
-        object: getOtherObjectOrThrow(relation, prevNode.object.id),
-        relationToChild: relation,
-        child: prevNode,
-      });
-      prevNode.parent = nextNode;
-      prevNode = nextNode;
-    }
-    topPathNode = prevNode instanceof PathToRootNode ? prevNode : null;
-    if (topPathNode) {
-      // then walk back down updating relevant fields
-      let node = topPathNode;
-      node.path = "/" + this.id;
-      while (node.child instanceof PathToRootNode) {
-        node.child.path = node.path + "/" + node.relationToChild.id;
-        node.child.depth = node.depth + 1;
-        node = node.child;
-      }
-      // and finally update the root node
-      root.path = node.path + "/" + node.relationToChild.id;
-      root.depth = node.depth + 1;
-      root.relationWithParent = node.relationToChild;
-      root.childrenGroups = [
-        { ...root.childrenGroups[0], parent: root, path: root.path + "/pinned" },
-        { ...root.childrenGroups[1], parent: root, path: root.path + "/all" },
-      ];
-    } else {
-      root.path = "/" + this.id;
-    }
-    return root;
-  }
-
   private applyFilter(treeNode: TreeNode): boolean {
     function walk(treeNode: TreeNode, filter: Filter) {
       treeNode.childrenGroups.forEach((group) => {
@@ -422,18 +319,6 @@ export class Tree {
     walk(treeNode);
   }
 
-  private createChildrenGroups(parentPath: string): ChildrenGroupsOmitParent {
-    const groups: ChildrenGroupsOmitParent = [
-      { id: "pinned", path: "", nodes: [], isExpanded: true },
-      { id: "all", path: "", nodes: [], isExpanded: true },
-    ];
-    groups.forEach((group) => {
-      group.path = parentPath + "/" + group.id;
-      group.isExpanded = this.isGroupExpanded(group.path);
-    });
-    return groups;
-  }
-
   async createChildNodeAndFocus() {
     const rootTreeNode = this.state.root;
     const { node, relation } = await this.graphStore.addChildNode({ parentId: rootTreeNode.object.id });
@@ -455,84 +340,34 @@ export class Tree {
     }
   }
 
-  indentSelection(): boolean {
-    return this.dentSelection("indent");
-  }
-
-  dedentSelection(): boolean {
-    return this.dentSelection("dedent");
-  }
-
   /**
-   * Indents or dedents the current selection.
-   *
-   * Indenting moves the selection to the bottom of the sibling above.
-   * Dedenting moves the selection to the grandparent, just below the current parent (while
-   * in the pinned section, it positions below the current parent in both sections)
+   * Moves the selection to the bottom of the sibling above.
    */
-  private dentSelection(dir: "indent" | "dedent"): boolean {
+  indentSelection(): boolean {
     const selection = this.selectionWithNodes;
-    if (selection === null) return false;
-    const subtrees = selection.type === "editor" ? [selection.treeNode] : selection.subtreeRoots;
-    // move each group of siblings together
-    for (const subtreeSiblings of groupSiblings(subtrees)) {
-      let targetGroup: Group;
-      let after: Positioner<GraphRelation> | undefined;
-      if (dir === "indent") {
-        // target bottom of the sibling above
-        const top = subtreeSiblings[0];
-        // there must be a sibling above in the same group to indent
-        if (top.parentGroup !== top?.siblingAbove?.parentGroup) continue; // can't indent the top nodes
-        targetGroup = top.siblingAbove.childrenGroupsById.all;
-        after = -1;
-      } else {
-        // target grandparent, just below the current parent
-        const parent = subtreeSiblings[0].parent;
-        if (parent instanceof RootTreeNode) continue; // can't dedent past the root
-        targetGroup = parent.parentGroup;
-        after = parent.relationWithParent;
-      }
-      this.moveNodesIntoGroup(subtreeSiblings, targetGroup, after);
-      this.setPathExpanded(targetGroup.parent.path, true);
+    for (const nodes of groupSiblings(selection?.subtreeRoots ?? [])) {
+      if (nodes.length === 0) continue;
+      const { parentGroup, siblingAbove } = nodes[0];
+      if (parentGroup !== siblingAbove?.parentGroup) continue; // can't indent selections that span groups
+      siblingAbove.addChildren(nodes, -1);
     }
     return true;
   }
 
   /**
-   * Moves the nodes into the given group while maintaining any expanded or
-   * selected states.
-   *
-   * Note: If any of the provided nodes are descendants of each other, the
-   * expansions and selections may not be preserved correctly. See
-   * {@link updateSubtreeExpansionAndSelectionPathState} for more details.
+   * Moves the selection to the grandparent, just below the current
+   * parent (while in the pinned section, it positions below the current parent
+   * in both sections)
    */
-  private moveNodesIntoGroup(treeNodes: DescendantTreeNode[], group: Group, after?: Positioner<GraphRelation>) {
-    treeNodes.forEach((node) => {
-      const newPath = group.path + "/" + node.relationWithParent.id;
-      this.updateSubtreeExpansionAndSelectionPathState(node.path, newPath);
-    });
-    // Every group represents a set of objects related to a parent. So to move the nodes
-    // into the group, we need to update their relations to target the group's parent.
-    const newParent = group.parent;
-    if (newParent !== treeNodes[0].parent) {
-      for (const treeNode of treeNodes) {
-        this.graphStore.updateRelationTarget(treeNode.relationWithParent, {
-          [getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id)]: newParent.object,
-        });
-      }
+  dedentSelection(): boolean {
+    const selection = this.selectionWithNodes;
+    for (const nodes of groupSiblings(selection?.subtreeRoots ?? [])) {
+      if (nodes.length === 0) continue;
+      const parent = nodes[0].parent;
+      if (parent instanceof RootTreeNode) continue; // can't dedent past the root
+      parent.parentGroup.add(nodes, parent);
     }
-    // and position in the specified location in the group
-    this.graphStore.getRelationList(newParent.object).move(
-      treeNodes.map((n) => n.relationWithParent),
-      after,
-    );
-    if (group.id === "pinned") {
-      // If it's the pinned group, we also need to pin and set position there.
-      group.parent.object.pinChildRelation(
-        treeNodes.map((n) => n.relationWithParent),
-        after,
-      );
-    }
+    return true;
   }
 
   /**
@@ -620,44 +455,23 @@ export class Tree {
    * Moves the selected or focused nodes up one step.
    */
   moveSelectedNodesUp(): boolean {
-    const selection = this.selectionWithNodes;
-    if (!selection) return false;
-    // Get the nodes to move
-    let subtreeRoots: DescendantTreeNode[];
-    let top: DescendantTreeNode;
-    if (selection.type === "node") {
-      subtreeRoots = selection.subtreeRoots;
-      top = selection.top;
-    } else if (selection.type === "editor") {
-      subtreeRoots = [selection.treeNode];
-      top = selection.treeNode;
-    } else {
-      return selection satisfies never;
-    }
+    if (!this.selectionWithNodes) return false;
+    const { top, subtreeRoots } = this.selectionWithNodes;
     // don't allow moving nodes that belong to different groups
     if (subtreeRoots.some((n) => n.parentGroup !== top.parentGroup)) {
       return false;
     }
-    if (top.siblingAboveInSameGroup) {
+    const siblingAbove = top.siblingAbove;
+    const siblingAboveParent = top.parent instanceof DescendantTreeNode && top.parent.siblingAbove;
+    if (siblingAbove) {
       // swap with sibling above in same group
-      // TODO the group should know how to do this work
-      const relationList =
-        top.parentGroup.id === "pinned"
-          ? this.graphStore.getPinnedRelationList(top.parent.object)
-          : this.graphStore.getRelationList(top.parent.object);
-      relationList.move(
-        subtreeRoots.map((t) => t.relationWithParent),
-        top.siblingAboveInSameGroup?.siblingAboveInSameGroup?.relationWithParent,
-      );
+      if (siblingAbove.parentGroup !== top.parentGroup) return false;
+      const siblingTwoAbove = siblingAbove.siblingAboveInSameGroup ?? undefined;
+      top.parentGroup.move(subtreeRoots, siblingTwoAbove);
       return true;
-    } else if (top.siblingAbove) {
-      // don't allow moving nodes into a different group
-      return false;
-    } else if (top.parent instanceof DescendantTreeNode && top.parent.siblingAbove) {
-      // Move the nodes to the bottom of the sibling above the current parent
-      const newGroup = top.parent.siblingAbove.childrenGroupsById.all;
-      this.moveNodesIntoGroup(subtreeRoots, newGroup, -1);
-      this.setPathExpanded(newGroup.parent.path, true);
+    } else if (siblingAboveParent) {
+      // we're at the top - move underneath the next parent above
+      siblingAboveParent.addChildren(subtreeRoots, -1);
       return true;
     }
     return false;
@@ -667,44 +481,22 @@ export class Tree {
    * Moves the selected or focused nodes down one step.
    */
   moveSelectedNodesDown(): boolean {
-    const selection = this.selectionWithNodes;
-    if (!selection) return false;
-    // Get the nodes to move
-    let subtreeRoots: DescendantTreeNode[];
-    let bottom: DescendantTreeNode;
-    if (selection.type === "node") {
-      subtreeRoots = selection.subtreeRoots;
-      bottom = selection.bottom;
-    } else if (selection.type === "editor") {
-      subtreeRoots = [selection.treeNode];
-      bottom = selection.treeNode;
-    } else {
-      return selection satisfies never;
-    }
+    if (!this.selectionWithNodes) return false;
+    const { bottom, subtreeRoots } = this.selectionWithNodes;
     // don't allow moving nodes that belong to different groups
     if (subtreeRoots.some((n) => n.parentGroup !== bottom.parentGroup)) {
       return false;
     }
-    if (bottom.siblingBelowInSameGroup) {
-      // swap with sibling below in same group
-      // TODO the group should know how to do this work
-      const relationList =
-        bottom.parentGroup.id === "pinned"
-          ? this.graphStore.getPinnedRelationList(bottom.parent.object)
-          : this.graphStore.getRelationList(bottom.parent.object);
-      relationList.move(
-        subtreeRoots.map((t) => t.relationWithParent),
-        bottom.siblingBelowInSameGroup.relationWithParent,
-      );
+    const siblingBelow = bottom.siblingBelow;
+    const siblingBelowParent = bottom.parent instanceof DescendantTreeNode && bottom.parent.siblingBelow;
+    if (siblingBelow) {
+      // swap with sibling below (if in same group)
+      if (siblingBelow.parentGroup !== bottom.parentGroup) return false;
+      bottom.parentGroup.move(subtreeRoots, siblingBelow);
       return true;
-    } else if (bottom.siblingBelow) {
-      // don't allow moving nodes into a different group
-      return false;
-    } else if (bottom.parent instanceof DescendantTreeNode && bottom.parent.siblingBelow) {
-      // Move the nodes to the bottom of the sibling below the current parent
-      const newGroup = bottom.parent.siblingBelow.childrenGroupsById.all;
-      this.moveNodesIntoGroup(subtreeRoots, newGroup, 0);
-      this.setPathExpanded(newGroup.parent.path, true);
+    } else if (siblingBelowParent) {
+      // we're at the bottom - move underneath next node
+      siblingBelowParent.addChildren(subtreeRoots, 0);
       return true;
     }
     return false;
@@ -829,7 +621,7 @@ export class Tree {
    * that seems like overkill for now. Avoiding that situation is why we only
    * support selecting and indenting entire subtrees right now.
    */
-  private updateSubtreeExpansionAndSelectionPathState(path: Path, newPath: Path) {
+  updateSubtreeExpansionAndSelectionPathState(path: Path, newPath: Path) {
     if (path === newPath) return;
     const pathAndDescendants = Array.from(this.expansionsByPath.keys()).filter((p) => p.startsWith(path));
     for (const p of pathAndDescendants) {
@@ -924,6 +716,7 @@ class TextCache {
         const disposer = reaction(
           () => node.object.text,
           () => {
+            if (this.isStale) return;
             this.isStale = true;
             this.disposers.clear();
             logger.debug("Text cache is now stale");

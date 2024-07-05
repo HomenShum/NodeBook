@@ -1,3 +1,5 @@
+import { FractionalPositionedList } from "@/app/graph/FractionalPositionedList";
+
 import { PositionedRelation } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
@@ -53,6 +55,12 @@ export class PlaceholderGraphObject implements GraphObject {
     throw new Error("Method not implemented.");
   }
   isRelationPinned(relation: GraphRelation): boolean {
+    throw new Error("Method not implemented.");
+  }
+  get allRelationsList(): FractionalPositionedList<GraphRelation> {
+    throw new Error("Method not implemented.");
+  }
+  get pinnedRelationsList(): FractionalPositionedList<GraphRelation> {
     throw new Error("Method not implemented.");
   }
 }

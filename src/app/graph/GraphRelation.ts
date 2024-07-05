@@ -1,5 +1,6 @@
 import { makeAutoObservable } from "mobx";
 
+import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { comparePositions, uuid } from "@/app/util";
@@ -66,12 +67,34 @@ export class GraphRelation implements Serializable, GraphObject {
     this.relationType = type;
   }
 
-  setFrom(node: GraphObject) {
+  setFrom(node: GraphObject, after?: Positioner<GraphRelation>) {
+    // remove this relation from the current "from" node
+    this.from.allRelationsList.delete(this.id);
+    this.from.pinnedRelationsList.delete(this.id);
+    // set the new "from" node
     this.from = node;
+    // add this relation to the new "from" node
+    this.from.allRelationsList.add(this, after);
+    // TOOD: delete if no relations?
   }
 
-  setTo(node: GraphObject) {
+  setTo(node: GraphObject, after?: Positioner<GraphRelation>) {
+    // remove this relation from the current "to" node
+    this.to.allRelationsList.delete(this.id);
+    this.to.pinnedRelationsList.delete(this.id);
+    // set the new "to" node
     this.to = node;
+    // add this relation to the new "to" node
+    this.to.allRelationsList.add(this, after);
+    // TOOD: delete if no relations?
+  }
+
+  setTarget(target: "from" | "to", node: GraphObject, after?: Positioner<GraphRelation>) {
+    if (target === "from") {
+      this.setFrom(node, after);
+    } else {
+      this.setTo(node, after);
+    }
   }
 
   setIsPrivate(value: boolean) {

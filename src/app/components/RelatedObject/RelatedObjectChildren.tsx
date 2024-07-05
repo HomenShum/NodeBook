@@ -6,7 +6,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
-import { AllGroup, DescendantTreeNode, PinnedGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import { AllGroup, ChildrenGroups, DescendantTreeNode, PinnedGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { formatDate } from "@/app/util";
 import { cn } from "@/lib/utils";
 
@@ -15,18 +15,17 @@ import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./RelatedObjectChildren.module.css";
 
 export const RelatedObjectChildren = observer(({ treeNode }: { treeNode: TreeNode }) => {
-  const children = treeNode.childrenGroups;
+  const children: ChildrenGroups = treeNode.childrenGroups;
   const isRoot = treeNode instanceof RootTreeNode;
   return (
     <div className={cn(!isRoot && styles.NodeIndentation)}>
       {children.map((group) => {
-        switch (group.id) {
-          case "pinned":
-            return <PinnedSection key={group.id} parentNode={treeNode} group={group} />;
-          case "all":
-            return <AllSection key={group.id} parentNode={treeNode} group={group} />;
-          default:
-            return group satisfies never;
+        if (group instanceof PinnedGroup) {
+          return <PinnedSection key={group.path} parentNode={treeNode} group={group} />;
+        } else if (group instanceof AllGroup) {
+          return <AllSection key={group.path} parentNode={treeNode} group={group} />;
+        } else {
+          return group satisfies never;
         }
       })}
     </div>

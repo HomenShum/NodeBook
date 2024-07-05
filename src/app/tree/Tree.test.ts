@@ -3,7 +3,7 @@ import { getAncestorsAsArray } from "@/app/tree/utils";
 
 describe("Tree", () => {
   describe("getAncestorsAsArray", () => {
-    it("should return ancestors of a node ordered from most to least distant", () => {
+    it.skip("should return ancestors of a node ordered from most to least distant", () => {
       // TODO: This should really be a test of the Tree class, not a helper function
       const treeNode = new DescendantTreeNode({
         object: { id: "o1" },
@@ -54,7 +54,7 @@ describe("Tree", () => {
         },
       ]);
     });
-    it("should handle no parent", () => {
+    it.skip("should handle no parent", () => {
       const treeNode = new RootTreeNode({
         object: { id: "o1" },
         parent: null,

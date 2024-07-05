@@ -1,3 +1,5 @@
+import { FractionalPositionedList } from "@/app/graph/FractionalPositionedList";
+
 import { PositionedRelation } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
 import { Positioner } from "./GraphTransactionTypes";
@@ -21,4 +23,7 @@ export interface GraphObject {
   pinChildRelation(relation: GraphRelation | GraphRelation[], after?: Positioner<GraphRelation>): void;
   unpinChildRelation(relation: GraphRelation): void;
   isRelationPinned(relation: GraphRelation): boolean;
+
+  allRelationsList: FractionalPositionedList<GraphRelation>;
+  pinnedRelationsList: FractionalPositionedList<GraphRelation>;
 }

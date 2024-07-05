@@ -26,7 +26,6 @@ export type TreeSelection = EditorSelection | NodeSelection;
  * details.
  */
 export type TreeSelectionWithNodes =
-  | (EditorSelection & { treeNode: DescendantTreeNode })
   | (NodeSelection & {
       /** The subtree where the selection starts. */
       anchor: DescendantTreeNode;
@@ -40,6 +39,12 @@ export type TreeSelectionWithNodes =
       nodes: DescendantTreeNode[];
       /** All the subtrees in the selection */
       subtreeRoots: DescendantTreeNode[];
+    })
+  | (EditorSelection & {
+      treeNode: DescendantTreeNode;
+      subtreeRoots: DescendantTreeNode[];
+      top: DescendantTreeNode;
+      bottom: DescendantTreeNode;
     });
 
 type EditorSelection = {
