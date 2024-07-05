@@ -42,7 +42,7 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
   return (
     <>
       <button
-        onClick={() => tree.toggleGroupExpanded(group.id)}
+        onClick={() => tree.toggleGroupExpanded(group.path)}
         className={`${styles.PinnedToggleButton}  ${
           tree.isGroupExpanded(group.id)
             ? styles.PinnedToggleButton_PinnedVisible

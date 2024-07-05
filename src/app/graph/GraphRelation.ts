@@ -114,12 +114,12 @@ export class GraphRelation implements Serializable, GraphObject {
       .map(({ relation }) => relation);
   }
 
-  pinChildRelation(childRelation: GraphRelation) {
-    this.store.pinRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
+  pinChildRelation(childRelation: GraphRelation | GraphRelation[], after?: number | string) {
+    this.pinnedRelationsList.add(childRelation, after);
   }
 
   unpinChildRelation(childRelation: GraphRelation) {
-    this.store.unpinRelation(childRelation, this.id === childRelation.from.id ? "from" : "to");
+    this.pinnedRelationsList.delete(childRelation.id);
   }
 
   isRelationPinned(childRelation: GraphRelation) {

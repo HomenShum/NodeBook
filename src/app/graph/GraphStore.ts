@@ -354,9 +354,7 @@ export class GraphStore {
       // remove the relations from their old from nodes
       const oldFrom = relation.from;
       this.getRelationList(oldFrom).delete(relation.id);
-      if (this.getPinnedRelationList(oldFrom).has(relation.id)) {
-        this.unpinRelation(relation, "from");
-      }
+      this.getPinnedRelationList(oldFrom).delete(relation.id);
       // update the relations from property
       relation.setFrom(newFrom);
       // add the relations to the new from node
@@ -379,9 +377,7 @@ export class GraphStore {
       // remove the relations from their old to nodes
       const oldTo = relation.to;
       this.getRelationList(oldTo).delete(relation.id);
-      if (this.getPinnedRelationList(oldTo).has(relation.id)) {
-        this.unpinRelation(relation, "to");
-      }
+      this.getPinnedRelationList(oldTo).delete(relation.id);
       // update the relations to property
       relation.setTo(newTo);
       // add the relations to the new to node
@@ -567,17 +563,6 @@ export class GraphStore {
       return [this.createRelationType({ label, reverseLabel }), "reverse"];
     }
     return [this.createRelationType({ label: labelText }), "forward"];
-  }
-
-  pinRelation(relation: GraphRelation, direction: "from" | "to", after?: Positioner<GraphRelation>) {
-    const list = this.getPinnedRelationList(relation[direction]);
-    if (!list.has(relation.id)) {
-      list.add(relation, after);
-    }
-  }
-
-  unpinRelation(relation: GraphRelation, direction: "from" | "to") {
-    this.getPinnedRelationList(relation[direction]).delete(relation.id);
   }
 
   // TODO: this is creating an observable, which might cause issues

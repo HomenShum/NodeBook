@@ -207,30 +207,43 @@ export class DescendantTreeNode extends BaseTreeNode {
   }
 
   get siblingAbove(): DescendantTreeNode | null {
-    const i = this.parentGroup.nodes.indexOf(this);
-    if (i < 0) {
+    const nodeIndex = this.parentGroup.nodes.indexOf(this);
+    if (nodeIndex < 0) {
       throw new Error("Node not found in group");
-    } else if (i === 0) {
+    } else if (nodeIndex === 0) {
       // get last node in previous group
-      const prevGroup = this.parent.childrenGroups[i - 1];
+      const prevGroupIdx = this.parent.childrenGroups.indexOf(this.parentGroup) - 1;
+      const prevGroup = this.parent.childrenGroups[prevGroupIdx];
+      if (!prevGroup?.isExpanded) return null; // TODO sketch that we need to do this
       return prevGroup?.nodes[prevGroup.nodes.length - 1] || null;
     } else {
-      return this.parentGroup.nodes[i - 1] || null;
+      return this.parentGroup.nodes[nodeIndex - 1] || null;
     }
   }
 
+  get siblingAboveInSameGroup(): DescendantTreeNode | null {
+    const node = this.siblingAbove;
+    return node?.parentGroup === this.parentGroup ? node : null;
+  }
+
   get siblingBelow(): DescendantTreeNode | null {
-    const i = this.parentGroup.nodes.indexOf(this);
-    if (i < 0) {
+    const nodeIndex = this.parentGroup.nodes.indexOf(this);
+    if (nodeIndex < 0) {
       throw new Error("Node not found in group");
-    } else if (i === this.parentGroup.nodes.length - 1) {
+    } else if (nodeIndex === this.parentGroup.nodes.length - 1) {
       // get first node in next group
       const nextGroupIndex = this.parent.childrenGroups.indexOf(this.parentGroup) + 1;
       const nextGroup = this.parent.childrenGroups[nextGroupIndex];
+      if (!nextGroup?.isExpanded) return null; // TODO sketch that we need to do this
       return nextGroup?.nodes[0] || null;
     } else {
-      return this.parentGroup.nodes[i + 1] || null;
+      return this.parentGroup.nodes[nodeIndex + 1] || null;
     }
+  }
+
+  get siblingBelowInSameGroup(): DescendantTreeNode | null {
+    const node = this.siblingBelow;
+    return node?.parentGroup === this.parentGroup ? node : null;
   }
 
   get isBackrelation(): boolean {
@@ -264,6 +277,11 @@ type NodeSelection = {
  * important to contraint to make maintaining the tree across moves easier. See
  * `Tree.moveNodesIntoGroup` and
  * `Tree.updateSubtreeExpansionAndSelectionPathState` for more details.
+ *
+ * The entire selection must be within the same parent group. Allowing selections
+ * that e.g. span the pinned and all groups is tricky to implement and can lead
+ * to some unintuitive behaviours even when done right. So for now, we're keeping
+ * it simple.
  */
 type TreeSelection = EditorSelection | NodeSelection;
 /**
@@ -726,6 +744,10 @@ export class Tree {
 
   /**
    * Indents or dedents the current selection.
+   *
+   * Indenting moves the selection to the bottom of the sibling above.
+   * Dedenting moves the selection to the grandparent, just below the current parent (while
+   * in the pinned section, it positions below the current parent in both sections)
    */
   private dentSelection(dir: "indent" | "dedent"): boolean {
     const selection = this.selectionWithNodes;
@@ -737,15 +759,16 @@ export class Tree {
       let after: Positioner<GraphRelation> | undefined;
       if (dir === "indent") {
         // target bottom of the sibling above
-        const siblingAbove = subtreeSiblings[0].siblingAbove;
-        if (!siblingAbove) continue; // can't indent the top nodes
-        targetGroup = siblingAbove.childrenGroupsById.all;
+        const top = subtreeSiblings[0];
+        // there must be a sibling above in the same group to indent
+        if (top.parentGroup !== top?.siblingAbove?.parentGroup) continue; // can't indent the top nodes
+        targetGroup = top.siblingAbove.childrenGroupsById.all;
         after = -1;
       } else {
         // target grandparent, just below the current parent
         const parent = subtreeSiblings[0].parent;
         if (parent instanceof RootTreeNode) continue; // can't dedent past the root
-        targetGroup = parent.parent.childrenGroupsById.all;
+        targetGroup = parent.parentGroup;
         after = parent.relationWithParent;
       }
       this.moveNodesIntoGroup(subtreeSiblings, targetGroup, after);
@@ -767,32 +790,34 @@ export class Tree {
       const newPath = group.path + "/" + node.relationWithParent.id;
       this.updateSubtreeExpansionAndSelectionPathState(node.path, newPath);
     });
+    // Every group represents a set of objects related to a parent. So to move the nodes
+    // into the group, we need to update their relations to target the group's parent.
     const newParent = group.parent;
-    for (const treeNode of treeNodes) {
-      // move the node to the new parent
-      this.graphStore.updateRelationTarget(treeNode.relationWithParent, {
-        [getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id)]: newParent.object,
-      });
+    if (newParent !== treeNodes[0].parent) {
+      for (const treeNode of treeNodes) {
+        this.graphStore.updateRelationTarget(treeNode.relationWithParent, {
+          [getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id)]: newParent.object,
+        });
+      }
     }
-    // Position the relation at the bottom of the siblings list
+    // and position in the specified location in the group
     this.graphStore.getRelationList(newParent.object).move(
       treeNodes.map((n) => n.relationWithParent),
       after,
     );
+    if (group.id === "pinned") {
+      // If it's the pinned group, we also need to pin and set position there.
+      group.parent.object.pinChildRelation(
+        treeNodes.map((n) => n.relationWithParent),
+        after,
+      );
+    }
   }
 
   /**
    * Splits a node and returns the newly created graph object, relation, and
    * expected path to it in the tree.
    *
-   * If the selection was at the start of a non-empty node, insert a new blank
-   * node just above the current node.
-   *
-   * If the current node is expanded, split it and place the new node as it's
-   * first child.
-   *
-   * Otherwise, split the node at the selection and place the new node as the
-   * next sibling.
    *
    * @DesignNote We leave the responsibility of generating the content for the new
    * and existing nodes to the caller, as opposed to taking a position and
@@ -813,16 +838,27 @@ export class Tree {
       throw new Error("Only splitting nodes is supported for now.");
     }
     if (contentBeforeSelection.length === 0 && contentAfterSelection.length > 0) {
-      const newNode = await this.graphStore.addChildNode({
-        parentId: treeNode.parent.object.id,
-        after: treeNode.siblingAbove?.relationWithParent,
-      });
+      // If the selection was at the start of a non-empty node, insert a new blank
+      // node just above the current node.
+      const siblingAbove = treeNode.siblingAboveInSameGroup;
       if (treeNode.parentGroup.id === "pinned") {
-        treeNode.parent.object.pinChildRelation(newNode.relation, treeNode.siblingAbove?.relationWithParent);
+        const newNode = await this.graphStore.addChildNode({
+          parentId: treeNode.parent.object.id,
+          after: -1,
+        });
+        treeNode.parent.object.pinChildRelation(newNode.relation, siblingAbove?.relationWithParent);
+        result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
+      } else {
+        const newNode = await this.graphStore.addChildNode({
+          parentId: treeNode.parent.object.id,
+          after: siblingAbove?.relationWithParent,
+        });
+        result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
       }
-      result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
     } else {
       treeNode.object.setContent(contentBeforeSelection);
+      //  If the current node is expanded, split it and place the new node as it's
+      //  first child.
       if (treeNode.isExpanded && treeNode.childCount > 0) {
         const newNode = await this.graphStore.addChildNode({
           parentId: treeNode.object.id,
@@ -830,13 +866,24 @@ export class Tree {
         });
         result = { ...newNode, path: treeNode.childrenGroupsById.all.path + "/" + newNode.relation.id };
       } else {
-        const newNode = await this.graphStore.addChildNode({
-          parentId: treeNode.parent.object.id,
-          nodeProps: { content: contentAfterSelection },
-          after: treeNode.relationWithParent,
-        });
+        //  Split the node at the selection
+        let newNode: { node: GraphObject; relation: GraphRelation };
         if (treeNode.parentGroup.id === "pinned") {
+          // while in the pinned section, create a new node at the bottom, then pin it
+          // just below the current node
+          newNode = await this.graphStore.addChildNode({
+            parentId: treeNode.parent.object.id,
+            nodeProps: { content: contentAfterSelection },
+            after: -1,
+          });
           treeNode.parent.object.pinChildRelation(newNode.relation, treeNode.relationWithParent);
+        } else {
+          // while in the all section, create a new node just below the current node
+          newNode = await this.graphStore.addChildNode({
+            parentId: treeNode.parent.object.id,
+            nodeProps: { content: contentAfterSelection },
+            after: treeNode.relationWithParent,
+          });
         }
         result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
       }
@@ -866,10 +913,25 @@ export class Tree {
     } else {
       return selection satisfies never;
     }
-    if (top.siblingAbove) {
-      // Move the nodes above the sibling above the top node
-      this.moveNodesIntoGroup(subtreeRoots, top.parentGroup, top.siblingAbove?.siblingAbove?.relationWithParent);
+    // don't allow moving nodes that belong to different groups
+    if (subtreeRoots.some((n) => n.parentGroup !== top.parentGroup)) {
+      return false;
+    }
+    if (top.siblingAboveInSameGroup) {
+      // swap with sibling above in same group
+      // TODO the group should know how to do this work
+      const relationList =
+        top.parentGroup.id === "pinned"
+          ? this.graphStore.getPinnedRelationList(top.parent.object)
+          : this.graphStore.getRelationList(top.parent.object);
+      relationList.move(
+        subtreeRoots.map((t) => t.relationWithParent),
+        top.siblingAboveInSameGroup?.siblingAboveInSameGroup?.relationWithParent,
+      );
       return true;
+    } else if (top.siblingAbove) {
+      // don't allow moving nodes into a different group
+      return false;
     } else if (top.parent instanceof DescendantTreeNode && top.parent.siblingAbove) {
       // Move the nodes to the bottom of the sibling above the current parent
       const newGroup = top.parent.siblingAbove.childrenGroupsById.all;
@@ -877,6 +939,7 @@ export class Tree {
       this.setPathExpanded(newGroup.parent.path, true);
       return true;
     }
+    console.log(toJS(this.selection));
     return false;
   }
 
@@ -898,10 +961,25 @@ export class Tree {
     } else {
       return selection satisfies never;
     }
-    if (bottom.siblingBelow) {
-      // Move the nodes below the sibling below the bottom node
-      this.moveNodesIntoGroup(subtreeRoots, bottom.parentGroup, bottom.siblingBelow?.relationWithParent);
+    // don't allow moving nodes that belong to different groups
+    if (subtreeRoots.some((n) => n.parentGroup !== bottom.parentGroup)) {
+      return false;
+    }
+    if (bottom.siblingBelowInSameGroup) {
+      // swap with sibling below in same group
+      // TODO the group should know how to do this work
+      const relationList =
+        bottom.parentGroup.id === "pinned"
+          ? this.graphStore.getPinnedRelationList(bottom.parent.object)
+          : this.graphStore.getRelationList(bottom.parent.object);
+      relationList.move(
+        subtreeRoots.map((t) => t.relationWithParent),
+        bottom.siblingBelowInSameGroup.relationWithParent,
+      );
       return true;
+    } else if (bottom.siblingBelow) {
+      // don't allow moving nodes into a different group
+      return false;
     } else if (bottom.parent instanceof DescendantTreeNode && bottom.parent.siblingBelow) {
       // Move the nodes to the bottom of the sibling below the current parent
       const newGroup = bottom.parent.siblingBelow.childrenGroupsById.all;
@@ -946,12 +1024,20 @@ export class Tree {
       if (dir === "up") {
         newHead = getNextAbove(head) ?? null;
         newHead = newHead && this.isNodeSelected(newHead.path) ? head.siblingAbove : newHead;
+        if (newHead && newHead.parentGroup.id !== anchor.parentGroup.id) {
+          // If the new head is in a different group, move up to the parent group
+          newHead = newHead.parent instanceof DescendantTreeNode ? newHead.parent : null;
+        }
         if (newHead && anchor.path.startsWith(newHead.path)) {
           newAnchor = newHead;
         }
       } else {
         newHead = getNextBelow(head) ?? null;
         newHead = newHead && this.isNodeSelected(newHead.path) ? head.siblingBelow : newHead;
+        if (newHead && newHead.parentGroup.id !== anchor.parentGroup.id) {
+          // don't allow moving down into a different group
+          return false;
+        }
       }
       if (this.selection?.type !== "node") {
         logger.warn(`Expected node selection type "node" but seeing "${this.selection?.type}"`);

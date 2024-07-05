@@ -18,7 +18,7 @@ export interface GraphObject {
 
   // pinned objects
   pinnedRelationsWithPositions: PositionedRelation[];
-  pinChildRelation(relation: GraphRelation, after?: Positioner<GraphRelation>): void;
+  pinChildRelation(relation: GraphRelation | GraphRelation[], after?: Positioner<GraphRelation>): void;
   unpinChildRelation(relation: GraphRelation): void;
   isRelationPinned(relation: GraphRelation): boolean;
 }
