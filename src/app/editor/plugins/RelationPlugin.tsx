@@ -8,7 +8,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
 
 export const RelationPlugin = () => {
   const settingsStore = useSettingsStore();

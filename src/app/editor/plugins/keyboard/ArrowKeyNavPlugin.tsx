@@ -10,7 +10,7 @@ import {
 } from "lexical";
 import { useEffect } from "react";
 
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
 
 /**
  * Plugin to jump focus to other editors using arrow keys.

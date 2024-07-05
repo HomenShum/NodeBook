@@ -2,7 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useEffect } from "react";
 
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
 
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.

@@ -19,8 +19,8 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { isUnlabelledChild } from "@/app/view/Tree";
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
+import { isUnlabelledChild } from "@/app/tree/utils";
 import { cn } from "@/lib/utils";
 
 import styles from "./SearchAndReplaceDropdownPlugin.module.css";

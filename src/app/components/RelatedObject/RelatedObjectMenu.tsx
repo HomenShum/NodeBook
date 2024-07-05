@@ -29,7 +29,7 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
 
 import { useTreeNode } from "./RelatedObjectContext";

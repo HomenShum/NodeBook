@@ -4,7 +4,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
-import { Tree } from "@/app/view/Tree";
+import { Tree } from "@/app/tree/Tree";
 
 export class ViewStore {
   private settingsStore: SettingsStore;

@@ -4,7 +4,7 @@ import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_EDITOR, KEY_DOWN_COM
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
 /**
  * Plugin to move current node using Tab/Shift+Tab. Also handles bulleting by typing '-' at the start of a line.
  */

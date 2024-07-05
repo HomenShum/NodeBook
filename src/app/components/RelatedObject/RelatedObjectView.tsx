@@ -7,9 +7,10 @@ import styles from "@/app/components/RelatedObject/RelatedObjectView.module.css"
 import { PinCustomIcon } from "@/app/components/icons";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { useTree } from "@/app/tree/TreeContext";
+import { DescendantTreeNode } from "@/app/tree/nodes";
+import { getAncestorsAsArray, isUnlabelledChild } from "@/app/tree/utils";
 import { relationsToURLPath, useCurView } from "@/app/util";
-import { DescendantTreeNode, getAncestorsAsArray, isUnlabelledChild } from "@/app/view/Tree";
-import { useTree } from "@/app/view/TreeContext";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";

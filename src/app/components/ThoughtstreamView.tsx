@@ -11,9 +11,10 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
+import { Tree } from "@/app/tree/Tree";
+import { TreeContext } from "@/app/tree/TreeContext";
+import { getAncestorsAsArray } from "@/app/tree/utils";
 import { relationsToURLPath, useCurView } from "@/app/util";
-import { Tree, getAncestorsAsArray } from "@/app/view/Tree";
-import { TreeContext } from "@/app/view/TreeContext";
 import { ViewType } from "@/app/view/ViewType";
 
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";

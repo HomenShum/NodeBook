@@ -1,8 +1,8 @@
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
-import { DescendantTreeNode } from "@/app/view/Tree";
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
+import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
 
 import styles from "./Toggle.module.css";

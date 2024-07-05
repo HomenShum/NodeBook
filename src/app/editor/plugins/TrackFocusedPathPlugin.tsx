@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useRenderController } from "@/app/render/useRenderController";
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
 
 export const TrackFocusedPathPlugin = ({ pathToNodeStr }: { pathToNodeStr: string }) => {
   const renderController = useRenderController();

@@ -3,7 +3,7 @@ import { $getRoot, COMMAND_PRIORITY_LOW, KEY_SPACE_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { isUnlabelledChild } from "@/app/view/Tree";
+import { isUnlabelledChild } from "@/app/tree/utils";
 
 /**
  * Ignore space at the start of the editor.

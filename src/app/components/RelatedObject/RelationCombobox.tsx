@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrim
 import { GraphRelationType } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { DescendantTreeNode } from "@/app/view/Tree";
+import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
 
 import styles from "./RelationCombobox.module.css";

@@ -5,9 +5,9 @@ import { PinCustomIcon } from "@/app/components/icons";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useTree } from "@/app/tree/TreeContext";
+import { AllGroup, DescendantTreeNode, PinnedGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { formatDate } from "@/app/util";
-import { AllGroup, DescendantTreeNode, PinnedGroup, RootTreeNode, TreeNode } from "@/app/view/Tree";
-import { useTree } from "@/app/view/TreeContext";
 import { cn } from "@/lib/utils";
 
 import { RelatedObjectView } from "./RelatedObjectView";

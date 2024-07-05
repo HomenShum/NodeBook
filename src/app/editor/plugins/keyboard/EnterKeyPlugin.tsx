@@ -8,7 +8,7 @@ import { nodeToChip } from "@/app/editor/utils";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
 
 function getChipsAroundSelection(selection: BaseSelection) {
   // Get selection start and end points

@@ -6,7 +6,7 @@ import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext
 import { GraphNode } from "@/app/graph/GraphNode";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useTree } from "@/app/view/TreeContext";
+import { useTree } from "@/app/tree/TreeContext";
 
 /**
  * Plugin to merge nodes when backspace is pressed at the start of a node.

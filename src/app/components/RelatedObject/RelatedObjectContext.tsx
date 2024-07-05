@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-import { DescendantTreeNode } from "@/app/view/Tree";
+import { DescendantTreeNode } from "@/app/tree/nodes";
 
 /**
  * The view type of the related object. This determines what is displayed in the

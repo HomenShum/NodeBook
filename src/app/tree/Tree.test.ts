@@ -1,4 +1,5 @@
-import { DescendantTreeNode, PathToRootNode, RootTreeNode, getAncestorsAsArray } from "@/app/view/Tree";
+import { DescendantTreeNode, PathToRootNode, RootTreeNode } from "@/app/tree/nodes";
+import { getAncestorsAsArray } from "@/app/tree/utils";
 
 describe("Tree", () => {
   describe("getAncestorsAsArray", () => {

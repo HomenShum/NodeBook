@@ -4,8 +4,8 @@ import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
+import { DescendantTreeNode } from "@/app/tree/nodes";
 import { sortByPrefixMatch } from "@/app/util";
-import { DescendantTreeNode } from "@/app/view/Tree";
 
 import styles from "./ReplaceRelatedNodeView.module.css";
 
