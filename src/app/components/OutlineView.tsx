@@ -199,8 +199,8 @@ function useOutlineHotkeys({ tree }: { tree: Tree }) {
   useHotkeys("ArrowDown", () => tree.moveEditorSelectionDown(), defaults, [tree]);
   useHotkeys("shift+ArrowUp", () => tree.moveNodeSelectionHeadUp(), defaults, [tree]);
   useHotkeys("shift+ArrowDown", () => tree.moveNodeSelectionHeadDown(), defaults, [tree]);
-  useHotkeys("delete", () => tree.deleteSelection(), [tree]);
-  useHotkeys("backspace", () => tree.deleteSelection(), [tree]);
+  useHotkeys("delete", () => tree.deleteSelection(), { preventDefault: true }, [tree]);
+  useHotkeys("backspace", () => tree.deleteSelection(), { preventDefault: true }, [tree]);
   useHotkeys("tab", () => tree.indentSelection(), defaults, [tree]);
   useHotkeys("shift+tab", () => tree.dedentSelection(), defaults, [tree]);
   useHotkeys("esc", () => tree.escapeSelection(), defaults, [tree]);
