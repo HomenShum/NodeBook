@@ -17,7 +17,7 @@ export const CreateNodeAtTopPlugin = () => {
         if (event.key === "k" && event.metaKey) {
           event.preventDefault();
           event.stopPropagation();
-          tree.createChildNodeAndFocus();
+          tree.createChildOfRootAndFocus();
           return true;
         }
         return false;

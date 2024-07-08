@@ -8,10 +8,16 @@ import logger from "@/lib/logger";
 import { FractionalPositionedList } from "./FractionalPositionedList";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
-import { GraphRelation, GraphRelationProps, GraphRelationType } from "./GraphRelation";
+import {
+  GraphRelation,
+  GraphRelationProps,
+  GraphRelationPropsWithoutTargets,
+  GraphRelationType,
+} from "./GraphRelation";
 import {
   Positioner,
   TxAddChildNode,
+  TxAddNode,
   TxAddRelation,
   TxCombined,
   TxRemoveNode,
@@ -91,9 +97,6 @@ export class GraphStore {
       to: this.thoughtstreamRoot,
       relationType: this.relationTypesById.child,
     });
-    // Initialize with blank entries in thoughtstream and outline
-    const { node } = this.createChildNode(this.outlineRoot);
-    this.addToThoughtstream(node);
   }
 
   /**
@@ -139,7 +142,11 @@ export class GraphStore {
     if (!wannaBeParent) {
       throw new Error(`Parent with id ${tx.parentId} does not exist`);
     }
-    return this.createChildNode(wannaBeParent, tx.nodeProps, tx.after);
+    return this.createChildNode({ ...tx, parent: wannaBeParent });
+  }
+
+  async addNode(props: TxAddNode) {
+    return this.createNode(props);
   }
 
   /**
@@ -159,14 +166,14 @@ export class GraphStore {
    * Create a new relation between two existing objects.
    */
   addRelation = async (tx: TxAddRelation) => this._addRelation(tx);
-  private _addRelation(tx: TxAddRelation): { relation: GraphRelation } {
+  private _addRelation(tx: TxAddRelation) {
     const from = this.nodesById.get(tx.fromId);
     const to = this.nodesById.get(tx.toId);
     if (!from || !to) {
       throw new Error(`GraphObject with id ${from ? tx.toId : tx.fromId} does not exist`);
     }
 
-    return { relation: this.createRelation({ from, to, relationType: tx.relationType }) };
+    return this.createRelation({ from, to, relationType: tx.relationType });
   }
 
   /**
@@ -238,20 +245,27 @@ export class GraphStore {
     }
   }
 
-  private createChildNode(
-    parent: GraphObject,
-    props: GraphNodeProps = {},
-    after?: Positioner<GraphRelation>,
-  ): { node: GraphNode; relation: GraphRelation } {
+  private createChildNode({
+    parent,
+    nodeProps = {},
+    relationProps = {},
+    after,
+  }: {
+    parent: GraphObject;
+    nodeProps?: GraphNodeProps;
+    relationProps?: GraphRelationPropsWithoutTargets;
+    after?: Positioner<GraphRelation>;
+  }): { node: GraphNode; relation: GraphRelation } {
     let node;
     let relation;
 
     try {
-      node = this.createNode(props);
+      node = this.createNode(nodeProps);
       relation = this.createRelation({
+        ...relationProps,
         from: parent,
         to: node,
-        relationType: defaultRelationTypes.child,
+        relationType: this.relationTypesById[relationProps?.relationTypeId ?? ""] || this.relationTypesById.child,
       });
 
       if (after) {
@@ -428,7 +442,7 @@ export class GraphStore {
       relationType: this.relationTypesById.child,
     });
     // Initialize with blank entries in thoughtstream and outline
-    const { node } = this.createChildNode(this.outlineRoot);
+    const { node } = this.createChildNode({ parent: this.outlineRoot });
     this.addToThoughtstream(node);
   }
 
@@ -494,7 +508,7 @@ export class GraphStore {
       to: obj,
     });
     // within a new bundle
-    const bundle = this.createChildNode(this.thoughtstreamRoot).node;
+    const bundle = this.createChildNode({ parent: this.thoughtstreamRoot }).node;
     bundle.setIsBundle(true);
     const relationToBundle = this.addToBundle(relationToThoughtstream, bundle);
     return { bundle, relationToThoughtstream, relationToBundle };

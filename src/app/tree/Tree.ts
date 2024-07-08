@@ -1,15 +1,16 @@
 import { IReactionDisposer, makeAutoObservable, reaction, toJS } from "mobx";
 
-import { Chip, GraphNode } from "@/app/graph/GraphNode";
+import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore, Path, defaultRelationTypes } from "@/app/graph/GraphStore";
+import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { comparePositions, relationsPathToParentChild, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
-import { DescendantTreeNode, RootTreeNode, TreeNode } from "./nodes";
+import { BaseTreeNode, DescendantTreeNode, RootTreeNode, TreeNode } from "./nodes";
 import { TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
@@ -122,6 +123,22 @@ export class Tree {
     };
   }
 
+  get root() {
+    return this.state.root;
+  }
+
+  getNode(path: Path) {
+    return this.state.descendantTreeNodesById.get(path);
+  }
+
+  getNodeOrThrow(path: Path) {
+    const node = this.getNode(path);
+    if (!node) {
+      throw new Error(`Tree node at path not found: ${path}`);
+    }
+    return node;
+  }
+
   /**
    * Returns selection with referenced nodes resolved.
    */
@@ -198,6 +215,10 @@ export class Tree {
     return (
       this.selectionWithNodes?.type === "node" && this.selectionWithNodes.nodes.some((node) => node.id === treeNodeId)
     );
+  }
+
+  selectBetween(anchorNodeId: string, headNodeId: string) {
+    this.selection = { type: "node", anchorNodeId, headNodeId };
   }
 
   /**
@@ -319,12 +340,28 @@ export class Tree {
     walk(treeNode);
   }
 
-  async createChildNodeAndFocus() {
-    const rootTreeNode = this.state.root;
-    const { node, relation } = await this.graphStore.addChildNode({ parentId: rootTreeNode.object.id });
-    const path = rootTreeNode.childrenGroupsById.all.path + "/" + relation.id;
+  async createChildOfRootAndFocus() {
+    const { node, relation } = await this.createChildNode({ parent: this.root });
+    const path = this.root.childrenGroupsById.all.createChildPath(relation);
     this.setFocusedNode(path);
     return { node, relation, path };
+  }
+
+  /**
+   * Creates a new node as a child of the given parent node. If no parent is
+   * given, the node is created as a child of the root node.
+   */
+  async createChildNode(props: {
+    parent?: BaseTreeNode;
+    nodeProps?: GraphNodeProps;
+    relationProps?: { id?: string; relationTypeId?: string };
+    after?: Positioner<DescendantTreeNode>;
+  }) {
+    return this.graphStore.addChildNode({
+      ...props,
+      parentId: props.parent?.object.id ?? this.rootObject.id,
+      after: props.after instanceof DescendantTreeNode ? props.after.relationWithParent : props.after,
+    });
   }
 
   async deleteSelection() {

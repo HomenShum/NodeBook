@@ -55,7 +55,7 @@ function CreateNewButton({ tree }: { tree: Tree }) {
       variant="default"
       size="icon"
       onClick={async () => {
-        await tree.createChildNodeAndFocus();
+        await tree.createChildOfRootAndFocus();
       }}
     >
       <Plus size={16}></Plus>

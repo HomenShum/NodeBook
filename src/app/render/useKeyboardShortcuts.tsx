@@ -17,12 +17,12 @@ export const useKeyboardShortcuts = () => {
         e.preventDefault();
         switch (curView) {
           case ViewType.OUTLINE: {
-            await viewStore.mainOutlineView.createChildNodeAndFocus();
+            await viewStore.mainOutlineView.createChildOfRootAndFocus();
             break;
           }
           case ViewType.THOUGHTSTREAM:
           case ViewType.SPLIT: {
-            await viewStore.mainStreamView.createChildNodeAndFocus();
+            await viewStore.mainStreamView.createChildOfRootAndFocus();
             break;
           }
           default:

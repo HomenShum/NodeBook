@@ -1,5 +1,5 @@
 import { GraphNodeProps } from "./GraphNode";
-import { GraphRelation, GraphRelationType } from "./GraphRelation";
+import { GraphRelation, GraphRelationPropsWithoutTargets, GraphRelationType } from "./GraphRelation";
 
 /**
  * Specifies a position in a list. Can be an index (number), the id of an object
@@ -12,14 +12,18 @@ export type RelationDirectionForObject = "from" | "to";
 export type TxAddChildNode = {
   parentId: string;
   nodeProps?: GraphNodeProps;
+  relationProps?: GraphRelationPropsWithoutTargets;
   after?: Positioner<GraphRelation>;
 };
+
+export type TxAddNode = GraphNodeProps;
 
 export type TxRemoveNode = {
   nodeId: string;
 };
 
 export type TxAddRelation = {
+  id?: string;
   fromId: string;
   toId: string;
   relationType?: GraphRelationType;
@@ -51,6 +55,10 @@ type TxCombinedPart =
   | {
       type: "addChildNode";
       transaction: TxAddChildNode;
+    }
+  | {
+      type: "addNode";
+      transaction: TxAddNode;
     }
   | {
       type: "removeNode";

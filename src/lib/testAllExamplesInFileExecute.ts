@@ -4,6 +4,7 @@ import { parse } from "comment-parser";
 
 /**
  * Execute all examples in a file and expect them to not throw.
+ * Supports async examples using await.
  *
  * Examples are expected to be in the form of JSDoc comments with the `@example` tag.
  *
@@ -15,9 +16,20 @@ export function testAllExamplesInFileExecute(filePath: string, references: { [ke
   parse(source).forEach(({ tags }) => {
     tags.forEach(({ tag, description }) => {
       if (tag === "example") {
-        it(description, () => {
-          const exampleFunction = new Function(...Object.keys(references), description);
-          expect(() => exampleFunction(...Object.values(references))).not.toThrow();
+        const code = description.replace(/^```|```$/g, "").trim();
+        it(code, async () => {
+          const mockFn = jest.fn(async () => {
+            const exampleFunction = new Function(
+              ...Object.keys(references),
+              `
+              return (async () => {
+                ${code}
+              })();
+            `,
+            );
+            await exampleFunction(...Object.values(references));
+          });
+          await expect(mockFn()).resolves.not.toThrow();
         });
       }
     });

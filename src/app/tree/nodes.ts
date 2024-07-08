@@ -47,6 +47,15 @@ export abstract class BaseTreeNode {
     this.object = object;
   }
 
+  /**
+   * Create a new graph node and adds it as a child of this node. Returns the
+   * path to the new node in the "all" section of the children.
+   */
+  async createChild(props: Omit<Parameters<Tree["createChildNode"]>[0], "parent"> = {}) {
+    const { relation } = await this.tree.createChildNode({ ...props, parent: this });
+    return this.createChildPath(relation);
+  }
+
   pinChild(child: DescendantTreeNode | DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
     const children = Array.isArray(child) ? child : [child];
     this.object.pinChildRelation(
@@ -57,6 +66,10 @@ export abstract class BaseTreeNode {
 
   get childrenGroupsById() {
     return { pinned: this.childrenGroups[0], all: this.childrenGroups[1] };
+  }
+
+  createChildPath(child: DescendantTreeNode | GraphRelation, groupId: GroupId = "all"): string {
+    return this.childrenGroupsById[groupId].createChildPath(child);
   }
 
   /**
@@ -134,7 +147,7 @@ export class RootTreeNode extends BaseTreeNode {
 }
 
 export class DescendantTreeNode extends BaseTreeNode {
-  parentGroup: Group;
+  parentGroup: BaseGroup;
   relationWithParent: GraphRelation;
   childrenGroups: ChildrenGroups;
   position: Position;
@@ -154,7 +167,7 @@ export class DescendantTreeNode extends BaseTreeNode {
     object: GraphObject;
     position: Position;
     relationWithParent: GraphRelation;
-    group: Group;
+    group: BaseGroup;
     isSearchMatch?: boolean;
     searchMatchInDescendants?: boolean;
   }) {
@@ -273,11 +286,11 @@ export type TreeNode = RootTreeNode | DescendantTreeNode;
  * having "suggested" or "related" groups as well. Or even having supporting
  * groupby operations like "by type" or "by relation" (similar to Linear).
  */
-export abstract class Group {
+export abstract class BaseGroup {
+  abstract id: "all" | "pinned";
   tree: Tree;
   parent: TreeNode;
   nodes: DescendantTreeNode[];
-  abstract id: string;
   abstract relationsWithPositions: PositionedRelation[];
   abstract relationsList: FractionalPositionedList<GraphRelation>;
   abstract path: string;
@@ -310,8 +323,9 @@ export abstract class Group {
     return this.tree.isGroupExpanded(this.path);
   }
 
-  createChildPath(node: DescendantTreeNode): string {
-    return this.path + "/" + node.relationWithParent.id;
+  createChildPath(child: DescendantTreeNode | GraphRelation): string {
+    const relation = child instanceof DescendantTreeNode ? child.relationWithParent : child;
+    return this.path + "/" + relation.id;
   }
 
   move(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
@@ -323,8 +337,8 @@ export abstract class Group {
 }
 // TODO Can define a type for this?
 
-export class PinnedGroup extends Group {
-  id = "pinned"; // TODO shouldn't be necessary
+export class PinnedGroup extends BaseGroup {
+  id = "pinned" as const; // TODO shouldn't be necessary
   constructor(props: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
     super(props);
   }
@@ -358,8 +372,8 @@ export class PinnedGroup extends Group {
   }
 }
 
-export class AllGroup extends Group {
-  id = "all"; // TODO shouldn't be necessary
+export class AllGroup extends BaseGroup {
+  id = "all" as const; // TODO shouldn't be necessary
   constructor(props: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
     super(props);
   }
@@ -391,4 +405,4 @@ export class AllGroup extends Group {
 }
 
 export type ChildrenGroups = [PinnedGroup, AllGroup];
-export type ChildrenGroupsOmitParent = [Omit<PinnedGroup, "parent">, Omit<AllGroup, "parent">];
+export type GroupId = BaseGroup["id"];

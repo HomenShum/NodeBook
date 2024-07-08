@@ -17,7 +17,6 @@ import { RenderControllerProvider } from "@/app/render/useRenderController";
 import { toast, useCurView } from "@/app/util";
 import { ViewStore } from "@/app/view/ViewStore";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
-
 import "./global.css";
 
 const App = dynamic(() => import("./App"), {
@@ -28,8 +27,13 @@ const App = dynamic(() => import("./App"), {
 const settingsStore = new SettingsStore();
 settingsStore.loadFromLocalStorage();
 const graphStore = new GraphStore(settingsStore);
+
 const viewStore = new ViewStore(settingsStore, graphStore);
 const renderController = new RenderController();
+// Initialize with blank entries in thoughtstream and outline
+graphStore.addChildNode({ parentId: graphStore.outlineRoot.id }).then(({ node }) => {
+  graphStore.addToThoughtstream(node);
+});
 
 autorun(() => {
   settingsStore.saveToLocalStorage();

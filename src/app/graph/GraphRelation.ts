@@ -24,6 +24,12 @@ export type GraphRelationProps = {
   isPrivate?: boolean;
 };
 
+export type GraphRelationPropsWithoutTargets = {
+  id?: string;
+  relationTypeId?: GraphRelationType["id"];
+  isPrivate?: boolean;
+};
+
 export class GraphRelation implements Serializable, GraphObject {
   type = "relation" as const;
   public id: string;
