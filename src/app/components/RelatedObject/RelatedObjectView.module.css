@@ -117,7 +117,7 @@ Node
 
 .RelatedObjectNode {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   flex: 1 1 0%;
   align-items: center;
   position: relative;
