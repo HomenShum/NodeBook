@@ -182,7 +182,6 @@ describe("Tree", () => {
         ]);
     });
   });
-
   describe("helper examples should run", () => {
     testAllExamplesInFileExecute(path.resolve(__dirname, "helpers.ts"), { createTestTreeFromTemplate });
   });

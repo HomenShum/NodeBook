@@ -4,23 +4,34 @@ import { TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
 
 /**
- * Create a tree from a template (and a fresh graph behind it).
+ * Create a tree from a template. It instantiates an empty graph behind it and
+ * creates the graph objects needed to represent the tree.
  *
  * If a single node is given, the tree will be created with that node as the
  * root. If an array of nodes is given, the tree's root will be set to the
  * default outline root node, and the templates will be used to create children
  * of the root.
  *
- * The template is a nested structure of objects, each representing a node in the tree.
- * The "rid" property is shorthand for the relationWithParent.id property of the node.
+ * The template is a nested structure of objects, each representing a node in
+ * the tree. The "rid" property is shorthand for the relationWithParent.id
+ * property of the node. Since the identifier for tree nodes is the path to the
+ * node, and since paths are based on relation ids, providing a relation id in
+ * the template allows for reproducible tree paths (as opposed to if random
+ * relation ids were generated).
  *
  * @example
  * const tree = await createTestTreeFromTemplate([
  *  { rid: "o1" },
- *  { rid: "o2", isHead: true, isAnchor: true }
+ *  { rid: "o2", isHead: true, children: [
+ *    { rid: "o3" }]},
+ *  { rid: "o4", isAnchor: true }
  * ]);
- * expect(tree.root.object.id).toBe("outline-root-id");
- * expect(tree.selection).toEqual({ type: "node", headNodeId: "/all/o2", anchorNodeId: "/all/o2" });
+ * // Defaults to the outline root node
+ * assert(tree.root.object.id === "outline-root-id");
+ * // The rid property sets the relation id, which in turn sets the path
+ * assert(tree.getNode("/all/o2/all/o3"));
+ * // The isHead and isAnchor properties above are used to set the selection
+ * assert(tree.selection.headNodeId === "/all/o2" && tree.selection.anchorNodeId === "/all/o4");
  *
  * @DesignNotes
  * We could've made the id property the path to the node, which is what it is in a real
