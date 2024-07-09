@@ -154,9 +154,9 @@ class Logger {
  *
  * @example
  * // Update the global filter to only log messages of level "info" and above for all loggers
- * getGlobalFilter(); // { level: "debug" }
+ * getGlobalLoggerFilter(); // { level: "debug" }
  * logger.debug("This message will be logged");
- * updateGlobalFilter({ level: "info" });
+ * updateGlobalLoggerFilter({ level: "info" });
  * logger.debug("This message will not be logged");
  */
 const logger = new Logger({ level: "debug" });
