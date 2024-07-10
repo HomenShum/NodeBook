@@ -1,6 +1,7 @@
 "use client";
 import { autorun, getDependencyTree, getObserverTree, toJS } from "mobx";
 import dynamic from "next/dynamic";
+import Pusher from "pusher-js";
 import { useEffect, useRef, useState } from "react";
 
 import { DataLoadProvider } from "@/app/DataLoadContext";
@@ -31,8 +32,16 @@ const graphStore = new GraphStore(settingsStore);
 const viewStore = new ViewStore(settingsStore, graphStore);
 const renderController = new RenderController();
 // Initialize with blank entries in thoughtstream and outline
-graphStore.addChildNode({ parentId: graphStore.outlineRoot.id }).then(({ node }) => {
-  graphStore.addToThoughtstream(node);
+// TODO: Pretty sure we should delete this as redundant with other initialization logic, but need to confirm
+// graphStore.addChildNode({ parentId: graphStore.outlineRoot.id }).then(({ node }) => {
+//   graphStore.addToThoughtstream(node);
+// });
+
+// Enable pusher logging - don't include this in production
+Pusher.logToConsole = true;
+
+const pusher = new Pusher(env.pusherKey, {
+  cluster: env.pusherCluster,
 });
 
 autorun(() => {
@@ -91,6 +100,11 @@ export default function RootTemplate({
             persistGraphData(newDataString);
           }
         }, 500);
+        const channel = pusher.subscribe("mew-sync-channel");
+        channel.bind("transaction-accepted", (data: any) => {
+          graphStore.handleSyncTransactionAccepted(data);
+        });
+        graphStore.startSync();
       }
     }
     setupSync();

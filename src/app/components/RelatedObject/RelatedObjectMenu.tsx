@@ -110,12 +110,20 @@ export const RelatedObjectMenu = observer(
           {/* toggle bundle */}
           {object instanceof GraphNode &&
             (object.isBundle ? (
-              <DropdownMenuItem onSelect={() => object.setIsBundle(false)}>
+              <DropdownMenuItem
+                onSelect={() => {
+                  graphStore.updateNode({ nodeId: object.id, nodeProps: { isBundle: false } });
+                }}
+              >
                 <GanttChart size={14} />
                 Unset as bundle
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onSelect={() => object.setIsBundle(true)}>
+              <DropdownMenuItem
+                onSelect={() => {
+                  graphStore.updateNode({ nodeId: object.id, nodeProps: { isBundle: true } });
+                }}
+              >
                 <GanttChartSquare size={14} />
                 Set as bundle
               </DropdownMenuItem>
@@ -123,12 +131,20 @@ export const RelatedObjectMenu = observer(
           {/* toggle zone */}
           {object instanceof GraphNode &&
             (object.isZone ? (
-              <DropdownMenuItem onSelect={() => object.setIsZone(false)}>
+              <DropdownMenuItem
+                onSelect={() => {
+                  graphStore.updateNode({ nodeId: object.id, nodeProps: { isZone: false } });
+                }}
+              >
                 <ScanLine size={14} />
                 Unset as zone
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onSelect={() => object.setIsZone(true)}>
+              <DropdownMenuItem
+                onSelect={() => {
+                  graphStore.updateNode({ nodeId: object.id, nodeProps: { isZone: true } });
+                }}
+              >
                 <Scan size={14} />
                 Set as zone
               </DropdownMenuItem>

@@ -173,7 +173,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
           graph.reverseRelation(relation);
         }
         if (object instanceof GraphNode) {
-          object.setContent("");
+          graph.updateNode({ nodeId: object.id, nodeProps: { content: "" } });
           tree.setFocusedNode(pathToNodeStr);
         }
       } else {

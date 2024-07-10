@@ -34,7 +34,7 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
       // Update the graph
       const chips = editorState.read($getChips);
       // update the node's content
-      node.setContent(chips);
+      graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
       // force the nodes with mentions of this node to update. (TODO: This is a
       // hack. Ideally the nodes would update reactively. Also, it doesn't
       // cover case where a node mentions another but we've deleted that
@@ -47,7 +47,7 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
           );
         })
         .forEach((obj) => {
-          obj.setContent([...obj.content]);
+          graphStore.updateNode({ nodeId: obj.id, nodeProps: { content: [...obj.content] } });
         });
     },
     [editor, graphStore, node],

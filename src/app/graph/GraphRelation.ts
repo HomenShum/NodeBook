@@ -1,22 +1,25 @@
 import { makeAutoObservable } from "mobx";
 
+import { ItemWithPosition } from "@/app/graph/FractionalPositionedList";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { comparePositions, uuid } from "@/app/util";
 
-import { PositionedRelation } from "./GraphNode";
+import { GraphNode, PositionedRelation } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
 import { PlaceholderGraphObject, isPlaceholder } from "./PlaceholderGraphObject";
 
 export type GraphRelationType = {
+  version: number;
   id: string;
   label: string; // e.g. author
   reverseLabel: string; // e.g. authored by
 };
 
 export type GraphRelationProps = {
+  version?: number;
   id?: string;
   from: GraphObject;
   to: GraphObject;
@@ -30,8 +33,18 @@ export type GraphRelationPropsWithoutTargets = {
   isPrivate?: boolean;
 };
 
+export type DeletedGraphRelationData = {
+  relation: GraphRelation;
+  fromPos: ItemWithPosition<GraphRelation> | undefined;
+  fromPinnedPos: ItemWithPosition<GraphRelation> | undefined;
+  toPos: ItemWithPosition<GraphRelation> | undefined;
+  toPinnedPos: ItemWithPosition<GraphRelation> | undefined;
+  bundles: GraphNode[];
+};
+
 export class GraphRelation implements Serializable, GraphObject {
   type = "relation" as const;
+  private version: number;
   public id: string;
   public from: GraphObject;
   public to: GraphObject;
@@ -42,8 +55,16 @@ export class GraphRelation implements Serializable, GraphObject {
 
   constructor(
     store: GraphStore,
-    { id = uuid(), from, to, relationType: type = defaultRelationTypes.child, isPrivate = true }: GraphRelationProps,
+    {
+      version = 1,
+      id = uuid(),
+      from,
+      to,
+      relationType: type = defaultRelationTypes.child,
+      isPrivate = true,
+    }: GraphRelationProps,
   ) {
+    this.version = version;
     this.id = id;
     this.from = from;
     this.to = to;
@@ -111,6 +132,10 @@ export class GraphRelation implements Serializable, GraphObject {
     this.store.updateRelationsType(this, newType);
   }
 
+  incrementVersion() {
+    this.version += 1;
+  }
+
   get allRelationsList() {
     const list = this.store.relationsByNodeId.get(this.id);
     if (!list) throw new Error("Missing allRelationsList");
@@ -157,6 +182,7 @@ export class GraphRelation implements Serializable, GraphObject {
 
   serialize(): SerializedRelation {
     return {
+      version: this.version,
       id: this.id,
       fromId: this.from.id,
       toId: this.to.id,
@@ -180,6 +206,7 @@ export class GraphRelation implements Serializable, GraphObject {
     }
 
     const newRelation = new GraphRelation(store, {
+      version: data.version,
       id: data.id,
       from,
       to,

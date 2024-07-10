@@ -15,6 +15,7 @@ export type Chip = {
 };
 
 export type GraphNodeProps = {
+  version?: number;
   id?: string;
   content?: Chip[] | string;
   createdAt?: Date;
@@ -29,6 +30,7 @@ export type PositionedRelation = {
 };
 
 export class GraphNode implements Serializable, GraphObject {
+  version: number;
   id: string;
   content: Chip[] = [];
   createdAt: Date;
@@ -40,6 +42,7 @@ export class GraphNode implements Serializable, GraphObject {
   constructor(
     private store: GraphStore,
     {
+      version = 1,
       id = uuid(),
       content = [],
       createdAt = new Date(),
@@ -48,6 +51,7 @@ export class GraphNode implements Serializable, GraphObject {
       isPrivate = true,
     }: GraphNodeProps,
   ) {
+    this.version = version;
     this.id = id;
     this.content =
       Array.isArray(content) && content.length > 0
@@ -62,22 +66,6 @@ export class GraphNode implements Serializable, GraphObject {
 
   setIsPrivate(value: boolean) {
     this.isPrivate = value;
-  }
-
-  toggleBundle() {
-    this.isBundle = !this.isBundle;
-  }
-
-  setIsBundle(isBundle: boolean) {
-    this.isBundle = isBundle;
-  }
-
-  toggleZone() {
-    this.isZone = !this.isZone;
-  }
-
-  setIsZone(isZone: boolean) {
-    this.isZone = isZone;
   }
 
   get allRelationsList() {
@@ -116,8 +104,33 @@ export class GraphNode implements Serializable, GraphObject {
     return this.pinnedRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
   }
 
-  setContent(newContent: Chip[] | string) {
-    this.content = typeof newContent === "string" ? [{ type: "text", value: newContent }] : newContent;
+  update(newProps: Partial<GraphNodeProps>) {
+    const oldValues: Partial<GraphNodeProps> = {};
+    if (newProps.content !== undefined) {
+      oldValues.content = this.content;
+      this.content =
+        typeof newProps.content === "string" ? [{ type: "text", value: newProps.content }] : newProps.content;
+    }
+    if (newProps.isBundle !== undefined) {
+      oldValues.isBundle = this.isBundle;
+      this.isBundle = newProps.isBundle;
+    }
+    if (newProps.isZone !== undefined) {
+      oldValues.isZone = this.isZone;
+      this.isZone = newProps.isZone;
+    }
+    if (newProps.isPrivate !== undefined) {
+      oldValues.isPrivate = this.isPrivate;
+      this.isPrivate = newProps.isPrivate;
+    }
+    oldValues.version = this.version;
+    if (newProps.version !== undefined) {
+      this.version = newProps.version;
+    } else {
+      this.version++;
+    }
+
+    return oldValues;
   }
 
   get text(): string {
@@ -185,6 +198,7 @@ export class GraphNode implements Serializable, GraphObject {
 
   serialize(): SerializedGraphNode {
     return {
+      version: this.version,
       id: this.id,
       createdAt: this.createdAt,
       content: toJS(this.content),
@@ -196,6 +210,7 @@ export class GraphNode implements Serializable, GraphObject {
 
   static deserialize(data: SerializedGraphNode, store: GraphStore): GraphNode {
     return new GraphNode(store, {
+      version: data.version,
       id: data.id,
       content: data.content,
       createdAt: new Date(data.createdAt),

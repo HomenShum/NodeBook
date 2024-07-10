@@ -29,7 +29,7 @@ export const PastePlugin = () => {
           // if the current node is empty, set the first line as its content
           if (object.text === "") {
             const line = lines.shift() ?? "";
-            object.setContent(line);
+            graphStore.updateNode({ nodeId: object.id, nodeProps: { content: line } });
           }
           // then for the remaining lines, create children positioned after the parent
           Promise.all(

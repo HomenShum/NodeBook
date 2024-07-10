@@ -50,7 +50,7 @@ export const RelationPlugin = () => {
         if (chipsRight.length) {
           chipsRight[0].value = chipsRight[0].value.trimStart(); // Remove leading whitespace
         }
-        object.setContent(chipsRight);
+        graphStore.updateNode({ nodeId: object.id, nodeProps: { content: chipsRight } });
         tree.setFocusedNode(pathToNodeStr);
 
         // TODO: if reasonable, make this one transaction with the above

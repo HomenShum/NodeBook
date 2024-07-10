@@ -1,8 +1,14 @@
 import { Chip } from "@/app/graph/GraphNode";
-import { GraphRelationType } from "@/app/graph/GraphRelation";
+import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
+import { Serializable } from "@/app/persistence/serialization";
 import { Position } from "@/app/util";
 
+export type SerializedPositionList<T extends Serializable> = {
+  [key: string]: Position;
+};
+
 export type SerializedGraphNode = {
+  version: number;
   id: string;
   createdAt: Date;
   content: Chip[];
@@ -11,6 +17,7 @@ export type SerializedGraphNode = {
   isPrivate: boolean;
 };
 export type SerializedRelation = {
+  version: number;
   id: string;
   fromId: string;
   toId: string;
@@ -50,4 +57,15 @@ export type SerializedViewStore = {
 export type SerializedStores = {
   graphStore: SerializedGraphStore;
   viewStore: SerializedViewStore;
+};
+
+export type SerializedSyncData = {
+  nodes?: SerializedGraphNode[];
+  nodesDeleted?: SerializedGraphNode[];
+  relations?: SerializedRelation[];
+  relationsDeleted?: SerializedRelation[];
+  relationTypes?: GraphRelationType[];
+  relationTypesDeleted?: string[];
+  relationLists?: Record<string, SerializedPositionList<GraphRelation>>;
+  pinnedRelationLists?: Record<string, SerializedPositionList<GraphRelation>>;
 };

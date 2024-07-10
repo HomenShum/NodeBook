@@ -16,11 +16,14 @@ export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore
   if (!dataString) return;
 
   const data = JSON.parse(dataString) as SerializedStores;
-  if (data.graphStore) {
-    graphStore.deserializeInPlace(data.graphStore);
-  }
+  // if (data.graphStore) {
+  //   graphStore.deserializeInPlace(data.graphStore);
+  // }
   if (data.viewStore) {
     viewStore.deserializeInPlace(data.viewStore);
   }
   console.debug(`Successfully loaded data from ${env.persistTo}`);
+
+  const syncData = await fetch("/api/sync").then((res) => res.json());
+  await graphStore.deserializeInPlace(syncData.data);
 }

@@ -20,9 +20,9 @@ export const ImportDialog = () => {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const fileContent = event.target!.result;
-      graphStore.deserializeInPlace(JSON.parse(fileContent as string));
+      await graphStore.deserializeInPlace(JSON.parse(fileContent as string));
       setOpen(false);
     };
     reader.readAsText(file);

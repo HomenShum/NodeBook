@@ -2,11 +2,12 @@ import { generateNKeysBetween } from "fractional-indexing";
 import { action, computed, makeObservable, observable } from "mobx";
 
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
+import { SerializedPositionList } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { Position, comparePositions, generateDefaultPosition } from "@/app/util";
 import logger from "@/lib/logger";
 
-type ItemWithPosition<T> = {
+export type ItemWithPosition<T> = {
   item: T;
   position: Position;
 };
@@ -77,6 +78,11 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
     return this.map.delete(id);
   }
 
+  undoDelete(itemWithPosition: ItemWithPosition<T> | undefined) {
+    if (!itemWithPosition) return;
+    this.map.set(itemWithPosition.item.id, itemWithPosition);
+  }
+
   /**
    * Move items to a new position in the list.
    *
@@ -128,7 +134,7 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
     return { int, fracBefore, fracAfter };
   }
 
-  serialize() {
+  serialize(): SerializedPositionList<T> {
     const result: { [key: string]: Position } = {};
     for (const [key, value] of this.map.entries()) {
       result[key] = value.position;
@@ -137,7 +143,7 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
   }
 
   static deserialize<T extends ListItem & Serializable>(
-    positionsByItemId: ReturnType<FractionalPositionedList<T>["serialize"]>,
+    positionsByItemId: SerializedPositionList<T>,
     getItem: (id: string) => T | null,
   ): FractionalPositionedList<T> {
     const list = new FractionalPositionedList<T>();

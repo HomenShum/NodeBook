@@ -2651,12 +2651,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/node-fetch@npm:^2.5.7":
+  version: 2.6.11
+  resolution: "@types/node-fetch@npm:2.6.11"
+  dependencies:
+    "@types/node": "npm:*"
+    form-data: "npm:^4.0.0"
+  checksum: 10c0/5283d4e0bcc37a5b6d8e629aee880a4ffcfb33e089f4b903b2981b19c623972d1e64af7c3f9540ab990f0f5c89b9b5dda19c5bcb37a8e177079e93683bfd2f49
+  languageName: node
+  linkType: hard
+
 "@types/node@npm:*, @types/node@npm:^20.14.5":
-  version: 20.14.9
-  resolution: "@types/node@npm:20.14.9"
+  version: 20.14.10
+  resolution: "@types/node@npm:20.14.10"
   dependencies:
     undici-types: "npm:~5.26.4"
-  checksum: 10c0/911ffa444dc032897f4a23ed580c67903bd38ea1c5ec99b1d00fa10b83537a3adddef8e1f29710cbdd8e556a61407ed008e06537d834e48caf449ce59f87d387
+  checksum: 10c0/0b06cff14365c2d0085dc16cc8cbea5c40ec09cfc1fea966be9eeecf35562760bfde8f88e86de6edfaf394501236e229d9c1084fad04fb4dec472ae245d8ae69
   languageName: node
   linkType: hard
 
@@ -3174,6 +3184,15 @@ __metadata:
   version: 2.0.0
   resolution: "abbrev@npm:2.0.0"
   checksum: 10c0/f742a5a107473946f426c691c08daba61a1d15942616f300b5d32fd735be88fef5cba24201757b6c407fd564555fb48c751cfa33519b2605c8a7aadd22baf372
+  languageName: node
+  linkType: hard
+
+"abort-controller@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "abort-controller@npm:3.0.0"
+  dependencies:
+    event-target-shim: "npm:^5.0.0"
+  checksum: 10c0/90ccc50f010250152509a344eb2e71977fbf8db0ab8f1061197e3275ddf6c61a41a6edfd7b9409c664513131dd96e962065415325ef23efa5db931b382d24ca5
   languageName: node
   linkType: hard
 
@@ -4779,9 +4798,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.4.796":
-  version: 1.4.816
-  resolution: "electron-to-chromium@npm:1.4.816"
-  checksum: 10c0/1a84bc42234484cbc5e8b521de57fd3ab9984a2111d8605eab26b3525f382c0c7b83b45bf8b34e5fa4a730cd183fef5dffa4a0627754c7f4fb0aae9cb3c16b37
+  version: 1.4.817
+  resolution: "electron-to-chromium@npm:1.4.817"
+  checksum: 10c0/5bba9ac8ef5b891a5adb3344a250f5caceef19d705e5e1865d3e86e8290cdaac5ec55ca9afc6ecf853535ef61af95a1ed023a7f677333ff3c0f7529b74bb1a87
   languageName: node
   linkType: hard
 
@@ -5912,6 +5931,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"event-target-shim@npm:^5.0.0":
+  version: 5.0.1
+  resolution: "event-target-shim@npm:5.0.1"
+  checksum: 10c0/0255d9f936215fd206156fd4caa9e8d35e62075d720dc7d847e89b417e5e62cf1ce6c9b4e0a1633a9256de0efefaf9f8d26924b1f3c8620cffb9db78e7d3076b
+  languageName: node
+  linkType: hard
+
 "events-intercept@npm:^2.0.0":
   version: 2.0.0
   resolution: "events-intercept@npm:2.0.0"
@@ -6932,6 +6958,16 @@ __metadata:
   dependencies:
     has-tostringtag: "npm:^1.0.0"
   checksum: 10c0/787bc931576aad525d751fc5ce211960fe91e49ac84a5c22d6ae0bc9541945fbc3f686dc590c3175722ce4f6d7b798a93f6f8ff4847fdb2199aea6f4baf5d668
+  languageName: node
+  linkType: hard
+
+"is-base64@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "is-base64@npm:1.1.0"
+  bin:
+    is-base64: bin/is-base64
+    is_base64: bin/is-base64
+  checksum: 10c0/d9f73739a7d0af48403b0f9091822a2596665e5c9e1e428ba2cef00133c1bccf97cf6fcc07e0b39950e47c3a434fb19c42d2f39578d34f5eb9e66e074bc8449f
   languageName: node
   linkType: hard
 
@@ -8049,8 +8085,8 @@ __metadata:
   linkType: hard
 
 "knip@npm:^5.21.2":
-  version: 5.24.0
-  resolution: "knip@npm:5.24.0"
+  version: 5.24.1
+  resolution: "knip@npm:5.24.1"
   dependencies:
     "@ericcornelissen/bash-parser": "npm:0.5.3"
     "@nodelib/fs.walk": "npm:2.0.0"
@@ -8076,7 +8112,7 @@ __metadata:
   bin:
     knip: bin/knip.js
     knip-bun: bin/knip-bun.js
-  checksum: 10c0/ab97bbb0e91b1771123fc1054973a17c8e34d14107007c0887e03e73b0c5d141e05e6e7d0fb7b0312660d37f2ce77acf77bc95e670aa127651587569d179c0f8
+  checksum: 10c0/cb8b1bca504b18a862ec2a9a8e376828a9dbc2a98802a2142ae35389870a06c6602324de173974a37ca5814d1d2e17d66dc601f87498a037c7dfce6173642646
   languageName: node
   linkType: hard
 
@@ -8383,6 +8419,8 @@ __metadata:
     mobx-react-lite: "npm:^4.0.5"
     next: "npm:^14.1.2"
     postcss: "npm:^8.4.35"
+    pusher: "npm:^5.2.0"
+    pusher-js: "npm:^8.4.0-rc2"
     react: "npm:^18"
     react-dom: "npm:^18"
     react-hotkeys-hook: "npm:^4.5.0"
@@ -8809,7 +8847,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:^2.6.7":
+"node-fetch@npm:^2.6.1, node-fetch@npm:^2.6.7":
   version: 2.7.0
   resolution: "node-fetch@npm:2.7.0"
   dependencies:
@@ -9683,6 +9721,29 @@ __metadata:
   version: 6.1.0
   resolution: "pure-rand@npm:6.1.0"
   checksum: 10c0/1abe217897bf74dcb3a0c9aba3555fe975023147b48db540aa2faf507aee91c03bf54f6aef0eb2bf59cc259a16d06b28eca37f0dc426d94f4692aeff02fb0e65
+  languageName: node
+  linkType: hard
+
+"pusher-js@npm:^8.4.0-rc2":
+  version: 8.4.0-rc2
+  resolution: "pusher-js@npm:8.4.0-rc2"
+  dependencies:
+    tweetnacl: "npm:^1.0.3"
+  checksum: 10c0/3355f0e6e5bae79c27f380b987fe51a5a4df4ea9f28ef39777a76f702b0dc624d2c97e548b753402a3fb20c60558dc29a122b6e10c9b71089fe6f2a32a7dea12
+  languageName: node
+  linkType: hard
+
+"pusher@npm:^5.2.0":
+  version: 5.2.0
+  resolution: "pusher@npm:5.2.0"
+  dependencies:
+    "@types/node-fetch": "npm:^2.5.7"
+    abort-controller: "npm:^3.0.0"
+    is-base64: "npm:^1.1.0"
+    node-fetch: "npm:^2.6.1"
+    tweetnacl: "npm:^1.0.0"
+    tweetnacl-util: "npm:^0.15.0"
+  checksum: 10c0/b2fe98f485d327eb46b9cc2e0577f92d3b41e1b44709689f7093dca2048dd633a85ad37c1fbfc5a1e36842b9d27a20f1fd0c3e462854ba87fbd771217b7b0143
   languageName: node
   linkType: hard
 
@@ -11035,6 +11096,20 @@ __metadata:
   bin:
     tsx: dist/cli.mjs
   checksum: 10c0/9df52264f88be00ca473e7d7eda43bb038cc09028514996b864db78645e9cd297c71485f0fdd4985464d6dc46424f8bef9f8c4bd56692c4fcf4d71621ae21763
+  languageName: node
+  linkType: hard
+
+"tweetnacl-util@npm:^0.15.0":
+  version: 0.15.1
+  resolution: "tweetnacl-util@npm:0.15.1"
+  checksum: 10c0/796fad76238e40e853dff79516406a27b41549bfd6fabf4ba89d87ca31acf232122f825daf955db8c8573cc98190d7a6d39ece9ed8ae0163370878c310650a80
+  languageName: node
+  linkType: hard
+
+"tweetnacl@npm:^1.0.0, tweetnacl@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "tweetnacl@npm:1.0.3"
+  checksum: 10c0/069d9df51e8ad4a89fbe6f9806c68e06c65be3c7d42f0701cc43dba5f0d6064686b238bbff206c5addef8854e3ce00c643bff59432ea2f2c639feab0ee1a93f9
   languageName: node
   linkType: hard
 

@@ -358,8 +358,9 @@ export class Tree {
     after?: Positioner<DescendantTreeNode>;
   }) {
     return this.graphStore.addChildNode({
-      ...props,
       parentId: props.parent?.object.id ?? this.rootObject.id,
+      nodeProps: props.nodeProps,
+      relationProps: props.relationProps,
       after: props.after instanceof DescendantTreeNode ? props.after.relationWithParent : props.after,
     });
   }
@@ -449,7 +450,8 @@ export class Tree {
         result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
       }
     } else {
-      treeNode.object.setContent(contentBeforeSelection);
+      this.graphStore.updateNode({ nodeId: treeNode.object.id, nodeProps: { content: contentBeforeSelection } });
+      // treeNode.object.setContent(contentBeforeSelection);
       //  If the current node is expanded, split it and place the new node as it's
       //  first child.
       if (treeNode.isExpanded && treeNode.childCount > 0) {

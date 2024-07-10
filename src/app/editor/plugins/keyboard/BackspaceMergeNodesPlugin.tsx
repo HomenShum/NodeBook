@@ -71,9 +71,15 @@ export const BackspaceMergeNodesPlugin = () => {
         }
 
         if (targetNode && object instanceof GraphNode) {
-          targetNode.setContent(targetNode.content.concat(object.content));
           graphStore
             .applyCombinedTransaction([
+              {
+                type: "updateNode",
+                transaction: {
+                  nodeId: targetNode.id,
+                  nodeProps: { content: targetNode.content.concat(object.content) },
+                },
+              },
               { type: "removeNode", transaction: { nodeId: object.id } },
               { type: "removeRelation", transaction: { relationId: relation.id } },
             ])

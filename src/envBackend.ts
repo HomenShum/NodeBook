@@ -20,4 +20,8 @@ export const env = Object.freeze({
   NODE_ENV: process.env.NODE_ENV,
   POSTGRES_CONNECTION_STRING:
     process.env.POSTGRES_CONNECTION_STRING || process.env.POSTGRES_CUSTOM_URL || process.env.POSTGRES_URL || "",
+  PUSHER_APP_ID: process.env.PUSHER_APP_ID ?? "",
+  PUSHER_KEY: process.env.PUSHER_KEY ?? "",
+  PUSHER_SECRET: process.env.PUSHER_SECRET ?? "",
+  PUSHER_CLUSTER: process.env.PUSHER_CLUSTER ?? "",
 });
