@@ -118,41 +118,41 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
           : (v: ItemWithPosition<T>) => v.item.id === positioner.id;
       i = items.findIndex(predicate);
     }
-    return {
-      int: items[i]?.position.int ?? 0,
-      fracBefore: items[i]?.position.frac ?? null,
-      fracAfter: items[i]?.position.int === items[i + 1]?.position.int ? items[i + 1]?.position.frac ?? null : null,
-    };
+    const int = items[i]?.position.int ?? 0;
+    const fracBefore = items[i]?.position.frac;
+    let fracAfter = items[i]?.position.int === items[i + 1]?.position.int ? items[i + 1]?.position.frac : null;
+    if (fracBefore && fracAfter && fracBefore === fracAfter) {
+      logger.error("Attempted to insert item between two items with the same position");
+      fracAfter = null;
+    }
+    return { int, fracBefore, fracAfter };
   }
 
   serialize() {
-    const result: { [key: string]: { item: ReturnType<T["serialize"]>; position: Position } } = {};
+    const result: { [key: string]: Position } = {};
     for (const [key, value] of this.map.entries()) {
-      result[key] = {
-        item: value.item.serialize(),
-        position: value.position,
-      };
+      result[key] = value.position;
     }
     return result;
   }
 
   static deserialize<T extends ListItem & Serializable>(
-    data: ReturnType<FractionalPositionedList<T>["serialize"]>,
-    deserializeInnerType: (data: any) => T | null,
+    positionsByItemId: ReturnType<FractionalPositionedList<T>["serialize"]>,
+    getItem: (id: string) => T | null,
   ): FractionalPositionedList<T> {
     const list = new FractionalPositionedList<T>();
     const result = new Map();
-    for (const [key, value] of Object.entries(data)) {
-      const item = deserializeInnerType(value.item);
+    for (const [itemId, position] of Object.entries(positionsByItemId)) {
+      const item = getItem(itemId);
       if (item === null) {
+        logger.warn(`Item with ID ${itemId} not found in deserialization`);
         continue;
       }
-      result.set(key, {
-        item: deserializeInnerType(value.item),
-        position: value.position,
+      result.set(itemId, {
+        item,
+        position,
       });
     }
-
     list.map = result;
     return list;
   }

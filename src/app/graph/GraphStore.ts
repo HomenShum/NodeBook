@@ -1,7 +1,7 @@
 import { makeAutoObservable, toJS } from "mobx";
 
-import { SerializedGraphStore, SerializedRelation } from "@/app/persistence/SerializedData";
 import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
+import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import { uuid } from "@/app/util";
 import logger from "@/lib/logger";
 
@@ -670,98 +670,31 @@ export class GraphStore {
   }
 
   deserializeInPlace(data: SerializedGraphStore) {
-    const nodesById = new Map<string, GraphNode>();
+    this.nodesById = new Map<string, GraphNode>();
+    this.relationTypesById = {};
+    this.relationsById = new Map<string, GraphRelation>();
+    this.relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
+    this.pinnedRelationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
+    this.relationToBundles = new Map<string, GraphNode[]>();
+
+    // Nodes
     for (const [key, value] of Object.entries(data.nodesById)) {
-      nodesById.set(key, GraphNode.deserialize(value, this));
+      this.nodesById.set(key, GraphNode.deserialize(value, this));
+      this.relationsByNodeId.set(key, new FractionalPositionedList());
+      this.pinnedRelationsByNodeId.set(key, new FractionalPositionedList());
     }
-
-    const relationTypesById: Record<string, GraphRelationType> = {};
-    for (const [key, value] of Object.entries(data.relationTypesById)) {
-      relationTypesById[key] = value;
-    }
-
-    const relationsById = new Map<string, GraphRelation>();
-    const getObjectById = (id: string) => nodesById.get(id) || relationsById.get(id);
-    const getRelationTypeById = (id: string) => relationTypesById[id];
-    for (const [key, value] of Object.entries(data.relationsById)) {
-      // Placeholders set here should be cleaned up by subsequent relations in this loop
-      relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById)!);
-    }
-
-    for (const [_, relation] of relationsById) {
-      if (isPlaceholder(relation.from)) {
-        // Do one last check to see if we can resolve the placeholder, log to console if not
-        if (getObjectById(relation.from.id)) {
-          relation.setFrom(getObjectById(relation.from.id)!);
-        } else {
-          console.warn("Deserialized relation with placeholder from", relation);
-          // Delete the relation if we can't resolve the placeholder to prevent issues later
-          relationsById.delete(relation.id);
-        }
-      }
-      if (isPlaceholder(relation.to)) {
-        if (getObjectById(relation.to.id)) {
-          relation.setTo(getObjectById(relation.to.id)!);
-        } else {
-          console.warn("Deserialized relation with placeholder to", relation);
-          relationsById.delete(relation.id);
-        }
-      }
-    }
-
-    const serializedToRelation = (data: string | SerializedRelation) => {
-      if (typeof data === "string") {
-        return relationsById.get(data) ?? null;
-      } else if (typeof data === "object") {
-        return relationsById.get(data.id) ?? null;
-      }
-      return null;
-    };
-    const relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
-    for (const [key, value] of Object.entries(data.relationsByNodeId)) {
-      relationsByNodeId.set(key, FractionalPositionedList.deserialize<GraphRelation>(value, serializedToRelation));
-    }
-
-    const pinnedRelationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
-    for (const [key, value] of Object.entries(data.pinnedRelationsByNodeId)) {
-      pinnedRelationsByNodeId.set(
-        key,
-        FractionalPositionedList.deserialize<GraphRelation>(value, serializedToRelation),
-      );
-    }
-
-    const relationToBundles = new Map<string, GraphNode[]>();
-    if (data.relationToBundles) {
-      for (const [relationId, bundlesArray] of Object.entries(data.relationToBundles)) {
-        if (!relationsById.has(relationId)) continue;
-        relationToBundles.set(
-          relationId,
-          bundlesArray.map((bundle) => nodesById.get(bundle.id)).filter((b) => !!b) as GraphNode[],
-        );
-      }
-    }
-
-    this.nodesById = nodesById;
-    this.relationsById = relationsById;
-    this.relationTypesById = relationTypesById;
-    this.relationsByNodeId = relationsByNodeId;
-    this.pinnedRelationsByNodeId = pinnedRelationsByNodeId;
-    this.relationToBundles = relationToBundles;
-
     const outlineRoot = this.nodesById.get(OUTLINE_ROOT_ID);
     if (outlineRoot) {
       this.outlineRoot = outlineRoot;
     } else {
       this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
     }
-
     const userRoot = this.nodesById.get(USER_ROOT_ID);
     if (userRoot) {
       this.userRoot = userRoot;
     } else {
       this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
     }
-
     const thoughtstreamRoot = this.nodesById.get(THOUGHTSTREAM_ROOT_ID);
     if (thoughtstreamRoot) {
       this.thoughtstreamRoot = thoughtstreamRoot;
@@ -772,6 +705,39 @@ export class GraphStore {
       });
     }
 
+    // Relation types
+    for (const [key, value] of Object.entries(data.relationTypesById)) {
+      this.relationTypesById[key] = value;
+    }
+
+    // Relations
+    const getObjectById = (id: string) => this.nodesById.get(id) || this.relationsById.get(id);
+    const getRelationTypeById = (id: string) => this.relationTypesById[id];
+    for (const [key, value] of Object.entries(data.relationsById)) {
+      // Placeholders set here should be cleaned up by subsequent relations in this loop
+      this.relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById)!);
+    }
+    for (const [_, relation] of this.relationsById) {
+      if (isPlaceholder(relation.from)) {
+        // Do one last check to see if we can resolve the placeholder, log to console if not
+        if (getObjectById(relation.from.id)) {
+          relation.setFrom(getObjectById(relation.from.id)!);
+        } else {
+          console.warn("Deserialized relation with placeholder from", relation);
+          // Delete the relation if we can't resolve the placeholder to prevent issues later
+          this.relationsById.delete(relation.id);
+        }
+      }
+      if (isPlaceholder(relation.to)) {
+        if (getObjectById(relation.to.id)) {
+          relation.setTo(getObjectById(relation.to.id)!);
+        } else {
+          console.warn("Deserialized relation with placeholder to", relation);
+          this.relationsById.delete(relation.id);
+        }
+      }
+    }
+    // Ensure there's a relation between user node and outline/thoughtstream roots
     const outlineRootRelationFromUserRoot = this.getRelationList(this.outlineRoot)
       .values()
       .find((r) => r.item.from.id === this.userRoot.id);
@@ -784,7 +750,6 @@ export class GraphStore {
         relationType: this.relationTypesById.child,
       });
     }
-
     const thoughtstreamRootRelationFromUserRoot = this.getRelationList(this.thoughtstreamRoot)
       .values()
       .find((r) => r.item.from.id === this.userRoot.id);
@@ -796,6 +761,38 @@ export class GraphStore {
         to: this.thoughtstreamRoot,
         relationType: this.relationTypesById.child,
       });
+    }
+
+    // Relations indexed by node id with positions
+    for (const [nodeId, positionsByRelationId] of Object.entries(data.relationsByNodeId)) {
+      this.relationsByNodeId.set(
+        nodeId,
+        FractionalPositionedList.deserialize<GraphRelation>(
+          positionsByRelationId,
+          (id) => this.relationsById.get(id) ?? null,
+        ),
+      );
+    }
+
+    // Pinned relations indexed by node id with positions
+    for (const [nodeId, positionsByRelationId] of Object.entries(data.pinnedRelationsByNodeId)) {
+      this.pinnedRelationsByNodeId.set(
+        nodeId,
+        FractionalPositionedList.deserialize<GraphRelation>(
+          positionsByRelationId,
+          (id) => this.relationsById.get(id) ?? null,
+        ),
+      );
+    }
+
+    if (data.relationToBundles) {
+      for (const [relationId, bundlesArray] of Object.entries(data.relationToBundles)) {
+        if (!this.relationsById.has(relationId)) continue;
+        this.relationToBundles.set(
+          relationId,
+          bundlesArray.map((bundle) => this.nodesById.get(bundle.id)).filter((b) => !!b) as GraphNode[],
+        );
+      }
     }
   }
 

@@ -21,10 +21,7 @@ type SerializedBundle = SerializedGraphNode;
 
 type SerializedRelationsByNodeId = {
   [nodeId: string]: {
-    [relationId: string]: {
-      item: SerializedRelation;
-      position: Position;
-    };
+    [relationId: string]: Position;
   };
 };
 
