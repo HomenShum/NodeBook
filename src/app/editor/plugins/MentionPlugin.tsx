@@ -6,7 +6,7 @@ import {
   MenuTextMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
-import { ReactPortal, Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ReactPortal, Ref, useCallback, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
@@ -14,10 +14,10 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useRenderController } from "@/app/render/useRenderController";
-import { sortByPrefixMatch, useCurView } from "@/app/util";
 
 import styles from "./MentionPlugin.module.css";
+
+const SUGGESTION_LIST_LENGTH_LIMIT = 5;
 
 // Much of this implementation is copied from:
 //
@@ -35,12 +35,10 @@ class MentionTypeaheadOption extends MenuOption {
 
 export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: boolean) => void }): JSX.Element | null {
   const { treeNode } = useTreeNode();
-  const [queryString, setQueryString] = useState<string | null>(null);
   const node = treeNode.object;
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  const renderController = useRenderController();
-  const curView = useCurView();
+
   const onSelectOption = useCallback(
     async (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
       let graphNode: GraphNode; // For some reason have to declare this way to make TSC happy
@@ -79,35 +77,47 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
     },
     [editor, graphStore, node],
   );
+  const prevText = useRef<string | null>(null);
 
-  const options: Array<MentionTypeaheadOption> = useMemo(() => {
-    const SUGGESTION_LIST_LENGTH_LIMIT = 5;
-    if (queryString === null) return [];
-    let matchingNodes = graphStore.nodes.filter(
-      (n) => n.text.toLowerCase().includes(queryString.toLowerCase()) && n.id !== node.id,
-    );
-    sortByPrefixMatch(matchingNodes, queryString);
-
-    const optionsForExistingNodes = matchingNodes
-      .map((node) => new MentionTypeaheadOption(node.text, node))
-      .slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
-
-    const newNodeOption = new MentionTypeaheadOption("Create new node: " + queryString);
-    return [...optionsForExistingNodes, newNodeOption];
-  }, [queryString, graphStore.nodes, node]);
-
-  const menuRenderFn = getMenuRenderFn(options);
+  const [options, setOptions] = useState<MentionTypeaheadOption[]>([]);
+  const limitedOptions = options.slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
+  const menuRenderFn = getMenuRenderFn(limitedOptions);
   return (
     <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
-      onQueryChange={setQueryString}
+      onQueryChange={() => {}}
       onSelectOption={onSelectOption}
       triggerFn={(text) => {
         const match = checkForMentionMatch(text);
-        const shouldOpen = match !== null;
-        setDropdownOpen(shouldOpen);
+        if (match && match.matchingString.length > 0) {
+          setDropdownOpen(true);
+          const queryString = match.matchingString.toLocaleLowerCase();
+          setOptions((prevOptions) => {
+            if (prevOptions.length > 0 && prevText.current && text.startsWith(prevText.current)) {
+              // If we've just added to the query, we can filter the existing options
+              return [
+                ...prevOptions.slice(0, -1).filter((option) => option.name.toLowerCase().includes(queryString)),
+                new MentionTypeaheadOption("Create new node: " + queryString),
+              ];
+            } else {
+              // Otherwise, we need to search the graph
+              const matchingNodes = graphStore
+                .search(queryString)
+                .sort((a, b) => b.score - a.score)
+                .map(({ object }) => object);
+              return [
+                ...matchingNodes.map((node) => new MentionTypeaheadOption(node.text, node)),
+                new MentionTypeaheadOption("Create new node: " + queryString),
+              ];
+            }
+          });
+        } else {
+          setDropdownOpen(false);
+          setOptions([]);
+        }
+        prevText.current = text;
         return match;
       }}
-      options={options}
+      options={limitedOptions}
       menuRenderFn={menuRenderFn}
       // High priority so it takes precedence over the split on enter command
       commandPriority={COMMAND_PRIORITY_HIGH}
@@ -145,7 +155,6 @@ function checkForMentionMatch(text: string): MenuTextMatch | null {
     "(^|\\s|\\()(" + "[" + TRIGGERS + "]" + "((?:" + VALID_CHARS + "){0," + ALIAS_LENGTH_LIMIT + "})" + ")$",
   );
 
-  const minMatchLength = 3;
   let match = AtSignMentionsRegex.exec(text);
   if (match === null) {
     match = AtSignMentionsRegexAliasRegex.exec(text);
@@ -155,13 +164,11 @@ function checkForMentionMatch(text: string): MenuTextMatch | null {
     // length to add it to the leadOffset
     const maybeLeadingWhitespace = match[1];
     const matchingString = match[3];
-    if (matchingString.length >= minMatchLength) {
-      return {
-        leadOffset: match.index + maybeLeadingWhitespace.length,
-        matchingString,
-        replaceableString: match[2],
-      };
-    }
+    return {
+      leadOffset: match.index + maybeLeadingWhitespace.length,
+      matchingString,
+      replaceableString: match[2],
+    };
   }
   return null;
 }

@@ -80,7 +80,9 @@ export class GraphStore {
   constructor(settingsStore: SettingsStore) {
     this.settingsStore = settingsStore;
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
-    makeAutoObservable(this);
+    makeAutoObservable(this, {
+      search: false,
+    });
     this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
     this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
     this.thoughtstreamRoot = this.createNode({
@@ -955,5 +957,18 @@ export class GraphStore {
         this.deleteRelation(obj);
       }
     }
+  }
+
+  search(query: string): { object: GraphNode; score: number }[] {
+    const procQuery = query.toLowerCase();
+    return Array.from(this.nodesById.values())
+      .filter((node) => node.text.toLocaleLowerCase().includes(procQuery))
+      .map((node) => {
+        const text = node.text.toLocaleLowerCase();
+        return {
+          object: node,
+          score: (text.length - (text.indexOf(procQuery) + 1)) / text.length,
+        };
+      });
   }
 }
