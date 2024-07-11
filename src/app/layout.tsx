@@ -100,6 +100,7 @@ export default function RootTemplate({
             persistGraphData(newDataString);
           }
         }, 500);
+        if (env.persistTo !== "server") return;
         const channel = pusher.subscribe("mew-sync-channel");
         channel.bind("transaction-accepted", (data: any) => {
           graphStore.handleSyncTransactionAccepted(data);
