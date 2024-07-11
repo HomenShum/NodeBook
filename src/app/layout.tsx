@@ -1,6 +1,7 @@
 "use client";
 import { autorun, getDependencyTree, getObserverTree, toJS } from "mobx";
 import dynamic from "next/dynamic";
+import { Inter } from "next/font/google";
 import Pusher from "pusher-js";
 import { useEffect, useRef, useState } from "react";
 
@@ -61,6 +62,12 @@ if (typeof window !== "undefined" && env.env !== "production") {
   };
 }
 
+// Loading main font
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+});
+
 /**
  * The root component which wraps every page in the application
  * and provides the app stores.
@@ -112,7 +119,7 @@ export default function RootTemplate({
   }, []);
 
   return (
-    <html>
+    <html className={inter.className}>
       <DataLoadProvider value={hasLoaded}>
         <SettingsStoreProvider value={settingsStore}>
           <GraphStoreProvider value={graphStore}>

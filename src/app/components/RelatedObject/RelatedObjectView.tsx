@@ -94,12 +94,7 @@ const Content = observer(() => {
     : "0px";
   return (
     <>
-      <div
-        style={{
-          backgroundColor: tree.isNodeSelected(treeNode.id) ? "rgba(0, 0, 255, 0.1)" : "transparent",
-        }}
-        className={styles.RelatedObjectNode}
-      >
+      <div className={cn(styles.RelatedObjectNode, tree.isNodeSelected(treeNode.id) && styles.Selected)}>
         <div className={styles.RelatedObjectNodeContent}>
           {showRelationType && (
             <RelationCombobox

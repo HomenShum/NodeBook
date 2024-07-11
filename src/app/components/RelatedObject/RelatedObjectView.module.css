@@ -4,10 +4,6 @@
   justify-content: left;
 }
 
-.RelatedObject.Selected {
-  background-color: var(--teal-a2);
-}
-
 .RelatedObjectContent {
   display: flex;
   gap: 4px;
@@ -38,7 +34,7 @@ Left Area
   align-items: center;
   position: absolute;
   right: 100%;
-  top: 8px;
+  top: 7px;
 }
 
 .RelatedObjectActions {
@@ -54,6 +50,7 @@ Bullet
 .RelatedObjectBulletContainer {
   position: relative;
   display: flex;
+  justify-content: center;
   width: 16px;
   height: 16px;
   top: 4px;
@@ -120,9 +117,14 @@ Node
   flex-direction: column;
   flex: 1 1 0%;
   align-items: center;
+  background-color: transparent;
   position: relative;
   width: 100%;
   color: var(--gray-12);
+  border-radius: 4px;
+}
+.RelatedObjectNode.Selected {
+  background-color: var(--teal-a3);
 }
 
 .RelatedObjectNodeContent {
@@ -152,18 +154,20 @@ Right Area
 */
 
 .RelatedObjectRightArea {
+  position: relative;
   display: flex;
   gap: 8px;
   align-items: center;
-  padding-top: 4px;
+  top: 3px;
 }
 
 /* Pin Icon of each bullet */
 .PinIcon {
   position: relative;
+  height: 18px;
   top: 0;
   padding: 0 0;
-  transform: scale(0.8) translateY(-0.5px);
+  transform: scale(0.8) translateY(-2px);
   color: var(--gray-6);
 }
 

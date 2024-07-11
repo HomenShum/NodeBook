@@ -57,10 +57,12 @@
   background-color: var(--teal-10);
   color: var(--teal-1);
 }
-
+.ghost {
+  color: var(--gray-11);
+}
 .ghost:hover {
   background-color: var(--gray-3);
-  color: var(--gray-11);
+  color: var(--gray-12);
 }
 
 .link {

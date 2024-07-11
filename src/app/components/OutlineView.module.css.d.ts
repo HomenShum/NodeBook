@@ -1,6 +1,4 @@
 declare const styles: {
-  readonly "AddButton": string;
-  readonly "AddButtonIcon": string;
   readonly "Breadcrumb": string;
   readonly "BreadcrumbContainer": string;
   readonly "Chevron": string;
