@@ -6,6 +6,7 @@ import Pusher from "pusher-js";
 import { useEffect, useRef, useState } from "react";
 
 import { DataLoadProvider } from "@/app/DataLoadContext";
+import { AuthProvider } from "@/app/auth/AuthProvider";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
@@ -82,6 +83,7 @@ export default function RootTemplate({
   const persistedData = useRef<string | null>(null);
   const curView = useCurView();
 
+  // TODO : hide persistence behind auth
   useEffect(() => {
     if (!env.isPersistenceEnabled) {
       setHasLoaded(true);
@@ -120,19 +122,21 @@ export default function RootTemplate({
 
   return (
     <html className={inter.className}>
-      <DataLoadProvider value={hasLoaded}>
-        <SettingsStoreProvider value={settingsStore}>
-          <GraphStoreProvider value={graphStore}>
-            <ViewStoreProvider value={viewStore}>
-              <RenderControllerProvider value={renderController}>
-                <body>
-                  <App curView={curView}>{children}</App>
-                </body>
-              </RenderControllerProvider>
-            </ViewStoreProvider>
-          </GraphStoreProvider>
-        </SettingsStoreProvider>
-      </DataLoadProvider>
+      <AuthProvider>
+        <DataLoadProvider value={hasLoaded}>
+          <SettingsStoreProvider value={settingsStore}>
+            <GraphStoreProvider value={graphStore}>
+              <ViewStoreProvider value={viewStore}>
+                <RenderControllerProvider value={renderController}>
+                  <body>
+                    <App curView={curView}>{children}</App>
+                  </body>
+                </RenderControllerProvider>
+              </ViewStoreProvider>
+            </GraphStoreProvider>
+          </SettingsStoreProvider>
+        </DataLoadProvider>
+      </AuthProvider>
     </html>
   );
 }

@@ -1,5 +1,6 @@
 import { observer } from "mobx-react-lite";
 
+import { useAuth } from "@/app/auth/useAuth";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -33,6 +34,7 @@ function SelectSearchAndReplaceDropdown() {
 }
 
 export const DevTools = observer(() => {
+  const { logout } = useAuth();
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
@@ -246,6 +248,14 @@ export const DevTools = observer(() => {
           }}
         >
           Reset user setttings to default
+        </Button>
+        <Button
+          size="default"
+          variant="default"
+          style={{ maxWidth: "fit-content" }}
+          onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+        >
+          Log out
         </Button>
       </div>
     </div>
