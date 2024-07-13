@@ -1,5 +1,5 @@
 import { LexicalEditor } from "lexical";
-import { makeAutoObservable } from "mobx";
+import { isObservable, makeAutoObservable } from "mobx";
 
 import { Path } from "@/app/graph/GraphStore";
 import { makeAutoSaving } from "@/app/util";
@@ -20,12 +20,17 @@ export class RenderController {
   public isDarkMode = false;
 
   constructor() {
-    makeAutoObservable(this);
+    this.makeObservable();
     makeAutoSaving(this, {
       leftSidebarOpen: true,
       rightSidebarOpen: true,
       isDarkMode: true,
     });
+  }
+
+  makeObservable() {
+    if (isObservable(this)) return;
+    makeAutoObservable(this);
   }
 
   toggleLeftSidebar() {

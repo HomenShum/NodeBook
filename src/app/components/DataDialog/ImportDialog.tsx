@@ -22,7 +22,7 @@ export const ImportDialog = () => {
     const reader = new FileReader();
     reader.onload = async (event) => {
       const fileContent = event.target!.result;
-      await graphStore.deserializeInPlace(JSON.parse(fileContent as string));
+      await graphStore.resetAndLoad(JSON.parse(fileContent as string));
       setOpen(false);
     };
     reader.readAsText(file);
@@ -34,7 +34,7 @@ export const ImportDialog = () => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const fileContent = event.target!.result;
-      graphStore.deserializeAndMerge(JSON.parse(fileContent as string));
+      graphStore.load(JSON.parse(fileContent as string));
       setOpen(false);
     };
     reader.readAsText(file);

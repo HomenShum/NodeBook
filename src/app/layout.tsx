@@ -30,20 +30,11 @@ const App = dynamic(() => import("./App"), {
 const settingsStore = new SettingsStore();
 settingsStore.loadFromLocalStorage();
 const graphStore = new GraphStore(settingsStore);
-
 const viewStore = new ViewStore(settingsStore, graphStore);
 const renderController = new RenderController();
 // Initialize with blank entries in thoughtstream and outline
-// TODO: Pretty sure we should delete this as redundant with other initialization logic, but need to confirm
-// graphStore.addChildNode({ parentId: graphStore.outlineRoot.id }).then(({ node }) => {
-//   graphStore.addToThoughtstream(node);
-// });
-
-// Enable pusher logging - don't include this in production
-Pusher.logToConsole = true;
-
-const pusher = new Pusher(env.pusherKey, {
-  cluster: env.pusherCluster,
+graphStore.addChildNode({ parentId: graphStore.outlineRoot.id }).then(({ node }) => {
+  graphStore.addToThoughtstream(node);
 });
 
 autorun(() => {
@@ -95,7 +86,7 @@ export default function RootTemplate({
         isLoadingRef.current = true;
         await loadGraphData(graphStore, viewStore);
       } catch (e) {
-        graphStore.clear();
+        graphStore.reset();
         viewStore.clear();
         toast("Failed to load data from server. Starting with an empty graph.");
         throw e;
@@ -110,6 +101,10 @@ export default function RootTemplate({
           }
         }, 500);
         if (env.persistTo !== "server") return;
+        Pusher.logToConsole = true; // Enable pusher logging - don't include this in production
+        const pusher = new Pusher(env.pusherKey, {
+          cluster: env.pusherCluster,
+        });
         const channel = pusher.subscribe("mew-sync-channel");
         channel.bind("transaction-accepted", (data: any) => {
           graphStore.handleSyncTransactionAccepted(data);

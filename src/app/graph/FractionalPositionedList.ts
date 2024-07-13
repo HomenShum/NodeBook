@@ -1,5 +1,5 @@
 import { generateNKeysBetween } from "fractional-indexing";
-import { action, computed, makeObservable, observable } from "mobx";
+import { action, computed, isObservable, makeObservable, observable } from "mobx";
 
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SerializedPositionList } from "@/app/persistence/SerializedData";
@@ -26,8 +26,13 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
         item,
       });
     });
+    this.makeObservable();
+  }
+
+  makeObservable() {
+    if (isObservable(this)) return;
     makeObservable<FractionalPositionedList<T>, "map">(this, {
-      map: observable,
+      map: observable.shallow,
       keys: computed,
       add: action,
       delete: action,
@@ -142,24 +147,14 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
     return result;
   }
 
-  static deserialize<T extends ListItem & Serializable>(
-    positionsByItemId: SerializedPositionList<T>,
-    getItem: (id: string) => T | null,
-  ): FractionalPositionedList<T> {
-    const list = new FractionalPositionedList<T>();
-    const result = new Map();
-    for (const [itemId, position] of Object.entries(positionsByItemId)) {
-      const item = getItem(itemId);
-      if (item === null) {
-        logger.warn(`Item with ID ${itemId} not found in deserialization`);
-        continue;
-      }
-      result.set(itemId, {
-        item,
-        position,
-      });
-    }
-    list.map = result;
-    return list;
+  /**
+   * Loads positioned items into the list without clearing existing items.
+   * If an item already exists in the list, it will be replaced.
+   * @see file://./design-notes.md#load-methods
+   */
+  load(items: ItemWithPosition<T>[]) {
+    items.forEach((item) => {
+      this.map.set(item.item.id, item);
+    });
   }
 }

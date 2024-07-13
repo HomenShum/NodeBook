@@ -1,9 +1,9 @@
-import { IReactionDisposer, makeAutoObservable, reaction, toJS } from "mobx";
+import { action, computed, IReactionDisposer, isObservable, makeObservable, observable, reaction, toJS } from "mobx";
 
 import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
-import { GraphStore, Path, defaultRelationTypes } from "@/app/graph/GraphStore";
+import { defaultRelationTypes, GraphStore, Path } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedTree } from "@/app/persistence/SerializedData";
@@ -66,12 +66,52 @@ export class Tree {
     this.partialFilter = filter;
     this.expansionsByPath = expansions;
     this.selection = selection;
-    makeAutoObservable<Tree, "cache">(this, {
-      cache: false,
+    this.makeObservable();
+  }
+
+  makeObservable() {
+    if (isObservable(this)) return;
+    makeObservable(this, {
+      selection: observable,
+      rootObject: observable.ref,
+      pathToRoot: observable.shallow,
+      search: observable,
+      partialFilter: observable,
+      expansionsByPath: observable,
+      filter: computed,
+      state: computed,
+      root: computed,
+      selectionWithNodes: computed,
+      setFocusedNode: action,
+      selectBetween: action,
+      setRoot: action,
+      setPathExpanded: action,
+      togglePathExpanded: action,
+      setGroupExpanded: action,
+      toggleGroupExpanded: action,
+      setSearch: action,
+      updateFilter: action,
+      createChildOfRootAndFocus: action,
+      createChildNode: action,
+      deleteSelection: action,
+      indentSelection: action,
+      dedentSelection: action,
+      splitNode: action,
+      moveSelectedNodesUp: action,
+      moveSelectedNodesDown: action,
+      moveNodeSelectionHeadUp: action,
+      moveNodeSelectionHeadDown: action,
+      moveEditorSelectionUp: action,
+      moveEditorSelectionDown: action,
+      escapeSelection: action,
+      updateSubtreeExpansionAndSelectionPathState: action,
+      clear: action,
+      deserializeInPlace: action,
     });
   }
 
   private id: string;
+
   private graphStore: GraphStore;
 
   private settingsStore: SettingsStore;

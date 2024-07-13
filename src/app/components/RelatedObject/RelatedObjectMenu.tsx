@@ -14,7 +14,6 @@ import {
   RefreshCcwDot,
   Scan,
   ScanLine,
-  Trash2,
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -170,14 +169,6 @@ export const RelatedObjectMenu = observer(
           >
             <Download size={14} />
             Export subtree
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => {
-              graphStore.deleteSubtree(object);
-            }}
-          >
-            <Trash2 size={14} />
-            Delete subtree
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

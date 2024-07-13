@@ -10,7 +10,7 @@ const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
   const data = JSON.parse(dataString) as SerializedStores;
 
   if (data.graphStore) {
-    graphStore.deserializeInPlace(data.graphStore);
+    graphStore.resetAndLoad(data.graphStore);
   }
 
   if (data.viewStore) {
@@ -40,7 +40,7 @@ const loadRemoteData = async (graphStore: GraphStore, viewStore: ViewStore) => {
   }
 
   const syncData = await fetch("/api/sync").then((res) => res.json());
-  await graphStore.deserializeInPlace(syncData.data);
+  await graphStore.resetAndLoad(syncData.data);
 };
 
 export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore) {

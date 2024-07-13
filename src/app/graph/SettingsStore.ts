@@ -1,5 +1,6 @@
 "use client";
-import { makeAutoObservable } from "mobx";
+
+import { isObservable, makeAutoObservable } from "mobx";
 
 type SerializedUserSettings = {
   addThoughtstreamDirectChildrenToOutline?: boolean;
@@ -54,6 +55,11 @@ export class SettingsStore {
   public hidePinnedItems = false;
 
   constructor() {
+    this.makeObservable();
+  }
+
+  makeObservable() {
+    if (isObservable(this)) return;
     makeAutoObservable(this);
   }
 

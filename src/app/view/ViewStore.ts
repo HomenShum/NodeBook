@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { isObservable, makeAutoObservable } from "mobx";
 
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -16,11 +16,17 @@ export class ViewStore {
   public sidebarTrees: Tree[] = [];
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
+    this.makeObservable();
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
     this.mainStreamView = new Tree(graphStore, this.settingsStore, [graphStore.thoughtstreamRootRelationFromUserRoot]);
     this.mainOutlineView = new Tree(graphStore, this.settingsStore, [graphStore.outlineRootRelationFromUserRoot]);
-    makeAutoObservable(this);
+  }
+
+  makeObservable() {
+    if (!isObservable(this)) {
+      makeAutoObservable(this);
+    }
   }
 
   setSearchQuery(query: string) {

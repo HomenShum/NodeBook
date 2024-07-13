@@ -1,4 +1,4 @@
-import { makeAutoObservable, toJS } from "mobx";
+import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SerializedGraphNode } from "@/app/persistence/SerializedData";
@@ -61,7 +61,22 @@ export class GraphNode implements Serializable, GraphObject {
     this.isBundle = isBundle;
     this.isZone = isZone;
     this.isPrivate = isPrivate;
-    makeAutoObservable(this);
+    this.makeObservable();
+  }
+
+  makeObservable() {
+    if (isObservable(this)) return;
+    makeObservable(this, {
+      version: observable,
+      createdAt: observable,
+      isBundle: observable,
+      isZone: observable,
+      isPrivate: observable,
+      content: observable.shallow,
+      update: action,
+      text: computed,
+      relationsWithPositions: computed,
+    });
   }
 
   setIsPrivate(value: boolean) {
@@ -173,12 +188,6 @@ export class GraphNode implements Serializable, GraphObject {
     return `Node(${this.id.slice(0, 8)}: ${this.text.slice(0, 8)})`;
   }
 
-  private assertValidRelation(relation: GraphRelation) {
-    if (relation.from.id !== this.id && relation.to.id !== this.id) {
-      throw new Error(`Relation ${relation} does not involve node ${this}`);
-    }
-  }
-
   getPath({ limit = 10 }: { limit?: number } = {}): GraphRelation[] {
     const path: GraphRelation[] = [];
     let current: GraphObject | undefined = this;
@@ -206,17 +215,5 @@ export class GraphNode implements Serializable, GraphObject {
       isZone: this.isZone,
       isPrivate: this.isPrivate,
     };
-  }
-
-  static deserialize(data: SerializedGraphNode, store: GraphStore): GraphNode {
-    return new GraphNode(store, {
-      version: data.version,
-      id: data.id,
-      content: data.content,
-      createdAt: new Date(data.createdAt),
-      isBundle: data.isBundle,
-      isZone: data.isZone,
-      isPrivate: data.isPrivate,
-    });
   }
 }

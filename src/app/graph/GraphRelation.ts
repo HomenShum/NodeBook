@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { action, computed, isObservable, makeObservable, observable } from "mobx";
 
 import { ItemWithPosition } from "@/app/graph/FractionalPositionedList";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
@@ -9,7 +9,6 @@ import { comparePositions, uuid } from "@/app/util";
 import { GraphNode, PositionedRelation } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
-import { PlaceholderGraphObject, isPlaceholder } from "./PlaceholderGraphObject";
 
 export type GraphRelationType = {
   version: number;
@@ -44,14 +43,14 @@ export type DeletedGraphRelationData = {
 
 export class GraphRelation implements Serializable, GraphObject {
   type = "relation" as const;
-  private version: number;
+  private store: GraphStore;
   public id: string;
+  public version: number;
+  public createdAt: Date = new Date();
+  public isPrivate: boolean = true;
+  public relationType: GraphRelationType;
   public from: GraphObject;
   public to: GraphObject;
-  public relationType: GraphRelationType;
-  public createdAt: Date = new Date();
-  private store: GraphStore;
-  public isPrivate: boolean = true;
 
   constructor(
     store: GraphStore,
@@ -71,7 +70,50 @@ export class GraphRelation implements Serializable, GraphObject {
     this.relationType = type;
     this.store = store;
     this.isPrivate = isPrivate;
-    makeAutoObservable(this);
+    this.makeObservable();
+  }
+
+  makeObservable() {
+    if (isObservable(this)) return;
+    makeObservable(this, {
+      createdAt: observable,
+      isPrivate: observable,
+      relationType: observable.ref,
+      from: observable.ref,
+      to: observable.ref,
+      text: computed,
+      setType: action,
+      setFrom: action,
+      setTo: action,
+      setTarget: action,
+      setIsPrivate: action,
+      incrementVersion: action,
+    });
+  }
+
+  update(props: Partial<GraphRelationProps>) {
+    const propsBefore: Partial<GraphRelationProps> = {};
+    if (props.version && props.version !== this.version) {
+      propsBefore.version = this.version;
+      this.version = props.version;
+    }
+    if (props.from && props.from !== this.from) {
+      propsBefore.from = this.from;
+      this.setFrom(props.from);
+    }
+    if (props.to && props.to !== this.to) {
+      propsBefore.to = this.to;
+      this.setTo(props.to);
+    }
+    if (props.relationType && props.relationType !== this.relationType) {
+      propsBefore.relationType = this.relationType;
+      this.setType(props.relationType);
+    }
+    if (props.isPrivate !== undefined && props.isPrivate !== this.isPrivate) {
+      propsBefore.isPrivate = this.isPrivate;
+      this.setIsPrivate(props.isPrivate);
+    }
+    return propsBefore;
   }
 
   get text(): string {
@@ -189,36 +231,5 @@ export class GraphRelation implements Serializable, GraphObject {
       relationTypeId: this.relationType.id,
       isPrivate: this.isPrivate,
     };
-  }
-
-  static deserialize(
-    data: SerializedRelation,
-    store: GraphStore,
-    getObjectById: (id: string) => GraphObject | undefined,
-    getRelationTypeById: (id: string) => GraphRelationType | undefined,
-    nullInsteadOfPlaceholder = false,
-  ): GraphRelation | null {
-    const from = getObjectById(data.fromId) ?? new PlaceholderGraphObject(data.fromId);
-    const to = getObjectById(data.toId) ?? new PlaceholderGraphObject(data.toId);
-
-    if (nullInsteadOfPlaceholder && (isPlaceholder(from) || isPlaceholder(to))) {
-      return null;
-    }
-
-    const newRelation = new GraphRelation(store, {
-      version: data.version,
-      id: data.id,
-      from,
-      to,
-      relationType: getRelationTypeById(data.relationTypeId),
-      isPrivate: data?.isPrivate ?? true,
-    });
-    if (from instanceof GraphRelation && isPlaceholder(from.to) && from.to.id === data.id) {
-      from.setTo(newRelation);
-    }
-    if (to instanceof GraphRelation && isPlaceholder(to.from) && to.from.id === data.id) {
-      to.setFrom(newRelation);
-    }
-    return newRelation;
   }
 }

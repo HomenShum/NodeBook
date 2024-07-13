@@ -234,7 +234,7 @@ export const DevTools = observer(() => {
         </Button>
         <ClearData
           onConfirm={() => {
-            graphStore.clear();
+            graphStore.reset();
             viewStore.clear();
           }}
         />

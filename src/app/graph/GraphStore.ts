@@ -1,12 +1,17 @@
-import { makeAutoObservable, toJS } from "mobx";
+import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
-import { SerializedGraphStore } from "@/app/persistence/SerializedData";
+import {
+  SerializedGraphNode,
+  SerializedGraphStore,
+  SerializedPositionList,
+  SerializedRelation,
+} from "@/app/persistence/SerializedData";
 import { SyncQueue } from "@/app/sync/SyncQueue";
 import { uuid } from "@/app/util";
 import logger from "@/lib/logger";
 
-import { FractionalPositionedList } from "./FractionalPositionedList";
+import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import {
@@ -28,7 +33,7 @@ import {
   TxReplaceRelationLink,
   TxUpdateNode,
 } from "./GraphTransactionTypes";
-import { isPlaceholder } from "./PlaceholderGraphObject";
+import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
 import { SettingsStore } from "./SettingsStore";
 
 export const defaultRelationTypes: Record<string, GraphRelationType> = {
@@ -86,26 +91,50 @@ export class GraphStore {
 
   constructor(settingsStore: SettingsStore) {
     this.settingsStore = settingsStore;
-    Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
-    makeAutoObservable(this, {
-      search: false,
-    });
-    this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
-    this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
-    this.thoughtstreamRoot = this.createNode({
-      id: THOUGHTSTREAM_ROOT_ID,
-      content: [{ type: "text", value: "Stream" }],
-    });
-    this.outlineRootRelationFromUserRoot = this.createRelation({
-      from: this.userRoot,
-      to: this.outlineRoot,
-      relationType: this.relationTypesById.child,
-    });
-    this.thoughtstreamRootRelationFromUserRoot = this.createRelation({
-      from: this.userRoot,
-      to: this.thoughtstreamRoot,
-      relationType: this.relationTypesById.child,
-    });
+    const defaults = this.createDefaultObjects();
+    this.userRoot = defaults.userRoot;
+    this.outlineRoot = defaults.outlineRoot;
+    this.thoughtstreamRoot = defaults.thoughtstreamRoot;
+    this.outlineRootRelationFromUserRoot = defaults.outlineRootRelationFromUserRoot;
+    this.thoughtstreamRootRelationFromUserRoot = defaults.thoughtstreamRootRelationFromUserRoot;
+    this.makeObservable();
+  }
+
+  makeObservable() {
+    if (!isObservable(this)) {
+      makeObservable(this, {
+        nodesById: observable.shallow,
+        relationsById: observable.shallow,
+        relationTypesById: observable,
+        relationsByNodeId: observable.shallow,
+        pinnedRelationsByNodeId: observable.shallow,
+        relationToBundles: observable.shallow,
+        // TODO: does the fact these are async mess up the action?
+        // node
+        addNode: action,
+        removeNode: action,
+        updateNode: action,
+        // relation
+        addRelation: action,
+        removeRelation: action,
+        replaceRelationLink: action,
+        updateRelationTarget: action,
+        reverseRelation: action,
+        // relation type
+        createRelationType: action,
+        updateRelationType: action,
+        deleteRelationType: action,
+        // misc
+        addChildNode: action,
+        addToBundle: action,
+        removeFromBundle: action,
+        addToThoughtstream: action,
+        load: action,
+        clear: action,
+        reset: action,
+        resetAndLoad: action,
+      });
+    }
   }
 
   private isSyncing = false;
@@ -481,6 +510,20 @@ export class GraphStore {
     }
   }
 
+  /**
+   * Load a serialized graph into the store.
+   * @see file://./design-notes.md#load-methods
+   */
+  private loadSerializedNode(props: SerializedGraphNode): GraphNode {
+    const existing = this.getNode(props.id);
+    if (existing) {
+      existing.update(props);
+      return existing;
+    } else {
+      return this.createNode(props);
+    }
+  }
+
   private createChildNode({
     parent,
     nodeProps = {},
@@ -584,6 +627,22 @@ export class GraphStore {
         this.pinnedRelationsByNodeId.delete(relation.id);
       }
       throw e;
+    }
+  }
+
+  /**
+   * Load a serialized graph into the store.
+   * @see file://./design-notes.md#load-methods
+   */
+  private loadSerializedRelation(props: SerializedRelation): GraphRelation {
+    const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(props.fromId);
+    const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(props.toId);
+    const existing = this.getRelation(props.id);
+    if (existing) {
+      existing.update(props);
+      return existing;
+    } else {
+      return this.createRelation({ ...props, from, to });
     }
   }
 
@@ -704,15 +763,18 @@ export class GraphStore {
   // MOST THINGS ABOVE THIS LINE HAVE BEEN REFACTORED OR TRIAGED
 
   // --- ### ---
-
   clear() {
     this.nodesById.clear();
     this.relationsById.clear();
-    this.relationTypesById = {};
     this.relationsByNodeId.clear();
     this.pinnedRelationsByNodeId.clear();
     this.relationToBundles.clear();
+    Object.keys(this.relationTypesById).forEach((key) => {
+      delete this.relationTypesById[key];
+    });
+  }
 
+  createDefaultObjects() {
     Object.values(defaultRelationTypes).forEach((rt) => this.createRelationType(rt, true));
     this.outlineRoot = this.createNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
     this.userRoot = this.createNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
@@ -730,9 +792,18 @@ export class GraphStore {
       to: this.thoughtstreamRoot,
       relationType: this.relationTypesById.child,
     });
-    // Initialize with blank entries in thoughtstream and outline
-    const { node } = this.createChildNode({ parent: this.outlineRoot });
-    this.addToThoughtstream(node);
+    return {
+      outlineRoot: this.outlineRoot,
+      userRoot: this.userRoot,
+      thoughtstreamRoot: this.thoughtstreamRoot,
+      outlineRootRelationFromUserRoot: this.outlineRootRelationFromUserRoot,
+      thoughtstreamRootRelationFromUserRoot: this.thoughtstreamRootRelationFromUserRoot,
+    };
+  }
+
+  reset() {
+    this.clear();
+    this.createDefaultObjects();
   }
 
   addToBundle(relation: GraphRelation, bundle: GraphNode) {
@@ -802,33 +873,20 @@ export class GraphStore {
     return { bundle, relationToThoughtstream, relationToBundle };
   }
 
-  /**
-   * Call this method after creating a new object. Depending on the settings, it
-   * will add the object to the thoughtstream or outline as needed.
-   */
-  addElsewhereAfterCreate(obj: GraphObject, parent: GraphObject, root: GraphObject) {
-    if (
-      (this.settingsStore.addThoughtstreamNestedChildrenToThoughtstream && root.id === this.thoughtstreamRoot.id) ||
-      (this.settingsStore.addThoughtstreamDirectChildrenToOutline && parent.id === this.thoughtstreamRoot.id)
-    ) {
-      this.createRelation({
-        from: this.outlineRoot,
-        to: obj,
-        relationType: this.relationTypesById.child,
-      });
-    }
-    // Add to thoughtstream if necessary
-    if (this.settingsStore.addAllOutlineDescendantsToThoughtstream && root.id === this.outlineRoot.id) {
-      this.addToThoughtstream(obj);
-    }
-  }
-
   getNode(id: string): GraphNode | undefined {
     return this.nodesById.get(id);
   }
 
-  getObject(id: string): GraphObject | undefined {
-    return this.nodesById.get(id) || this.relationsById.get(id);
+  getRelation(id: string): GraphRelation | undefined {
+    return this.relationsById.get(id);
+  }
+
+  getObject(id: string): GraphNode | GraphRelation | undefined {
+    return this.getNode(id) || this.getRelation(id);
+  }
+
+  getRelationType(id: string): GraphRelationType | undefined {
+    return this.relationTypesById[id];
   }
 
   /**
@@ -862,6 +920,44 @@ export class GraphStore {
     const newList = new FractionalPositionedList<GraphRelation>();
     this.relationsByNodeId.set(node.id, newList);
     return newList;
+  }
+
+  /**
+   * Load serialized positioned relations list into the store.
+   * @see file://./design-notes.md#load-methods
+   */
+  loadSerializedAllRelationList(objectId: string, positionsByRelationId: SerializedPositionList<GraphRelation>) {
+    const { object, relationsWithPositions } = this.resolveRelationListReferences(objectId, positionsByRelationId);
+    const list = object.allRelationsList;
+    list.load(relationsWithPositions);
+  }
+
+  /**
+   * Load serialized pinned relations list into the store.
+   * @see file://./design-notes.md#load-methods
+   */
+  loadSerializedPinnedRelationList(objectId: string, positionsByRelationId: SerializedPositionList<GraphRelation>) {
+    const { object, relationsWithPositions } = this.resolveRelationListReferences(objectId, positionsByRelationId);
+    const list = object.pinnedRelationsList;
+    list.load(relationsWithPositions);
+  }
+
+  private resolveRelationListReferences(
+    objectId: string,
+    positionsByRelationId: SerializedPositionList<GraphRelation>,
+  ) {
+    const object = this.getObject(objectId) ?? new PlaceholderGraphObject(objectId); // TODO: what if it's a relation?
+    const relationsWithPositions: ItemWithPosition<GraphRelation>[] = [];
+    for (const [relationId, position] of Object.entries(positionsByRelationId)) {
+      const relation = this.getRelation(relationId);
+      if (!relation) {
+        // TODO should create placeholder relation here
+        logger.warn(`Relation with id ${relationId} does not exist`);
+        continue;
+      }
+      relationsWithPositions.push({ item: relation, position });
+    }
+    return { object, relationsWithPositions };
   }
 
   getPinnedRelationList(node: GraphObject): FractionalPositionedList<GraphRelation> {
@@ -959,206 +1055,37 @@ export class GraphStore {
     };
   }
 
-  async deserializeInPlace(data: SerializedGraphStore) {
-    this.nodesById = new Map<string, GraphNode>();
-    this.relationTypesById = {};
-    this.relationsById = new Map<string, GraphRelation>();
-    this.relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
-    this.pinnedRelationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
-    this.relationToBundles = new Map<string, GraphNode[]>();
+  /**
+   * {@link reset|Reset} the store and {@link load} the serialized data into it.
+   */
+  resetAndLoad(data: SerializedGraphStore) {
+    this.reset();
+    this.load(data);
+  }
 
-    // Nodes
-    for (const [key, value] of Object.entries(data.nodesById)) {
-      this.nodesById.set(key, GraphNode.deserialize(value, this));
-      this.relationsByNodeId.set(key, new FractionalPositionedList());
-      this.pinnedRelationsByNodeId.set(key, new FractionalPositionedList());
+  /**
+   * Load the serialized data into the store. Existing data isn't cleared, but values
+   * are overwritten if they already exist.
+   */
+  load(data: SerializedGraphStore) {
+    for (const props of Object.values(data.nodesById)) {
+      this.loadSerializedNode(props);
     }
-    const outlineRoot = this.nodesById.get(OUTLINE_ROOT_ID);
-    if (outlineRoot) {
-      this.outlineRoot = outlineRoot;
-    } else {
-      this.outlineRoot = await this.addNode({ id: OUTLINE_ROOT_ID, content: [{ type: "text", value: "My Graph" }] });
-    }
-    const userRoot = this.nodesById.get(USER_ROOT_ID);
-    if (userRoot) {
-      this.userRoot = userRoot;
-    } else {
-      this.userRoot = await this.addNode({ id: USER_ROOT_ID, content: [{ type: "text", value: "User" }] });
-    }
-    const thoughtstreamRoot = this.nodesById.get(THOUGHTSTREAM_ROOT_ID);
-    if (thoughtstreamRoot) {
-      this.thoughtstreamRoot = thoughtstreamRoot;
-    } else {
-      this.thoughtstreamRoot = await this.addNode({
-        id: THOUGHTSTREAM_ROOT_ID,
-        content: [{ type: "text", value: "Stream" }],
-      });
-    }
-
-    // Relation types
     for (const [key, value] of Object.entries(data.relationTypesById)) {
       this.relationTypesById[key] = value;
     }
-
-    // Relations
-    const getObjectById = (id: string) => this.nodesById.get(id) || this.relationsById.get(id);
-    const getRelationTypeById = (id: string) => this.relationTypesById[id];
-    for (const [key, value] of Object.entries(data.relationsById)) {
-      // Placeholders set here should be cleaned up by subsequent relations in this loop
-      this.relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById)!);
+    for (const props of Object.values(data.relationsById)) {
+      this.loadSerializedRelation(props);
     }
-    for (const [_, relation] of this.relationsById) {
-      if (isPlaceholder(relation.from)) {
-        // Do one last check to see if we can resolve the placeholder, log to console if not
-        if (getObjectById(relation.from.id)) {
-          relation.setFrom(getObjectById(relation.from.id)!);
-        } else {
-          console.warn("Deserialized relation with placeholder from", relation);
-          // Delete the relation if we can't resolve the placeholder to prevent issues later
-          this.relationsById.delete(relation.id);
-        }
-      }
-      if (isPlaceholder(relation.to)) {
-        if (getObjectById(relation.to.id)) {
-          relation.setTo(getObjectById(relation.to.id)!);
-        } else {
-          console.warn("Deserialized relation with placeholder to", relation);
-          this.relationsById.delete(relation.id);
-        }
-      }
-    }
-
-    // Relations indexed by node id with positions
     for (const [nodeId, positionsByRelationId] of Object.entries(data.relationsByNodeId)) {
-      this.relationsByNodeId.set(
-        nodeId,
-        FractionalPositionedList.deserialize<GraphRelation>(
-          positionsByRelationId,
-          (id) => this.relationsById.get(id) ?? null,
-        ),
-      );
+      this.loadSerializedAllRelationList(nodeId, positionsByRelationId);
     }
-
-    // Pinned relations indexed by node id with positions
     for (const [nodeId, positionsByRelationId] of Object.entries(data.pinnedRelationsByNodeId)) {
-      this.pinnedRelationsByNodeId.set(
-        nodeId,
-        FractionalPositionedList.deserialize<GraphRelation>(
-          positionsByRelationId,
-          (id) => this.relationsById.get(id) ?? null,
-        ),
-      );
+      this.loadSerializedPinnedRelationList(nodeId, positionsByRelationId);
     }
-
-    // Ensure there's a relation between user node and outline/thoughtstream roots
-    const outlineRootRelationFromUserRoot = this.getRelationList(this.outlineRoot)
-      .values()
-      .find((r) => r.item.from.id === this.userRoot.id);
-    if (outlineRootRelationFromUserRoot) {
-      this.outlineRootRelationFromUserRoot = outlineRootRelationFromUserRoot.item;
-    } else {
-      this.outlineRootRelationFromUserRoot = await this.addRelation({
-        fromId: this.userRoot.id,
-        toId: this.outlineRoot.id,
-        relationType: this.relationTypesById.child,
-      });
-    }
-    const thoughtstreamRootRelationFromUserRoot = this.getRelationList(this.thoughtstreamRoot)
-      .values()
-      .find((r) => r.item.from.id === this.userRoot.id);
-    if (thoughtstreamRootRelationFromUserRoot) {
-      this.thoughtstreamRootRelationFromUserRoot = thoughtstreamRootRelationFromUserRoot.item;
-    } else {
-      this.thoughtstreamRootRelationFromUserRoot = await this.addRelation({
-        fromId: this.userRoot.id,
-        toId: this.outlineRoot.id,
-        relationType: this.relationTypesById.child,
-      });
-    }
-
     if (data.relationToBundles) {
-      for (const [relationId, bundlesArray] of Object.entries(data.relationToBundles)) {
-        if (!this.relationsById.has(relationId)) continue;
-        this.relationToBundles.set(
-          relationId,
-          bundlesArray.map((bundle) => this.nodesById.get(bundle.id)).filter((b) => !!b) as GraphNode[],
-        );
-      }
-    }
-  }
-
-  deserializeAndMerge(data: SerializedGraphStore) {
-    for (const [key, value] of Object.entries(data.nodesById)) {
-      if (!this.nodesById.has(key)) {
-        this.createNode(value);
-      }
-    }
-    for (const [key, value] of Object.entries(data.relationTypesById)) {
-      if (!this.relationTypesById[key]) {
-        this.relationTypesById[key] = value;
-      }
-    }
-
-    const getObjectById = (id: string) => this.nodesById.get(id) || this.relationsById.get(id);
-    const getRelationTypeById = (id: string) => this.relationTypesById[id];
-    for (const [key, value] of Object.entries(data.relationsById)) {
-      if (this.relationsById.has(key)) continue;
-      // Placeholders set here should be cleaned up by subsequent relations in this loop
-      this.relationsById.set(key, GraphRelation.deserialize(value, this, getObjectById, getRelationTypeById)!);
-    }
-
-    for (const [_, relation] of this.relationsById) {
-      if (isPlaceholder(relation.from)) {
-        // Do one last check to see if we can resolve the placeholder, log to console if not
-        if (getObjectById(relation.from.id)) {
-          relation.setFrom(getObjectById(relation.from.id)!);
-        } else {
-          console.warn("Deserialized relation with placeholder from", relation);
-          // Delete the relation if we can't resolve the placeholder to prevent issues later
-          this.relationsById.delete(relation.id);
-          continue;
-        }
-      }
-      if (isPlaceholder(relation.to)) {
-        if (getObjectById(relation.to.id)) {
-          relation.setTo(getObjectById(relation.to.id)!);
-        } else {
-          console.warn("Deserialized relation with placeholder to", relation);
-          this.relationsById.delete(relation.id);
-          continue;
-        }
-      }
-      if (!isPlaceholder(relation.from) && !isPlaceholder(relation.to)) {
-        this.getRelationList(relation.from).add(relation);
-        this.getRelationList(relation.to).add(relation);
-
-        if (!this.pinnedRelationsByNodeId.has(relation.id)) {
-          const newList = new FractionalPositionedList<GraphRelation>();
-          this.pinnedRelationsByNodeId.set(relation.id, newList);
-        }
-      }
-    }
-
-    if (data.relationToBundles) {
-      for (const [relationId, bundlesArray] of Object.entries(data.relationToBundles)) {
-        if (!this.relationsById.has(relationId)) continue;
-        if (this.relationToBundles.has(relationId)) {
-          // Add any new bundles to the existing list
-          const existingBundles = this.relationToBundles.get(relationId)!;
-          const newBundles = bundlesArray
-            .map((bundle) => this.nodesById.get(bundle.id))
-            .filter((b) => !!b) as GraphNode[];
-          this.relationToBundles.set(relationId, [
-            ...existingBundles,
-            ...newBundles.filter((b) => !existingBundles.includes(b)),
-          ]);
-        } else {
-          this.relationToBundles.set(
-            relationId,
-            bundlesArray.map((bundle) => this.nodesById.get(bundle.id)).filter((b) => !!b) as GraphNode[],
-          );
-        }
-      }
+      // TODO: Implement this
+      logger.error("relationToBundles not implemented");
     }
   }
 
@@ -1235,18 +1162,6 @@ export class GraphStore {
       pinnedRelationsByNodeId: serializeMap(pinnedRelationsByNodeId),
       relationToBundles: serializeMapWithArrayValues(relationToBundles),
     };
-  }
-
-  deleteSubtree(root: GraphObject) {
-    const subtreeObjects = this.gatherSubtree(root);
-    for (const obj of subtreeObjects) {
-      if (obj instanceof GraphNode) {
-        this.deleteNode(obj);
-      } else if (obj instanceof GraphRelation) {
-        this.deleteRelation(obj);
-        // TODO: Check if need to deleteIfNoRelations for from/to nodes
-      }
-    }
   }
 
   search(query: string): { object: GraphNode; score: number }[] {
