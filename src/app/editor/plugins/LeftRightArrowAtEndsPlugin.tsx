@@ -13,9 +13,10 @@ import { useEffect } from "react";
 import { useTree } from "@/app/tree/TreeContext";
 
 /**
- * Plugin to jump focus to other editors using arrow keys.
+ * Plugin to jump focus to other editors using left and right arrow keys
+ * when at the start or end of the editor.
  */
-export const ArrowKeyNavPlugin = () => {
+export const LeftRightArrowAtEndsPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   useEffect(() => {
@@ -54,7 +55,7 @@ export const ArrowKeyNavPlugin = () => {
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor]);
+  }, [editor, tree]);
 
   return null;
 };

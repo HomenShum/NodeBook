@@ -3,7 +3,7 @@ import { ChevronRight, Ellipsis, HomeIcon, Plus } from "lucide-react";
 import { autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Options, useHotkeys } from "react-hotkeys-hook";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -30,13 +30,15 @@ import s from "./OutlineView.module.css";
 
 export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   const graphStore = useGraphStore();
-  useOutlineHotkeys({ tree });
+  const treeRef = useRef<HTMLDivElement>(null);
+  const hasFocus = useCallback(() => !!treeRef.current?.contains(document.activeElement), [treeRef]);
+  useOutlineHotkeys({ tree, hasFocus });
   useBindEditorFocusToTree({ tree });
   const treeNode = tree.state.root;
   const ancestors = getAncestorsAsArray(treeNode);
   return (
     <TreeContext.Provider value={tree}>
-      <div className={s.OutlineView}>
+      <div ref={treeRef} className={s.OutlineView}>
         {ancestors.length > 1 && <Breadcrumbs treeNode={treeNode} />}
         <div className={s.TitleContainer}>
           {treeNode.object.id === graphStore.outlineRoot.id && <HomeIcon size={20} />}
@@ -193,10 +195,12 @@ const useBindEditorFocusToTree = ({ tree }: { tree: Tree }) => {
   }, [tree, renderController]);
 };
 
-function useOutlineHotkeys({ tree }: { tree: Tree }) {
+function useOutlineHotkeys({ tree, hasFocus }: { tree: Tree; hasFocus: () => boolean }) {
   const defaults: Options = { enableOnContentEditable: true, preventDefault: true };
   useHotkeys("mod+shift+ArrowUp", () => tree.moveSelectedNodesUp(), defaults, [tree]);
   useHotkeys("mod+shift+ArrowDown", () => tree.moveSelectedNodesDown(), defaults, [tree]);
+  useHotkeys("mod+ArrowUp", () => tree.collapseAtSelection(), defaults, [tree]);
+  useHotkeys("mod+ArrowDown", () => tree.expandAtSelection(), defaults, [tree]);
   useHotkeys("ArrowUp", () => tree.moveEditorSelectionUp(), defaults, [tree]);
   useHotkeys("ArrowDown", () => tree.moveEditorSelectionDown(), defaults, [tree]);
   useHotkeys("shift+ArrowUp", () => tree.moveNodeSelectionHeadUp(), defaults, [tree]);
@@ -206,4 +210,16 @@ function useOutlineHotkeys({ tree }: { tree: Tree }) {
   useHotkeys("tab", () => tree.indentSelection(), defaults, [tree]);
   useHotkeys("shift+tab", () => tree.dedentSelection(), defaults, [tree]);
   useHotkeys("esc", () => tree.escapeSelection(), defaults, [tree]);
+  useHotkeys("mod+.", () => tree.setRootToSelection(), defaults, [tree]);
+  useHotkeys(
+    "mod+k",
+    (e) => {
+      if (hasFocus()) {
+        e.stopPropagation();
+        tree.createChildOfRootAndFocus();
+      }
+    },
+    defaults,
+    [tree],
+  );
 }

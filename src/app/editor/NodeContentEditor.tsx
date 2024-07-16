@@ -10,7 +10,6 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { CreateNodeAtTopPlugin } from "@/app/editor/plugins/keyboard/CreateNodeAtTopPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -19,22 +18,16 @@ import { useTree } from "@/app/tree/TreeContext";
 import { isUnlabelledChild } from "@/app/tree/utils";
 import { cn } from "@/lib/utils";
 
-import { IgnoreSpaceAtStartOfLabelledRelationsPlugin } from "./plugins/IgnoreSpaceAtStartOfLabelledRelationsPlugin";
-import { JumpSelectionPlugin } from "./plugins/JumpSelectionPluigin";
+import { BackspaceMergeNodesPlugin } from "./plugins/BackspaceMergeNodesPlugin";
+import { EnterKeyPlugin } from "./plugins/EnterKeyPlugin";
+import { LeftRightArrowAtEndsPlugin } from "./plugins/LeftRightArrowAtEndsPlugin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
+import { PastePlugin } from "./plugins/pastePlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
-import { ReplaceObjectPlugin } from "./plugins/ReplaceObjectPlugin";
 import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { TrackFocusedPathPlugin } from "./plugins/TrackFocusedPathPlugin";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
-import { ArrowKeyExpandCollapsePlugin } from "./plugins/keyboard/ArrowKeyExpandCollapsePlugin";
-import { ArrowKeyNavPlugin } from "./plugins/keyboard/ArrowKeyNavPlugin";
-import { BackspaceMergeNodesPlugin } from "./plugins/keyboard/BackspaceMergeNodesPlugin";
-import { EnterKeyPlugin } from "./plugins/keyboard/EnterKeyPlugin";
-import { SetNodeAsRootPlugin } from "./plugins/keyboard/SetNodeAsRootPlugin";
-import { TabAndBulletPlugin } from "./plugins/keyboard/TabAndBulletPlugin";
-import { PastePlugin } from "./plugins/pastePlugin";
 
 import styles from "./Editor.module.css";
 
@@ -92,11 +85,7 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
     (settingsStore.searchAndReplaceDropdown === "all" ||
       (settingsStore.searchAndReplaceDropdown === "labelled-only" && !isUnlabelledChild(treeNode)));
   return (
-    <div
-      ref={ref}
-      className={cn(styles.EditorWrapper, settingsStore.showAtSignOnMention && styles.showAtSignPrefix)}
-      // style={{ textIndent: indent, position: "relative", left: `-${indent}` }}
-    >
+    <div ref={ref} className={cn(styles.EditorWrapper, settingsStore.showAtSignOnMention && styles.showAtSignPrefix)}>
       <LexicalComposer initialConfig={initialConfig}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
@@ -106,14 +95,9 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
         <HistoryPlugin />
         <ClearEditorPlugin />
         {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
-        <ArrowKeyNavPlugin />
-        <ArrowKeyExpandCollapsePlugin />
+        <LeftRightArrowAtEndsPlugin />
         <EnterKeyPlugin />
-        <TabAndBulletPlugin />
         <BackspaceMergeNodesPlugin />
-        <CreateNodeAtTopPlugin />
-        <SetNodeAsRootPlugin />
-        <ReplaceObjectPlugin />
         <PastePlugin />
         <RelationPlugin />
         <MentionPlugin setDropdownOpen={setMentionDropdownOpen} />
@@ -125,10 +109,8 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
           }}
         />
         {showSearchAndReplaceDropdown && <AutocompleteDropdownPlugin parentRef={ref} />}
-        <IgnoreSpaceAtStartOfLabelledRelationsPlugin />
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
         <TrackFocusedPathPlugin pathToNodeStr={treeNode.path} />
-        <JumpSelectionPlugin />
       </LexicalComposer>
     </div>
   );
