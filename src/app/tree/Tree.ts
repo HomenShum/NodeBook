@@ -600,49 +600,44 @@ export class Tree {
   // TODO: feels like this could be simplified
   private moveNodeSelectionHead(dir: "up" | "down"): boolean {
     const selection = this.selectionWithNodes;
-    if (selection?.type === "editor") {
+    if (!selection) return false;
+    if (selection.type === "editor") {
       // convert editor selection to node selection
-      const head = selection.treeNode;
-      this.selection = { type: "node", anchorNodeId: head.id, headNodeId: head.id };
+      this.selection = { type: "node", anchorNodeId: selection.treeNode.id, headNodeId: selection.treeNode.id };
       return true;
-    } else if (selection?.type === "node") {
-      // Get the next node in the given direction from the head. This is either
-      // the next node directly aboven/below the head or if that's already
-      // selected then sibling above/below the head
-      const { anchor, head } = selection;
-      let newHead: DescendantTreeNode | null = null;
-      let newAnchor: DescendantTreeNode | null = null;
-      if (dir === "up") {
-        newHead = getNextAbove(head) ?? null;
-        newHead = newHead && this.isNodeSelected(newHead.path) ? head.siblingAbove : newHead;
-        if (newHead && newHead.parentGroup.id !== anchor.parentGroup.id) {
-          // If the new head is in a different group, move up to the parent group
-          newHead = newHead.parent instanceof DescendantTreeNode ? newHead.parent : null;
-        }
-        if (newHead && anchor.path.startsWith(newHead.path)) {
-          newAnchor = newHead;
-        }
-      } else {
-        newHead = getNextBelow(head) ?? null;
-        newHead = newHead && this.isNodeSelected(newHead.path) ? head.siblingBelow : newHead;
-        if (newHead && newHead.parentGroup.id !== anchor.parentGroup.id) {
-          // don't allow moving down into a different group
-          return false;
-        }
-      }
-      if (this.selection?.type !== "node") {
-        logger.warn(`Expected node selection type "node" but seeing "${this.selection?.type}"`);
+    } else if (selection.type === "node") {
+      if (selection.type !== this.selection?.type) {
+        // This should never happen. The selection and computed selection types should always match.
+        logger.warn("Selection type mismatch", { selection, current: this.selection });
         return false;
       }
-      if (newHead) {
-        this.selection.headNodeId = newHead.path;
-      }
-      if (newAnchor) {
-        this.selection.anchorNodeId = newAnchor.path;
+      const { anchor, head, bottom } = selection;
+      if (dir === "up") {
+        const nextNode = getNextAbove(head) ?? null;
+        if (!nextNode || nextNode.parentGroup.id !== head.parentGroup.id) return false;
+        if (head === anchor) {
+          // Selection is collapsed on single node. If the selection is moving up a subtree, move the anchor with it.
+          this.selection.headNodeId = nextNode.path;
+          if (nextNode.isAncestorOf(anchor)) {
+            this.selection.anchorNodeId = nextNode.path;
+          }
+        } else if (head === bottom) {
+          // Head is at the bottom end of selection range. Move to next node above, unless that's
+          // within the anchors subtree, in which case bring the head up to the anchor.
+          this.selection.headNodeId = nextNode.isDescendantOf(anchor) ? anchor.path : nextNode.path;
+        } else {
+          // Head is at the top end of selection range. Move to next node above.
+          this.selection.headNodeId = nextNode.path;
+        }
+      } else {
+        const nextNode = getNextSubtreeBelow(head) ?? null;
+        if (!nextNode || nextNode.parentGroup.id !== head.parentGroup.id) return false;
+        this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextNode.path };
       }
       return true;
+    } else {
+      return selection satisfies never;
     }
-    return false;
   }
 
   /**

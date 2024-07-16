@@ -124,7 +124,11 @@ export function groupSiblings(treeNodes: DescendantTreeNode[]): DescendantTreeNo
  * the given nodes descendants.
  */
 export function getNextSubtreeBelow(treeNode: DescendantTreeNode): DescendantTreeNode | null {
-  return treeNode.siblingBelow || (treeNode.parent instanceof DescendantTreeNode ? treeNode.parent.siblingBelow : null);
+  let next = getNextBelow(treeNode);
+  while (next && next.isDescendantOf(treeNode)) {
+    next = getNextBelow(next);
+  }
+  return next || null;
 }
 
 /**

@@ -97,6 +97,14 @@ export abstract class BaseTreeNode {
   get isBackrelation(): boolean {
     return this.relationWithParent?.from.id === this.object.id;
   }
+
+  isDescendantOf(node: TreeNode): boolean {
+    return this.path.startsWith(node.path) && this.path !== node.path;
+  }
+
+  isAncestorOf(node: TreeNode): boolean {
+    return node.path.startsWith(this.path) && this.path !== node.path;
+  }
 }
 
 export class RootTreeNode extends BaseTreeNode {
