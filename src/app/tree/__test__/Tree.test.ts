@@ -1,12 +1,50 @@
 import path from "path";
 
+import { GraphStore } from "@/app/graph/GraphStore";
+import { SettingsStore } from "@/app/graph/SettingsStore";
 import { createTestTreeFromTemplate, expectTreeToMatchTemplate } from "@/app/tree/__test__/helpers";
+import { Tree } from "@/app/tree/Tree";
 import { updateGlobalLoggerFilter } from "@/lib/logger";
 import { testAllExamplesInFileExecute } from "@/lib/testAllExamplesInFileExecute";
 
 describe("Tree", () => {
   beforeAll(() => {
     updateGlobalLoggerFilter({ level: "info" });
+  });
+  describe("computing state from graph", () => {
+    it("basic", async () => {
+      const settingsStore = new SettingsStore();
+      const graphStore = new GraphStore(settingsStore);
+      const root = graphStore.outlineRoot;
+      // Add 2 children of the root, each with a child of their own
+      const { node: n1, relation: r1 } = await graphStore.addChildNode({
+        parentId: root.id,
+        nodeProps: { content: "1" },
+      });
+      const { relation: r2 } = await graphStore.addChildNode({
+        parentId: n1.id,
+        nodeProps: { content: "2" },
+      });
+      const { node: n3, relation: r3 } = await graphStore.addChildNode({
+        parentId: graphStore.outlineRoot.id,
+        nodeProps: { content: "3" },
+        after: r1,
+      });
+      await graphStore.addChildNode({
+        parentId: n3.id,
+        nodeProps: { content: "4" },
+      });
+      // Create a tree starting from the root, but only with the first child expanded
+      const tree = new Tree(graphStore, settingsStore, graphStore.outlineRoot, {
+        expansions: new Map<string, boolean>([[`/all/${r1.id}`, true]]),
+      });
+      // prettier-ignore
+      expectTreeToMatchTemplate(tree, [
+        { rid: r1.id, children: [ // this is expanded, so it's children should be shown
+          { rid: r2.id }] },
+        { rid: r3.id}, // this isn't expanded, so they shouldn't be shown
+      ]);
+    });
   });
   describe("move node selection", () => {
     describe("should select same node as editor selection on", () => {
