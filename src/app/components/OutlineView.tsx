@@ -38,7 +38,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   const ancestors = getAncestorsAsArray(treeNode);
   return (
     <TreeContext.Provider value={tree}>
-      <div ref={treeRef} className={s.OutlineView}>
+      <div id={ViewType.OUTLINE} ref={treeRef} className={s.OutlineView}>
         {ancestors.length > 1 && <Breadcrumbs treeNode={treeNode} />}
         <div className={s.TitleContainer}>
           {treeNode.object.id === graphStore.outlineRoot.id && <HomeIcon size={20} />}
@@ -211,15 +211,4 @@ function useOutlineHotkeys({ tree, hasFocus }: { tree: Tree; hasFocus: () => boo
   useHotkeys("shift+tab", () => tree.dedentSelection(), defaults, [tree]);
   useHotkeys("esc", () => tree.escapeSelection(), defaults, [tree]);
   useHotkeys("mod+.", () => tree.setRootToSelection(), defaults, [tree]);
-  useHotkeys(
-    "mod+k",
-    (e) => {
-      if (hasFocus()) {
-        e.stopPropagation();
-        tree.createChildOfRootAndFocus();
-      }
-    },
-    defaults,
-    [tree],
-  );
 }

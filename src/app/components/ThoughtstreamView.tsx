@@ -42,7 +42,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
 
   return (
     <TreeContext.Provider value={tree}>
-      <div tabIndex={0} className={stylesStream.StreamContainer}>
+      <div id={ViewType.THOUGHTSTREAM} tabIndex={0} className={stylesStream.StreamContainer}>
         <div>
           {ancestors.length > 1 && (
             <div className={stylesList.BreadcrumbContainer}>

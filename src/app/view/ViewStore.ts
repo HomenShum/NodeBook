@@ -5,6 +5,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { Tree } from "@/app/tree/Tree";
+import { ViewType } from "@/app/view/ViewType";
 
 export class ViewStore {
   private settingsStore: SettingsStore;
@@ -26,6 +27,19 @@ export class ViewStore {
   makeObservable() {
     if (!isObservable(this)) {
       makeAutoObservable(this);
+    }
+  }
+
+  // TODO: This is a bit of a hack. We should probably have a more structured way of handling focus.
+  // Like in our editor, you can do .focus(), .getRootElement(), etc. We should have a similar API for
+  // our outline/stream views.
+  focusedView(): ViewType.OUTLINE | ViewType.THOUGHTSTREAM | null {
+    if (document.getElementById(ViewType.OUTLINE)?.contains(document.activeElement)) {
+      return ViewType.OUTLINE;
+    } else if (document.getElementById(ViewType.THOUGHTSTREAM)?.contains(document.activeElement)) {
+      return ViewType.THOUGHTSTREAM;
+    } else {
+      return null;
     }
   }
 

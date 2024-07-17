@@ -20,13 +20,21 @@ export const useKeyboardShortcuts = () => {
             await viewStore.mainOutlineView.createChildOfRootAndFocus();
             break;
           }
-          case ViewType.THOUGHTSTREAM:
-          case ViewType.SPLIT: {
+          case ViewType.THOUGHTSTREAM: {
             await viewStore.mainStreamView.createChildOfRootAndFocus();
             break;
           }
-          default:
+          case ViewType.SPLIT: {
+            if (viewStore.focusedView() === ViewType.OUTLINE) {
+              await viewStore.mainOutlineView.createChildOfRootAndFocus();
+            } else {
+              await viewStore.mainStreamView.createChildOfRootAndFocus();
+            }
+            break;
+          }
+          default: {
             curView satisfies never;
+          }
         }
       }
     },
