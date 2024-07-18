@@ -25,6 +25,11 @@ export const SearchBar = observer(() => {
         onChange={action((e) => {
           viewStore.setSearchQuery(e.target.value);
         })}
+        onKeyDown={action((e) => {
+          if (e.key === "Escape") {
+            viewStore.setSearchQuery("");
+          }
+        })}
       />
       {viewStore.searchQuery && (
         <button
