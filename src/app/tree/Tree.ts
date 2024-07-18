@@ -1,4 +1,4 @@
-import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
+import { action, computed, IReactionDisposer, isObservable, makeObservable, observable, reaction, toJS } from "mobx";
 
 import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
@@ -132,20 +132,7 @@ export class Tree {
   /** Expanded paths in the tree. */
   public expansionsByPath: Map<string, boolean>;
 
-  /**
-   * Cache of object texts for tree search filtering.
-   *
-   * When computing the tree state, if there's a search input, we need to filter
-   * out nodes that don't match the search. But if we reference the object texts
-   * directly, mobx will recompute the tree every time the object text changes,
-   * which we don't want. So we cache the object texts in this *non-observable*
-   * map and reference the cache during the search filter. It's important that
-   * it not be observable!
-   *
-   * TODO: This may make more sense in the graph store. I'm guessing we'll want a
-   * text cache for the graph store as well.
-   */
-  textsByObjectId = new Map<string, string>();
+  private textsCache = new TextCache();
 
   get filter(): Filter {
     return {
@@ -166,6 +153,7 @@ export class Tree {
   get state() {
     logger.debug("Creating tree");
     const rootTreeNode = new RootTreeNode({ tree: this }).hydrate();
+    this.textsCache.updateIfStale(rootTreeNode); // Important to update cache before applying filters
     this.applyFilter(rootTreeNode);
     this.applySearch(rootTreeNode);
     this.applySort(rootTreeNode);
@@ -321,18 +309,8 @@ export class Tree {
     this.expansionsByPath.set(path, !this.isGroupExpanded(path));
   }
 
-  /**
-   * Sets the search string for the tree.
-   *
-   * Before updating, the text cache is updated with the current text of all nodes.
-   * See {@link textsByObjectId} for details.
-   */
   setSearch(search: string) {
     logger.debug(`Setting search to "${search}"`);
-    if (this.search === "") this.textsByObjectId.clear();
-    walkTree(this.root, (node) => {
-      this.textsByObjectId.set(node.object.id, node.object.text.toLocaleLowerCase());
-    });
     this.search = search;
   }
 
@@ -374,20 +352,19 @@ export class Tree {
     if (!this.search) return;
     logger.debug("Applying search:", `"${this.search}"`);
     const search = this.search;
-    const texts = this.textsByObjectId;
+    const texts = this.textsCache.texts;
     function walk(treeNode: TreeNode) {
       let searchMatchInDescendants = false;
       treeNode.childrenGroups.forEach((group) => {
         group.nodes = group.nodes.filter((child) => {
           walk(child);
-          const match = child.isSearchMatch || (child.searchMatchInDescendants && child.isExpanded);
+          const match = child.isSearchMatch || child.searchMatchInDescendants;
           searchMatchInDescendants = searchMatchInDescendants || match;
           return match;
         });
       });
       if (treeNode instanceof DescendantTreeNode) {
-        const text = texts.get(treeNode.object.id);
-        treeNode.isSearchMatch = search ? text?.includes(search) ?? true : true;
+        treeNode.isSearchMatch = search ? texts.get(treeNode.object.id)?.includes(search) ?? true : true;
         treeNode.searchMatchInDescendants = searchMatchInDescendants;
       }
     }
@@ -775,8 +752,7 @@ export class Tree {
   clear(root: GraphRelation[]) {
     this.pathToRoot = root;
     this.expansionsByPath.clear();
-    // this.textsCache.clear();
-    this.textsByObjectId.clear();
+    this.textsCache.clear();
   }
 
   serialize(): SerializedTree {
@@ -811,6 +787,58 @@ export class Tree {
     this.rootObject = rootObject;
     this.expansionsByPath = expansionsByPath;
     return true;
+  }
+}
+
+/**
+ * Cache of object texts for tree search filtering.
+ *
+ * When computing the tree state, if there's a search input, we need
+ * to filter out nodes that don't match the search. But if we reference the
+ * object texts directly, mobx will recompute the tree every time the object
+ * text changes, which we don't want. So we cache the object texts and reference
+ * the cache during the search filter. When any object text changes, we mark the
+ * cache as stale and recompute it before applying the next search filter.
+ *
+ * TODO: This may make more sense in the graph store. I'm guessing we'll want a
+ * text cache for the graph store as well.
+ */
+class TextCache {
+  texts = new Map<string, string>();
+  disposers = new Map<string, IReactionDisposer>();
+  isStale = true;
+
+  updateIfStale(root: RootTreeNode) {
+    if (!this.isStale) return;
+    logger.debug("Text cache is outdated. Updating...");
+    this.clear();
+    walkTree(root, (node) => {
+      // cache current texts
+      if (!this.texts.has(node.object.id)) {
+        this.texts.set(node.object.id, node.object.text.toLocaleLowerCase());
+      }
+      // mark as stale if any text changes
+      if (!this.disposers.has(node.object.id)) {
+        const disposer = reaction(
+          () => node.object.text,
+          () => {
+            if (this.isStale) return;
+            this.isStale = true;
+            this.disposers.clear();
+            logger.debug("Text cache is now stale");
+          },
+        );
+        this.disposers.set(node.object.id, disposer);
+      }
+    });
+    this.isStale = false;
+  }
+
+  clear() {
+    this.texts.clear();
+    this.disposers.forEach((disposer) => disposer());
+    this.disposers.clear();
+    this.isStale = true;
   }
 }
 
