@@ -16,9 +16,10 @@ export const BindFocusToTreePlugin = observer(() => {
   useEffect(() => {
     // Update the editor focus to match the tree selection
     const disposeAutorun = autorun(() => {
-      if (tree.isNodeFocused(treeNode.id)) {
+      const editorFocused = editor.getRootElement()?.contains(document.activeElement);
+      if (!editorFocused && tree.isNodeFocused(treeNode.id)) {
         editor.focus();
-      } else if (tree.selection?.type === "node" && editor.getRootElement()?.contains(document.activeElement)) {
+      } else if (tree.selection?.type === "node" && editorFocused) {
         editor.blur();
       }
     });

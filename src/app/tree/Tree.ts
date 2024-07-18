@@ -255,7 +255,6 @@ export class Tree {
 
   /** Set the selection to the editor of the given node. */
   setFocusedNode(treeNodeId: string | null) {
-    // console.log("setFocusedNode", treeNodeId);
     this.selection = treeNodeId ? { type: "editor", treeNodeId, startPos: 0, endPos: 0 } : null;
   }
 

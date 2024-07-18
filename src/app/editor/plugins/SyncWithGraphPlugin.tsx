@@ -55,12 +55,14 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
 
   const setEditorToGraphNodeText = useCallback(
     (graphNode: GraphNode) => {
+      const focusedBefore = editor.getRootElement()?.contains(document.activeElement);
       editor.update(() => {
         const currentParagraph = $getRoot().getChildren()[0] as ParagraphNode;
         if (graphNodeMatchesParagraph(graphNode, currentParagraph, graphStore)) {
           return;
         }
-        currentParagraph.replace(createParagraphMatchingGraphNode(graphNode, graphStore));
+        const newParagraph = createParagraphMatchingGraphNode(graphNode, graphStore);
+        currentParagraph.replace(newParagraph);
         /**
          * Setting the selection to null here seems to prevent the error below.
          * Based on https://stackoverflow.com/a/72197580, it seems that when we're
@@ -76,6 +78,8 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
          * ```
          */
         $setSelection(null);
+        // We lose the focus when we do this update, so we need to refocus
+        if (focusedBefore) editor.focus();
       });
     },
     [editor, graphStore],
