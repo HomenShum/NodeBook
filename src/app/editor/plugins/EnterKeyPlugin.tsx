@@ -96,6 +96,7 @@ export const EnterKeyPlugin = () => {
           return false;
         }
         event.preventDefault();
+        event.stopPropagation();
         const { chipsBefore, chipsAfter } = getChipsAroundSelection(selection);
         tree.splitNode(treeNode, chipsBefore, chipsAfter);
         return true;

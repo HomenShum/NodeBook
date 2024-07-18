@@ -10,10 +10,8 @@
 }
 
 .MentionNode {
-  border-radius: 4px;
-  padding: 0 2px;
-  background-color: var(--teal-a3);
-
+  color: "#0b0b79";
+  text-decoration: underline #cecece;
   color: var(--teal-11);
   cursor: pointer;
 }

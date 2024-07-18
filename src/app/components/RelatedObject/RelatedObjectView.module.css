@@ -136,6 +136,26 @@ Node
   align-items: baseline;
 }
 
+.TreeNodeReference {
+  display: flex;
+  flex: 1;
+}
+
+.TreeNodeReference div {
+  border-radius: 4px;
+  padding: 0 2px;
+  background-color: var(--teal-a3);
+  color: var(--teal-11);
+  cursor: pointer;
+}
+
+.TreeNodeReference input {
+  flex: 1;
+  background: none;
+  outline: none;
+  border: none;
+}
+
 .HoverCardTrigger {
   flex: 1 1 0%;
 }

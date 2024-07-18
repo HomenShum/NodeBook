@@ -32,10 +32,6 @@ settingsStore.loadFromLocalStorage();
 const graphStore = new GraphStore(settingsStore);
 const viewStore = new ViewStore(settingsStore, graphStore);
 const renderController = new RenderController();
-// Initialize with blank entries in thoughtstream and outline
-graphStore.addChildNode({ parentId: graphStore.outlineRoot.id }).then(({ node }) => {
-  graphStore.addToThoughtstream(node);
-});
 
 autorun(() => {
   settingsStore.saveToLocalStorage();
@@ -77,6 +73,10 @@ export default function RootTemplate({
   // TODO : hide persistence behind auth
   useEffect(() => {
     if (!env.isPersistenceEnabled) {
+      // Initialize with blank entries in thoughtstream and outline
+      if (graphStore.outlineRoot.children.length === 0) {
+        graphStore.addChildNode({ parentId: graphStore.outlineRoot.id });
+      }
       setHasLoaded(true);
       return;
     }

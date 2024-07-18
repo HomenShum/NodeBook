@@ -38,6 +38,7 @@ import { SettingsStore } from "./SettingsStore";
 
 export const defaultRelationTypes: Record<string, GraphRelationType> = {
   child: { version: 1, id: "child", label: "child", reverseLabel: "parent" },
+  relatedTo: { version: 1, id: "relatedTo", label: "relates to", reverseLabel: "relates to" },
   author: { version: 1, id: "author", label: "author", reverseLabel: "authored" },
   empty: { version: 1, id: "empty", label: "", reverseLabel: "" },
 };
@@ -875,6 +876,14 @@ export class GraphStore {
 
   getNode(id: string): GraphNode | undefined {
     return this.nodesById.get(id);
+  }
+
+  getNodeOrThrow(id: string): GraphNode {
+    const node = this.getNode(id);
+    if (!node) {
+      throw new Error(`Node with id ${id} does not exist`);
+    }
+    return node;
   }
 
   getRelation(id: string): GraphRelation | undefined {

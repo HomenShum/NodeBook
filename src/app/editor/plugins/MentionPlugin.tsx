@@ -14,6 +14,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
+import { uuid } from "@/app/util";
 
 import styles from "./MentionPlugin.module.css";
 
@@ -24,12 +25,16 @@ const SUGGESTION_LIST_LENGTH_LIMIT = 5;
 // https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/plugins/MentionsPlugin/index.tsx#L23
 
 class MentionTypeaheadOption extends MenuOption {
-  name: string;
-  graphNode?: GraphNode;
-  constructor(name: string, graphNode?: GraphNode) {
-    super(name);
-    this.name = name;
-    this.graphNode = graphNode;
+  value: { type: "existing"; object: GraphNode } | { type: "new"; text: string };
+  constructor(value: GraphNode | string) {
+    super(typeof value === "string" ? value : value.id);
+    this.value = typeof value === "string" ? { type: "new", text: value } : { type: "existing", object: value };
+  }
+  get name() {
+    return this.value.type === "new" ? `Create new node: ${this.value.text}` : this.value.object.text;
+  }
+  get matchText() {
+    return this.value.type === "new" ? this.value.text : this.value.object.text;
   }
 }
 
@@ -40,42 +45,35 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
   const graphStore = useGraphStore();
 
   const onSelectOption = useCallback(
-    async (selectedOption: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
-      let graphNode: GraphNode; // For some reason have to declare this way to make TSC happy
-      if (selectedOption.graphNode) {
-        graphNode = selectedOption.graphNode;
-      } else {
-        // Create a new node
-        const newNodeAndRelation = await graphStore.addChildNode({
-          parentId: graphStore.outlineRoot.id,
-          nodeProps: { content: selectedOption.name.slice("Create new node: ".length) },
-        });
-        graphNode = newNodeAndRelation.node;
-      }
+    async (opt: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
+      if (!nodeToReplace) return;
+      // update editor
+      const graphNodeId = opt.value.type === "new" ? uuid() : opt.value.object.id;
+      const text = opt.value.type === "new" ? opt.value.text : opt.value.object.text;
       editor.update(async () => {
-        const mentionNode = $createMentionNode(graphNode.id, graphNode.text);
-        if (nodeToReplace) {
-          nodeToReplace.replace(mentionNode);
-        }
-        if (
-          !node.relations.some(
-            (relation) =>
-              relation.relationType == graphStore.relationTypesById.child &&
-              relation.from == selectedOption.graphNode &&
-              relation.to == node,
-          )
-        ) {
-          graphStore.addRelation({
-            fromId: graphNode.id,
-            toId: node.id,
-            relationType: graphStore.relationTypesById.child,
+        const mentionNode = $createMentionNode(graphNodeId, text);
+        nodeToReplace.replace(mentionNode);
+        if (opt.value.type === "new") {
+          await graphStore.addChildNode({
+            parentId: graphStore.outlineRoot.id,
+            nodeProps: { id: graphNodeId, content: opt.name.slice("Create new node: ".length) },
           });
         }
-        mentionNode.select();
         closeMenu();
+        // add relation
+        const hasMentionRelation = node.relations.some(
+          (r) => r.relationType == graphStore.relationTypesById.relatedTo && r.from == node && r.to.id === graphNodeId,
+        );
+        if (!hasMentionRelation) {
+          await graphStore.addRelation({
+            fromId: node.id,
+            toId: graphNodeId,
+            relationType: graphStore.relationTypesById.relatedTo,
+          });
+        }
       });
     },
-    [editor, graphStore, node],
+    [editor, node, graphStore],
   );
   const prevText = useRef<string | null>(null);
 
@@ -96,7 +94,7 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
               // If we've just added to the query, we can filter the existing options
               return [
                 ...prevOptions.slice(0, -1).filter((option) => option.name.toLowerCase().includes(queryString)),
-                new MentionTypeaheadOption("Create new node: " + queryString),
+                new MentionTypeaheadOption(queryString),
               ];
             } else {
               // Otherwise, we need to search the graph
@@ -105,8 +103,8 @@ export function MentionPlugin({ setDropdownOpen }: { setDropdownOpen: (isOpen: b
                 .sort((a, b) => b.score - a.score)
                 .map(({ object }) => object);
               return [
-                ...matchingNodes.map((node) => new MentionTypeaheadOption(node.text, node)),
-                new MentionTypeaheadOption("Create new node: " + queryString),
+                ...matchingNodes.map((node) => new MentionTypeaheadOption(node)),
+                new MentionTypeaheadOption(queryString),
               ];
             }
           });
@@ -239,7 +237,7 @@ function MentionsTypeaheadMenuItem({
   if (isSelected) {
     className = styles.Selected;
   }
-  const path = option.graphNode ? getTopMostParentPath(option.graphNode).slice(1) : [];
+  const path = option.value.type === "existing" ? getTopMostParentPath(option.value.object).slice(1) : [];
   return (
     <li
       key={option.key}

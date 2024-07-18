@@ -1,9 +1,8 @@
 "use client";
 import { ChevronRight, Ellipsis, HomeIcon, Plus } from "lucide-react";
-import { autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Options, useHotkeys } from "react-hotkeys-hook";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -14,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { TreeNode } from "@/app/tree/nodes";
@@ -22,7 +20,6 @@ import { getAncestorsAsArray } from "@/app/tree/utils";
 import { relationsToURLPath, useCurView } from "@/app/util";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
-import logger from "@/lib/logger";
 
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
@@ -33,7 +30,6 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   const treeRef = useRef<HTMLDivElement>(null);
   const hasFocus = useCallback(() => !!treeRef.current?.contains(document.activeElement), [treeRef]);
   useOutlineHotkeys({ tree, hasFocus });
-  useBindEditorFocusToTree({ tree });
   const treeNode = tree.state.root;
   const ancestors = getAncestorsAsArray(treeNode);
   return (
@@ -172,31 +168,8 @@ const truncate = (text: string, maxLength: number) => {
   return text;
 };
 
-const useBindEditorFocusToTree = ({ tree }: { tree: Tree }) => {
-  const renderController = useRenderController();
-  useEffect(() => {
-    const disposer = autorun(() => {
-      if (tree.selection?.type === "editor") {
-        const editor = renderController.editorsByPath.get(tree.selection.treeNodeId);
-        if (!editor) return;
-        const hasFocus = editor.getRootElement()?.contains(document.activeElement);
-        if (!hasFocus) {
-          logger.debug("Focusing editor to match selection", { treeNodeId: tree.selection.treeNodeId });
-          editor.focus();
-        }
-      } else {
-        if (document.activeElement instanceof HTMLElement && document.activeElement?.dataset.lexicalEditor === "true") {
-          logger.debug("Blurring editor to match selection", { type: tree.selection?.type });
-          document.activeElement.blur();
-        }
-      }
-    });
-    return disposer;
-  }, [tree, renderController]);
-};
-
 function useOutlineHotkeys({ tree, hasFocus }: { tree: Tree; hasFocus: () => boolean }) {
-  const defaults: Options = { enableOnContentEditable: true, preventDefault: true };
+  const defaults: Options = { enableOnContentEditable: true, preventDefault: true, enableOnFormTags: ["INPUT"] };
   useHotkeys("mod+shift+ArrowUp", () => tree.moveSelectedNodesUp(), defaults, [tree]);
   useHotkeys("mod+shift+ArrowDown", () => tree.moveSelectedNodesDown(), defaults, [tree]);
   useHotkeys("mod+ArrowUp", () => tree.collapseAtSelection(), defaults, [tree]);

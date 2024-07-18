@@ -243,6 +243,7 @@ export class Tree {
 
   /** Set the selection to the editor of the given node. */
   setFocusedNode(treeNodeId: string | null) {
+    // console.log("setFocusedNode", treeNodeId);
     this.selection = treeNodeId ? { type: "editor", treeNodeId, startPos: 0, endPos: 0 } : null;
   }
 
@@ -402,6 +403,18 @@ export class Tree {
       nodeProps: props.nodeProps,
       relationProps: props.relationProps,
       after: props.after instanceof DescendantTreeNode ? props.after.relationWithParent : props.after,
+    });
+  }
+
+  async setObjectOnNode(treeNodeId: string, object: GraphObject) {
+    const treeNode = this.getNodeOrThrow(treeNodeId);
+    await this.graphStore.replaceRelationLink({
+      direction: treeNode.relationWithParent.to.id === treeNode.object.id ? "to" : "from",
+      relationId: treeNode.relationWithParent.id,
+      replaceWith:
+        object.objectType === "node"
+          ? { type: "existing-node", id: object.id }
+          : { type: "existing-relation", id: object.id },
     });
   }
 

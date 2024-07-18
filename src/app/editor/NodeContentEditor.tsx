@@ -19,6 +19,7 @@ import { isUnlabelledChild } from "@/app/tree/utils";
 import { cn } from "@/lib/utils";
 
 import { BackspaceMergeNodesPlugin } from "./plugins/BackspaceMergeNodesPlugin";
+import { BindFocusToTreePlugin } from "./plugins/BindFocusToTreePlugin";
 import { EnterKeyPlugin } from "./plugins/EnterKeyPlugin";
 import { LeftRightArrowAtEndsPlugin } from "./plugins/LeftRightArrowAtEndsPlugin";
 import { MentionPlugin } from "./plugins/MentionPlugin";
@@ -26,7 +27,6 @@ import { PastePlugin } from "./plugins/pastePlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
 import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
-import { TrackFocusedPathPlugin } from "./plugins/TrackFocusedPathPlugin";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
 
 import styles from "./Editor.module.css";
@@ -110,7 +110,7 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
         />
         {showSearchAndReplaceDropdown && <AutocompleteDropdownPlugin parentRef={ref} />}
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
-        <TrackFocusedPathPlugin pathToNodeStr={treeNode.path} />
+        <BindFocusToTreePlugin />
       </LexicalComposer>
     </div>
   );

@@ -3,9 +3,6 @@ import { isObservable, makeAutoObservable } from "mobx";
 
 import { Path } from "@/app/graph/GraphStore";
 import { makeAutoSaving } from "@/app/util";
-import appLogger from "@/lib/logger";
-
-const logger = appLogger.child({ service: "RenderController" });
 
 export class RenderController {
   public focusedNode: Path | null = null;

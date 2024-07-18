@@ -12,7 +12,6 @@ import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import SidebarTree from "@/app/components/SidebarTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { ListIcon, SidebarIcon, SplitIcon, StreamIcon } from "@/app/components/icons";
-import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useRenderController } from "@/app/render/useRenderController";
 import { ViewType } from "@/app/view/ViewType";
 import { cn } from "@/lib/utils";
@@ -35,7 +34,6 @@ export default observer(
     const { isAuthenticated, isLoading } = useAuth();
     const appContainerRef = useRef<HTMLDivElement>(null);
     const renderController = useRenderController();
-    useKeyboardShortcuts();
 
     const ButtonNavigation = () => (
       <>

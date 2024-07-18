@@ -178,18 +178,13 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
         }
       } else {
         const needNewNode = option.type === "action" && option.id === "create-new-node";
-        await graph.replaceRelationLink({
-          direction: relation.from.id === option.id ? "from" : "to",
-          relationId: relation.id,
-          replaceWith: needNewNode
-            ? { type: "new-node", nodeProps: { content: object.text } }
-            : { type: resolveReplacementType(option.type), id: option.id },
-        });
-        tree.setFocusedNode(pathToNodeStr);
+        const newObject = needNewNode ? await graph.addNode({ content: object.text }) : graph.getNodeOrThrow(option.id);
+        treeNode.setObject(newObject);
+        tree.setFocusedNode(treeNode.path);
       }
       closeDropdown();
     },
-    [tree, graph, relation, pathToNodeStr, closeDropdown, object],
+    [closeDropdown, graph, relation, object, tree, pathToNodeStr, treeNode],
   );
 
   // Register keyboard commands for the dropdown

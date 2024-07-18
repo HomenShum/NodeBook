@@ -1,9 +1,8 @@
 import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 
-import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SerializedGraphNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
-import { Position, comparePositions, uuid } from "@/app/util";
+import { Position, uuid } from "@/app/util";
 
 import { GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
@@ -29,18 +28,18 @@ export type PositionedRelation = {
   relation: GraphRelation;
 };
 
-export class GraphNode implements Serializable, GraphObject {
+export class GraphNode extends GraphObject implements Serializable {
+  objectType = "node" as const;
   version: number;
   id: string;
   content: Chip[] = [];
   createdAt: Date;
-  type = "node" as const;
   isBundle: boolean;
   isZone: boolean;
   public isPrivate: boolean = true;
 
   constructor(
-    private store: GraphStore,
+    store: GraphStore,
     {
       version = 1,
       id = uuid(),
@@ -51,6 +50,7 @@ export class GraphNode implements Serializable, GraphObject {
       isPrivate = true,
     }: GraphNodeProps,
   ) {
+    super(store);
     this.version = version;
     this.id = id;
     this.content =
@@ -75,48 +75,9 @@ export class GraphNode implements Serializable, GraphObject {
       content: observable.shallow,
       update: action,
       text: computed,
+      isLocal: computed,
       relationsWithPositions: computed,
     });
-  }
-
-  setIsPrivate(value: boolean) {
-    this.isPrivate = value;
-  }
-
-  get allRelationsList() {
-    const list = this.store.relationsByNodeId.get(this.id);
-    if (!list) throw new Error("Missing allRelationsList");
-    return list;
-  }
-
-  get pinnedRelationsList() {
-    const list = this.store.pinnedRelationsByNodeId.get(this.id);
-    if (!list) throw new Error("Missing pinnedRelationsList");
-    return list;
-  }
-
-  get isRoot(): boolean {
-    return this.store.isRoot(this);
-  }
-
-  get relationsWithPositions(): PositionedRelation[] {
-    const list = this.store.relationsByNodeId.get(this.id);
-    if (!list) return [];
-    return list.values().map(({ position, item }) => ({ position, relation: item }));
-  }
-
-  get relations(): GraphRelation[] {
-    return this.relationsWithPositions.map(({ relation }) => relation);
-  }
-
-  get relationsSortedByPosition(): GraphRelation[] {
-    return this.relationsWithPositions
-      .sort((a, b) => comparePositions(a.position, b.position))
-      .map(({ relation }) => relation);
-  }
-
-  get pinnedRelationsWithPositions(): PositionedRelation[] {
-    return this.pinnedRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
   }
 
   update(newProps: Partial<GraphNodeProps>) {
@@ -162,26 +123,6 @@ export class GraphNode implements Serializable, GraphObject {
         }
       })
       .join("");
-  }
-
-  get children(): GraphObject[] {
-    return this.relations.filter((r) => r.from.id === this.id).map((r) => r.to);
-  }
-
-  connectedObjects(): GraphObject[] {
-    return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
-  }
-
-  pinChildRelation(childRelation: GraphRelation | GraphRelation[], after?: Positioner<GraphRelation>) {
-    this.pinnedRelationsList.add(childRelation, after);
-  }
-
-  unpinChildRelation(childRelation: GraphRelation) {
-    this.pinnedRelationsList.delete(childRelation.id);
-  }
-
-  isRelationPinned(childRelation: GraphRelation) {
-    return this.pinnedRelationsList.has(childRelation.id);
   }
 
   toString() {

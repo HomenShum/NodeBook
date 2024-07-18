@@ -1,7 +1,8 @@
 import { Circle, Dot, GlobeIcon } from "lucide-react";
+import { autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import styles from "@/app/components/RelatedObject/RelatedObjectView.module.css";
 import { PinCustomIcon } from "@/app/components/icons";
@@ -106,8 +107,10 @@ const Content = observer(() => {
           )}
           {viewType === "replace" ? (
             <ReplaceRelatedNodeView treeNode={treeNode} />
-          ) : (
+          ) : treeNode.object.isLocal ? (
             <RelatedObjectEditor indentationWidth={relationTypeTextWidth} object={treeNode.object} />
+          ) : (
+            <TreeNodeReference treeNode={treeNode} />
           )}
         </div>
         {settingsStore.showNodeDetails && viewType !== "replace" && (
@@ -226,8 +229,6 @@ const Bullet = observer(() => {
 });
 
 const Controls = observer(() => {
-  const graphStore = useGraphStore();
-  const settingsStore = useSettingsStore();
   const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
   return (
     <>
@@ -253,3 +254,51 @@ function getTextWidth(text: string, font: string) {
   const metrics = context.measureText(text);
   return metrics.width;
 }
+
+/**
+ * Displays the node as a non-editable reference pill. The user can place the selection
+ * at the end though, so they can add a sibling below it. They can also press backspace
+ * to delete the referenced node and replace it with a new one.
+ */
+const TreeNodeReference = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const tree = useTree();
+  const graph = useGraphStore();
+
+  // Update the input focus to match the tree selection
+  useEffect(() => {
+    return autorun(() => {
+      if (tree.isNodeFocused(treeNode.id)) {
+        inputRef.current?.focus();
+      } else if (tree.selection?.type === "node" && inputRef.current?.contains(document.activeElement)) {
+        inputRef.current?.blur();
+      }
+    });
+  }, [tree, treeNode.id]);
+
+  return (
+    <div className={styles.TreeNodeReference}>
+      <div onClick={() => tree.togglePathExpanded(treeNode.path)}>{treeNode.object.text}</div>
+      <input
+        // Update the tree selection to match the input focus
+        onFocus={() => tree.setFocusedNode(treeNode.path)}
+        onBlur={() => tree.isNodeFocused(treeNode.id) && tree.setFocusedNode(null)}
+        onKeyDown={async (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const path = await treeNode.parent.createChild({ after: treeNode });
+            tree.setFocusedNode(path);
+          } else if (e.key === "Backspace") {
+            e.preventDefault();
+            const node = await graph.addNode({ content: treeNode.object.text.slice(0, -1) });
+            await treeNode.setObject(node);
+          }
+        }}
+        ref={inputRef}
+        type="text"
+        value=""
+        onChange={() => {}}
+      />
+    </div>
+  );
+});

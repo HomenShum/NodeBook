@@ -284,6 +284,10 @@ export class DescendantTreeNode extends BaseTreeNode {
   addChildren(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
     this.childrenGroupsById.all.add(nodes, after);
   }
+
+  async setObject(object: GraphObject) {
+    await this.tree.setObjectOnNode(this.id, object);
+  }
 }
 
 export type TreeNode = RootTreeNode | DescendantTreeNode;
