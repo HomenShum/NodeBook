@@ -4,7 +4,7 @@
   min-width: 200px;
   background-color: var(--gray-1);
   border: solid 0.5px var(--teal-4);
-  z-index: 10;
+  z-index: 20;
   list-style: none;
   padding: 4px;
   border-radius: 4px;

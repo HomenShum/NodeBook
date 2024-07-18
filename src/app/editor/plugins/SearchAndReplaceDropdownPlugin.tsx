@@ -201,6 +201,8 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
               const nextIdx = (selectedIdx - 1 + objectsMatchingSearch.length) % objectsMatchingSearch.length;
               setSelected(objectsMatchingSearch[nextIdx].id ?? null);
             }
+            event.preventDefault();
+            event.stopPropagation();
             return true;
           }
           return false;
@@ -218,6 +220,8 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
               const nextIdx = (selectedIdx + 1) % objectsMatchingSearch.length;
               setSelected(objectsMatchingSearch[nextIdx].id ?? null);
             }
+            event.preventDefault();
+            event.stopPropagation();
             return true;
           }
           return false;
