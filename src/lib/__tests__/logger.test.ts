@@ -5,7 +5,7 @@ import { testAllExamplesInFileExecute } from "@/lib/testAllExamplesInFileExecute
 
 describe("logger", () => {
   describe("examples should run", () => {
-    testAllExamplesInFileExecute(path.resolve(__dirname, "logger.ts"), {
+    testAllExamplesInFileExecute(path.resolve(__dirname, "..", "logger.ts"), {
       logger,
       getGlobalLoggerFilter,
       updateGlobalLoggerFilter,

@@ -8,6 +8,8 @@ module.exports = {
           // Without this configuration option, jest throws errors when encountering JSX
           // elements in tests or any files imported from test files
           jsx: "react-jsx",
+          target: "ESNext",
+          lib: ["dom", "dom.iterable", "esnext"],
         },
       },
     ],
@@ -22,4 +24,7 @@ module.exports = {
     '\\.css$': 'identity-obj-proxy',
   },
   testEnvironment: 'jsdom',
+  testMatch: [
+    '/**/*.test.ts?(x)',
+  ]
 };

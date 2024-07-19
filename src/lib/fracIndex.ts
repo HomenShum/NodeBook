@@ -143,4 +143,4 @@ async function main() {
   ids.sort();
   ids.forEach((id) => console.log(id));
 }
-main().then(() => console.log("done"));
+// main().then(() => console.log("done"));

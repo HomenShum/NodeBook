@@ -2,17 +2,12 @@ import { NextResponse } from "next/server";
 import Pusher from "pusher";
 
 import { createSnapshotFromDb } from "@/app/api/sync/createSnapshot";
-import { GraphRelation } from "@/app/graph/GraphRelation";
-import {
-  SerializedGraphNode,
-  SerializedPositionList,
-  SerializedRelation,
-  SerializedSyncData,
-} from "@/app/persistence/SerializedData";
+import { SerializedSyncDataSchema } from "@/app/sync/SyncTask";
 import { getDb } from "@/db";
-import { deleteNode, upsertNode } from "@/db/graphNodes";
-import { deleteRelation, upsertRelation } from "@/db/graphRelations";
+import { createNode, deleteNode, updateNode } from "@/db/graphNodes";
+import { createRelation, deleteRelation, updateRelation } from "@/db/graphRelations";
 import { upsertRelationList } from "@/db/relationLists";
+import { createRelationType, deleteRelationType, updateRelationType } from "@/db/relationTypes";
 import { env } from "@/envBackend";
 
 const pusher = new Pusher({
@@ -28,46 +23,55 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
+  const parsedData = SerializedSyncDataSchema.safeParse(await req.json());
 
-  if (!body || typeof body !== "object" || !body.transactionId || !body.transaction || !body.result) {
+  if (!parsedData.success) {
+    console.log(parsedData.error);
     return NextResponse.json({ status: "error", message: "Invalid sync data request" }, { status: 400 });
   }
 
-  const { transactionId, transaction, result } = body;
-  if (!result || typeof result !== "object" || !(result satisfies SerializedSyncData)) {
-    return NextResponse.json({ status: "error", message: "Invalid sync data request" }, { status: 400 });
-  }
-
-  const nodes: SerializedGraphNode[] = result.nodes ?? [];
-  const nodesDeleted: SerializedGraphNode[] = result.nodesDeleted ?? [];
-  const relations: SerializedRelation[] = result.relations ?? [];
-  const relationsDeleted: SerializedRelation[] = result.relationsDeleted ?? [];
-  const relationLists: Record<string, SerializedPositionList<GraphRelation>> = result.relationLists ?? {};
-  const pinnedRelationLists: Record<string, SerializedPositionList<GraphRelation>> = result.pinnedRelationLists ?? {};
+  const { transactionId, updates } = parsedData.data;
 
   const db = getDb();
 
   try {
     // TODO: Probably use multi-select queries instead of this for loop stuff
     await db.transaction(async (tx) => {
-      for (const relation of relationsDeleted) {
-        await deleteRelation(tx, relation);
-      }
-      for (const node of nodesDeleted) {
-        await deleteNode(tx, node);
-      }
-      for (const node of nodes) {
-        await upsertNode(tx, node);
-      }
-      for (const relation of relations) {
-        await upsertRelation(tx, relation);
-      }
-      for (const [nodeId, relationList] of Object.entries(relationLists)) {
-        await upsertRelationList(tx, nodeId, relationList, false);
-      }
-      for (const [nodeId, relationList] of Object.entries(pinnedRelationLists)) {
-        await upsertRelationList(tx, nodeId, relationList, true);
+      for (const update of updates) {
+        switch (update.operation) {
+          case "addNode":
+            await createNode(tx, update.node);
+            break;
+          case "updateNode":
+            await updateNode(tx, update.oldProps, update.newProps);
+            break;
+          case "deleteNode":
+            await deleteNode(tx, update.node);
+            break;
+          case "addRelationType":
+            await createRelationType(tx, update.relationType);
+            break;
+          case "updateRelationType":
+            await updateRelationType(tx, update.oldProps, update.newProps);
+            break;
+          case "deleteRelationType":
+            await deleteRelationType(tx, update.relationType);
+            break;
+          case "addRelation":
+            await createRelation(tx, update.relation);
+            break;
+          case "updateRelation":
+            await updateRelation(tx, update.oldProps, update.newProps);
+            break;
+          case "deleteRelation":
+            await deleteRelation(tx, update.deleted.relation);
+            break;
+          case "updateRelationList":
+            await upsertRelationList(tx, update.nodeId, update.listAfter, update.pinned);
+            break;
+          default:
+            const _exhaustiveCheck: never = update;
+        }
       }
     });
   } catch (e) {
@@ -76,7 +80,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
   }
 
-  pusher.trigger("mew-sync-channel", "transaction-accepted", { transactionId, transaction, result });
+  pusher.trigger("mew-sync-channel", "transaction-accepted", { transactionId, updates });
 
   return NextResponse.json({ status: "ok" });
 }

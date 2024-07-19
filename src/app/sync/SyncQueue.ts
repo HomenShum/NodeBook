@@ -1,56 +1,36 @@
-import { SerializedSyncData } from "@/app/persistence/SerializedData";
+import { GraphUpdate } from "@/app/graph/GraphUpdate";
 import { SyncTask } from "@/app/sync/SyncTask";
+import { uuid } from "@/app/util";
 
 export class SyncQueue {
   private queue: SyncTask[] = [];
+  private localTransactions: Set<string> = new Set();
 
-  add(task: SyncTask) {
-    const { transaction, result } = task.dataToSync;
-    // TODO: some more robust serialization logic for transactions?
-    // Right now, only the positioner is ever a non-primitive value
-    if (
-      transaction.type === "addChildNode" &&
-      transaction.transaction.after &&
-      typeof transaction.transaction.after === "object"
-    ) {
-      transaction.transaction.after = transaction.transaction.after.id;
-    }
-    // Serialize the result data before adding it to the queue so that it's "frozen" before being sent to the server.
-    // TODO: This is a bit of a hack; maybe do something better here or decide it's fine as-is.
-    const serializedResult: SerializedSyncData = {
-      nodes: result.nodes?.map((node) => node.serialize()),
-      nodesDeleted: result.nodesDeleted?.map((node) => node.serialize()),
-      relations: result.relations?.map((rel) => rel.serialize()),
-      relationsDeleted: result.relationsDeleted?.map((rel) => rel.serialize()),
-      relationLists: Object.fromEntries(
-        Object.entries(result.relationLists ?? {}).map(([nodeId, relList]) => [nodeId, relList.serialize()]),
-      ),
-      pinnedRelationLists: Object.fromEntries(
-        Object.entries(result.pinnedRelationLists ?? {}).map(([nodeId, relList]) => [nodeId, relList.serialize()]),
-      ),
-    };
-    const taskForQueue = {
-      ...task,
-      dataToSync: {
-        ...task.dataToSync,
-        transaction,
-        serializedResult,
+  addUpdates(updates: GraphUpdate[], undoFn: () => void) {
+    const task: SyncTask = {
+      data: {
+        transactionId: uuid(),
+        updates,
       },
+      undo: undoFn,
     };
-    this.queue.push(taskForQueue);
+    this.localTransactions.add(task.data.transactionId);
+    this.queue.push(task);
+  }
+
+  isLocalTransaction(transactionId: string) {
+    return this.localTransactions.has(transactionId);
   }
 
   async process() {
     let task = this.queue.shift();
     while (task) {
-      const { transactionId, transaction, serializedResult } = task.dataToSync;
-      console.log("Syncing", transactionId, transaction, serializedResult);
       const response = await fetch("/api/sync", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ transactionId, transaction, result: serializedResult }),
+        body: JSON.stringify(task.data),
       });
       const responseJson = await response.json();
       if (responseJson.status !== "ok") {
@@ -66,12 +46,26 @@ export class SyncQueue {
   /**
    * Undo all pending tasks in the queue, moving backwards to ensure that the state is consistent.
    */
-  private undoAllPending() {
+  undoAllPending() {
     // TODO: This maybe ends up being a place where we revert to a snapshot of server state rather than manually undoing things ourselves
     let task = this.queue.pop();
     while (task) {
       task.undo();
       task = this.queue.pop();
     }
+  }
+
+  /**
+   * Get updates that are pending to be sent to the server.
+   */
+  get pendingUpdates() {
+    return this.queue.map((task) => task.data);
+  }
+
+  /**
+   * Clear all pending updates without sending them to the server or undoing them. Use carefully!
+   */
+  clear() {
+    this.queue = [];
   }
 }

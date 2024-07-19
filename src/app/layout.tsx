@@ -17,6 +17,7 @@ import { persistGraphData } from "@/app/persistence/persistGraphData";
 import { storesToDataString } from "@/app/persistence/serialization";
 import { RenderController } from "@/app/render/RenderController";
 import { RenderControllerProvider } from "@/app/render/useRenderController";
+import { SerializedSyncDataSchema } from "@/app/sync/SyncTask";
 import { toast, useCurView } from "@/app/util";
 import { ViewStore } from "@/app/view/ViewStore";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
@@ -101,13 +102,17 @@ export default function RootTemplate({
           }
         }, 500);
         if (env.persistTo !== "server") return;
-        Pusher.logToConsole = true; // Enable pusher logging - don't include this in production
         const pusher = new Pusher(env.pusherKey, {
           cluster: env.pusherCluster,
         });
         const channel = pusher.subscribe("mew-sync-channel");
         channel.bind("transaction-accepted", (data: any) => {
-          graphStore.handleSyncTransactionAccepted(data);
+          const parsed = SerializedSyncDataSchema.safeParse(data);
+          if (!parsed.success) {
+            console.error("Invalid sync data received", data);
+            return;
+          }
+          graphStore.handleSyncData(parsed.data);
         });
         graphStore.startSync();
       }

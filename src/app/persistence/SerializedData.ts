@@ -1,30 +1,69 @@
-import { Chip } from "@/app/graph/GraphNode";
-import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
-import { Serializable } from "@/app/persistence/serialization";
+import { z } from "zod";
+
+import { GraphRelationType } from "@/app/graph/GraphRelation";
 import { Position } from "@/app/util";
 
-export type SerializedPositionList<T extends Serializable> = {
-  [key: string]: Position;
-};
+const SerializedChipSchema = z.object({
+  type: z.union([z.literal("text"), z.literal("mention"), z.literal("linebreak")]),
+  value: z.string(),
+});
 
-export type SerializedGraphNode = {
-  version: number;
-  id: string;
-  createdAt: Date;
-  content: Chip[];
-  isBundle: boolean;
-  isZone: boolean;
-  isPrivate: boolean;
+export const SerializedNodeSchema = z.object({
+  version: z.number(),
+  id: z.string(),
+  createdAt: z.coerce.date(),
+  content: z.array(SerializedChipSchema),
+  isBundle: z.boolean(),
+  isZone: z.boolean(),
+  isPrivate: z.boolean(),
+});
+export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
+
+export const SerializedRelationTypeSchema = z.object({
+  id: z.string(),
+  version: z.number(),
+  label: z.string(),
+  reverseLabel: z.string(),
+});
+
+export const SerializedRelationSchema = z.object({
+  version: z.number(),
+  id: z.string(),
+  fromId: z.string(),
+  toId: z.string(),
+  relationTypeId: z.string(),
+  isPrivate: z.boolean(),
+});
+export type SerializedRelation = z.infer<typeof SerializedRelationSchema>;
+
+export const PositionSchema = z.object({
+  int: z.number(),
+  frac: z.string(),
+});
+
+export const SerializedPositionListSchema = z.record(z.string(), PositionSchema);
+export type SerializedPositionList<T> = z.infer<typeof SerializedPositionListSchema>;
+
+export type DeletedRelationData = {
+  relation: SerializedRelation;
+  fromPos?: Position;
+  fromPinnedPos?: Position;
+  toPos?: Position;
+  toPinnedPos?: Position;
+  relationsList: DeletedRelationData[];
+  bundles: SerializedNode[];
 };
-export type SerializedRelation = {
-  version: number;
-  id: string;
-  fromId: string;
-  toId: string;
-  relationTypeId: string;
-  isPrivate: boolean;
-};
-type SerializedBundle = SerializedGraphNode;
+// Have to use z.ZodType and z.lazy because of recursive typing
+// https://zod.dev/?id=recursive-types
+export const DeletedRelationDataSchema: z.ZodType<DeletedRelationData> = z.object({
+  relation: SerializedRelationSchema,
+  fromPos: PositionSchema,
+  fromPinnedPos: PositionSchema,
+  toPos: PositionSchema,
+  toPinnedPos: PositionSchema,
+  relationsList: z.lazy(() => DeletedRelationDataSchema.array()),
+  bundles: z.array(SerializedNodeSchema),
+});
 
 type SerializedRelationsByNodeId = {
   [nodeId: string]: {
@@ -33,12 +72,12 @@ type SerializedRelationsByNodeId = {
 };
 
 export type SerializedGraphStore = {
-  nodesById: Record<string, SerializedGraphNode>;
+  nodesById: Record<string, SerializedNode>;
   relationTypesById: Record<string, GraphRelationType>;
   relationsById: Record<string, SerializedRelation>;
   relationsByNodeId: SerializedRelationsByNodeId;
   pinnedRelationsByNodeId: SerializedRelationsByNodeId;
-  relationToBundles?: Record<string, SerializedBundle[]>;
+  relationToBundles?: Record<string, SerializedNode[]>;
 };
 
 export type SerializedTree = {
@@ -57,15 +96,4 @@ export type SerializedViewStore = {
 export type SerializedStores = {
   graphStore: SerializedGraphStore;
   viewStore: SerializedViewStore;
-};
-
-export type SerializedSyncData = {
-  nodes?: SerializedGraphNode[];
-  nodesDeleted?: SerializedGraphNode[];
-  relations?: SerializedRelation[];
-  relationsDeleted?: SerializedRelation[];
-  relationTypes?: GraphRelationType[];
-  relationTypesDeleted?: string[];
-  relationLists?: Record<string, SerializedPositionList<GraphRelation>>;
-  pinnedRelationLists?: Record<string, SerializedPositionList<GraphRelation>>;
 };

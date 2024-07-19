@@ -1,6 +1,6 @@
 import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 
-import { SerializedGraphNode } from "@/app/persistence/SerializedData";
+import { SerializedNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { Position, uuid } from "@/app/util";
 
@@ -146,7 +146,7 @@ export class GraphNode extends GraphObject implements Serializable {
     return path;
   }
 
-  serialize(): SerializedGraphNode {
+  serialize(): SerializedNode {
     return {
       version: this.version,
       id: this.id,

@@ -1,12 +1,10 @@
 import { action, computed, isObservable, makeObservable, observable } from "mobx";
 
-import { ItemWithPosition } from "@/app/graph/FractionalPositionedList";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { uuid } from "@/app/util";
 
-import { GraphNode } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
 
@@ -30,15 +28,6 @@ export type GraphRelationPropsWithoutTargets = {
   id?: string;
   relationTypeId?: GraphRelationType["id"];
   isPrivate?: boolean;
-};
-
-export type DeletedGraphRelationData = {
-  relation: GraphRelation;
-  fromPos: ItemWithPosition<GraphRelation> | undefined;
-  fromPinnedPos: ItemWithPosition<GraphRelation> | undefined;
-  toPos: ItemWithPosition<GraphRelation> | undefined;
-  toPinnedPos: ItemWithPosition<GraphRelation> | undefined;
-  bundles: GraphNode[];
 };
 
 export class GraphRelation extends GraphObject implements Serializable {

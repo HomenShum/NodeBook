@@ -1,4 +1,4 @@
-import { generateIndex, generateNIndex, parseIndex } from "./fracIndex"; // Adjust the import path as necessary
+import { generateIndex, generateNIndex, parseIndex } from "@/lib/fracIndex";
 
 function expectValidIndices(...indices: string[]) {
   indices.forEach((index) => {

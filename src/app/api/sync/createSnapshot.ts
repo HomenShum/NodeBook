@@ -1,4 +1,4 @@
-import { SerializedGraphNode, SerializedGraphStore } from "@/app/persistence/SerializedData";
+import { SerializedGraphStore, SerializedNode } from "@/app/persistence/SerializedData";
 import { getDb } from "@/db";
 import { graphNodeTable, graphRelationTable, relationListsTable, relationTypeTable } from "@/db/schema";
 
@@ -15,7 +15,7 @@ export const createSnapshotFromDb = async (): Promise<SerializedGraphStore> => {
 
   const nodeRows = await db.select().from(graphNodeTable);
   for (const row of nodeRows) {
-    const node: SerializedGraphNode = {
+    const node: SerializedNode = {
       version: row.version,
       id: row.id,
       createdAt: row.createdAt!,

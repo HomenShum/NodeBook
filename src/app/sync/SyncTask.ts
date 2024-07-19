@@ -1,24 +1,17 @@
-import { FractionalPositionedList } from "@/app/graph/FractionalPositionedList";
-import { GraphNode } from "@/app/graph/GraphNode";
-import { GraphRelation } from "@/app/graph/GraphRelation";
-import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
-import { SerializedSyncData } from "@/app/persistence/SerializedData";
+import { z } from "zod";
+
+import { GraphUpdate, GraphUpdateSchema } from "@/app/graph/GraphUpdate";
 
 export interface SyncData {
   transactionId: string;
-  transaction: TxCombinedPart;
-  result: {
-    nodes?: GraphNode[];
-    nodesDeleted?: GraphNode[];
-    relations?: GraphRelation[];
-    relationsDeleted?: GraphRelation[];
-    relationLists?: Record<string, FractionalPositionedList<GraphRelation>>;
-    pinnedRelationLists?: Record<string, FractionalPositionedList<GraphRelation>>;
-  };
-  serializedResult?: SerializedSyncData;
+  updates: GraphUpdate[];
 }
+export const SerializedSyncDataSchema = z.object({
+  transactionId: z.string(),
+  updates: GraphUpdateSchema.array(),
+});
 
 export interface SyncTask {
-  dataToSync: SyncData;
+  data: SyncData;
   undo: () => void;
 }
