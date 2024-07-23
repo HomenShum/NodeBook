@@ -1,8 +1,8 @@
+import { PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { comparePositions } from "@/app/util";
 
-import { PositionedRelation } from "./GraphNode";
 import { GraphRelation } from "./GraphRelation";
 
 export abstract class GraphObject {
@@ -106,11 +106,12 @@ export abstract class GraphObject {
   }
 
   pinChildRelation(childRelation: GraphRelation | GraphRelation[], after?: Positioner<GraphRelation>) {
-    this.pinnedRelationsList.add(childRelation, after);
+    const relationIds = Array.isArray(childRelation) ? childRelation.map((r) => r.id) : [childRelation.id];
+    this.store.pinRelations(this.id, relationIds, after);
   }
 
   unpinChildRelation(childRelation: GraphRelation) {
-    this.pinnedRelationsList.delete(childRelation.id);
+    this.store.unpinRelations(this.id, [childRelation.id]);
   }
 
   isRelationPinned(childRelation: GraphRelation) {

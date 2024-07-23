@@ -1052,20 +1052,61 @@ export class GraphStore {
   }
 
   // TODO: this is creating an observable, which might cause issues
-  getRelationList(node: GraphObject): FractionalPositionedList<GraphRelation> {
-    const list = this.relationsByNodeId.get(node.id);
+  getRelationList(node: GraphObject | string): FractionalPositionedList<GraphRelation> {
+    const nodeId = typeof node === "string" ? node : node.id;
+    const list = this.relationsByNodeId.get(nodeId);
     if (list) return list;
     const newList = new FractionalPositionedList<GraphRelation>();
-    this.relationsByNodeId.set(node.id, newList);
+    this.relationsByNodeId.set(nodeId, newList);
     return newList;
   }
 
-  getPinnedRelationList(node: GraphObject): FractionalPositionedList<GraphRelation> {
-    const list = this.pinnedRelationsByNodeId.get(node.id);
+  getPinnedRelationList(node: GraphObject | string): FractionalPositionedList<GraphRelation> {
+    const nodeId = typeof node === "string" ? node : node.id;
+    const list = this.pinnedRelationsByNodeId.get(nodeId);
     if (list) return list;
     const newList = new FractionalPositionedList<GraphRelation>();
-    this.pinnedRelationsByNodeId.set(node.id, newList);
+    this.pinnedRelationsByNodeId.set(nodeId, newList);
     return newList;
+  }
+
+  pinRelations(objectId: string, relationIds: string[], after?: Positioner<GraphRelation>) {
+    const { updates } = this._pinRelations(objectId, relationIds, after);
+    this.queueUpdates(updates);
+  }
+
+  private _pinRelations(
+    objectId: string,
+    relationIds: string[],
+    after?: Positioner<GraphRelation>,
+  ): { updates: GraphUpdate[] } {
+    const relations = relationIds.map((id) => {
+      const relation = this.relationsById.get(id);
+      if (!relation) {
+        throw new Error(`Relation with id ${id} does not exist`);
+      }
+      return relation;
+    });
+    const list = this.getPinnedRelationList(objectId);
+    const listBefore = list.serialize();
+    list.add(relations, after);
+    const listAfter = list.serialize();
+    return { updates: [{ operation: "updateRelationList", nodeId: objectId, pinned: true, listBefore, listAfter }] };
+  }
+
+  unpinRelations(objectId: string, relationIds: string[]) {
+    const { updates } = this._unpinRelations(objectId, relationIds);
+    this.queueUpdates(updates);
+  }
+
+  private _unpinRelations(objectId: string, relationIds: string[]): { updates: GraphUpdate[] } {
+    const list = this.getPinnedRelationList(objectId);
+    const listBefore = list.serialize();
+    relationIds.forEach((id) => {
+      list.delete(id);
+    });
+    const listAfter = list.serialize();
+    return { updates: [{ operation: "updateRelationList", nodeId: objectId, pinned: true, listBefore, listAfter }] };
   }
 
   updateRelationList(objectId: string, pinned: boolean, list: SerializedPositionList<GraphRelation>) {
