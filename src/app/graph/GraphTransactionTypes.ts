@@ -36,10 +36,8 @@ export type TxRemoveRelation = {
 export type TxReplaceRelationLink = {
   direction: RelationDirectionForObject;
   relationId: string;
-  replaceWith:
-    | { type: "new-node"; nodeProps?: GraphNodeProps }
-    | { type: "existing-node"; id: string }
-    | { type: "existing-relation"; id: string };
+  replaceWith: { type: "new-node"; nodeProps?: GraphNodeProps } | { type: "existing-object"; id: string };
+  after?: Positioner<GraphRelation>;
 };
 
 export type TxUpdateNode = {

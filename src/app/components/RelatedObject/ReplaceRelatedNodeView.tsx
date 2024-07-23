@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
@@ -62,8 +61,7 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
       await graph.replaceRelationLink({
         direction: treeNode.relationWithParent.to.id === treeNode.object.id ? "to" : "from",
         relationId: treeNode.relationWithParent.id,
-        replaceWith:
-          obj instanceof GraphNode ? { type: "existing-node", id: obj.id } : { type: "existing-relation", id: obj.id },
+        replaceWith: { type: "existing-object", id: obj.id },
       });
       setViewType("edit");
     },

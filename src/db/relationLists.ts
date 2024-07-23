@@ -11,16 +11,10 @@ export const upsertRelationList = async (
   relationList: SerializedPositionList<GraphRelation>,
   pinned: boolean,
 ) => {
+  await tx
+    .delete(relationListsTable)
+    .where(and(eq(relationListsTable.nodeId, nodeId), eq(relationListsTable.pinned, pinned)));
   for (const [relationId, position] of Object.entries(relationList)) {
-    await tx
-      .delete(relationListsTable)
-      .where(
-        and(
-          eq(relationListsTable.nodeId, nodeId),
-          eq(relationListsTable.relationId, relationId),
-          eq(relationListsTable.pinned, pinned),
-        ),
-      );
     await tx
       .insert(relationListsTable)
       .values({

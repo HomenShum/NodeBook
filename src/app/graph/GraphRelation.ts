@@ -74,7 +74,6 @@ export class GraphRelation extends GraphObject implements Serializable {
       setType: action,
       setFrom: action,
       setTo: action,
-      setTarget: action,
       setIsPrivate: action,
       incrementVersion: action,
     });
@@ -133,14 +132,6 @@ export class GraphRelation extends GraphObject implements Serializable {
     // add this relation to the new "to" node
     this.to.allRelationsList.add(this, after);
     // TOOD: delete if no relations?
-  }
-
-  setTarget(target: "from" | "to", node: GraphObject, after?: Positioner<GraphRelation>) {
-    if (target === "from") {
-      this.setFrom(node, after);
-    } else {
-      this.setTo(node, after);
-    }
   }
 
   setIsPrivate(value: boolean) {

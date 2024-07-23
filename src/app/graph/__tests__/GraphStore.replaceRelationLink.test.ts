@@ -44,7 +44,7 @@ describe("GraphStore.replaceRelationLink", () => {
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
       direction: "from",
-      replaceWith: { type: "existing-node", id: nodeC.id },
+      replaceWith: { type: "existing-object", id: nodeC.id },
     });
 
     expect(relationAB.from).toBe(nodeC);
@@ -59,7 +59,7 @@ describe("GraphStore.replaceRelationLink", () => {
     await graphStore.replaceRelationLink({
       relationId: relationBC.id,
       direction: "to",
-      replaceWith: { type: "existing-node", id: nodeA.id },
+      replaceWith: { type: "existing-object", id: nodeA.id },
     });
 
     expect(relationBC.to).toBe(nodeA);
@@ -68,13 +68,17 @@ describe("GraphStore.replaceRelationLink", () => {
     expect(nodeC.relations).toHaveLength(2);
     expect(nodeC.relations).not.toEqual(expect.arrayContaining([relationBC]));
   });
-  it("should queue a GraphUpdate for replacing a relation link with an existing node", async () => {
+  it("should queue correct GraphUpdates when replacing a relation link with an existing node", async () => {
     const abAtStart = relationAB.serialize();
+    const abPosition = graphStore.getRelationList(nodeA).get(relationAB.id)?.position;
+    const acPosition = graphStore.getRelationList(nodeA).get(relationAC.id)?.position;
+
+    const bcPosition = graphStore.getRelationList(nodeB).get(relationBC.id)?.position;
 
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
       direction: "from",
-      replaceWith: { type: "existing-node", id: nodeC.id },
+      replaceWith: { type: "existing-object", id: nodeC.id },
     });
 
     const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
@@ -85,6 +89,32 @@ describe("GraphStore.replaceRelationLink", () => {
           oldProps: abAtStart,
           newProps: relationAB.serialize(),
         },
+        {
+          operation: "updateRelationList",
+          nodeId: nodeA.id,
+          pinned: false,
+          listBefore: {
+            ab: abPosition,
+            ac: acPosition,
+          },
+          listAfter: {
+            ac: acPosition,
+          },
+        },
+        {
+          operation: "updateRelationList",
+          nodeId: nodeC.id,
+          pinned: false,
+          listBefore: {
+            ac: acPosition,
+            bc: bcPosition,
+          },
+          listAfter: {
+            ab: abPosition,
+            ac: acPosition,
+            bc: bcPosition,
+          },
+        },
       ],
     ]);
   });
@@ -92,7 +122,7 @@ describe("GraphStore.replaceRelationLink", () => {
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
       direction: "from",
-      replaceWith: { type: "existing-node", id: nodeC.id },
+      replaceWith: { type: "existing-object", id: nodeC.id },
     });
 
     graphStore.syncQueue.undoAllPending();
@@ -126,6 +156,8 @@ describe("GraphStore.replaceRelationLink", () => {
   });
   it("should queue two GraphUpdates for replacing a relation link with a new node", async () => {
     const abAtStart = relationAB.serialize();
+    const abPosition = graphStore.getRelationList(nodeA).get(relationAB.id)?.position;
+    const acPosition = graphStore.getRelationList(nodeA).get(relationAC.id)?.position;
 
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
@@ -148,6 +180,27 @@ describe("GraphStore.replaceRelationLink", () => {
           operation: "updateRelation",
           oldProps: abAtStart,
           newProps: relationAB.serialize(),
+        },
+        {
+          operation: "updateRelationList",
+          nodeId: nodeA.id,
+          pinned: false,
+          listBefore: {
+            ab: abPosition,
+            ac: acPosition,
+          },
+          listAfter: {
+            ac: acPosition,
+          },
+        },
+        {
+          operation: "updateRelationList",
+          nodeId: newNode.id,
+          pinned: false,
+          listBefore: {},
+          listAfter: {
+            ab: abPosition,
+          },
         },
       ],
     ]);
@@ -177,7 +230,7 @@ describe("GraphStore.replaceRelationLink", () => {
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
       direction: "to",
-      replaceWith: { type: "existing-node", id: nodeC.id },
+      replaceWith: { type: "existing-object", id: nodeC.id },
     });
 
     expect(nodeB.relations).toHaveLength(1);
@@ -187,7 +240,7 @@ describe("GraphStore.replaceRelationLink", () => {
     await graphStore.replaceRelationLink({
       relationId: relationBC.id,
       direction: "from",
-      replaceWith: { type: "existing-node", id: nodeA.id },
+      replaceWith: { type: "existing-object", id: nodeA.id },
     });
 
     expect(nodeB.relations).toHaveLength(0);
@@ -200,12 +253,12 @@ describe("GraphStore.replaceRelationLink", () => {
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
       direction: "to",
-      replaceWith: { type: "existing-node", id: nodeC.id },
+      replaceWith: { type: "existing-object", id: nodeC.id },
     });
     await graphStore.replaceRelationLink({
       relationId: relationBC.id,
       direction: "from",
-      replaceWith: { type: "existing-node", id: nodeA.id },
+      replaceWith: { type: "existing-object", id: nodeA.id },
     });
 
     graphStore.syncQueue.undoAllPending();

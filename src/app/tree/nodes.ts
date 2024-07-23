@@ -271,18 +271,16 @@ export class DescendantTreeNode extends BaseTreeNode {
    * to the new parent. If `after` is provided, the node will be positioned
    * after the given node in the new parent's children.
    */
-  setParent(parent: BaseTreeNode, after?: Positioner<DescendantTreeNode>) {
+  async setParent(parent: BaseTreeNode, after?: Positioner<DescendantTreeNode>) {
     if (this.parent.object === parent.object) return;
-    const afterRelation = after instanceof DescendantTreeNode ? after.relationWithParent : after;
-    const parentSide = getOtherSideOrThrow(this.relationWithParent, this.object.id);
-    this.relationWithParent.setTarget(parentSide, parent.object, afterRelation);
+    await this.tree.setObjectOnNode(this.id, parent.object, after);
   }
 
   /**
    * Moves the node to the given position in the parent's children.
    */
-  addChildren(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
-    this.childrenGroupsById.all.add(nodes, after);
+  async addChildren(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+    await this.childrenGroupsById.all.add(nodes, after);
   }
 
   async setObject(object: GraphObject) {
@@ -306,7 +304,7 @@ export abstract class BaseGroup {
   abstract relationsWithPositions: PositionedRelation[];
   abstract relationsList: FractionalPositionedList<GraphRelation>;
   abstract path: string;
-  abstract add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>): void;
+  abstract add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>): Promise<void>;
 
   constructor({ tree, parent, nodes = [] }: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
     this.tree = tree;
@@ -371,10 +369,10 @@ export class PinnedGroup extends BaseGroup {
    * Moves the nodes into the given group while maintaining any expanded or
    * selected states.
    */
-  add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+  async add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
     for (const node of nodes) {
       // add the nodes as children of the parent, at the bottom (if they're not already there)
-      node.setParent(this.parent, -1);
+      await node.setParent(this.parent, -1);
       // then add to pinned group by pinning (at the specified position if provided)
       this.parent.pinChild(node, after);
       this.tree.updateSubtreeExpansionAndSelectionPathState(node.path, this.createChildPath(node));
@@ -406,9 +404,9 @@ export class AllGroup extends BaseGroup {
    * Moves the nodes into the given group while maintaining any expanded or
    * selected states.
    */
-  add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+  async add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
     for (const node of nodes) {
-      node.setParent(this.parent, after);
+      await node.setParent(this.parent, after);
       this.tree.updateSubtreeExpansionAndSelectionPathState(node.path, this.createChildPath(node));
       after = node;
     }

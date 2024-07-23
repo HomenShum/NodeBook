@@ -413,19 +413,14 @@ export class GraphStore {
       newObject = newNode;
       updates.push(...newNodeUpdates);
     } else {
-      if (tx.replaceWith.type === "existing-node") {
-        newObject = this.nodesById.get(tx.replaceWith.id);
-      } else if (tx.replaceWith.type === "existing-relation") {
-        newObject = this.relationsById.get(tx.replaceWith.id);
-      }
-
+      newObject = this.getObject(tx.replaceWith.id);
       if (!newObject) throw new Error(`Object with id ${tx.replaceWith.id} does not exist`);
     }
 
     if (tx.direction === "from") {
-      updates.push(...this.updateRelationFrom(relation, newObject));
+      updates.push(...this.updateRelationFrom(relation, newObject, tx.after));
     } else {
-      updates.push(...this.updateRelationTo(relation, newObject));
+      updates.push(...this.updateRelationTo(relation, newObject, tx.after));
     }
 
     return { object: newObject, relation, updates };
@@ -831,17 +826,33 @@ export class GraphStore {
   ): GraphUpdate[] {
     const updates: GraphUpdate[] = [];
     try {
-      const oldFrom = relation.from;
-
       const oldRelation = relation.serialize();
-      relation.setFrom(newFrom);
+      const oldFrom = relation.from;
+      const oldFromListBefore = this.getRelationList(oldFrom).serialize();
+      const newFromListBefore = this.getRelationList(newFrom).serialize();
+
+      relation.setFrom(newFrom, after);
       relation.incrementVersion();
+
       updates.push({
         operation: "updateRelation",
         oldProps: oldRelation,
         newProps: relation.serialize(),
       });
-
+      updates.push({
+        operation: "updateRelationList",
+        nodeId: oldFrom.id,
+        pinned: false,
+        listBefore: oldFromListBefore,
+        listAfter: this.getRelationList(oldFrom).serialize(),
+      });
+      updates.push({
+        operation: "updateRelationList",
+        nodeId: newFrom.id,
+        pinned: false,
+        listBefore: newFromListBefore,
+        listAfter: this.getRelationList(newFrom).serialize(),
+      });
       updates.push(...this.deleteIfNoRelations(oldFrom));
     } catch (e) {
       // TODO: implement rollback
@@ -863,15 +874,31 @@ export class GraphStore {
   ): GraphUpdate[] {
     const updates: GraphUpdate[] = [];
     try {
-      const oldTo = relation.to;
-
       const oldRelation = relation.serialize();
+      const oldTo = relation.to;
+      const oldToListBefore = this.getRelationList(oldTo).serialize();
+      const newToListBefore = this.getRelationList(newTo).serialize();
+
       relation.setTo(newTo, after);
       relation.incrementVersion();
       updates.push({
         operation: "updateRelation",
         oldProps: oldRelation,
         newProps: relation.serialize(),
+      });
+      updates.push({
+        operation: "updateRelationList",
+        nodeId: oldTo.id,
+        pinned: false,
+        listBefore: oldToListBefore,
+        listAfter: this.getRelationList(oldTo).serialize(),
+      });
+      updates.push({
+        operation: "updateRelationList",
+        nodeId: newTo.id,
+        pinned: false,
+        listBefore: newToListBefore,
+        listAfter: this.getRelationList(newTo).serialize(),
       });
 
       updates.push(...this.deleteIfNoRelations(oldTo));

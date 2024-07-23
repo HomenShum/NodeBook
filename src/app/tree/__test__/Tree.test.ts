@@ -115,7 +115,7 @@ describe("Tree", () => {
         { rid: "2", isHead: true },
         { rid: "3", isAnchor: true },
       ]);
-      tree.indentSelection();
+      await tree.indentSelection();
       expectTreeToMatchTemplate(tree, [
         // prettier-ignore
         { rid: "1", children: [
@@ -133,7 +133,7 @@ describe("Tree", () => {
           { rid: "3" },
         ]},
       ]);
-      tree.indentSelection();
+      await tree.indentSelection();
       // prettier-ignore
       expectTreeToMatchTemplate(tree, [
         { rid: "1", children: [
@@ -155,7 +155,7 @@ describe("Tree", () => {
             { rid: "3" },
           ]);
           if (direction === "up") {
-            tree.moveSelectedNodesUp();
+            await tree.moveSelectedNodesUp();
             // prettier-ignore
             expectTreeToMatchTemplate(tree, [
               { rid: "2", isFocused: true },
@@ -163,7 +163,7 @@ describe("Tree", () => {
               { rid: "3" },
             ]);
           } else {
-            tree.moveSelectedNodesDown();
+            await tree.moveSelectedNodesDown();
             // prettier-ignore
             expectTreeToMatchTemplate(tree, [
               { rid: "1" }, 
@@ -184,7 +184,7 @@ describe("Tree", () => {
           ]},
           { rid: "5", isAnchor: true },
         ]);
-      tree.moveSelectedNodesUp();
+      await tree.moveSelectedNodesUp();
       // prettier-ignore
       expectTreeToMatchTemplate(tree, [
           { rid: "1" }, 
@@ -206,7 +206,7 @@ describe("Tree", () => {
             { rid: "6" },
           ]},
         ]);
-      tree.moveSelectedNodesUp();
+      await tree.moveSelectedNodesUp();
       // prettier-ignore
       expectTreeToMatchTemplate(tree, [
           { rid: "1" }, 

@@ -25,17 +25,6 @@ import { cn } from "@/lib/utils";
 
 import styles from "./SearchAndReplaceDropdownPlugin.module.css";
 
-function resolveReplacementType(optionType: DropdownOption["type"]): "existing-node" | "existing-relation" {
-  switch (optionType) {
-    case "node":
-      return "existing-node";
-    case "relation":
-      return "existing-relation";
-    default:
-      throw new Error(`Invalid option type: ${optionType}`);
-  }
-}
-
 /**
  * Dropdown options:
  * - Replace the current object with the selected object

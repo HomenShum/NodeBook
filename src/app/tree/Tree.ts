@@ -6,6 +6,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes, GraphStore, Path } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
+import { getOtherSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { comparePositions, relationsPathToParentChild, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
@@ -428,15 +429,13 @@ export class Tree {
     });
   }
 
-  async setObjectOnNode(treeNodeId: string, object: GraphObject) {
+  async setObjectOnNode(treeNodeId: string, object: GraphObject, after?: Positioner<DescendantTreeNode>) {
     const treeNode = this.getNodeOrThrow(treeNodeId);
     await this.graphStore.replaceRelationLink({
-      direction: treeNode.relationWithParent.to.id === treeNode.object.id ? "to" : "from",
+      direction: getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id),
       relationId: treeNode.relationWithParent.id,
-      replaceWith:
-        object.objectType === "node"
-          ? { type: "existing-node", id: object.id }
-          : { type: "existing-relation", id: object.id },
+      replaceWith: { type: "existing-object", id: object.id },
+      after: after instanceof DescendantTreeNode ? after.relationWithParent : after,
     });
   }
 
@@ -456,13 +455,13 @@ export class Tree {
   /**
    * Moves the selection to the bottom of the sibling above.
    */
-  indentSelection(): boolean {
+  async indentSelection(): Promise<boolean> {
     const selection = this.selectionWithNodes;
     for (const nodes of groupSiblings(selection?.subtreeRoots ?? [])) {
       if (nodes.length === 0) continue;
       const { parentGroup, siblingAbove } = nodes[0];
       if (parentGroup !== siblingAbove?.parentGroup) continue; // can't indent selections that span groups
-      siblingAbove.addChildren(nodes, -1);
+      await siblingAbove.addChildren(nodes, -1);
     }
     return true;
   }
@@ -568,7 +567,7 @@ export class Tree {
   /**
    * Moves the selected or focused nodes up one step.
    */
-  moveSelectedNodesUp(): boolean {
+  async moveSelectedNodesUp(): Promise<boolean> {
     if (!this.selectionWithNodes) return false;
     const { top, subtreeRoots } = this.selectionWithNodes;
     // don't allow moving nodes that belong to different groups
@@ -585,7 +584,7 @@ export class Tree {
       return true;
     } else if (siblingAboveParent) {
       // we're at the top - move underneath the next parent above
-      siblingAboveParent.addChildren(subtreeRoots, -1);
+      await siblingAboveParent.addChildren(subtreeRoots, -1);
       return true;
     }
     return false;
@@ -594,7 +593,7 @@ export class Tree {
   /**
    * Moves the selected or focused nodes down one step.
    */
-  moveSelectedNodesDown(): boolean {
+  async moveSelectedNodesDown(): Promise<boolean> {
     if (!this.selectionWithNodes) return false;
     const { bottom, subtreeRoots } = this.selectionWithNodes;
     // don't allow moving nodes that belong to different groups
@@ -610,7 +609,7 @@ export class Tree {
       return true;
     } else if (siblingBelowParent) {
       // we're at the bottom - move underneath next node
-      siblingBelowParent.addChildren(subtreeRoots, 0);
+      await siblingBelowParent.addChildren(subtreeRoots, 0);
       return true;
     }
     return false;
