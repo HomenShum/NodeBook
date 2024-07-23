@@ -6,16 +6,10 @@
 
 .RelatedObjectContent {
   display: flex;
-  gap: 4px;
   align-items: start;
   position: relative;
   padding: 3px 6px 2px 0px;
   min-height: 32px;
-}
-
-.RelatedObjectContentPublic {
-  color: inherit;
-  /* Leaving this empty in case Jacob wants to add extra styles for the public content */
 }
 
 /* 
@@ -116,6 +110,8 @@ Node
   display: flex;
   flex-direction: column;
   flex: 1 1 0%;
+  padding: 0.5px 0 0 4px;
+  margin-right: 4px;
   align-items: center;
   background-color: transparent;
   position: relative;
@@ -123,6 +119,7 @@ Node
   color: var(--gray-12);
   border-radius: 4px;
 }
+
 .RelatedObjectNode.Selected {
   background-color: var(--teal-a3);
 }
@@ -212,7 +209,7 @@ Right Area
   text-align: center;
   background-color: var(--gray-3);
   color: var(--gray-9);
-  font-size: 12px;
+  font-size: var(--font-size-mini);
   border-radius: 2px;
   padding-left: 4px;
   padding-right: 4px;

@@ -2,92 +2,55 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 720px;
-  gap: 4px;
-  margin: 0 auto;
+  margin: 8px 8px 8px 0;
+  border: 0.5px solid var(--gray-6);
+  border-radius: 6px;
+  padding-bottom: 72px;
+  min-height: calc(100vh - 16px);
+  background-color: var(--gray-1);
 }
 
-.OutlineObject {
+.OutlineViewFull {
+  margin: 8px;
+}
+
+.OutlineContent {
   display: flex;
   flex-direction: column;
-  justify-content: left;
 }
 
-.OutlineObject.Selected {
-  background-color: var(--teal-a2);
-}
-
-.OutlineObjectContent {
-  display: flex;
-  align-items: baseline;
-  position: relative;
-  margin: 0 12px;
-  min-height: 32px;
-}
-
-.OutlineObjectContentPublic {
-  color: inherit;
-  /* Leaving this empty in case Jacob wants to add extra styles for the public content */
-}
-
-.OutlineObjectLeftArea {
-  position: absolute;
-  height: 100%;
-  width: 100px;
-  right: 100%;
-}
-
-/* Pin Icon of each bullet */
-.PinIcon {
-  position: relative;
+.WindowNav {
+  position: sticky;
+  border-radius: 8px;
   top: 0;
-  padding: 0 1px 0 0;
-  right: 4px;
-  transform: scale(0.8) translateY(-0.5px);
-  color: var(--gray-6);
+  left: 0;
+  z-index: 20;
 }
 
-.BreadcrumbContainer {
+.HeadingContainer {
   display: flex;
-  gap: 4px;
-  color: var(--gray-9);
-}
-
-.BreadcrumbContainer > :first-child > :first-child {
-  margin-right: 4px;
-}
-
-.Breadcrumb {
-  cursor: pointer;
-  display: flex;
-  gap: 2px;
-  align-items: center;
-  user-select: none;
-}
-
-.Chevron {
-  align-items: center;
-  user-select: none;
-  align-self: center;
-}
-
-.Breadcrumb:hover {
-  color: var(--teal-8);
+  flex-direction: column;
+  align-items: start;
+  padding: 36px 52px 4px 48px;
+  color: var(--gray-12);
+  gap: 8px;
 }
 
 .TitleContainer {
   display: flex;
   align-items: center;
-  margin: 0 -2px;
-  height: 52px;
-  color: var(--gray-12);
   gap: 8px;
+  padding-left: 3px;
 }
 
 .TitleText {
-  font-size: 1.5rem;
+  font-size: var(--font-size-h2);
   font-weight: 400;
   user-select: none;
+}
+
+.Nodes {
+  padding: 0 52px;
 }
 
 @media only screen and (max-width: 600px) {
@@ -98,9 +61,5 @@
 
   .TitleContainer {
     padding: 0 13px;
-  }
-
-  .OutlineObjectContent {
-    margin: 2px;
   }
 }

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import styles from "./Button.module.css";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "destructive" | "outline" | "accent" | "ghost" | "link";
+  variant?: "default" | "destructive" | "outline" | "accent" | "active" | "ghost" | "link";
   size?: "default" | "sm" | "lg" | "icon";
   asChild?: boolean;
 }

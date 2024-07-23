@@ -15,16 +15,13 @@ const TreeElement = observer(({ object }: { object: GraphObject }) => {
   return (
     <>
       <div className={styles.SidebarTreeBlock}>
-        <div className={styles.IconBox}>
-          <Play
-            size={8}
-            fill="currentColor"
-            className={cn(isExpanded && styles.IconExpanded)}
-            onClick={() => setIsExpanded(!isExpanded)}
-          />
+        <div onClick={() => setIsExpanded(!isExpanded)} className={styles.IconBox}>
+          <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
         </div>
 
-        <div className={styles.SidebarTreeContent}>{object.text}</div>
+        <div className={styles.SidebarTreeContent}>
+          <span>{object.text}</span>
+        </div>
       </div>
       <div className={styles.SidebarTreeChildren}>
         {isExpanded && object.children.map((o) => <TreeElement object={o} key={o.id}></TreeElement>)}

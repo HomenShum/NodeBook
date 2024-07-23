@@ -48,7 +48,7 @@ export const RelatedObjectMenu = observer(
         <DropdownMenuTrigger className={styles.TrailMenuTrigger}>
           <Ellipsis size={16} className={cn(isHovered ? styles.TrailMenuIcon : styles.Transparent)} />
         </DropdownMenuTrigger>
-        <DropdownMenuContent onCloseAutoFocus={(e) => e.preventDefault()}>
+        <DropdownMenuContent align="start" alignOffset={-5} onCloseAutoFocus={(e) => e.preventDefault()}>
           {parent.isRelationPinned(relation) ? (
             <DropdownMenuItem onSelect={() => parent.unpinChildRelation(relation)}>
               <PinOff size={14} />

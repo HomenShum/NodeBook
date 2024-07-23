@@ -2,7 +2,7 @@
   position: relative;
   left: 50%;
   transform: translate(-50%);
-  font-size: 16px;
+  font-size: var(--font-size-md);
   display: flex;
   gap: 4px;
   align-items: center;

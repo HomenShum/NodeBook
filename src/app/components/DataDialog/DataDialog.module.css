@@ -1,5 +1,5 @@
 .DialogOverlay {
-  background-color: rgba(255, 255, 255, 0.7);
+  /* background-color: rgba(255, 255, 255, 0.7); */
   position: fixed;
   inset: 0;
   animation: overlayShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -18,7 +18,7 @@
 .DialogContent {
   background-color: var(--gray-1);
   border-radius: 6px;
-  box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
+  box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
   position: fixed;
   top: 50%;
   left: 50%;
@@ -28,6 +28,7 @@
   max-height: 85vh;
   padding: 25px;
   animation: contentShow 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 30;
 }
 
 @keyframes contentShow {
@@ -46,55 +47,69 @@
   outline: none;
 }
 
+.DialogHeader {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-items: center;
+}
+
+.BackButton {
+  position: relative;
+}
+
 .DialogTitle {
   margin: 0;
   font-weight: 500;
-  font-size: 17px;
+  font-size: var(--font-size-md);
 }
 
 .DialogDescription {
   margin: 10px 0 20px;
-  font-size: 15px;
+  font-size: var(--font-size-sm);
   line-height: 1.5;
 }
 
 .DialogCloseButton {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 24px;
+  right: 24px;
 }
 
-.DialogCloseButton:hover {
-  background-color: var(--teal-2);
-}
-
-.DialogCloseButton:focus {
-  box-shadow: 0 0 0 2px var(--teal-4);
+.DialogActions {
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 .Fieldset {
   display: flex;
-  gap: 20px;
   align-items: center;
-  margin-bottom: 15px;
 }
 
 .FileFieldset {
   display: flex;
-  flex-direction: column;
+  gap: 12px;
   align-items: flex-start;
-  margin-bottom: 15px;
+  border: none;
+  margin: 0 0 24px 0;
+  padding: 0;
 }
 
 .SelectedFileLabel {
-  display: block;
-  margin-top: 4px;
-  font-size: 0.8em;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: var(--font-size-xs);
+  border: solid 0.5px var(--gray-4);
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 6px;
+  user-select: none;
 }
 
 .SelectedFileLabel > button {
-  display: inline-block;
-  border-radius: 50%;
-  color: red;
-  margin-left: 1ch;
+  display: flex;
+  align-items: center;
 }

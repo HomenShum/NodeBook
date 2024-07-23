@@ -2,6 +2,7 @@ declare const styles: {
   readonly "Button": string;
   readonly "Disabled": string;
   readonly "accent": string;
+  readonly "active": string;
   readonly "default": string;
   readonly "destructive": string;
   readonly "ghost": string;

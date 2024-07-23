@@ -1,7 +1,10 @@
 .SidebarTreeContainer {
   margin-left: 4px;
-  margin-top: 12px;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  overflow: hidden;
 }
 
 .SidebarTreeBlock {
@@ -11,10 +14,11 @@
   height: 28px;
   padding: 2px 4px;
   align-items: center;
-  color: var(--gray-11);
+  justify-content: start;
+  font-size: var(--font-size-sm);
+  color: var(--gray-12);
   border-radius: 4px;
-  width: 100%;
-  max-width: 180px;
+  overflow: hidden;
 }
 
 .SidebarTreeBlock:hover {
@@ -23,12 +27,16 @@
 
 .SidebarTreeChildren {
   padding-left: 16px;
+  width: 100%;
 }
 
 .SidebarTreeContent {
+  flex: 1;
+  width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  cursor: default;
 }
 
 .IconBox {
@@ -41,7 +49,8 @@
 }
 
 .IconBox:hover {
-  background-color: var(--gray-5);
+  background-color: var(--gray-6);
+  cursor: pointer;
 }
 
 .IconExpanded {

@@ -36,7 +36,7 @@ export const RelatedObjectDetails = observer(
 
     return (
       <div className={styles.DetailsContainer}>
-        <span>path: {treeNode.path} </span>
+        <span className={styles.PathEllipsis}>path: {treeNode.path} </span>
         <span>objectId: {object.id}</span>
         <span>relationId: {relation.id}</span>
         {position && (

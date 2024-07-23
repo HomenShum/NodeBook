@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
-import { PinCustomIcon } from "@/app/components/icons";
+import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";

@@ -1,25 +1,17 @@
 "use client";
-import { ChevronRight, Ellipsis, HomeIcon, Plus } from "lucide-react";
+import { HomeIcon, Plus } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
 import { useCallback, useRef } from "react";
 import { Options, useHotkeys } from "react-hotkeys-hook";
 
+import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
+import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
-import { TreeNode } from "@/app/tree/nodes";
-import { getAncestorsAsArray } from "@/app/tree/utils";
-import { relationsToURLPath, useCurView } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
-import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
@@ -31,17 +23,31 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   const hasFocus = useCallback(() => !!treeRef.current?.contains(document.activeElement), [treeRef]);
   useOutlineHotkeys({ tree, hasFocus });
   const treeNode = tree.state.root;
-  const ancestors = getAncestorsAsArray(treeNode);
+  const renderController = useRenderController();
   return (
     <TreeContext.Provider value={tree}>
-      <div id={ViewType.OUTLINE} ref={treeRef} className={s.OutlineView}>
-        {ancestors.length > 1 && <Breadcrumbs treeNode={treeNode} />}
-        <div className={s.TitleContainer}>
-          {treeNode.object.id === graphStore.outlineRoot.id && <HomeIcon size={20} />}
-          <h1 className={s.TitleText}>{truncate(treeNode.object.text, 40)}</h1>
-          <CreateNewButton tree={tree} />
+      <div
+        className={cn(s.OutlineView, {
+          [s.OutlineViewFull]: !renderController.leftSidebarOpen,
+        })}
+      >
+        <div className={s.WindowNav}>
+          <Breadcrumbs treeNode={treeNode} />
+          <ControlsBar tree={tree} />
         </div>
-        <RelatedObjectChildren treeNode={treeNode} />
+        <div className={s.OutlineContent}>
+          <div className={s.HeadingContainer}>
+            <div className={s.TitleContainer}>
+              {treeNode.object.id === graphStore.outlineRoot.id && <HomeIcon size={20} />}
+              <h1 className={s.TitleText}>{treeNode.object.text}</h1>
+            </div>
+
+            <CreateNewButton tree={tree} />
+          </div>
+          <div className={s.Nodes}>
+            <RelatedObjectChildren treeNode={treeNode} />
+          </div>
+        </div>
       </div>
     </TreeContext.Provider>
   );
@@ -50,7 +56,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
 function CreateNewButton({ tree }: { tree: Tree }) {
   return (
     <Button
-      variant="default"
+      variant="ghost"
       size="icon"
       onClick={async () => {
         await tree.createChildOfRootAndFocus();
@@ -60,113 +66,6 @@ function CreateNewButton({ tree }: { tree: Tree }) {
     </Button>
   );
 }
-
-const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
-  const router = useRouter();
-  const curView = useCurView();
-  const graphStore = useGraphStore();
-  const viewStore = useViewStore();
-  const ancestors = getAncestorsAsArray(treeNode);
-  const isLong = treeNode.depth > 5 || ancestors.reduce((total, { object }) => total + object.text.length, 0) > 50;
-  const relations = ancestors.map((a) => a.relationToChild);
-  return (
-    <div className={s.BreadcrumbContainer}>
-      {ancestors.slice(1).map(({ object, path }, i) => {
-        const isFirst = i === 0;
-        const isSecondLast = i === path.length - 2;
-
-        if (isFirst || isSecondLast) {
-          return (
-            <span
-              className={s.Breadcrumb}
-              key={path}
-              onClick={() => {
-                if (curView !== ViewType.SPLIT) {
-                  router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
-                } else {
-                  router.push(
-                    `/split/outline${relationsToURLPath(
-                      relations.slice(0, i + 1),
-                      graphStore,
-                    )}/stream${relationsToURLPath(viewStore.mainStreamView.pathToRoot, graphStore)}`,
-                  );
-                }
-              }}
-            >
-              {isFirst && <HomeIcon size={14} />}
-              {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
-              <span>{truncate(object.text, 20)}</span>
-            </span>
-          );
-        }
-        if (isLong && i === 1) {
-          return (
-            <DropdownMenu key="ellipsis">
-              <DropdownMenuTrigger asChild>
-                <span className={s.Breadcrumb}>
-                  <ChevronRight size={14} />
-                  <Ellipsis size={14} />
-                </span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent sideOffset={4}>
-                {ancestors.slice(1, -1).map(({ object, relationToChild, path }, index) => (
-                  <DropdownMenuItem
-                    key={path}
-                    onSelect={() => {
-                      if (curView !== ViewType.SPLIT) {
-                        router.push(`/outline${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`);
-                      } else {
-                        router.push(
-                          `/split/outline${relationsToURLPath(
-                            relations.slice(0, index + 2),
-                            graphStore,
-                          )}/stream${relationsToURLPath(viewStore.mainStreamView.pathToRoot, graphStore)}`,
-                        );
-                      }
-                    }}
-                  >
-                    {truncate(object.text, 20)}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        }
-        return !isLong ? (
-          <span
-            className={s.Breadcrumb}
-            key={path}
-            onClick={() => {
-              if (curView !== ViewType.SPLIT) {
-                router.push(`/outline${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
-              } else {
-                router.push(
-                  `/split/outline${relationsToURLPath(
-                    relations.slice(0, i + 1),
-                    graphStore,
-                  )}/stream${relationsToURLPath(viewStore.mainStreamView.pathToRoot, graphStore)}`,
-                );
-              }
-            }}
-          >
-            <ChevronRight size={14} strokeWidth={2} />
-            <span>{truncate(object.text, 20)}</span>
-          </span>
-        ) : null;
-      })}
-      <span className={s.Chevron}>
-        <ChevronRight size={14} strokeWidth={2} />
-      </span>
-    </div>
-  );
-});
-
-const truncate = (text: string, maxLength: number) => {
-  if (text.length > maxLength) {
-    return text.slice(0, maxLength) + "...";
-  }
-  return text;
-};
 
 function useOutlineHotkeys({ tree, hasFocus }: { tree: Tree; hasFocus: () => boolean }) {
   const defaults: Options = { enableOnContentEditable: true, preventDefault: true, enableOnFormTags: ["INPUT"] };

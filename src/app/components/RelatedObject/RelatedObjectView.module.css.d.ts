@@ -14,7 +14,6 @@ declare const styles: {
   readonly "RelatedObjectBulletContainer": string;
   readonly "RelatedObjectContainer": string;
   readonly "RelatedObjectContent": string;
-  readonly "RelatedObjectContentPublic": string;
   readonly "RelatedObjectLeftArea": string;
   readonly "RelatedObjectLeftHandler": string;
   readonly "RelatedObjectNode": string;

@@ -1,11 +1,11 @@
 .DropdownMenuContent {
   min-width: 200px;
   background-color: var(--gray-1);
-  border: solid 0.5px var(--teal-4);
-  z-index: 10;
+  border: solid 0.5px var(--gray-6);
+  z-index: 50;
   list-style: none;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: 6px;
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
@@ -31,11 +31,11 @@
 
 .DropdownMenuItem {
   padding: 6px 12px;
-  border-radius: 2px;
+  border-radius: 4px;
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--gray-12);
   display: flex;
   gap: 8px;
@@ -75,7 +75,7 @@
 
 .DropdownMenuShortcut {
   margin-left: auto;
-  font-size: 0.75rem;
+  font-size: var(--font-size-mini);
   letter-spacing: 0.1em;
   opacity: 0.6;
 }

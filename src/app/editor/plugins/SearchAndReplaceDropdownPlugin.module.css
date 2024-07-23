@@ -20,7 +20,7 @@
   border: none;
   cursor: pointer;
   white-space: nowrap;
-  font-size: 0.875rem;
+  font-size: var(--font-size-sm);
   color: var(--gray-12);
   display: flex;
   gap: 8px;

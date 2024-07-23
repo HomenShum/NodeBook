@@ -1,22 +1,23 @@
 import { observer } from "mobx-react-lite";
 
 import { useAuth } from "@/app/auth/useAuth";
-import { ClearData } from "@/app/components/DataDialog/ClearData";
-import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
+import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
-import { useViewStore } from "@/app/view/useViewStore";
+import { useRenderController } from "@/app/render/useRenderController";
 
 import styles from "./DevTools.module.css";
 
 function SelectSearchAndReplaceDropdown() {
   const settingsStore = useSettingsStore();
+
   const searchAndReplaceDropdownOptions: { label: string; value: typeof settingsStore.searchAndReplaceDropdown }[] = [
     { label: "Only after labelled relations", value: "labelled-only" },
     { label: "All", value: "all" },
     { label: "None", value: "none" },
   ];
+
   return (
     <select
       value={settingsStore.searchAndReplaceDropdown}
@@ -37,76 +38,19 @@ export const DevTools = observer(() => {
   const { logout } = useAuth();
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
-  const viewStore = useViewStore();
+  const renderController = useRenderController();
+
+  const handleClose = () => {
+    renderController.setActiveModal(null);
+  };
+
+  const handleOpenImportData = () => {
+    renderController.setActiveModal("importData");
+  };
 
   return (
-    <div className={styles.DevToolsContainer}>
-      <h1 className={styles.DevToolsHeader}>Dev Tools</h1>
+    <DataDialog title="Dev Tools" description="Manage App settings" modalType="devTools">
       <div className={styles.SettingsGroup}>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.showNodeDetails}
-            onChange={(e) => settingsStore.setShowNodeDetails(e.target.checked)}
-          />
-          Show node details in view
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.hideDirectParent}
-            onChange={(e) => settingsStore.setHideDirectParent(e.target.checked)}
-          />
-          Hide relations to direct parent
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.hideAllRootParents}
-            onChange={(e) => settingsStore.setHideAllRootParents(e.target.checked)}
-          />
-          Hide all root parents
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.hideAllParents}
-            onChange={(e) => settingsStore.setHideAllParents(e.target.checked)}
-          />
-          Hide all parents
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.hideBackrelations}
-            onChange={(e) => settingsStore.setHideBackrelations(e.target.checked)}
-          />
-          Hide backrelations
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.hideBundles}
-            onChange={(e) => settingsStore.setHideBundles(e.target.checked)}
-          />
-          Hide bundles
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.hideZones}
-            onChange={(e) => settingsStore.setHideZones(e.target.checked)}
-          />
-          Hide zones
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.showAtSignOnMention}
-            onChange={(e) => settingsStore.setShowAtSignOnMention(e.target.checked)}
-          />
-          Show @ sign on mention
-        </label>
         <label className={styles.LabelSetting}>
           <input
             type="checkbox"
@@ -130,14 +74,6 @@ export const DevTools = observer(() => {
             onChange={(e) => settingsStore.setAddThoughtstreamNestedChildrenToThoughtstream(e.target.checked)}
           />
           Add thoughtstream nested children as direct children of thoughtstream
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.hideThoughtstreamBullets}
-            onChange={(e) => settingsStore.setHideThoughtstreamBullets(e.target.checked)}
-          />
-          Hide bullets in thoughtstream view
         </label>
         <label className={styles.LabelSetting}>
           <input
@@ -166,14 +102,6 @@ export const DevTools = observer(() => {
         <label className={styles.LabelSetting}>
           <input
             type="checkbox"
-            checked={settingsStore.hideBulletBackgroundIfParentsOnly}
-            onChange={(e) => settingsStore.setHideBulletBackgroundIfParentsOnly(e.target.checked)}
-          />
-          Hide bullet backgrounds if it contains only parents
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
             checked={settingsStore.removingNodeAsDirectChildOfThoughtstreamDeletesIt}
             onChange={(e) => settingsStore.setRemovingNodeAsDirectChildOfThoughtstreamDeletesIt(e.target.checked)}
           />
@@ -195,69 +123,54 @@ export const DevTools = observer(() => {
           />
           Type ; in an empty editor to trigger search and replace for current object
         </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.hidePinnedItems}
-            onChange={(e) => settingsStore.setHidePinnedItems(e.target.checked)}
-          />
-          Hide pinned items from the main list
-        </label>
         <div className={styles.SearchReplaceContainer}>
           <label>Search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />
         </div>
         <hr />
-        <ImportDialog />
+        <Button size="default" variant="default" onClick={handleOpenImportData}>
+          Import Data
+        </Button>
         <Button
           size="default"
           variant="accent"
-          style={{ maxWidth: "fit-content" }}
           onClick={() => {
-            // Create a Blob with the JSON string
+            // Export as JSON logic
             const blob = new Blob([JSON.stringify(graphStore.serialize())], { type: "application/json" });
-
             // Create a temporary URL for the Blob
             const url = URL.createObjectURL(blob);
-
             // Create a link element and trigger the download
             const link = document.createElement("a");
             link.href = url;
             link.download = "data.json";
             link.click();
-
             // Clean up the temporary URL
             URL.revokeObjectURL(url);
           }}
         >
           Export as JSON
         </Button>
-        <ClearData
-          onConfirm={() => {
-            graphStore.reset();
-            viewStore.clear();
-          }}
-        />
+        <Button size="default" variant="destructive" onClick={() => renderController.setActiveModal("clearData")}>
+          Clear all data
+        </Button>
         <hr />
         <Button
           size="default"
           variant="default"
-          style={{ maxWidth: "fit-content" }}
           onClick={() => {
             settingsStore.resetToDefaults();
           }}
         >
-          Reset user setttings to default
+          Reset user settings to default
         </Button>
         <Button
           size="default"
           variant="default"
-          style={{ maxWidth: "fit-content" }}
           onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
         >
           Log out
         </Button>
       </div>
-    </div>
+    </DataDialog>
   );
 });

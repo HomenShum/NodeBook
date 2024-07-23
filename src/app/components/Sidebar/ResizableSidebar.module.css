@@ -1,0 +1,111 @@
+.Sidebar {
+  position: fixed;
+  z-index: 30;
+  height: 100vh;
+  background-color: var(--gray-2);
+  border-top: 1px solid var(--gray-4);
+  overflow-y: auto;
+  transition: left 0.15s ease;
+}
+
+.Open {
+  left: 0 !important;
+}
+
+.BackNavigation {
+  align-self: flex-end;
+  margin-bottom: 24px;
+}
+
+.SidebarContent {
+  display: flex;
+  padding: 16px 13px 13px 13px;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.SidebarContent.Resizing {
+  pointer-events: none;
+  user-select: none;
+}
+
+.Resizer {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  padding: 8px 2px;
+  width: 2px;
+  height: calc(100vh - 16px);
+  border-radius: 12px;
+  cursor: col-resize;
+  touch-action: none;
+  transition: background-color 0.2s ease;
+}
+
+.Resizer:hover {
+  background-color: var(--gray-a4);
+}
+.Resizer:active {
+  background-color: var(--teal-a4);
+}
+
+.BackButton {
+  position: absolute;
+  top: 0;
+}
+
+.TopContent {
+  display: flex;
+  gap: 2px;
+  flex-direction: column;
+}
+
+.RightNav {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.Button {
+  text-align: left;
+  padding: 8px 8px;
+  display: inline-flex;
+  justify-content: left;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--gray-12);
+  font-size: var(--font-size-sm);
+  font-style: normal;
+  font-weight: 400;
+  line-height: var(--font-size-mini);
+}
+
+.Button:hover {
+  background-color: var(--gray-a2);
+  color: var(--teal-11);
+}
+
+.Button.Selected {
+  background-color: var(--gray-3);
+  color: var(--teal-11);
+}
+
+.Button.Selected .ButtonIcon {
+  color: var(--teal-11);
+}
+
+@media (max-width: 960px) {
+  .Hidden {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .Sidebar {
+    width: 100% !important;
+  }
+}

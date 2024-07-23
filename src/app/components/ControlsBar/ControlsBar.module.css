@@ -1,0 +1,36 @@
+.ControlsBar {
+  padding: 0 16px 0 46px;
+  height: 40px;
+  border-bottom: 0.5px solid var(--gray-6);
+  display: flex;
+  width: 100%;
+  gap: 6px;
+  align-items: center;
+  background-color: var(--gray-1);
+  justify-content: space-between;
+}
+
+.PopoverHeader {
+  padding: 8px;
+  height: 32px;
+  color: var(--gray-11);
+  font-size: var(--font-size-xs);
+}
+
+.SwitchItem {
+  display: flex;
+  justify-content: space-between;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  height: 32px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--gray-10);
+}
+
+.SwitchItem label {
+  cursor: pointer;
+}

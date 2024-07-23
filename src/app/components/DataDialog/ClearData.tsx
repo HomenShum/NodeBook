@@ -1,8 +1,11 @@
-import * as Dialog from "@radix-ui/react-dialog";
-import { X } from "lucide-react";
-import { useState } from "react";
+import { observer } from "mobx-react-lite";
+import { useCallback } from "react";
 
+import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./DataDialog.module.css";
 
@@ -10,48 +13,33 @@ interface Props {
   onConfirm: () => void;
 }
 
-export const ClearData = ({ onConfirm }: Props) => {
-  const [open, setOpen] = useState(false);
+export const ClearData = observer(({ onConfirm }: Props) => {
+  const renderController = useRenderController();
+
+  const graphStore = useGraphStore();
+  const viewStore = useViewStore();
+
+  const handleClearData = useCallback(() => {
+    graphStore.reset();
+    viewStore.clear();
+    renderController.setActiveModal(null);
+  }, [graphStore, viewStore, renderController]);
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger asChild>
-        <Button variant="destructive" size="default">
-          Clear all data
+    <DataDialog
+      title="Clear Data"
+      description="Are you sure you want to delete all existing graph data? This action cannot be undone."
+      modalType="clearData"
+      showBackButton
+    >
+      <div className={styles.DialogActions}>
+        <Button variant="outline" size="sm" onClick={() => renderController.setActiveModal("devTools")}>
+          Cancel
         </Button>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className={styles.DialogOverlay} />
-        <Dialog.Content className={styles.DialogContent}>
-          <Dialog.Title className={styles.DialogTitle}>Confirm data replace</Dialog.Title>
-          <Dialog.Description className={styles.DialogDescription}>
-            Really delete all existing graph data?
-          </Dialog.Description>
-          <Dialog.Close asChild>
-            <Button variant="ghost" size="icon" className={styles.DialogCloseButton} aria-label="close">
-              <X size={12} />
-            </Button>
-          </Dialog.Close>
-          <div style={{ display: "flex", gap: 5, marginTop: 25, justifyContent: "flex-end" }}>
-            <Dialog.Close asChild>
-              <Button variant="outline" size={"sm"} style={{ maxWidth: "fit-content" }}>
-                Cancel
-              </Button>
-            </Dialog.Close>
-            <Button
-              onClick={() => {
-                onConfirm();
-                setOpen(false);
-              }}
-              variant="destructive"
-              size={"sm"}
-              style={{ maxWidth: "fit-content" }}
-            >
-              Confirm delete
-            </Button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+        <Button variant="destructive" size="sm" onClick={handleClearData}>
+          Confirm Delete
+        </Button>
+      </div>
+    </DataDialog>
   );
-};
+});

@@ -15,6 +15,8 @@ export class RenderController {
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
   public isDarkMode = false;
+  public sidebarWidth = 268;
+  public activeModal: "devTools" | "importData" | "clearData" | null = null;
 
   constructor() {
     this.makeObservable();
@@ -22,6 +24,8 @@ export class RenderController {
       leftSidebarOpen: true,
       rightSidebarOpen: true,
       isDarkMode: true,
+      sidebarWidth: true,
+      activeModal: true,
     });
   }
 
@@ -38,6 +42,10 @@ export class RenderController {
     this.rightSidebarOpen = !this.rightSidebarOpen;
   }
 
+  setActiveModal(modal: "devTools" | "importData" | "clearData" | null) {
+    this.activeModal = modal;
+  }
+
   setHoveredNode(path: Path | null) {
     this.hoveredNode = path;
   }
@@ -48,5 +56,9 @@ export class RenderController {
 
   removeEditor(pathStr: Path) {
     this.editorsByPath.delete(pathStr);
+  }
+
+  setSidebarWidth(width: number) {
+    this.sidebarWidth = width;
   }
 }

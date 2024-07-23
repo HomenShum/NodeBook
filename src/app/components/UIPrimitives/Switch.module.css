@@ -1,0 +1,49 @@
+.Switch {
+  --switch-width: 24px;
+  --switch-height: 12px;
+  --thumb-size: 10px;
+
+  all: unset;
+  width: var(--switch-width);
+  height: var(--switch-height);
+  background-color: var(--gray-4);
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+}
+
+.Switch[data-state="checked"] {
+  background-color: var(--teal-9);
+}
+
+.SwitchThumb {
+  display: block;
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  background-color: var(--gray-1);
+  border-radius: 10px;
+  transition: transform 100ms;
+  transform: translateX(2px);
+  will-change: transform;
+}
+
+.Switch[data-state="checked"] .SwitchThumb {
+  transform: translateX(calc(var(--switch-width) - var(--thumb-size) - 1px));
+}
+
+.Switch.Disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* .Switch.size-sm {
+  --switch-width: 36px;
+  --switch-height: 21px;
+  --thumb-size: 17px;
+}
+
+.Switch.size-lg {
+  --switch-width: 54px;
+  --switch-height: 32px;
+  --thumb-size: 28px;
+} */

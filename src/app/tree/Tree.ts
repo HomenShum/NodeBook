@@ -1,4 +1,5 @@
 import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
+import { SetStateAction } from "react";
 
 import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
@@ -72,14 +73,15 @@ export class Tree {
 
   makeObservable() {
     if (isObservable(this)) return;
-    makeObservable(this, {
+    makeObservable<this, "partialFilter">(this, {
       selection: observable,
       rootObject: observable.ref,
       pathToRoot: observable.shallow,
       search: observable,
-      partialFilter: observable,
       expansionsByPath: observable,
+      partialFilter: observable,
       filter: computed,
+      updateFilter: action,
       state: computed,
       root: computed,
       selectionWithNodes: computed,
@@ -91,7 +93,6 @@ export class Tree {
       setGroupExpanded: action,
       toggleGroupExpanded: action,
       setSearch: action,
-      updateFilter: action,
       createChildOfRootAndFocus: action,
       createChildNode: action,
       deleteSelection: action,
@@ -128,7 +129,7 @@ export class Tree {
 
   public search: string = "";
 
-  readonly partialFilter: Partial<Filter> = {};
+  private partialFilter: Partial<Filter> = {};
 
   /** Expanded paths in the tree. */
   public expansionsByPath: Map<string, boolean>;
@@ -148,6 +149,10 @@ export class Tree {
    */
   textsByObjectId = new Map<string, string>();
 
+  /**
+   * @DesignNote The settings store is used as the default filter, and any
+   * filter props assigned to the tree will override the settings store.
+   */
   get filter(): Filter {
     return {
       hideBackrelations: this.settingsStore.hideBackrelations,
@@ -155,6 +160,7 @@ export class Tree {
       hideAllParents: this.settingsStore.hideAllParents,
       hideAllRootParents: this.settingsStore.hideAllRootParents,
       hideDirectParent: this.settingsStore.hideDirectParent,
+      hidePinnedSection: false,
       ...this.partialFilter,
     };
   }
@@ -336,12 +342,20 @@ export class Tree {
     this.search = search;
   }
 
-  updateFilter(filter: Partial<Filter>) {
-    Object.assign(this.partialFilter, filter);
+  /**
+   * Update the tree filter. Note that the tree only keeps a partial filter, and
+   * the full filter is computed by merging the partial filter with the settings
+   * store. That's why when you pass a function, only a partial filter is returned.
+   */
+  updateFilter(filter: SetStateAction<Partial<Filter>>) {
+    this.partialFilter = typeof filter === "function" ? filter(this.partialFilter) : filter;
   }
 
   private applyFilter(treeNode: TreeNode): boolean {
     function walk(treeNode: TreeNode, filter: Filter) {
+      if (filter.hidePinnedSection) {
+        treeNode.childrenGroupsById.pinned.nodes = [];
+      }
       treeNode.childrenGroups.forEach((group) => {
         group.nodes = group.nodes.filter((child) => walk(child, filter));
       });
@@ -833,4 +847,5 @@ type Filter = {
   hideAllParents: boolean;
   hideAllRootParents: boolean;
   hideDirectParent: boolean;
+  hidePinnedSection: boolean;
 };

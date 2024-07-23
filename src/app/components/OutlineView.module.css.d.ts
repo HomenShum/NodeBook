@@ -1,17 +1,13 @@
 declare const styles: {
-  readonly "Breadcrumb": string;
-  readonly "BreadcrumbContainer": string;
-  readonly "Chevron": string;
+  readonly "HeadingContainer": string;
+  readonly "Nodes": string;
   readonly "OutlineContainer": string;
-  readonly "OutlineObject": string;
-  readonly "OutlineObjectContent": string;
-  readonly "OutlineObjectContentPublic": string;
-  readonly "OutlineObjectLeftArea": string;
+  readonly "OutlineContent": string;
   readonly "OutlineView": string;
-  readonly "PinIcon": string;
-  readonly "Selected": string;
+  readonly "OutlineViewFull": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
+  readonly "WindowNav": string;
 };
 export = styles;
 

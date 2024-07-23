@@ -1,0 +1,60 @@
+.BreadcrumbContainer {
+  display: flex;
+  height: 40px;
+  align-items: center;
+  gap: 4px;
+  padding-left: 54px;
+  color: var(--gray-9);
+  border-radius: 6px 6px 0 0;
+  background-color: var(--gray-1);
+  border-bottom: 0.5px solid var(--gray-6);
+}
+
+.BreadcrumbContainer > :first-child > :first-child {
+  margin-right: 4px;
+}
+
+.BreadcrumbWrapper {
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+  flex-grow: 1;
+}
+
+.Breadcrumb {
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  user-select: none;
+}
+
+.Breadcrumb:hover {
+  color: var(--teal-8);
+}
+
+.Separator {
+  margin: 0 4px;
+}
+
+.Chevron {
+  display: flex;
+  height: 14px;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.ActionButtons {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-right: 48px;
+}
+.Icon {
+  display: flex;
+  align-items: center;
+  color: var(--gray-10);
+}
+.Breadcrumb:hover .PinButton {
+  visibility: visible;
+}

@@ -4,8 +4,8 @@ import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { PinCustomIcon } from "@/app/components/CustomIcons";
 import styles from "@/app/components/RelatedObject/RelatedObjectView.module.css";
-import { PinCustomIcon } from "@/app/components/icons";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
@@ -61,13 +61,7 @@ const Main = observer(({ treeNode, children }: { treeNode: DescendantTreeNode; c
       }}
     >
       <div
-        className={cn(
-          styles.RelatedObjectContent,
-          !treeNode.object.isPrivate &&
-            settingsStore.hideThoughtstreamBullets &&
-            treeNode.parent.object === graphStore.thoughtstreamRoot && // TODO: what is this for?
-            styles.RelatedObjectContentPublic,
-        )}
+        className={styles.RelatedObjectContent}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >

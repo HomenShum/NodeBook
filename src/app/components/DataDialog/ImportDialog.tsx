@@ -1,20 +1,23 @@
-import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
+import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useRenderController } from "@/app/render/useRenderController";
 
 import { ConfirmReplace } from "./ConfirmReplace";
 
 import styles from "./DataDialog.module.css";
 
-export const ImportDialog = () => {
+export const ImportDialog = observer(() => {
+  const renderController = useRenderController();
+
   const graphStore = useGraphStore();
 
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
-  const [open, setOpen] = useState(false);
 
   const onReplaceConfirm = useCallback(() => {
     if (!file) return;
@@ -23,10 +26,10 @@ export const ImportDialog = () => {
     reader.onload = async (event) => {
       const fileContent = event.target!.result;
       await graphStore.resetAndLoad(JSON.parse(fileContent as string));
-      setOpen(false);
+      renderController.setActiveModal(null); // Close the ImportDialog after replacing data
     };
     reader.readAsText(file);
-  }, [graphStore, file]);
+  }, [graphStore, file, renderController]);
 
   const onAddToGraphClick = useCallback(() => {
     if (!file) return;
@@ -35,77 +38,66 @@ export const ImportDialog = () => {
     reader.onload = (event) => {
       const fileContent = event.target!.result;
       graphStore.load(JSON.parse(fileContent as string));
-      setOpen(false);
+      renderController.setActiveModal(null);
     };
     reader.readAsText(file);
-  }, [file, graphStore]);
+  }, [file, graphStore, renderController]);
 
   return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger asChild>
-        <Button size="default" variant="default" style={{ maxWidth: "fit-content" }}>
-          Import data
+    <DataDialog
+      title="Import Data"
+      description="Import your data."
+      modalType="importData"
+      showBackButton
+      onBack={() => renderController.setActiveModal("devTools")}
+    >
+      <fieldset className={styles.FileFieldset}>
+        <Button
+          size="sm"
+          style={{ maxWidth: "fit-content" }}
+          variant={file ? "outline" : "default"}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {file ? "Change file" : "Select file"}
         </Button>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className={styles.DialogOverlay} />
-        <Dialog.Content className={styles.DialogContent}>
-          <Dialog.Title className={styles.DialogTitle}>Import data</Dialog.Title>
-          <Dialog.Description className={styles.DialogDescription}>Import data into Mew.</Dialog.Description>
-          <Dialog.Close asChild>
-            <Button variant="ghost" size="icon" className={styles.DialogCloseButton} aria-label="close">
-              <X size={12} />
-            </Button>
-          </Dialog.Close>
-          <fieldset className={styles.FileFieldset}>
-            <Button
-              size={"sm"}
-              style={{ maxWidth: "fit-content" }}
-              variant={file ? "outline" : "default"}
+        <input
+          type="file"
+          accept=".json"
+          ref={fileInputRef}
+          style={{ display: "none" }}
+          onChange={(event) => {
+            const selectedFile = event.target.files?.[0] ?? null;
+            setFile(selectedFile);
+          }}
+        />
+        {file && (
+          <p className={styles.SelectedFileLabel}>
+            Selected: {file.name}
+            <button
               onClick={() => {
-                (fileInputRef.current! as HTMLInputElement).click();
+                setFile(null);
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
               }}
             >
-              {file ? "Change file" : "Select file"}
-            </Button>
-            <input
-              type="file"
-              accept=".json"
-              ref={fileInputRef}
-              style={{ display: "none" }}
-              onChange={(event) => {
-                const file = event.target.files?.[0] ?? null;
-                setFile(file);
-              }}
-            />
-            {file && (
-              <p className={styles.SelectedFileLabel}>
-                Selected: {file.name}
-                <button
-                  onClick={() => {
-                    setFile(null);
-                    (fileInputRef.current! as HTMLInputElement).value = "";
-                  }}
-                >
-                  X
-                </button>
-              </p>
-            )}
-          </fieldset>
-          <div style={{ display: "flex", gap: 5, marginTop: 25, justifyContent: "flex-end" }}>
-            <ConfirmReplace disabled={!file} onConfirm={onReplaceConfirm} />
-            <Button
-              disabled={!file}
-              onClick={onAddToGraphClick}
-              variant="default"
-              size={"sm"}
-              style={{ maxWidth: "fit-content" }}
-            >
-              Add to graph
-            </Button>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+              <X size={12} />
+            </button>
+          </p>
+        )}
+      </fieldset>
+      <div className={styles.DialogActions}>
+        <ConfirmReplace disabled={!file} onConfirm={onReplaceConfirm} />
+        <Button
+          disabled={!file}
+          onClick={onAddToGraphClick}
+          variant="default"
+          size="sm"
+          style={{ maxWidth: "fit-content" }}
+        >
+          Add to graph
+        </Button>
+      </div>
+    </DataDialog>
   );
-};
+});

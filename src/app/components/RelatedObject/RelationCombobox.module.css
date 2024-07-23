@@ -1,7 +1,7 @@
 .RelationComboboxLabel {
   border: none;
   z-index: 10;
-  font-size: 1rem;
+  font-size: var(--font-size-md);
   height: 16px;
   padding: 0;
   margin: 0;

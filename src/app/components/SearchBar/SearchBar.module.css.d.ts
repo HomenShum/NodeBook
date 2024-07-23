@@ -2,8 +2,9 @@ declare const styles: {
   readonly "CancelSearch": string;
   readonly "Search": string;
   readonly "SearchContent": string;
-  readonly "SearchFocus": string;
+  readonly "SearchExpanded": string;
   readonly "SearchIcon": string;
+  readonly "SearchIconWrapper": string;
 };
 export = styles;
 
