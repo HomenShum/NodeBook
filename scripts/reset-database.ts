@@ -1,4 +1,5 @@
 import { sql } from "drizzle-orm";
+import { migrate } from "drizzle-orm/vercel-postgres/migrator";
 
 import { end, getDb } from "@/db";
 import { env } from "@/envBackend";
@@ -14,6 +15,7 @@ async function main() {
     DROP SCHEMA IF EXISTS drizzle CASCADE;
     CREATE SCHEMA public;
   `);
+    await migrate(db, { migrationsFolder: "./drizzle" });
     console.log("Successfully reset the database");
   } catch (error) {
     console.error("Error deleting data:", error);
