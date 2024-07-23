@@ -6,7 +6,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes, GraphStore, Path } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { getOtherSideOrThrow } from "@/app/graph/utils";
+import { getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { comparePositions, relationsPathToParentChild, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
@@ -432,7 +432,7 @@ export class Tree {
   async setObjectOnNode(treeNodeId: string, object: GraphObject, after?: Positioner<DescendantTreeNode>) {
     const treeNode = this.getNodeOrThrow(treeNodeId);
     await this.graphStore.replaceRelationLink({
-      direction: getOtherSideOrThrow(treeNode.relationWithParent, treeNode.object.id),
+      direction: getSideOrThrow(treeNode.relationWithParent, treeNode.object.id),
       relationId: treeNode.relationWithParent.id,
       replaceWith: { type: "existing-object", id: object.id },
       after: after instanceof DescendantTreeNode ? after.relationWithParent : after,

@@ -58,14 +58,10 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
 
   const onSelect = useCallback(
     async (obj: GraphObject) => {
-      await graph.replaceRelationLink({
-        direction: treeNode.relationWithParent.to.id === treeNode.object.id ? "to" : "from",
-        relationId: treeNode.relationWithParent.id,
-        replaceWith: { type: "existing-object", id: obj.id },
-      });
+      await treeNode.setObject(obj);
       setViewType("edit");
     },
-    [treeNode, graph, setViewType],
+    [treeNode, setViewType],
   );
 
   useEffect(() => {

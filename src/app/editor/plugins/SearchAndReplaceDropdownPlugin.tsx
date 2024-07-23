@@ -169,7 +169,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
       } else {
         const needNewNode = option.type === "action" && option.id === "create-new-node";
         const newObject = needNewNode ? await graph.addNode({ content: object.text }) : graph.getNodeOrThrow(option.id);
-        treeNode.setObject(newObject);
+        await treeNode.setObject(newObject);
         tree.setFocusedNode(treeNode.path);
       }
       closeDropdown();
