@@ -25,7 +25,7 @@ import { LeftRightArrowAtEndsPlugin } from "./plugins/LeftRightArrowAtEndsPlugin
 import { MentionPlugin } from "./plugins/MentionPlugin";
 import { PastePlugin } from "./plugins/pastePlugin";
 import { RelationPlugin } from "./plugins/RelationPlugin";
-import { AutocompleteDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
+import { SearchAndReplaceDropdownPlugin } from "./plugins/SearchAndReplaceDropdownPlugin";
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 import { ViewControllerRegistryPlugin } from "./plugins/ViewControllerRegistryPlugin";
 
@@ -108,7 +108,7 @@ export const NodeContentEditor = observer(({ indent }: { indent: string }) => {
             setPathToNodeAsRoot((e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!);
           }}
         />
-        {showSearchAndReplaceDropdown && <AutocompleteDropdownPlugin parentRef={ref} />}
+        {showSearchAndReplaceDropdown && <SearchAndReplaceDropdownPlugin parentRef={ref} />}
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
         <BindFocusToTreePlugin />
       </LexicalComposer>
