@@ -266,14 +266,9 @@ export class DescendantTreeNode extends BaseTreeNode {
     return node?.parentGroup === this.parentGroup ? node : null;
   }
 
-  /**
-   * Set new parent in tree by pointing the relation to the current parent
-   * to the new parent. If `after` is provided, the node will be positioned
-   * after the given node in the new parent's children.
-   */
   async setParent(parent: BaseTreeNode, after?: Positioner<DescendantTreeNode>) {
     if (this.parent.object === parent.object) return;
-    await this.tree.setObjectOnNode(this.id, parent.object, after);
+    await this.tree.setParentOfNode(this.id, parent, after);
   }
 
   /**

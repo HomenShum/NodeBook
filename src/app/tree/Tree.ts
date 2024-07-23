@@ -429,6 +429,21 @@ export class Tree {
     });
   }
 
+  /**
+   * Set new parent for tree node by pointing the relation to the current parent
+   * to the new parent. If `after` is provided, the node will be positioned
+   * after the given node in the new parent's children.
+   */
+  async setParentOfNode(treeNodeId: string, newParent: BaseTreeNode, after?: Positioner<DescendantTreeNode>) {
+    const treeNode = this.getNodeOrThrow(treeNodeId);
+    await this.graphStore.replaceRelationLink({
+      direction: getSideOrThrow(treeNode.relationWithParent, treeNode.parent.object.id),
+      relationId: treeNode.relationWithParent.id,
+      replaceWith: { type: "existing-object", id: newParent.object.id },
+      after: after instanceof DescendantTreeNode ? after.relationWithParent : after,
+    });
+  }
+
   async setObjectOnNode(treeNodeId: string, object: GraphObject, after?: Positioner<DescendantTreeNode>) {
     const treeNode = this.getNodeOrThrow(treeNodeId);
     await this.graphStore.replaceRelationLink({
