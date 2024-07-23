@@ -57,7 +57,6 @@ export class GraphRelation extends GraphObject implements Serializable {
     this.from = from;
     this.to = to;
     this.relationType = type;
-    this.store = store;
     this.isPrivate = isPrivate;
     this.makeObservable();
   }
@@ -71,6 +70,7 @@ export class GraphRelation extends GraphObject implements Serializable {
       from: observable.ref,
       to: observable.ref,
       text: computed,
+      update: action,
       setType: action,
       setFrom: action,
       setTo: action,
@@ -132,14 +132,6 @@ export class GraphRelation extends GraphObject implements Serializable {
     // add this relation to the new "to" node
     this.to.allRelationsList.add(this, after);
     // TOOD: delete if no relations?
-  }
-
-  setIsPrivate(value: boolean) {
-    this.isPrivate = value;
-  }
-
-  updateType(newType: GraphRelationType) {
-    this.store.updateRelationsType(this, newType);
   }
 
   incrementVersion() {

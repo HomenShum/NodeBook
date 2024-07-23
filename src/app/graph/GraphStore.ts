@@ -33,6 +33,7 @@ import {
   TxRemoveRelation,
   TxReplaceRelationLink,
   TxUpdateNode,
+  TxUpdateRelation,
 } from "./GraphTransactionTypes";
 import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
 import { SettingsStore } from "./SettingsStore";
@@ -119,8 +120,6 @@ export class GraphStore {
         addRelation: action,
         removeRelation: action,
         replaceRelationLink: action,
-        updateRelationTarget: action,
-        reverseRelation: action,
         // relation type
         createRelationType: action,
         updateRelationType: action,
@@ -183,7 +182,7 @@ export class GraphStore {
           this._addRelation(update.relation);
           break;
         case "updateRelation":
-          this.updateRelation(update.oldProps, update.newProps);
+          this._updateRelation(update.oldProps, update.newProps);
           break;
         case "deleteRelation":
           this.deleteRelation(update.deleted.relation.id);
@@ -222,7 +221,7 @@ export class GraphStore {
           this.deleteRelation(update.relation.id);
           break;
         case "updateRelation":
-          this.updateRelation(update.newProps, update.oldProps);
+          this._updateRelation(update.newProps, update.oldProps);
           break;
         case "deleteRelation":
           this.restoreRelation(update.deleted);
@@ -258,20 +257,23 @@ export class GraphStore {
         case "removeNode":
           results.push(await this.removeNode(tx.transaction));
           break;
+        case "updateNode":
+          results.push(await this.updateNode(tx.transaction));
+          break;
         case "addRelation":
           results.push(await this.addRelation(tx.transaction));
           break;
         case "removeRelation":
           results.push(await this.removeRelation(tx.transaction));
           break;
-        case "addChildNode":
-          results.push(await this.addChildNode(tx.transaction));
-          break;
         case "replaceRelationLink":
           results.push(await this.replaceRelationLink(tx.transaction));
           break;
-        case "updateNode":
-          results.push(await this.updateNode(tx.transaction));
+        case "updateRelation":
+          results.push(await this.updateRelation(tx.transaction));
+          break;
+        case "addChildNode":
+          results.push(await this.addChildNode(tx.transaction));
           break;
         default:
           const _exhaustiveCheck: never = tx;
@@ -385,45 +387,6 @@ export class GraphStore {
       relationProps: tx.relationProps,
       after: tx.after,
     });
-  }
-
-  /**
-   * Replace a relation link with a new or existing graph object.
-   */
-  async replaceRelationLink(tx: TxReplaceRelationLink) {
-    const { object, relation, updates } = this._replaceRelationLink(tx);
-    this.queueUpdates(updates);
-    return { object, relation };
-  }
-  private _replaceRelationLink(tx: TxReplaceRelationLink): {
-    object: GraphObject;
-    relation: GraphRelation;
-    updates: GraphUpdate[];
-  } {
-    const relation = this.relationsById.get(tx.relationId);
-    if (!relation) {
-      throw new Error(`Relation with id ${tx.relationId} does not exist`);
-    }
-
-    const updates: GraphUpdate[] = [];
-
-    let newObject;
-    if (tx.replaceWith.type === "new-node") {
-      const { node: newNode, updates: newNodeUpdates } = this.createNode(tx.replaceWith.nodeProps || {});
-      newObject = newNode;
-      updates.push(...newNodeUpdates);
-    } else {
-      newObject = this.getObject(tx.replaceWith.id);
-      if (!newObject) throw new Error(`Object with id ${tx.replaceWith.id} does not exist`);
-    }
-
-    if (tx.direction === "from") {
-      updates.push(...this.updateRelationFrom(relation, newObject, tx.after));
-    } else {
-      updates.push(...this.updateRelationTo(relation, newObject, tx.after));
-    }
-
-    return { object: newObject, relation, updates };
   }
 
   // TODO: Make this async
@@ -664,11 +627,12 @@ export class GraphStore {
     const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(props.fromId);
     const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(props.toId);
     const existing = this.getRelation(props.id);
+    const relationType = this.relationTypesById[props.relationTypeId] ?? defaultRelationTypes.child;
     if (existing) {
-      existing.update(props);
+      existing.update({ ...props, relationType });
       return existing;
     } else {
-      const { relation } = this.createRelation({ ...props, from, to });
+      const { relation } = this.createRelation({ ...props, from, to, relationType });
       return relation;
     }
   }
@@ -800,18 +764,162 @@ export class GraphStore {
     });
   }
 
-  private updateRelation(oldProps: SerializedRelation, newProps: SerializedRelation) {
+  /**
+   * Replace a relation link with a new or existing graph object.
+   */
+  async replaceRelationLink(tx: TxReplaceRelationLink) {
+    const { object, relation, updates } = this._replaceRelationLink(tx);
+    this.queueUpdates(updates);
+    return { object, relation };
+  }
+  private _replaceRelationLink(tx: TxReplaceRelationLink): {
+    object: GraphObject;
+    relation: GraphRelation;
+    updates: GraphUpdate[];
+  } {
+    const relation = this.relationsById.get(tx.relationId);
+    if (!relation) {
+      throw new Error(`Relation with id ${tx.relationId} does not exist`);
+    }
+
+    const updates: GraphUpdate[] = [];
+
+    let newObject;
+    if (tx.replaceWith.type === "new-node") {
+      const { node: newNode, updates: newNodeUpdates } = this.createNode(tx.replaceWith.nodeProps || {});
+      newObject = newNode;
+      updates.push(...newNodeUpdates);
+    } else {
+      newObject = this.getObject(tx.replaceWith.id);
+      if (!newObject) throw new Error(`Object with id ${tx.replaceWith.id} does not exist`);
+    }
+
+    if (tx.direction === "from") {
+      updates.push(...this.setRelationFrom(relation, newObject, tx.after));
+    } else {
+      updates.push(...this.setRelationTo(relation, newObject, tx.after));
+    }
+
+    return { object: newObject, relation, updates };
+  }
+
+  async updateRelation(tx: TxUpdateRelation) {
+    const relation = this.relationsById.get(tx.relationId);
+    if (!relation) {
+      throw new Error(`Relation with id ${tx.relationId} does not exist`);
+    }
+
+    const oldProps = relation.serialize();
+    const newProps = {
+      ...oldProps,
+      isPrivate: tx.relationProps?.isPrivate ?? oldProps.isPrivate,
+      relationTypeId: tx.relationProps?.relationType?.id ?? oldProps.relationTypeId,
+      version: oldProps.version + 1,
+    };
+    if (tx.reverse) {
+      newProps.fromId = oldProps.toId;
+      newProps.toId = oldProps.fromId;
+    }
+
+    const updates = this._updateRelation(oldProps, newProps);
+    this.queueUpdates(updates);
+  }
+
+  private _updateRelation(oldProps: SerializedRelation, newProps: SerializedRelation): GraphUpdate[] {
     const relation = this.relationsById.get(oldProps.id);
     if (!relation) {
       throw new Error(`Relation with id ${oldProps.id} does not exist`);
     }
 
-    const hydratedNew = {
-      ...newProps,
-      from: this.getObject(newProps.fromId),
-      to: this.getObject(newProps.toId),
-    };
-    relation.update(hydratedNew);
+    let propsForUpdate: Partial<GraphRelationProps> = { ...newProps };
+
+    let oldFrom;
+    let oldFromListBefore;
+    let newFrom;
+    let newFromListBefore;
+    if (oldProps.fromId !== newProps.fromId) {
+      oldFrom = relation.from;
+      newFrom = this.getObject(newProps.fromId);
+      if (!newFrom) {
+        throw new Error(
+          `Error setting "from" property of ${relation.id}: object with id ${newProps.fromId} does not exist`,
+        );
+      }
+      oldFromListBefore = this.getRelationList(oldFrom).serialize();
+      newFromListBefore = this.getRelationList(newFrom).serialize();
+      propsForUpdate.from = newFrom;
+    }
+
+    let oldTo;
+    let oldToListBefore;
+    let newTo;
+    let newToListBefore;
+    if (oldProps.toId !== newProps.toId) {
+      oldTo = relation.to;
+      newTo = this.getObject(newProps.toId);
+      if (!newTo) {
+        throw new Error(
+          `Error setting "to" property of ${relation.id}: object with id ${newProps.toId} does not exist`,
+        );
+      }
+      oldToListBefore = this.getRelationList(oldTo).serialize();
+      newToListBefore = this.getRelationList(newTo).serialize();
+      propsForUpdate.to = newTo;
+    }
+
+    if (oldProps.relationTypeId !== newProps.relationTypeId) {
+      const newRelationType = this.relationTypesById[newProps.relationTypeId];
+      if (!newRelationType) {
+        throw new Error(
+          `Error setting "relationTypeId" property of ${relation.id}: relation type with id ${newProps.relationTypeId} does not exist`,
+        );
+      }
+      propsForUpdate.relationType = newRelationType;
+    }
+
+    const updates: GraphUpdate[] = [
+      {
+        operation: "updateRelation",
+        oldProps,
+        newProps,
+      },
+    ];
+    relation.update(propsForUpdate);
+
+    if (newFrom) {
+      updates.push({
+        operation: "updateRelationList",
+        nodeId: oldFrom!.id,
+        pinned: false,
+        listBefore: oldFromListBefore!,
+        listAfter: this.getRelationList(oldFrom!).serialize(),
+      });
+      updates.push({
+        operation: "updateRelationList",
+        nodeId: newFrom!.id,
+        pinned: false,
+        listBefore: newFromListBefore!,
+        listAfter: this.getRelationList(newFrom!).serialize(),
+      });
+    }
+    const isReversal = oldFrom && oldTo && newFrom && newTo && oldFrom.id === newTo.id && oldTo.id === newFrom.id;
+    if (newTo && !isReversal) {
+      updates.push({
+        operation: "updateRelationList",
+        nodeId: oldTo!.id,
+        pinned: false,
+        listBefore: oldToListBefore!,
+        listAfter: this.getRelationList(oldTo!).serialize(),
+      });
+      updates.push({
+        operation: "updateRelationList",
+        nodeId: newTo!.id,
+        pinned: false,
+        listBefore: newToListBefore!,
+        listAfter: this.getRelationList(newTo!).serialize(),
+      });
+    }
+    return updates;
   }
 
   /**
@@ -819,7 +927,7 @@ export class GraphStore {
    * also updates the list of relations on the old and new `from` nodes
    * to reflect the changes.
    */
-  private updateRelationFrom(
+  private setRelationFrom(
     relation: GraphRelation,
     newFrom: GraphObject,
     after?: Positioner<GraphRelation>,
@@ -867,11 +975,7 @@ export class GraphStore {
    * also updates the list of relations on the old and new `to` nodes
    * to reflect the changes.
    */
-  private updateRelationTo(
-    relation: GraphRelation,
-    newTo: GraphObject,
-    after?: Positioner<GraphRelation>,
-  ): GraphUpdate[] {
+  private setRelationTo(relation: GraphRelation, newTo: GraphObject, after?: Positioner<GraphRelation>): GraphUpdate[] {
     const updates: GraphUpdate[] = [];
     try {
       const oldRelation = relation.serialize();
@@ -907,6 +1011,20 @@ export class GraphStore {
       // Phil: I don't like how this messes up with the `createNode` in the replaceRelationLink method
       throw e;
     }
+    return updates;
+  }
+
+  private setRelationType(relation: GraphRelation, newType: GraphRelationType): GraphUpdate[] {
+    const oldRelation = relation.serialize();
+    relation.relationType = newType;
+    relation.incrementVersion();
+    const updates: GraphUpdate[] = [
+      {
+        operation: "updateRelation",
+        oldProps: oldRelation,
+        newProps: relation.serialize(),
+      },
+    ];
     return updates;
   }
 
@@ -1216,38 +1334,6 @@ export class GraphStore {
     return { object, relationsWithPositions };
   }
 
-  updateRelationTarget(relation: GraphRelation, { from, to }: { from?: GraphObject; to?: GraphObject }) {
-    if (from) {
-      this.updateRelationFrom(relation, from);
-    }
-    if (to) {
-      this.updateRelationTo(relation, to);
-    }
-  }
-
-  reverseRelation(relation: GraphRelation): GraphRelation {
-    const { from, to } = relation;
-    relation.from = to;
-    relation.to = from;
-    return relation;
-  }
-
-  // TODO: Rename this to make it less confusing
-  // TODO: Make this private
-  updateRelationsType(relation: GraphRelation, newType: GraphRelationType): GraphUpdate[] {
-    const oldRelation = relation.serialize();
-    relation.relationType = newType;
-    relation.incrementVersion();
-    const updates: GraphUpdate[] = [
-      {
-        operation: "updateRelation",
-        oldProps: oldRelation,
-        newProps: relation.serialize(),
-      },
-    ];
-    return updates;
-  }
-
   // TODO: Expose this functionality in a transaction, make this function private
   createRelationType(
     props: { id?: string; label: string; reverseLabel?: string },
@@ -1298,7 +1384,7 @@ export class GraphStore {
     // find all relations with this type and set them to a default type
     for (const rel of this.relations) {
       if (rel.relationType.id !== id) continue;
-      updates.push(...this.updateRelationsType(rel, this.relationTypesById.child));
+      updates.push(...this.setRelationType(rel, this.relationTypesById.child));
     }
     updates.push({
       operation: "deleteRelationType",

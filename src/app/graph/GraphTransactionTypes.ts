@@ -22,6 +22,11 @@ export type TxRemoveNode = {
   nodeId: string;
 };
 
+export type TxUpdateNode = {
+  nodeId: string;
+  nodeProps: Partial<GraphNodeProps>;
+};
+
 export type TxAddRelation = {
   id?: string;
   fromId: string;
@@ -40,17 +45,13 @@ export type TxReplaceRelationLink = {
   after?: Positioner<GraphRelation>;
 };
 
-export type TxUpdateNode = {
-  nodeId: string;
-  nodeProps: Partial<GraphNodeProps>;
-};
-
-type TxMapping = {
-  addChildNode: TxAddChildNode;
-  removeNode: TxRemoveNode;
-  addRelation: TxAddRelation;
-  removeRelation: TxRemoveRelation;
-  replaceRelationLink: TxReplaceRelationLink;
+export type TxUpdateRelation = {
+  relationId: string;
+  relationProps?: {
+    isPrivate?: boolean;
+    relationType?: GraphRelationType;
+  };
+  reverse?: boolean;
 };
 
 // TODO: probably can be done with less boilerplate code?
@@ -64,6 +65,10 @@ export type TxCombinedPart =
       transaction: TxRemoveNode;
     }
   | {
+      type: "updateNode";
+      transaction: TxUpdateNode;
+    }
+  | {
       type: "addRelation";
       transaction: TxAddRelation;
     }
@@ -72,16 +77,16 @@ export type TxCombinedPart =
       transaction: TxRemoveRelation;
     }
   | {
-      type: "addChildNode";
-      transaction: TxAddChildNode;
-    }
-  | {
       type: "replaceRelationLink";
       transaction: TxReplaceRelationLink;
     }
   | {
-      type: "updateNode";
-      transaction: TxUpdateNode;
+      type: "updateRelation";
+      transaction: TxUpdateRelation;
+    }
+  | {
+      type: "addChildNode";
+      transaction: TxAddChildNode;
     };
 
 /**

@@ -58,9 +58,9 @@ export type DeletedRelationData = {
 export const DeletedRelationDataSchema: z.ZodType<DeletedRelationData> = z.object({
   relation: SerializedRelationSchema,
   fromPos: PositionSchema,
-  fromPinnedPos: PositionSchema,
+  fromPinnedPos: PositionSchema.optional(),
   toPos: PositionSchema,
-  toPinnedPos: PositionSchema,
+  toPinnedPos: PositionSchema.optional(),
   relationsList: z.lazy(() => DeletedRelationDataSchema.array()),
   bundles: z.array(SerializedNodeSchema),
 });

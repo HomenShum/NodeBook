@@ -49,36 +49,38 @@ export const RelationCombobox = observer(
         {
           key: `${relationType.id}-forward`,
           label: relationType.label,
-          onSelect: () => {
+          onSelect: async () => {
             if (relationType.id === relation.relationType.id) {
               if (isForward) {
                 return; // already selected
               } else {
-                graphStore.reverseRelation(relation);
+                await graphStore.updateRelation({ relationId: relation.id, reverse: true });
               }
             } else {
-              graphStore.updateRelationsType(relation, relationType);
-              if (!isForward) {
-                graphStore.reverseRelation(relation);
-              }
+              await graphStore.updateRelation({
+                relationId: relation.id,
+                relationProps: { relationType },
+                reverse: !isForward,
+              });
             }
           },
         },
         {
           key: `${relationType.id}-reverse`,
           label: relationType.reverseLabel,
-          onSelect: () => {
+          onSelect: async () => {
             if (relationType.id === relation?.relationType.id) {
               if (isForward) {
-                graphStore.reverseRelation(relation!);
+                await graphStore.updateRelation({ relationId: relation.id, reverse: true });
               } else {
                 return; // already selected
               }
             } else {
-              graphStore.updateRelationsType(relation!, relationType);
-              if (isForward) {
-                graphStore.reverseRelation(relation!);
-              }
+              await graphStore.updateRelation({
+                relationId: relation.id,
+                relationProps: { relationType },
+                reverse: isForward,
+              });
             }
           },
         },
@@ -90,12 +92,15 @@ export const RelationCombobox = observer(
       items.push({
         key: "new",
         label: `Create "${search}" relation type`,
-        onSelect: () => {
+        onSelect: async () => {
           const { relationType } = graphStore.createRelationType({
             id: search,
             label: search,
           });
-          relation.setType(relationType);
+          await graphStore.updateRelation({
+            relationId: relation.id,
+            relationProps: { relationType },
+          });
         },
       });
     }

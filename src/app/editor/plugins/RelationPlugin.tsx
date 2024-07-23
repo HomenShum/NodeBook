@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getChips, $getText, getSelectionPositions } from "@/app/editor/utils";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
@@ -37,31 +38,45 @@ export const RelationPlugin = () => {
           }
           event.preventDefault();
           event.stopPropagation();
+          const graphStoreTransaction: TxCombined = [];
           const [selectionLeft, selectionRight] = getSelectionPositions(editor);
           // Set the relation type to the text before the cursor
           const textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft }).trim();
           let [relationType, direction] = graphStore.getOrCreateRelationTypeByLabel(textBefore);
-          relation.setType(relationType);
-          if (direction === "reverse") {
-            graphStore.reverseRelation(relation);
-          }
+          graphStoreTransaction.push({
+            type: "updateRelation",
+            transaction: {
+              relationId: relation.id,
+              relationProps: { relationType },
+              reverse: direction === "reverse",
+            },
+          });
 
           // Set the content to the content after the cursor and focus
           const chipsRight = $getChips(selectionRight);
           if (chipsRight.length) {
             chipsRight[0].value = chipsRight[0].value.trimStart(); // Remove leading whitespace
           }
-          graphStore.updateNode({ nodeId: object.id, nodeProps: { content: chipsRight } });
+          graphStoreTransaction.push({
+            type: "updateNode",
+            transaction: {
+              nodeId: object.id,
+              nodeProps: { content: chipsRight },
+            },
+          });
 
           // TODO: if reasonable, make this one transaction with the above
           const parent = relation.to.id === object.id ? relation.from : relation.to;
           if (settingsStore.addStreamLabeledRelationsToMyLists && parent === graphStore.thoughtstreamRoot) {
-            graphStore.addRelation({
-              fromId: graphStore.thoughtstreamRoot.id,
-              toId: object.id,
+            graphStoreTransaction.push({
+              type: "addRelation",
+              transaction: {
+                fromId: graphStore.thoughtstreamRoot.id,
+                toId: object.id,
+              },
             });
           }
-
+          graphStore.applyCombinedTransaction(graphStoreTransaction);
           return true;
         },
         COMMAND_PRIORITY_NORMAL,

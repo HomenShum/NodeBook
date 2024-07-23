@@ -1,0 +1,159 @@
+import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphRelation } from "@/app/graph/GraphRelation";
+import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
+import { GraphUpdate } from "@/app/graph/GraphUpdate";
+import { SettingsStore } from "@/app/graph/SettingsStore";
+
+import { MIN_NUM_RELATIONS } from "./helpers";
+
+describe("GraphStore.updateRelation", () => {
+  let graphStore: GraphStore;
+
+  let startNode: GraphNode;
+  let endNode: GraphNode;
+  let relation: GraphRelation;
+
+  const NUM_RELATIONS_START = MIN_NUM_RELATIONS + 1;
+
+  beforeEach(async () => {
+    jest.useFakeTimers({ now: new Date(2024, 5, 4) });
+
+    const settingsStore = new SettingsStore();
+    graphStore = new GraphStore(settingsStore);
+
+    startNode = await graphStore.addNode({
+      id: "start-node",
+    });
+    endNode = await graphStore.addNode({
+      id: "end-node",
+    });
+    relation = await graphStore.addRelation({
+      id: "test-relation",
+      fromId: startNode.id,
+      toId: endNode.id,
+    });
+
+    graphStore.syncQueue.clear();
+  });
+
+  it("should be able to update isPrivate and increment version properly", async () => {
+    expect(relation).toBeDefined();
+    expect(graphStore.getRelation(relation.id)).toBe(relation);
+    expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
+    expect(relation.isPrivate).toBe(true);
+    expect(relation.version).toBe(1);
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      relationProps: { isPrivate: false },
+    });
+
+    // Check most things stayed the same...
+    expect(graphStore.getRelation(relation.id)).toBe(relation);
+    expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+
+    // Check that isPrivate and version were updated
+    expect(relation.isPrivate).toBe(false);
+    expect(relation.version).toBe(2);
+  });
+
+  it("should update relation type and reverse with a single version increment", async () => {
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+    expect(relation.version).toBe(1);
+
+    const newRelationType = defaultRelationTypes.author;
+    expect(newRelationType).toBeDefined();
+    expect(relation.relationType).not.toBe(newRelationType);
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      relationProps: {
+        relationType: newRelationType,
+      },
+      reverse: true,
+    });
+
+    expect(relation.from).toBe(endNode);
+    expect(relation.to).toBe(startNode);
+    expect(relation.relationType).toEqual(newRelationType);
+    expect(relation.version).toBe(2);
+  });
+
+  it("should generate a working undo function", async () => {
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      relationProps: {
+        isPrivate: false,
+      },
+      reverse: true,
+    });
+
+    expect(relation.from).toBe(endNode);
+    expect(relation.to).toBe(startNode);
+    expect(relation.isPrivate).toBe(false);
+    expect(relation.version).toBe(2);
+
+    graphStore.syncQueue.undoAllPending();
+
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+    expect(relation.isPrivate).toBe(true);
+    expect(relation.version).toBe(1);
+  });
+
+  it("should queue a GraphUpdate for updating a relation", async () => {
+    const relationAtStart = relation.serialize();
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      relationProps: {
+        isPrivate: false,
+      },
+    });
+
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    expect(pendingUpdateSets).toEqual([
+      [{ operation: "updateRelation", oldProps: relationAtStart, newProps: relation.serialize() }],
+    ]);
+  });
+
+  it("should queue appropriate GraphUpdates when reversing a relation", async () => {
+    const relationAtStart = relation.serialize();
+    const startNodeRelationsAtStart = graphStore.getRelationList(startNode).serialize();
+    const endNodeRelationsAtStart = graphStore.getRelationList(endNode).serialize();
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      relationProps: {
+        isPrivate: false,
+      },
+      reverse: true,
+    });
+
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    expect(pendingUpdateSets).toEqual([
+      [
+        { operation: "updateRelation", oldProps: relationAtStart, newProps: relation.serialize() },
+        {
+          operation: "updateRelationList",
+          nodeId: startNode.id,
+          pinned: false,
+          listBefore: startNodeRelationsAtStart,
+          listAfter: graphStore.getRelationList(startNode).serialize(),
+        },
+        {
+          operation: "updateRelationList",
+          nodeId: endNode.id,
+          pinned: false,
+          listBefore: endNodeRelationsAtStart,
+          listAfter: graphStore.getRelationList(endNode).serialize(),
+        },
+      ],
+    ]);
+  });
+});

@@ -157,10 +157,11 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
     async (option: DropdownOption) => {
       if (option.type === "relationType") {
         // update the relation type of the current relation
-        graph.updateRelationsType(relation, option.object);
-        if (!option.isForward) {
-          graph.reverseRelation(relation);
-        }
+        await graph.updateRelation({
+          relationId: relation.id,
+          relationProps: { relationType: option.object },
+          reverse: !option.isForward,
+        });
         if (object instanceof GraphNode) {
           graph.updateNode({ nodeId: object.id, nodeProps: { content: "" } });
           tree.setFocusedNode(pathToNodeStr);
