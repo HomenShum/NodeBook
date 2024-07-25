@@ -1,6 +1,5 @@
 import { isObservable, makeAutoObservable } from "mobx";
 
-import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
@@ -14,7 +13,6 @@ export class ViewStore {
 
   public mainStreamView: Tree;
   public mainOutlineView: Tree;
-  public sidebarTrees: Tree[] = [];
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.makeObservable();
@@ -45,19 +43,12 @@ export class ViewStore {
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
-    [this.mainStreamView, this.mainOutlineView, ...this.sidebarTrees].forEach((view) => view.setSearch(query));
-  }
-
-  openSidebarOutlineView(path: GraphRelation[]) {
-    const newView = new Tree(this.graphStore, this.settingsStore, path);
-    this.sidebarTrees.unshift(newView);
-    return newView;
+    [this.mainStreamView, this.mainOutlineView].forEach((view) => view.setSearch(query));
   }
 
   clear() {
     this.mainOutlineView.clear([this.graphStore.outlineRootRelationFromUserRoot]);
     this.mainStreamView.clear([this.graphStore.thoughtstreamRootRelationFromUserRoot]);
-    this.sidebarTrees = [];
   }
 
   serialize(): SerializedViewStore {

@@ -5,7 +5,6 @@ import { Inter } from "next/font/google";
 import Pusher from "pusher-js";
 import { useEffect, useRef, useState } from "react";
 
-import { DataLoadProvider } from "@/app/DataLoadContext";
 import { AuthProvider } from "@/app/auth/AuthProvider";
 import { useAuth } from "@/app/auth/useAuth";
 import { env } from "@/app/envFrontend";
@@ -140,18 +139,16 @@ function RootTemplateInternals({
   }, [user, authFetch]);
 
   return (
-    <DataLoadProvider value={hasLoaded}>
-      <SettingsStoreProvider value={settingsStore}>
-        <GraphStoreProvider value={graphStore}>
-          <ViewStoreProvider value={viewStore}>
-            <RenderControllerProvider value={renderController}>
-              <body>
-                <App>{children}</App>
-              </body>
-            </RenderControllerProvider>
-          </ViewStoreProvider>
-        </GraphStoreProvider>
-      </SettingsStoreProvider>
-    </DataLoadProvider>
+    <SettingsStoreProvider value={settingsStore}>
+      <GraphStoreProvider value={graphStore}>
+        <ViewStoreProvider value={viewStore}>
+          <RenderControllerProvider value={renderController}>
+            <body>
+              <App>{children}</App>
+            </body>
+          </RenderControllerProvider>
+        </ViewStoreProvider>
+      </GraphStoreProvider>
+    </SettingsStoreProvider>
   );
 }
