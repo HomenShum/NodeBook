@@ -93,8 +93,7 @@ export const RelationCombobox = observer(
         key: "new",
         label: `Create "${search}" relation type`,
         onSelect: async () => {
-          const { relationType } = graphStore.createRelationType({
-            id: search,
+          const relationType = await graphStore.addRelationType({
             label: search,
           });
           await graphStore.updateRelation({

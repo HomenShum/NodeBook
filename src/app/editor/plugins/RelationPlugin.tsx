@@ -42,13 +42,11 @@ export const RelationPlugin = () => {
           const [selectionLeft, selectionRight] = getSelectionPositions(editor);
           // Set the relation type to the text before the cursor
           const textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft }).trim();
-          let [relationType, direction] = graphStore.getOrCreateRelationTypeByLabel(textBefore);
           graphStoreTransaction.push({
             type: "updateRelation",
             transaction: {
               relationId: relation.id,
-              relationProps: { relationType },
-              reverse: direction === "reverse",
+              relationProps: { relationTypeLabel: textBefore },
             },
           });
 

@@ -29,6 +29,7 @@ import {
   TxAddChildNode,
   TxAddNode,
   TxAddRelation,
+  TxAddRelationType,
   TxCombined,
   TxRemoveNode,
   TxRemoveRelation,
@@ -127,7 +128,7 @@ export class GraphStore {
         removeRelation: action,
         replaceRelationLink: action,
         // relation type
-        createRelationType: action,
+        addRelationType: action,
         updateRelationType: action,
         deleteRelationType: action,
         // misc
@@ -295,6 +296,9 @@ export class GraphStore {
           break;
         case "updateRelation":
           results.push(await this.updateRelation(tx.transaction));
+          break;
+        case "addRelationType":
+          results.push(await this.addRelationType(tx.transaction));
           break;
         case "addChildNode":
           results.push(await this.addChildNode(tx.transaction));
@@ -840,6 +844,7 @@ export class GraphStore {
       throw new Error(`Relation with id ${tx.relationId} does not exist`);
     }
 
+    const updates: GraphUpdate[] = [];
     const oldProps = relation.serialize();
     const newProps = {
       ...oldProps,
@@ -847,12 +852,32 @@ export class GraphStore {
       relationTypeId: tx.relationProps?.relationType?.id ?? oldProps.relationTypeId,
       version: oldProps.version + 1,
     };
-    if (tx.reverse) {
+
+    let relTypeLabelImpliesReverse = false;
+    if (tx.relationProps?.relationTypeLabel !== undefined) {
+      if (tx.relationProps?.relationType) {
+        throw new Error("Don't provide both relationType and relationTypeLabel in updateRelation");
+      }
+      const relTypeAndDirection = this.getRelationTypeByLabel(tx.relationProps.relationTypeLabel);
+      if (!relTypeAndDirection) {
+        const { relationType, updates: relTypeUpdates } = this.createRelationType({
+          label: tx.relationProps.relationTypeLabel,
+        });
+        updates.push(...relTypeUpdates);
+        newProps.relationTypeId = relationType.id;
+      } else {
+        const { relationType, direction } = relTypeAndDirection;
+        newProps.relationTypeId = relationType.id;
+        relTypeLabelImpliesReverse = direction === "reverse";
+      }
+    }
+
+    if (tx.reverse || (tx.reverse === undefined && relTypeLabelImpliesReverse)) {
       newProps.fromId = oldProps.toId;
       newProps.toId = oldProps.fromId;
     }
 
-    const updates = this._updateRelation(oldProps, newProps);
+    updates.push(...this._updateRelation(oldProps, newProps));
     this.queueUpdates(updates);
   }
 
@@ -1351,30 +1376,18 @@ export class GraphStore {
     return this.relationTypesById[id];
   }
 
-  /**
-   * Finds the first relation type whose label (or reverseLabel) matches the provided text.
-   *
-   * TODO: think about how this should be handled long term.
-   */
-  getOrCreateRelationTypeByLabel(labelText: string): [GraphRelationType, "forward" | "reverse"] {
+  getRelationTypeByLabel(
+    labelText: string,
+  ): { relationType: GraphRelationType; direction: "forward" | "reverse" } | undefined {
     for (const [_, type] of Object.entries(this.relationTypesById)) {
       if (type.label.toLowerCase() === labelText.toLowerCase()) {
-        return [type, "forward"];
+        return { relationType: type, direction: "forward" };
       }
       if (type.reverseLabel.toLowerCase() === labelText.toLowerCase()) {
-        return [type, "reverse"];
+        return { relationType: type, direction: "reverse" };
       }
     }
-    if (labelText.endsWith(" of")) {
-      // Special case for "is X of" relations because the auto-generated reverse label will be "is X of" and
-      // we don't want "is X of of"
-      const reverseLabel = labelText;
-      const label = labelText.replace(/^(is\s+)?(.+?)\s+of$/i, "$2");
-      const { relationType } = this.createRelationType({ label, reverseLabel });
-      return [relationType, "reverse"];
-    }
-    const { relationType } = this.createRelationType({ label: labelText });
-    return [relationType, "forward"];
+    return undefined;
   }
 
   /**
@@ -1415,8 +1428,13 @@ export class GraphStore {
     return { object, relationsWithPositions };
   }
 
-  // TODO: Expose this functionality in a transaction, make this function private
-  createRelationType(
+  async addRelationType(tx: TxAddRelationType) {
+    const { relationType, updates } = this.createRelationType(tx);
+    this.queueUpdates(updates);
+    return relationType;
+  }
+
+  private createRelationType(
     props: { id?: string; label: string; reverseLabel?: string },
     fromServer = false,
   ): { relationType: GraphRelationType; updates: GraphUpdate[] } {
@@ -1424,12 +1442,24 @@ export class GraphStore {
     if (this.relationTypesById[id] && !fromServer) {
       throw new Error(`Relation type with id ${props.id} already exists`);
     }
+
+    let label = props.label;
+    let reverseLabel = props.reverseLabel;
+    if (label.endsWith(" of") && !reverseLabel) {
+      // Special case for "is X of" relations because the auto-generated reverse label will be "is X of" and
+      // we don't want "is X of of"
+      reverseLabel = label;
+      label = label.replace(/^(is\s+)?(.+?)\s+of$/i, "$2");
+    } else if (!reverseLabel) {
+      reverseLabel = `is ${label} of`;
+    }
+
     const newRelationType = {
       version: 1,
       id,
       authorId: this.user.id,
-      label: props.label,
-      reverseLabel: props.reverseLabel ?? `is ${props.label} of`,
+      label,
+      reverseLabel,
     };
     this.relationTypesById[id] = newRelationType;
     const updates: GraphUpdate[] = [

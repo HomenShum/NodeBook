@@ -8,14 +8,6 @@ import { GraphRelation, GraphRelationPropsWithoutTargets, GraphRelationType } fr
 export type Positioner<T extends { id: string }> = number | string | T;
 
 export type RelationDirectionForObject = "from" | "to";
-
-export type TxAddChildNode = {
-  parentId: string;
-  nodeProps?: GraphNodeProps;
-  relationProps?: GraphRelationPropsWithoutTargets;
-  after?: Positioner<GraphRelation>;
-};
-
 export type TxAddNode = {
   nodeProps?: GraphNodeProps;
 };
@@ -52,8 +44,22 @@ export type TxUpdateRelation = {
   relationProps?: {
     isPrivate?: boolean;
     relationType?: GraphRelationType;
+    relationTypeLabel?: string;
   };
   reverse?: boolean;
+};
+
+export type TxAddRelationType = {
+  id?: string;
+  label: string;
+  reverseLabel?: string;
+};
+
+export type TxAddChildNode = {
+  parentId: string;
+  nodeProps?: GraphNodeProps;
+  relationProps?: GraphRelationPropsWithoutTargets;
+  after?: Positioner<GraphRelation>;
 };
 
 // TODO: probably can be done with less boilerplate code?
@@ -85,6 +91,10 @@ export type TxCombinedPart =
   | {
       type: "updateRelation";
       transaction: TxUpdateRelation;
+    }
+  | {
+      type: "addRelationType";
+      transaction: TxAddRelationType;
     }
   | {
       type: "addChildNode";

@@ -160,4 +160,59 @@ describe("GraphStore.updateRelation", () => {
       ],
     ]);
   });
+
+  it("should be able to set a relation type by label, inferring direction", async () => {
+    const relTypeAndDir = graphStore.getRelationTypeByLabel("author");
+    expect(relTypeAndDir).toBeDefined();
+    const { relationType: authorRelationType, direction } = relTypeAndDir!;
+    expect(authorRelationType.label).toBe("author");
+    expect(authorRelationType.reverseLabel).toBe("authored");
+    expect(direction).toBe("forward");
+
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+    expect(relation.relationType).not.toBe(authorRelationType);
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      relationProps: {
+        relationTypeLabel: "author",
+      },
+    });
+
+    expect(relation.relationType).toBe(authorRelationType);
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      relationProps: {
+        relationTypeLabel: "authored",
+      },
+    });
+
+    expect(relation.relationType).toBe(authorRelationType);
+    expect(relation.from).toBe(endNode);
+    expect(relation.to).toBe(startNode);
+  });
+
+  it("should be able to set a relation type by label, creating a new type if none exists", async () => {
+    let relTypeAndDir = graphStore.getRelationTypeByLabel("test");
+    expect(relTypeAndDir).toBeUndefined();
+
+    expect(relation.relationType.label).not.toBe("test");
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      relationProps: {
+        relationTypeLabel: "test",
+      },
+    });
+
+    relTypeAndDir = graphStore.getRelationTypeByLabel("test");
+    expect(relTypeAndDir).toBeDefined();
+    expect(relTypeAndDir?.relationType.label).toBe("test");
+    expect(relTypeAndDir?.direction).toBe("forward");
+    expect(relation.relationType).toBe(relTypeAndDir?.relationType);
+  });
 });
