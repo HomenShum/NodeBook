@@ -87,7 +87,7 @@ function RootTemplateInternals({
 
   // TODO : hide persistence behind auth
   useEffect(() => {
-    if (user.isUnlogged) return;
+    if (user.isUnlogged || hasLoaded) return;
     graphStore.initialize(user);
 
     if (!env.isPersistenceEnabled) {
@@ -136,7 +136,7 @@ function RootTemplateInternals({
       }
     }
     setupSync();
-  }, [user, authFetch]);
+  }, [user, authFetch, hasLoaded]);
 
   return (
     <SettingsStoreProvider value={settingsStore}>

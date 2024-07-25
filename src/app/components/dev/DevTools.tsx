@@ -167,7 +167,10 @@ export const DevTools = observer(() => {
           <Button
             size="default"
             variant="default"
-            onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+            onClick={() => {
+              handleClose();
+              logout({ logoutParams: { returnTo: window.location.origin } });
+            }}
           >
             Log out
           </Button>

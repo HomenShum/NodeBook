@@ -62,6 +62,7 @@ export const useAuth: () => MewAuthInterface = !env.isAuthEnabled
       );
 
       useEffect(() => {
+        if (mewUser) return;
         const fetchUser = async () => {
           if (!auth.user) return;
           try {
@@ -73,7 +74,7 @@ export const useAuth: () => MewAuthInterface = !env.isAuthEnabled
           }
         };
         fetchUser();
-      }, [auth.user, authFetch]);
+      }, [auth.user, authFetch, mewUser]);
 
       return {
         ...auth,

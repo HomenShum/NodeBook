@@ -13,6 +13,7 @@ export class ViewStore {
 
   public mainStreamView: Tree;
   public mainOutlineView: Tree;
+  public sidebarTrees: Tree[] = [];
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.makeObservable();
