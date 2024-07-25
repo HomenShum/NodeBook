@@ -1,8 +1,10 @@
 import { ExtractTablesWithRelations } from "drizzle-orm";
 import { PgTransaction } from "drizzle-orm/pg-core";
-import { VercelPgQueryResultHKT } from "drizzle-orm/vercel-postgres";
+import { VercelPgDatabase, VercelPgQueryResultHKT } from "drizzle-orm/vercel-postgres";
 
 import * as schema from "./schema";
+
+export type MewDatabase = VercelPgDatabase<typeof schema>;
 
 export type MewDbSchema = typeof schema;
 

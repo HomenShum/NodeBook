@@ -1,7 +1,6 @@
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
-import { SettingsStore } from "@/app/graph/SettingsStore";
 
 import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
 
@@ -16,8 +15,7 @@ describe("GraphStore.addChildNode", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    const settingsStore = new SettingsStore();
-    graphStore = new GraphStore(settingsStore);
+    graphStore = new GraphStore();
 
     parent = await graphStore.addNode({});
 
@@ -58,6 +56,7 @@ describe("GraphStore.addChildNode", () => {
         {
           operation: "updateRelationList",
           nodeId: parent.id,
+          authorId: parent.authorId,
           pinned: false,
           listBefore: {},
           listAfter: {
@@ -67,6 +66,7 @@ describe("GraphStore.addChildNode", () => {
         {
           operation: "updateRelationList",
           nodeId: child.id,
+          authorId: child.authorId,
           pinned: false,
           listBefore: {},
           listAfter: {

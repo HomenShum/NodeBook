@@ -2,7 +2,6 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
-import { SettingsStore } from "@/app/graph/SettingsStore";
 
 import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
 
@@ -21,8 +20,7 @@ describe("GraphStore.removeRelation", () => {
     const NUM_RELATIONS_START = MIN_NUM_RELATIONS + 1;
 
     beforeEach(async () => {
-      const settingsStore = new SettingsStore();
-      graphStore = new GraphStore(settingsStore);
+      graphStore = new GraphStore();
 
       startNode = await graphStore.addNode({});
       endNode = await graphStore.addNode({});
@@ -145,12 +143,11 @@ describe("GraphStore.removeRelation", () => {
     const NUM_RELATIONS_START = MIN_NUM_RELATIONS + 4;
 
     beforeEach(async () => {
-      const settingsStore = new SettingsStore();
-      graphStore = new GraphStore(settingsStore);
+      graphStore = new GraphStore();
 
-      nodeA = await graphStore.addNode({ id: "a" });
-      nodeB = await graphStore.addNode({ id: "b" });
-      nodeC = await graphStore.addNode({ id: "c" });
+      nodeA = await graphStore.addNode({ nodeProps: { id: "a" } });
+      nodeB = await graphStore.addNode({ nodeProps: { id: "b" } });
+      nodeC = await graphStore.addNode({ nodeProps: { id: "c" } });
       relationAB = await graphStore.addRelation({ id: "ab", fromId: nodeA.id, toId: nodeB.id });
       relationBC = await graphStore.addRelation({ id: "bc", fromId: nodeB.id, toId: nodeC.id });
       relationAC = await graphStore.addRelation({ id: "ac", fromId: nodeA.id, toId: nodeC.id });

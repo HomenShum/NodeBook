@@ -1,3 +1,4 @@
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { TreeNode } from "@/app/tree/nodes";
@@ -40,7 +41,8 @@ import { Tree } from "@/app/tree/Tree";
  */
 export async function createTestTreeFromTemplate(template: TemplateNode[]) {
   const settingsStore = new SettingsStore();
-  const graphStore = new GraphStore(settingsStore);
+  const graphStore = new GraphStore();
+  graphStore.initialize(MOCK_MEW_USER);
   const tree = new Tree(graphStore, settingsStore, graphStore.outlineRoot);
   let selectionHeadPath: string | undefined;
   let selectionAnchorPath: string | undefined;

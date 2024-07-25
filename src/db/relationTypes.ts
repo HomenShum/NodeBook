@@ -7,6 +7,7 @@ import { MewDbTransaction } from "@/db/types";
 export const createRelationType = async (tx: MewDbTransaction, relType: GraphRelationType) => {
   await tx.insert(relationTypeTable).values({
     id: relType.id,
+    authorId: relType.authorId,
     version: relType.version,
     label: relType.label,
     reverseLabel: relType.reverseLabel,
@@ -22,6 +23,7 @@ export const updateRelationType = async (
     .update(relationTypeTable)
     .set({
       id: newProps.id,
+      authorId: newProps.authorId,
       version: newProps.version,
       label: newProps.label,
       reverseLabel: newProps.reverseLabel,

@@ -8,11 +8,13 @@ import { GraphObject } from "@/app/graph/GraphObject";
  */
 export class PlaceholderGraphObject extends GraphObject {
   id: string;
+  authorId: string;
   createdAt: Date;
   public isPrivate: boolean = false;
-  constructor(id: string) {
+  constructor(id: string, authorId: string) {
     super(null as any);
     this.id = id;
+    this.authorId = authorId;
     this.createdAt = new Date();
   }
   objectType = "placeholder" as const;

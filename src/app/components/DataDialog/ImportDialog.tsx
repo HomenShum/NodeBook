@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
+import { useAuth } from "@/app/auth/useAuth";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -12,6 +13,7 @@ import { ConfirmReplace } from "./ConfirmReplace";
 import styles from "./DataDialog.module.css";
 
 export const ImportDialog = observer(() => {
+  const { user } = useAuth();
   const renderController = useRenderController();
 
   const graphStore = useGraphStore();
@@ -25,11 +27,11 @@ export const ImportDialog = observer(() => {
     const reader = new FileReader();
     reader.onload = async (event) => {
       const fileContent = event.target!.result;
-      await graphStore.resetAndLoad(JSON.parse(fileContent as string));
+      graphStore.initializeAndLoad(user, JSON.parse(fileContent as string));
       renderController.setActiveModal(null); // Close the ImportDialog after replacing data
     };
     reader.readAsText(file);
-  }, [graphStore, file, renderController]);
+  }, [graphStore, file, user, renderController]);
 
   const onAddToGraphClick = useCallback(() => {
     if (!file) return;

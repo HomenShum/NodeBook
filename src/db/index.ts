@@ -1,6 +1,7 @@
 import { createPool, VercelPool } from "@vercel/postgres";
-import { drizzle, VercelPgDatabase } from "drizzle-orm/vercel-postgres";
+import { drizzle } from "drizzle-orm/vercel-postgres";
 
+import { MewDatabase } from "@/db/types";
 import { env } from "@/envBackend";
 
 import * as schema from "./schema";
@@ -9,7 +10,7 @@ import * as schema from "./schema";
 // But that was causing the build to fail. I think cause during the build, the env variables
 // aren't set, so the connecting string is empty. So I'm using a getter function to delay
 // the instantiation of the db until runtime, when the env variables are set.
-let db: VercelPgDatabase<typeof schema>;
+let db: MewDatabase;
 let client: VercelPool;
 
 export const getDb = (connectionString?: string) => {

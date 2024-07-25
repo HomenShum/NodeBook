@@ -8,6 +8,7 @@ import { GraphRelation } from "./GraphRelation";
 export abstract class GraphObject {
   abstract objectType: "node" | "relation" | "placeholder";
   abstract id: string;
+  abstract authorId: string;
   abstract createdAt: Date;
   abstract text: string;
   abstract isPrivate: boolean;

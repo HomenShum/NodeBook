@@ -1,52 +1,39 @@
-import { User as Auth0User } from "@auth0/auth0-react";
-
-type Auth0UserWithId = Exclude<Auth0User, "sub"> & { sub: string };
+import { PersistedUser } from "@/db/schema";
 
 export class MewUser {
   id: string;
-  auth0Id: string;
-  firstName: string;
-  lastName: string;
-  nickname: string;
+  email: string;
   name: string;
   picture: string;
-  locale: string;
-  updatedAt: Date;
-  email: string;
-  emailVerified: boolean;
+  createdAt: Date;
 
-  constructor(u: Auth0UserWithId) {
-    this.id = u.sub;
-    this.auth0Id = u.sub;
-    this.firstName = u.given_name ?? "unknown";
-    this.lastName = u.family_name ?? "unknown";
-    this.nickname = u.nickname ?? "unknown";
+  constructor(u: PersistedUser) {
+    this.id = u.id;
+    this.email = u.email ?? "unknown";
     this.name = u.name ?? "unknown";
     this.picture = u.picture ?? "/profile-default.jpg";
-    this.locale = u.locale ?? "en";
-    this.updatedAt = new Date(u.updated_at ?? Date.now());
-    this.email = u.email ?? "unknown";
-    this.emailVerified = u.email_verified ?? false;
+    this.createdAt = u.createdAt ?? new Date("2020-01-01");
   }
 
-  static fromAuth0User(auth0User: Auth0User): MewUser {
-    if (!auth0User.sub) {
-      throw new TypeError("User must have a `sub` property");
-    }
-
-    return new MewUser(auth0User as Auth0UserWithId);
+  get isUnlogged() {
+    return this.id === UNLOGGED_USER_ID;
   }
 }
 
-export const MOCK_MEW_USER = MewUser.fromAuth0User({
-  sub: "mew|0123456789",
-  given_name: "Tyler",
-  family_name: "Durden",
-  nickname: "tyler",
+const UNLOGGED_USER_ID = "SPECIAL::mew|unlogged";
+export const UNLOGGED_USER = new MewUser({
+  id: UNLOGGED_USER_ID,
+  email: "unlogged.user@ideaflow.io",
+  name: "Unlogged User",
+  picture: "/profile-default.jpg",
+  createdAt: new Date("2024-07-16T17:14:31.223Z"),
+});
+
+const MOCK_MEW_USER_ID = "SPECIAL::mew|0123456789";
+export const MOCK_MEW_USER = new MewUser({
+  id: MOCK_MEW_USER_ID,
+  email: "mock.user@ideaflow.io",
   name: "Tyler Durden",
   picture: "/profile-default.jpg",
-  locale: "en",
-  updatedAt: "2020-03-24T17:49:22.464Z",
-  email: "mock.user@ideaflow.io",
-  email_verified: true,
+  createdAt: new Date("2024-07-16T17:14:31.223Z"),
 });

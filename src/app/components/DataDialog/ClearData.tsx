@@ -1,6 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useCallback } from "react";
 
+import { useAuth } from "@/app/auth/useAuth";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -14,16 +15,17 @@ interface Props {
 }
 
 export const ClearData = observer(({ onConfirm }: Props) => {
+  const { user } = useAuth();
   const renderController = useRenderController();
 
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
 
   const handleClearData = useCallback(() => {
-    graphStore.reset();
+    graphStore.initialize(user);
     viewStore.clear();
     renderController.setActiveModal(null);
-  }, [graphStore, viewStore, renderController]);
+  }, [graphStore, viewStore, renderController, user]);
 
   return (
     <DataDialog

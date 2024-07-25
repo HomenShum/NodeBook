@@ -1,5 +1,6 @@
 import path from "path";
 
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { createTestTreeFromTemplate, expectTreeToMatchTemplate } from "@/app/tree/__test__/helpers";
@@ -14,7 +15,8 @@ describe("Tree", () => {
   describe("computing state from graph", () => {
     it("basic", async () => {
       const settingsStore = new SettingsStore();
-      const graphStore = new GraphStore(settingsStore);
+      const graphStore = new GraphStore();
+      graphStore.initialize(MOCK_MEW_USER);
       const root = graphStore.outlineRoot;
       // Add 2 children of the root, each with a child of their own
       const { node: n1, relation: r1 } = await graphStore.addChildNode({
@@ -63,7 +65,7 @@ describe("Tree", () => {
     it("should move head up to sibling above", async () => {
       // prettier-ignore
       const tree = await createTestTreeFromTemplate([
-        { rid: "1" }, 
+        { rid: "1" },
         { rid: "2", isHead: true, isAnchor: true }
       ]);
       tree.moveNodeSelectionHeadUp();
@@ -150,7 +152,7 @@ describe("Tree", () => {
         it(direction, async () => {
           // prettier-ignore
           const tree = await createTestTreeFromTemplate([
-            { rid: "1" }, 
+            { rid: "1" },
             { rid: "2", isFocused: true },
             { rid: "3" },
           ]);
@@ -159,14 +161,14 @@ describe("Tree", () => {
             // prettier-ignore
             expectTreeToMatchTemplate(tree, [
               { rid: "2", isFocused: true },
-              { rid: "1" }, 
+              { rid: "1" },
               { rid: "3" },
             ]);
           } else {
             await tree.moveSelectedNodesDown();
             // prettier-ignore
             expectTreeToMatchTemplate(tree, [
-              { rid: "1" }, 
+              { rid: "1" },
               { rid: "3" },
               { rid: "2", isFocused: true },
             ]);
@@ -177,8 +179,8 @@ describe("Tree", () => {
     it("should handle multiple selected nodes", async () => {
       // prettier-ignore
       const tree = await createTestTreeFromTemplate([
-          { rid: "1" }, 
-          { rid: "2" }, 
+          { rid: "1" },
+          { rid: "2" },
           { rid: "3", isHead: true, children: [
             { rid: "4" },
           ]},
@@ -187,19 +189,19 @@ describe("Tree", () => {
       await tree.moveSelectedNodesUp();
       // prettier-ignore
       expectTreeToMatchTemplate(tree, [
-          { rid: "1" }, 
+          { rid: "1" },
           { rid: "3", isHead: true, children: [
             { rid: "4" },
           ]},
           { rid: "5", isAnchor: true },
-          { rid: "2" }, 
+          { rid: "2" },
         ]);
     });
     it("should move to parents sibling if there's no sibling above", async () => {
       // prettier-ignore
       const tree = await createTestTreeFromTemplate([
-          { rid: "1" }, 
-          { rid: "2" }, 
+          { rid: "1" },
+          { rid: "2" },
           { rid: "3", children: [
             { rid: "4", isHead: true },
             { rid: "5", isAnchor: true },
@@ -209,7 +211,7 @@ describe("Tree", () => {
       await tree.moveSelectedNodesUp();
       // prettier-ignore
       expectTreeToMatchTemplate(tree, [
-          { rid: "1" }, 
+          { rid: "1" },
           { rid: "2", children: [
             { rid: "4", isHead: true },
             { rid: "5", isAnchor: true },

@@ -2,7 +2,6 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
-import { SettingsStore } from "@/app/graph/SettingsStore";
 
 import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
 
@@ -22,13 +21,12 @@ describe("GraphStore.removeNode", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    const settingsStore = new SettingsStore();
-    graphStore = new GraphStore(settingsStore);
+    graphStore = new GraphStore();
 
     orphanNode = await graphStore.addNode({});
-    nodeA = await graphStore.addNode({ id: "a" });
-    nodeB = await graphStore.addNode({ id: "b" });
-    nodeC = await graphStore.addNode({ id: "c" });
+    nodeA = await graphStore.addNode({ nodeProps: { id: "a" } });
+    nodeB = await graphStore.addNode({ nodeProps: { id: "b" } });
+    nodeC = await graphStore.addNode({ nodeProps: { id: "c" } });
     relationAB = await graphStore.addRelation({ id: "ab", fromId: nodeA.id, toId: nodeB.id });
     relationBC = await graphStore.addRelation({ id: "bc", fromId: nodeB.id, toId: nodeC.id });
 

@@ -28,7 +28,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       cacheLocation="localstorage"
       authorizationParams={{
         redirect_uri: global?.window?.location.origin,
-        audience: "https://ideaflow.auth0.com/api/v2/",
+        audience: env.auth0ApiAudience,
+        issuer: env.auth0Domain,
         scope: "openid profile email offline_access",
       }}
     >

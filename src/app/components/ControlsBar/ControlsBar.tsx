@@ -129,7 +129,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="show-node-details"
                   checked={settingsStore.showNodeDetails}
-                  onCheckedChange={(checked) => settingsStore.setShowNodeDetails(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setShowNodeDetails(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -137,7 +137,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="hide-direct-parent"
                   checked={settingsStore.hideDirectParent}
-                  onCheckedChange={(checked) => settingsStore.setHideDirectParent(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHideDirectParent(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -145,7 +145,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="hide-all-root-parents"
                   checked={settingsStore.hideAllRootParents}
-                  onCheckedChange={(checked) => settingsStore.setHideAllRootParents(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHideAllRootParents(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -153,7 +153,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="hide-all-parents"
                   checked={settingsStore.hideAllParents}
-                  onCheckedChange={(checked) => settingsStore.setHideAllParents(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHideAllParents(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -161,7 +161,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="hide-backrelations"
                   checked={settingsStore.hideBackrelations}
-                  onCheckedChange={(checked) => settingsStore.setHideBackrelations(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHideBackrelations(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -169,7 +169,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="hide-bundles"
                   checked={settingsStore.hideBundles}
-                  onCheckedChange={(checked) => settingsStore.setHideBundles(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHideBundles(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -177,7 +177,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="hide-zones"
                   checked={settingsStore.hideZones}
-                  onCheckedChange={(checked) => settingsStore.setHideZones(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHideZones(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -185,7 +185,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="show-at-sign-on-mention"
                   checked={settingsStore.showAtSignOnMention}
-                  onCheckedChange={(checked) => settingsStore.setShowAtSignOnMention(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setShowAtSignOnMention(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -193,7 +193,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="hide-thoughtstream-bullets"
                   checked={settingsStore.hideThoughtstreamBullets}
-                  onCheckedChange={(checked) => settingsStore.setHideThoughtstreamBullets(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHideThoughtstreamBullets(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -203,7 +203,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="hide-bullet-background-if-parents-only"
                   checked={settingsStore.hideBulletBackgroundIfParentsOnly}
-                  onCheckedChange={(checked) => settingsStore.setHideBulletBackgroundIfParentsOnly(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHideBulletBackgroundIfParentsOnly(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>
@@ -211,7 +211,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 <Switch
                   id="hide-pinned-items"
                   checked={settingsStore.hidePinnedItems}
-                  onCheckedChange={(checked) => settingsStore.setHidePinnedItems(checked)}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHidePinnedItems(checked)}
                 />
               </div>
             </div>

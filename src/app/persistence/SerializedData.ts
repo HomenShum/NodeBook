@@ -11,6 +11,7 @@ const SerializedChipSchema = z.object({
 export const SerializedNodeSchema = z.object({
   version: z.number(),
   id: z.string(),
+  authorId: z.string(),
   createdAt: z.coerce.date(),
   content: z.array(SerializedChipSchema),
   isBundle: z.boolean(),
@@ -21,6 +22,7 @@ export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
 
 export const SerializedRelationTypeSchema = z.object({
   id: z.string(),
+  authorId: z.string(),
   version: z.number(),
   label: z.string(),
   reverseLabel: z.string(),
@@ -29,6 +31,7 @@ export const SerializedRelationTypeSchema = z.object({
 export const SerializedRelationSchema = z.object({
   version: z.number(),
   id: z.string(),
+  authorId: z.string(),
   fromId: z.string(),
   toId: z.string(),
   relationTypeId: z.string(),

@@ -169,7 +169,7 @@ export const SearchAndReplaceDropdownPlugin = observer(
         } else {
           const needNewNode = option.type === "action" && option.id === "create-new-node";
           const newObject = needNewNode
-            ? await graph.addNode({ content: object.text })
+            ? await graph.addNode({ nodeProps: { content: object.text } })
             : graph.getNodeOrThrow(option.id);
           await treeNode.setObject(newObject);
           tree.setFocusedNode(treeNode.path);

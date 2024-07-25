@@ -2,7 +2,6 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
-import { SettingsStore } from "@/app/graph/SettingsStore";
 
 import { MIN_NUM_RELATIONS } from "./helpers";
 
@@ -18,14 +17,17 @@ describe("GraphStore.updateRelation", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    const settingsStore = new SettingsStore();
-    graphStore = new GraphStore(settingsStore);
+    graphStore = new GraphStore();
 
     startNode = await graphStore.addNode({
-      id: "start-node",
+      nodeProps: {
+        id: "start-node",
+      },
     });
     endNode = await graphStore.addNode({
-      id: "end-node",
+      nodeProps: {
+        id: "end-node",
+      },
     });
     relation = await graphStore.addRelation({
       id: "test-relation",
@@ -142,6 +144,7 @@ describe("GraphStore.updateRelation", () => {
         {
           operation: "updateRelationList",
           nodeId: startNode.id,
+          authorId: startNode.authorId,
           pinned: false,
           listBefore: startNodeRelationsAtStart,
           listAfter: graphStore.getRelationList(startNode).serialize(),
@@ -149,6 +152,7 @@ describe("GraphStore.updateRelation", () => {
         {
           operation: "updateRelationList",
           nodeId: endNode.id,
+          authorId: endNode.authorId,
           pinned: false,
           listBefore: endNodeRelationsAtStart,
           listAfter: graphStore.getRelationList(endNode).serialize(),

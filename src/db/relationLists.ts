@@ -8,6 +8,7 @@ import { MewDbTransaction } from "@/db/types";
 export const upsertRelationList = async (
   tx: MewDbTransaction,
   nodeId: string,
+  authorId: string,
   relationList: SerializedPositionList<GraphRelation>,
   pinned: boolean,
 ) => {
@@ -18,6 +19,7 @@ export const upsertRelationList = async (
     await tx
       .insert(relationListsTable)
       .values({
+        authorId: authorId,
         nodeId: nodeId,
         relationId: relationId,
         pinned: pinned,

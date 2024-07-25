@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
+import { useAuth } from "@/app/auth/useAuth";
 import { ListIcon, StreamIcon } from "@/app/components/CustomIcons";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
@@ -33,6 +34,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
   className,
   onResizeStateChange,
 }) => {
+  const { user } = useAuth();
   const curView = useCurView();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
@@ -49,7 +51,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
   };
 
   const handleClearData = () => {
-    graphStore.reset();
+    graphStore.initialize(user);
     viewStore.clear();
     renderController.setActiveModal(null);
   };

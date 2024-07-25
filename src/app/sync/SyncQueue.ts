@@ -22,10 +22,10 @@ export class SyncQueue {
     return this.localTransactions.has(transactionId);
   }
 
-  async process() {
+  async process(authFetch: typeof fetch) {
     let task = this.queue.shift();
     while (task) {
-      const response = await fetch("/api/sync", {
+      const response = await authFetch(`/api/sync?userId=${window.mew.graphStore.user.id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

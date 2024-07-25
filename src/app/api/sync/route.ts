@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
+import { parse } from "url";
+
+import { NextRequest, NextResponse } from "next/server";
 import Pusher from "pusher";
 
+import { withAuth } from "@/app/api/authMiddleware";
 import { createSnapshotFromDb } from "@/app/api/sync/createSnapshot";
 import { SerializedSyncDataSchema } from "@/app/sync/SyncTask";
 import { getDb } from "@/db";
@@ -17,12 +20,18 @@ const pusher = new Pusher({
   cluster: env.PUSHER_CLUSTER ?? "",
 });
 
-export async function GET(req: Request) {
-  const data = await createSnapshotFromDb();
+export const GET = withAuth(getHandler);
+async function getHandler(req: NextRequest) {
+  const { userId } = parse(req.url, true).query; // TODO: Figure out how to get it directly from NextRequest
+  if (!userId || typeof userId !== "string") {
+    return NextResponse.json({ status: "error", message: "Invalid user ID" }, { status: 400 });
+  }
+  const data = await createSnapshotFromDb(userId);
   return NextResponse.json({ data });
 }
 
-export async function POST(req: Request) {
+export const POST = withAuth(postHandler);
+async function postHandler(req: NextRequest) {
   const parsedData = SerializedSyncDataSchema.safeParse(await req.json());
 
   if (!parsedData.success) {
@@ -67,7 +76,7 @@ export async function POST(req: Request) {
             await deleteRelation(tx, update.deleted.relation);
             break;
           case "updateRelationList":
-            await upsertRelationList(tx, update.nodeId, update.listAfter, update.pinned);
+            await upsertRelationList(tx, update.nodeId, update.authorId, update.listAfter, update.pinned);
             break;
           default:
             const _exhaustiveCheck: never = update;

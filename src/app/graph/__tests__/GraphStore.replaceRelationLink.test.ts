@@ -2,7 +2,6 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
-import { SettingsStore } from "@/app/graph/SettingsStore";
 
 import { MIN_NUM_NODES } from "./helpers";
 
@@ -21,12 +20,11 @@ describe("GraphStore.replaceRelationLink", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    const settingsStore = new SettingsStore();
-    graphStore = new GraphStore(settingsStore);
+    graphStore = new GraphStore();
 
-    nodeA = await graphStore.addNode({ id: "a" });
-    nodeB = await graphStore.addNode({ id: "b" });
-    nodeC = await graphStore.addNode({ id: "c" });
+    nodeA = await graphStore.addNode({ nodeProps: { id: "a" } });
+    nodeB = await graphStore.addNode({ nodeProps: { id: "b" } });
+    nodeC = await graphStore.addNode({ nodeProps: { id: "c" } });
     relationAB = await graphStore.addRelation({ id: "ab", fromId: nodeA.id, toId: nodeB.id });
     relationBC = await graphStore.addRelation({ id: "bc", fromId: nodeB.id, toId: nodeC.id });
     relationAC = await graphStore.addRelation({ id: "ac", fromId: nodeA.id, toId: nodeC.id });
@@ -92,6 +90,7 @@ describe("GraphStore.replaceRelationLink", () => {
         {
           operation: "updateRelationList",
           nodeId: nodeA.id,
+          authorId: nodeA.authorId,
           pinned: false,
           listBefore: {
             ab: abPosition,
@@ -104,6 +103,7 @@ describe("GraphStore.replaceRelationLink", () => {
         {
           operation: "updateRelationList",
           nodeId: nodeC.id,
+          authorId: nodeC.authorId,
           pinned: false,
           listBefore: {
             ac: acPosition,
@@ -184,6 +184,7 @@ describe("GraphStore.replaceRelationLink", () => {
         {
           operation: "updateRelationList",
           nodeId: nodeA.id,
+          authorId: nodeA.authorId,
           pinned: false,
           listBefore: {
             ab: abPosition,
@@ -196,6 +197,7 @@ describe("GraphStore.replaceRelationLink", () => {
         {
           operation: "updateRelationList",
           nodeId: newNode.id,
+          authorId: newNode.authorId,
           pinned: false,
           listBefore: {},
           listAfter: {

@@ -11,6 +11,7 @@ import { GraphStore, defaultRelationTypes } from "./GraphStore";
 export type GraphRelationType = {
   version: number;
   id: string;
+  authorId: string;
   label: string; // e.g. author
   reverseLabel: string; // e.g. authored by
 };
@@ -18,6 +19,7 @@ export type GraphRelationType = {
 export type GraphRelationProps = {
   version?: number;
   id?: string;
+  authorId?: string;
   from: GraphObject;
   to: GraphObject;
   relationType?: GraphRelationType;
@@ -33,6 +35,7 @@ export type GraphRelationPropsWithoutTargets = {
 export class GraphRelation extends GraphObject implements Serializable {
   objectType: "relation" = "relation";
   id: string;
+  authorId: string;
   version: number;
   createdAt: Date = new Date();
   isPrivate: boolean = true;
@@ -43,17 +46,20 @@ export class GraphRelation extends GraphObject implements Serializable {
   constructor(
     store: GraphStore,
     {
+      authorId,
       version = 1,
       id = uuid(),
       from,
       to,
       relationType: type = defaultRelationTypes.child,
       isPrivate = true,
-    }: GraphRelationProps,
+    }: GraphRelationProps & { authorId: string },
   ) {
     super(store);
+
     this.version = version;
     this.id = id;
+    this.authorId = authorId;
     this.from = from;
     this.to = to;
     this.relationType = type;
@@ -146,6 +152,7 @@ export class GraphRelation extends GraphObject implements Serializable {
     return {
       version: this.version,
       id: this.id,
+      authorId: this.authorId,
       fromId: this.from.id,
       toId: this.to.id,
       relationTypeId: this.relationType.id,

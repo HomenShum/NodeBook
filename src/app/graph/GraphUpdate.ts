@@ -67,6 +67,7 @@ export type DeleteRelation = z.infer<typeof DeleteRelationSchema>;
 
 const UpdateRelationListSchema = z.object({
   operation: z.literal("updateRelationList"),
+  authorId: z.string(),
   nodeId: z.string(),
   pinned: z.boolean(),
   listBefore: SerializedPositionListSchema,

@@ -262,7 +262,7 @@ const TreeNodeReference = observer(({ treeNode }: { treeNode: DescendantTreeNode
             tree.setFocusedNode(path);
           } else if (e.key === "Backspace") {
             e.preventDefault();
-            const node = await graph.addNode({ content: treeNode.object.text.slice(0, -1) });
+            const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
             await treeNode.setObject(node);
           }
         }}

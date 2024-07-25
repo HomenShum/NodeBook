@@ -1,7 +1,6 @@
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
-import { SettingsStore } from "@/app/graph/SettingsStore";
 
 import { MIN_NUM_NODES } from "./helpers";
 
@@ -15,16 +14,17 @@ describe("GraphStore.updateNode", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    const settingsStore = new SettingsStore();
-    graphStore = new GraphStore(settingsStore);
+    graphStore = new GraphStore();
 
     node = await graphStore.addNode({
-      id: "test-node",
-      content: "test content",
-      createdAt: new Date(1994, 5, 4),
-      isBundle: false,
-      isZone: false,
-      isPrivate: true,
+      nodeProps: {
+        id: "test-node",
+        content: "test content",
+        createdAt: new Date(1994, 5, 4),
+        isBundle: false,
+        isZone: false,
+        isPrivate: true,
+      },
     });
 
     graphStore.syncQueue.clear();

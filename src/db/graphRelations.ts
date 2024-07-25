@@ -7,6 +7,7 @@ import { MewDbTransaction } from "@/db/types";
 export const createRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
   await tx.insert(graphRelationTable).values({
     id: relation.id,
+    authorId: relation.authorId,
     version: relation.version,
     fromId: relation.fromId,
     toId: relation.toId,
@@ -24,6 +25,7 @@ export const updateRelation = async (
     .update(graphRelationTable)
     .set({
       id: newProps.id,
+      authorId: newProps.authorId,
       version: newProps.version,
       fromId: newProps.fromId,
       toId: newProps.toId,

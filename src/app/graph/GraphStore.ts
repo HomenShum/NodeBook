@@ -1,5 +1,6 @@
 import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
+import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
 import {
@@ -36,18 +37,20 @@ import {
   TxUpdateRelation,
 } from "./GraphTransactionTypes";
 import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
-import { SettingsStore } from "./SettingsStore";
 
+const TEMP_USER_ID = UNLOGGED_USER.id; // TODO: This is simply to satisfy the type checker, we should change this
 export const defaultRelationTypes: Record<string, GraphRelationType> = {
-  child: { version: 1, id: "child", label: "child", reverseLabel: "parent" },
-  relatedTo: { version: 1, id: "relatedTo", label: "relates to", reverseLabel: "relates to" },
-  author: { version: 1, id: "author", label: "author", reverseLabel: "authored" },
-  empty: { version: 1, id: "empty", label: "", reverseLabel: "" },
+  child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent" },
+  relatedTo: { version: 1, id: "relatedTo", authorId: TEMP_USER_ID, label: "relates to", reverseLabel: "relates to" },
+  author: { version: 1, id: "author", authorId: TEMP_USER_ID, label: "author", reverseLabel: "authored" },
+  empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "" },
 };
 
 const USER_ROOT_ID = "user-root-id";
 const OUTLINE_ROOT_ID = "outline-root-id";
 const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
+const OUTLINE_USER_ROOT_REL_ID = "outline-to-user-root-relation-id";
+const THOUGHTSTREAM_USER_ROOT_REL_ID = "thoughtstream-to-user-root-relation-id";
 
 /**
  * Forward slash delimited relation ids.
@@ -69,9 +72,11 @@ export type Path = string;
  * - asynchronous and transactional (i.e. they return a new state of the graph)
  */
 export class GraphStore {
-  private settingsStore: SettingsStore;
+  private isSyncing = false;
 
   syncQueue: SyncQueue = new SyncQueue(); // Only not private for ease of window.mew debugging right now
+
+  user: MewUser;
 
   // TODO: make all properties private
   nodesById: Map<string, GraphNode> = new Map();
@@ -91,8 +96,8 @@ export class GraphStore {
   outlineRootRelationFromUserRoot: GraphRelation;
   thoughtstreamRootRelationFromUserRoot: GraphRelation;
 
-  constructor(settingsStore: SettingsStore) {
-    this.settingsStore = settingsStore;
+  constructor() {
+    this.user = UNLOGGED_USER;
     const defaults = this.ensureDefaultObjects();
     this.userRoot = defaults.userRoot;
     this.outlineRoot = defaults.outlineRoot;
@@ -105,6 +110,7 @@ export class GraphStore {
   makeObservable() {
     if (!isObservable(this)) {
       makeObservable(this, {
+        user: observable,
         nodesById: observable.shallow,
         relationsById: observable.shallow,
         relationTypesById: observable,
@@ -128,24 +134,40 @@ export class GraphStore {
         addChildNode: action,
         addToBundle: action,
         removeFromBundle: action,
-        addToThoughtstream: action,
         load: action,
         clear: action,
-        reset: action,
-        resetAndLoad: action,
+        initialize: action,
+        initializeAndLoad: action,
       });
     }
   }
 
-  private isSyncing = false;
+  /**
+   * Reset the graph to its initial state and sets the user.
+   */
+  initialize(user: MewUser) {
+    this.clear();
+    this.user = user;
+    this.ensureDefaultObjects();
+  }
 
-  startSync() {
+  /**
+   * {@link initialize|Initialize} the store and {@link load} the serialized data into it.
+   */
+  initializeAndLoad(user: MewUser, data: SerializedGraphStore) {
+    this.clear();
+    this.user = user;
+    this.load(data);
+    this.ensureDefaultObjects();
+  }
+
+  startSync(authedFetch: typeof fetch) {
     return setTimeout(async () => {
       if (this.isSyncing) return;
       this.isSyncing = true;
-      await this.syncQueue.process();
+      await this.syncQueue.process(authedFetch);
       this.isSyncing = false;
-      this.startSync();
+      this.startSync(authedFetch);
     }, 500);
   }
 
@@ -161,7 +183,7 @@ export class GraphStore {
     for (const update of updates) {
       switch (update.operation) {
         case "addNode":
-          this._addNode(update.node);
+          this._addNode({ nodeProps: update.node });
           break;
         case "updateNode":
           this._updateNode({ nodeId: update.oldProps.id, nodeProps: update.newProps });
@@ -251,6 +273,8 @@ export class GraphStore {
     const results = [];
     for (const tx of txs) {
       switch (tx.type) {
+        // TODO: Phil: I think this is a mistake here, we should be using the sync _ methods without await
+        // TODO: Otherwise, the combined transaction will not be atomic
         case "addNode":
           results.push(await this.addNode(tx.transaction));
           break;
@@ -290,7 +314,7 @@ export class GraphStore {
     return node;
   }
   private _addNode(tx: TxAddNode) {
-    return this.createNode(tx);
+    return this.createNode(tx.nodeProps || {});
   }
 
   /**
@@ -419,6 +443,7 @@ export class GraphStore {
       node = new GraphNode(this, {
         version: props.version ?? 1,
         id: props.id ?? uuid(),
+        authorId: this.user.id,
         content: props.content,
         isBundle: props.isBundle ?? false,
         isZone: props.isZone ?? false,
@@ -498,6 +523,7 @@ export class GraphStore {
         this.getRelationList(parent).move([newRelation], after);
         updates.push({
           operation: "updateRelationList",
+          authorId: this.user.id,
           nodeId: parent.id,
           pinned: false,
           listBefore: relListBefore.serialize(),
@@ -567,7 +593,10 @@ export class GraphStore {
     const updates: GraphUpdate[] = [];
 
     try {
-      relation = new GraphRelation(this, relationProps);
+      relation = new GraphRelation(this, {
+        ...relationProps,
+        authorId: relationProps.authorId || this.user.id,
+      });
       if (this.relationsById.has(relation.id)) {
         const relationId = relation.id;
         relation = null; // So that it's not deleted in the catch block
@@ -589,6 +618,7 @@ export class GraphStore {
       const fromListAfter = this.getRelationList(relation.from).serialize();
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: relation.from.id,
         pinned: false,
         listBefore: fromListBefore,
@@ -600,6 +630,7 @@ export class GraphStore {
       const toListAfter = this.getRelationList(relation.to).serialize();
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: relation.to.id,
         pinned: false,
         listBefore: toListBefore,
@@ -624,8 +655,8 @@ export class GraphStore {
    * @see file://./design-notes.md#load-methods
    */
   private loadSerializedRelation(props: SerializedRelation): GraphRelation {
-    const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(props.fromId);
-    const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(props.toId);
+    const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(props.fromId, this.user.id);
+    const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(props.toId, this.user.id);
     const existing = this.getRelation(props.id);
     const relationType = this.relationTypesById[props.relationTypeId] ?? defaultRelationTypes.child;
     if (existing) {
@@ -889,6 +920,7 @@ export class GraphStore {
     if (newFrom) {
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: oldFrom!.id,
         pinned: false,
         listBefore: oldFromListBefore!,
@@ -896,6 +928,7 @@ export class GraphStore {
       });
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: newFrom!.id,
         pinned: false,
         listBefore: newFromListBefore!,
@@ -906,6 +939,7 @@ export class GraphStore {
     if (newTo && !isReversal) {
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: oldTo!.id,
         pinned: false,
         listBefore: oldToListBefore!,
@@ -913,6 +947,7 @@ export class GraphStore {
       });
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: newTo!.id,
         pinned: false,
         listBefore: newToListBefore!,
@@ -949,6 +984,7 @@ export class GraphStore {
       });
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: oldFrom.id,
         pinned: false,
         listBefore: oldFromListBefore,
@@ -956,6 +992,7 @@ export class GraphStore {
       });
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: newFrom.id,
         pinned: false,
         listBefore: newFromListBefore,
@@ -992,6 +1029,7 @@ export class GraphStore {
       });
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: oldTo.id,
         pinned: false,
         listBefore: oldToListBefore,
@@ -999,6 +1037,7 @@ export class GraphStore {
       });
       updates.push({
         operation: "updateRelationList",
+        authorId: this.user.id,
         nodeId: newTo.id,
         pinned: false,
         listBefore: newToListBefore,
@@ -1091,7 +1130,18 @@ export class GraphStore {
     const listBefore = list.serialize();
     list.add(relations, after);
     const listAfter = list.serialize();
-    return { updates: [{ operation: "updateRelationList", nodeId: objectId, pinned: true, listBefore, listAfter }] };
+    return {
+      updates: [
+        {
+          operation: "updateRelationList",
+          authorId: this.user.id,
+          nodeId: objectId,
+          pinned: true,
+          listBefore,
+          listAfter,
+        },
+      ],
+    };
   }
 
   unpinRelations(objectId: string, relationIds: string[]) {
@@ -1106,7 +1156,18 @@ export class GraphStore {
       list.delete(id);
     });
     const listAfter = list.serialize();
-    return { updates: [{ operation: "updateRelationList", nodeId: objectId, pinned: true, listBefore, listAfter }] };
+    return {
+      updates: [
+        {
+          operation: "updateRelationList",
+          authorId: this.user.id,
+          nodeId: objectId,
+          pinned: true,
+          listBefore,
+          listAfter,
+        },
+      ],
+    };
   }
 
   updateRelationList(objectId: string, pinned: boolean, list: SerializedPositionList<GraphRelation>) {
@@ -1145,6 +1206,7 @@ export class GraphStore {
     Object.keys(this.relationTypesById).forEach((key) => {
       delete this.relationTypesById[key];
     });
+    // TODO: Consider pausing sync when the user is being changed
     this.syncQueue.clear();
   }
 
@@ -1182,8 +1244,9 @@ export class GraphStore {
       this.thoughtstreamRoot = node;
       updates.push(...tsRootUpdates);
     }
-    if (!this.outlineRootRelationFromUserRoot) {
+    if (!this.relationsById.get(OUTLINE_USER_ROOT_REL_ID)) {
       const { relation, updates: userOutlineUpdates } = this.createRelation({
+        id: OUTLINE_USER_ROOT_REL_ID,
         from: this.userRoot,
         to: this.outlineRoot,
         relationType: this.relationTypesById.child,
@@ -1191,8 +1254,9 @@ export class GraphStore {
       this.outlineRootRelationFromUserRoot = relation;
       updates.push(...userOutlineUpdates);
     }
-    if (!this.thoughtstreamRootRelationFromUserRoot) {
+    if (!this.relationsById.get(THOUGHTSTREAM_USER_ROOT_REL_ID)) {
       const { relation, updates: userThoughtstreamUpdates } = this.createRelation({
+        id: THOUGHTSTREAM_USER_ROOT_REL_ID,
         from: this.userRoot,
         to: this.thoughtstreamRoot,
         relationType: this.relationTypesById.child,
@@ -1210,15 +1274,6 @@ export class GraphStore {
       thoughtstreamRootRelationFromUserRoot: this.thoughtstreamRootRelationFromUserRoot,
     };
   }
-
-  reset() {
-    this.clear();
-    this.ensureDefaultObjects();
-  }
-
-  // --- ### ---
-  // MOST THINGS ABOVE THIS LINE HAVE BEEN REFACTORED OR TRIAGED
-  // --- ### ---
 
   addToBundle(relation: GraphRelation, bundle: GraphNode) {
     if (!bundle.isBundle) {
@@ -1270,21 +1325,6 @@ export class GraphStore {
 
   get relationTypes(): GraphRelationType[] {
     return Object.values(this.relationTypesById);
-  }
-
-  /**
-   * Add a node to the thoughtstream, with a new bundle containing it.
-   */
-  addToThoughtstream(obj: GraphObject) {
-    // add to thoughtstream
-    const { relation: relationToThoughtstream } = this.createRelation({
-      from: this.thoughtstreamRoot,
-      to: obj,
-    });
-    // within a new bundle
-    const { newNode: bundle } = this.createChildNode({ parent: this.thoughtstreamRoot, nodeProps: { isBundle: true } });
-    const relationToBundle = this.addToBundle(relationToThoughtstream, bundle);
-    return { bundle, relationToThoughtstream, relationToBundle };
   }
 
   getNode(id: string): GraphNode | undefined {
@@ -1361,7 +1401,7 @@ export class GraphStore {
     objectId: string,
     positionsByRelationId: SerializedPositionList<GraphRelation>,
   ) {
-    const object = this.getObject(objectId) ?? new PlaceholderGraphObject(objectId); // TODO: what if it's a relation?
+    const object = this.getObject(objectId) ?? new PlaceholderGraphObject(objectId, this.user.id); // TODO: what if it's a relation?
     const relationsWithPositions: ItemWithPosition<GraphRelation>[] = [];
     for (const [relationId, position] of Object.entries(positionsByRelationId)) {
       const relation = this.getRelation(relationId);
@@ -1387,6 +1427,7 @@ export class GraphStore {
     const newRelationType = {
       version: 1,
       id,
+      authorId: this.user.id,
       label: props.label,
       reverseLabel: props.reverseLabel ?? `is ${props.label} of`,
     };
@@ -1472,15 +1513,6 @@ export class GraphStore {
   }
 
   /**
-   * {@link reset|Reset} the store and {@link load} the serialized data into it.
-   */
-  resetAndLoad(data: SerializedGraphStore) {
-    this.clear();
-    this.load(data);
-    this.ensureDefaultObjects();
-  }
-
-  /**
    * Load the serialized data into the store. Existing data isn't cleared, but values
    * are overwritten if they already exist.
    */
@@ -1555,6 +1587,7 @@ export class GraphStore {
 
     // Need a relation between the subtree root and outline root so it shows up after import
     const subtreeRootRelation = new GraphRelation(this, {
+      authorId: this.user.id,
       from: this.outlineRoot,
       to: root,
       relationType: this.relationTypesById.child,

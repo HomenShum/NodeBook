@@ -16,6 +16,7 @@ export type Chip = {
 export type GraphNodeProps = {
   version?: number;
   id?: string;
+  authorId?: string;
   content?: Chip[] | string;
   createdAt?: Date;
   isBundle?: boolean;
@@ -32,15 +33,17 @@ export class GraphNode extends GraphObject implements Serializable {
   objectType = "node" as const;
   version: number;
   id: string;
+  authorId: string;
   content: Chip[] = [];
   createdAt: Date;
   isBundle: boolean;
   isZone: boolean;
-  public isPrivate: boolean = true;
+  isPrivate: boolean = true;
 
   constructor(
     store: GraphStore,
     {
+      authorId,
       version = 1,
       id = uuid(),
       content = [],
@@ -48,11 +51,13 @@ export class GraphNode extends GraphObject implements Serializable {
       isBundle = false,
       isZone = false,
       isPrivate = true,
-    }: GraphNodeProps,
+    }: GraphNodeProps & { authorId: string },
   ) {
     super(store);
+
     this.version = version;
     this.id = id;
+    this.authorId = authorId;
     this.content =
       Array.isArray(content) && content.length > 0
         ? content
@@ -150,6 +155,7 @@ export class GraphNode extends GraphObject implements Serializable {
     return {
       version: this.version,
       id: this.id,
+      authorId: this.authorId,
       createdAt: this.createdAt,
       content: toJS(this.content),
       isBundle: this.isBundle,

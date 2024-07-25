@@ -8,37 +8,74 @@ export const dataTable = pgTable("data", {
 });
 
 export const PersistedDataSchema = createSelectSchema(dataTable);
-export type PersitedData = z.infer<typeof PersistedDataSchema>;
+export type PersistedData = z.infer<typeof PersistedDataSchema>;
 
-export const graphNodeTable = pgTable("graph_node", {
+export const userTable = pgTable("mew_user", {
   id: text("id").primaryKey(),
-  version: integer("version").notNull().default(1),
+  email: text("email"),
+  name: text("name"),
+  picture: text("picture"),
   createdAt: timestamp("created_at"),
-  content: text("content"),
-  isBundle: boolean("is_bundle"),
-  isZone: boolean("is_zone"),
-  isPrivate: boolean("is_private"),
 });
+export const UserSchema = createSelectSchema(userTable, {
+  createdAt: z.coerce.date(),
+});
+export type PersistedUser = z.infer<typeof UserSchema>;
+
+export const graphNodeTable = pgTable(
+  "graph_node",
+  {
+    pk: uuid("pk").primaryKey().defaultRandom(),
+    id: text("id").notNull(),
+    version: integer("version").notNull().default(1),
+    authorId: text("author_id").notNull(),
+    createdAt: timestamp("created_at"),
+    content: text("content"),
+    isBundle: boolean("is_bundle"),
+    isZone: boolean("is_zone"),
+    isPrivate: boolean("is_private").default(true),
+  },
+  (t) => ({
+    unique: unique().on(t.id, t.authorId),
+  }),
+);
 export const GraphNodeSchema = createSelectSchema(graphNodeTable);
 export type PersistedGraphNode = z.infer<typeof GraphNodeSchema>;
 
-export const graphRelationTable = pgTable("graph_relation", {
-  id: text("id").primaryKey(),
-  version: integer("version").notNull().default(1),
-  fromId: text("from_id"),
-  toId: text("to_id"),
-  relationTypeId: text("relation_type_id"),
-  isPrivate: boolean("is_private"),
-});
+export const graphRelationTable = pgTable(
+  "graph_relation",
+  {
+    pk: uuid("pk").primaryKey().defaultRandom(),
+    id: text("id").notNull(),
+    version: integer("version").notNull().default(1),
+    authorId: text("author_id").notNull(),
+    createdAt: timestamp("created_at"),
+    fromId: text("from_id"),
+    toId: text("to_id"),
+    relationTypeId: text("relation_type_id"),
+    isPrivate: boolean("is_private").default(true),
+  },
+  (t) => ({
+    unique: unique().on(t.id, t.authorId),
+  }),
+);
 export const GraphRelationSchema = createSelectSchema(graphRelationTable);
 export type PersistedGraphRelation = z.infer<typeof GraphRelationSchema>;
 
-export const relationTypeTable = pgTable("relation_type", {
-  id: text("id").primaryKey(),
-  version: integer("version").notNull().default(1),
-  label: text("label"),
-  reverseLabel: text("reverseLabel"),
-});
+export const relationTypeTable = pgTable(
+  "relation_type",
+  {
+    pk: uuid("pk").primaryKey().defaultRandom(),
+    id: text("id").notNull(),
+    authorId: text("author_id").notNull(),
+    version: integer("version").notNull().default(1),
+    label: text("label"),
+    reverseLabel: text("reverseLabel"),
+  },
+  (t) => ({
+    unique: unique().on(t.id, t.authorId),
+  }),
+);
 export const RelationTypeSchema = createSelectSchema(relationTypeTable);
 export type PersistedRelationType = z.infer<typeof RelationTypeSchema>;
 
@@ -46,6 +83,7 @@ export const relationListsTable = pgTable(
   "relation_lists",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    authorId: text("author_id").notNull(),
     nodeId: text("node_id"),
     relationId: text("relation_id"),
     pinned: boolean("pinned"),

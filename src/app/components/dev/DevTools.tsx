@@ -35,7 +35,7 @@ function SelectSearchAndReplaceDropdown() {
 }
 
 export const DevTools = observer(() => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const renderController = useRenderController();
@@ -163,13 +163,15 @@ export const DevTools = observer(() => {
         >
           Reset user settings to default
         </Button>
-        <Button
-          size="default"
-          variant="default"
-          onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
-        >
-          Log out
-        </Button>
+        {!user.isUnlogged && (
+          <Button
+            size="default"
+            variant="default"
+            onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}
+          >
+            Log out
+          </Button>
+        )}
       </div>
     </DataDialog>
   );

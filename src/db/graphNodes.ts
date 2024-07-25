@@ -7,6 +7,7 @@ import { MewDbTransaction } from "@/db/types";
 export const createNode = async (tx: MewDbTransaction, node: SerializedNode) => {
   await tx.insert(graphNodeTable).values({
     id: node.id,
+    authorId: node.authorId,
     version: node.version,
     createdAt: new Date(node.createdAt),
     content: JSON.stringify(node.content),

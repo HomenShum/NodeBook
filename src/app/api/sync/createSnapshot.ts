@@ -1,8 +1,11 @@
+import { eq } from "drizzle-orm";
+
+import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { SerializedGraphStore, SerializedNode } from "@/app/persistence/SerializedData";
 import { getDb } from "@/db";
 import { graphNodeTable, graphRelationTable, relationListsTable, relationTypeTable } from "@/db/schema";
 
-export const createSnapshotFromDb = async (): Promise<SerializedGraphStore> => {
+export const createSnapshotFromDb = async (userId: string): Promise<SerializedGraphStore> => {
   const snapshot: SerializedGraphStore = {
     nodesById: {},
     relationTypesById: {},
@@ -13,11 +16,12 @@ export const createSnapshotFromDb = async (): Promise<SerializedGraphStore> => {
 
   const db = getDb();
 
-  const nodeRows = await db.select().from(graphNodeTable);
+  const nodeRows = await db.select().from(graphNodeTable).where(eq(graphNodeTable.authorId, userId));
   for (const row of nodeRows) {
     const node: SerializedNode = {
       version: row.version,
       id: row.id,
+      authorId: row.authorId ?? UNLOGGED_USER.id,
       createdAt: row.createdAt!,
       content: JSON.parse(row.content ?? ""),
       isBundle: !!row.isBundle,
@@ -27,21 +31,23 @@ export const createSnapshotFromDb = async (): Promise<SerializedGraphStore> => {
     snapshot.nodesById[node.id] = node;
   }
 
-  const relationTypeRows = await db.select().from(relationTypeTable);
+  const relationTypeRows = await db.select().from(relationTypeTable).where(eq(relationTypeTable.authorId, userId));
   for (const row of relationTypeRows) {
     snapshot.relationTypesById[row.id] = {
       id: row.id,
+      authorId: row.authorId,
       version: row.version,
       label: row.label ?? "",
       reverseLabel: row.reverseLabel ?? "",
     };
   }
 
-  const relationRows = await db.select().from(graphRelationTable);
+  const relationRows = await db.select().from(graphRelationTable).where(eq(graphRelationTable.authorId, userId));
   for (const row of relationRows) {
     snapshot.relationsById[row.id] = {
       version: row.version,
       id: row.id,
+      authorId: row.authorId ?? UNLOGGED_USER.id,
       fromId: row.fromId ?? "",
       toId: row.toId ?? "",
       relationTypeId: row.relationTypeId ?? "",
@@ -49,7 +55,7 @@ export const createSnapshotFromDb = async (): Promise<SerializedGraphStore> => {
     };
   }
 
-  const relationListRows = await db.select().from(relationListsTable);
+  const relationListRows = await db.select().from(relationListsTable).where(eq(relationListsTable.authorId, userId));
   for (const row of relationListRows) {
     const { nodeId, relationId } = row;
     if (!nodeId || !relationId) continue;

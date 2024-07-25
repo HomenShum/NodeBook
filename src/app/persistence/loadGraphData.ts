@@ -10,7 +10,7 @@ const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
   const data = JSON.parse(dataString) as SerializedStores;
 
   if (data.graphStore) {
-    graphStore.resetAndLoad(data.graphStore);
+    graphStore.initializeAndLoad(graphStore.user, data.graphStore);
   }
 
   if (data.viewStore) {
@@ -20,7 +20,7 @@ const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
   console.debug(`Successfully loaded data from ${env.persistTo}`);
 };
 
-const loadRemoteData = async (graphStore: GraphStore, viewStore: ViewStore) => {
+const loadRemoteData = async (graphStore: GraphStore, viewStore: ViewStore, authFetch: typeof fetch) => {
   console.debug("Loading data from server");
 
   const json = await fetch("/api/persist").then((res) => res.json());
@@ -39,14 +39,14 @@ const loadRemoteData = async (graphStore: GraphStore, viewStore: ViewStore) => {
     viewStore.deserializeInPlace(data.viewStore);
   }
 
-  const syncData = await fetch("/api/sync").then((res) => res.json());
-  await graphStore.resetAndLoad(syncData.data);
+  const syncData = await authFetch(`/api/sync?userId=${graphStore.user.id}`).then((res) => res.json());
+  await graphStore.initializeAndLoad(graphStore.user, syncData.data);
 };
 
-export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore) {
+export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore, authFetch: typeof fetch) {
   if (env.persistTo === "local") {
     localLocalData(graphStore, viewStore);
   } else if (env.persistTo === "server") {
-    await loadRemoteData(graphStore, viewStore);
+    await loadRemoteData(graphStore, viewStore, authFetch);
   }
 }

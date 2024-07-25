@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { DataLoadProvider } from "@/app/DataLoadContext";
 import { AuthProvider } from "@/app/auth/AuthProvider";
+import { useAuth } from "@/app/auth/useAuth";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
@@ -30,7 +31,7 @@ const App = dynamic(() => import("./App"), {
 // Initialize stores
 const settingsStore = new SettingsStore();
 settingsStore.loadFromLocalStorage();
-const graphStore = new GraphStore(settingsStore);
+const graphStore = new GraphStore();
 const viewStore = new ViewStore(settingsStore, graphStore);
 const renderController = new RenderController();
 
@@ -66,12 +67,30 @@ export default function RootTemplate({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  return (
+    <html className={inter.className}>
+      <AuthProvider>
+        <RootTemplateInternals>{children}</RootTemplateInternals>
+      </AuthProvider>
+    </html>
+  );
+}
+
+function RootTemplateInternals({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const { user, authFetch } = useAuth();
   const [hasLoaded, setHasLoaded] = useState(false);
   const isLoadingRef = useRef(false);
   const persistedData = useRef<string | null>(null);
 
   // TODO : hide persistence behind auth
   useEffect(() => {
+    if (user.isUnlogged) return;
+    graphStore.initialize(user);
+
     if (!env.isPersistenceEnabled) {
       // Initialize with blank entries in thoughtstream and outline
       if (graphStore.outlineRoot.children.length === 0) {
@@ -80,13 +99,14 @@ export default function RootTemplate({
       setHasLoaded(true);
       return;
     }
+
     if (isLoadingRef.current) return;
     async function setupSync() {
       try {
         isLoadingRef.current = true;
-        await loadGraphData(graphStore, viewStore);
+        await loadGraphData(graphStore, viewStore, authFetch);
       } catch (e) {
-        graphStore.reset();
+        graphStore.initialize(user);
         viewStore.clear();
         toast("Failed to load data from server. Starting with an empty graph.");
         throw e;
@@ -113,29 +133,25 @@ export default function RootTemplate({
           }
           graphStore.handleSyncData(parsed.data);
         });
-        graphStore.startSync();
+        graphStore.startSync(authFetch);
       }
     }
     setupSync();
-  }, []);
+  }, [user, authFetch]);
 
   return (
-    <html className={inter.className}>
-      <AuthProvider>
-        <DataLoadProvider value={hasLoaded}>
-          <SettingsStoreProvider value={settingsStore}>
-            <GraphStoreProvider value={graphStore}>
-              <ViewStoreProvider value={viewStore}>
-                <RenderControllerProvider value={renderController}>
-                  <body>
-                    <App>{children}</App>
-                  </body>
-                </RenderControllerProvider>
-              </ViewStoreProvider>
-            </GraphStoreProvider>
-          </SettingsStoreProvider>
-        </DataLoadProvider>
-      </AuthProvider>
-    </html>
+    <DataLoadProvider value={hasLoaded}>
+      <SettingsStoreProvider value={settingsStore}>
+        <GraphStoreProvider value={graphStore}>
+          <ViewStoreProvider value={viewStore}>
+            <RenderControllerProvider value={renderController}>
+              <body>
+                <App>{children}</App>
+              </body>
+            </RenderControllerProvider>
+          </ViewStoreProvider>
+        </GraphStoreProvider>
+      </SettingsStoreProvider>
+    </DataLoadProvider>
   );
 }

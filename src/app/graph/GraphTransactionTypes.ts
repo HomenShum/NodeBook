@@ -16,7 +16,9 @@ export type TxAddChildNode = {
   after?: Positioner<GraphRelation>;
 };
 
-export type TxAddNode = GraphNodeProps;
+export type TxAddNode = {
+  nodeProps?: GraphNodeProps;
+};
 
 export type TxRemoveNode = {
   nodeId: string;

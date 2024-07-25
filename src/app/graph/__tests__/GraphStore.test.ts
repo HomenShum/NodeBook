@@ -1,12 +1,12 @@
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
-import { SettingsStore } from "@/app/graph/SettingsStore";
 
 import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
 
 describe("GraphStore initialization", () => {
   it("should initialize with a user root, outline root, and thoughtstream root", () => {
-    const settingsStore = new SettingsStore();
-    const graphStore = new GraphStore(settingsStore);
+    const graphStore = new GraphStore();
+    graphStore.initialize(MOCK_MEW_USER);
 
     // Check root nodes are all there
     expect(graphStore.userRoot).toBeDefined();
