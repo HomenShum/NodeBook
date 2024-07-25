@@ -18,7 +18,7 @@ import { storesToDataString } from "@/app/persistence/serialization";
 import { RenderController } from "@/app/render/RenderController";
 import { RenderControllerProvider } from "@/app/render/useRenderController";
 import { SerializedSyncDataSchema } from "@/app/sync/SyncTask";
-import { toast, useCurView } from "@/app/util";
+import { toast } from "@/app/util";
 import { ViewStore } from "@/app/view/ViewStore";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import "./global.css";
@@ -69,7 +69,6 @@ export default function RootTemplate({
   const [hasLoaded, setHasLoaded] = useState(false);
   const isLoadingRef = useRef(false);
   const persistedData = useRef<string | null>(null);
-  const curView = useCurView();
 
   // TODO : hide persistence behind auth
   useEffect(() => {
@@ -129,7 +128,7 @@ export default function RootTemplate({
               <ViewStoreProvider value={viewStore}>
                 <RenderControllerProvider value={renderController}>
                   <body>
-                    <App curView={curView}>{children}</App>
+                    <App>{children}</App>
                   </body>
                 </RenderControllerProvider>
               </ViewStoreProvider>

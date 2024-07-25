@@ -9,12 +9,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { getAncestorsAsArray } from "@/app/tree/utils";
-import { relationsToURLPath, useCurView } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
+import { createRouteUrl, ViewType } from "@/app/view/ViewType";
 
 import breadcrumb from "./Breadcrumbs/Breadcrumbs.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
@@ -30,8 +28,6 @@ const truncateText = (text: string, maxLength: number) => {
 };
 
 export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
-  const graphStore = useGraphStore();
-  const curView = useCurView();
   const router = useRouter();
 
   const { root: treeNode } = tree.state;
@@ -41,7 +37,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
 
   return (
     <TreeContext.Provider value={tree}>
-      <div id={ViewType.THOUGHTSTREAM} tabIndex={0} className={stylesStream.StreamContainer}>
+      <div id={ViewType.STREAM} tabIndex={0} className={stylesStream.StreamContainer}>
         <div>
           <div className={breadcrumb.BreadcrumbContainer}>
             {ancestors.slice(0, -1).map(({ object, path }, i) => {
@@ -53,16 +49,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
                     className={breadcrumb.Breadcrumb}
                     key={path}
                     onClick={() => {
-                      if (curView !== ViewType.SPLIT) {
-                        router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
-                      } else {
-                        router.push(
-                          `/split/outline${relationsToURLPath(tree.pathToRoot, graphStore)}/stream${relationsToURLPath(
-                            relations.slice(0, i + 1),
-                            graphStore,
-                          )}`,
-                        );
-                      }
+                      router.push(createRouteUrl(ViewType.STREAM, ...relations.slice(0, i + 1)));
                     }}
                   >
                     {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
@@ -85,16 +72,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
                         <DropdownMenuItem
                           key={path}
                           onSelect={() => {
-                            if (curView !== ViewType.SPLIT) {
-                              router.push(`/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`);
-                            } else {
-                              router.push(
-                                `/split/outline${relationsToURLPath(
-                                  tree.pathToRoot,
-                                  graphStore,
-                                )}/stream${relationsToURLPath(relations.slice(0, index + 2), graphStore)}`,
-                              );
-                            }
+                            router.push(createRouteUrl(ViewType.STREAM, ...relations.slice(0, index + 2)));
                           }}
                         >
                           {truncateText(object.text, 20)}
@@ -110,16 +88,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
                   className={breadcrumb.Breadcrumb}
                   key={path}
                   onClick={() => {
-                    if (curView !== ViewType.SPLIT) {
-                      router.push(`/stream${relationsToURLPath(relations.slice(0, i + 1), graphStore)}`);
-                    } else {
-                      router.push(
-                        `/split/outline${relationsToURLPath(tree.pathToRoot, graphStore)}/stream${relationsToURLPath(
-                          relations.slice(0, i + 1),
-                          graphStore,
-                        )}`,
-                      );
-                    }
+                    router.push(createRouteUrl(ViewType.STREAM, ...relations.slice(0, i + 1)));
                   }}
                 >
                   <ChevronRight size={14} strokeWidth={2} />
@@ -134,9 +103,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
 
           <div className={stylesList.HeadingContainer}>
             <div className={stylesList.TitleContainer}>
-              {(curView === ViewType.SPLIT || ancestors.length > 1) && (
-                <h1 className={stylesList.TitleText}>{treeNode.object.text}</h1>
-              )}
+              {ancestors.length > 1 && <h1 className={stylesList.TitleText}>{treeNode.object.text}</h1>}
             </div>
 
             <Button

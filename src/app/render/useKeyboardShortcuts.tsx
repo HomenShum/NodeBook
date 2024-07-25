@@ -16,20 +16,12 @@ export const useKeyboardShortcuts = () => {
       if (metaOrCtrl && e.key === "k") {
         e.preventDefault();
         switch (curView) {
-          case ViewType.OUTLINE: {
+          case ViewType.GRAPH: {
             await viewStore.mainOutlineView.createChildOfRootAndFocus();
             break;
           }
-          case ViewType.THOUGHTSTREAM: {
+          case ViewType.STREAM: {
             await viewStore.mainStreamView.createChildOfRootAndFocus();
-            break;
-          }
-          case ViewType.SPLIT: {
-            if (viewStore.focusedView() === ViewType.OUTLINE) {
-              await viewStore.mainOutlineView.createChildOfRootAndFocus();
-            } else {
-              await viewStore.mainStreamView.createChildOfRootAndFocus();
-            }
             break;
           }
           default: {

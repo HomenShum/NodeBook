@@ -11,12 +11,9 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { TreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray } from "@/app/tree/utils";
-import { relationsToURLPath, useCurView } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
-import { useViewStore } from "@/app/view/useViewStore";
+import { createRouteUrl, ViewType } from "@/app/view/ViewType";
 
 import styles, { default as s } from "./Breadcrumbs.module.css";
 
@@ -24,25 +21,13 @@ const MAX_VISIBLE_ITEMS = 4;
 
 export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
   const router = useRouter();
-  const curView = useCurView();
-  const graphStore = useGraphStore();
-  const viewStore = useViewStore();
   const ancestors = getAncestorsAsArray(treeNode);
   const relations = ancestors.map((a) => a.relationToChild);
   if (!(treeNode.object instanceof GraphNode)) return null;
 
   const handleNavigation = (index: number) => {
     const targetRelations = relations.slice(0, index);
-    if (curView !== ViewType.SPLIT) {
-      router.push(`/outline${relationsToURLPath(targetRelations, graphStore)}`);
-    } else {
-      router.push(
-        `/split/outline${relationsToURLPath(targetRelations, graphStore)}/stream${relationsToURLPath(
-          viewStore.mainStreamView.pathToRoot,
-          graphStore,
-        )}`,
-      );
-    }
+    router.push(createRouteUrl(ViewType.GRAPH, ...targetRelations));
   };
 
   const BreadcrumbItem = ({ ancestor, index }: { ancestor: any; index: number }) => (

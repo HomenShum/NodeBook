@@ -9,7 +9,6 @@ import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useRenderController } from "@/app/render/useRenderController";
-import { ViewType } from "@/app/view/ViewType";
 import { cn } from "@/lib/utils";
 
 import { DevTools } from "./components/dev/DevTools";
@@ -22,10 +21,8 @@ import "./global.css";
 export default observer(
   ({
     children,
-    curView,
   }: Readonly<{
     children: React.ReactNode;
-    curView: ViewType;
   }>) => {
     const [isResizing, setIsResizing] = useState(false);
     const { isAuthenticated, isLoading } = useAuth();
@@ -42,11 +39,7 @@ export default observer(
       return (
         <div className={cn(styles.App, renderController.isDarkMode && "dark")}>
           <div ref={appContainerRef} className={styles.AppContainer}>
-            <ResizableSidebar
-              isOpen={renderController.leftSidebarOpen}
-              curView={curView}
-              onResizeStateChange={setIsResizing}
-            />
+            <ResizableSidebar isOpen={renderController.leftSidebarOpen} onResizeStateChange={setIsResizing} />
             <div className={styles.Container}>
               <Button
                 className={styles.SidebarToggle}

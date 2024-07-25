@@ -12,7 +12,8 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { ViewType } from "@/app/view/ViewType";
+import { useCurView } from "@/app/util";
+import { createRouteUrl, ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./ResizableSidebar.module.css";
@@ -21,9 +22,7 @@ interface ResizableSidebarProps {
   isOpen: boolean;
   minWidth?: number;
   maxWidth?: number;
-  defaultWidth?: number;
   className?: string;
-  curView: ViewType;
   onResizeStateChange: (isResizing: boolean) => void;
 }
 
@@ -31,11 +30,10 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
   isOpen,
   minWidth = 150,
   maxWidth = 450,
-  defaultWidth = 268,
   className,
-  curView,
   onResizeStateChange,
 }) => {
+  const curView = useCurView();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -118,11 +116,17 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
 
   const ButtonNavigation = () => (
     <>
-      <Link className={`${styles.Button} ${curView === ViewType.OUTLINE && styles.Selected}`} href="/outline">
+      <Link
+        className={`${styles.Button} ${curView === ViewType.GRAPH && styles.Selected}`}
+        href={createRouteUrl(ViewType.GRAPH)}
+      >
         <ListIcon className={styles.ButtonIcon} />
         List
       </Link>
-      <Link className={`${styles.Button} ${curView === ViewType.THOUGHTSTREAM && styles.Selected}`} href="/stream">
+      <Link
+        className={`${styles.Button} ${curView === ViewType.STREAM && styles.Selected}`}
+        href={createRouteUrl(ViewType.STREAM)}
+      >
         <StreamIcon className={styles.ButtonIcon} />
         Stream
       </Link>

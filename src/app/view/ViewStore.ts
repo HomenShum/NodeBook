@@ -33,11 +33,11 @@ export class ViewStore {
   // TODO: This is a bit of a hack. We should probably have a more structured way of handling focus.
   // Like in our editor, you can do .focus(), .getRootElement(), etc. We should have a similar API for
   // our outline/stream views.
-  focusedView(): ViewType.OUTLINE | ViewType.THOUGHTSTREAM | null {
-    if (document.getElementById(ViewType.OUTLINE)?.contains(document.activeElement)) {
-      return ViewType.OUTLINE;
-    } else if (document.getElementById(ViewType.THOUGHTSTREAM)?.contains(document.activeElement)) {
-      return ViewType.THOUGHTSTREAM;
+  focusedView(): ViewType.GRAPH | ViewType.STREAM | null {
+    if (document.getElementById(ViewType.GRAPH)?.contains(document.activeElement)) {
+      return ViewType.GRAPH;
+    } else if (document.getElementById(ViewType.STREAM)?.contains(document.activeElement)) {
+      return ViewType.STREAM;
     } else {
       return null;
     }

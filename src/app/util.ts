@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
-import { ViewType } from "@/app/view/ViewType";
+import { isViewType, ViewType } from "@/app/view/ViewType";
 
 // TODO: what should we actually use for this?
 export const uuid = () => uuidv4().slice(0, 8);
@@ -69,9 +69,24 @@ export const relationsPathToParentChild = (relations: GraphRelation[]): PathLink
   return path;
 };
 
-export const relationsToPathStr = (relations: GraphRelation[]) => {
-  return "/" + relations.map((r) => r.id).join("/");
+export const isPathContinuous = (relations: GraphRelation[]): boolean => {
+  try {
+    relationsPathToParentChild(relations);
+    return true;
+  } catch {
+    return false;
+  }
 };
+
+export function pathStringToRelations(path: string[], graphStore: GraphStore) {
+  let relations = [];
+  for (const id of path) {
+    const graphRel = id === "home" ? graphStore.outlineRootRelationFromUserRoot : graphStore.relationsById.get(id);
+    if (!graphRel) return null;
+    relations.push(graphRel);
+  }
+  return isPathContinuous(relations) ? relations : null;
+}
 
 export function formatDate(date: Date | undefined): string {
   if (!date) {
@@ -96,20 +111,7 @@ export function formatDate(date: Date | undefined): string {
 export function useCurView() {
   const pathname = usePathname();
   const firstElement = pathname.split("/")[1];
-  switch (firstElement) {
-    case "outline":
-      return ViewType.OUTLINE;
-    case "stream":
-      return ViewType.THOUGHTSTREAM;
-    case "split":
-      return ViewType.SPLIT;
-    default:
-      return ViewType.OUTLINE;
-  }
-}
-
-export function relationsToURLPath(relations: GraphRelation[], graphStore: GraphStore) {
-  return `/${relations.map((x) => x.id).join("/")}`;
+  return isViewType(firstElement) ? firstElement : ViewType.GRAPH;
 }
 
 export function pathToNodeSet(path: GraphRelation[]) {

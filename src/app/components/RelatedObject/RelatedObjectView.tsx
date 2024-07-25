@@ -11,9 +11,7 @@ import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, isUnlabelledChild } from "@/app/tree/utils";
-import { relationsToURLPath, useCurView } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
-import { useViewStore } from "@/app/view/useViewStore";
+import { createRouteUrl, ViewType } from "@/app/view/ViewType";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
@@ -142,10 +140,7 @@ const Content = observer(() => {
 });
 
 const Bullet = observer(() => {
-  const tree = useTree();
-  const viewStore = useViewStore();
   const graphStore = useGraphStore();
-  const curView = useCurView();
   const router = useRouter();
   const settingsStore = useSettingsStore();
   const { treeNode } = useTreeNode();
@@ -153,27 +148,10 @@ const Bullet = observer(() => {
   const handleBulletClick = useCallback(
     (e: React.MouseEvent) => {
       const path = getAncestorsAsArray(treeNode).map((p) => p.relationToChild);
-      if (e.shiftKey) {
-        logger.debug("Shift-clicked bullet", treeNode.path);
-        viewStore.openSidebarOutlineView(path);
-      } else {
-        logger.debug("Clicked bullet", treeNode.path);
-        switch (curView) {
-          case ViewType.OUTLINE:
-            router.push(`/outline${relationsToURLPath(path, graphStore)}`);
-            break;
-          case ViewType.THOUGHTSTREAM:
-            router.push(`/stream${relationsToURLPath(path, graphStore)}`);
-            break;
-          case ViewType.SPLIT:
-            tree.setRoot(path);
-            break;
-          default:
-            curView satisfies never;
-        }
-      }
+      logger.debug("Clicked bullet", treeNode.path);
+      router.push(createRouteUrl(ViewType.GRAPH, ...path));
     },
-    [tree, treeNode, curView, router, graphStore, viewStore],
+    [treeNode, router],
   );
 
   return (
@@ -241,8 +219,8 @@ const Controls = observer(() => {
   );
 });
 
-const canvas = document.createElement("canvas");
 function getTextWidth(text: string, font: string) {
+  const canvas = document.createElement("canvas");
   const context = canvas.getContext("2d")!;
   context.font = font;
   const metrics = context.measureText(text);

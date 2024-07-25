@@ -4,8 +4,6 @@ import { useState } from "react";
 
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useCurView } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
 import { cn } from "@/lib/utils";
 
 import styles from "./SidebarTree.module.css";
@@ -32,11 +30,9 @@ const TreeElement = observer(({ object }: { object: GraphObject }) => {
 
 export default observer(() => {
   const graphStore = useGraphStore();
-  const curView = useCurView();
-  const root = curView === ViewType.THOUGHTSTREAM ? graphStore.thoughtstreamRoot! : graphStore.outlineRoot!;
   return (
     <div className={styles.SidebarTreeContainer}>
-      <TreeElement object={root}></TreeElement>
+      <TreeElement object={graphStore.outlineRoot}></TreeElement>
     </div>
   );
 });
