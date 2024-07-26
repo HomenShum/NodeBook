@@ -7,6 +7,7 @@ import { Options, useHotkeys } from "react-hotkeys-hook";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { NodeHeaderEditor } from "@/app/editor/nodeEditors";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { Tree } from "@/app/tree/Tree";
@@ -39,7 +40,9 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
           <div className={s.HeadingContainer}>
             <div className={s.TitleContainer}>
               {treeNode.object.id === graphStore.outlineRoot.id && <HomeIcon size={20} />}
-              <h1 className={s.TitleText}>{treeNode.object.text}</h1>
+              <h1 className={s.TitleText}>
+                <NodeHeaderEditor treeNode={treeNode} />
+              </h1>
             </div>
 
             <CreateNewButton tree={tree} />

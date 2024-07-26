@@ -100,7 +100,7 @@ const Content = observer(() => {
           {viewType === "replace" ? (
             <ReplaceRelatedNodeView treeNode={treeNode} />
           ) : treeNode.object.isLocal ? (
-            <RelatedObjectEditor indentationWidth={relationTypeTextWidth} object={treeNode.object} />
+            <RelatedObjectEditor treeNode={treeNode} />
           ) : (
             <TreeNodeReference treeNode={treeNode} />
           )}

@@ -3,12 +3,12 @@ import { $getSelection, BaseSelection, COMMAND_PRIORITY_NORMAL, KEY_ENTER_COMMAN
 import { action } from "mobx";
 import { useEffect } from "react";
 
-import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { nodeToChip } from "@/app/editor/utils";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/tree/TreeContext";
+import { DescendantTreeNode } from "@/app/tree/nodes";
 
 function getChipsAroundSelection(selection: BaseSelection) {
   // Get selection start and end points
@@ -70,11 +70,10 @@ function getChipsAroundSelection(selection: BaseSelection) {
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.
  */
-export const EnterKeyPlugin = () => {
+export const EnterKeyPlugin = ({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const graphStore = useGraphStore();
   const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
-  const { treeNode, viewType, setViewType } = useTreeNode();
   const tree = useTree();
   const object = treeNode.object;
   const parent = treeNode.parent.object;
@@ -112,9 +111,7 @@ export const EnterKeyPlugin = () => {
     pathToNodeStr,
     pathToParentNodes,
     relation,
-    setViewType,
     renderController,
-    viewType,
     treeNode,
   ]);
 
