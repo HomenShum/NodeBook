@@ -33,7 +33,16 @@ export default observer(
     const renderController = useRenderController();
     useKeyboardShortcuts();
 
-    if (auth && !auth.isAuthenticated) {
+    if (auth && auth.error) {
+      return (
+        <div>
+          <div>Error: {auth.error.message}</div>
+          <button onClick={() => auth.logout({ logoutParams: { returnTo: window.location.origin } })}>
+            Force logout
+          </button>
+        </div>
+      );
+    } else if (auth && !auth.isAuthenticated) {
       return <LoginScreen />;
     } else if (isLoading) {
       return <div>Loading...</div>;
