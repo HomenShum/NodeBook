@@ -27,24 +27,19 @@ const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
 const loadRemoteData = async (graphStore: GraphStore, viewStore: ViewStore, authFetch: typeof fetch) => {
   console.debug("Loading data from server");
 
+  const syncData = await authFetch(`/api/sync?userId=${graphStore.user.id}`).then((res) => res.json());
+  await graphStore.initializeAndLoad(graphStore.user, syncData.data);
+
+  // Legacy loading of viewStore from /api/persist
+  // TODO: We probably should just delete this?
   const json = await fetch("/api/persist").then((res) => res.json());
   const dataString = json.data;
   if (!dataString) return;
 
   const data = JSON.parse(dataString) as SerializedStores;
-
-  // Uncomment this to load graph data from legacy /persist endpoint
-  // TODO: Remove this after finished with sync system clean up
-  // if (data.graphStore) {
-  //   graphStore.deserializeInPlace(data.graphStore);
-  // }
-
   if (data.viewStore) {
     viewStore.deserializeInPlace(data.viewStore);
   }
-
-  const syncData = await authFetch(`/api/sync?userId=${graphStore.user.id}`).then((res) => res.json());
-  await graphStore.initializeAndLoad(graphStore.user, syncData.data);
 };
 
 export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore, authFetch: typeof fetch) {
