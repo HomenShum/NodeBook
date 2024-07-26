@@ -104,6 +104,7 @@ export function MentionPlugin({
               // Otherwise, we need to search the graph
               const matchingNodes = graphStore
                 .search(queryString)
+                .filter((result) => result.object.id !== treeNode.object.id)
                 .sort((a, b) => b.score - a.score)
                 .map(({ object }) => object);
               return [
