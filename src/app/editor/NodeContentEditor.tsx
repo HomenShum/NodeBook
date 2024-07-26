@@ -1,13 +1,12 @@
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
@@ -23,7 +22,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
-import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
+import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
 
@@ -86,31 +85,4 @@ export const NodeContentEditor = observer(({ treeNode }: { treeNode: DescendantT
       </LexicalComposer>
     </div>
   );
-});
-
-export const NodeHeaderEditor = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
-  return (
-    <div>
-      <LexicalComposer initialConfig={createConfig({ namespace: "header-editor", treeNode })}>
-        <PlainTextPlugin
-          ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
-          placeholder={null}
-        />
-        <HistoryPlugin />
-        <ClearEditorPlugin />
-        {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
-        <MentionPlugin treeNode={treeNode} />
-        <SetEditablePlugin treeNode={treeNode} />
-      </LexicalComposer>
-    </div>
-  );
-});
-
-export const SetEditablePlugin = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
-  const [editor] = useLexicalComposerContext();
-  useEffect(() => {
-    editor.setEditable(!treeNode.object.isRoot);
-  }, [editor, treeNode.object.isRoot]);
-  return null;
 });
