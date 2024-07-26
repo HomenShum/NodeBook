@@ -99,6 +99,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
         r.id !== object.id &&
         r.id !== relation.id &&
         r.to.id !== object.id && // ignore relations to this object
+        r.from.id !== object.id && // ignore relations from this object
         !(r.from instanceof GraphNode && r.from.isBundle) && // ignore relations from bundles
         keywords.every((keyword) => r.text.toLowerCase().includes(keyword.toLowerCase())),
     );
