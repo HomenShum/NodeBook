@@ -39,6 +39,7 @@
 .TitleContainer {
   display: flex;
   align-items: center;
+  width: 100%;
   gap: 8px;
   padding-left: 3px;
 }
@@ -47,6 +48,8 @@
   font-size: var(--font-size-h2);
   font-weight: 400;
   user-select: none;
+  width: 100%;
+  letter-spacing: -0.02em;
 }
 
 .Nodes {
