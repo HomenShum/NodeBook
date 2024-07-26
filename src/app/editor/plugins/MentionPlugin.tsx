@@ -73,7 +73,6 @@ export function MentionPlugin({
           await graphStore.addRelation({
             fromId: node.id,
             toId: graphNodeId,
-            relationType: graphStore.relationTypesById.relatedTo,
           });
         }
       });
