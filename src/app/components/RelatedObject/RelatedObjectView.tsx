@@ -24,18 +24,20 @@ import { RelationCombobox } from "./RelationCombobox";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
 import Toggle from "./Toggle";
 
-export const RelatedObjectView = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
-  return (
-    <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
-      <Main treeNode={treeNode}>
-        <Controls />
-        <Bullet />
-        <Content />
-      </Main>
-      {treeNode.isExpanded && <RelatedObjectChildren treeNode={treeNode} />}
-    </div>
-  );
-});
+export const RelatedObjectView = observer(
+  ({ treeNode, showBullet = true }: { treeNode: DescendantTreeNode; showBullet?: boolean }) => {
+    return (
+      <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
+        <Main treeNode={treeNode}>
+          <Controls />
+          {showBullet && <Bullet />}
+          <Content />
+        </Main>
+        {treeNode.isExpanded && <RelatedObjectChildren treeNode={treeNode} />}
+      </div>
+    );
+  },
+);
 
 const Main = observer(({ treeNode, children }: { treeNode: DescendantTreeNode; children: React.ReactNode }) => {
   const settingsStore = useSettingsStore();

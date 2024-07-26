@@ -2,12 +2,10 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
-import { GraphNode } from "@/app/graph/GraphNode";
-import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
-import { AllGroup, ChildrenGroups, DescendantTreeNode, PinnedGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
-import { formatDate } from "@/app/util";
+import { AllGroup, ChildrenGroups, PinnedGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
 import { RelatedObjectView } from "./RelatedObjectView";
@@ -33,6 +31,8 @@ export const RelatedObjectChildren = observer(({ treeNode }: { treeNode: TreeNod
 });
 
 const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: PinnedGroup }) => {
+  const viewStore = useViewStore();
+  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === "note";
   const tree = useTree();
   const graphStore = useGraphStore();
   if (group.nodes.length === 0) {
@@ -63,9 +63,10 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
         was either empty or not depending on expansion so component can be dumber  */}
         {group.isExpanded && (
           <>
-            {group.nodes.map((treeNode) => (
+            {group.nodes.map((treeNode, i) => (
               <div key={treeNode.path}>
-                <RelatedObjectView treeNode={treeNode} />
+                {noteView && <Separator i={i} />}
+                <RelatedObjectView treeNode={treeNode} showBullet={!noteView} />
               </div>
             ))}
             <div
@@ -83,28 +84,15 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
 });
 
 const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: AllGroup }) => {
-  const bundles =
-    parentNode instanceof DescendantTreeNode && parentNode.parent instanceof DescendantTreeNode // TODO: ugly
-      ? parentNode.parent.object.children.filter((object) => object instanceof GraphNode && object.isBundle)
-      : [];
-  const findRelationsFirstBundle = (r: GraphRelation) =>
-    bundles.find((b) => b.children.map((o) => o.id).includes(r.id));
-  let currentDate: string | undefined;
-  let lastBundleId: string | undefined;
-  let lastDisplayedDate: string | undefined;
+  const viewStore = useViewStore();
+  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === "note";
   return (
     <div>
       {group.nodes.map((childTreeNode, i) => {
-        const childRelation = childTreeNode.relationWithParent;
-        const firstBundle = findRelationsFirstBundle(childRelation);
-        const newBundle = firstBundle?.id !== lastBundleId;
-        lastBundleId = firstBundle?.id;
-        currentDate = newBundle && currentDate !== lastDisplayedDate ? formatDate(firstBundle?.createdAt) : undefined;
-        lastDisplayedDate = lastDisplayedDate || currentDate;
         return (
           <div key={childTreeNode.path}>
-            {newBundle && <BundleSeparator i={i} currentDate={currentDate} />}
-            <RelatedObjectView treeNode={childTreeNode} />
+            {noteView && <Separator i={i} />}
+            <RelatedObjectView treeNode={childTreeNode} showBullet={!noteView} />
           </div>
         );
       })}
@@ -112,21 +100,6 @@ const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; grou
   );
 });
 
-function BundleSeparator({ i, currentDate }: { i: number; currentDate?: string }) {
-  return (
-    <>
-      <div
-        className={`${styles.BundleSeparator} ${
-          i === 0
-            ? `${styles.FirstBundle} ${currentDate ? styles.FirstBundle_WithDate : styles.FirstBundle_NoDate}`
-            : styles.DefaultBundle
-        }`}
-      />
-      {currentDate && (
-        <div className={styles.DateLabel}>
-          <span className={styles.DateLabelContent}>{currentDate}</span>
-        </div>
-      )}
-    </>
-  );
+function Separator({ i }: { i: number }) {
+  return <div className={cn(styles.BundleSeparator, i === 0 ? styles.FirstBundle : styles.DefaultBundle)} />;
 }

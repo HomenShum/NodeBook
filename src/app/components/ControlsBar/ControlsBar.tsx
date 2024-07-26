@@ -2,7 +2,7 @@ import { Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react"
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
-import { PinIconMew, ViewsIconMew } from "@/app/components/CustomIcons";
+import { ListIcon, PinIconMew, StreamIcon, ViewsIconMew } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrim
 import { Switch } from "@/app/components/UIPrimitives/Switch";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { Tree } from "@/app/tree/Tree";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import s from "./ControlsBar.module.css";
 
@@ -26,6 +27,7 @@ const filterIcons: { [key: string]: React.ReactNode } = {
 };
 
 export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
+  const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
   const [isPinnedHovered, setIsPinnedHovered] = useState(false);
   const showPinnedSection = !tree.filter.hidePinnedSection;
@@ -110,10 +112,39 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
         </DropdownMenu>
       </div>
       <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-        <Button disabled size="sm">
-          <ViewsIconMew size={16} fill="none" strokeWidth={1.5} />
-          <span>View</span>
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button size="sm">
+              <ViewsIconMew size={16} fill="none" strokeWidth={1.5} />
+              <span>View</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="end">
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
+            >
+              <Button
+                size="sm"
+                variant={viewStore.viewType === "outline" ? "active" : "default"}
+                onClick={() => viewStore.setViewType("outline")}
+              >
+                <ListIcon />
+                Outline
+              </Button>
+              <Button
+                size="sm"
+                variant={viewStore.viewType === "note" ? "active" : "default"}
+                onClick={() => viewStore.setViewType("note")}
+              >
+                <StreamIcon />
+                Note
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
         <Popover>
           <PopoverTrigger asChild>
             <Button size="sm">

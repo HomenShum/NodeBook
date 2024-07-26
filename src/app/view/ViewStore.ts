@@ -11,6 +11,7 @@ export class ViewStore {
   private graphStore: GraphStore;
   public searchQuery: string = "";
 
+  public viewType: "outline" | "note" = "outline";
   public mainStreamView: Tree;
   public mainOutlineView: Tree;
   public sidebarTrees: Tree[] = [];
@@ -40,6 +41,10 @@ export class ViewStore {
     } else {
       return null;
     }
+  }
+
+  setViewType(viewType: "outline" | "note") {
+    this.viewType = viewType;
   }
 
   setSearchQuery(query: string) {

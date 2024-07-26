@@ -1,4 +1,4 @@
-import { ArrowLeft, MoonIcon, Play, Search, SettingsIcon, SunIcon } from "lucide-react";
+import { ArrowLeft, MoonIcon, Play, SettingsIcon, SunIcon } from "lucide-react";
 import { action } from "mobx";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -144,7 +144,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
             <Button className={styles.BackNavigation} variant="ghost" size="icon" onClick={() => router.back()}>
               <ArrowLeft size={16} />
             </Button>
-            <Button
+            {/* <Button
               variant="default"
               size="default"
               disabled
@@ -152,12 +152,12 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
             >
               <Search size={16}></Search>
               Global Search
-            </Button>
-            <Button variant="ghost" size="sm">
+            </Button> */}
+            {/* <Button variant="ghost" size="sm">
               Workspace
               <Play size={7} fill="currentColor" />
             </Button>
-            <ButtonNavigation />
+            <ButtonNavigation /> */}
             <Button variant="ghost" size="sm" style={{ marginTop: "24px" }}>
               My Graph
               <Play size={7} fill="currentColor" />
