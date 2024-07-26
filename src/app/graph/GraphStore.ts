@@ -14,6 +14,7 @@ import { SyncQueue } from "@/app/sync/SyncQueue";
 import { SyncData } from "@/app/sync/SyncTask";
 import { uuid } from "@/app/util";
 import logger from "@/lib/logger";
+import { scoreMatch } from "@/lib/utils";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
@@ -1660,7 +1661,7 @@ export class GraphStore {
         const text = node.text.toLocaleLowerCase();
         return {
           object: node,
-          score: (text.length - (text.indexOf(procQuery) + 1)) / text.length,
+          score: scoreMatch(text, procQuery),
         };
       });
   }

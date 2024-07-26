@@ -15,6 +15,7 @@ import { $createMentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { TreeNode } from "@/app/tree/nodes";
 import { uuid } from "@/app/util";
+import { scoreMatch } from "@/lib/utils";
 
 import styles from "./MentionPlugin.module.css";
 
@@ -97,14 +98,21 @@ export function MentionPlugin({
             if (prevOptions.length > 0 && prevText.current && text.startsWith(prevText.current)) {
               // If we've just added to the query, we can filter the existing options
               return [
-                ...prevOptions.slice(0, -1).filter((option) => option.name.toLowerCase().includes(queryString)),
+                ...prevOptions
+                  .slice(0, -1)
+                  .filter((option) => option.name.toLowerCase().includes(queryString))
+                  .sort(
+                    (a, b) =>
+                      scoreMatch(queryString, b.matchText.toLocaleLowerCase()) -
+                      scoreMatch(queryString, a.matchText.toLocaleLowerCase()),
+                  ),
                 new MentionTypeaheadOption(queryString),
               ];
             } else {
               // Otherwise, we need to search the graph
               const matchingNodes = graphStore
                 .search(queryString)
-                .filter((result) => result.object.id !== treeNode.object.id)
+                .filter((a) => a.object.id !== treeNode.object.id)
                 .sort((a, b) => b.score - a.score)
                 .map(({ object }) => object);
               return [
