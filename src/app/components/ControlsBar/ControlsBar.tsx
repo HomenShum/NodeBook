@@ -122,14 +122,17 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
           <PopoverContent align="end">
             <div
               style={{
+                width: "100%",
                 display: "flex",
                 justifyContent: "flex-end",
+                gap: 4,
               }}
             >
               <Button
                 size="sm"
                 variant={viewStore.viewType === "outline" ? "active" : "default"}
                 onClick={() => viewStore.setViewType("outline")}
+                style={{ width: "100%", height: 36, flex: "grow", display: "flex" }}
               >
                 <ListIcon />
                 Outline
@@ -138,6 +141,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 size="sm"
                 variant={viewStore.viewType === "note" ? "active" : "default"}
                 onClick={() => viewStore.setViewType("note")}
+                style={{ width: "100%", flex: "grow", height: 36, display: "flex" }}
               >
                 <StreamIcon />
                 Note
