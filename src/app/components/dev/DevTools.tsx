@@ -6,6 +6,7 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
+import { useUser } from "@/app/StoresProvider";
 
 import styles from "./DevTools.module.css";
 
@@ -35,7 +36,8 @@ function SelectSearchAndReplaceDropdown() {
 }
 
 export const DevTools = observer(() => {
-  const { logout, user } = useAuth();
+  const auth = useAuth();
+  const user = useUser();
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const renderController = useRenderController();
@@ -163,13 +165,13 @@ export const DevTools = observer(() => {
         >
           Reset user settings to default
         </Button>
-        {!user.isUnlogged && (
+        {auth && (
           <Button
             size="default"
             variant="default"
             onClick={() => {
               handleClose();
-              logout({ logoutParams: { returnTo: window.location.origin } });
+              auth.logout({ logoutParams: { returnTo: window.location.origin } });
             }}
           >
             Log out

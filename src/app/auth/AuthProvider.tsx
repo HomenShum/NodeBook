@@ -1,15 +1,10 @@
-import { AppState, Auth0Provider } from "@auth0/auth0-react";
+import { Auth0Provider } from "@auth0/auth0-react";
 import { useRouter } from "next/navigation";
-import { useCallback } from "react";
 
 import { env } from "@/app/envFrontend";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
-  const onRedirectCallback = useCallback(
-    (appState: AppState | undefined) => router.replace(appState?.returnTo ?? "/"),
-    [router],
-  );
 
   if (!env.isAuthEnabled) {
     return children;
@@ -24,7 +19,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       domain={env.auth0Domain}
       clientId={env.auth0ClientId}
       useRefreshTokens
-      onRedirectCallback={onRedirectCallback}
+      onRedirectCallback={(s) => router.replace(s?.returnTo ?? "/")}
       cacheLocation="localstorage"
       authorizationParams={{
         redirect_uri: global?.window?.location.origin,

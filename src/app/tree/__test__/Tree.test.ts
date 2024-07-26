@@ -1,6 +1,5 @@
 import path from "path";
 
-import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { createTestTreeFromTemplate, expectTreeToMatchTemplate } from "@/app/tree/__test__/helpers";
@@ -16,7 +15,6 @@ describe("Tree", () => {
     it("basic", async () => {
       const settingsStore = new SettingsStore();
       const graphStore = new GraphStore();
-      graphStore.initialize(MOCK_MEW_USER);
       const root = graphStore.outlineRoot;
       // Add 2 children of the root, each with a child of their own
       const { node: n1, relation: r1 } = await graphStore.addChildNode({

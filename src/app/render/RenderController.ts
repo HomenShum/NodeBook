@@ -61,4 +61,8 @@ export class RenderController {
   setSidebarWidth(width: number) {
     this.sidebarWidth = width;
   }
+
+  cleanup() {
+    this.setActiveModal(null);
+  }
 }

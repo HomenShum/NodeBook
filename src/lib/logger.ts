@@ -14,6 +14,7 @@ type LoggerOptions = {
   level: LogLevel;
   service?: string;
   formatter: (logMessage: LogMessage) => any[];
+  transports: Transport[];
 };
 
 type GlobalFilter = {
@@ -47,20 +48,55 @@ export function getGlobalLoggerFilter() {
   return { ...globalLoggerFilter };
 }
 
+type Formatter = (logMessage: LogMessage) => any[];
+
+interface Transport {
+  log(logMessage: LogMessage): void;
+}
+
+class ConsoleTransport implements Transport {
+  private formatter: Formatter;
+  constructor(formatter: Formatter) {
+    this.formatter = formatter;
+  }
+  log(logMessage: LogMessage) {
+    const level = logMessage.level || "info";
+    switch (level) {
+      case "debug":
+        console.debug(...this.formatter(logMessage));
+        break;
+      case "info":
+        console.info(...this.formatter(logMessage));
+        break;
+      case "warn":
+        console.warn(...this.formatter(logMessage));
+        break;
+      case "error":
+        console.error(...this.formatter(logMessage));
+        break;
+      default:
+        level satisfies never;
+    }
+  }
+}
+
+function defaultFormatter(logMessage: LogMessage): [string, ...any[]] {
+  const message = logMessage.service ? `${logMessage.service}: ${logMessage.message}` : logMessage.message;
+  const optionalParams = logMessage.optionalParams || [];
+  return [message, ...optionalParams];
+}
+
 class Logger {
   private options: LoggerOptions;
+
   constructor(options: Partial<LoggerOptions>) {
+    const formatter = options.formatter || defaultFormatter;
     this.options = {
       level: "info",
-      formatter: this.defaultFormatter,
+      formatter,
+      transports: [new ConsoleTransport(formatter)],
       ...options,
     };
-  }
-
-  private defaultFormatter(logMessage: LogMessage): any[] {
-    const message = logMessage.service ? `${logMessage.service}: ${logMessage.message}` : logMessage.message;
-    const optionalParams = logMessage.optionalParams || [];
-    return [message, ...optionalParams];
   }
 
   debug(message: string, ...optionalParams: any[]): void;
@@ -107,22 +143,7 @@ class Logger {
     const level = logMessage.level || "info";
     if (gte(level, this.options.level) && gte(level, globalLoggerFilter.level)) {
       logMessage = { ...logMessage, service: this.options.service || logMessage.service, level };
-      switch (level) {
-        case "debug":
-          console.debug(...this.options.formatter(logMessage));
-          break;
-        case "info":
-          console.info(...this.options.formatter(logMessage));
-          break;
-        case "warn":
-          console.warn(...this.options.formatter(logMessage));
-          break;
-        case "error":
-          console.error(...this.options.formatter(logMessage));
-          break;
-        default:
-          level satisfies never;
-      }
+      this.options.transports.forEach((transport) => transport.log(logMessage));
     }
   }
 

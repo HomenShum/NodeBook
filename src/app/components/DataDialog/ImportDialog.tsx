@@ -2,18 +2,18 @@ import { X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
-import { useAuth } from "@/app/auth/useAuth";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
+import { useUser } from "@/app/StoresProvider";
 
 import { ConfirmReplace } from "./ConfirmReplace";
 
 import styles from "./DataDialog.module.css";
 
 export const ImportDialog = observer(() => {
-  const { user } = useAuth();
+  const user = useUser();
   const renderController = useRenderController();
 
   const graphStore = useGraphStore();

@@ -2,8 +2,7 @@ import { useAuth } from "@/app/auth/useAuth";
 import { Button } from "@/app/components/UIPrimitives/Button";
 
 export const LoginScreen = () => {
-  const { loginWithRedirect } = useAuth();
-
+  const auth = useAuth();
   return (
     <div
       style={{
@@ -15,7 +14,7 @@ export const LoginScreen = () => {
       }}
     >
       <h1>Login</h1>
-      <Button onClick={() => loginWithRedirect()}>Log in</Button>
+      <Button onClick={() => auth?.loginWithRedirect()}>Log in</Button>
     </div>
   );
 };

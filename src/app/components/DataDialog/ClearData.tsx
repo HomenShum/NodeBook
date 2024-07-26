@@ -1,12 +1,8 @@
 import { observer } from "mobx-react-lite";
-import { useCallback } from "react";
 
-import { useAuth } from "@/app/auth/useAuth";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./DataDialog.module.css";
 
@@ -15,18 +11,7 @@ interface Props {
 }
 
 export const ClearData = observer(({ onConfirm }: Props) => {
-  const { user } = useAuth();
   const renderController = useRenderController();
-
-  const graphStore = useGraphStore();
-  const viewStore = useViewStore();
-
-  const handleClearData = useCallback(() => {
-    graphStore.initialize(user);
-    viewStore.clear();
-    renderController.setActiveModal(null);
-  }, [graphStore, viewStore, renderController, user]);
-
   return (
     <DataDialog
       title="Clear Data"
@@ -38,7 +23,7 @@ export const ClearData = observer(({ onConfirm }: Props) => {
         <Button variant="outline" size="sm" onClick={() => renderController.setActiveModal("devTools")}>
           Cancel
         </Button>
-        <Button variant="destructive" size="sm" onClick={handleClearData}>
+        <Button variant="destructive" size="sm" onClick={onConfirm}>
           Confirm Delete
         </Button>
       </div>

@@ -1,7 +1,10 @@
+import { User } from "@auth0/auth0-react";
+
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SerializedStores } from "@/app/persistence/SerializedData";
 import { ViewStore } from "@/app/view/ViewStore";
+import { PersistedUser } from "@/db/schema";
 
 const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
   console.debug("Loading data from local storage");
@@ -50,3 +53,22 @@ export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore
     await loadRemoteData(graphStore, viewStore, authFetch);
   }
 }
+export const fetchGetOrCreateUser = async (user: User, authFetch: typeof fetch): Promise<PersistedUser | undefined> => {
+  if (!user?.sub) throw new TypeError("This function must be called with a User that has the `sub` property");
+
+  return await authFetch("/api/user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      user: {
+        id: user.sub,
+        email: user.email,
+        name: user.name ?? user.nickname ?? "The Nameless One",
+        picture: user.picture,
+        createdAt: user.updated_at ?? new Date().toISOString(),
+      },
+    }),
+  }).then((res) => res.json());
+};

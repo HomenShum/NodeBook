@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { useAuth } from "@/app/auth/useAuth";
+import { useUser } from "@/app/StoresProvider";
 import { ListIcon, StreamIcon } from "@/app/components/CustomIcons";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
@@ -34,7 +34,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
   className,
   onResizeStateChange,
 }) => {
-  const { user } = useAuth();
+  const user = useUser();
   const curView = useCurView();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
@@ -48,12 +48,6 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
 
   const handleOpenDevTools = () => {
     renderController.setActiveModal("devTools");
-  };
-
-  const handleClearData = () => {
-    graphStore.initialize(user);
-    viewStore.clear();
-    renderController.setActiveModal(null);
   };
 
   const startResizing = useCallback(
@@ -194,7 +188,15 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
       </aside>
       <DevTools />
       <ImportDialog />
-      <ClearData onConfirm={handleClearData} />
+      {user.isUnlogged && (
+        <ClearData
+          onConfirm={() => {
+            graphStore.clear();
+            viewStore.clear();
+            renderController.setActiveModal(null);
+          }}
+        />
+      )}
     </>
   );
 };

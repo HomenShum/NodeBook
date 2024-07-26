@@ -11,6 +11,7 @@ import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useRenderController } from "@/app/render/useRenderController";
 import { cn } from "@/lib/utils";
 
+import { useLoading } from "./StoresProvider";
 import { DevTools } from "./components/dev/DevTools";
 import { SidebarOutlines } from "./components/dev/SidebarOutlines";
 
@@ -25,13 +26,14 @@ export default observer(
     children: React.ReactNode;
   }>) => {
     const [isResizing, setIsResizing] = useState(false);
-    const { isAuthenticated, isLoading } = useAuth();
+    const auth = useAuth();
+    const isLoading = useLoading();
 
     const appContainerRef = useRef<HTMLDivElement>(null);
     const renderController = useRenderController();
     useKeyboardShortcuts();
 
-    if (!isAuthenticated) {
+    if (auth && !auth.isAuthenticated) {
       return <LoginScreen />;
     } else if (isLoading) {
       return <div>Loading...</div>;

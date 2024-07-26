@@ -1,6 +1,6 @@
 "use client";
 
-import { isObservable, makeAutoObservable } from "mobx";
+import { autorun, isObservable, makeAutoObservable } from "mobx";
 
 type SerializedUserSettings = {
   addThoughtstreamDirectChildrenToOutline?: boolean;
@@ -54,8 +54,11 @@ export class SettingsStore {
   public allowShiftTabAboveViewRoot = false;
   public hidePinnedItems = false;
 
+  private stopAutosave: () => void;
+
   constructor() {
     this.makeObservable();
+    this.stopAutosave = autorun(() => this.saveToLocalStorage());
   }
 
   makeObservable() {
@@ -242,5 +245,9 @@ export class SettingsStore {
 
   setHidePinnedItems(value: boolean) {
     this.hidePinnedItems = value;
+  }
+
+  cleanup() {
+    this.stopAutosave();
   }
 }

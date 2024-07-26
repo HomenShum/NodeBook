@@ -74,6 +74,7 @@ export type Path = string;
  */
 export class GraphStore {
   private isSyncing = false;
+  private nextSyncId: ReturnType<typeof setTimeout> | number = 0;
 
   syncQueue: SyncQueue = new SyncQueue(); // Only not private for ease of window.mew debugging right now
 
@@ -97,8 +98,8 @@ export class GraphStore {
   outlineRootRelationFromUserRoot: GraphRelation;
   thoughtstreamRootRelationFromUserRoot: GraphRelation;
 
-  constructor() {
-    this.user = UNLOGGED_USER;
+  constructor(user: MewUser = UNLOGGED_USER) {
+    this.user = user;
     const defaults = this.ensureDefaultObjects();
     this.userRoot = defaults.userRoot;
     this.outlineRoot = defaults.outlineRoot;
@@ -137,21 +138,12 @@ export class GraphStore {
         removeFromBundle: action,
         load: action,
         clear: action,
-        initialize: action,
         initializeAndLoad: action,
       });
     }
   }
 
-  /**
-   * Reset the graph to its initial state and sets the user.
-   */
-  initialize(user: MewUser) {
-    this.clear();
-    this.user = user;
-    this.ensureDefaultObjects();
-  }
-
+  // TODO remove?
   /**
    * {@link initialize|Initialize} the store and {@link load} the serialized data into it.
    */
@@ -162,14 +154,24 @@ export class GraphStore {
     this.ensureDefaultObjects();
   }
 
+  // TODO not sure about these
   startSync(authedFetch: typeof fetch) {
-    return setTimeout(async () => {
-      if (this.isSyncing) return;
-      this.isSyncing = true;
+    this.isSyncing = true;
+    this.syncLoop(authedFetch);
+    return () => this.stopSync();
+  }
+
+  syncLoop(authedFetch: typeof fetch) {
+    if (!this.isSyncing) return;
+    this.nextSyncId = setTimeout(async () => {
       await this.syncQueue.process(authedFetch);
-      this.isSyncing = false;
-      this.startSync(authedFetch);
+      this.syncLoop(authedFetch);
     }, 500);
+  }
+
+  stopSync() {
+    clearTimeout(this.nextSyncId);
+    this.isSyncing = false;
   }
 
   handleSyncData(data: SyncData) {
@@ -1233,6 +1235,12 @@ export class GraphStore {
     });
     // TODO: Consider pausing sync when the user is being changed
     this.syncQueue.clear();
+  }
+
+  // TODO do we need clear and cleanup?
+  cleanup() {
+    this.clear();
+    // TODO: stop sync here
   }
 
   ensureDefaultObjects() {

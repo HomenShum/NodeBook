@@ -69,4 +69,6 @@ export class ViewStore {
       return view;
     });
   }
+
+  cleanup() {}
 }
