@@ -12,6 +12,7 @@ import { createRelation, deleteRelation, updateRelation } from "@/db/graphRelati
 import { upsertRelationList } from "@/db/relationLists";
 import { createRelationType, deleteRelationType, updateRelationType } from "@/db/relationTypes";
 import { env } from "@/envBackend";
+import { userIdToPusherChannel } from "@/lib/pusher";
 
 const pusher = new Pusher({
   appId: env.PUSHER_APP_ID ?? "",
@@ -39,7 +40,8 @@ async function postHandler(req: NextRequest) {
     return NextResponse.json({ status: "error", message: "Invalid sync data request" }, { status: 400 });
   }
 
-  const { transactionId, updates } = parsedData.data;
+  // TODO: At some point we'll want to validate user ID matches the user from auth, or just pull it directly from there
+  const { userId, transactionId, updates } = parsedData.data;
 
   const db = getDb();
 
@@ -89,7 +91,7 @@ async function postHandler(req: NextRequest) {
     return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
   }
 
-  pusher.trigger("mew-sync-channel", "transaction-accepted", { transactionId, updates });
+  pusher.trigger(userIdToPusherChannel(userId), "transaction-accepted", { userId, transactionId, updates });
 
   return NextResponse.json({ status: "ok" });
 }

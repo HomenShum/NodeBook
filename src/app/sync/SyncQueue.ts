@@ -3,12 +3,18 @@ import { SyncTask } from "@/app/sync/SyncTask";
 import { uuid } from "@/app/util";
 
 export class SyncQueue {
+  private userId: string;
   private queue: SyncTask[] = [];
   private localTransactions: Set<string> = new Set();
+
+  constructor(userId: string) {
+    this.userId = userId;
+  }
 
   addUpdates(updates: GraphUpdate[], undoFn: () => void) {
     const task: SyncTask = {
       data: {
+        userId: this.userId,
         transactionId: uuid(),
         updates,
       },
@@ -25,7 +31,7 @@ export class SyncQueue {
   async process(authFetch: typeof fetch) {
     let task = this.queue.shift();
     while (task) {
-      const response = await authFetch(`/api/sync?userId=${window.mew.graphStore.user.id}`, {
+      const response = await authFetch(`/api/sync?userId=${this.userId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

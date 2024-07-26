@@ -18,6 +18,7 @@ import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
 import appLogger from "@/lib/logger";
+import { userIdToPusherChannel } from "@/lib/pusher";
 
 export const logger = appLogger.child({ service: "store-provider" });
 
@@ -130,7 +131,7 @@ function startSync({ graphStore, authFetch }: { graphStore: GraphStore; authFetc
   const pusher = new Pusher(env.pusherKey, {
     cluster: env.pusherCluster,
   });
-  const channel = pusher.subscribe("mew-sync-channel");
+  const channel = pusher.subscribe(userIdToPusherChannel(graphStore.user.id));
   channel.bind("transaction-accepted", (data: any) => {
     const parsed = SerializedSyncDataSchema.safeParse(data);
     if (!parsed.success) {

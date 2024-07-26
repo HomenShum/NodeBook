@@ -76,9 +76,8 @@ export class GraphStore {
   private isSyncing = false;
   private nextSyncId: ReturnType<typeof setTimeout> | number = 0;
 
-  syncQueue: SyncQueue = new SyncQueue(); // Only not private for ease of window.mew debugging right now
-
   user: MewUser;
+  syncQueue: SyncQueue;
 
   // TODO: make all properties private
   nodesById: Map<string, GraphNode> = new Map();
@@ -100,6 +99,7 @@ export class GraphStore {
 
   constructor(user: MewUser = UNLOGGED_USER) {
     this.user = user;
+    this.syncQueue = new SyncQueue(user.id);
     const defaults = this.ensureDefaultObjects();
     this.userRoot = defaults.userRoot;
     this.outlineRoot = defaults.outlineRoot;
