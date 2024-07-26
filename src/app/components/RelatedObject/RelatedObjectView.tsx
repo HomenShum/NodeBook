@@ -1,4 +1,4 @@
-import { Circle, Dot, GlobeIcon } from "lucide-react";
+import { Circle, Dot, Edit2, GlobeIcon } from "lucide-react";
 import { autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import styles from "@/app/components/RelatedObject/RelatedObjectView.module.css";
+import { NodeReferenceEditor } from "@/app/editor/NodeReferenceEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
@@ -238,8 +239,11 @@ const TreeNodeReference = observer(({ treeNode }: { treeNode: DescendantTreeNode
   const inputRef = useRef<HTMLInputElement>(null);
   const tree = useTree();
   const graph = useGraphStore();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Update the input focus to match the tree selection
+
   useEffect(() => {
     return autorun(() => {
       if (tree.isNodeFocused(treeNode.id)) {
@@ -250,29 +254,68 @@ const TreeNodeReference = observer(({ treeNode }: { treeNode: DescendantTreeNode
     });
   }, [tree, treeNode.id]);
 
+  // Refocus the input when we finish editing
+
+  useEffect(() => {
+    console.log("useEffect", { isEditing, focused: tree.isNodeFocused(treeNode.id) });
+    if (!isEditing && tree.isNodeFocused(treeNode.id)) {
+      inputRef.current?.focus();
+    }
+  }, [isEditing, tree, treeNode.id]);
+
+  const focusInput = useCallback(() => {
+    tree.setFocusedNode(treeNode.id);
+  }, [tree, treeNode.id]);
+
   return (
-    <div className={styles.TreeNodeReference}>
-      <div onClick={() => tree.togglePathExpanded(treeNode.path)}>{treeNode.object.text}</div>
-      <input
-        // Update the tree selection to match the input focus
-        onFocus={() => tree.setFocusedNode(treeNode.path)}
-        onBlur={() => tree.isNodeFocused(treeNode.id) && tree.setFocusedNode(null)}
-        onKeyDown={async (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            const path = await treeNode.parent.createChild({ after: treeNode });
-            tree.setFocusedNode(path);
-          } else if (e.key === "Backspace") {
-            e.preventDefault();
-            const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
-            await treeNode.setObject(node);
-          }
-        }}
-        ref={inputRef}
-        type="text"
-        value=""
-        onChange={() => {}}
-      />
+    <div className={styles.TreeNodeReference} onBlur={() => setIsEditing(false)}>
+      {isEditing ? (
+        <div className={cn(styles.Pill, styles.Editor)}>
+          <NodeReferenceEditor treeNode={treeNode} onClose={focusInput} />
+        </div>
+      ) : (
+        <div style={{ display: "flex" }}>
+          <div
+            className={styles.Pill}
+            style={{ display: "flex" }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <div onClick={() => tree.togglePathExpanded(treeNode.path)}>{treeNode.object.text}</div>
+            {isHovered && (
+              <button
+                className={styles.EditButton}
+                onClick={() => {
+                  setIsEditing(true);
+                  setIsHovered(false);
+                }}
+              >
+                <Edit2 size={16} />
+              </button>
+            )}
+          </div>
+          <input
+            // Update the tree selection to match the input focus
+            onFocus={() => tree.setFocusedNode(treeNode.path)}
+            onBlur={() => tree.isNodeFocused(treeNode.id) && tree.setFocusedNode(null)}
+            onKeyDown={async (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const path = await treeNode.parent.createChild({ after: treeNode });
+                tree.setFocusedNode(path);
+              } else if (e.key === "Backspace") {
+                e.preventDefault();
+                const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
+                await treeNode.setObject(node);
+              }
+            }}
+            ref={inputRef}
+            type="text"
+            value=""
+            onChange={() => {}}
+          />
+        </div>
+      )}
     </div>
   );
 });

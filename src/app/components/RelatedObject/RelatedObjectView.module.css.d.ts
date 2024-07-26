@@ -7,8 +7,11 @@ declare const styles: {
   readonly "DotInsidePublic": string;
   readonly "DotOutsidePrivate": string;
   readonly "DotOutsidePublic": string;
+  readonly "EditButton": string;
+  readonly "Editor": string;
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
+  readonly "Pill": string;
   readonly "PinIcon": string;
   readonly "RelatedObjectActions": string;
   readonly "RelatedObjectBulletContainer": string;

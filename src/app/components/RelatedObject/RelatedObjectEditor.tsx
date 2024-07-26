@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useRef } from "react";
 
-import { NodeContentEditor } from "@/app/editor/nodeEditors";
+import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 

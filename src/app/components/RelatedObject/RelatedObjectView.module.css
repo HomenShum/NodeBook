@@ -138,12 +138,25 @@ Node
   flex: 1;
 }
 
-.TreeNodeReference div {
+.TreeNodeReference .Pill {
+  position: relative;
   border-radius: 4px;
   padding: 0 2px;
   background-color: var(--teal-a3);
   color: var(--teal-11);
   cursor: pointer;
+}
+
+.TreeNodeReference .EditButton {
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: translateX(100%);
+}
+
+.TreeNodeReference .Pill.Editor {
+  background-color: var(--gray-2);
+  border: 2px solid var(--gray-4);
 }
 
 .TreeNodeReference input {
