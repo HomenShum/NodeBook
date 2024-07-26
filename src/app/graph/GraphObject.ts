@@ -84,17 +84,30 @@ export abstract class GraphObject {
     ) {
       return "global";
     }
-    // Common case: you add the first labelled child
-    const relationsFromThis = this.relations.filter((r) => r.from.id === this.id);
-    if (relationsFromThis.some((r) => r.isLabelled())) {
+    const { relationsFromThis, lablledRelationsToThis, labelledRelationsFromThis } = this.relations.reduce(
+      (acc, relation) => {
+        if (relation.to.id === this.id) {
+          acc.relationsToThis++;
+          if (relation.isLabelled()) acc.lablledRelationsToThis++;
+        }
+        if (relation.from.id === this.id) {
+          acc.relationsFromThis++;
+          if (relation.isLabelled()) acc.labelledRelationsFromThis++;
+        }
+        return acc;
+      },
+      { relationsToThis: 0, relationsFromThis: 0, lablledRelationsToThis: 0, labelledRelationsFromThis: 0 },
+    );
+
+    // typical case: you add the first labelled child
+    if (labelledRelationsFromThis > 0) {
       return "global";
     }
-    // Common case: you create a lablled relation to this, and then add a child
-    // to it
-    const labelledRelationsToThis = this.relations.some((r) => r.isLabelled() && r.to.id === this.id);
-    if (labelledRelationsToThis && relationsFromThis.length > 0) {
+    // typical case: after creating a node next to a labelled relation, you add children to it
+    if (lablledRelationsToThis > 0 && relationsFromThis > 0) {
       return "global";
     }
+
     return "local";
   }
 
