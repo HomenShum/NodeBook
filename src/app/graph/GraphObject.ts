@@ -84,9 +84,15 @@ export abstract class GraphObject {
     ) {
       return "global";
     }
-    const relationsToThis = this.relations.filter((r) => r.to.id === this.id);
-    const labelledRelations = this.relations.filter((r) => r.isLabelled());
-    if (labelledRelations.length > 1 || relationsToThis.length > 1) {
+    // Common case: you add the first labelled child
+    const relationsFromThis = this.relations.filter((r) => r.from.id === this.id);
+    if (relationsFromThis.some((r) => r.isLabelled())) {
+      return "global";
+    }
+    // Common case: you create a lablled relation to this, and then add a child
+    // to it
+    const labelledRelationsToThis = this.relations.some((r) => r.isLabelled() && r.to.id === this.id);
+    if (labelledRelationsToThis && relationsFromThis.length > 0) {
       return "global";
     }
     return "local";

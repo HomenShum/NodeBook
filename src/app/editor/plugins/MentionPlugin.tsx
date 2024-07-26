@@ -71,8 +71,8 @@ export function MentionPlugin({
         );
         if (!hasMentionRelation) {
           await graphStore.addRelation({
-            fromId: node.id,
-            toId: graphNodeId,
+            fromId: graphNodeId,
+            toId: node.id,
           });
         }
       });
