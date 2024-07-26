@@ -63,7 +63,6 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       // create new stores
       const graphStore = new GraphStore(newUser);
       const settingsStore = new SettingsStore();
-      settingsStore.loadFromLocalStorage();
       const viewStore = new ViewStore(settingsStore, graphStore);
       const renderController = new RenderController();
 

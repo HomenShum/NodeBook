@@ -26,6 +26,11 @@ type SerializedUserSettings = {
   hidePinnedItems?: boolean;
 };
 
+/**
+ * Store for user settings
+ *
+ * Loads from local storage on creation and saves to local storage on change
+ */
 export class SettingsStore {
   /** Add outline descendants which are direct children of outline to outline */
   public addThoughtstreamDirectChildrenToOutline = false;
@@ -58,6 +63,7 @@ export class SettingsStore {
 
   constructor() {
     this.makeObservable();
+    this.loadFromLocalStorage();
     this.stopAutosave = autorun(() => this.saveToLocalStorage());
   }
 

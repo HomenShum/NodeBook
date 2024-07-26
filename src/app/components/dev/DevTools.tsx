@@ -10,7 +10,7 @@ import { useUser } from "@/app/StoresProvider";
 
 import styles from "./DevTools.module.css";
 
-function SelectSearchAndReplaceDropdown() {
+const SelectSearchAndReplaceDropdown = observer(() => {
   const settingsStore = useSettingsStore();
 
   const searchAndReplaceDropdownOptions: { label: string; value: typeof settingsStore.searchAndReplaceDropdown }[] = [
@@ -33,7 +33,7 @@ function SelectSearchAndReplaceDropdown() {
       ))}
     </select>
   );
-}
+});
 
 export const DevTools = observer(() => {
   const auth = useAuth();
