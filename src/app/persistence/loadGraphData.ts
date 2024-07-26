@@ -1,5 +1,6 @@
 import { User } from "@auth0/auth0-react";
 
+import { PostUserResponseSchema } from "@/app/api/types";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SerializedStores } from "@/app/persistence/SerializedData";
@@ -55,8 +56,7 @@ export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore
 }
 export const fetchGetOrCreateUser = async (user: User, authFetch: typeof fetch): Promise<PersistedUser | undefined> => {
   if (!user?.sub) throw new TypeError("This function must be called with a User that has the `sub` property");
-
-  return await authFetch("/api/user", {
+  const response = await authFetch("/api/user", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -71,4 +71,14 @@ export const fetchGetOrCreateUser = async (user: User, authFetch: typeof fetch):
       },
     }),
   }).then((res) => res.json());
+  const parsedResponse = PostUserResponseSchema.safeParse(response);
+  if (!parsedResponse.success) {
+    console.error("Invalid response", parsedResponse.error);
+    return undefined;
+  }
+  if (parsedResponse.data.error) {
+    console.error("Error response", parsedResponse.data.message);
+    return undefined;
+  }
+  return parsedResponse.data.data;
 };
