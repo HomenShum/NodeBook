@@ -7,8 +7,11 @@ export class SyncQueue {
   private queue: SyncTask[] = [];
   private localTransactions: Set<string> = new Set();
 
-  constructor(userId: string) {
+  private refetchAllData: () => Promise<void>;
+
+  constructor(userId: string, refetchFn: () => Promise<void>) {
     this.userId = userId;
+    this.refetchAllData = refetchFn;
   }
 
   addUpdates(updates: GraphUpdate[], undoFn: () => void) {
@@ -43,6 +46,8 @@ export class SyncQueue {
         console.error("Sync failed", responseJson);
         this.undoAllPending();
         task.undo();
+        await this.refetchAllData();
+        return;
       }
 
       task = this.queue.shift();

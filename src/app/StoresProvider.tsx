@@ -43,7 +43,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       logger.debug("Starting to setup stores", auth);
       setIsLoading(true);
 
-      const authFetch: typeof fetch = async (input, init) => {
+      const authedFetch: typeof fetch = async (input, init) => {
         const token = await auth.getAccessTokenSilently();
         return fetch(input, { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } });
       };
@@ -52,7 +52,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       logger.debug("Loading user");
       let newUser: MewUser;
       try {
-        const data = await fetchGetOrCreateUser(auth.user, authFetch);
+        const data = await fetchGetOrCreateUser(auth.user, authedFetch);
         if (!data) throw new Error("fetchGetOrCreateUser returned null");
         newUser = new MewUser({ ...data });
       } catch (e) {
@@ -61,7 +61,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       }
 
       // create new stores
-      const graphStore = new GraphStore(newUser);
+      const graphStore = new GraphStore(newUser, authedFetch);
       const settingsStore = new SettingsStore();
       const viewStore = new ViewStore(settingsStore, graphStore);
       const renderController = new RenderController();
@@ -71,9 +71,9 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       try {
         if (env.isPersistenceEnabled && !newUser.isUnlogged) {
           logger.debug("Loading data", newUser.id);
-          await loadGraphData(graphStore, viewStore, authFetch);
+          await loadGraphData(graphStore, viewStore, authedFetch);
           logger.debug("Starting sync");
-          syncCleanup = startSync({ graphStore, authFetch });
+          syncCleanup = startSync({ graphStore, authFetch: authedFetch });
         }
       } catch (e) {
         toast("Failed to load data from server. Starting with an empty graph.");
@@ -131,15 +131,15 @@ function startSync({ graphStore, authFetch }: { graphStore: GraphStore; authFetc
     cluster: env.pusherCluster,
   });
   const channel = pusher.subscribe(userIdToPusherChannel(graphStore.user.id));
-  channel.bind("transaction-accepted", (data: any) => {
+  channel.bind("transaction-accepted", async (data: any) => {
     const parsed = SerializedSyncDataSchema.safeParse(data);
     if (!parsed.success) {
       console.error("Invalid sync data received", data);
       return;
     }
-    graphStore.handleSyncData(parsed.data);
+    await graphStore.handleSyncData(parsed.data);
   });
-  const stopSyncing = graphStore.startSync(authFetch);
+  const stopSyncing = graphStore.startSync();
   return () => {
     pusher.disconnect();
     stopSyncing();

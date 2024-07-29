@@ -6,8 +6,8 @@ import { MewDbTransaction } from "@/db/types";
 
 export const createNode = async (tx: MewDbTransaction, node: SerializedNode) => {
   await tx.insert(graphNodeTable).values({
-    id: node.id,
     authorId: node.authorId,
+    id: node.id,
     version: node.version,
     createdAt: new Date(node.createdAt),
     content: JSON.stringify(node.content),
@@ -18,9 +18,10 @@ export const createNode = async (tx: MewDbTransaction, node: SerializedNode) => 
 };
 
 export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode, newProps: SerializedNode) => {
-  await tx
+  const updated = await tx
     .update(graphNodeTable)
     .set({
+      authorId: newProps.authorId,
       id: newProps.id,
       version: newProps.version,
       createdAt: new Date(newProps.createdAt),
@@ -29,7 +30,20 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
       isZone: newProps.isZone,
       isPrivate: newProps.isPrivate,
     })
-    .where(and(eq(graphNodeTable.id, oldProps.id), eq(graphNodeTable.version, oldProps.version)));
+    .where(
+      and(
+        eq(graphNodeTable.authorId, oldProps.authorId),
+        eq(graphNodeTable.id, oldProps.id),
+        eq(graphNodeTable.version, oldProps.version),
+      ),
+    )
+    .returning({ updatedId: graphNodeTable.id });
+  if (updated.length === 0) {
+    console.error(
+      `Node with authorId ${oldProps.authorId}, id ${oldProps.id}, and version ${oldProps.version} not found`,
+    );
+    tx.rollback();
+  }
 };
 
 export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => {

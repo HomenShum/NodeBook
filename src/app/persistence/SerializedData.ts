@@ -82,6 +82,14 @@ export type SerializedGraphStore = {
   pinnedRelationsByNodeId: SerializedRelationsByNodeId;
   relationToBundles?: Record<string, SerializedNode[]>;
 };
+export const SerializedGraphStoreSchema = z.object({
+  nodesById: z.record(SerializedNodeSchema),
+  relationTypesById: z.record(SerializedRelationTypeSchema),
+  relationsById: z.record(SerializedRelationSchema),
+  relationsByNodeId: z.record(z.record(PositionSchema)),
+  pinnedRelationsByNodeId: z.record(z.record(PositionSchema)),
+  relationToBundles: z.record(z.array(SerializedNodeSchema)).optional(),
+});
 
 export type SerializedTree = {
   id: string;

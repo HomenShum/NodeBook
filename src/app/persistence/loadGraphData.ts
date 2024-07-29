@@ -3,12 +3,13 @@ import { User } from "@auth0/auth0-react";
 import { PostUserResponseSchema } from "@/app/api/types";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
-import { SerializedStores } from "@/app/persistence/SerializedData";
+import { SerializedGraphStoreSchema, SerializedStores } from "@/app/persistence/SerializedData";
 import { ViewStore } from "@/app/view/ViewStore";
 import { PersistedUser } from "@/db/schema";
+import logger from "@/lib/logger";
 
 const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
-  console.debug("Loading data from local storage");
+  logger.debug("Loading data from local storage");
   const dataString = localStorage.getItem("data");
   if (!dataString) return;
   const data = JSON.parse(dataString) as SerializedStores;
@@ -21,14 +22,20 @@ const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
     viewStore.deserializeInPlace(data.viewStore);
   }
 
-  console.debug(`Successfully loaded data from ${env.persistTo}`);
+  logger.debug(`Successfully loaded data from ${env.persistTo}`);
 };
 
 const loadRemoteData = async (graphStore: GraphStore, viewStore: ViewStore, authFetch: typeof fetch) => {
-  console.debug("Loading data from server");
+  logger.debug("Loading data from server");
 
   const syncData = await authFetch(`/api/sync?userId=${graphStore.user.id}`).then((res) => res.json());
-  await graphStore.initializeAndLoad(graphStore.user, syncData.data);
+  const parsed = SerializedGraphStoreSchema.safeParse(syncData.data);
+  if (parsed.success) {
+    graphStore.initializeAndLoad(graphStore.user, parsed.data);
+    logger.debug("Graph data loaded");
+  } else {
+    logger.error("Failed to parse graph store data from server", parsed.error);
+  }
 
   // Legacy loading of viewStore from /api/persist
   // TODO: We probably should just delete this?
@@ -68,11 +75,11 @@ export const fetchGetOrCreateUser = async (user: User, authFetch: typeof fetch):
   }).then((res) => res.json());
   const parsedResponse = PostUserResponseSchema.safeParse(response);
   if (!parsedResponse.success) {
-    console.error("Invalid response", parsedResponse.error);
+    logger.error("Invalid response", parsedResponse.error);
     return undefined;
   }
   if (parsedResponse.data.error) {
-    console.error("Error response", parsedResponse.data.message);
+    logger.error("Error response", parsedResponse.data.message);
     return undefined;
   }
   return parsedResponse.data.data;

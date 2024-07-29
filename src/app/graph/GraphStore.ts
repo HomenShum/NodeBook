@@ -6,6 +6,7 @@ import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/ser
 import {
   DeletedRelationData,
   SerializedGraphStore,
+  SerializedGraphStoreSchema,
   SerializedNode,
   SerializedPositionList,
   SerializedRelation,
@@ -77,6 +78,7 @@ export class GraphStore {
   private isSyncing = false;
   private nextSyncId: ReturnType<typeof setTimeout> | number = 0;
 
+  authedFetch: typeof fetch;
   user: MewUser;
   syncQueue: SyncQueue;
 
@@ -98,9 +100,10 @@ export class GraphStore {
   outlineRootRelationFromUserRoot: GraphRelation;
   thoughtstreamRootRelationFromUserRoot: GraphRelation;
 
-  constructor(user: MewUser = UNLOGGED_USER) {
+  constructor(user: MewUser = UNLOGGED_USER, authedFetch?: typeof fetch) {
     this.user = user;
-    this.syncQueue = new SyncQueue(user.id);
+    this.authedFetch = authedFetch ?? fetch;
+    this.syncQueue = new SyncQueue(user.id, async () => await this.fetchLatestDataSnapshot());
     const defaults = this.ensureDefaultObjects();
     this.userRoot = defaults.userRoot;
     this.outlineRoot = defaults.outlineRoot;
@@ -155,18 +158,29 @@ export class GraphStore {
     this.ensureDefaultObjects();
   }
 
+  async fetchLatestDataSnapshot() {
+    logger.info("Fetching latest data snapshot from backend");
+    const latestData = await this.authedFetch(`/api/sync?userId=${this.user.id}`).then((res) => res.json());
+    const parsed = SerializedGraphStoreSchema.safeParse(latestData.data);
+    if (parsed.success) {
+      this.load(parsed.data);
+    } else {
+      logger.error("Failed to parse latest data snapshot", parsed.error);
+    }
+  }
+
   // TODO not sure about these
-  startSync(authedFetch: typeof fetch) {
+  startSync() {
     this.isSyncing = true;
-    this.syncLoop(authedFetch);
+    this.syncLoop();
     return () => this.stopSync();
   }
 
-  syncLoop(authedFetch: typeof fetch) {
+  syncLoop() {
     if (!this.isSyncing) return;
     this.nextSyncId = setTimeout(async () => {
-      await this.syncQueue.process(authedFetch);
-      this.syncLoop(authedFetch);
+      await this.syncQueue.process(this.authedFetch);
+      this.syncLoop();
     }, 500);
   }
 
@@ -175,12 +189,17 @@ export class GraphStore {
     this.isSyncing = false;
   }
 
-  handleSyncData(data: SyncData) {
+  async handleSyncData(data: SyncData) {
     if (this.syncQueue.isLocalTransaction(data.transactionId)) {
       // TODO: we probably want to delete the transaction from the localTransactions set here
       return;
     }
-    this.applyUpdates(data.updates);
+    try {
+      this.applyUpdates(data.updates);
+    } catch (e) {
+      logger.warn("Failed to apply updates from sync data", e);
+      await this.fetchLatestDataSnapshot();
+    }
   }
 
   private applyUpdates(updates: GraphUpdate[]) {

@@ -6,8 +6,8 @@ import { MewDbTransaction } from "@/db/types";
 
 export const createRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
   await tx.insert(graphRelationTable).values({
-    id: relation.id,
     authorId: relation.authorId,
+    id: relation.id,
     version: relation.version,
     fromId: relation.fromId,
     toId: relation.toId,
@@ -21,18 +21,31 @@ export const updateRelation = async (
   oldProps: SerializedRelation,
   newProps: SerializedRelation,
 ) => {
-  await tx
+  const updated = await tx
     .update(graphRelationTable)
     .set({
-      id: newProps.id,
       authorId: newProps.authorId,
+      id: newProps.id,
       version: newProps.version,
       fromId: newProps.fromId,
       toId: newProps.toId,
       relationTypeId: newProps.relationTypeId,
       isPrivate: newProps.isPrivate,
     })
-    .where(and(eq(graphRelationTable.id, oldProps.id), eq(graphRelationTable.version, oldProps.version)));
+    .where(
+      and(
+        eq(graphRelationTable.authorId, oldProps.authorId),
+        eq(graphRelationTable.id, oldProps.id),
+        eq(graphRelationTable.version, oldProps.version),
+      ),
+    )
+    .returning({ updatedId: graphRelationTable.id });
+  if (updated.length === 0) {
+    console.error(
+      `Relation with authorId ${oldProps.authorId}, id ${oldProps.id}, and version ${oldProps.version} not found`,
+    );
+    tx.rollback();
+  }
 };
 
 export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
