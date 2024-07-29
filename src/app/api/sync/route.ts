@@ -1,25 +1,16 @@
 import { parse } from "url";
 
 import { NextRequest, NextResponse } from "next/server";
-import Pusher from "pusher";
 
 import { withAuth } from "@/app/api/authMiddleware";
 import { createSnapshotFromDb } from "@/app/api/sync/createSnapshot";
+import { broadcastSyncSuccess } from "@/app/api/sync/pusher";
 import { SerializedSyncDataSchema } from "@/app/sync/SyncTask";
 import { getDb } from "@/db";
 import { createNode, deleteNode, updateNode } from "@/db/graphNodes";
 import { createRelation, deleteRelation, updateRelation } from "@/db/graphRelations";
 import { upsertRelationList } from "@/db/relationLists";
 import { createRelationType, deleteRelationType, updateRelationType } from "@/db/relationTypes";
-import { env } from "@/envBackend";
-import { userIdToPusherChannel } from "@/lib/pusher";
-
-const pusher = new Pusher({
-  appId: env.PUSHER_APP_ID ?? "",
-  key: env.PUSHER_KEY ?? "",
-  secret: env.PUSHER_SECRET ?? "",
-  cluster: env.PUSHER_CLUSTER ?? "",
-});
 
 export const GET = withAuth(getHandler);
 async function getHandler(req: NextRequest) {
@@ -90,7 +81,7 @@ async function postHandler(req: NextRequest) {
     return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
   }
 
-  pusher.trigger(userIdToPusherChannel(userId), "transaction-accepted", { userId, transactionId, updates });
+  broadcastSyncSuccess({ userId, transactionId, updates });
 
   return NextResponse.json({ status: "ok" });
 }
