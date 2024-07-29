@@ -41,9 +41,8 @@ export class SyncQueue {
         },
         body: JSON.stringify(task.data),
       });
-      const responseJson = await response.json();
-      if (responseJson.status !== "ok") {
-        console.error("Sync failed", responseJson);
+      if (!response.ok) {
+        console.error("Sync failed", response);
         this.undoAllPending();
         task.undo();
         await this.refetchAllData();
