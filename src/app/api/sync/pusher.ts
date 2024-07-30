@@ -10,6 +10,7 @@ const pusher = new Pusher({
   key: env.PUSHER_KEY ?? "",
   secret: env.PUSHER_SECRET ?? "",
   cluster: env.PUSHER_CLUSTER ?? "",
+  useTLS: true,
 });
 
 // Pusher has a 10KB limit on message size, so we need to chunk updates into smaller pieces
@@ -37,14 +38,14 @@ const updatesToSize = (updates: GraphUpdate[]): GraphUpdate[][] => {
   return resized;
 };
 
-export const broadcastSyncSuccess = ({ userId, transactionId, updates }: SyncData) => {
+export const broadcastSyncSuccess = async ({ userId, transactionId, updates }: SyncData) => {
   const channel = userIdToPusherChannel(userId);
   const updateChunks = updatesToSize(updates);
   for (const chunk of updateChunks) {
     let attempts = 0;
     while (attempts < 3) {
       try {
-        pusher.trigger(channel, "transaction-accepted", { userId, transactionId, updates: chunk });
+        await pusher.trigger(channel, "transaction-accepted", { userId, transactionId, updates: chunk });
         break;
       } catch (e) {
         attempts++;

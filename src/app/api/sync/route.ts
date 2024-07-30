@@ -81,7 +81,7 @@ async function postHandler(req: NextRequest) {
     return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
   }
 
-  broadcastSyncSuccess({ userId, transactionId, updates });
+  await broadcastSyncSuccess({ userId, transactionId, updates });
 
   return NextResponse.json({ status: "ok" });
 }
