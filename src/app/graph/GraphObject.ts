@@ -84,27 +84,9 @@ export abstract class GraphObject {
     ) {
       return "global";
     }
-    const { relationsFromThis, lablledRelationsToThis, labelledRelationsFromThis } = this.relations.reduce(
-      (acc, relation) => {
-        if (relation.to.id === this.id) {
-          acc.relationsToThis++;
-          if (relation.isLabelled()) acc.lablledRelationsToThis++;
-        }
-        if (relation.from.id === this.id) {
-          acc.relationsFromThis++;
-          if (relation.isLabelled()) acc.labelledRelationsFromThis++;
-        }
-        return acc;
-      },
-      { relationsToThis: 0, relationsFromThis: 0, lablledRelationsToThis: 0, labelledRelationsFromThis: 0 },
-    );
-
-    // typical case: you add the first labelled child
-    if (labelledRelationsFromThis > 0) {
-      return "global";
-    }
-    // typical case: after creating a node next to a labelled relation, you add children to it
-    if (lablledRelationsToThis > 0 && relationsFromThis > 0) {
+    // As soon as you have more than one relation pointing to you, you're global
+    const relationsToThis = this.relations.filter((r) => r.to.id === this.id).length;
+    if (relationsToThis > 1) {
       return "global";
     }
 
