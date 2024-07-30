@@ -86,28 +86,21 @@ export class GraphRelation extends GraphObject implements Serializable {
   }
 
   update(props: Partial<GraphRelationProps>) {
-    const propsBefore: Partial<GraphRelationProps> = {};
     if (props.version && props.version !== this.version) {
-      propsBefore.version = this.version;
       this.version = props.version;
     }
     if (props.from && props.from !== this.from) {
-      propsBefore.from = this.from;
       this.setFrom(props.from);
     }
     if (props.to && props.to !== this.to) {
-      propsBefore.to = this.to;
       this.setTo(props.to);
     }
     if (props.relationType && props.relationType !== this.relationType) {
-      propsBefore.relationType = this.relationType;
       this.setType(props.relationType);
     }
     if (props.isPrivate !== undefined && props.isPrivate !== this.isPrivate) {
-      propsBefore.isPrivate = this.isPrivate;
       this.setIsPrivate(props.isPrivate);
     }
-    return propsBefore;
   }
 
   get text(): string {
@@ -119,25 +112,27 @@ export class GraphRelation extends GraphObject implements Serializable {
   }
 
   setFrom(node: GraphObject, after?: Positioner<GraphRelation>) {
-    // remove this relation from the current "from" node
-    this.from.allRelationsList.delete(this.id);
-    this.from.pinnedRelationsList.delete(this.id);
+    // remove this relation from the current "from" node's relation list, unless it's a circular relation
+    if (this.to.id != this.from.id) {
+      this.from.allRelationsList.delete(this.id);
+      this.from.pinnedRelationsList.delete(this.id);
+    }
     // set the new "from" node
     this.from = node;
     // add this relation to the new "from" node
     this.from.allRelationsList.add(this, after);
-    // TOOD: delete if no relations?
   }
 
   setTo(node: GraphObject, after?: Positioner<GraphRelation>) {
-    // remove this relation from the current "to" node
-    this.to.allRelationsList.delete(this.id);
-    this.to.pinnedRelationsList.delete(this.id);
+    // remove this relation from the current "to" node's relation list, unless it's a circular relation
+    if (this.to.id != this.from.id) {
+      this.to.allRelationsList.delete(this.id);
+      this.to.pinnedRelationsList.delete(this.id);
+    }
     // set the new "to" node
     this.to = node;
     // add this relation to the new "to" node
     this.to.allRelationsList.add(this, after);
-    // TOOD: delete if no relations?
   }
 
   incrementVersion() {

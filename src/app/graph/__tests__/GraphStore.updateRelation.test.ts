@@ -46,6 +46,8 @@ describe("GraphStore.updateRelation", () => {
     expect(relation.version).toBe(1);
     expect(relation.from).toBe(startNode);
     expect(relation.to).toBe(endNode);
+    expect(relation.from.allRelationsList.has(relation.id)).toBe(true);
+    expect(relation.to.allRelationsList.has(relation.id)).toBe(true);
 
     await graphStore.updateRelation({
       relationId: relation.id,
@@ -84,6 +86,8 @@ describe("GraphStore.updateRelation", () => {
     expect(relation.to).toBe(startNode);
     expect(relation.relationType).toEqual(newRelationType);
     expect(relation.version).toBe(2);
+    expect(relation.from.allRelationsList.has(relation.id)).toBe(true);
+    expect(relation.to.allRelationsList.has(relation.id)).toBe(true);
   });
 
   it("should generate a working undo function", async () => {
