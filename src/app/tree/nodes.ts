@@ -3,9 +3,10 @@ import { PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
-import { getOtherObjectOrThrow, getOtherSideOrThrow } from "@/app/graph/utils";
+import { getOtherObjectOrThrow } from "@/app/graph/utils";
 import { Tree } from "@/app/tree/Tree";
 import { Position } from "@/app/util";
+import logger from "@/lib/logger";
 
 export class PathToRootNode {
   object: GraphObject;
@@ -218,14 +219,6 @@ export class DescendantTreeNode extends BaseTreeNode {
     return n;
   }
 
-  get parentSideOfRelation(): "from" | "to" {
-    return getOtherSideOrThrow(this.relationWithParent, this.object.id);
-  }
-
-  get thisSideOfRelation(): "from" | "to" {
-    return getOtherSideOrThrow(this.relationWithParent, this.parent.object.id);
-  }
-
   get siblingAbove(): DescendantTreeNode | null {
     const nodeIndex = this.parentGroup.nodes.indexOf(this);
     if (nodeIndex < 0) {
@@ -308,20 +301,26 @@ export abstract class BaseGroup {
   }
 
   hydrate() {
-    this.nodes = this.relationsWithPositions.map(({ relation, position }) => {
-      const node = new DescendantTreeNode({
-        object: getOtherObjectOrThrow(relation, this.parent.object.id),
-        position,
-        relationWithParent: relation,
-        group: this,
-      });
-      // Only hydrate children if the parent is expanded. This is important to avoid
-      // infinite recursion since we allow circular references in the graph.
-      if (this.parent.isExpanded && this.isExpanded) {
-        node.hydrate();
+    const nodes = [];
+    for (const { relation, position } of this.relationsWithPositions) {
+      try {
+        const node = new DescendantTreeNode({
+          object: getOtherObjectOrThrow(relation, this.parent.object.id),
+          position,
+          relationWithParent: relation,
+          group: this,
+        });
+        // Only hydrate children if the parent is expanded. This is important to avoid
+        // infinite recursion since we allow circular references in the graph.
+        if (this.parent.isExpanded && this.isExpanded) {
+          node.hydrate();
+        }
+        nodes.push(node);
+      } catch (e) {
+        logger.error("Error hydrating node", e);
       }
-      return node;
-    });
+    }
+    this.nodes = nodes;
   }
 
   get isExpanded() {
