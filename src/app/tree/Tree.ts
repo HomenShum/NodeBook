@@ -471,9 +471,12 @@ export class Tree {
   async deleteSelection() {
     const selection = this.selectionWithNodes;
     if (selection?.type === "node") {
-      for (const treeNode of selection.nodes) {
-        await this.graphStore.removeRelation({ relationId: treeNode.relationWithParent.id });
-      }
+      await this.graphStore.applyCombinedTransaction(
+        selection.nodes.map((treeNode) => ({
+          type: "removeRelation",
+          transaction: { relationId: treeNode.relationWithParent.id },
+        })),
+      );
       const node = getNextAbove(selection.top);
       if (node) {
         this.setFocusedNode(node.path);

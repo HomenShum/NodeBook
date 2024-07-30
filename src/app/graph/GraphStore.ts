@@ -293,42 +293,64 @@ export class GraphStore {
    * execute first all the prep methods and then all the call ones.
    */
   async applyCombinedTransaction(txs: TxCombined): Promise<any[]> {
+    const updatesArray: GraphUpdate[] = [];
     const results = [];
     for (const tx of txs) {
       switch (tx.type) {
-        // TODO: Phil: I think this is a mistake here, we should be using the sync _ methods without await
-        // TODO: Otherwise, the combined transaction will not be atomic
-        case "addNode":
-          results.push(await this.addNode(tx.transaction));
+        case "addNode": {
+          const { node, updates } = this._addNode(tx.transaction);
+          updatesArray.push(...updates);
+          results.push(node);
           break;
-        case "removeNode":
-          results.push(await this.removeNode(tx.transaction));
+        }
+        case "removeNode": {
+          const { updates } = this._removeNode(tx.transaction);
+          updatesArray.push(...updates);
           break;
-        case "updateNode":
-          results.push(await this.updateNode(tx.transaction));
+        }
+        case "updateNode": {
+          const { updates } = this._updateNode(tx.transaction);
+          updatesArray.push(...updates);
           break;
-        case "addRelation":
-          results.push(await this.addRelation(tx.transaction));
+        }
+        case "addRelation": {
+          const { newRelation, updates } = this._addRelation(tx.transaction);
+          updatesArray.push(...updates);
+          results.push(newRelation);
           break;
-        case "removeRelation":
-          results.push(await this.removeRelation(tx.transaction));
+        }
+        case "removeRelation": {
+          const { updates } = this._removeRelation(tx.transaction);
+          updatesArray.push(...updates);
           break;
-        case "replaceRelationLink":
-          results.push(await this.replaceRelationLink(tx.transaction));
+        }
+        case "replaceRelationLink": {
+          const { object, relation, updates } = this._replaceRelationLink(tx.transaction);
+          updatesArray.push(...updates);
+          results.push({ object, relation });
           break;
-        case "updateRelation":
-          results.push(await this.updateRelation(tx.transaction));
+        }
+        case "updateRelation": {
+          // Due to the complicated logic in the async .updateRelation() method, we can't use it here
+          throw new Error("Update relation is not supported in combined transactions");
+        }
+        case "addRelationType": {
+          const { relationType, updates } = this.createRelationType(tx.transaction);
+          updatesArray.push(...updates);
+          results.push(relationType);
           break;
-        case "addRelationType":
-          results.push(await this.addRelationType(tx.transaction));
+        }
+        case "addChildNode": {
+          const { newNode, newRelation, updates } = this._addChildNode(tx.transaction);
+          updatesArray.push(...updates);
+          results.push({ node: newNode, relation: newRelation });
           break;
-        case "addChildNode":
-          results.push(await this.addChildNode(tx.transaction));
-          break;
+        }
         default:
           const _exhaustiveCheck: never = tx;
       }
     }
+    this.queueUpdates(updatesArray);
     return results;
   }
   /**
@@ -347,16 +369,16 @@ export class GraphStore {
    * Remove a node from the graph, then delete the object if it is no longer related to anything.
    */
   async removeNode(tx: TxRemoveNode): Promise<void> {
-    const updates = this._removeNode(tx);
+    const { updates } = this._removeNode(tx);
     this.queueUpdates(updates);
   }
-  private _removeNode(tx: TxRemoveNode): GraphUpdate[] {
+  private _removeNode(tx: TxRemoveNode): { updates: GraphUpdate[] } {
     const node = this.nodesById.get(tx.nodeId);
     if (!node) {
       throw new Error(`Node with id ${tx.nodeId} does not exist`);
     }
 
-    return this.deleteNode(node);
+    return { updates: this.deleteNode(node) };
   }
 
   /**
@@ -387,10 +409,10 @@ export class GraphStore {
    * Remove a relation from the graph, then delete the objects if they are no longer related to anything.
    */
   async removeRelation(tx: TxRemoveRelation) {
-    const updates = this._removeRelation(tx);
+    const { updates } = this._removeRelation(tx);
     this.queueUpdates(updates);
   }
-  private _removeRelation(tx: TxRemoveRelation): GraphUpdate[] {
+  private _removeRelation(tx: TxRemoveRelation): { updates: GraphUpdate[] } {
     const relation = this.relationsById.get(tx.relationId);
     if (!relation) {
       throw new Error(`Relation with id ${tx.relationId} does not exist`);
@@ -411,7 +433,7 @@ export class GraphStore {
     if (to instanceof GraphNode && this.hasNoRelations(to)) {
       updates.push(...this.deleteNode(to));
     }
-    return updates;
+    return { updates };
   }
 
   /**
@@ -441,10 +463,10 @@ export class GraphStore {
 
   // TODO: Make this async
   updateNode(tx: TxUpdateNode) {
-    const updates = this._updateNode(tx);
+    const { updates } = this._updateNode(tx);
     this.queueUpdates(updates);
   }
-  private _updateNode(tx: TxUpdateNode): GraphUpdate[] {
+  private _updateNode(tx: TxUpdateNode): { updates: GraphUpdate[] } {
     const node = this.nodesById.get(tx.nodeId);
     if (!node) {
       throw new Error(`Node with id ${tx.nodeId} does not exist`);
@@ -453,13 +475,15 @@ export class GraphStore {
     const oldProps = node.serialize();
     node.update(tx.nodeProps);
 
-    return [
-      {
-        operation: "updateNode",
-        oldProps,
-        newProps: node.serialize(),
-      },
-    ];
+    return {
+      updates: [
+        {
+          operation: "updateNode",
+          oldProps,
+          newProps: node.serialize(),
+        },
+      ],
+    };
   }
 
   private createNode(props: GraphNodeProps): { node: GraphNode; updates: GraphUpdate[] } {
@@ -860,6 +884,7 @@ export class GraphStore {
     return { object: newObject, relation, updates };
   }
 
+  // TODO: All the transaction logic should be moved to the sync _updateRelation method
   async updateRelation(tx: TxUpdateRelation) {
     const relation = this.relationsById.get(tx.relationId);
     if (!relation) {
@@ -902,7 +927,6 @@ export class GraphStore {
     updates.push(...this._updateRelation(oldProps, newProps));
     this.queueUpdates(updates);
   }
-
   private _updateRelation(oldProps: SerializedRelation, newProps: SerializedRelation): GraphUpdate[] {
     const relation = this.relationsById.get(oldProps.id);
     if (!relation) {
