@@ -1,5 +1,5 @@
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
-import { SyncTask } from "@/app/sync/SyncTask";
+import { condenseSyncTasks, SyncTask } from "@/app/sync/SyncTask";
 import { uuid } from "@/app/util";
 
 export class SyncQueue {
@@ -23,7 +23,6 @@ export class SyncQueue {
       },
       undo: undoFn,
     };
-    this.localTransactions.add(task.data.transactionId);
     this.queue.push(task);
   }
 
@@ -32,8 +31,11 @@ export class SyncQueue {
   }
 
   async process(authFetch: typeof fetch) {
-    let task = this.queue.shift();
+    const tasks = condenseSyncTasks(this.queue);
+    this.queue = [];
+    let task = tasks.shift();
     while (task) {
+      this.localTransactions.add(task.data.transactionId);
       const response = await authFetch(`/api/sync?userId=${this.userId}`, {
         method: "POST",
         headers: {
@@ -43,25 +45,18 @@ export class SyncQueue {
       });
       if (!response.ok) {
         console.error("Sync failed", response);
-        this.undoAllPending();
+        // Revert all pending updates and the current task, moving backwards to ensure that the state is consistent.
+        let lastTask = tasks.pop();
+        while (lastTask) {
+          lastTask.undo();
+          lastTask = tasks.pop();
+        }
         task.undo();
+        // Fetch all data from the server to get back to a consistent state.
         await this.refetchAllData();
         return;
       }
-
-      task = this.queue.shift();
-    }
-  }
-
-  /**
-   * Undo all pending tasks in the queue, moving backwards to ensure that the state is consistent.
-   */
-  undoAllPending() {
-    // TODO: This maybe ends up being a place where we revert to a snapshot of server state rather than manually undoing things ourselves
-    let task = this.queue.pop();
-    while (task) {
-      task.undo();
-      task = this.queue.pop();
+      task = tasks.shift();
     }
   }
 
@@ -70,6 +65,17 @@ export class SyncQueue {
    */
   get pendingUpdates() {
     return this.queue.map((task) => task.data);
+  }
+
+  /**
+   * Undo all pending tasks in the queue, moving backwards to ensure that the state is consistent.
+   */
+  undoAllPending() {
+    let task = this.queue.pop();
+    while (task) {
+      task.undo();
+      task = this.queue.pop();
+    }
   }
 
   /**
