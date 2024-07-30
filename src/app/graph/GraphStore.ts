@@ -331,8 +331,10 @@ export class GraphStore {
           break;
         }
         case "updateRelation": {
-          // Due to the complicated logic in the async .updateRelation() method, we can't use it here
-          throw new Error("Update relation is not supported in combined transactions");
+          // TODO: Due to the complicated logic in the async .updateRelation() method, we shouldn't use it here
+          // TODO: Right now it's kinda dangerous since the updates are queued separately and not in the same order as the transactions
+          await this.updateRelation(tx.transaction);
+          break;
         }
         case "addRelationType": {
           const { relationType, updates } = this.createRelationType(tx.transaction);
