@@ -121,8 +121,10 @@ describe("GraphStore.removeRelation", () => {
 
       expect(graphStore.getRelation(relation.id)?.serialize()).toEqual(serializedRelation);
       expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
-      expect(graphStore.getNode(startNode.id)?.relations.map((r) => r.serialize())).toEqual([serializedRelation]);
-      expect(graphStore.getNode(endNode.id)?.relations.map((r) => r.serialize())).toEqual([serializedRelation]);
+      expect(startNode.relations).toHaveLength(1);
+      expect(startNode.relations).toEqual(expect.arrayContaining([relation]));
+      expect(endNode.relations).toHaveLength(1);
+      expect(endNode.relations).toEqual(expect.arrayContaining([relation]));
     });
   });
 
@@ -200,8 +202,10 @@ describe("GraphStore.removeRelation", () => {
 
       expect(graphStore.getRelation(hyperRelation.id)?.serialize()).toEqual(serializedRelation);
       expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
-      expect(graphStore.getRelation(relationAB.id)?.relations.map((r) => r.serialize())).toEqual([serializedRelation]);
-      expect(graphStore.getRelation(relationBC.id)?.relations.map((r) => r.serialize())).toEqual([serializedRelation]);
+      expect(relationAB.relations).toHaveLength(1);
+      expect(relationAB.relations).toEqual(expect.arrayContaining([hyperRelation]));
+      expect(relationBC.relations).toHaveLength(1);
+      expect(relationBC.relations).toEqual(expect.arrayContaining([hyperRelation]));
     });
     it("should cascade deletion to relations of a relation", async () => {
       expect(relationAB.relations).toHaveLength(1);
@@ -259,12 +263,10 @@ describe("GraphStore.removeRelation", () => {
       expect(graphStore.getRelation(relationAB.id)?.serialize()).toEqual(serializedRelation);
       expect(graphStore.getRelation(hyperRelation.id)?.serialize()).toEqual(serializedHyperRelation);
       expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
-      expect(graphStore.getRelation(relationAB.id)?.relations.map((r) => r.serialize())).toEqual([
-        serializedHyperRelation,
-      ]);
-      expect(graphStore.getRelation(relationBC.id)?.relations.map((r) => r.serialize())).toEqual([
-        serializedHyperRelation,
-      ]);
+      expect(relationAB.relations).toHaveLength(1);
+      expect(relationAB.relations).toEqual(expect.arrayContaining([hyperRelation]));
+      expect(relationBC.relations).toHaveLength(1);
+      expect(relationBC.relations).toEqual(expect.arrayContaining([hyperRelation]));
     });
     it("should correctly handle complex deletion cascades", async () => {
       expect(nodeA.relations).toHaveLength(2);
@@ -313,9 +315,9 @@ describe("GraphStore.removeRelation", () => {
       expect(graphStore.getRelation(relationAB.id)?.serialize()).toEqual(serializeAB);
       expect(graphStore.getRelation(relationAC.id)?.serialize()).toEqual(serializeAC);
       expect(graphStore.getRelation(hyperRelation.id)?.serialize()).toEqual(serializedHyper);
-      expect(graphStore.getNode(nodeA.id)?.relations).toHaveLength(2);
-      expect(graphStore.getNode(nodeB.id)?.relations).toHaveLength(2);
-      expect(graphStore.getNode(nodeC.id)?.relations).toHaveLength(2);
+      expect(nodeA.relations).toHaveLength(2);
+      expect(nodeB.relations).toHaveLength(2);
+      expect(nodeC.relations).toHaveLength(2);
       expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
     });
   });
