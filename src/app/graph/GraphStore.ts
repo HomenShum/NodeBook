@@ -15,6 +15,7 @@ import { SyncQueue } from "@/app/sync/SyncQueue";
 import { SyncData } from "@/app/sync/SyncTask";
 import { uuid } from "@/app/util";
 import logger from "@/lib/logger";
+import { CappedKeywordIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
@@ -25,6 +26,7 @@ import {
   GraphRelationProps,
   GraphRelationPropsWithoutTargets,
   GraphRelationType,
+  isGraphRelationType,
 } from "./GraphRelation";
 import {
   Positioner,
@@ -81,6 +83,8 @@ export class GraphStore {
   authedFetch: typeof fetch;
   user: MewUser;
   syncQueue: SyncQueue;
+
+  cappedKeywordIndex = new CappedKeywordIndex(3);
 
   // TODO: make all properties private
   nodesById: Map<string, GraphNode> = new Map();
@@ -486,7 +490,7 @@ export class GraphStore {
   }
 
   private createNode(props: GraphNodeProps): { node: GraphNode; updates: GraphUpdate[] } {
-    let node;
+    let node: GraphNode | undefined;
 
     try {
       node = new GraphNode(this, {
@@ -499,6 +503,7 @@ export class GraphStore {
       });
 
       this.nodesById.set(node.id, node);
+      this.cappedKeywordIndex.add(node.id, () => node!.text);
 
       const updates: GraphUpdate[] = [
         {
@@ -511,6 +516,7 @@ export class GraphStore {
     } catch (e) {
       if (node) {
         this.nodesById.delete(node.id);
+        this.cappedKeywordIndex.delete(node.id);
       }
       throw e;
     }
@@ -602,9 +608,11 @@ export class GraphStore {
         relationsDeleted.push(deleted);
       });
       this.nodesById.delete(node.id);
+      this.cappedKeywordIndex.delete(node.id);
     } catch (e) {
       if (!this.nodesById.has(node.id)) {
         this.nodesById.set(node.id, node);
+        this.cappedKeywordIndex.add(node.id, () => node.text);
       }
       for (const deletedData of relationsDeleted) {
         this.restoreRelation(deletedData);
@@ -625,22 +633,21 @@ export class GraphStore {
   }
 
   private createRelation(relationProps: GraphRelationProps): { relation: GraphRelation; updates: GraphUpdate[] } {
-    let relation;
+    let relation: GraphRelation | null = null;
     const updates: GraphUpdate[] = [];
 
     try {
+      if (relationProps.id && this.relationsById.has(relationProps.id)) {
+        throw new Error(`Relation with id ${relationProps.id} already exists`);
+      }
+      this.assertExists(relationProps.from, relationProps.to);
+
       relation = new GraphRelation(this, {
         ...relationProps,
         authorId: relationProps.authorId || this.user.id,
       });
-      if (this.relationsById.has(relation.id)) {
-        const relationId = relation.id;
-        relation = null; // So that it's not deleted in the catch block
-        throw new Error(`Relation with id ${relationId} already exists`);
-      }
-
-      this.assertExists(relation.from, relation.to);
       this.relationsById.set(relation.id, relation);
+      this.cappedKeywordIndex.add(relation.id, () => relation!.text);
 
       updates.push({
         operation: "addRelation",
@@ -675,6 +682,7 @@ export class GraphStore {
     } catch (e) {
       if (relation) {
         this.relationsById.delete(relation.id);
+        this.cappedKeywordIndex.delete(relation.id);
         relation.from.allRelationsList.delete(relation.id);
         relation.to.allRelationsList.delete(relation.id);
       }
@@ -738,9 +746,11 @@ export class GraphStore {
 
       // Delete the relation itself
       this.relationsById.delete(relation.id);
+      this.cappedKeywordIndex.delete(relation.id);
     } catch (e) {
       if (!this.relationsById.has(relation.id)) {
         this.relationsById.set(relation.id, relation);
+        this.cappedKeywordIndex.add(relation.id, () => relation.text);
       }
       if (deleted.fromPos) {
         this.getRelationList(relation.from).undoDelete({
@@ -792,6 +802,7 @@ export class GraphStore {
   }: DeletedRelationData) {
     const relation = this.loadSerializedRelation(serializedRelation);
     this.relationsById.set(relation.id, relation);
+    this.cappedKeywordIndex.add(relation.id, () => relation.text);
     if (fromPos) {
       this.getRelationList(relation.from).undoDelete({
         item: relation,
@@ -1243,6 +1254,7 @@ export class GraphStore {
     });
     // TODO: Consider pausing sync when the user is being changed
     this.syncQueue.clear();
+    this.cappedKeywordIndex.clear();
   }
 
   // TODO do we need clear and cleanup?
@@ -1356,12 +1368,12 @@ export class GraphStore {
     return obj.id === this.userRoot.id || obj.id === this.outlineRoot.id || obj.id === this.thoughtstreamRoot.id;
   }
 
-  get nodes(): GraphNode[] {
-    return Array.from(this.nodesById.values());
+  getNodes() {
+    return this.nodesById.values();
   }
 
-  get relations(): GraphRelation[] {
-    return Array.from(this.relationsById.values());
+  getRelations() {
+    return this.relationsById.values();
   }
 
   get relationTypes(): GraphRelationType[] {
@@ -1394,6 +1406,11 @@ export class GraphStore {
 
   getObject(id: string): GraphNode | GraphRelation | undefined {
     return this.getNode(id) || this.getRelation(id);
+  }
+
+  // TODO later graph relation type should be a graph object too, and this method should be merged with getObject
+  getObjectOrType(id: string): GraphNode | GraphRelation | GraphRelationType | undefined {
+    return this.getNode(id) || this.getRelation(id) || this.getRelationType(id);
   }
 
   getRelationType(id: string): GraphRelationType | undefined {
@@ -1484,6 +1501,8 @@ export class GraphStore {
       reverseLabel,
     };
     this.relationTypesById[id] = newRelationType;
+    this.cappedKeywordIndex.add(newRelationType.id, () => newRelationType.label);
+    this.cappedKeywordIndex.add(newRelationType.id, () => newRelationType.reverseLabel);
     const updates: GraphUpdate[] = [
       {
         operation: "addRelationType",
@@ -1503,6 +1522,8 @@ export class GraphStore {
     const oldProps = { ...this.relationTypesById[id] };
     const newProps = { ...oldProps, ...props, version: oldProps.version + 1 };
     this.relationTypesById[id] = newProps;
+    this.cappedKeywordIndex.add(newProps.id, () => newProps.label);
+    this.cappedKeywordIndex.add(newProps.id, () => newProps.reverseLabel);
     const updates: GraphUpdate[] = [
       {
         operation: "updateRelationType",
@@ -1516,7 +1537,7 @@ export class GraphStore {
   deleteRelationType(id: string): GraphUpdate[] {
     const updates: GraphUpdate[] = [];
     // find all relations with this type and set them to a default type
-    for (const rel of this.relations) {
+    for (const rel of this.relationsById.values()) {
       if (rel.relationType.id !== id) continue;
       updates.push(...this.setRelationType(rel, this.relationTypesById.child));
     }
@@ -1525,6 +1546,7 @@ export class GraphStore {
       relationType: { ...this.relationTypesById[id] },
     });
     delete this.relationTypesById[id];
+    this.cappedKeywordIndex.delete(id);
     return updates;
   }
 
@@ -1672,16 +1694,67 @@ export class GraphStore {
     };
   }
 
-  search(query: string): { object: GraphNode; score: number }[] {
-    const procQuery = query.toLowerCase();
-    return Array.from(this.nodesById.values())
-      .filter((node) => node.text.toLocaleLowerCase().includes(procQuery))
-      .map((node) => {
+  search(query: Query): SearchResults {
+    const results: SearchResults = { nodes: [], relations: [], relationTypes: [] };
+    const { text, filters, sort } = query;
+    const procText = text?.toLowerCase();
+    const keywords = procText.split(/\s+/);
+    const include = {
+      nodes: !filters?.types || filters.types.includes("node"),
+      relations: !filters?.types || filters.types.includes("relation"),
+      relationTypes: !filters?.types || filters.types.includes("relationType"),
+    };
+
+    // Use the keyword index to get an initial set of object ids
+    const initialObjectIds = this.cappedKeywordIndex.getIds(procText);
+
+    // Then do a full text search on the results
+    for (const id of initialObjectIds) {
+      const object = this.getObjectOrType(id);
+      if (include.nodes && object instanceof GraphNode) {
+        const node = object;
         const text = node.text.toLocaleLowerCase();
-        return {
-          object: node,
-          score: scoreMatch(text, procQuery),
-        };
-      });
+        if (keywords.every((kw) => text.includes(kw))) {
+          results.nodes.push({ node: object, score: scoreMatch(text, procText) });
+        }
+      } else if (include.relations && object instanceof GraphRelation) {
+        const relation = object;
+        const text = relation.text.toLocaleLowerCase();
+        if (keywords.every((kw) => text.includes(kw))) {
+          results.relations.push({ relation, score: scoreMatch(text, procText) });
+        }
+      } else if (include.relationTypes && isGraphRelationType(object)) {
+        const relationType = object;
+        const label = relationType.label.toLocaleLowerCase();
+        const reverseLabel = relationType.reverseLabel.toLocaleLowerCase();
+        if (keywords.every((kw) => label.includes(kw)) || keywords.every((kw) => reverseLabel.includes(kw))) {
+          results.relationTypes.push({ relationType, score: scoreMatch(text, procText) });
+        }
+      }
+    }
+
+    if (sort?.by === "score") {
+      results.nodes.sort((a, b) => (sort.order === "asc" ? a.score - b.score : b.score - a.score));
+      results.relations.sort((a, b) => (sort.order === "asc" ? a.score - b.score : b.score - a.score));
+      results.relationTypes.sort((a, b) => (sort.order === "asc" ? a.score - b.score : b.score - a.score));
+    }
+    return results;
   }
 }
+
+type Query = {
+  text: string;
+  filters?: {
+    types?: ("node" | "relation" | "relationType")[];
+  };
+  sort?: {
+    by?: "score";
+    order?: "asc" | "desc";
+  };
+};
+
+type SearchResults = {
+  nodes: { node: GraphNode; score: number }[];
+  relations: { relation: GraphRelation; score: number }[];
+  relationTypes: { relationType: GraphRelationType; score: number }[];
+};

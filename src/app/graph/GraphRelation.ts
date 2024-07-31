@@ -16,6 +16,10 @@ export type GraphRelationType = {
   reverseLabel: string; // e.g. authored by
 };
 
+export function isGraphRelationType(obj: any): obj is GraphRelationType {
+  return obj && obj.id && obj.label && obj.reverseLabel;
+}
+
 export type GraphRelationProps = {
   version?: number;
   id?: string;

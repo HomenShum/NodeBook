@@ -1,6 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
+  $getTextContent,
   BLUR_COMMAND,
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_LOW,
@@ -19,7 +20,6 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
-import { isUnlabelledChild } from "@/app/tree/utils";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +45,8 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
   const object = treeNode.object;
   const relation = treeNode.relationWithParent;
   const pathToNodeStr = treeNode.path;
+  const [editedSinceFocused, setEditedSinceFocused] = useState(false);
+  const [textOnFocus, setTextOnFocus] = useState(object.text);
 
   // Track whether the mouse has moved after the dropdown was opened. We only want to
   // set the selection to the mouse position if the mouse was intentionally moved there.
@@ -77,65 +79,46 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
 
   // Filter nodes that match the search
   const objectsMatchingSearch = useMemo<DropdownOption[]>(() => {
-    if (!hasFocus || object.text === "") {
+    const shouldUpdate = hasFocus && editedSinceFocused && object.text !== "";
+    if (!shouldUpdate) {
       return [];
     }
-    const keywords = object.text.split(/\s+/);
-    const nodes: GraphNode[] = graph.nodes
-      .filter(
-        (node) =>
-          node.id !== object.id && keywords.every((keyword) => node.text.toLowerCase().includes(keyword.toLowerCase())),
-      )
-      // Exact matches with `object.text` at the top. Prefix matches with `object.text` next. Substring matches last.
-      .sort((a, b) => {
-        if (a.text === object.text) return -1;
-        if (b.text === object.text) return 1;
-        if (a.text.startsWith(object.text)) return -1;
-        if (b.text.startsWith(object.text)) return 1;
-        return a.text.localeCompare(b.text);
-      });
-    // Filter relations that match the search
-    const relations: GraphRelation[] = graph.relations.filter(
-      (r) =>
-        r.id !== object.id &&
-        r.id !== relation.id &&
-        r.to.id !== object.id && // ignore relations to this object
-        r.from.id !== object.id && // ignore relations from this object
-        !(r.from instanceof GraphNode && r.from.isBundle) && // ignore relations from bundles
-        keywords.every((keyword) => r.text.toLowerCase().includes(keyword.toLowerCase())),
+    const searchText = object.text.toLocaleLowerCase();
+
+    // Filter nodes that match the search
+    let { nodes, relations, relationTypes } = graph.search({ text: searchText, sort: { by: "score" } });
+    // ignore the current object and relation
+    nodes = nodes.filter(({ node }) => node.id !== treeNode.object.id);
+    relations = relations.filter(
+      ({ relation }) => relation.id !== treeNode.object.id && relation.id !== treeNode.relationWithParent.id,
     );
-    // Filter relation types that match the search
-    let relationTypeOptions: DropdownOption[] = [];
-    if (isUnlabelledChild(treeNode) && keywords.length > 0) {
-      graph.relationTypes.forEach((rt) => {
-        if (rt.id === relation.relationType.id) {
-          return;
-        }
-        if (keywords.every((keyword) => rt.label.toLowerCase().includes(keyword.toLowerCase()))) {
-          relationTypeOptions.push({ id: rt.id + "-fwd", object: rt, type: "relationType", isForward: true });
-        }
-        if (keywords.every((keyword) => rt.reverseLabel.toLowerCase().includes(keyword.toLowerCase()))) {
-          relationTypeOptions.push({ id: rt.id + "-rev", object: rt, type: "relationType", isForward: false });
-        }
-      });
-    }
-    const actionOptions: DropdownOption[] = [];
-    // object.relations.length > 1 ? [{ type: "action", id: "create-new-node" }] : [];
+    relationTypes = relationTypes.filter(({ relationType }) => relationType.id !== relation.relationType.id);
+
+    // map to dropdown options
     return [
-      ...relationTypeOptions,
-      ...nodes.map((node) => ({ type: "node" as const, id: node.id, object: node })),
-      ...relations.map((relation) => ({ type: "relation" as const, id: relation.id, object: relation })),
-      ...actionOptions,
+      ...(relationTypes
+        .map(({ relationType }) => {
+          if (relationType.label.toLowerCase().includes(searchText)) {
+            return { id: relationType.id + "-fwd", object: relationType, type: "relationType", isForward: true };
+          }
+          if (relationType.reverseLabel.toLowerCase().includes(searchText)) {
+            return { id: relationType.id + "-rev", object: relationType, type: "relationType", isForward: false };
+          }
+        })
+        .filter(Boolean)
+        .slice(0, 5) as DropdownOption[]),
+      ...nodes.map(({ node }) => ({ type: "node" as const, id: node.id, object: node })).slice(0, 5),
+      ...relations
+        .map(({ relation }) => ({ type: "relation" as const, id: relation.id, object: relation }))
+        .slice(0, 5),
     ];
   }, [
     hasFocus,
+    editedSinceFocused,
     object.text,
-    object.id,
-    graph.nodes,
-    graph.relations,
-    graph.relationTypes,
-    treeNode,
-    relation.id,
+    graph,
+    treeNode.object.id,
+    treeNode.relationWithParent.id,
     relation.relationType.id,
   ]);
 
@@ -209,7 +192,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
 
   // Register keyboard commands for the dropdown
   useEffect(() => {
-    const unsubscribe = mergeRegister(
+    return mergeRegister(
       editor.registerCommand<KeyboardEvent>(
         KEY_ARROW_UP_COMMAND,
         (event) => {
@@ -275,14 +258,22 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
         },
         COMMAND_PRIORITY_NORMAL,
       ),
+      // Track focus and text changes after focus
       editor.registerCommand(
         FOCUS_COMMAND,
         () => {
           setHasFocus(true);
+          setEditedSinceFocused(false);
+          setTextOnFocus(editor.getEditorState().read(() => $getTextContent()));
           return false;
         },
         COMMAND_PRIORITY_LOW,
       ),
+      editor.registerTextContentListener((text) => {
+        if (hasFocus && text !== textOnFocus) {
+          setEditedSinceFocused(true);
+        }
+      }),
       editor.registerCommand(
         BLUR_COMMAND,
         () => {
@@ -294,7 +285,6 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
         COMMAND_PRIORITY_LOW,
       ),
     );
-    return unsubscribe;
   }, [
     editor,
     dropdownOpen,
@@ -305,6 +295,8 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
     setSelected,
     onSelect,
     findSelectionIdx,
+    hasFocus,
+    textOnFocus,
   ]);
 
   // Open the dropdown when the text content changes while the editor is focused

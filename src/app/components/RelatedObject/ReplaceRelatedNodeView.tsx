@@ -4,7 +4,6 @@ import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { sortByPrefixMatch } from "@/app/util";
 
 import styles from "./ReplaceRelatedNodeView.module.css";
 
@@ -16,26 +15,17 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
   const ref = useRef<HTMLDivElement>(null);
   const { setViewType } = useTreeNode();
   const { optionsFlat: options, optionsGrouped } = useMemo(() => {
-    const keywords = filter.split(/\s+/);
-    const nodeOptions = graph.nodes.filter(
-      (node) =>
-        node.id !== currentObject.id &&
-        keywords.every((keyword) => node.text.toLowerCase().includes(keyword.toLowerCase())),
-    );
-    sortByPrefixMatch(nodeOptions, filter);
-
-    const relationOptions = graph.relations.filter(
-      (r) =>
-        r.id !== currentObject.id &&
-        r.id !== relation.id &&
-        keywords.every((keyword) => r.text.toLowerCase().includes(keyword.toLowerCase())),
-    );
-    sortByPrefixMatch(relationOptions, filter);
+    let { nodes, relations } = graph.search({ text: filter, sort: { by: "score" } });
+    const nodeOptions = nodes.map(({ node }) => node).filter((n) => n.id !== currentObject.id);
+    const relationOptions = relations
+      .map(({ relation }) => relation)
+      .filter((r) => r.id !== relation?.id && r.id !== currentObject.id);
 
     const optionsGrouped: {
       type: "nodes" | "relations";
       options: { index: number; object: GraphObject; text: string }[];
     }[] = [];
+
     let index = 0;
     if (nodeOptions.length > 0) {
       optionsGrouped.push({

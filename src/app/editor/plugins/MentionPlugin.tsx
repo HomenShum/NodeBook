@@ -111,10 +111,9 @@ export function MentionPlugin({
             } else {
               // Otherwise, we need to search the graph
               const matchingNodes = graphStore
-                .search(queryString)
-                .filter((a) => a.object.id !== treeNode.object.id)
-                .sort((a, b) => b.score - a.score)
-                .map(({ object }) => object);
+                .search({ text: queryString, filters: { types: ["node"] }, sort: { by: "score" } })
+                .nodes.filter((a) => a.node.id !== treeNode.object.id)
+                .map(({ node }) => node);
               return [
                 ...matchingNodes.map((node) => new MentionTypeaheadOption(node)),
                 new MentionTypeaheadOption(queryString),
