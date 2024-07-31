@@ -12,6 +12,7 @@ declare const styles: {
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
   readonly "Pill": string;
+  readonly "PillContainer": string;
   readonly "PinIcon": string;
   readonly "RelatedObjectActions": string;
   readonly "RelatedObjectBulletContainer": string;

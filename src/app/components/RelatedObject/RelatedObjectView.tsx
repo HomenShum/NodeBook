@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import styles from "@/app/components/RelatedObject/RelatedObjectView.module.css";
+import { Button } from "@/app/components/UIPrimitives/Button";
 import { NodeReferenceEditor } from "@/app/editor/NodeReferenceEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
@@ -240,7 +241,6 @@ const TreeNodeReference = observer(({ treeNode }: { treeNode: DescendantTreeNode
   const tree = useTree();
   const graph = useGraphStore();
   const [isEditing, setIsEditing] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   // Update the input focus to match the tree selection
 
@@ -274,28 +274,21 @@ const TreeNodeReference = observer(({ treeNode }: { treeNode: DescendantTreeNode
           <NodeReferenceEditor treeNode={treeNode} onClose={focusInput} />
         </div>
       ) : (
-        <div style={{ display: "flex" }}>
-          <div
-            className={styles.Pill}
-            style={{ display: "flex" }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
+        <div className={styles.PillContainer}>
+          <div className={styles.Pill}>
             <div onClick={() => tree.togglePathExpanded(treeNode.path)}>{treeNode.object.text}</div>
-            {isHovered && (
-              <button
-                className={styles.EditButton}
-                onClick={() => {
-                  setIsEditing(true);
-                  setIsHovered(false);
-                }}
-              >
-                <Edit2 size={16} />
-              </button>
-            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className={styles.EditButton}
+              onClick={() => {
+                setIsEditing(true);
+              }}
+            >
+              <Edit2 size={16} />
+            </Button>
           </div>
           <input
-            // Update the tree selection to match the input focus
             onFocus={() => tree.setFocusedNode(treeNode.path)}
             onBlur={() => tree.isNodeFocused(treeNode.id) && tree.setFocusedNode(null)}
             onKeyDown={async (e) => {

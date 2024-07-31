@@ -127,24 +127,31 @@ Node
 .RelatedObjectNodeContent {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
   width: 100%;
   gap: 4px;
   align-items: baseline;
 }
 
 .TreeNodeReference {
+  width: 100%;
   display: flex;
-  flex: 1;
+}
+
+.TreeNodeReference .PillContainer {
+  display: flex;
+  width: 100%;
+  position: relative;
 }
 
 .TreeNodeReference .Pill {
   position: relative;
   border-radius: 4px;
-  padding: 0 2px;
-  background-color: var(--teal-a3);
-  color: var(--teal-11);
+  padding: 0 4px;
+  height: calc(100% - 1px);
+  border: 0.5px solid var(--teal-6);
+  color: var(--gray-12);
   cursor: pointer;
+  margin: 0;
 }
 
 .TreeNodeReference .EditButton {
@@ -152,11 +159,20 @@ Node
   right: 0;
   top: 0;
   transform: translateX(100%);
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.TreeNodeReference .PillContainer:hover .EditButton {
+  opacity: 1;
 }
 
 .TreeNodeReference .Pill.Editor {
-  background-color: var(--gray-2);
-  border: 2px solid var(--gray-4);
+  background-color: var(--teal-2);
+  outline: 1px solid var(--teal-6);
+  display: flex;
+  align-items: center;
+  cursor: text;
 }
 
 .TreeNodeReference input {

@@ -11,7 +11,7 @@
 
 .MentionNode {
   color: "#0b0b79";
-  text-decoration: underline #cecece;
+  text-decoration: underline var(--gray-3);
   color: var(--teal-11);
   cursor: pointer;
 }
