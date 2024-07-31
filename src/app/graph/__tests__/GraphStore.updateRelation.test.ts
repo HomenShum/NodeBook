@@ -3,7 +3,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 
-import { MIN_NUM_RELATIONS } from "./helpers";
+import { getRelationPosition, MIN_NUM_RELATIONS } from "./helpers";
 
 describe("GraphStore.updateRelation", () => {
   let graphStore: GraphStore;
@@ -218,5 +218,39 @@ describe("GraphStore.updateRelation", () => {
     expect(relTypeAndDir?.relationType.label).toBe("test");
     expect(relTypeAndDir?.direction).toBe("forward");
     expect(relation.relationType).toBe(relTypeAndDir?.relationType);
+  });
+
+  it("should be able to swap the direction of a relation while preserving the position", async () => {
+    const oldFromPosition = getRelationPosition(relation, true);
+    const oldToPosition = getRelationPosition(relation, false);
+
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      reverse: true,
+    });
+
+    const newFromPosition = getRelationPosition(relation, true);
+    const newToPosition = getRelationPosition(relation, false);
+
+    expect(relation.from).toBe(endNode);
+    expect(relation.to).toBe(startNode);
+    expect(newFromPosition).toBe(oldToPosition);
+    expect(newToPosition).toBe(oldFromPosition);
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      reverse: true,
+    });
+
+    const finalFromPosition = getRelationPosition(relation, true);
+    const finalToPosition = getRelationPosition(relation, false);
+
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+    expect(finalFromPosition).toBe(oldFromPosition);
+    expect(finalToPosition).toBe(oldToPosition);
   });
 });

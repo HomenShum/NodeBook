@@ -89,6 +89,12 @@ export class GraphRelation extends GraphObject implements Serializable {
     if (props.version && props.version !== this.version) {
       this.version = props.version;
     }
+    if (props.from && props.to && this.from.id === props.to.id && this.to.id === props.from.id) {
+      const newFromPosition = this.to.relationsSortedByPosition.findIndex((r) => r.id === this.id);
+      const newToPosition = this.from.relationsSortedByPosition.findIndex((r) => r.id === this.id) - 1;
+      this.setFrom(props.from, newFromPosition);
+      this.setTo(props.to, newToPosition);
+    }
     if (props.from && props.from !== this.from) {
       this.setFrom(props.from);
     }

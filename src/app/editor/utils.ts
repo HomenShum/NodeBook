@@ -13,7 +13,8 @@ import {
 } from "lexical";
 
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
-import { GraphStore } from "@/app/graph/GraphStore";
+import { GraphRelationType } from "@/app/graph/GraphRelation";
+import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
 import { $createMentionNode, $isMentionNode, MentionNode } from "@/app/graph/MentionNode";
 
 type LexicalEditorPosition = { index: number; offset: number };
@@ -102,6 +103,7 @@ export function $getText({ from, to }: { from?: LexicalEditorPosition; to?: Lexi
  */
 export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPosition): Chip[] {
   const nodes = $getNodes();
+  if (!nodes.length) return [];
   if (!from) {
     return nodes.map(nodeToChip);
   }
@@ -210,6 +212,11 @@ export function nodeToChip(node: LexicalNode): Chip {
     throw new Error("Unsupported node type");
   }
 }
-/**
- * Returns the content between two positions in the editor as a list of chips.
- */
+
+export function matchDefaultRelationType(text: string): GraphRelationType | undefined {
+  for (const type of Object.values(defaultRelationTypes)) {
+    if (type.label === text) {
+      return type;
+    }
+  }
+}

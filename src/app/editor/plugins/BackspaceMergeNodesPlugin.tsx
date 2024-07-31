@@ -24,7 +24,9 @@ export const BackspaceMergeNodesPlugin = () => {
     return editor.registerCommand(
       KEY_BACKSPACE_COMMAND,
       (event) => {
-        if (!graphStore) return false;
+        // It only should happen for the child relation since there is different
+        // logic at work for the other relation types in RelationPlugin
+        if (!graphStore || relation.relationType.id !== defaultRelationTypes.child.id) return false;
         event.preventDefault();
         if (object.text === "") {
           if (treeNode.relationWithParent) {

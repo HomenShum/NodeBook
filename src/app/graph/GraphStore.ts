@@ -46,7 +46,7 @@ export const defaultRelationTypes: Record<string, GraphRelationType> = {
   child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent" },
   relatedTo: { version: 1, id: "relatedTo", authorId: TEMP_USER_ID, label: "relates to", reverseLabel: "relates to" },
   author: { version: 1, id: "author", authorId: TEMP_USER_ID, label: "author", reverseLabel: "authored" },
-  empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "" },
+  empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "is [empty] of" },
 };
 
 const USER_ROOT_ID = "user-root-id";
@@ -901,7 +901,11 @@ export class GraphStore {
       }
     }
 
-    if (tx.reverse || (tx.reverse === undefined && relTypeLabelImpliesReverse)) {
+    if (
+      tx.reverse ||
+      (tx.reverse === undefined && relTypeLabelImpliesReverse) ||
+      tx.relationProps?.isInitiallyReversed
+    ) {
       newProps.fromId = oldProps.toId;
       newProps.toId = oldProps.fromId;
     }

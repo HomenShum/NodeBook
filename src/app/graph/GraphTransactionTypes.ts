@@ -45,6 +45,7 @@ export type TxUpdateRelation = {
     isPrivate?: boolean;
     relationType?: GraphRelationType;
     relationTypeLabel?: string;
+    isInitiallyReversed?: boolean;
   };
   reverse?: boolean;
 };
