@@ -1,8 +1,8 @@
-.RelationComboboxLabel {
+/* increasing specificity here to everride Button primitive but maybe I should make a custom button variant for this one */
+.RelationComboboxLabel.RelationComboboxLabel {
   border: none;
   z-index: 10;
-  font-size: var(--font-size-md);
-  height: 16px;
+  font-size: 16px;
   padding: 0;
   margin: 0;
   color: var(--gray-9);
@@ -26,6 +26,7 @@
   outline-offset: 2px;
   width: 100%;
   background-color: var(--teal-1);
+  color: var(--teal-11);
 }
 
 .RelationComboboxGroup {
@@ -33,6 +34,7 @@
   max-height: 256px;
   padding-top: 4px;
 }
+
 .RelationComboboxGroup::-webkit-scrollbar {
   display: none;
 }
@@ -51,6 +53,7 @@
   height: 32px;
   border-radius: 4px;
   cursor: pointer;
+  color: var(--gray-11);
 }
 
 .Selected {

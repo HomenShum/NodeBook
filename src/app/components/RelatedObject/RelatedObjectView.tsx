@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
-import styles from "@/app/components/RelatedObject/RelatedObjectView.module.css";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
@@ -23,6 +22,8 @@ import { RelatedObjectMenu } from "./RelatedObjectMenu";
 import { RelationCombobox } from "./RelationCombobox";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
 import Toggle from "./Toggle";
+
+import styles from "./RelatedObjectView.module.css";
 
 export const RelatedObjectView = observer(
   ({ treeNode, showBullet = true }: { treeNode: DescendantTreeNode; showBullet?: boolean }) => {

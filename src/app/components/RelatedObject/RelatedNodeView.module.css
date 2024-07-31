@@ -1,0 +1,79 @@
+.Container {
+  display: flex;
+  gap: 5px;
+  align-items: flex-start;
+  flex: 1 1 0%;
+  letter-spacing: -0.02rem;
+}
+
+.ColumnContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0%;
+}
+
+.FlexContainer {
+  display: flex;
+  min-width: 64px;
+}
+
+.TextContent {
+  font-style: italic;
+  color: inherit;
+}
+
+/* Reference */
+
+.TreeNodeReference {
+  width: 100%;
+  display: flex;
+}
+
+.TreeNodeReference .PillContainer {
+  display: flex;
+  width: 100%;
+  position: relative;
+}
+
+.TreeNodeReference .Pill {
+  position: relative;
+  border-radius: 4px;
+  padding: 0 4px;
+  height: calc(100% - 2px);
+  border: 0.5px solid var(--teal-6);
+  color: var(--gray-12);
+  cursor: pointer;
+  margin: 0;
+}
+
+.TreeNodeReference .EditButton {
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: translateX(100%);
+  visibility: hidden;
+  opacity: 0.5;
+  transition: opacity 0.1s ease-in-out, visibility 0.1s ease-in-out;
+}
+
+.TreeNodeReference .PillContainer:hover .EditButton {
+  opacity: 0.5;
+  visibility: visible;
+}
+
+.TreeNodeReference .PillContainer:hover .EditButton:hover {
+  opacity: 1;
+}
+
+.TreeNodeReference .Pill.Editor {
+  background-color: var(--teal-2);
+  outline: 1px solid var(--teal-6);
+  cursor: text;
+}
+
+.TreeNodeReference input {
+  flex: 1;
+  background: none;
+  outline: none;
+  border: none;
+}

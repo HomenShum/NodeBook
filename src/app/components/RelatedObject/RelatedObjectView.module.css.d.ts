@@ -7,12 +7,8 @@ declare const styles: {
   readonly "DotInsidePublic": string;
   readonly "DotOutsidePrivate": string;
   readonly "DotOutsidePublic": string;
-  readonly "EditButton": string;
-  readonly "Editor": string;
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
-  readonly "Pill": string;
-  readonly "PillContainer": string;
   readonly "PinIcon": string;
   readonly "RelatedObjectActions": string;
   readonly "RelatedObjectBulletContainer": string;
@@ -27,7 +23,6 @@ declare const styles: {
   readonly "RelationCounter": string;
   readonly "RelationHoverCard": string;
   readonly "Selected": string;
-  readonly "TreeNodeReference": string;
 };
 export = styles;
 

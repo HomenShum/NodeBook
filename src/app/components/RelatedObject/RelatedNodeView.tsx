@@ -3,20 +3,20 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
+import { Button } from "@/app/components/UIPrimitives/Button";
 import { NodeContentEditor } from "@/app/editor/NodeContentEditor";
 import { NodeReferenceEditor } from "@/app/editor/NodeReferenceEditor";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
 
-import sEditor from "./RelatedObjectEditor.module.css";
-import styles from "./RelatedObjectView.module.css";
+import styles from "./RelatedNodeView.module.css";
 
 export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
   return (
-    <div className={sEditor.Container}>
-      <div className={sEditor.ColumnContainer}>
-        <div className={sEditor.FlexContainer}>
+    <div className={styles.Container}>
+      <div className={styles.ColumnContainer}>
+        <div className={styles.FlexContainer}>
           {treeNode.object.isLocal ? (
             <NodeContentEditor treeNode={treeNode} />
           ) : (
@@ -37,7 +37,6 @@ const NodeReferenceView = observer(({ treeNode }: { treeNode: DescendantTreeNode
   const inputRef = useRef<HTMLInputElement>(null);
   const tree = useTree();
   const [isEditing, setIsEditing] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   // Refocus the input when we finish editing
   useEffect(() => {
@@ -56,25 +55,19 @@ const NodeReferenceView = observer(({ treeNode }: { treeNode: DescendantTreeNode
           <NodeReferenceEditor treeNode={treeNode} onClose={focusInput} />
         </div>
       ) : (
-        <div style={{ display: "flex" }}>
-          <div
-            className={styles.Pill}
-            style={{ display: "flex" }}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
+        <div className={styles.PillContainer}>
+          <div className={styles.Pill}>
             <div onClick={() => tree.togglePathExpanded(treeNode.path)}>{treeNode.object.text}</div>
-            {isHovered && (
-              <button
-                className={styles.EditButton}
-                onClick={() => {
-                  setIsEditing(true);
-                  setIsHovered(false);
-                }}
-              >
-                <Edit2 size={16} />
-              </button>
-            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className={styles.EditButton}
+              onClick={() => {
+                setIsEditing(true);
+              }}
+            >
+              <Edit2 size={14} />
+            </Button>
           </div>
           <TreeNodeInputSuffix treeNode={treeNode} />
         </div>
