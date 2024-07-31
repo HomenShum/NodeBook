@@ -32,6 +32,10 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
   const [settingsStore, setSettingsStore] = useState<SettingsStore>(new SettingsStore());
   const [viewStore, setViewStore] = useState<ViewStore>(new ViewStore(settingsStore, graphStore));
   const [renderController, setRenderController] = useState<RenderController>(new RenderController());
+  // expose stores to window for debugging
+  if (env.env !== "production" && typeof window !== "undefined") {
+    window.mew = { env, toJS, graphStore, viewStore, renderController, getDependencyTree, getObserverTree };
+  }
 
   // when auth changes, clean up current stores and setup up new ones
   useEffect(() => {

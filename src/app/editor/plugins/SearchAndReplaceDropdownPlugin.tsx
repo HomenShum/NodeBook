@@ -20,6 +20,7 @@ import { GraphRelation, GraphRelationType } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { isUnlabelledChild } from "@/app/tree/utils";
+import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 import styles from "./SearchAndReplaceDropdownPlugin.module.css";
@@ -154,26 +155,54 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
 
   const onSelect = useCallback(
     async (option: DropdownOption) => {
-      if (option.type === "relationType") {
-        // update the relation type of the current relation
-        await graph.updateRelation({
-          relationId: relation.id,
-          relationProps: { relationType: option.object },
-          reverse: !option.isForward,
-        });
-        if (object instanceof GraphNode) {
-          graph.updateNode({ nodeId: object.id, nodeProps: { content: "" } });
-          tree.setFocusedNode(pathToNodeStr);
+      try {
+        switch (option.type) {
+          case "relationType": {
+            // update the relation type of the current relation
+            await graph.updateRelation({
+              relationId: relation.id,
+              relationProps: { relationType: option.object },
+              reverse: !option.isForward,
+            });
+            if (object instanceof GraphNode) {
+              graph.updateNode({ nodeId: object.id, nodeProps: { content: "" } });
+              tree.setFocusedNode(pathToNodeStr);
+            }
+            break;
+          }
+          case "action": {
+            switch (option.id) {
+              case "create-new-node": {
+                const newNode = await graph.addNode({ nodeProps: { content: object.text } });
+                await treeNode.setObject(newNode);
+                tree.setFocusedNode(treeNode.path);
+                break;
+              }
+              default: {
+                option satisfies never;
+              }
+            }
+          }
+          case "node": {
+            const newObject = graph.getNodeOrThrow(option.id);
+            await treeNode.setObject(newObject);
+            tree.setFocusedNode(treeNode.path);
+            break;
+          }
+          case "relation": {
+            const newObject = graph.getRelationOrThrow(option.id);
+            await treeNode.setObject(newObject);
+            tree.setFocusedNode(treeNode.path);
+            break;
+          }
+          default:
+            option satisfies never;
         }
-      } else {
-        const needNewNode = option.type === "action" && option.id === "create-new-node";
-        const newObject = needNewNode
-          ? await graph.addNode({ nodeProps: { content: object.text } })
-          : graph.getNodeOrThrow(option.id);
-        await treeNode.setObject(newObject);
-        tree.setFocusedNode(treeNode.path);
+      } catch (e) {
+        logger.error("Error selecting dropdown option", e);
+      } finally {
+        closeDropdown();
       }
-      closeDropdown();
     },
     [closeDropdown, graph, relation, object, tree, pathToNodeStr, treeNode],
   );

@@ -1418,6 +1418,14 @@ export class GraphStore {
     return node;
   }
 
+  getRelationOrThrow(id: string): GraphRelation {
+    const relation = this.getRelation(id);
+    if (!relation) {
+      throw new Error(`Relation with id ${id} does not exist`);
+    }
+    return relation;
+  }
+
   getRelation(id: string): GraphRelation | undefined {
     return this.relationsById.get(id);
   }

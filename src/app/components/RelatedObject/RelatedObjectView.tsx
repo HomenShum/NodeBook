@@ -1,13 +1,11 @@
-import { Circle, Dot, Edit2, GlobeIcon } from "lucide-react";
-import { autorun } from "mobx";
+import { Circle, Dot, GlobeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import styles from "@/app/components/RelatedObject/RelatedObjectView.module.css";
-import { Button } from "@/app/components/UIPrimitives/Button";
-import { NodeReferenceEditor } from "@/app/editor/NodeReferenceEditor";
+import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
@@ -17,10 +15,10 @@ import { createRouteUrl, ViewType } from "@/app/view/ViewType";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
+import { RelatedNodeView } from "./RelatedNodeView";
 import { RelatedObjectChildren } from "./RelatedObjectChildren";
 import { RelatedObjectViewType, TreeNodeProvider, useTreeNode } from "./RelatedObjectContext";
 import { RelatedObjectDetails } from "./RelatedObjectDetails";
-import { RelatedObjectEditor } from "./RelatedObjectEditor";
 import { RelatedObjectMenu } from "./RelatedObjectMenu";
 import { RelationCombobox } from "./RelationCombobox";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
@@ -103,10 +101,14 @@ const Content = observer(() => {
           )}
           {viewType === "replace" ? (
             <ReplaceRelatedNodeView treeNode={treeNode} />
-          ) : treeNode.object.isLocal ? (
-            <RelatedObjectEditor treeNode={treeNode} />
+          ) : treeNode.object.objectType === "node" ? (
+            <RelatedNodeView treeNode={treeNode} />
+          ) : treeNode.object.objectType === "relation" ? (
+            <RelatedRelationView treeNode={treeNode} />
+          ) : treeNode.object.objectType === "placeholder" ? (
+            <span>TODO never</span>
           ) : (
-            <TreeNodeReference treeNode={treeNode} />
+            <>{treeNode.object.objectType satisfies never}</>
           )}
         </div>
         {settingsStore.showNodeDetails && viewType !== "replace" && (
@@ -230,85 +232,3 @@ function getTextWidth(text: string, font: string) {
   const metrics = context.measureText(text);
   return metrics.width;
 }
-
-/**
- * Displays the node as a non-editable reference pill. The user can place the selection
- * at the end though, so they can add a sibling below it. They can also press backspace
- * to delete the referenced node and replace it with a new one.
- */
-const TreeNodeReference = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const tree = useTree();
-  const graph = useGraphStore();
-  const [isEditing, setIsEditing] = useState(false);
-
-  // Update the input focus to match the tree selection
-
-  useEffect(() => {
-    return autorun(() => {
-      if (tree.isNodeFocused(treeNode.id)) {
-        inputRef.current?.focus();
-      } else if (tree.selection?.type === "node" && inputRef.current?.contains(document.activeElement)) {
-        inputRef.current?.blur();
-      }
-    });
-  }, [tree, treeNode.id]);
-
-  // Refocus the input when we finish editing
-
-  useEffect(() => {
-    console.log("useEffect", { isEditing, focused: tree.isNodeFocused(treeNode.id) });
-    if (!isEditing && tree.isNodeFocused(treeNode.id)) {
-      inputRef.current?.focus();
-    }
-  }, [isEditing, tree, treeNode.id]);
-
-  const focusInput = useCallback(() => {
-    tree.setFocusedNode(treeNode.id);
-  }, [tree, treeNode.id]);
-
-  return (
-    <div className={styles.TreeNodeReference} onBlur={() => setIsEditing(false)}>
-      {isEditing ? (
-        <div className={cn(styles.Pill, styles.Editor)}>
-          <NodeReferenceEditor treeNode={treeNode} onClose={focusInput} />
-        </div>
-      ) : (
-        <div className={styles.PillContainer}>
-          <div className={styles.Pill}>
-            <div onClick={() => tree.togglePathExpanded(treeNode.path)}>{treeNode.object.text}</div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className={styles.EditButton}
-              onClick={() => {
-                setIsEditing(true);
-              }}
-            >
-              <Edit2 size={16} />
-            </Button>
-          </div>
-          <input
-            onFocus={() => tree.setFocusedNode(treeNode.path)}
-            onBlur={() => tree.isNodeFocused(treeNode.id) && tree.setFocusedNode(null)}
-            onKeyDown={async (e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                const path = await treeNode.parent.createChild({ after: treeNode });
-                tree.setFocusedNode(path);
-              } else if (e.key === "Backspace") {
-                e.preventDefault();
-                const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
-                await treeNode.setObject(node);
-              }
-            }}
-            ref={inputRef}
-            type="text"
-            value=""
-            onChange={() => {}}
-          />
-        </div>
-      )}
-    </div>
-  );
-});
