@@ -51,7 +51,7 @@ export const DevTools = observer(() => {
   };
 
   return (
-    <DataDialog title="Dev Tools" description="Manage App settings" modalType="devTools">
+    <DataDialog title="Settings" description="" modalType="devTools">
       <div className={styles.SettingsGroup}>
         <label className={styles.LabelSetting}>
           <input
@@ -159,6 +159,13 @@ export const DevTools = observer(() => {
         </div>
 
         <hr style={{ border: ".5px solid var(--gray-6)" }} />
+        <p>
+          <span>Email:</span> {user.email}
+        </p>
+        <p>
+          <span>User ID:</span> {user.id}
+        </p>
+
         <Button
           size="default"
           variant="default"
