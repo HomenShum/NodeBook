@@ -157,4 +157,8 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
       this.map.set(item.item.id, item);
     });
   }
+
+  clear() {
+    this.map.clear();
+  }
 }
