@@ -1,6 +1,6 @@
 "use client";
 import { observer } from "mobx-react-lite";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { LoginScreen } from "@/app/auth/LoginScreen";
 import { useAuth } from "@/app/auth/useAuth";
@@ -9,11 +9,8 @@ import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useRenderController } from "@/app/render/useRenderController";
-import { cn } from "@/lib/utils";
 
 import { useLoading } from "./StoresProvider";
-import { DevTools } from "./components/dev/DevTools";
-import { SidebarOutlines } from "./components/dev/SidebarOutlines";
 
 import styles from "./app.module.css";
 
@@ -33,6 +30,15 @@ export default observer(
     const renderController = useRenderController();
     useKeyboardShortcuts();
 
+    useEffect(() => {
+      const htmlElement = document.documentElement;
+      if (renderController.isDarkMode) {
+        htmlElement.classList.add("dark");
+      } else {
+        htmlElement.classList.remove("dark");
+      }
+    }, [renderController.isDarkMode]);
+
     if (auth && auth.error) {
       return (
         <div>
@@ -48,7 +54,7 @@ export default observer(
       return <div>Loading...</div>;
     } else {
       return (
-        <div className={cn(styles.App, renderController.isDarkMode && "dark")}>
+        <div className={styles.App}>
           <div ref={appContainerRef} className={styles.AppContainer}>
             <ResizableSidebar isOpen={renderController.leftSidebarOpen} onResizeStateChange={setIsResizing} />
             <div className={styles.Container}>
@@ -60,14 +66,14 @@ export default observer(
               >
                 <SidebarIcon />
               </Button>
-              <Button
+              {/* <Button
                 className={styles.RightSidebarToggle}
                 variant="ghost"
                 size="icon"
                 onClick={() => renderController.toggleRightSidebar()}
               >
                 <SidebarIcon />
-              </Button>
+              </Button> */}
               <div className={styles.MainContainer}>
                 <main
                   className={`${styles.Main} ${renderController.leftSidebarOpen ? styles.ShiftMain : ""} ${
@@ -77,12 +83,12 @@ export default observer(
                 >
                   {children}
                 </main>
-                {renderController.rightSidebarOpen && (
+                {/* {renderController.rightSidebarOpen && (
                   <aside className={styles.DevToolsSidebar}>
                     <SidebarOutlines />
                     <DevTools />
                   </aside>
-                )}
+                )} */}
               </div>
             </div>
           </div>

@@ -129,33 +129,36 @@ export const DevTools = observer(() => {
           <label>Search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />
         </div>
-        <hr />
-        <Button size="default" variant="default" onClick={handleOpenImportData}>
-          Import Data
-        </Button>
-        <Button
-          size="default"
-          variant="accent"
-          onClick={() => {
-            // Export as JSON logic
-            const blob = new Blob([JSON.stringify(graphStore.serialize())], { type: "application/json" });
-            // Create a temporary URL for the Blob
-            const url = URL.createObjectURL(blob);
-            // Create a link element and trigger the download
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "data.json";
-            link.click();
-            // Clean up the temporary URL
-            URL.revokeObjectURL(url);
-          }}
-        >
-          Export as JSON
-        </Button>
-        <Button size="default" variant="destructive" onClick={() => renderController.setActiveModal("clearData")}>
-          Clear all data
-        </Button>
-        <hr />
+        <hr style={{ border: ".5px solid var(--gray-6)" }} />
+        <div style={{ display: "flex", gap: 12 }}>
+          <Button size="default" variant="default" onClick={handleOpenImportData}>
+            Import Data
+          </Button>
+          <Button
+            size="default"
+            variant="accent"
+            onClick={() => {
+              // Export as JSON logic
+              const blob = new Blob([JSON.stringify(graphStore.serialize())], { type: "application/json" });
+              // Create a temporary URL for the Blob
+              const url = URL.createObjectURL(blob);
+              // Create a link element and trigger the download
+              const link = document.createElement("a");
+              link.href = url;
+              link.download = "data.json";
+              link.click();
+              // Clean up the temporary URL
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export as JSON
+          </Button>
+          <Button size="default" variant="destructive" onClick={() => renderController.setActiveModal("clearData")}>
+            Clear all data
+          </Button>
+        </div>
+
+        <hr style={{ border: ".5px solid var(--gray-6)" }} />
         <Button
           size="default"
           variant="default"

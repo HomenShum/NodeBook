@@ -10,18 +10,21 @@
   font-size: var(--font-size-h3);
   font-weight: bold;
   margin-bottom: 8px;
+  color: var(--gray-11);
 }
 
 .SettingsGroup {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  color: var(--gray-11);
 }
 
 .LabelSetting {
   display: flex;
   gap: 12px;
   align-items: baseline;
+  color: var(--gray-11);
 }
 
 .SearchReplaceContainer {
