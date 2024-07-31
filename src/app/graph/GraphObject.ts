@@ -86,7 +86,8 @@ export abstract class GraphObject {
     }
     // As soon as you have more than one relation pointing to you, you're global
     const labelledRelations = this.relations.filter((r) => r.isLabelled()).length;
-    if (labelledRelations > 1) {
+    const unlablledRelationsTo = this.relations.filter((r) => r.to.id === this.id && !r.isLabelled()).length;
+    if (labelledRelations > 1 || unlablledRelationsTo > 1) {
       return "global";
     }
 
