@@ -19,4 +19,5 @@ export class PlaceholderGraphObject extends GraphObject {
   }
   objectType = "placeholder" as const;
   text = "PLACEHOLDER";
+  searchText = "PLACEHOLDER";
 }

@@ -506,7 +506,7 @@ export class GraphStore {
       });
 
       this.nodesById.set(node.id, node);
-      this.cappedKeywordIndex.add(node.id, () => node!.text);
+      this.cappedKeywordIndex.add(node.id, () => node!.searchText);
       this.relationsByNodeId.set(node.id, new FractionalPositionedList());
       this.pinnedRelationsByNodeId.set(node.id, new FractionalPositionedList());
 
@@ -663,7 +663,7 @@ export class GraphStore {
         authorId: relationProps.authorId || this.user.id,
       });
       this.relationsById.set(relation.id, relation);
-      this.cappedKeywordIndex.add(relation.id, () => relation!.text);
+      this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
       this.relationsByNodeId.set(relation.id, new FractionalPositionedList());
       this.pinnedRelationsByNodeId.set(relation.id, new FractionalPositionedList());
 
@@ -1737,7 +1737,7 @@ export class GraphStore {
   search(query: Query): SearchResults {
     const results: SearchResults = { nodes: [], relations: [], relationTypes: [] };
     const { text, filters, sort } = query;
-    const procText = text?.toLowerCase();
+    const procText = text?.toLowerCase().trim();
     const keywords = procText.split(/\s+/);
     const include = {
       nodes: !filters?.types || filters.types.includes("node"),

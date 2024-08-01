@@ -120,6 +120,14 @@ describe("CappedKeywordIndex", () => {
     expect(index.getIds("wor")).toEqual(["1"]); // still matches due to prefix
   });
 
+  test("whitespace around query", () => {
+    const obj = observable({ text: "hello world" });
+    index.add("1", () => obj.text);
+
+    expect(index.getIds(" hello ")).toEqual(["1"]);
+    expect(index.getIds("  hello  world  ")).toEqual(["1"]);
+  });
+
   test("empty query", () => {
     const obj = observable({ text: "hello world" });
     index.add("1", () => obj.text);

@@ -117,6 +117,12 @@ export class GraphRelation extends GraphObject implements Serializable {
     return `[(${this.from.text}) -(${this.relationType.label})-> (${this.to.text})]`;
   }
 
+  get searchText(): string {
+    return [this.from.searchText, this.relationType.label, this.relationType.reverseLabel, this.to.searchText].join(
+      " ",
+    );
+  }
+
   setType(type: GraphRelationType) {
     this.relationType = type;
   }

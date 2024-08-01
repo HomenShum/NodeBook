@@ -130,6 +130,10 @@ export class GraphNode extends GraphObject implements Serializable {
       .join("");
   }
 
+  get searchText(): string {
+    return this.text;
+  }
+
   toString() {
     return `Node(${this.id.slice(0, 8)}: ${this.text.slice(0, 8)})`;
   }

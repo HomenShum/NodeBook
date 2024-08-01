@@ -11,6 +11,7 @@ export abstract class GraphObject {
   abstract authorId: string;
   abstract createdAt: Date;
   abstract text: string;
+  abstract searchText: string;
   abstract isPrivate: boolean;
   protected store: GraphStore;
 

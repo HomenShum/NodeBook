@@ -1,5 +1,9 @@
 import { reaction } from "mobx";
 
+import appLogger from "@/lib/logger";
+
+const logger = appLogger.child({ service: "trie" });
+
 export class CappedKeywordIndex {
   root: TrieNode = new TrieNode();
   maxPrefixLength: number;
@@ -18,6 +22,7 @@ export class CappedKeywordIndex {
     const disposer = reaction(
       getText,
       (text) => {
+        logger.debug("Update object in trie", { id, text });
         this.removeFromTrie(id);
         this.addIdToTrie(id, text);
       },
@@ -29,6 +34,7 @@ export class CappedKeywordIndex {
   }
 
   delete(id: string) {
+    logger.debug("Delete object from trie", { id });
     const disposers = this.reactionDisposersById.get(id);
     disposers?.forEach((disposer) => disposer());
     this.reactionDisposersById.delete(id);
@@ -46,7 +52,7 @@ export class CappedKeywordIndex {
    * necessary.
    */
   getIds(text: string): string[] {
-    const keywords = text.split(/\s+/);
+    const keywords = text.split(/\s+/).filter((word) => word.length > 0);
     let ids: Set<string> | null = null;
     for (let word of keywords) {
       word = word.toLocaleLowerCase();
