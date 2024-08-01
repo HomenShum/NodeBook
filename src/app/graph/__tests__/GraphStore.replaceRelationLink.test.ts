@@ -265,7 +265,7 @@ describe("GraphStore.replaceRelationLink", () => {
 
     graphStore.syncQueue.undoAllPending();
 
-    expect(nodeB.relations).toHaveLength(2);
+    expect(graphStore.getNode(nodeB.id)?.relations).toHaveLength(2);
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START);
     expect(graphStore.getNode(nodeB.id)?.serialize()).toEqual(nodeBAtStart);
   });

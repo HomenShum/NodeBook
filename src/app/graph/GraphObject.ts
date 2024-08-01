@@ -1,3 +1,4 @@
+import { FractionalPositionedList } from "@/app/graph/FractionalPositionedList";
 import { PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
@@ -14,9 +15,13 @@ export abstract class GraphObject {
   abstract searchText: string;
   abstract isPrivate: boolean;
   protected store: GraphStore;
+  allRelationsList: FractionalPositionedList<GraphRelation>;
+  pinnedRelationsList: FractionalPositionedList<GraphRelation>;
 
   constructor(store: GraphStore) {
     this.store = store;
+    this.allRelationsList = new FractionalPositionedList();
+    this.pinnedRelationsList = new FractionalPositionedList();
   }
 
   get children(): GraphObject[] {
@@ -39,22 +44,8 @@ export abstract class GraphObject {
     );
   }
 
-  get allRelationsList() {
-    const list = this.store.relationsByNodeId.get(this.id);
-    if (!list) throw new Error("Missing allRelationsList");
-    return list;
-  }
-
-  get pinnedRelationsList() {
-    const list = this.store.pinnedRelationsByNodeId.get(this.id);
-    if (!list) throw new Error("Missing pinnedRelationsList");
-    return list;
-  }
-
   get relationsWithPositions(): PositionedRelation[] {
-    const list = this.store.relationsByNodeId.get(this.id);
-    if (!list) return [];
-    return list.values().map(({ position, item }) => ({ position, relation: item }));
+    return this.allRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
   }
 
   get relations(): GraphRelation[] {

@@ -91,9 +91,6 @@ export class GraphStore {
   relationsById: Map<string, GraphRelation> = new Map();
   relationTypesById: Record<string, GraphRelationType> = {};
 
-  relationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
-  pinnedRelationsByNodeId: Map<string, FractionalPositionedList<GraphRelation>> = new Map();
-
   /** Relation id to list of bundle-nodes that contain it */
   relationToBundles: Map<string, GraphNode[]> = new Map();
 
@@ -108,12 +105,13 @@ export class GraphStore {
     this.user = user;
     this.authedFetch = authedFetch ?? fetch;
     this.syncQueue = new SyncQueue(user.id, async () => await this.fetchLatestDataSnapshot());
-    const defaults = this.ensureDefaultObjects();
+    const { updates, ...defaults } = this.createDefaultObjects();
     this.userRoot = defaults.userRoot;
     this.outlineRoot = defaults.outlineRoot;
     this.thoughtstreamRoot = defaults.thoughtstreamRoot;
     this.outlineRootRelationFromUserRoot = defaults.outlineRootRelationFromUserRoot;
     this.thoughtstreamRootRelationFromUserRoot = defaults.thoughtstreamRootRelationFromUserRoot;
+    this.queueUpdates(updates);
     this.makeObservable();
   }
 
@@ -124,8 +122,6 @@ export class GraphStore {
         nodesById: observable.shallow,
         relationsById: observable.shallow,
         relationTypesById: observable,
-        relationsByNodeId: observable.shallow,
-        pinnedRelationsByNodeId: observable.shallow,
         relationToBundles: observable.shallow,
         // TODO: does the fact these are async mess up the action?
         // node
@@ -159,7 +155,6 @@ export class GraphStore {
     this.clear();
     this.user = user;
     this.load(data);
-    this.ensureDefaultObjects();
   }
 
   async fetchLatestDataSnapshot() {
@@ -507,8 +502,6 @@ export class GraphStore {
 
       this.nodesById.set(node.id, node);
       this.cappedKeywordIndex.add(node.id, () => node!.searchText);
-      this.relationsByNodeId.set(node.id, new FractionalPositionedList());
-      this.pinnedRelationsByNodeId.set(node.id, new FractionalPositionedList());
 
       const updates: GraphUpdate[] = [
         {
@@ -522,8 +515,6 @@ export class GraphStore {
       if (node) {
         this.nodesById.delete(node.id);
         this.cappedKeywordIndex.delete(node.id);
-        this.relationsByNodeId.delete(node.id);
-        this.pinnedRelationsByNodeId.delete(node.id);
       }
       throw e;
     }
@@ -577,15 +568,16 @@ export class GraphStore {
       updates.push(...newRelationUpdates);
 
       if (after) {
-        const relListBefore = this.getRelationList(parent);
-        this.getRelationList(parent).move([newRelation], after);
+        const listBefore = parent.allRelationsList.serialize();
+        parent.allRelationsList.move([newRelation], after);
+        const listAfter = parent.allRelationsList.serialize();
         updates.push({
           operation: "updateRelationList",
           authorId: this.user.id,
           nodeId: parent.id,
           pinned: false,
-          listBefore: relListBefore.serialize(),
-          listAfter: this.getRelationList(parent).serialize(),
+          listBefore,
+          listAfter,
         });
       }
 
@@ -596,8 +588,6 @@ export class GraphStore {
       }
       if (newNode) {
         this.nodesById.delete(newNode.id);
-        this.relationsByNodeId.delete(newNode.id);
-        this.pinnedRelationsByNodeId.delete(newNode.id);
       }
       throw e;
     }
@@ -617,18 +607,10 @@ export class GraphStore {
       });
       this.nodesById.delete(node.id);
       this.cappedKeywordIndex.delete(node.id);
-      this.relationsByNodeId.delete(node.id);
-      this.pinnedRelationsByNodeId.delete(node.id);
     } catch (e) {
       if (!this.nodesById.has(node.id)) {
         this.nodesById.set(node.id, node);
         this.cappedKeywordIndex.add(node.id, () => node.searchText);
-      }
-      if (!this.relationsByNodeId.has(node.id)) {
-        this.relationsByNodeId.set(node.id, new FractionalPositionedList());
-      }
-      if (!this.pinnedRelationsByNodeId.has(node.id)) {
-        this.pinnedRelationsByNodeId.set(node.id, new FractionalPositionedList());
       }
       for (const deletedData of relationsDeleted) {
         this.restoreRelation(deletedData);
@@ -664,17 +646,15 @@ export class GraphStore {
       });
       this.relationsById.set(relation.id, relation);
       this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
-      this.relationsByNodeId.set(relation.id, new FractionalPositionedList());
-      this.pinnedRelationsByNodeId.set(relation.id, new FractionalPositionedList());
 
       updates.push({
         operation: "addRelation",
         relation: relation.serialize(),
       });
 
-      const fromListBefore = this.getRelationList(relation.from).serialize();
+      const fromListBefore = relation.from.allRelationsList.serialize();
       this.getRelationList(relation.from).add(relation);
-      const fromListAfter = this.getRelationList(relation.from).serialize();
+      const fromListAfter = relation.from.allRelationsList.serialize();
       updates.push({
         operation: "updateRelationList",
         authorId: this.user.id,
@@ -684,9 +664,9 @@ export class GraphStore {
         listAfter: fromListAfter,
       });
 
-      const toListBefore = this.getRelationList(relation.to).serialize();
+      const toListBefore = relation.to.allRelationsList.serialize();
       this.getRelationList(relation.to).add(relation);
-      const toListAfter = this.getRelationList(relation.to).serialize();
+      const toListAfter = relation.to.allRelationsList.serialize();
       updates.push({
         operation: "updateRelationList",
         authorId: this.user.id,
@@ -703,10 +683,6 @@ export class GraphStore {
         this.cappedKeywordIndex.delete(relation.id);
         relation.from.allRelationsList.delete(relation.id);
         relation.to.allRelationsList.delete(relation.id);
-        this.relationsByNodeId.delete(relation.id);
-        this.pinnedRelationsByNodeId.delete(relation.id);
-        this.getRelationList(relation.from).delete(relation.id);
-        this.getRelationList(relation.to).delete(relation.id);
       }
       throw e;
     }
@@ -1181,22 +1157,14 @@ export class GraphStore {
   }
 
   // TODO: this is creating an observable, which might cause issues
-  getRelationList(node: GraphObject | string): FractionalPositionedList<GraphRelation> {
-    const nodeId = typeof node === "string" ? node : node.id;
-    const list = this.relationsByNodeId.get(nodeId);
-    if (list) return list;
-    const newList = new FractionalPositionedList<GraphRelation>();
-    this.relationsByNodeId.set(nodeId, newList);
-    return newList;
+  getRelationList(nodeOrId: GraphObject | string): FractionalPositionedList<GraphRelation> {
+    const node = typeof nodeOrId === "string" ? this.getNodeOrThrow(nodeOrId) : nodeOrId;
+    return node.allRelationsList;
   }
 
-  getPinnedRelationList(node: GraphObject | string): FractionalPositionedList<GraphRelation> {
-    const nodeId = typeof node === "string" ? node : node.id;
-    const list = this.pinnedRelationsByNodeId.get(nodeId);
-    if (list) return list;
-    const newList = new FractionalPositionedList<GraphRelation>();
-    this.pinnedRelationsByNodeId.set(nodeId, newList);
-    return newList;
+  getPinnedRelationList(nodeOrId: GraphObject | string): FractionalPositionedList<GraphRelation> {
+    const node = typeof nodeOrId === "string" ? this.getNodeOrThrow(nodeOrId) : nodeOrId;
+    return node.pinnedRelationsList;
   }
 
   pinRelations(objectId: string, relationIds: string[], after?: Positioner<GraphRelation>) {
@@ -1260,38 +1228,24 @@ export class GraphStore {
     };
   }
 
-  updateRelationList(objectId: string, pinned: boolean, list: SerializedPositionList<GraphRelation>) {
-    const newList = new FractionalPositionedList<GraphRelation>();
-    for (const [relationId, position] of Object.entries(list)) {
+  updateRelationList(objectId: string, pinned: boolean, serializedList: SerializedPositionList<GraphRelation>) {
+    const object = this.getObject(objectId);
+    if (!object) {
+      throw new Error(`Object with id ${objectId} does not exist`);
+    }
+    const list = pinned ? object.pinnedRelationsList : object.allRelationsList;
+    list.clear();
+    const positionedRelations = Object.entries(serializedList).map(([relationId, position]) => {
       const relation = this.relationsById.get(relationId);
-      if (!relation) continue;
-      const relationWithPosition = {
-        item: relation,
-        position: position,
-      };
-      newList.undoDelete(relationWithPosition);
-    }
-
-    if (pinned) {
-      this.pinnedRelationsByNodeId.set(objectId, newList);
-    } else {
-      this.relationsByNodeId.set(objectId, newList);
-    }
-  }
-
-  deleteRelationList(objectId: string, pinned: boolean) {
-    if (pinned) {
-      this.pinnedRelationsByNodeId.delete(objectId);
-    } else {
-      this.relationsByNodeId.delete(objectId);
-    }
+      if (!relation) throw new Error(`Relation with id ${relationId} does not exist`);
+      return { item: relation, position };
+    });
+    list.load(positionedRelations);
   }
 
   clear() {
     this.nodesById.clear();
     this.relationsById.clear();
-    this.relationsByNodeId.clear();
-    this.pinnedRelationsByNodeId.clear();
     this.relationToBundles.clear();
     Object.keys(this.relationTypesById).forEach((key) => {
       delete this.relationTypesById[key];
@@ -1299,6 +1253,7 @@ export class GraphStore {
     // TODO: Consider pausing sync when the user is being changed
     this.syncQueue.clear();
     this.cappedKeywordIndex.clear();
+    this.createDefaultObjects();
   }
 
   // TODO do we need clear and cleanup?
@@ -1307,7 +1262,7 @@ export class GraphStore {
     // TODO: stop sync here
   }
 
-  ensureDefaultObjects() {
+  createDefaultObjects() {
     const updates: GraphUpdate[] = [];
 
     for (const rt of Object.values(defaultRelationTypes)) {
@@ -1361,7 +1316,6 @@ export class GraphStore {
       this.thoughtstreamRootRelationFromUserRoot = relation;
       updates.push(...userThoughtstreamUpdates);
     }
-    this.queueUpdates(updates);
 
     return {
       userRoot: this.userRoot,
@@ -1369,6 +1323,7 @@ export class GraphStore {
       thoughtstreamRoot: this.thoughtstreamRoot,
       outlineRootRelationFromUserRoot: this.outlineRootRelationFromUserRoot,
       thoughtstreamRootRelationFromUserRoot: this.thoughtstreamRootRelationFromUserRoot,
+      updates,
     };
   }
 
@@ -1481,8 +1436,7 @@ export class GraphStore {
    */
   loadSerializedAllRelationList(objectId: string, positionsByRelationId: SerializedPositionList<GraphRelation>) {
     const { object, relationsWithPositions } = this.resolveRelationListReferences(objectId, positionsByRelationId);
-    const list = object.allRelationsList;
-    list.load(relationsWithPositions);
+    object.allRelationsList.load(relationsWithPositions);
   }
 
   /**
@@ -1491,8 +1445,7 @@ export class GraphStore {
    */
   loadSerializedPinnedRelationList(objectId: string, positionsByRelationId: SerializedPositionList<GraphRelation>) {
     const { object, relationsWithPositions } = this.resolveRelationListReferences(objectId, positionsByRelationId);
-    const list = object.pinnedRelationsList;
-    list.load(relationsWithPositions);
+    object.pinnedRelationsList.load(relationsWithPositions);
   }
 
   private resolveRelationListReferences(
@@ -1617,8 +1570,14 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = serializeMap(this.relationsByNodeId);
-    const pinnedRelationsByNodeId = serializeMap(this.pinnedRelationsByNodeId);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.allRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.pinnedRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 
@@ -1696,7 +1655,7 @@ export class GraphStore {
     for (const obj of subtreeObjects) {
       if (obj instanceof GraphNode) {
         nodesById.set(obj.id, obj);
-        relationsByNodeId.set(obj.id, this.relationsByNodeId.get(obj.id) || new FractionalPositionedList());
+        relationsByNodeId.set(obj.id, this.nodesById.get(obj.id)?.allRelationsList || new FractionalPositionedList());
         pinnedRelationsByNodeId.set(obj.id, new FractionalPositionedList());
       } else if (obj instanceof GraphRelation) {
         relationTypesById[obj.relationType.id] = obj.relationType;

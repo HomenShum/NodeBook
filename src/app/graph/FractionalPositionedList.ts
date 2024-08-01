@@ -37,6 +37,7 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
       add: action,
       delete: action,
       move: action,
+      clear: action,
     });
   }
 
@@ -156,5 +157,9 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
     items.forEach((item) => {
       this.map.set(item.item.id, item);
     });
+  }
+
+  clear() {
+    this.map.clear();
   }
 }

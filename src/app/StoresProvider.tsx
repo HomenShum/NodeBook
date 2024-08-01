@@ -92,11 +92,6 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       setRenderController(renderController);
       setIsLoading(false);
 
-      // expose stores to window for debugging
-      if (env.env !== "production" && typeof window !== "undefined") {
-        window.mew = { env, toJS, graphStore, viewStore, renderController, getDependencyTree, getObserverTree };
-      }
-
       return () => {
         logger.debug("Cleaning up stores");
         graphStore.cleanup();
