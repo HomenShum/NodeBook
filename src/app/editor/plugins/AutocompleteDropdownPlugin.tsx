@@ -23,7 +23,7 @@ import { useTree } from "@/app/tree/TreeContext";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
-import styles from "./SearchAndReplaceDropdownPlugin.module.css";
+import styles from "./AutocompleteDropdownPlugin.module.css";
 
 /**
  * Dropdown options:
@@ -44,6 +44,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
   const [mouseHasMoved, setMouseHasMoved] = useState(false);
   const object = treeNode.object;
   const relation = treeNode.relationWithParent;
+  const isLabellingRelation = relation.isLabelled();
   const pathToNodeStr = treeNode.path;
   const [editedSinceFocused, setEditedSinceFocused] = useState(false);
   const [textOnFocus, setTextOnFocus] = useState(object.text);
@@ -86,7 +87,14 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
     const searchText = object.text.toLocaleLowerCase();
 
     // Filter nodes that match the search
-    let { nodes, relations, relationTypes } = graph.search({ text: searchText, sort: { by: "score" } });
+
+    let { nodes, relations, relationTypes } = graph.search({
+      text: searchText,
+      filters: {
+        types: isLabellingRelation ? ["node", "relation"] : ["node", "relation", "relationType"],
+      },
+      sort: { by: "score" },
+    });
     // ignore the current object and relation
     nodes = nodes.filter(({ node }) => node.id !== treeNode.object.id);
     relations = relations.filter(
@@ -116,6 +124,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
     hasFocus,
     editedSinceFocused,
     object.text,
+    isLabellingRelation,
     graph,
     treeNode.object.id,
     treeNode.relationWithParent.id,

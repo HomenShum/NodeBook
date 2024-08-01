@@ -9,6 +9,7 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
+import { AutocompleteDropdownPlugin } from "@/app/editor/plugins/AutocompleteDropdownPlugin";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { BindFocusToTreePlugin } from "@/app/editor/plugins/BindFocusToTreePlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
@@ -16,7 +17,6 @@ import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowA
 import { MentionPlugin } from "@/app/editor/plugins/MentionPlugin";
 import { PastePlugin } from "@/app/editor/plugins/pastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
-import { AutocompleteDropdownPlugin } from "@/app/editor/plugins/SearchAndReplaceDropdownPlugin";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
