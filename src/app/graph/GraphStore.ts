@@ -622,7 +622,7 @@ export class GraphStore {
     } catch (e) {
       if (!this.nodesById.has(node.id)) {
         this.nodesById.set(node.id, node);
-        this.cappedKeywordIndex.add(node.id, () => node.text);
+        this.cappedKeywordIndex.add(node.id, () => node.searchText);
       }
       if (!this.relationsByNodeId.has(node.id)) {
         this.relationsByNodeId.set(node.id, new FractionalPositionedList());
@@ -772,7 +772,7 @@ export class GraphStore {
     } catch (e) {
       if (!this.relationsById.has(relation.id)) {
         this.relationsById.set(relation.id, relation);
-        this.cappedKeywordIndex.add(relation.id, () => relation.text);
+        this.cappedKeywordIndex.add(relation.id, () => relation.searchText);
       }
       if (deleted.fromPos) {
         this.getRelationList(relation.from).undoDelete({
@@ -824,7 +824,7 @@ export class GraphStore {
   }: DeletedRelationData) {
     const relation = this.loadSerializedRelation(serializedRelation);
     this.relationsById.set(relation.id, relation);
-    this.cappedKeywordIndex.add(relation.id, () => relation.text);
+    this.cappedKeywordIndex.add(relation.id, () => relation.searchText);
     if (fromPos) {
       this.getRelationList(relation.from).undoDelete({
         item: relation,
