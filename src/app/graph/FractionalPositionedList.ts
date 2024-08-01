@@ -2,8 +2,8 @@ import { generateNKeysBetween } from "fractional-indexing";
 import { action, computed, isObservable, makeObservable, observable } from "mobx";
 
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
-import { SerializedPositionList } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
+import { SerializedPositionList } from "@/app/persistence/SerializedData";
 import { Position, comparePositions, generateDefaultPosition } from "@/app/util";
 import logger from "@/lib/logger";
 
@@ -57,27 +57,27 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
     return Array.from(this.map.keys());
   }
 
-  /**
-   * Add one or more items to the list. The `after` parameter can specify an
-   * existing item in the list to insert the new items after. If not provided,
-   * the items will be added to the top of the list.
-   */
   add(item: T | T[], after?: Positioner<T>) {
     const items = Array.isArray(item) ? item : [item];
     let int: number, fracs: string[];
     if (this.map.size === 0 || !after) {
       int = Math.max(...Array.from(items).map((item) => item.createdAt.getTime()));
       fracs = generateNKeysBetween(null, null, items.length);
+      items.forEach((item, i) => {
+        if (this.map.has(item.id)) return logger.error("Attempted to add item that is already in the list");
+        this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
+      });
     } else {
-      const position = this.positionerToPosition(after);
-      int = position.int;
-      fracs = generateNKeysBetween(position.fracBefore, position.fracAfter, items.length);
+      const { newPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
+      newPositions.forEach((position, i) => {
+        this.map.set(items[i].id, { position, item: items[i] });
+      });
+      updatedPositions.forEach((position, id) => {
+        const existing = this.map.get(id);
+        if (!existing) return logger.error("Attempted to reposition item that is not in the list");
+        this.map.set(id, { ...existing, position });
+      });
     }
-    items.forEach((item, i) => {
-      // don't re-insert items; that would reset their position (ENT-3361)
-      if (this.map.has(item.id)) return;
-      this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
-    });
   }
 
   delete(id: string) {
@@ -89,36 +89,29 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
     this.map.set(itemWithPosition.item.id, itemWithPosition);
   }
 
-  /**
-   * Move items to a new position in the list.
-   *
-   * The `to` parameter can specify an item to position the items after, or
-   * "top" or "bottom" to move to the top or bottom of the list.
-   */
   move(items: T[], after?: Positioner<T>) {
     let int: number, fracs: string[];
     if (!after) {
       int = Date.now();
       fracs = generateNKeysBetween(null, null, items.length);
+      items.forEach((item, i) => {
+        if (!this.map.has(item.id)) return logger.error("Attempted to move item that is not in the list");
+        this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
+      });
     } else {
-      const positions = this.positionerToPosition(after);
-      int = positions.int;
-      fracs = generateNKeysBetween(positions.fracBefore, positions.fracAfter, items.length);
+      const { newPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
+      newPositions.forEach((position, i) => {
+        this.map.set(items[i].id, { position, item: items[i] });
+      });
+      updatedPositions.forEach((position, id) => {
+        const existing = this.map.get(id);
+        if (!existing) return logger.error("Attempted to reposition item that is not in the list");
+        this.map.set(id, { ...existing, position });
+      });
     }
-    items.forEach((item, i) => {
-      if (!this.map.has(item.id)) {
-        logger.error("Attempted to move item that is not in the list");
-        return;
-      }
-      this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
-    });
   }
 
-  private positionerToPosition(positioner: Positioner<T>): {
-    int: number;
-    fracBefore: string | null;
-    fracAfter: string | null;
-  } {
+  private generatePositionsForInsert(positioner: Positioner<T>, n: number) {
     const items = Array.from(this.map.values()).sort((a, b) => comparePositions(a.position, b.position));
     let i: number;
     if (typeof positioner === "number") {
@@ -130,14 +123,11 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
           : (v: ItemWithPosition<T>) => v.item.id === positioner.id;
       i = items.findIndex(predicate);
     }
-    const int = items[i]?.position.int ?? 0;
-    const fracBefore = items[i]?.position.frac;
-    let fracAfter = items[i]?.position.int === items[i + 1]?.position.int ? items[i + 1]?.position.frac : null;
-    if (fracBefore && fracAfter && fracBefore === fracAfter) {
-      logger.error("Attempted to insert item between two items with the same position");
-      fracAfter = null;
-    }
-    return { int, fracBefore, fracAfter };
+    return generatePositionsForInsert(
+      items.map((v) => ({ position: v.position, id: v.item.id })),
+      i,
+      n,
+    );
   }
 
   serialize(): SerializedPositionList<T> {
@@ -162,4 +152,66 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
   clear() {
     this.map.clear();
   }
+}
+
+/**
+ * Generate new positions for inserting items into a sorted list of items with positions.
+ * If needed to maintain ordering, provides updated positions for existing items.
+ *
+ * @param items - Sorted list of items with positions
+ * @param i - Index after which to insert new positions
+ * @param n - Number of new positions to insert
+ * @returns Object containing new positions and updated positions for existing items
+ * @throws Error if index is out of bounds or n is not positive
+ */
+export function generatePositionsForInsert(items: { position: Position; id: string }[], i: number, n: number) {
+  if (n <= 0) {
+    throw new Error("Number of positions to insert must be positive");
+  }
+
+  const newPositions: Position[] = [];
+  const updatedPositions = new Map<string, Position>();
+
+  // Handle empty list case
+  if (items.length === 0) {
+    const int = Math.floor(Date.now() / 1000); // Use seconds instead of milliseconds
+    generateNKeysBetween(null, null, n).forEach((frac) => newPositions.push({ int, frac }));
+    return { newPositions, updatedPositions };
+  }
+
+  // Check for index out of bounds
+  if (i < 0 || i >= items.length) {
+    throw new Error("Index out of bounds");
+  }
+
+  const currentPosition = items[i].position;
+  let nextDifferentIndex: number = i + 1;
+
+  // Find the next different position
+  while (
+    nextDifferentIndex < items.length &&
+    items[nextDifferentIndex].position.int === currentPosition.int &&
+    items[nextDifferentIndex].position.frac === currentPosition.frac
+  ) {
+    nextDifferentIndex++;
+  }
+
+  // Generate new fractional keys
+  const nextDifferentPosition = items[nextDifferentIndex]?.position ?? null;
+  const newFracs = generateNKeysBetween(
+    currentPosition.frac,
+    // it's only if the current and next share an int part that we need to generate between them
+    nextDifferentPosition?.int === currentPosition.int ? nextDifferentPosition?.frac : null,
+    // new positions + positions to update
+    n + (nextDifferentIndex - i - 1),
+  );
+
+  // Create new positions and update existing ones if necessary
+  newFracs.slice(0, n).forEach((frac) => newPositions.push({ int: currentPosition.int, frac }));
+  newFracs.slice(n).forEach((frac, index) => {
+    const itemToUpdate = items[i + 1 + index];
+    updatedPositions.set(itemToUpdate.id, { int: currentPosition.int, frac });
+  });
+
+  return { newPositions, updatedPositions };
 }
