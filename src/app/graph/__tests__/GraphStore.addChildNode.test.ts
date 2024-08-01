@@ -19,7 +19,7 @@ describe("GraphStore.addChildNode", () => {
 
     parent = await graphStore.addNode({});
 
-    graphStore.syncQueue.clear();
+    graphStore.updateManager.clear();
   });
 
   it("should create a new node", async () => {
@@ -48,11 +48,16 @@ describe("GraphStore.addChildNode", () => {
     const { node: child, relation } = await graphStore.addChildNode({ parentId: parent.id });
 
     // Get pendingUpdates without the transactionId for comparison
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [
         { operation: "addNode", node: child.serialize() },
-        { operation: "addRelation", relation: relation.serialize() },
+        {
+          operation: "addRelation",
+          relation: relation.serialize(),
+          fromPos: relation.fromPosition,
+          toPos: relation.toPosition,
+        },
         {
           operation: "updateRelationList",
           nodeId: parent.id,
@@ -76,10 +81,10 @@ describe("GraphStore.addChildNode", () => {
       ],
     ]);
   });
-  it("should create a working undo operation", async () => {
+  it("should create a working revert operation", async () => {
     const { node, relation } = await graphStore.addChildNode({ parentId: graphStore.outlineRoot.id });
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(graphStore.getNode(node.id)).toBeUndefined();
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START);

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 
+import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useCurView } from "@/app/util";
 import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -9,6 +10,7 @@ import { useViewStore } from "@/app/view/useViewStore";
 export const useKeyboardShortcuts = () => {
   const curView = useCurView();
   const viewStore = useViewStore();
+  const graphStore = useGraphStore();
   const handleKeyDown = useCallback(
     async (e: KeyboardEvent) => {
       const metaOrCtrl = e.metaKey || e.ctrlKey; // Command key on Mac, Ctrl key on Windows
@@ -29,8 +31,16 @@ export const useKeyboardShortcuts = () => {
           }
         }
       }
+      if (metaOrCtrl && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) {
+          graphStore.updateManager.redo();
+        } else {
+          graphStore.updateManager.undo();
+        }
+      }
     },
-    [curView, viewStore],
+    [curView, viewStore, graphStore],
   );
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);

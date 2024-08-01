@@ -14,14 +14,23 @@ describe("GraphStore.addRelation", () => {
 
     graphStore = new GraphStore();
 
-    startNode = await graphStore.addNode({});
-    endNode = await graphStore.addNode({});
+    startNode = await graphStore.addNode({
+      nodeProps: {
+        id: "start",
+      },
+    });
+    endNode = await graphStore.addNode({
+      nodeProps: {
+        id: "end",
+      },
+    });
 
-    graphStore.syncQueue.clear();
+    graphStore.updateManager.clear();
   });
 
   it("should create a new relation", async () => {
     const relation = await graphStore.addRelation({
+      id: "relation",
       fromId: startNode.id,
       toId: endNode.id,
     });
@@ -29,6 +38,10 @@ describe("GraphStore.addRelation", () => {
     expect(relation).toBeDefined();
     expect(graphStore.getRelation(relation.id)).toBe(relation);
     expect(graphStore.relationsById.size).toBe(MIN_NUM_RELATIONS + 1);
+    expect(relation.from).toBe(startNode);
+    expect(relation.fromPosition).toBeDefined();
+    expect(relation.to).toBe(endNode);
+    expect(relation.toPosition).toBeDefined();
     expect(startNode.relations).toHaveLength(1);
     expect(startNode.relations).toEqual(expect.arrayContaining([relation]));
     expect(endNode.relations).toHaveLength(1);
@@ -36,15 +49,21 @@ describe("GraphStore.addRelation", () => {
   });
   it("should queue GraphUpdates for creating a relation and updating relation lists", async () => {
     const relation = await graphStore.addRelation({
+      id: "relation",
       fromId: startNode.id,
       toId: endNode.id,
     });
 
     // Get pendingUpdates without the transactionId for comparison
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [
-        { operation: "addRelation", relation: relation.serialize() },
+        {
+          operation: "addRelation",
+          relation: relation.serialize(),
+          fromPos: relation.fromPosition,
+          toPos: relation.toPosition,
+        },
         {
           operation: "updateRelationList",
           nodeId: startNode.id,
@@ -52,7 +71,7 @@ describe("GraphStore.addRelation", () => {
           pinned: false,
           listBefore: {},
           listAfter: {
-            [relation.id]: graphStore.getRelationList(startNode).get(relation.id)?.position,
+            [relation.id]: relation.fromPosition,
           },
         },
         {
@@ -62,19 +81,20 @@ describe("GraphStore.addRelation", () => {
           pinned: false,
           listBefore: {},
           listAfter: {
-            [relation.id]: graphStore.getRelationList(endNode).get(relation.id)?.position,
+            [relation.id]: relation.toPosition,
           },
         },
       ],
     ]);
   });
-  it("should create a working undo operation", async () => {
+  it("should create a working revert operation", async () => {
     const relation = await graphStore.addRelation({
+      id: "relation",
       fromId: startNode.id,
       toId: endNode.id,
     });
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(graphStore.getRelation(relation.id)).toBeUndefined();
     expect(graphStore.relationsById.size).toBe(MIN_NUM_RELATIONS);

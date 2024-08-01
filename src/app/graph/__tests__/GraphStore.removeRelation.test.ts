@@ -26,7 +26,7 @@ describe("GraphStore.removeRelation", () => {
       endNode = await graphStore.addNode({});
       relation = await graphStore.addRelation({ fromId: startNode.id, toId: endNode.id });
 
-      graphStore.syncQueue.clear();
+      graphStore.updateManager.clear();
     });
 
     it("should delete a specified relation", async () => {
@@ -53,20 +53,23 @@ describe("GraphStore.removeRelation", () => {
       expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES);
     });
     it("should queue GraphUpdates for deleting the relation and its from and to nodes", async () => {
-      expect(graphStore.syncQueue.pendingUpdates).toHaveLength(0);
+      expect(graphStore.updateManager.pendingUpdates).toHaveLength(0);
 
+      const serializedRelation = relation.serialize();
       const fromPos = graphStore.getRelationList(startNode).get(relation.id)?.position;
       const toPos = graphStore.getRelationList(endNode).get(relation.id)?.position;
 
       await graphStore.removeRelation({ relationId: relation.id });
 
-      const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+      const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
+        (update) => update.updates,
+      );
       expect(pendingUpdateSets).toEqual([
         [
           {
             operation: "deleteRelation",
             deleted: {
-              relation: relation.serialize(),
+              relation: serializedRelation,
               bundles: [],
               relationsList: [],
               fromPos,
@@ -82,8 +85,9 @@ describe("GraphStore.removeRelation", () => {
     });
     it("should leave the from and to nodes if they have other relations", async () => {
       const _otherRelation = await graphStore.addRelation({ fromId: startNode.id, toId: endNode.id });
-      graphStore.syncQueue.clear();
+      graphStore.updateManager.clear();
 
+      const serializedRelation = relation.serialize();
       const fromPos = graphStore.getRelationList(startNode).get(relation.id)?.position;
       const toPos = graphStore.getRelationList(endNode).get(relation.id)?.position;
 
@@ -94,13 +98,15 @@ describe("GraphStore.removeRelation", () => {
       expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES + 2);
 
       // Check queue has only the relation deletion, no node deletions
-      const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+      const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
+        (update) => update.updates,
+      );
       expect(pendingUpdateSets).toEqual([
         [
           {
             operation: "deleteRelation",
             deleted: {
-              relation: relation.serialize(),
+              relation: serializedRelation,
               bundles: [],
               relationsList: [],
               fromPos,
@@ -112,12 +118,12 @@ describe("GraphStore.removeRelation", () => {
         ],
       ]);
     });
-    it("should create a working undo operation", async () => {
+    it("should create a working revert operation", async () => {
       const serializedRelation = relation.serialize();
 
       await graphStore.removeRelation({ relationId: relation.id });
 
-      graphStore.syncQueue.undoAllPending();
+      graphStore.updateManager.revertAllPending();
 
       expect(graphStore.getRelation(relation.id)?.serialize()).toEqual(serializedRelation);
       expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
@@ -151,7 +157,7 @@ describe("GraphStore.removeRelation", () => {
       relationAC = await graphStore.addRelation({ id: "ac", fromId: nodeA.id, toId: nodeC.id });
       hyperRelation = await graphStore.addRelation({ id: "hyper", fromId: relationAB.id, toId: relationBC.id });
 
-      graphStore.syncQueue.clear();
+      graphStore.updateManager.clear();
     });
 
     it("should work normally on a hyperrelation", async () => {
@@ -163,6 +169,7 @@ describe("GraphStore.removeRelation", () => {
       expect(relationBC.relations).toHaveLength(1);
       expect(relationBC.relations).toEqual(expect.arrayContaining([hyperRelation]));
 
+      const serializedHyperRelation = hyperRelation.serialize();
       const fromPos = graphStore.getRelationList(relationAB).get(hyperRelation.id)?.position;
       const toPos = graphStore.getRelationList(relationBC).get(hyperRelation.id)?.position;
 
@@ -173,13 +180,15 @@ describe("GraphStore.removeRelation", () => {
       expect(relationAB.relations).toHaveLength(0);
       expect(relationBC.relations).toHaveLength(0);
 
-      const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+      const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
+        (update) => update.updates,
+      );
       expect(pendingUpdateSets).toEqual([
         [
           {
             operation: "deleteRelation",
             deleted: {
-              relation: hyperRelation.serialize(),
+              relation: serializedHyperRelation,
               bundles: [],
               relationsList: [],
               fromPos,
@@ -191,12 +200,12 @@ describe("GraphStore.removeRelation", () => {
         ],
       ]);
     });
-    it("should undo properly for a hyperrelation", async () => {
+    it("should revert properly for a hyperrelation", async () => {
       const serializedRelation = hyperRelation.serialize();
 
       await graphStore.removeRelation({ relationId: hyperRelation.id });
 
-      graphStore.syncQueue.undoAllPending();
+      graphStore.updateManager.revertAllPending();
 
       expect(graphStore.getRelation(hyperRelation.id)?.serialize()).toEqual(serializedRelation);
       expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
@@ -208,8 +217,10 @@ describe("GraphStore.removeRelation", () => {
       expect(relationAB.relations).toEqual(expect.arrayContaining([hyperRelation]));
       expect(relationBC.relations).toHaveLength(1);
 
+      const serializedHyperRelation = hyperRelation.serialize();
       const hyperFromPos = graphStore.getRelationList(relationAB).get(hyperRelation.id)?.position;
       const hyperToPos = graphStore.getRelationList(relationBC).get(hyperRelation.id)?.position;
+      const serializedAB = relationAB.serialize();
       const relABFromPos = graphStore.getRelationList(nodeA).get(relationAB.id)?.position;
       const relABToPos = graphStore.getRelationList(nodeB).get(relationAB.id)?.position;
 
@@ -220,17 +231,19 @@ describe("GraphStore.removeRelation", () => {
       expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START - 2);
       expect(relationBC.relations).toHaveLength(0);
 
-      const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+      const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
+        (update) => update.updates,
+      );
       expect(pendingUpdateSets).toEqual([
         [
           {
             operation: "deleteRelation",
             deleted: {
-              relation: relationAB.serialize(),
+              relation: serializedAB,
               bundles: [],
               relationsList: [
                 {
-                  relation: hyperRelation.serialize(),
+                  relation: serializedHyperRelation,
                   bundles: [],
                   relationsList: [],
                   fromPos: hyperFromPos,
@@ -248,13 +261,13 @@ describe("GraphStore.removeRelation", () => {
         ],
       ]);
     });
-    it("should undo properly for a relation with relations", async () => {
+    it("should revert properly for a relation with relations", async () => {
       const serializedRelation = relationAB.serialize();
       const serializedHyperRelation = hyperRelation.serialize();
 
       await graphStore.removeRelation({ relationId: relationAB.id });
 
-      graphStore.syncQueue.undoAllPending();
+      graphStore.updateManager.revertAllPending();
 
       expect(graphStore.getRelation(relationAB.id)?.serialize()).toEqual(serializedRelation);
       expect(graphStore.getRelation(hyperRelation.id)?.serialize()).toEqual(serializedHyperRelation);
@@ -291,7 +304,7 @@ describe("GraphStore.removeRelation", () => {
       expect(nodeC.relations).toHaveLength(1);
       expect(graphStore.nodesById.size).toBe(NUM_NODES_START - 1);
     });
-    it("should be able to undo complex deletion cascades", async () => {
+    it("should be able to revert complex deletion cascades", async () => {
       const serializeAB = relationAB.serialize();
       const serializeAC = relationAC.serialize();
       const serializedHyper = hyperRelation.serialize();
@@ -308,7 +321,7 @@ describe("GraphStore.removeRelation", () => {
       expect(nodeC.relations).toHaveLength(1);
       expect(graphStore.nodesById.size).toBe(NUM_NODES_START - 1);
 
-      graphStore.syncQueue.undoAllPending();
+      graphStore.updateManager.revertAllPending();
 
       expect(graphStore.getRelation(relationAB.id)?.serialize()).toEqual(serializeAB);
       expect(graphStore.getRelation(relationAC.id)?.serialize()).toEqual(serializeAC);

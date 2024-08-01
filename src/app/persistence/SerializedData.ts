@@ -28,6 +28,11 @@ export const SerializedRelationTypeSchema = z.object({
   reverseLabel: z.string(),
 });
 
+export const PositionSchema = z.object({
+  int: z.number(),
+  frac: z.string(),
+});
+
 export const SerializedRelationSchema = z.object({
   version: z.number(),
   id: z.string(),
@@ -38,11 +43,6 @@ export const SerializedRelationSchema = z.object({
   isPrivate: z.boolean(),
 });
 export type SerializedRelation = z.infer<typeof SerializedRelationSchema>;
-
-export const PositionSchema = z.object({
-  int: z.number(),
-  frac: z.string(),
-});
 
 export const SerializedPositionListSchema = z.record(z.string(), PositionSchema);
 export type SerializedPositionList<T> = z.infer<typeof SerializedPositionListSchema>;

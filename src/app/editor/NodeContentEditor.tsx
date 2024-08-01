@@ -2,7 +2,6 @@ import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
@@ -63,7 +62,6 @@ export const NodeContentEditor = observer(({ treeNode }: { treeNode: DescendantT
           contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
           placeholder={null}
         />
-        <HistoryPlugin />
         <ClearEditorPlugin />
         {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
         <EnterKeyPlugin treeNode={treeNode} />

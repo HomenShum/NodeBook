@@ -35,7 +35,7 @@ describe("GraphStore.updateRelation", () => {
       toId: endNode.id,
     });
 
-    graphStore.syncQueue.clear();
+    graphStore.updateManager.clear();
   });
 
   it("should be able to update isPrivate and increment version properly", async () => {
@@ -90,7 +90,7 @@ describe("GraphStore.updateRelation", () => {
     expect(relation.to.allRelationsList.has(relation.id)).toBe(true);
   });
 
-  it("should generate a working undo function", async () => {
+  it("should generate a working revert function", async () => {
     await graphStore.updateRelation({
       relationId: relation.id,
       relationProps: {
@@ -104,7 +104,7 @@ describe("GraphStore.updateRelation", () => {
     expect(relation.isPrivate).toBe(false);
     expect(relation.version).toBe(2);
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(relation.from).toBe(startNode);
     expect(relation.to).toBe(endNode);
@@ -122,7 +122,7 @@ describe("GraphStore.updateRelation", () => {
       },
     });
 
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [{ operation: "updateRelation", oldProps: relationAtStart, newProps: relation.serialize() }],
     ]);
@@ -141,7 +141,7 @@ describe("GraphStore.updateRelation", () => {
       reverse: true,
     });
 
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [
         { operation: "updateRelation", oldProps: relationAtStart, newProps: relation.serialize() },

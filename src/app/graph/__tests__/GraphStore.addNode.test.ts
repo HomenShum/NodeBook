@@ -10,7 +10,7 @@ describe("GraphStore.addNode", () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
     graphStore = new GraphStore();
-    graphStore.syncQueue.clear();
+    graphStore.updateManager.clear();
   });
 
   it("should create a new node", async () => {
@@ -24,13 +24,13 @@ describe("GraphStore.addNode", () => {
     const node = await graphStore.addNode({});
 
     // Get pendingUpdates without the transactionId for comparison
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([[{ operation: "addNode", node: node.serialize() }]]);
   });
-  it("should create a working undo operation", async () => {
+  it("should create a working revert operation", async () => {
     const node = await graphStore.addNode({});
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(graphStore.getNode(node.id)).toBeUndefined();
     expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES);

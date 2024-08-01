@@ -3,7 +3,6 @@ import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
-import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { mergeRegister } from "@lexical/utils";
 import { COMMAND_PRIORITY_NORMAL, KEY_ENTER_COMMAND, KEY_ESCAPE_COMMAND } from "lexical";
@@ -30,7 +29,6 @@ export const NodeReferenceEditor = observer(
           />
           <HandleClosePlugin onClose={onClose} />
           <AutofocusPlugin />
-          <HistoryPlugin />
           <ClearEditorPlugin />
           {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
           <MentionPlugin treeNode={treeNode} />

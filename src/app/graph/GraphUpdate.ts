@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import {
+  DeletedRelationData,
   DeletedRelationDataSchema,
+  PositionSchema,
   SerializedNodeSchema,
   SerializedPositionListSchema,
   SerializedRelationSchema,
@@ -49,6 +51,10 @@ export type DeleteRelationType = z.infer<typeof DeleteRelationTypeSchema>;
 const AddRelationSchema = z.object({
   operation: z.literal("addRelation"),
   relation: SerializedRelationSchema,
+  fromPos: PositionSchema.optional(),
+  fromPinnedPos: PositionSchema.optional(),
+  toPos: PositionSchema.optional(),
+  toPinnedPos: PositionSchema.optional(),
 });
 export type AddRelation = z.infer<typeof AddRelationSchema>;
 
@@ -88,3 +94,117 @@ export const GraphUpdateSchema = z.discriminatedUnion("operation", [
   UpdateRelationListSchema,
 ]);
 export type GraphUpdate = z.infer<typeof GraphUpdateSchema>;
+
+// TODO: Figure out
+
+export const generateInverseUpdates = (updates: GraphUpdate[]): GraphUpdate[] => {
+  const inverseUpdates: GraphUpdate[] = [];
+
+  for (const update of [...updates].reverse()) {
+    switch (update.operation) {
+      case "addNode":
+        inverseUpdates.push({
+          operation: "deleteNode",
+          node: update.node,
+        });
+        break;
+
+      case "updateNode":
+        inverseUpdates.push({
+          operation: "updateNode",
+          oldProps: update.newProps,
+          newProps: update.oldProps,
+        });
+        break;
+
+      case "deleteNode":
+        inverseUpdates.push({
+          operation: "addNode",
+          node: update.node,
+        });
+        break;
+
+      case "addRelationType":
+        inverseUpdates.push({
+          operation: "deleteRelationType",
+          relationType: update.relationType,
+        });
+        break;
+
+      case "updateRelationType":
+        inverseUpdates.push({
+          operation: "updateRelationType",
+          oldProps: update.newProps,
+          newProps: update.oldProps,
+        });
+        break;
+
+      case "deleteRelationType":
+        inverseUpdates.push({
+          operation: "addRelationType",
+          relationType: update.relationType,
+        });
+        break;
+
+      case "addRelation":
+        inverseUpdates.push({
+          operation: "deleteRelation",
+          deleted: {
+            relation: update.relation,
+            fromPos: update.fromPos,
+            fromPinnedPos: update.fromPinnedPos,
+            toPos: update.toPos,
+            toPinnedPos: update.toPinnedPos,
+            relationsList: [],
+            bundles: [],
+          },
+        });
+        break;
+
+      case "updateRelation":
+        inverseUpdates.push({
+          operation: "updateRelation",
+          oldProps: update.newProps,
+          newProps: update.oldProps,
+        });
+        break;
+
+      case "deleteRelation":
+        inverseUpdates.push(...invertDeleteRelationUpdate(update.deleted));
+        break;
+
+      case "updateRelationList":
+        inverseUpdates.push({
+          operation: "updateRelationList",
+          authorId: update.authorId,
+          nodeId: update.nodeId,
+          pinned: update.pinned,
+          listBefore: update.listAfter,
+          listAfter: update.listBefore,
+        });
+        break;
+
+      default:
+        const _exhaustiveCheck: never = update;
+    }
+  }
+
+  return inverseUpdates;
+};
+
+const invertDeleteRelationUpdate = (update: DeletedRelationData): AddRelation[] => {
+  const inverse: AddRelation[] = [
+    {
+      operation: "addRelation",
+      relation: update.relation,
+      fromPos: update.fromPos,
+      fromPinnedPos: update.fromPinnedPos,
+      toPos: update.toPos,
+      toPinnedPos: update.toPinnedPos,
+    },
+  ];
+  for (const relation of update.relationsList) {
+    inverse.push(...invertDeleteRelationUpdate(relation));
+  }
+  return inverse;
+};

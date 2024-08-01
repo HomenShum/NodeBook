@@ -29,7 +29,7 @@ describe("GraphStore.replaceRelationLink", () => {
     relationBC = await graphStore.addRelation({ id: "bc", fromId: nodeB.id, toId: nodeC.id });
     relationAC = await graphStore.addRelation({ id: "ac", fromId: nodeA.id, toId: nodeC.id });
 
-    graphStore.syncQueue.clear();
+    graphStore.updateManager.clear();
   });
 
   it("should be able to replace the from or to of a relation with an existing node", async () => {
@@ -79,7 +79,7 @@ describe("GraphStore.replaceRelationLink", () => {
       replaceWith: { type: "existing-object", id: nodeC.id },
     });
 
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [
         {
@@ -118,14 +118,14 @@ describe("GraphStore.replaceRelationLink", () => {
       ],
     ]);
   });
-  it("should create a working undo operation", async () => {
+  it("should create a working revert operation", async () => {
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
       direction: "from",
       replaceWith: { type: "existing-object", id: nodeC.id },
     });
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(relationAB.from).toBe(nodeA);
     expect(nodeA.relations).toHaveLength(2);
@@ -172,7 +172,7 @@ describe("GraphStore.replaceRelationLink", () => {
 
     const serializedNewNode = (newNode as GraphNode).serialize();
 
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [
         { operation: "addNode", node: serializedNewNode },
@@ -207,7 +207,7 @@ describe("GraphStore.replaceRelationLink", () => {
       ],
     ]);
   });
-  it("should create an undo operation that cleans up created nodes", async () => {
+  it("should create an revert operation that cleans up created nodes", async () => {
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
       direction: "from",
@@ -219,7 +219,7 @@ describe("GraphStore.replaceRelationLink", () => {
     expect(newNode).not.toBe(nodeA);
     expect(graphStore.getNode(newNode.id)).toBe(newNode);
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(relationAB.from).toBe(nodeA);
     expect(nodeA.relations).toHaveLength(2);
@@ -249,7 +249,7 @@ describe("GraphStore.replaceRelationLink", () => {
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START - 1);
     expect(graphStore.getNode(nodeB.id)).toBeUndefined();
   });
-  it("should create an undo operation that can restore orphaned nodes", async () => {
+  it("should create an revert operation that can restore orphaned nodes", async () => {
     const nodeBAtStart = nodeB.serialize();
 
     await graphStore.replaceRelationLink({
@@ -263,7 +263,7 @@ describe("GraphStore.replaceRelationLink", () => {
       replaceWith: { type: "existing-object", id: nodeA.id },
     });
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(graphStore.getNode(nodeB.id)?.relations).toHaveLength(2);
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START);

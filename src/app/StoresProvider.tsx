@@ -8,12 +8,12 @@ import { useAuth } from "@/app/auth/useAuth";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
+import { SyncDataSchema } from "@/app/graph/SyncData";
 import { GraphStoreProvider } from "@/app/graph/useGraphStore";
 import { SettingsStoreProvider } from "@/app/graph/useSettingsStore";
 import { fetchGetOrCreateUser, loadGraphData } from "@/app/persistence/loadGraphData";
 import { RenderController } from "@/app/render/RenderController";
 import { RenderControllerProvider } from "@/app/render/useRenderController";
-import { SerializedSyncDataSchema } from "@/app/sync/SyncTask";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
@@ -131,7 +131,7 @@ function startSync({ graphStore, authFetch }: { graphStore: GraphStore; authFetc
   });
   const channel = pusher.subscribe(userIdToPusherChannel(graphStore.user.id));
   channel.bind("transaction-accepted", async (data: any) => {
-    const parsed = SerializedSyncDataSchema.safeParse(data);
+    const parsed = SyncDataSchema.safeParse(data);
     if (!parsed.success) {
       console.error("Invalid sync data received", data);
       return;

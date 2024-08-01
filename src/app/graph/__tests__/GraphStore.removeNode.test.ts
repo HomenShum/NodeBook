@@ -30,7 +30,7 @@ describe("GraphStore.removeNode", () => {
     relationAB = await graphStore.addRelation({ id: "ab", fromId: nodeA.id, toId: nodeB.id });
     relationBC = await graphStore.addRelation({ id: "bc", fromId: nodeB.id, toId: nodeC.id });
 
-    graphStore.syncQueue.clear();
+    graphStore.updateManager.clear();
   });
 
   it("should delete a specified node", async () => {
@@ -47,13 +47,13 @@ describe("GraphStore.removeNode", () => {
     await graphStore.removeNode({ nodeId: orphanNode.id });
 
     // Get pendingUpdates without the transactionId for comparison
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([[{ operation: "deleteNode", node: orphanNode.serialize() }]]);
   });
-  it("should create a working undo operation", async () => {
+  it("should create a working revert operation", async () => {
     await graphStore.removeNode({ nodeId: nodeA.id });
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(graphStore.getNode(nodeA.id)?.serialize()).toEqual(nodeA.serialize());
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START);
@@ -69,10 +69,10 @@ describe("GraphStore.removeNode", () => {
     expect(graphStore.getRelation(relationAB.id)).toBeUndefined();
     expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START - 1);
   });
-  it("should be able to undo deletion of a node with relations", async () => {
+  it("should be able to revert deletion of a node with relations", async () => {
     await graphStore.removeNode({ nodeId: nodeA.id });
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(graphStore.getNode(nodeA.id)?.serialize()).toEqual(nodeA.serialize());
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START);

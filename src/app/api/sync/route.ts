@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/app/api/authMiddleware";
 import { createSnapshotFromDb } from "@/app/api/sync/createSnapshot";
 import { broadcastSyncSuccess } from "@/app/api/sync/pusher";
-import { SerializedSyncDataSchema } from "@/app/sync/SyncTask";
+import { SyncDataSchema } from "@/app/graph/SyncData";
 import { getDb } from "@/db";
 import { createNode, deleteNode, updateNode } from "@/db/graphNodes";
 import { createRelation, deleteRelation, updateRelation } from "@/db/graphRelations";
@@ -24,7 +24,7 @@ async function getHandler(req: NextRequest) {
 
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextRequest) {
-  const parsedData = SerializedSyncDataSchema.safeParse(await req.json());
+  const parsedData = SyncDataSchema.safeParse(await req.json());
 
   if (!parsedData.success) {
     console.log(parsedData.error);
@@ -32,7 +32,7 @@ async function postHandler(req: NextRequest) {
   }
 
   // TODO: At some point we'll want to validate user ID matches the user from auth, or just pull it directly from there
-  const { userId, transactionId, updates } = parsedData.data;
+  const { clientId, userId, transactionId, updates } = parsedData.data;
 
   const db = getDb();
 
@@ -81,7 +81,7 @@ async function postHandler(req: NextRequest) {
     return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
   }
 
-  await broadcastSyncSuccess({ userId, transactionId, updates });
+  await broadcastSyncSuccess({ clientId, userId, transactionId, updates });
 
   return NextResponse.json({ status: "ok" });
 }

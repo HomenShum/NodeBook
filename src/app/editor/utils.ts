@@ -166,8 +166,17 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
   return chips;
 }
 
+const nodeEmpty = (node: GraphNode): boolean => {
+  return node.content.length === 0 || node.content.every((chip) => chip.type === "text" && chip.value === "");
+};
+
+const paragraphEmpty = (paragraph: ParagraphNode): boolean => {
+  return paragraph.getChildren().length === 0 || paragraph.getChildren().every((node) => node.getTextContent() === "");
+};
+
 export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphNode, graphStore: GraphStore) => {
   const paragraphChildren = paragraph.getChildren();
+  if (nodeEmpty(node) && paragraphEmpty(paragraph)) return true;
   if (node.content.length !== paragraphChildren.length) return false;
 
   const match = node.content.every((chip, idx) => {

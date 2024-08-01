@@ -27,7 +27,7 @@ describe("GraphStore.updateNode", () => {
       },
     });
 
-    graphStore.syncQueue.clear();
+    graphStore.updateManager.clear();
   });
 
   it("should create a new node", async () => {
@@ -45,13 +45,13 @@ describe("GraphStore.updateNode", () => {
     expect(graphStore.nodesById.size).toBe(NUM_START_NODES);
     expect(node.content).toEqual([{ type: "text", value: "new content" }]);
   });
-  it("should create a working undo operation", async () => {
+  it("should create a working revert operation", async () => {
     await graphStore.updateNode({
       nodeId: node.id,
       nodeProps: { content: "new content" },
     });
 
-    graphStore.syncQueue.undoAllPending();
+    graphStore.updateManager.revertAllPending();
 
     expect(node.content).toEqual([{ type: "text", value: "test content" }]);
   });
@@ -64,7 +64,7 @@ describe("GraphStore.updateNode", () => {
     });
 
     // Get pendingUpdates without the transactionId for comparison
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.syncQueue.pendingUpdates.map((update) => update.updates);
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [{ operation: "updateNode", oldProps: nodeAtStart, newProps: node.serialize() }],
     ]);

@@ -3,7 +3,7 @@ import { action, computed, isObservable, makeObservable, observable } from "mobx
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
-import { uuid } from "@/app/util";
+import { Position, uuid } from "@/app/util";
 
 import { GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
@@ -121,6 +121,22 @@ export class GraphRelation extends GraphObject implements Serializable {
     return [this.from.searchText, this.relationType.label, this.relationType.reverseLabel, this.to.searchText].join(
       " ",
     );
+  }
+
+  get fromPosition(): Position | undefined {
+    return this.from.allRelationsList.get(this.id)?.position;
+  }
+
+  get fromPinnedPosition(): Position | undefined {
+    return this.from.pinnedRelationsList.get(this.id)?.position;
+  }
+
+  get toPosition(): Position | undefined {
+    return this.to.allRelationsList.get(this.id)?.position;
+  }
+
+  get toPinnedPosition(): Position | undefined {
+    return this.to.pinnedRelationsList.get(this.id)?.position;
   }
 
   setType(type: GraphRelationType) {

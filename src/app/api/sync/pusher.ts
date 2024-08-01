@@ -1,7 +1,7 @@
 import Pusher from "pusher";
 
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
-import { SyncData } from "@/app/sync/SyncTask";
+import { SyncData } from "@/app/graph/SyncData";
 import { env } from "@/envBackend";
 import { userIdToPusherChannel } from "@/lib/pusher";
 
@@ -38,14 +38,16 @@ const updatesToSize = (updates: GraphUpdate[]): GraphUpdate[][] => {
   return resized;
 };
 
-export const broadcastSyncSuccess = async ({ userId, transactionId, updates }: SyncData) => {
+export const broadcastSyncSuccess = async ({ clientId, userId, transactionId, updates }: SyncData) => {
   const channel = userIdToPusherChannel(userId);
   const updateChunks = updatesToSize(updates);
   for (const chunk of updateChunks) {
     let attempts = 0;
     while (attempts < 3) {
       try {
-        await pusher.trigger(channel, "transaction-accepted", { userId, transactionId, updates: chunk });
+        // msgData declaration here not strictly needed but helps with type checking as we continue to play with the structure of SyncData
+        const msgData: SyncData = { clientId, userId, transactionId, updates: chunk };
+        await pusher.trigger(channel, "transaction-accepted", msgData);
         break;
       } catch (e) {
         attempts++;

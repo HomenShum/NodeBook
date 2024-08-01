@@ -2,6 +2,8 @@ import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
+import { SyncData } from "@/app/graph/SyncData";
+import { UpdateManager } from "@/app/graph/UpdateManager";
 import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
 import {
   DeletedRelationData,
@@ -11,8 +13,6 @@ import {
   SerializedPositionList,
   SerializedRelation,
 } from "@/app/persistence/SerializedData";
-import { SyncQueue } from "@/app/sync/SyncQueue";
-import { SyncData } from "@/app/sync/SyncTask";
 import { uuid } from "@/app/util";
 import logger from "@/lib/logger";
 import { CappedKeywordIndex } from "@/lib/trie";
@@ -82,7 +82,7 @@ export class GraphStore {
 
   authedFetch: typeof fetch;
   user: MewUser;
-  syncQueue: SyncQueue;
+  updateManager: UpdateManager;
 
   cappedKeywordIndex = new CappedKeywordIndex(3);
 
@@ -104,7 +104,11 @@ export class GraphStore {
   constructor(user: MewUser = UNLOGGED_USER, authedFetch?: typeof fetch) {
     this.user = user;
     this.authedFetch = authedFetch ?? fetch;
-    this.syncQueue = new SyncQueue(user.id, async () => await this.fetchLatestDataSnapshot());
+    this.updateManager = new UpdateManager(
+      user.id,
+      async () => await this.fetchLatestDataSnapshot(),
+      (updates) => this.applyUpdates(updates),
+    );
     const { updates, ...defaults } = this.createDefaultObjects();
     this.userRoot = defaults.userRoot;
     this.outlineRoot = defaults.outlineRoot;
@@ -140,6 +144,7 @@ export class GraphStore {
         addChildNode: action,
         addToBundle: action,
         removeFromBundle: action,
+        applyUpdates: action,
         load: action,
         clear: action,
         initializeAndLoad: action,
@@ -178,7 +183,7 @@ export class GraphStore {
   syncLoop() {
     if (!this.isSyncing) return;
     this.nextSyncId = setTimeout(async () => {
-      await this.syncQueue.process(this.authedFetch);
+      await this.updateManager.syncLocalUpdates(this.authedFetch);
       this.syncLoop();
     }, 500);
   }
@@ -189,8 +194,7 @@ export class GraphStore {
   }
 
   async handleSyncData(data: SyncData) {
-    if (this.syncQueue.isLocalTransaction(data.transactionId)) {
-      // TODO: we probably want to delete the transaction from the localTransactions set here
+    if (this.updateManager.isLocalUpdate(data)) {
       return;
     }
     try {
@@ -201,7 +205,7 @@ export class GraphStore {
     }
   }
 
-  private applyUpdates(updates: GraphUpdate[]) {
+  applyUpdates(updates: GraphUpdate[]) {
     for (const update of updates) {
       switch (update.operation) {
         case "addNode":
@@ -240,48 +244,8 @@ export class GraphStore {
     }
   }
 
-  private undoUpdates(updates: GraphUpdate[]) {
-    for (const update of [...updates].reverse()) {
-      switch (update.operation) {
-        case "addNode":
-          this.deleteNode(update.node.id);
-          break;
-        case "updateNode":
-          this._updateNode({ nodeId: update.newProps.id, nodeProps: update.oldProps });
-          break;
-        case "deleteNode":
-          this.createNode(update.node);
-          break;
-        case "addRelationType":
-          this.deleteRelationType(update.relationType.id);
-          break;
-        case "updateRelationType":
-          this.updateRelationType(update.newProps.id, update.oldProps);
-          break;
-        case "deleteRelationType":
-          this.createRelationType(update.relationType);
-          break;
-        case "addRelation":
-          this.deleteRelation(update.relation.id);
-          break;
-        case "updateRelation":
-          this._updateRelation(update.newProps, update.oldProps);
-          break;
-        case "deleteRelation":
-          this.restoreRelation(update.deleted);
-          break;
-        case "updateRelationList":
-          this.updateRelationList(update.nodeId, update.pinned, update.listBefore);
-          break;
-        default:
-          const _exhaustiveCheck: never = update;
-      }
-    }
-  }
-
   private queueUpdates(updates: GraphUpdate[]) {
-    const undoFn = () => this.undoUpdates(updates);
-    this.syncQueue.addUpdates(updates, undoFn);
+    this.updateManager.addUpdates(updates);
   }
 
   /**
@@ -632,7 +596,7 @@ export class GraphStore {
 
   private createRelation(relationProps: GraphRelationProps): { relation: GraphRelation; updates: GraphUpdate[] } {
     let relation: GraphRelation | null = null;
-    const updates: GraphUpdate[] = [];
+    let updates: GraphUpdate[];
 
     try {
       if (relationProps.id && this.relationsById.has(relationProps.id)) {
@@ -647,35 +611,38 @@ export class GraphStore {
       this.relationsById.set(relation.id, relation);
       this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
 
-      updates.push({
-        operation: "addRelation",
-        relation: relation.serialize(),
-      });
-
       const fromListBefore = relation.from.allRelationsList.serialize();
-      this.getRelationList(relation.from).add(relation);
+      relation.from.allRelationsList.add(relation);
       const fromListAfter = relation.from.allRelationsList.serialize();
-      updates.push({
-        operation: "updateRelationList",
-        authorId: this.user.id,
-        nodeId: relation.from.id,
-        pinned: false,
-        listBefore: fromListBefore,
-        listAfter: fromListAfter,
-      });
 
       const toListBefore = relation.to.allRelationsList.serialize();
-      this.getRelationList(relation.to).add(relation);
+      relation.to.allRelationsList.add(relation);
       const toListAfter = relation.to.allRelationsList.serialize();
-      updates.push({
-        operation: "updateRelationList",
-        authorId: this.user.id,
-        nodeId: relation.to.id,
-        pinned: false,
-        listBefore: toListBefore,
-        listAfter: toListAfter,
-      });
 
+      updates = [
+        {
+          operation: "addRelation",
+          relation: relation.serialize(),
+          fromPos: relation.fromPosition!,
+          toPos: relation.toPosition!,
+        },
+        {
+          operation: "updateRelationList",
+          authorId: this.user.id,
+          nodeId: relation.from.id,
+          pinned: false,
+          listBefore: fromListBefore,
+          listAfter: fromListAfter,
+        },
+        {
+          operation: "updateRelationList",
+          authorId: this.user.id,
+          nodeId: relation.to.id,
+          pinned: false,
+          listBefore: toListBefore,
+          listAfter: toListAfter,
+        },
+      ];
       return { relation, updates };
     } catch (e) {
       if (relation) {
@@ -707,17 +674,17 @@ export class GraphStore {
   }
 
   private deleteRelation(relationOrId: GraphRelation | string): DeletedRelationData {
-    const relation = typeof relationOrId === "string" ? this.relationsById.get(relationOrId) : relationOrId;
+    const relation = typeof relationOrId === "string" ? this.getRelation(relationOrId) : relationOrId;
     if (!relation) {
       throw new Error("Relation does not exist");
     }
 
     const deleted: DeletedRelationData = {
       relation: relation.serialize(),
-      fromPos: this.getRelationList(relation.from).get(relation.id)?.position,
-      fromPinnedPos: this.getPinnedRelationList(relation.from).get(relation.id)?.position,
-      toPos: this.getRelationList(relation.to).get(relation.id)?.position,
-      toPinnedPos: this.getPinnedRelationList(relation.to).get(relation.id)?.position,
+      fromPos: relation.fromPosition,
+      fromPinnedPos: relation.fromPinnedPosition,
+      toPos: relation.toPosition,
+      toPinnedPos: relation.toPinnedPosition,
       bundles: this.relationToBundles.get(relation.id) || [],
       relationsList: [],
     };
@@ -1251,7 +1218,7 @@ export class GraphStore {
       delete this.relationTypesById[key];
     });
     // TODO: Consider pausing sync when the user is being changed
-    this.syncQueue.clear();
+    this.updateManager.clear();
     this.cappedKeywordIndex.clear();
     this.createDefaultObjects();
   }
