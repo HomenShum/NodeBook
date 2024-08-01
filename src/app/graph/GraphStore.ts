@@ -455,7 +455,7 @@ export class GraphStore {
     newRelation: GraphRelation;
     updates: GraphUpdate[];
   } {
-    const wannaBeParent = this.nodesById.get(tx.parentId);
+    const wannaBeParent = this.getObject(tx.parentId);
     if (!wannaBeParent) {
       throw new Error(`Parent with id ${tx.parentId} does not exist`);
     }
