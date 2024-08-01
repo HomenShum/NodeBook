@@ -180,6 +180,8 @@ class Logger {
  * updateGlobalLoggerFilter({ level: "info" });
  * logger.debug("This message will not be logged");
  */
-const logger = new Logger({ level: "debug" });
+const logger = new Logger({
+  level: process.env.NODE_ENV === "production" ? "info" : process.env.NODE_ENV === "test" ? "error" : "debug",
+});
 
 export default logger;
