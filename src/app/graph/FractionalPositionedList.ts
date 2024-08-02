@@ -64,6 +64,7 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
       int = Math.max(...Array.from(items).map((item) => item.createdAt.getTime()));
       fracs = generateNKeysBetween(null, null, items.length);
       items.forEach((item, i) => {
+        // TODO: should this throw?
         if (this.map.has(item.id)) return logger.error("Attempted to add item that is already in the list");
         this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
       });
