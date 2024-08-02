@@ -13,6 +13,7 @@ import {
 import { GraphNode } from "@/app/graph/GraphNode";
 import { TreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray } from "@/app/tree/utils";
+import { truncateText } from "@/app/util";
 import { createRouteUrl, ViewType } from "@/app/view/ViewType";
 
 import styles, { default as s } from "./Breadcrumbs.module.css";
@@ -35,7 +36,7 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
       {index > 0 && <ChevronRight size={14} strokeWidth={2} className={s.Separator} />}
       <span className={s.Breadcrumb} onClick={() => handleNavigation(index)}>
         {index === 0 ? <User size={14} /> : null}
-        <span>{truncate(ancestor.object.text, 32)}</span>
+        <span>{truncateText(ancestor.object.text, 32)}</span>
       </span>
     </React.Fragment>
   );
@@ -62,7 +63,7 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
           <DropdownMenuContent sideOffset={4}>
             {ancestors.slice(1, -MAX_VISIBLE_ITEMS + 2).map((ancestor, index) => (
               <DropdownMenuItem key={ancestor.path} onSelect={() => handleNavigation(index + 1)}>
-                {truncate(ancestor.object.text, 32)}
+                {truncateText(ancestor.object.text, 32)}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
@@ -94,10 +95,3 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
     </nav>
   );
 });
-
-const truncate = (text: string, maxLength: number) => {
-  if (text.length > maxLength) {
-    return text.slice(0, maxLength) + "...";
-  }
-  return text;
-};

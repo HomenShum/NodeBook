@@ -4,26 +4,27 @@
   padding: 2px;
   border-radius: 4px;
   position: fixed;
-  max-width: 380px;
+  max-width: 50vw;
   z-index: 30;
   box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
 }
 
 .TypeaheadPopover ul {
-  padding: 0;
+  padding: 2px;
   list-style: none;
   margin: 0;
-  overflow-y: scroll;
+  overflow-y: auto;
+  max-height: 30vh;
   scrollbar-width: none;
 }
 
 .TypeaheadPopover ul > :last-child {
-  padding-bottom: 8px;
+  padding: 8px 12px 4px 12px;
 }
 
 .TypeaheadPopover ul li {
   margin: 0;
-  padding: 4px 12px;
+  padding: 6px 12px;
   min-width: 180px;
   border-radius: 2px;
   outline: none;
@@ -36,14 +37,17 @@
 
 .TypeaheadPopoverItem {
   display: flex;
+  gap: 2px;
+  padding-bottom: 4px;
   flex-direction: column;
 }
 
 .TypeaheadPopoverItemPath {
   display: flex;
+  flex-wrap: wrap;
+  line-height: 16px;
   gap: 4px;
   align-items: center;
   font-size: var(--font-size-sm);
   color: var(--gray-9);
-  height: 20px;
 }

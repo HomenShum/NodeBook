@@ -130,3 +130,10 @@ export function sortByPrefixMatch(objects: GraphObject[], query: string) {
 export function toast(message: string) {
   alert(message);
 }
+
+export const truncateText = (text: string, maxLength: number) => {
+  if (text.length > maxLength) {
+    return text.slice(0, maxLength) + "...";
+  }
+  return text;
+};

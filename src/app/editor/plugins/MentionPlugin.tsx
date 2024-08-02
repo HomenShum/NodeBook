@@ -14,7 +14,7 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { TreeNode } from "@/app/tree/nodes";
-import { uuid } from "@/app/util";
+import { truncateText, uuid } from "@/app/util";
 import { scoreMatch } from "@/lib/utils";
 
 import styles from "./MentionPlugin.module.css";
@@ -266,10 +266,25 @@ function MentionsTypeaheadMenuItem({
         <div>{option.name}</div>
         {path.length > 0 && (
           <div className={styles.TypeaheadPopoverItemPath}>
-            {path.map(({ key, text }) => (
-              <span key={key}>
-                {text}
-                <span> /</span>
+            {path.map(({ key, text }, index) => (
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  flexWrap: index === path.length - 1 ? "wrap" : "nowrap",
+                }}
+                key={key}
+              >
+                <span
+                  style={{
+                    textWrap: index === path.length - 1 ? "wrap" : "nowrap",
+                    maxWidth: index === path.length - 1 ? "100%" : "auto",
+                  }}
+                >
+                  {index === path.length - 1 ? text : truncateText(text, 36)}
+                </span>
+                {index < path.length - 1 && <span>/</span>}
               </span>
             ))}
           </div>
