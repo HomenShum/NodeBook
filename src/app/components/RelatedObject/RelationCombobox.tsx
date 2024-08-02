@@ -7,7 +7,6 @@ import * as React from "react";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { GraphRelationType } from "@/app/graph/GraphRelation";
-import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
@@ -41,6 +40,7 @@ export const RelationCombobox = observer(
     const close = () => {
       setIsOpen(false);
       setUpdatingRelationType(false);
+      treeNode.tree.setFocusedNode(treeNode.id);
     };
 
     // list of relation types, only forward and backward
@@ -113,7 +113,6 @@ export const RelationCombobox = observer(
     });
 
     const label = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
-    const isParent = relation.relationType.id === defaultRelationTypes.child.id && isForward;
 
     return (
       <Popover
@@ -138,6 +137,7 @@ export const RelationCombobox = observer(
           </Button>
         </PopoverTrigger>
         <PopoverContent
+          onCloseAutoFocus={(e) => e.preventDefault()}
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") {
               e.preventDefault();
