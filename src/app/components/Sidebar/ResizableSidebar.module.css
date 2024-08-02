@@ -5,11 +5,40 @@
   background-color: var(--gray-2);
   border-top: 1px solid var(--gray-4);
   overflow-y: auto;
-  transition: left 0.15s ease;
+  transition: transform 0.15s ease;
+  transform: translateX(-100%);
 }
 
 .Open {
-  left: 0 !important;
+  transform: translateX(0);
+}
+
+@media (max-width: 600px) {
+  .Sidebar {
+    width: 80% !important;
+    max-width: 300px;
+  }
+
+  .Resizer {
+    display: none;
+  }
+}
+
+.Backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 29;
+}
+
+@media (max-width: 600px) {
+  .Backdrop {
+    display: block;
+  }
 }
 
 .BackNavigation {
@@ -46,6 +75,7 @@
 .Resizer:hover {
   background-color: var(--gray-a4);
 }
+
 .Resizer:active {
   background-color: var(--teal-a4);
 }

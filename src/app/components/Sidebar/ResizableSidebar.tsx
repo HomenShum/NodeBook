@@ -131,12 +131,12 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
 
   return (
     <>
+      {isOpen && <div className={styles.Backdrop} onClick={() => renderController.toggleLeftSidebar()} />}
       <aside
         ref={sidebarRef}
         className={`${styles.Sidebar} ${isOpen ? styles.Open : ""} ${className || ""}`}
         style={{
           width: `${renderController.sidebarWidth}px`,
-          left: isOpen ? "0" : `${-1 * renderController.sidebarWidth}px`,
         }}
       >
         <div className={`${styles.SidebarContent} ${isResizing ? styles.Resizing : ""}`}>

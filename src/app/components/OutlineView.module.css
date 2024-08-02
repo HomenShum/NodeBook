@@ -61,13 +61,12 @@
   padding: 0 52px;
 }
 
-@media only screen and (max-width: 600px) {
-  .OutlineContainer {
-    margin-left: 0;
-    margin-top: 36px;
+@media (max-width: 600px) {
+  .HeadingContainer {
+    padding: 24px 0 0 18px;
   }
 
-  .TitleContainer {
-    padding: 0 13px;
+  .Nodes {
+    padding: 0 18px 0 48px;
   }
 }

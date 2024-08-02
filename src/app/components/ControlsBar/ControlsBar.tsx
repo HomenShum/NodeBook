@@ -17,7 +17,7 @@ import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { Tree } from "@/app/tree/Tree";
 import { useViewStore } from "@/app/view/useViewStore";
 
-import s from "./ControlsBar.module.css";
+import { default as s, default as styles } from "./ControlsBar.module.css";
 
 const filterIcons: { [key: string]: React.ReactNode } = {
   Public: <Globe size={14} />,
@@ -76,6 +76,7 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
         </Button>
 
         <SearchBar />
+
         {selectedFilters.map((filter) => (
           <FilterPill
             key={filter}
@@ -83,33 +84,34 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
             onRemove={(filter) => setSelectedFilters((prev) => prev.filter((f) => f !== filter))}
           />
         ))}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm">
-              <ListFilter size={16} strokeWidth={2} />
-              <span>Filters</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onSelect={() => toggleFilter("Public")}>
-              <Globe size={14} />
-              Public
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => toggleFilter("Shared")}>
-              <Link2 size={14} />
-              Shared
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => toggleFilter("Maps")}>
-              <Map size={14} />
-              Maps
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => toggleFilter("Places")}>
-              <MapPin size={14} />
-              Places
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className={styles.FiltersDropdown}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" disabled>
+                <ListFilter size={16} strokeWidth={2} />
+                <span>Filters</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => toggleFilter("Public")}>
+                <Globe size={14} />
+                Public
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => toggleFilter("Shared")}>
+                <Link2 size={14} />
+                Shared
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => toggleFilter("Maps")}>
+                <Map size={14} />
+                Maps
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => toggleFilter("Places")}>
+                <MapPin size={14} />
+                Places
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
         <Popover>

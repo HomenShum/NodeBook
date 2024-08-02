@@ -11,6 +11,10 @@
   justify-content: space-between;
 }
 
+.FiltersDropdown {
+  height: 24px;
+}
+
 .PopoverHeader {
   padding: 8px;
   height: 32px;
@@ -34,4 +38,19 @@
 
 .SwitchItem label {
   cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .ControlsBar {
+    padding: 8px 12px;
+    height: fit-content;
+    gap: 8px;
+    align-items: start;
+    flex-direction: column;
+    justify-content: start;
+  }
+
+  .FiltersDropdown {
+    display: none;
+  }
 }

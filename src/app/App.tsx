@@ -39,6 +39,10 @@ export default observer(
       }
     }, [renderController.isDarkMode]);
 
+    useEffect(() => {
+      document.documentElement.style.setProperty("--sidebar-width", `${renderController.sidebarWidth}px`);
+    }, [renderController.sidebarWidth]);
+
     if (auth && auth.error) {
       return (
         <div>
@@ -79,7 +83,6 @@ export default observer(
                   className={`${styles.Main} ${renderController.leftSidebarOpen ? styles.ShiftMain : ""} ${
                     isResizing ? styles.MainDragging : ""
                   }`}
-                  style={{ marginLeft: renderController.leftSidebarOpen ? renderController.sidebarWidth : "" }}
                 >
                   {children}
                 </main>
