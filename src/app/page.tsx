@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { createRouteUrl, ViewType } from "@/app/view/ViewType";
+import { ViewType } from "@/app/view/ViewType";
 
 export default function Page() {
-  redirect(createRouteUrl(ViewType.GRAPH, "home"));
+  redirect(ViewType.GRAPH + "/home");
 }

@@ -15,7 +15,7 @@ export const useKeyboardShortcuts = () => {
     async (e: KeyboardEvent) => {
       const metaOrCtrl = e.metaKey || e.ctrlKey; // Command key on Mac, Ctrl key on Windows
       // Create note shortcut when it's not already handled by an editor
-      if (metaOrCtrl && e.key === "k") {
+      if (metaOrCtrl && !e.shiftKey && e.key === "k") {
         e.preventDefault();
         switch (curView) {
           case ViewType.GRAPH: {

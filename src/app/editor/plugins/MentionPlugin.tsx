@@ -9,12 +9,12 @@ import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
 import { ReactPortal, Ref, useCallback, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
+import { Path } from "@/app/components/Path";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { GraphObject } from "@/app/graph/GraphObject";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { TreeNode } from "@/app/tree/nodes";
-import { truncateText, uuid } from "@/app/util";
+import { uuid } from "@/app/util";
 import { scoreMatch } from "@/lib/utils";
 
 import styles from "./MentionPlugin.module.css";
@@ -249,7 +249,6 @@ function MentionsTypeaheadMenuItem({
   if (isSelected) {
     className = styles.Selected;
   }
-  const path = option.value.type === "existing" ? getTopMostParentPath(option.value.object).slice(1) : [];
   return (
     <li
       key={option.key}
@@ -264,58 +263,8 @@ function MentionsTypeaheadMenuItem({
     >
       <div className={styles.TypeaheadPopoverItem}>
         <div>{option.name}</div>
-        {path.length > 0 && (
-          <div className={styles.TypeaheadPopoverItemPath}>
-            {path.map(({ key, text }, index) => (
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  flexWrap: index === path.length - 1 ? "wrap" : "nowrap",
-                }}
-                key={key}
-              >
-                <span
-                  style={{
-                    textWrap: index === path.length - 1 ? "wrap" : "nowrap",
-                    maxWidth: index === path.length - 1 ? "100%" : "auto",
-                  }}
-                >
-                  {index === path.length - 1 ? text : truncateText(text, 36)}
-                </span>
-                {index < path.length - 1 && <span>/</span>}
-              </span>
-            ))}
-          </div>
-        )}
+        {option.value.type === "existing" && <Path path={option.value.object.getPath()} />}
       </div>
     </li>
   );
-}
-
-/**
- * Traverses up parent nodes, always going up the first parent we hit, and
- * returns the path of nodes.
- *
- * If we find a cycle, hit the root, or hit a limit, we return the current path.
- */
-function getTopMostParentPath(
-  node: GraphObject,
-  { limit = 10 }: { limit?: number } = {},
-): { key: string; text: string }[] {
-  const path: GraphObject[] = [];
-  let current: GraphObject | undefined = node;
-
-  for (let i = 0; i < limit && current; i++) {
-    const parent: GraphObject | undefined = current.relationsSortedByPosition.find(
-      (r) => r.relationType.id === "child" && r.to === current,
-    )?.from;
-    if (!parent || path.some((p) => p.id === parent.id)) {
-      return path.map((p) => ({ key: p.id, text: p.text }));
-    }
-    path.unshift(parent);
-    current = parent;
-  }
-  return [{ key: "ellipses", text: "..." }, ...path.map((p) => ({ key: p.id, text: p.text }))];
 }

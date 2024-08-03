@@ -14,14 +14,13 @@ export class ViewStore {
   public viewType: "outline" | "note" = "outline";
   public mainStreamView: Tree;
   public mainOutlineView: Tree;
-  public sidebarTrees: Tree[] = [];
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.makeObservable();
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
-    this.mainStreamView = new Tree(graphStore, this.settingsStore, [graphStore.thoughtstreamRootRelationFromUserRoot]);
-    this.mainOutlineView = new Tree(graphStore, this.settingsStore, [graphStore.outlineRootRelationFromUserRoot]);
+    this.mainStreamView = new Tree(graphStore, this.settingsStore, graphStore.outlineRoot);
+    this.mainOutlineView = new Tree(graphStore, this.settingsStore, graphStore.thoughtstreamRoot);
   }
 
   makeObservable() {
@@ -61,18 +60,12 @@ export class ViewStore {
     return {
       mainStreamView: this.mainStreamView.serialize(),
       mainOutlineView: this.mainOutlineView.serialize(),
-      sidebarOutlineViews: this.sidebarTrees.map((view) => view.serialize()),
     };
   }
 
   deserializeInPlace(data: SerializedViewStore) {
     this.mainStreamView.deserializeInPlace(data.mainStreamView);
     this.mainOutlineView.deserializeInPlace(data.mainOutlineView);
-    this.sidebarTrees = data.sidebarOutlineViews.map((viewData) => {
-      const view = new Tree(this.graphStore, this.settingsStore, []);
-      view.deserializeInPlace(viewData);
-      return view;
-    });
   }
 
   cleanup() {}

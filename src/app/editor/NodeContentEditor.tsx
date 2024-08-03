@@ -5,6 +5,7 @@ import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
@@ -22,7 +23,8 @@ import { MentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
+import { createRouteUrl } from "@/app/util";
+import { ViewType } from "@/app/view/ViewType";
 import { cn } from "@/lib/utils";
 
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
@@ -31,8 +33,8 @@ import styles from "./Editor.module.css";
 
 export const NodeContentEditor = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const settingsStore = useSettingsStore();
-  const tree = useTree();
   const graphStore = useGraphStore();
+  const router = useRouter();
   const [mentionDropdownOpen, setMentionDropdownOpen] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -44,10 +46,10 @@ export const NodeContentEditor = observer(({ treeNode }: { treeNode: DescendantT
     (nodeId: string) => {
       const node = graphStore.getNode(nodeId);
       if (node) {
-        tree.setRoot(node.getPath());
+        router.push(createRouteUrl(ViewType.GRAPH, { object: node }));
       }
     },
-    [tree, graphStore],
+    [graphStore, router],
   );
 
   const showSearchAndReplaceDropdown =

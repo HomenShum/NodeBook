@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useUser } from "@/app/StoresProvider";
+import CommandBar from "@/app/components/CommandBar";
 import { ListIcon, StreamIcon } from "@/app/components/CustomIcons";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
@@ -13,8 +14,8 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { useCurView } from "@/app/util";
-import { createRouteUrl, ViewType } from "@/app/view/ViewType";
+import { createRouteUrl, useCurView } from "@/app/util";
+import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./ResizableSidebar.module.css";
@@ -144,15 +145,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
             <Button className={styles.BackNavigation} variant="ghost" size="icon" onClick={() => router.back()}>
               <ArrowLeft size={16} />
             </Button>
-            {/* <Button
-              variant="default"
-              size="default"
-              disabled
-              style={{ width: "100%", justifyContent: "start", marginBottom: "24px" }}
-            >
-              <Search size={16}></Search>
-              Global Search
-            </Button> */}
+            <CommandBar />
             {/* <Button variant="ghost" size="sm">
               Workspace
               <Play size={7} fill="currentColor" />

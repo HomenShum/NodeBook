@@ -12,7 +12,8 @@ import {
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { getAncestorsAsArray } from "@/app/tree/utils";
-import { createRouteUrl, ViewType } from "@/app/view/ViewType";
+import { createRouteUrl } from "@/app/util";
+import { ViewType } from "@/app/view/ViewType";
 
 import breadcrumb from "./Breadcrumbs/Breadcrumbs.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
@@ -49,7 +50,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
                     className={breadcrumb.Breadcrumb}
                     key={path}
                     onClick={() => {
-                      router.push(createRouteUrl(ViewType.STREAM, ...relations.slice(0, i + 1)));
+                      router.push(createRouteUrl(ViewType.STREAM, relations.slice(0, i + 1)));
                     }}
                   >
                     {!isFirst && <ChevronRight size={14} strokeWidth={2} />}
@@ -72,7 +73,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
                         <DropdownMenuItem
                           key={path}
                           onSelect={() => {
-                            router.push(createRouteUrl(ViewType.STREAM, ...relations.slice(0, index + 2)));
+                            router.push(createRouteUrl(ViewType.STREAM, relations.slice(0, index + 2)));
                           }}
                         >
                           {truncateText(object.text, 20)}
@@ -88,7 +89,7 @@ export const ThoughtstreamView = observer(({ tree }: { tree: Tree }) => {
                   className={breadcrumb.Breadcrumb}
                   key={path}
                   onClick={() => {
-                    router.push(createRouteUrl(ViewType.STREAM, ...relations.slice(0, i + 1)));
+                    router.push(createRouteUrl(ViewType.STREAM, relations.slice(0, i + 1)));
                   }}
                 >
                   <ChevronRight size={14} strokeWidth={2} />

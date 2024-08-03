@@ -7,10 +7,13 @@ import { v4 as uuidv4 } from "uuid";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
+import { getOtherObject } from "@/app/graph/utils";
 import { isViewType, ViewType } from "@/app/view/ViewType";
 
 // TODO: what should we actually use for this?
 export const uuid = () => uuidv4().slice(0, 8);
+
+const home = "home";
 
 export function comparePositions(a: Position | null, b: Position | null) {
   if (a === null) return -1;
@@ -69,23 +72,72 @@ export const relationsPathToParentChild = (relations: GraphRelation[]): PathLink
   return path;
 };
 
-export const isPathContinuous = (relations: GraphRelation[]): boolean => {
-  try {
-    relationsPathToParentChild(relations);
-    return true;
-  } catch {
-    return false;
+/**
+ * Specifies an object and optionally a path of relations to reach it
+ */
+export type ObjectPath = { object: GraphObject; relations?: GraphRelation[] };
+
+export const isPathContinuous = (path: ObjectPath): boolean => {
+  let current: GraphObject = path.object;
+  const relations = path.relations || [];
+  for (let i = relations.length - 1; i >= 0; i--) {
+    const otherSide = getOtherObject(relations[i], current.id);
+    if (!otherSide) return false;
+    current = otherSide;
   }
+  return true;
 };
 
-export function pathStringToRelations(path: string[], graphStore: GraphStore) {
+function relationsToObjectPath(relations: GraphRelation[]): ObjectPath | null {
+  if (relations.length === 0) return null;
+  let current: GraphObject = relations[0].from;
+  for (const relation of relations) {
+    const otherSide = getOtherObject(relation, current.id);
+    if (!otherSide) return null;
+    current = otherSide;
+  }
+  return { relations, object: current };
+}
+
+export function objectPathToObjects(path: ObjectPath): GraphObject[] | null {
+  const objects: GraphObject[] = [];
+  let current: GraphObject = path.object;
+  const relations = path.relations || [];
+  for (let i = relations.length - 1; i >= 0; i--) {
+    objects.unshift(current);
+    const otherSide = getOtherObject(relations[i], current.id);
+    if (!otherSide) return null;
+    current = otherSide;
+  }
+  objects.unshift(current);
+  return objects;
+}
+
+export function createRouteUrl(viewType: ViewType, path?: ObjectPath | GraphRelation[] | typeof home): string {
+  if (path && path !== home) {
+    const objectPath = Array.isArray(path) ? relationsToObjectPath(path) : path;
+    if (objectPath) {
+      const ids = [...(objectPath.relations || []).map((r) => r.id), objectPath.object.id];
+      return "/" + viewType + "/" + ids.join("/");
+    }
+  }
+  return "/" + viewType + "/" + home;
+}
+
+export function parsePathString(path: string[], graphStore: GraphStore): ObjectPath | null {
+  if (path.length === 0) return null;
   let relations = [];
-  for (const id of path) {
-    const graphRel = id === "home" ? graphStore.outlineRootRelationFromUserRoot : graphStore.relationsById.get(id);
+  for (const id of path.slice(0, -1)) {
+    const graphRel = graphStore.relationsById.get(id);
     if (!graphRel) return null;
     relations.push(graphRel);
   }
-  return isPathContinuous(relations) ? relations : null;
+  const lastId = path[path.length - 1];
+  const object = lastId === home ? graphStore.outlineRoot : graphStore.getObject(lastId);
+  if (!object) return null;
+  const objectPath = { relations, object };
+  if (!isPathContinuous(objectPath)) return null;
+  return objectPath;
 }
 
 export function formatDate(date: Date | undefined): string {

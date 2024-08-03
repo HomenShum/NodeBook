@@ -1,0 +1,9 @@
+.Path {
+  display: flex;
+  flex-wrap: wrap;
+  line-height: 16px;
+  gap: 4px;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--gray-9);
+}

@@ -10,6 +10,13 @@
   border: 0.5px solid var(--gray-6);
 }
 
+.Home {
+  margin-top: 2px;
+  margin-right: 3px;
+  cursor: pointer;
+  color: var(--gray-9);
+}
+
 .BreadcrumbContainer > :first-child > :first-child {
   margin-right: 4px;
 }

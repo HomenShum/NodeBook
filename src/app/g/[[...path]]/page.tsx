@@ -4,17 +4,17 @@ import { useEffect } from "react";
 
 import { OutlineView } from "@/app/components/OutlineView";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { pathStringToRelations } from "@/app/util";
+import { createRouteUrl, parsePathString } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
-import { createRouteUrl, ViewType } from "@/app/view/ViewType";
+import { ViewType } from "@/app/view/ViewType";
 
 export default function Page({ params: { path } }: { params: { path: string[] | undefined } }) {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   useEffect(() => {
-    const relationPath = pathStringToRelations(path ?? [], graphStore);
-    if (relationPath === null || relationPath.length === 0) {
-      return redirect(createRouteUrl(ViewType.GRAPH, graphStore.outlineRootRelationFromUserRoot));
+    const relationPath = parsePathString(path ?? [], graphStore);
+    if (relationPath === null) {
+      return redirect(createRouteUrl(ViewType.GRAPH, "home"));
     }
     viewStore.mainOutlineView.setRoot(relationPath);
   }, [graphStore, path, viewStore.mainOutlineView]);

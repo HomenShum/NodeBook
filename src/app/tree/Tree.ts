@@ -9,7 +9,7 @@ import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
-import { comparePositions, relationsPathToParentChild, uuid } from "@/app/util";
+import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
 import { BaseTreeNode, DescendantTreeNode, RootTreeNode, TreeNode } from "./nodes";
@@ -39,7 +39,7 @@ export class Tree {
   constructor(
     graphStore: GraphStore,
     settingsStore: SettingsStore,
-    root: GraphObject | GraphRelation[],
+    root: DescendantTreeNode | ObjectPath | GraphObject,
     {
       id = uuid(),
       search = "",
@@ -57,13 +57,9 @@ export class Tree {
     this.id = id;
     this.graphStore = graphStore;
     this.settingsStore = settingsStore;
-    if (Array.isArray(root)) {
-      this.rootObject = relationsPathToParentChild(root).slice(-1)[0]?.child;
-      this.pathToRoot = root;
-    } else {
-      this.rootObject = root;
-      this.pathToRoot = [];
-    }
+    const { rootObject, pathToRoot } = this.setRoot(root);
+    this.rootObject = rootObject;
+    this.pathToRoot = pathToRoot;
     this.search = search;
     this.partialFilter = filter;
     this.expansionsByPath = expansions;
@@ -286,19 +282,19 @@ export class Tree {
    * If an array of relations is given, it must be a contiguous path,
    * and the object at the end of the path will be considered the "root".
    */
-  setRoot(root: GraphObject | DescendantTreeNode | GraphRelation[]) {
+  setRoot(root: DescendantTreeNode | ObjectPath | GraphObject) {
     logger.debug("Setting tree root", root);
-    if (Array.isArray(root)) {
-      const path = relationsPathToParentChild(root);
-      this.rootObject = path[path.length - 1].child;
-      this.pathToRoot = root;
-    } else if (root instanceof DescendantTreeNode) {
+    if (root instanceof DescendantTreeNode) {
       this.rootObject = root.object;
       this.pathToRoot = getAncestorsAsArray(root).map((node) => node.relationToChild);
-    } else {
+    } else if (root instanceof GraphObject) {
       this.rootObject = root;
       this.pathToRoot = [];
+    } else {
+      this.rootObject = root.object;
+      this.pathToRoot = root.relations || [];
     }
+    return { rootObject: this.rootObject, pathToRoot: this.pathToRoot };
   }
 
   // For objects, we default to collapsed.

@@ -2,7 +2,7 @@ import { action, computed, isObservable, makeObservable, observable, toJS } from
 
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
-import { Position, uuid } from "@/app/util";
+import { ObjectPath, Position, uuid } from "@/app/util";
 
 import { GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
@@ -138,21 +138,21 @@ export class GraphNode extends GraphObject implements Serializable {
     return `Node(${this.id.slice(0, 8)}: ${this.text.slice(0, 8)})`;
   }
 
-  getPath({ limit = 10 }: { limit?: number } = {}): GraphRelation[] {
-    const path: GraphRelation[] = [];
+  getPath({ limit = 10 }: { limit?: number } = {}): ObjectPath {
+    const relations: GraphRelation[] = [];
     let current: GraphObject | undefined = this;
 
-    for (let i = 0; i < limit && current; i++) {
+    for (let i = 0; i < limit && current && current !== this.store.outlineRoot; i++) {
       const parentRelation: GraphRelation | undefined = current.relationsSortedByPosition.find(
         (r) => r.relationType.id === "child" && r.to === current && r.from.id !== this.store.thoughtstreamRoot.id,
       );
-      if (!parentRelation || path.some((p) => p.id === parentRelation.id)) {
-        return path;
+      if (!parentRelation || relations.some((p) => p.id === parentRelation.id)) {
+        return { relations, object: this };
       }
-      path.unshift(parentRelation);
+      relations.unshift(parentRelation);
       current = parentRelation.from;
     }
-    return path;
+    return { relations, object: this };
   }
 
   serialize(): SerializedNode {

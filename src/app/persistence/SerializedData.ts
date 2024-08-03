@@ -101,7 +101,6 @@ export type SerializedTree = {
 export type SerializedViewStore = {
   mainStreamView: SerializedTree;
   mainOutlineView: SerializedTree;
-  sidebarOutlineViews: SerializedTree[];
 };
 
 export type SerializedStores = {

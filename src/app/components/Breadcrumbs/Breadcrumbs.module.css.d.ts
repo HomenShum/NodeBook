@@ -4,6 +4,7 @@ declare const styles: {
   readonly "BreadcrumbContainer": string;
   readonly "BreadcrumbWrapper": string;
   readonly "Chevron": string;
+  readonly "Home": string;
   readonly "Icon": string;
   readonly "PinButton": string;
   readonly "Separator": string;
