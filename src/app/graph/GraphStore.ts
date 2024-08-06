@@ -1526,6 +1526,8 @@ export class GraphStore {
         if (!this.relationsById.has(obj.id)) {
           throw new Error(`Relation with id ${obj.id} does not exist`);
         }
+      } else if (obj instanceof PlaceholderGraphObject) {
+        logger.warn(`Placeholder object with id ${obj.id} is being used`);
       } else {
         throw new Error("Invalid object type");
       }
