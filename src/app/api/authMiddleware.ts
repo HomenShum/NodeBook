@@ -37,10 +37,7 @@ export function withAuth(handler: (req: NextRequest) => Promise<NextResponse>) {
     try {
       await verifyToken(token);
     } catch (error) {
-      return NextResponse.json(
-        { status: "error", message: "Invalid or expired token", error, env, JWT_PUBLIC_KEY, token },
-        { status: 401 },
-      );
+      return NextResponse.json({ status: "error", message: "Invalid or expired token" }, { status: 401 });
     }
 
     return handler(req);
