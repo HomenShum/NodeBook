@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { env } from "@/envBackend";
 
-const JWT_PUBLIC_KEY = Buffer.from(env.JWT_PUBLIC_KEY, "base64").toString("utf-8").trim();
+const JWT_PUBLIC_KEY = Buffer.from(env.AUTH0_JWT_PUBLIC_KEY, "base64").toString("utf-8").trim();
 
 function verifyToken(token: string) {
   return new Promise((resolve, reject) => {
