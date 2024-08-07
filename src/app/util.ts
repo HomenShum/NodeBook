@@ -2,6 +2,7 @@
 import { generateKeyBetween } from "fractional-indexing";
 import { autorun, toJS } from "mobx";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { GraphObject } from "@/app/graph/GraphObject";
@@ -188,4 +189,25 @@ export const truncateText = (text: string, maxLength: number) => {
     return text.slice(0, maxLength) + "...";
   }
   return text;
+};
+
+export const useIsMobile = (breakpoint: number = 480): boolean => {
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= breakpoint);
+    };
+
+    // Check initially
+    checkIsMobile();
+
+    // Add event listener
+    window.addEventListener("resize", checkIsMobile);
+
+    // Clean up
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, [breakpoint]);
+
+  return isMobile;
 };
