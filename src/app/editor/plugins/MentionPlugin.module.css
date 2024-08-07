@@ -29,6 +29,7 @@
   border-radius: 2px;
   outline: none;
   cursor: pointer;
+  color: var(--gray-12);
 }
 
 .TypeaheadPopover ul li.Selected {

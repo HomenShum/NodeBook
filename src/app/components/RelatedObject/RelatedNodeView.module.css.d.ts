@@ -3,6 +3,7 @@ declare const styles: {
   readonly "Container": string;
   readonly "EditButton": string;
   readonly "Editor": string;
+  readonly "Expanded": string;
   readonly "FlexContainer": string;
   readonly "Pill": string;
   readonly "PillContainer": string;

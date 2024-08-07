@@ -56,7 +56,7 @@ const NodeReferenceView = observer(({ treeNode }: { treeNode: DescendantTreeNode
         </div>
       ) : (
         <div className={styles.PillContainer}>
-          <div className={styles.Pill}>
+          <div className={`${tree.isPathExpanded(treeNode.path) && styles.Expanded} ${styles.Pill}`}>
             <div onClick={() => tree.togglePathExpanded(treeNode.path)}>{treeNode.object.text}</div>
             <Button
               variant="ghost"

@@ -23,7 +23,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -62,6 +61,16 @@ export const RelatedObjectMenu = observer(
           )}
           <DropdownMenuItem
             onSelect={action(async () => {
+              await graphStore.addChildNode({ parentId: object.id });
+              tree.setPathExpanded(treeNode.path, true);
+            })}
+          >
+            <Plus size={14} />
+            Add child
+            {/* <DropdownMenuShortcut>⌘K</DropdownMenuShortcut> */}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={action(async () => {
               await graphStore.removeRelation({ relationId: relation.id });
               if (treeNode.siblingAbove) {
                 tree.setFocusedNode(treeNode.siblingAbove.path);
@@ -96,15 +105,6 @@ export const RelatedObjectMenu = observer(
           <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>
             <RefreshCcwDot size={14} />
             Change relation type
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={action(async () => {
-              await graphStore.addChildNode({ parentId: object.id });
-              tree.setPathExpanded(treeNode.path, true);
-            })}
-          >
-            <Plus size={14} />
-            Add child <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
           </DropdownMenuItem>
           {/* toggle bundle */}
           {object instanceof GraphNode &&
