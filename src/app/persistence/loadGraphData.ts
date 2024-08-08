@@ -15,7 +15,8 @@ const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
   const data = JSON.parse(dataString) as SerializedStores;
 
   if (data.graphStore) {
-    graphStore.initializeAndLoad(graphStore.user, data.graphStore);
+    graphStore.cleanup();
+    graphStore.load(data.graphStore);
   }
 
   if (data.viewStore) {
@@ -31,7 +32,8 @@ const loadRemoteData = async (graphStore: GraphStore, viewStore: ViewStore, auth
   const syncData = await authFetch(`/api/sync?userId=${graphStore.user.id}`).then((res) => res.json());
   const parsed = SerializedGraphStoreSchema.safeParse(syncData.data);
   if (parsed.success) {
-    graphStore.initializeAndLoad(graphStore.user, parsed.data);
+    graphStore.cleanup();
+    graphStore.load(parsed.data);
     logger.debug("Graph data loaded");
   } else {
     logger.error("Failed to parse graph store data from server", parsed.error);

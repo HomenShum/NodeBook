@@ -35,7 +35,7 @@ describe("GraphStore.updateRelation", () => {
       toId: endNode.id,
     });
 
-    graphStore.updateManager.clear();
+    graphStore.updateManager.cleanup();
   });
 
   it("should be able to update isPrivate and increment version properly", async () => {

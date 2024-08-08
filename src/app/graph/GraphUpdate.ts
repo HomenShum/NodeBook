@@ -185,7 +185,7 @@ export const generateInverseUpdates = (updates: GraphUpdate[]): GraphUpdate[] =>
         break;
 
       default:
-        const _exhaustiveCheck: never = update;
+        update satisfies never;
     }
   }
 

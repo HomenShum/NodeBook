@@ -26,7 +26,7 @@ describe("GraphStore.removeRelation", () => {
       endNode = await graphStore.addNode({});
       relation = await graphStore.addRelation({ fromId: startNode.id, toId: endNode.id });
 
-      graphStore.updateManager.clear();
+      graphStore.updateManager.cleanup();
     });
 
     it("should delete a specified relation", async () => {
@@ -85,7 +85,7 @@ describe("GraphStore.removeRelation", () => {
     });
     it("should leave the from and to nodes if they have other relations", async () => {
       const _otherRelation = await graphStore.addRelation({ fromId: startNode.id, toId: endNode.id });
-      graphStore.updateManager.clear();
+      graphStore.updateManager.cleanup();
 
       const serializedRelation = relation.serialize();
       const fromPos = graphStore.getRelationList(startNode).get(relation.id)?.position;
@@ -157,7 +157,7 @@ describe("GraphStore.removeRelation", () => {
       relationAC = await graphStore.addRelation({ id: "ac", fromId: nodeA.id, toId: nodeC.id });
       hyperRelation = await graphStore.addRelation({ id: "hyper", fromId: relationAB.id, toId: relationBC.id });
 
-      graphStore.updateManager.clear();
+      graphStore.updateManager.cleanup();
     });
 
     it("should work normally on a hyperrelation", async () => {

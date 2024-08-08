@@ -11,6 +11,7 @@ import * as ReactDOM from "react-dom";
 
 import { Path } from "@/app/components/Path";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { TreeNode } from "@/app/tree/nodes";
@@ -68,7 +69,7 @@ export function MentionPlugin({
         closeMenu();
         // add relation
         const hasMentionRelation = node.relations.some(
-          (r) => r.relationType == graphStore.relationTypesById.relatedTo && r.from == node && r.to.id === graphNodeId,
+          (r) => r.relationType == defaultRelationTypes.relatedTo && r.from == node && r.to.id === graphNodeId,
         );
         if (!hasMentionRelation) {
           await graphStore.addRelation({

@@ -29,7 +29,7 @@ describe("GraphStore.replaceRelationLink", () => {
     relationBC = await graphStore.addRelation({ id: "bc", fromId: nodeB.id, toId: nodeC.id });
     relationAC = await graphStore.addRelation({ id: "ac", fromId: nodeA.id, toId: nodeC.id });
 
-    graphStore.updateManager.clear();
+    graphStore.updateManager.cleanup();
   });
 
   it("should be able to replace the from or to of a relation with an existing node", async () => {

@@ -4,7 +4,7 @@ import { SetStateAction } from "react";
 import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
-import { defaultRelationTypes, GraphStore, Path } from "@/app/graph/GraphStore";
+import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { getSideOrThrow } from "@/app/graph/utils";
@@ -24,6 +24,18 @@ import {
   groupSiblings,
   walkTree,
 } from "./utils";
+
+/**
+ * Forward slash delimited relation ids.
+ * Needs to be relation ids, not node ids, cause you can have multiple instances of
+ * the same node related to the same parent, so node paths are not unique.
+ *
+ * Example:
+ * - A
+ *   - child: B
+ *   - author: B
+ */
+export type Path = string;
 
 const logger = appLogger.child({ service: "tree" });
 
@@ -822,7 +834,7 @@ export class Tree {
     Object.entries(data.expansionsByPath ?? {}).forEach(([key, value]) => expansionsByPath.set(key, value));
     let pathToRoot: GraphRelation[] = [];
     for (const id of data.pathToRootIds) {
-      const relation = this.graphStore.relationsById.get(id);
+      const relation = this.graphStore.getRelation(id);
       if (!relation) {
         return false;
       }

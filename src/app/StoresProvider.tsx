@@ -64,20 +64,20 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
         newUser = UNLOGGED_USER;
       }
 
-      // create new stores
-      const graphStore = new GraphStore(newUser, authedFetch);
-      const settingsStore = new SettingsStore();
-      const viewStore = new ViewStore(settingsStore, graphStore);
-      const renderController = new RenderController();
+      // create new stores (shorter names to disttinguish from the state variables)
+      const graph = new GraphStore(newUser, authedFetch);
+      const settings = new SettingsStore();
+      const view = new ViewStore(settings, graph);
+      const render = new RenderController();
 
       // load and start sync
       let syncCleanup = () => {};
       try {
         if (env.isPersistenceEnabled && !newUser.isUnlogged) {
           logger.debug("Loading data", newUser.id);
-          await loadGraphData(graphStore, viewStore, authedFetch);
+          await loadGraphData(graph, view, authedFetch);
           logger.debug("Starting sync");
-          syncCleanup = startSync({ graphStore, authFetch: authedFetch });
+          syncCleanup = startSync({ graphStore: graph, authFetch: authedFetch });
         }
       } catch (e) {
         toast("Failed to load data from server. Starting with an empty graph.");
@@ -86,18 +86,18 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
 
       // set stores
       setUser(newUser);
-      setGraphStore(graphStore);
-      setSettingsStore(settingsStore);
-      setViewStore(viewStore);
-      setRenderController(renderController);
+      setGraphStore(graph);
+      setSettingsStore(settings);
+      setViewStore(view);
+      setRenderController(render);
       setIsLoading(false);
 
       return () => {
         logger.debug("Cleaning up stores");
-        graphStore.cleanup();
-        settingsStore.cleanup();
-        viewStore.cleanup();
-        renderController.cleanup();
+        graph.cleanup();
+        settings.cleanup();
+        view.cleanup();
+        render.cleanup();
         syncCleanup();
       };
     }
@@ -136,9 +136,9 @@ function startSync({ graphStore, authFetch }: { graphStore: GraphStore; authFetc
       console.error("Invalid sync data received", data);
       return;
     }
-    await graphStore.handleSyncData(parsed.data);
+    await graphStore.updateManager.handleSyncData(parsed.data);
   });
-  const stopSyncing = graphStore.startSync();
+  const stopSyncing = graphStore.updateManager.startSync();
   return () => {
     pusher.disconnect();
     stopSyncing();

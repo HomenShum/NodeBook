@@ -27,7 +27,7 @@ describe("GraphStore.updateNode", () => {
       },
     });
 
-    graphStore.updateManager.clear();
+    graphStore.updateManager.cleanup();
   });
 
   it("should create a new node", async () => {

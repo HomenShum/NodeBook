@@ -72,7 +72,7 @@ async function postHandler(req: NextRequest) {
             await upsertRelationList(tx, update.nodeId, update.authorId, update.listAfter, update.pinned);
             break;
           default:
-            const _exhaustiveCheck: never = update;
+            update satisfies never;
         }
       }
     });

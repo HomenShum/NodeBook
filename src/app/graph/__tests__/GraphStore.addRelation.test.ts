@@ -25,7 +25,7 @@ describe("GraphStore.addRelation", () => {
       },
     });
 
-    graphStore.updateManager.clear();
+    graphStore.updateManager.cleanup();
   });
 
   it("should create a new relation", async () => {

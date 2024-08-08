@@ -41,7 +41,7 @@ export const RelationPlugin = () => {
             return false;
           }
           // Only trigger logic when current node is a regular child of the rendered parent
-          if (relation.relationType.id !== graphStore.relationTypesById.child.id || relation.to.id !== object.id) {
+          if (relation.relationType.id !== defaultRelationTypes.child.id || relation.to.id !== object.id) {
             return false;
           }
           event.preventDefault();

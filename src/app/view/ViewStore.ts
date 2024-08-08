@@ -51,7 +51,7 @@ export class ViewStore {
     [this.mainStreamView, this.mainOutlineView].forEach((view) => view.setSearch(query));
   }
 
-  clear() {
+  cleanup() {
     this.mainOutlineView.clear([this.graphStore.outlineRootRelationFromUserRoot]);
     this.mainStreamView.clear([this.graphStore.thoughtstreamRootRelationFromUserRoot]);
   }
@@ -67,6 +67,4 @@ export class ViewStore {
     this.mainStreamView.deserializeInPlace(data.mainStreamView);
     this.mainOutlineView.deserializeInPlace(data.mainOutlineView);
   }
-
-  cleanup() {}
 }

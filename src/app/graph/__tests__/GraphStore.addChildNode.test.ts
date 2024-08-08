@@ -19,7 +19,7 @@ describe("GraphStore.addChildNode", () => {
 
     parent = await graphStore.addNode({});
 
-    graphStore.updateManager.clear();
+    graphStore.updateManager.cleanup();
   });
 
   it("should create a new node", async () => {

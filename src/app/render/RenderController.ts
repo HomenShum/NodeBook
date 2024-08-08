@@ -1,7 +1,7 @@
 import { LexicalEditor } from "lexical";
 import { isObservable, makeAutoObservable } from "mobx";
 
-import { Path } from "@/app/graph/GraphStore";
+import { Path } from "@/app/tree/Tree";
 import { makeAutoSaving } from "@/app/util";
 
 export class RenderController {

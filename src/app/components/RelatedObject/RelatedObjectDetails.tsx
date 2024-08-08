@@ -31,7 +31,7 @@ export const RelatedObjectDetails = observer(
   ({ position, object, relation }: { position: Position; object: GraphObject; relation: GraphRelation }) => {
     const graphStore = useGraphStore();
     const { treeNode } = useTreeNode();
-    const bundles = graphStore.relationToBundles.get(relation.id);
+    const bundles = graphStore.getBundleRelation(relation.id);
     const parentZones = getParentZones(relation);
 
     return (

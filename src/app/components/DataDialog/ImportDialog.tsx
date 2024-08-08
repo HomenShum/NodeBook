@@ -6,14 +6,12 @@ import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { useUser } from "@/app/StoresProvider";
 
 import { ConfirmReplace } from "./ConfirmReplace";
 
 import styles from "./DataDialog.module.css";
 
 export const ImportDialog = observer(() => {
-  const user = useUser();
   const renderController = useRenderController();
 
   const graphStore = useGraphStore();
@@ -27,11 +25,12 @@ export const ImportDialog = observer(() => {
     const reader = new FileReader();
     reader.onload = async (event) => {
       const fileContent = event.target!.result;
-      graphStore.initializeAndLoad(user, JSON.parse(fileContent as string));
+      graphStore.cleanup();
+      graphStore.load(JSON.parse(fileContent as string));
       renderController.setActiveModal(null); // Close the ImportDialog after replacing data
     };
     reader.readAsText(file);
-  }, [graphStore, file, user, renderController]);
+  }, [graphStore, file, renderController]);
 
   const onAddToGraphClick = useCallback(() => {
     if (!file) return;

@@ -30,7 +30,7 @@ describe("GraphStore.removeNode", () => {
     relationAB = await graphStore.addRelation({ id: "ab", fromId: nodeA.id, toId: nodeB.id });
     relationBC = await graphStore.addRelation({ id: "bc", fromId: nodeB.id, toId: nodeC.id });
 
-    graphStore.updateManager.clear();
+    graphStore.updateManager.cleanup();
   });
 
   it("should delete a specified node", async () => {

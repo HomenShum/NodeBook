@@ -184,8 +184,8 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
       {user.isUnlogged && (
         <ClearData
           onConfirm={() => {
-            graphStore.clear();
-            viewStore.clear();
+            graphStore.cleanup();
+            viewStore.cleanup();
             renderController.setActiveModal(null);
           }}
         />

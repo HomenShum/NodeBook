@@ -129,7 +129,7 @@ export function parsePathString(path: string[], graphStore: GraphStore): ObjectP
   if (path.length === 0) return null;
   let relations = [];
   for (const id of path.slice(0, -1)) {
-    const graphRel = graphStore.relationsById.get(id);
+    const graphRel = graphStore.getRelation(id);
     if (!graphRel) return null;
     relations.push(graphRel);
   }

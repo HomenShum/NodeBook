@@ -10,7 +10,7 @@ describe("GraphStore.addNode", () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
     graphStore = new GraphStore();
-    graphStore.updateManager.clear();
+    graphStore.updateManager.cleanup();
   });
 
   it("should create a new node", async () => {

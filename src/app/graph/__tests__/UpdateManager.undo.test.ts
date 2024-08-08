@@ -22,7 +22,7 @@ describe("UpdateManaager.undo", () => {
         content: "start content",
       },
     });
-    graphStore.updateManager.clear();
+    graphStore.updateManager.cleanup();
   });
 
   it("can undo and redo a simple node update", async () => {

@@ -1,30 +1,87 @@
 import { generateInverseUpdates, GraphUpdate } from "@/app/graph/GraphUpdate";
 import { condenseSyncDataBatch, SyncData } from "@/app/graph/SyncData";
+import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
 import { uuid } from "@/app/util";
+import logger from "@/lib/logger";
 
 export class UpdateManager {
   private clientId = uuid();
   private userId: string;
 
+  private isSyncing = false;
+  private nextSyncId: ReturnType<typeof setTimeout> | number = 0;
+
   private undoStack: GraphUpdate[][] = [];
   private redoStack: GraphUpdate[][] = [];
   private syncQueue: SyncData[] = [];
 
-  private refetchAllData: () => Promise<void>;
+  private authedFetch: typeof fetch;
+
+  private refetchCallback: (data: SerializedGraphStore) => void;
   private applyGraphUpdates: (updates: GraphUpdate[]) => void;
 
-  constructor(userId: string, refetchFn: () => Promise<void>, applyUpdatesFn: (updates: GraphUpdate[]) => void) {
+  constructor(
+    userId: string,
+    authedFetch: typeof fetch,
+    refetchCallback: (data: SerializedGraphStore) => void,
+    applyUpdatesFn: (updates: GraphUpdate[]) => void,
+  ) {
     this.userId = userId;
-    this.refetchAllData = refetchFn;
+    this.authedFetch = authedFetch;
+    this.refetchCallback = refetchCallback;
     this.applyGraphUpdates = applyUpdatesFn;
   }
 
-  revertGraphUpdates(updates: GraphUpdate[]) {
+  // TODO not sure about these
+  startSync() {
+    this.isSyncing = true;
+    this.syncLoop();
+    return () => this.stopSync();
+  }
+
+  private syncLoop() {
+    if (!this.isSyncing) return;
+    this.nextSyncId = setTimeout(async () => {
+      await this.syncLocalUpdates(this.authedFetch);
+      this.syncLoop();
+    }, 500);
+  }
+
+  private stopSync() {
+    clearTimeout(this.nextSyncId);
+    this.isSyncing = false;
+  }
+
+  private async fetchLatestDataSnapshot() {
+    logger.info("Fetching latest data snapshot from backend");
+    const latestData = await this.authedFetch(`/api/sync?userId=${this.userId}`).then((res) => res.json());
+    const parsed = SerializedGraphStoreSchema.safeParse(latestData.data);
+    if (parsed.success) {
+      this.refetchCallback(parsed.data);
+    } else {
+      logger.error("Failed to parse latest data snapshot", parsed.error);
+    }
+  }
+
+  async handleSyncData(data: SyncData) {
+    if (this.isLocalUpdate(data)) {
+      return;
+    }
+
+    try {
+      this.applyGraphUpdates(data.updates);
+    } catch (e) {
+      logger.warn("Failed to apply updates from sync data", e);
+      await this.fetchLatestDataSnapshot();
+    }
+  }
+
+  private revertGraphUpdates(updates: GraphUpdate[]) {
     const inverted = generateInverseUpdates(updates);
     this.applyGraphUpdates(inverted);
   }
 
-  addUpdates(updates: GraphUpdate[]) {
+  queueUpdates(updates: GraphUpdate[]) {
     this.undoStack.push(updates);
     this.redoStack = [];
     const dataForSync: SyncData = {
@@ -72,11 +129,11 @@ export class UpdateManager {
     this.syncQueue.push(dataForSync);
   }
 
-  isLocalUpdate(syncData: SyncData) {
+  private isLocalUpdate(syncData: SyncData) {
     return syncData.clientId === this.clientId;
   }
 
-  async syncLocalUpdates(authFetch: typeof fetch) {
+  private async syncLocalUpdates(authFetch: typeof fetch) {
     const syncDataBatch = condenseSyncDataBatch(this.syncQueue);
     this.syncQueue = [];
     let syncData = syncDataBatch.shift();
@@ -98,7 +155,7 @@ export class UpdateManager {
         }
         this.revertGraphUpdates(syncData.updates);
         // Fetch all data from the server to get back to a consistent state.
-        await this.refetchAllData();
+        await this.fetchLatestDataSnapshot();
         return;
       }
       syncData = syncDataBatch.shift();
@@ -126,7 +183,7 @@ export class UpdateManager {
   /**
    * Clear all pending updates without sending them to the server or undoing them. Use carefully!
    */
-  clear() {
+  cleanup() {
     this.undoStack = [];
     this.redoStack = [];
     this.syncQueue = [];
