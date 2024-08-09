@@ -804,13 +804,6 @@ export class Tree {
     this.setPathExpanded(selection.treeNodeId, true);
   }
 
-  setRootToSelection() {
-    const selection = this.selectionWithNodes;
-    if (selection?.type !== "editor") return;
-    this.setRoot(selection.treeNode);
-    this.setFocusedNode(selection.treeNode.visibleChildren[0]?.path ?? null);
-  }
-
   clear(root: GraphRelation[]) {
     this.pathToRoot = root;
     this.expansionsByPath.clear();

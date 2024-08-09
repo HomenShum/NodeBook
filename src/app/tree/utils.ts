@@ -1,5 +1,11 @@
+import { useRouter } from "next/navigation";
+import { useCallback } from "react";
+
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
+import { Tree } from "@/app/tree/Tree";
+import { createRouteUrl } from "@/app/util";
+import { ViewType } from "@/app/view/ViewType";
 
 import { DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 
@@ -154,4 +160,18 @@ export function walkTree(treeNode: TreeNode, callback: (node: TreeNode) => boole
   const res = callback(treeNode);
   if (res === false) return;
   treeNode.visibleChildren.forEach((child) => walkTree(child, callback));
+}
+
+/**
+ * Sets the current node as the root node of the current view.
+ */
+export function useSetCurrentNodeAsRoot(tree: Tree) {
+  const router = useRouter();
+  return useCallback(() => {
+    if (tree.selectionWithNodes?.type === "editor") {
+      const node = tree.selectionWithNodes.treeNode;
+      const relations = getAncestorsAsArray(node).map((node) => node.relationToChild);
+      router.push(createRouteUrl(ViewType.GRAPH, { object: node.object, relations }));
+    }
+  }, [tree, router]);
 }

@@ -12,6 +12,7 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
+import { useSetCurrentNodeAsRoot } from "@/app/tree/utils";
 import { cn } from "@/lib/utils";
 
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
@@ -85,5 +86,6 @@ function useOutlineHotkeys({ tree, hasFocus }: { tree: Tree; hasFocus: () => boo
   useHotkeys("tab", () => tree.indentSelection(), defaults, [tree]);
   useHotkeys("shift+tab", () => tree.dedentSelection(), defaults, [tree]);
   useHotkeys("esc", () => tree.escapeSelection(), defaults, [tree]);
-  useHotkeys("mod+.", () => tree.setRootToSelection(), defaults, [tree]);
+  const setCurrentNodeAsRoot = useSetCurrentNodeAsRoot(tree);
+  useHotkeys("mod+.", setCurrentNodeAsRoot, defaults, [tree]);
 }
