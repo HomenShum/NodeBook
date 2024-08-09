@@ -377,14 +377,15 @@ export class Tree {
         return false;
       }
       /** Parent from the perspective of the graph, not the current tree */
-      const isGraphParent =
+      const isParentRelation =
         treeNode.isBackrelation && treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id;
-      const grandparent = treeNode.parent.parent;
-      if (filter.hideAllParents && isGraphParent) {
+      const isParentRelationToGrandparent =
+        isParentRelation && treeNode.object.id === treeNode.parent.parent?.object.id;
+      if (filter.hideAllParents && isParentRelation) {
         return false;
-      } else if (filter.hideAllRootParents && isGraphParent && treeNode.object.isRoot) {
+      } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
         return false;
-      } else if (filter.hideDirectParent && treeNode.object.id === grandparent?.object.id) {
+      } else if (filter.hideDirectParent && isParentRelationToGrandparent) {
         return false;
       }
       return true;
