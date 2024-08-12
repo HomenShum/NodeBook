@@ -26,6 +26,7 @@ export type TxAddRelation = {
   fromId: string;
   toId: string;
   relationType?: GraphRelationType;
+  after?: Positioner<GraphRelation>;
 };
 
 export type TxRemoveRelation = {

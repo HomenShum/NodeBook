@@ -26,26 +26,29 @@ export const PastePlugin = () => {
         if (!(object instanceof GraphNode)) return false;
         const lines = event.clipboardData?.getData("Text")?.split("\n") ?? [];
         if (lines.length > 1) {
+          let promise = Promise.resolve();
           // if the current node is empty, set the first line as its content
           if (object.text === "") {
             const line = lines.shift() ?? "";
-            graphStore.updateNode({ nodeId: object.id, nodeProps: { content: line } });
+            promise = graphStore.updateNode({ nodeId: object.id, nodeProps: { content: line } });
           }
           // then for the remaining lines, create children positioned after the parent
-          Promise.all(
-            lines.map((line) =>
-              graphStore.addChildNode({
-                parentId: parent.id,
-                nodeProps: { content: line },
-              }),
-            ),
-          ).then((children) => {
-            graphStore.getRelationList(parent).move(
-              children.map((c) => c.relation),
-              relation,
-            );
-            tree.setFocusedNode(path);
-          });
+          promise.then(() =>
+            Promise.all(
+              lines.map((line) =>
+                graphStore.addChildNode({
+                  parentId: parent.id,
+                  nodeProps: { content: line },
+                }),
+              ),
+            ).then((children) => {
+              graphStore.getRelationList(parent).move(
+                children.map((c) => c.relation),
+                relation,
+              );
+              tree.setFocusedNode(path);
+            }),
+          );
           return true;
         }
         return false;

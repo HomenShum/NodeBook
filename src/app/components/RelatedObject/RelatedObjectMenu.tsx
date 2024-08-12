@@ -110,8 +110,8 @@ export const RelatedObjectMenu = observer(
           {object instanceof GraphNode &&
             (object.isBundle ? (
               <DropdownMenuItem
-                onSelect={() => {
-                  graphStore.updateNode({ nodeId: object.id, nodeProps: { isBundle: false } });
+                onSelect={async () => {
+                  await graphStore.updateNode({ nodeId: object.id, nodeProps: { isBundle: false } });
                 }}
               >
                 <GanttChart size={14} />
@@ -119,8 +119,8 @@ export const RelatedObjectMenu = observer(
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem
-                onSelect={() => {
-                  graphStore.updateNode({ nodeId: object.id, nodeProps: { isBundle: true } });
+                onSelect={async () => {
+                  await graphStore.updateNode({ nodeId: object.id, nodeProps: { isBundle: true } });
                 }}
               >
                 <GanttChartSquare size={14} />
@@ -131,8 +131,8 @@ export const RelatedObjectMenu = observer(
           {object instanceof GraphNode &&
             (object.isZone ? (
               <DropdownMenuItem
-                onSelect={() => {
-                  graphStore.updateNode({ nodeId: object.id, nodeProps: { isZone: false } });
+                onSelect={async () => {
+                  await graphStore.updateNode({ nodeId: object.id, nodeProps: { isZone: false } });
                 }}
               >
                 <ScanLine size={14} />
@@ -140,8 +140,8 @@ export const RelatedObjectMenu = observer(
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem
-                onSelect={() => {
-                  graphStore.updateNode({ nodeId: object.id, nodeProps: { isZone: true } });
+                onSelect={async () => {
+                  await graphStore.updateNode({ nodeId: object.id, nodeProps: { isZone: true } });
                 }}
               >
                 <Scan size={14} />

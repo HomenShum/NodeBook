@@ -567,7 +567,7 @@ export class Tree {
         result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
       }
     } else {
-      this.graphStore.updateNode({ nodeId: treeNode.object.id, nodeProps: { content: contentBeforeSelection } });
+      await this.graphStore.updateNode({ nodeId: treeNode.object.id, nodeProps: { content: contentBeforeSelection } });
       // treeNode.object.setContent(contentBeforeSelection);
       //  If the current node is expanded, split it and place the new node as it's
       //  first child.

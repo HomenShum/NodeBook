@@ -157,7 +157,7 @@ export const AutocompleteDropdownPlugin = observer(({ parentRef }: { parentRef: 
               reverse: !option.isForward,
             });
             if (object instanceof GraphNode) {
-              graph.updateNode({ nodeId: object.id, nodeProps: { content: "" } });
+              await graph.updateNode({ nodeId: object.id, nodeProps: { content: "" } });
               tree.setFocusedNode(pathToNodeStr);
             }
             break;
