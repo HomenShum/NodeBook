@@ -7,11 +7,11 @@ import { AuthProvider } from "@/app/auth/AuthProvider";
 import "./global.css";
 import { StoresProvider } from "./StoresProvider";
 
+const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
+
 const App = dynamic(() => import("./App"), {
   ssr: false,
 });
-
-const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 /**
  * The root component which wraps every page in the application
@@ -23,7 +23,7 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <html className={inter.className}>
+    <html lang="en" className={inter.variable}>
       <AuthProvider>
         <StoresProvider>
           <body>
