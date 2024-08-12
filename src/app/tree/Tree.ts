@@ -12,7 +12,7 @@ import { SerializedTree } from "@/app/persistence/SerializedData";
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
-import { BaseTreeNode, DescendantTreeNode, RootTreeNode, TreeNode } from "./nodes";
+import { BaseTreeNode, DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 import { TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
@@ -380,7 +380,9 @@ export class Tree {
       const isParentRelation =
         treeNode.isBackrelation && treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id;
       const isParentRelationToGrandparent =
-        isParentRelation && treeNode.object.id === treeNode.parent.parent?.object.id;
+        isParentRelation &&
+        treeNode.object.id === treeNode.parent.parent?.object.id &&
+        !(treeNode.parent.parent instanceof PathToRootNode);
       if (filter.hideAllParents && isParentRelation) {
         return false;
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
