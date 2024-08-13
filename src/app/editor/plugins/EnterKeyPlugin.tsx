@@ -26,7 +26,7 @@ function getChipsAroundSelection(selection: BaseSelection) {
     const firstNode = selectionNodes[0];
     const lastNode = selectionNodes[selectionNodes.length - 1];
 
-    const paragraphNode = firstNode.getParent();
+    const paragraphNode = firstNode.getParentOrThrow();
     nodes = paragraphNode.getChildren();
 
     const firstNodeIndexInParagraph = nodes.findIndex((node) => node === firstNode);
