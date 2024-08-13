@@ -40,7 +40,7 @@ export const defaultRelationTypes: Record<string, GraphRelationType> = {
   child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent" },
   relatedTo: { version: 1, id: "relatedTo", authorId: TEMP_USER_ID, label: "relates to", reverseLabel: "relates to" },
   author: { version: 1, id: "author", authorId: TEMP_USER_ID, label: "author", reverseLabel: "authored" },
-  empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "is [empty] of" },
+  empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "" },
 };
 
 const USER_ROOT_ID = "user-root-id";
