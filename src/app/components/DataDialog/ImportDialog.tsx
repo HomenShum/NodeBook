@@ -25,8 +25,7 @@ export const ImportDialog = observer(() => {
     const reader = new FileReader();
     reader.onload = async (event) => {
       const fileContent = event.target!.result;
-      graphStore.cleanup();
-      graphStore.load(JSON.parse(fileContent as string));
+      graphStore.resetAndLoad(JSON.parse(fileContent as string));
       renderController.setActiveModal(null); // Close the ImportDialog after replacing data
     };
     reader.readAsText(file);

@@ -47,9 +47,13 @@ export class UpdateManager {
     }, 500);
   }
 
-  private stopSync() {
+  stopSync() {
     clearTimeout(this.nextSyncId);
     this.isSyncing = false;
+  }
+
+  get syncRunning() {
+    return this.isSyncing;
   }
 
   private async fetchLatestDataSnapshot() {

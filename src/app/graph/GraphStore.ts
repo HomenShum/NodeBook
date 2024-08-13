@@ -119,6 +119,7 @@ export class GraphStore {
         applyUpdates: action,
         load: action,
         cleanup: action,
+        resetAndLoad: action,
       });
     }
   }
@@ -1179,10 +1180,43 @@ export class GraphStore {
     Object.keys(this.relationTypesById).forEach((key) => {
       delete this.relationTypesById[key];
     });
-    // TODO: Consider pausing sync when the user is being changed
     this.updateManager.cleanup();
     this.cappedKeywordIndex.clear();
-    this.createDefaultObjects();
+    const { updates, ...defaults } = this.createDefaultObjects();
+    this.updateManager.queueUpdates(updates);
+  }
+
+  /**
+   * Reset the graph and load the given data.
+   *
+   * Important note: this method calls createDefaultObjects after loading the data, so it will use the root nodes etc
+   * that are present in the loaded data if they exist. That's not possible by calling cleanup() and load() sequentially, but
+   * is essential for sync to work properly.
+   */
+  resetAndLoad(data: SerializedGraphStore) {
+    let wasSyncing = this.updateManager.syncRunning;
+    this.updateManager.stopSync();
+
+    // Clear all local data
+    this.nodesById.clear();
+    this.relationsById.clear();
+    this.relationToBundles.clear();
+    Object.keys(this.relationTypesById).forEach((key) => {
+      delete this.relationTypesById[key];
+    });
+    this.updateManager.cleanup();
+    this.cappedKeywordIndex.clear();
+
+    // Load data
+    this.load(data);
+
+    // Ensure default objects are present if they weren't created as part of load
+    const { updates, ...defaults } = this.createDefaultObjects();
+    this.updateManager.queueUpdates(updates);
+
+    if (wasSyncing) {
+      this.updateManager.startSync();
+    }
   }
 
   createDefaultObjects() {
@@ -1452,6 +1486,16 @@ export class GraphStore {
       return existing;
     } else {
       const { node } = this._addNode(props);
+
+      // Make sure root node properties are properly set
+      if (node.id === USER_ROOT_ID) {
+        this.userRoot = node;
+      } else if (node.id === OUTLINE_ROOT_ID) {
+        this.outlineRoot = node;
+      } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
+        this.thoughtstreamRoot = node;
+      }
+
       return node;
     }
   }
