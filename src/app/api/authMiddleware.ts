@@ -1,11 +1,11 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 
 import { env } from "@/envBackend";
 
 const JWT_PUBLIC_KEY = Buffer.from(env.AUTH0_JWT_PUBLIC_KEY, "base64").toString("utf-8").trim();
 
-function verifyToken(token: string) {
+function verifyToken(token: string): Promise<{sub: string} | string | JwtPayload | undefined> {
   return new Promise((resolve, reject) => {
     jwt.verify(
       token,
@@ -35,7 +35,13 @@ export function withAuth(handler: (req: NextRequest) => Promise<NextResponse>) {
 
     const token = authHeader.split(" ")[1];
     try {
-      await verifyToken(token);
+      const payload = await verifyToken(token);
+
+      if(!payload || typeof payload.sub !== "string"){
+        return NextResponse.json({ status: "error", message: "Invalid user ID" }, { status: 400 });
+      }
+
+      req.headers.set("userId",payload.sub);
     } catch (error) {
       return NextResponse.json({ status: "error", message: "Invalid or expired token" }, { status: 401 });
     }

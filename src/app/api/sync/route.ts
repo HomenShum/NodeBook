@@ -1,5 +1,3 @@
-import { parse } from "url";
-
 import { NextRequest, NextResponse } from "next/server";
 
 import { withAuth } from "@/app/api/authMiddleware";
@@ -14,9 +12,9 @@ import { createRelationType, deleteRelationType, updateRelationType } from "@/db
 
 export const GET = withAuth(getHandler);
 async function getHandler(req: NextRequest) {
-  const { userId } = parse(req.url, true).query; // TODO: Figure out how to get it directly from NextRequest
-  if (!userId || typeof userId !== "string") {
-    return NextResponse.json({ status: "error", message: "Invalid user ID" }, { status: 400 });
+  const userId = req.headers.get("userId");
+  if (!userId) {
+    return NextResponse.json({ status: "error", message: "Invalid userId" }, { status: 400 });
   }
   const data = await createSnapshotFromDb(userId);
   return NextResponse.json({ data });
@@ -24,6 +22,7 @@ async function getHandler(req: NextRequest) {
 
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextRequest) {
+  const userId = req.headers.get("userId");
   const parsedData = SyncDataSchema.safeParse(await req.json());
 
   if (!parsedData.success) {
@@ -31,8 +30,11 @@ async function postHandler(req: NextRequest) {
     return NextResponse.json({ status: "error", message: "Invalid sync data request" }, { status: 400 });
   }
 
-  // TODO: At some point we'll want to validate user ID matches the user from auth, or just pull it directly from there
-  const { clientId, userId, transactionId, updates } = parsedData.data;
+  if (!userId) {
+    return NextResponse.json({ status: "error", message: "Invalid userId" }, { status: 400 });
+  }
+
+  const { clientId, transactionId, updates } = parsedData.data;
 
   const db = getDb();
 
