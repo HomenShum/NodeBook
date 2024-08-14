@@ -67,13 +67,6 @@ export class GraphStore {
   relationToBundles: Map<string, GraphNode[]> = new Map(); // Relation id to list of bundle-nodes that contain it
   relationTypesById: Record<string, GraphRelationType> = {};
 
-  // Default nodes and relations
-  userRoot: GraphNode;
-  outlineRoot: GraphNode;
-  thoughtstreamRoot: GraphNode;
-  outlineRootRelationFromUserRoot: GraphRelation;
-  thoughtstreamRootRelationFromUserRoot: GraphRelation;
-
   constructor(user: MewUser = UNLOGGED_USER, authedFetch?: typeof fetch) {
     this.user = user;
     this.updateManager = new UpdateManager(
@@ -82,14 +75,7 @@ export class GraphStore {
       (data: SerializedGraphStore) => this.load(data),
       (updates) => this.applyUpdates(updates),
     );
-
-    const { updates, ...defaults } = this.createDefaultObjects();
-    this.userRoot = defaults.userRoot;
-    this.outlineRoot = defaults.outlineRoot;
-    this.thoughtstreamRoot = defaults.thoughtstreamRoot;
-    this.outlineRootRelationFromUserRoot = defaults.outlineRootRelationFromUserRoot;
-    this.thoughtstreamRootRelationFromUserRoot = defaults.thoughtstreamRootRelationFromUserRoot;
-    this.updateManager.queueUpdates(updates);
+    this.ensureDefaultObjectsCreated();
     this.makeObservable();
   }
 
@@ -122,6 +108,47 @@ export class GraphStore {
         resetAndLoad: action,
       });
     }
+  }
+
+  // Default nodes and relations
+  get userRoot(): GraphNode {
+    const node = this.nodesById.get(USER_ROOT_ID);
+    if (!node) {
+      throw new Error("User root node not found");
+    }
+    return node;
+  }
+
+  get outlineRoot(): GraphNode {
+    const node = this.nodesById.get(OUTLINE_ROOT_ID);
+    if (!node) {
+      throw new Error("Outline root node not found");
+    }
+    return node;
+  }
+
+  get thoughtstreamRoot(): GraphNode {
+    const node = this.nodesById.get(THOUGHTSTREAM_ROOT_ID);
+    if (!node) {
+      throw new Error("Thoughtstream root node not found");
+    }
+    return node;
+  }
+
+  get outlineRootRelationFromUserRoot(): GraphRelation {
+    const relation = this.relationsById.get(OUTLINE_USER_ROOT_REL_ID);
+    if (!relation) {
+      throw new Error("User Root -> Outline Root relation not found");
+    }
+    return relation;
+  }
+
+  get thoughtstreamRootRelationFromUserRoot(): GraphRelation {
+    const relation = this.relationsById.get(THOUGHTSTREAM_USER_ROOT_REL_ID);
+    if (!relation) {
+      throw new Error("User Root -> Thoughtstream Root relation not found");
+    }
+    return relation;
   }
 
   // TODO: Investigate why some operations don't have a transaction counterpart (and why some transactions don't have an operation counterpart)
@@ -1182,16 +1209,12 @@ export class GraphStore {
     });
     this.updateManager.cleanup();
     this.cappedKeywordIndex.clear();
-    const { updates, ...defaults } = this.createDefaultObjects();
-    this.updateManager.queueUpdates(updates);
+
+    this.ensureDefaultObjectsCreated();
   }
 
   /**
    * Reset the graph and load the given data.
-   *
-   * Important note: this method calls createDefaultObjects after loading the data, so it will use the root nodes etc
-   * that are present in the loaded data if they exist. That's not possible by calling cleanup() and load() sequentially, but
-   * is essential for sync to work properly.
    */
   resetAndLoad(data: SerializedGraphStore) {
     let wasSyncing = this.updateManager.syncRunning;
@@ -1210,16 +1233,20 @@ export class GraphStore {
     // Load data
     this.load(data);
 
-    // Ensure default objects are present if they weren't created as part of load
-    const { updates, ...defaults } = this.createDefaultObjects();
-    this.updateManager.queueUpdates(updates);
+    // Ensure default objects are present if they weren't created as part of load.
+    // Important to call this *after* load, so that update manager is in a consistent state where it's queueing the correct
+    // updates for the default objects.
+    this.ensureDefaultObjectsCreated();
 
     if (wasSyncing) {
       this.updateManager.startSync();
     }
   }
 
-  createDefaultObjects() {
+  /**
+   * Create default objects (e.g. User Root, Outline Root) if and only if they don't exist, and queue matching GraphUpdates.
+   */
+  private ensureDefaultObjectsCreated() {
     const updates: GraphUpdate[] = [];
 
     for (const rt of Object.values(defaultRelationTypes)) {
@@ -1230,58 +1257,46 @@ export class GraphStore {
     }
 
     if (!this.nodesById.get(USER_ROOT_ID)) {
-      const { node, updates: userRootUpdates } = this._addNode({
+      const { updates: userRootUpdates } = this._addNode({
         id: USER_ROOT_ID,
         content: [{ type: "text", value: "User" }],
       });
-      this.userRoot = node;
       updates.push(...userRootUpdates);
     }
     if (!this.nodesById.get(OUTLINE_ROOT_ID)) {
-      const { node, updates: outlineRootUpdates } = this._addNode({
+      const { updates: outlineRootUpdates } = this._addNode({
         id: OUTLINE_ROOT_ID,
         content: [{ type: "text", value: "My Graph" }],
       });
-      this.outlineRoot = node;
       updates.push(...outlineRootUpdates);
     }
     if (!this.nodesById.get(THOUGHTSTREAM_ROOT_ID)) {
-      const { node, updates: tsRootUpdates } = this._addNode({
+      const { updates: tsRootUpdates } = this._addNode({
         id: THOUGHTSTREAM_ROOT_ID,
         content: [{ type: "text", value: "Stream" }],
       });
-      this.thoughtstreamRoot = node;
       updates.push(...tsRootUpdates);
     }
     if (!this.relationsById.get(OUTLINE_USER_ROOT_REL_ID)) {
-      const { relation, updates: userOutlineUpdates } = this.createRelation({
+      const { updates: userOutlineUpdates } = this.createRelation({
         id: OUTLINE_USER_ROOT_REL_ID,
         from: this.userRoot,
         to: this.outlineRoot,
         relationType: this.relationTypesById.child,
       });
-      this.outlineRootRelationFromUserRoot = relation;
       updates.push(...userOutlineUpdates);
     }
     if (!this.relationsById.get(THOUGHTSTREAM_USER_ROOT_REL_ID)) {
-      const { relation, updates: userThoughtstreamUpdates } = this.createRelation({
+      const { updates: userThoughtstreamUpdates } = this.createRelation({
         id: THOUGHTSTREAM_USER_ROOT_REL_ID,
         from: this.userRoot,
         to: this.thoughtstreamRoot,
         relationType: this.relationTypesById.child,
       });
-      this.thoughtstreamRootRelationFromUserRoot = relation;
       updates.push(...userThoughtstreamUpdates);
     }
 
-    return {
-      userRoot: this.userRoot,
-      outlineRoot: this.outlineRoot,
-      thoughtstreamRoot: this.thoughtstreamRoot,
-      outlineRootRelationFromUserRoot: this.outlineRootRelationFromUserRoot,
-      thoughtstreamRootRelationFromUserRoot: this.thoughtstreamRootRelationFromUserRoot,
-      updates,
-    };
+    this.updateManager.queueUpdates(updates);
   }
 
   addToBundle(relation: GraphRelation, bundle: GraphNode) {
@@ -1486,15 +1501,6 @@ export class GraphStore {
       return existing;
     } else {
       const { node } = this._addNode(props);
-
-      // Make sure root node properties are properly set
-      if (node.id === USER_ROOT_ID) {
-        this.userRoot = node;
-      } else if (node.id === OUTLINE_ROOT_ID) {
-        this.outlineRoot = node;
-      } else if (node.id === THOUGHTSTREAM_ROOT_ID) {
-        this.thoughtstreamRoot = node;
-      }
 
       return node;
     }
