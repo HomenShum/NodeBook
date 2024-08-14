@@ -26,8 +26,12 @@ function verifyToken(token: string): Promise<{sub: string} | string | JwtPayload
   });
 }
 
-export function withAuth(handler: (req: NextRequest) => Promise<NextResponse>) {
-  return async (req: NextRequest) => {
+export interface NextAuthenticatedRequest extends NextRequest {
+  userId: string;
+}
+
+export function withAuth(handler: (req: NextAuthenticatedRequest) => Promise<NextResponse>) {
+  return async (req: NextAuthenticatedRequest) => {
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
       return NextResponse.json({ status: "error", message: "Missing authorization header" }, { status: 401 });
@@ -41,7 +45,7 @@ export function withAuth(handler: (req: NextRequest) => Promise<NextResponse>) {
         return NextResponse.json({ status: "error", message: "Invalid user ID" }, { status: 400 });
       }
 
-      req.headers.set("userId",payload.sub);
+      req.userId = payload.sub;
     } catch (error) {
       return NextResponse.json({ status: "error", message: "Invalid or expired token" }, { status: 401 });
     }
