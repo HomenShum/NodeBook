@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { withAuth } from "@/app/api/authMiddleware";
+import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { PostUserRequestSchema, PostUserResponse } from "@/app/api/types";
 import { getDb } from "@/db";
 import { getOrCreateUser } from "@/db/users";
 
 export const POST = withAuth(postHandler);
-async function postHandler(req: Request) {
+async function postHandler(req: NextAuthenticatedRequest) {
   const body = await req.json();
   const result = PostUserRequestSchema.safeParse(body);
   if (!result.success) {

@@ -58,7 +58,7 @@ export class UpdateManager {
 
   private async fetchLatestDataSnapshot() {
     logger.info("Fetching latest data snapshot from backend");
-    const latestData = await this.authedFetch(`/api/sync?userId=${this.userId}`).then((res) => res.json());
+    const latestData = await this.authedFetch("/api/sync").then((res) => res.json());
     const parsed = SerializedGraphStoreSchema.safeParse(latestData.data);
     if (parsed.success) {
       this.refetchCallback(parsed.data);
@@ -142,7 +142,7 @@ export class UpdateManager {
     this.syncQueue = [];
     let syncData = syncDataBatch.shift();
     while (syncData) {
-      const response = await authFetch(`/api/sync?userId=${this.userId}`, {
+      const response = await authFetch(`/api/sync`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
