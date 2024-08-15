@@ -5,7 +5,7 @@ import { env } from "@/envBackend";
 
 const JWT_PUBLIC_KEY = Buffer.from(env.AUTH0_JWT_PUBLIC_KEY, "base64").toString("utf-8").trim();
 
-function verifyToken(token: string): Promise<{sub: string} | string | JwtPayload | undefined> {
+function verifyToken(token: string): Promise<string | JwtPayload | undefined> {
   return new Promise((resolve, reject) => {
     jwt.verify(
       token,
