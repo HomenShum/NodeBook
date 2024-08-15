@@ -42,12 +42,18 @@ export const TreeNodeInputSuffix = observer(({ treeNode }: { treeNode: Descendan
           e.preventDefault();
           const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
           await treeNode.setObject(node);
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          tree.moveEditorSelectionDown("start");
+        } else if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          tree.moveEditorSelectionUp("end");
         }
       }}
       ref={inputRef}
       type="text"
       value=""
-      onChange={() => {}}
+      onChange={() => { }}
     />
   );
 });

@@ -27,7 +27,7 @@ export const LeftRightArrowAtEndsPlugin = () => {
           const selectionStart = $getSelection()?.getStartEndPoints()?.[0];
           // Offset is 0 when at start of text
           if (!selectionStart || selectionStart.offset !== 0) return false;
-          const focusedMoved = tree.moveEditorSelectionUp();
+          const focusedMoved = tree.moveEditorSelectionUp('end');
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -47,7 +47,7 @@ export const LeftRightArrowAtEndsPlugin = () => {
             // Selection not at end of editor
             return false;
           }
-          const focusedMoved = tree.moveEditorSelectionDown();
+          const focusedMoved = tree.moveEditorSelectionDown('start');
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;

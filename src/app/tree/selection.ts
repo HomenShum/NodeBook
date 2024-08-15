@@ -47,14 +47,16 @@ export type TreeSelectionWithNodes =
       bottom: DescendantTreeNode;
     });
 
-type EditorSelection = {
+export type EditorSelectionPosition = "start" | "end" | { anchorOffset: number; focusOffset: number };
+
+export type EditorSelection = {
   type: "editor";
   treeNodeId: string;
-  startPos?: number;
-  endPos?: number;
+  position?: EditorSelectionPosition;
 };
 
-type NodeSelection = {
+
+export type NodeSelection = {
   type: "node";
   anchorNodeId: string;
   headNodeId: string;

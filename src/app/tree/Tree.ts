@@ -13,7 +13,7 @@ import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
-import { TreeSelection, TreeSelectionWithNodes } from "./selection";
+import { EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
   getAncestorsAsArray,
@@ -269,8 +269,8 @@ export class Tree {
   }
 
   /** Set the selection to the editor of the given node. */
-  setFocusedNode(treeNodeId: string | null) {
-    this.selection = treeNodeId ? { type: "editor", treeNodeId, startPos: 0, endPos: 0 } : null;
+  setFocusedNode(treeNodeId: string | null, position: EditorSelectionPosition = "end") {
+    this.selection = treeNodeId ? { type: "editor", treeNodeId, position } : null;
   }
 
   /** Returns true if the given node's editor is focused. */
@@ -720,25 +720,25 @@ export class Tree {
   /**
    * Move selection from the current node to the next one up.
    */
-  moveEditorSelectionUp(): boolean {
+  moveEditorSelectionUp(position: EditorSelectionPosition = "end"): boolean {
     const selection = this.selectionWithNodes;
     if (!selection) return false;
     const treeNode = selection.type === "editor" ? selection.treeNode : selection.top;
     const next = getNextAbove(treeNode);
     if (!next) return false;
-    this.setFocusedNode(next.path);
+    this.setFocusedNode(next.path, position);
     return true;
   }
 
   /**
    * Move selection from the current node to the next one down.
    */
-  moveEditorSelectionDown(): boolean {
+  moveEditorSelectionDown(position: EditorSelectionPosition = "end"): boolean {
     const selection = this.selectionWithNodes;
     if (!selection) return false;
     const next = selection.type === "editor" ? getNextBelow(selection.treeNode) : getNextSubtreeBelow(selection.bottom);
     if (!next) return false;
-    this.setFocusedNode(next.path);
+    this.setFocusedNode(next.path, position);
     return true;
   }
 

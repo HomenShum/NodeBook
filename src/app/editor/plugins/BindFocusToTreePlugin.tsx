@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
-import { BLUR_COMMAND, COMMAND_PRIORITY_EDITOR, FOCUS_COMMAND } from "lexical";
+import { $getRoot, BLUR_COMMAND, COMMAND_PRIORITY_EDITOR, FOCUS_COMMAND } from "lexical";
 import { action, autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
@@ -18,7 +18,21 @@ export const BindFocusToTreePlugin = observer(() => {
     const disposeAutorun = autorun(() => {
       const editorFocused = editor.getRootElement()?.contains(document.activeElement);
       if (!editorFocused && tree.isNodeFocused(treeNode.id)) {
-        editor.focus();
+        const sel = tree.selection;
+        if (!editorFocused && sel?.type === "editor" && sel.treeNodeId === treeNode.id) {
+          editor.update(() => {
+            const root = $getRoot();
+            if (sel.position === "start") {
+              root.selectStart();
+            } else if (sel.position === "end") {
+              root.selectEnd();
+            }
+          });
+          editor.focus();
+        } else if (tree.selection?.type === "node" && editorFocused) {
+          editor.blur();
+        }
+
       } else if (tree.selection?.type === "node" && editorFocused) {
         editor.blur();
       }
