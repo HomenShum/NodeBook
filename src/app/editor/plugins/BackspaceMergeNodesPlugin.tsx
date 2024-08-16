@@ -7,6 +7,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
+import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 
 /**
  * Plugin to merge nodes when backspace is pressed at the start of a node.
@@ -42,7 +43,12 @@ export const BackspaceMergeNodesPlugin = () => {
           return false;
         }
 
-        // merge nodes if necessary
+        //We want to merge nodes if the cursor is before the first
+        //character and backspace is pressed.
+
+        //This also implies that we need to reassign all the
+        //children of the old node to the new node.
+
         const selection = $getSelection();
         if (!$isRangeSelection(selection)) return false;
 
@@ -72,9 +78,25 @@ export const BackspaceMergeNodesPlugin = () => {
           }
         }
 
+        if(!targetNode){
+          return false;
+        }
+
+        //Update all child nodes to point to the targetNode. We want to delete the
+        //edge/relation between the "node to be deleted" and it's parent so ignore and do
+        //not update that relation.
+        const updateRelationTxs: TxCombinedPart[] = object.relations.filter(r => r.id != relation.id).map(r => {
+          return {type: "replaceRelationLink", transaction: {
+            relationId: r.id,
+              direction: r.from.id === object.id ? "from" : "to",
+              replaceWith: { type: "existing-object", id: targetNode.id }
+          }};
+        })
+
         if (targetNode && object instanceof GraphNode) {
           graphStore
             .applyCombinedTransaction([
+              ...updateRelationTxs,
               {
                 type: "updateNode",
                 transaction: {
@@ -82,8 +104,8 @@ export const BackspaceMergeNodesPlugin = () => {
                   nodeProps: { content: targetNode.content.concat(object.content) },
                 },
               },
-              { type: "removeNode", transaction: { nodeId: object.id } },
               { type: "removeRelation", transaction: { relationId: relation.id } },
+              { type: "removeNode", transaction: { nodeId: object.id } },
             ])
             .catch(() => {}) // TODO: investigate missing relation error
             .finally(() => {
