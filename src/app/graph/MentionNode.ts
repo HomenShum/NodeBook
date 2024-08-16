@@ -1,4 +1,4 @@
-import type { Spread } from "lexical";
+import type { NodeKey, Spread } from "lexical";
 import {
   $applyNodeReplacement,
   TextNode,
@@ -42,7 +42,7 @@ export class MentionNode extends TextNode {
   }
 
   static clone(node: MentionNode): MentionNode {
-    return new MentionNode(node.mentionedGraphNodeId, node.mentionedGraphNodeText);
+    return new MentionNode(node.mentionedGraphNodeId, node.mentionedGraphNodeText, node.__key);
   }
 
   static importJSON(serializedNode: SerializedMentionNode): MentionNode {
@@ -55,8 +55,9 @@ export class MentionNode extends TextNode {
     return node;
   }
 
-  constructor(mentionedGraphNodeId: string, mentionedGraphNodeText: string) {
-    super(mentionedGraphNodeText);
+  constructor(mentionedGraphNodeId: string, mentionedGraphNodeText: string, __key?: NodeKey) {
+    // The __key parameter is required when cloning a node
+    super(mentionedGraphNodeText, __key);
     this.mentionedGraphNodeId = mentionedGraphNodeId;
     this.mentionedGraphNodeText = mentionedGraphNodeText;
   }

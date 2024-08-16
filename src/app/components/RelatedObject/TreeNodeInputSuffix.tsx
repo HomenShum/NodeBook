@@ -6,12 +6,17 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 
+type TreeNodeInputSuffixProps = {
+  treeNode: DescendantTreeNode;
+  backspaceCallback?: () => void;
+};
+
 /**
  * For non-editable object renderings, we still want to allow the user to place focus at the end
  * of the object so they can add a sibling below it. Place this component at the end of the object
  * rendering to support this behaviour.
  */
-export const TreeNodeInputSuffix = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
+export const TreeNodeInputSuffix = observer(({ treeNode, backspaceCallback }: TreeNodeInputSuffixProps) => {
   const tree = useTree();
   const graph = useGraphStore();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,8 +45,12 @@ export const TreeNodeInputSuffix = observer(({ treeNode }: { treeNode: Descendan
           tree.setFocusedNode(path);
         } else if (e.key === "Backspace") {
           e.preventDefault();
-          const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
-          await treeNode.setObject(node);
+          if (!treeNode.object.isLocal && backspaceCallback) {
+            backspaceCallback();
+          } else {
+            const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
+            await treeNode.setObject(node);
+          }
         } else if (e.key === "ArrowRight") {
           e.preventDefault();
           tree.moveEditorSelectionDown("start");
@@ -53,7 +62,7 @@ export const TreeNodeInputSuffix = observer(({ treeNode }: { treeNode: Descendan
       ref={inputRef}
       type="text"
       value=""
-      onChange={() => { }}
+      onChange={() => {}}
     />
   );
 });

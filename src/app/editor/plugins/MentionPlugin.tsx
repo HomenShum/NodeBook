@@ -54,38 +54,44 @@ export function MentionPlugin({
   const onSelectOption = useCallback(
     async (opt: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
       if (!nodeToReplace) return;
-      // update editor
+
       const graphNodeId = opt.value.type === "new" ? uuid() : opt.value.object.id;
       const text = opt.value.type === "new" ? opt.value.text : opt.value.object.text;
       editor.update(async () => {
         const mentionNode = $createMentionNode(graphNodeId, text);
         nodeToReplace.replace(mentionNode);
+        mentionNode.selectEnd();
+
         if (opt.value.type === "new") {
           await graphStore.addChildNode({
             parentId: graphStore.outlineRoot.id,
             nodeProps: { id: graphNodeId, content: opt.name.slice("Create new node: ".length) },
           });
         }
-        closeMenu();
-        // add relation
+
         const hasMentionRelation = node.relations.some(
-          (r) => r.relationType == defaultRelationTypes.relatedTo && r.from == node && r.to.id === graphNodeId,
+          (r) => r.relationType === defaultRelationTypes.child && r.from === node && r.to.id === graphNodeId,
         );
         if (!hasMentionRelation) {
           await graphStore.addRelation({
             fromId: graphNodeId,
             toId: node.id,
+            relationType: defaultRelationTypes.child,
           });
         }
+
+        closeMenu();
       });
     },
     [editor, node, graphStore],
   );
+
   const prevText = useRef<string | null>(null);
 
   const [options, setOptions] = useState<MentionTypeaheadOption[]>([]);
   const limitedOptions = options.slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
   const menuRenderFn = getMenuRenderFn(limitedOptions);
+
   return (
     <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
       onQueryChange={() => {}}

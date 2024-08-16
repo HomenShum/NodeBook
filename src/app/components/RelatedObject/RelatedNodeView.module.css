@@ -14,7 +14,7 @@
 
 .FlexContainer {
   display: flex;
-  min-width: 64px;
+  min-width: 32px;
 }
 
 .TextContent {
@@ -62,12 +62,12 @@
   transition: opacity 0.1s ease-in-out, visibility 0.1s ease-in-out;
 }
 
-.TreeNodeReference .PillContainer:hover .EditButton {
+.TreeNodeReference.PillContainer:hover .EditButton {
   opacity: 0.5;
   visibility: visible;
 }
 
-.TreeNodeReference .PillContainer:hover .EditButton:hover {
+.TreeNodeReference.PillContainer:hover .EditButton:hover {
   opacity: 1;
 }
 

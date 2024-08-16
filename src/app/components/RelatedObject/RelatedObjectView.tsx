@@ -42,8 +42,6 @@ export const RelatedObjectView = observer(
 );
 
 const Main = observer(({ treeNode, children }: { treeNode: DescendantTreeNode; children: React.ReactNode }) => {
-  const settingsStore = useSettingsStore();
-  const graphStore = useGraphStore();
   const [updatingRelationType, setUpdatingRelationType] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [relationComboboxIsOpen, setRelationComboboxIsOpen] = useState(false);
@@ -86,9 +84,7 @@ const Content = observer(() => {
   } = useTreeNode();
   const graphStore = useGraphStore();
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
-  const relationTypeTextWidth = showRelationType
-    ? `${getTextWidth(`${treeNode.relationWithParent?.relationType.label}:`, "normal 17.5px ui-sans-serif") + 3}px`
-    : "0px";
+
   return (
     <>
       <div className={cn(styles.RelatedObjectNode, tree.isNodeSelected(treeNode.id) && styles.Selected)}>
@@ -226,11 +222,3 @@ const Controls = observer(() => {
     </>
   );
 });
-
-function getTextWidth(text: string, font: string) {
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d")!;
-  context.font = font;
-  const metrics = context.measureText(text);
-  return metrics.width;
-}

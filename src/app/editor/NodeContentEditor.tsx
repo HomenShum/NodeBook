@@ -17,6 +17,7 @@ import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowA
 import { MentionPlugin } from "@/app/editor/plugins/MentionPlugin";
 import { PastePlugin } from "@/app/editor/plugins/pastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
+import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
@@ -31,7 +32,13 @@ import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 
 import styles from "./Editor.module.css";
 
-export const NodeContentEditor = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
+type NodeEditorProps = {
+  treeNode: DescendantTreeNode;
+  isEditable: boolean;
+  setIsEditable: (isEditable: boolean) => void;
+};
+
+export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: NodeEditorProps) => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const router = useRouter();
@@ -56,6 +63,7 @@ export const NodeContentEditor = observer(({ treeNode }: { treeNode: DescendantT
     !mentionDropdownOpen &&
     (settingsStore.searchAndReplaceDropdown === "all" ||
       (settingsStore.searchAndReplaceDropdown === "labelled-only" && treeNode.relationWithParent?.isLabelled()));
+
   return (
     <div ref={ref} className={cn(styles.EditorWrapper, settingsStore.showAtSignOnMention && styles.showAtSignPrefix)}>
       <LexicalComposer initialConfig={createConfig({ namespace: "descendant-editor", treeNode })}>
@@ -76,12 +84,14 @@ export const NodeContentEditor = observer(({ treeNode }: { treeNode: DescendantT
           nodeType={MentionNode}
           eventType={"click"}
           eventListener={(e: Event) => {
+            e.stopPropagation();
             setPathToNodeAsRoot((e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!);
           }}
         />
         {showSearchAndReplaceDropdown && <AutocompleteDropdownPlugin parentRef={ref} />}
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
         <BindFocusToTreePlugin />
+        <ToggleEditablePlugin treeNode={treeNode} isEditable={isEditable} setIsEditable={setIsEditable} />
       </LexicalComposer>
     </div>
   );
