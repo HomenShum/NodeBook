@@ -5,7 +5,7 @@ import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
-import { Positioner } from "@/app/graph/GraphTransactionTypes";
+import { Positioner, TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
@@ -544,67 +544,64 @@ export class Tree {
     contentBeforeSelection: Chip[],
     contentAfterSelection: Chip[],
   ): Promise<{ node: GraphObject; relation: GraphRelation; path: string }> {
-    let result: { node: GraphObject; relation: GraphRelation; path: string };
+
     if (!(treeNode.object instanceof GraphNode)) {
       throw new Error("Only splitting nodes is supported for now.");
     }
-    if (contentBeforeSelection.length === 0 && contentAfterSelection.length > 0) {
-      // If the selection was at the start of a non-empty node, insert a new blank
-      // node just above the current node.
-      const siblingAbove = treeNode.siblingAboveInSameGroup;
-      if (treeNode.parentGroup.id === "pinned") {
-        const newNode = await this.graphStore.addChildNode({
-          parentId: treeNode.parent.object.id,
-          after: -1,
-        });
-        treeNode.parent.object.pinChildRelation(newNode.relation, siblingAbove?.relationWithParent);
-        result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
-      } else {
-        const newNode = await this.graphStore.addChildNode({
-          parentId: treeNode.parent.object.id,
-          after: siblingAbove?.relationWithParent,
-        });
-        result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
-      }
-    } else {
-      await this.graphStore.updateNode({ nodeId: treeNode.object.id, nodeProps: { content: contentBeforeSelection } });
-      // treeNode.object.setContent(contentBeforeSelection);
-      //  If the current node is expanded, split it and place the new node as it's
-      //  first child.
-      if (treeNode.isExpanded && treeNode.childCount > 0) {
-        const newNode = await this.graphStore.addChildNode({
-          parentId: treeNode.object.id,
-          nodeProps: { content: contentAfterSelection },
-        });
-        result = { ...newNode, path: treeNode.childrenGroupsById.all.path + "/" + newNode.relation.id };
-      } else {
-        //  Split the node at the selection
-        let newNode: { node: GraphObject; relation: GraphRelation };
-        if (treeNode.parentGroup.id === "pinned") {
-          // while in the pinned section, create a new node at the bottom, then pin it
-          // just below the current node
-          newNode = await this.graphStore.addChildNode({
-            parentId: treeNode.parent.object.id,
-            nodeProps: { content: contentAfterSelection },
-            after: -1,
-          });
-          treeNode.parent.object.pinChildRelation(newNode.relation, treeNode.relationWithParent);
-        } else {
-          // while in the all section, create a new node just below the current node
-          newNode = await this.graphStore.addChildNode({
-            parentId: treeNode.parent.object.id,
-            nodeProps: { content: contentAfterSelection },
-            after: treeNode.relationWithParent,
-          });
+
+    const oldNode = treeNode;
+    const newNodeId = uuid();
+    const after = treeNode.parentGroup.id === "pinned" ? -1 : oldNode.relationWithParent;
+
+    const reassignRelationTxs: TxCombined = oldNode.object.relations.filter(r => r.id != oldNode.relationWithParent.id).map((r) => {
+      return {
+        type: "replaceRelationLink",
+        transaction: {
+          relationId: r.id,
+          direction: r.from.id === oldNode.object.id ? "from" : "to",
+          replaceWith: {type: "existing-object", id: newNodeId}
         }
-        result = { ...newNode, path: treeNode.parentGroup.path + "/" + newNode.relation.id };
       }
+    })
+
+    const results = await this.graphStore.applyCombinedTransaction([
+      {
+        type: "addChildNode",
+        transaction: {
+          parentId: oldNode.parent.object.id,
+          after,
+          nodeProps: { content: contentAfterSelection, id: newNodeId },
+        }
+      },
+      ...reassignRelationTxs,
+      {
+        type: "updateNode",
+        transaction: { nodeId: oldNode.object.id, nodeProps: { content: contentBeforeSelection } }
+      }
+    ]);
+
+    const newNode = results[0].node as GraphNode;
+    const relation = results[0].relation as GraphRelation;
+
+    //If we are splitting inside pinned group,
+    //we want the new node to be pinned after the old node
+    if(oldNode.parentGroup.id === "pinned"){
+      oldNode.parent.object.pinChildRelation(relation, oldNode?.relationWithParent);
     }
-    // If the node was focused, focus the new node
-    if (this.isNodeFocused(treeNode.path)) {
-      this.setFocusedNode(result.path);
+
+    const newNodePath = oldNode.parentGroup.path + "/" + relation.id;
+
+    //If old node was expanded during splitting, expand the new node as well.
+    if(oldNode.isExpanded){
+      this.setPathExpanded(newNodePath, true)
     }
-    return result;
+
+    window.setFocusedNode = this.setFocusedNode;
+
+    console.log("path",newNodePath);
+    this.setFocusedNode(newNodePath);
+
+    return { node: newNode, relation, path: newNodePath }
   }
 
   /**
