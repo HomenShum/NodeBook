@@ -105,7 +105,6 @@ export const BackspaceMergeNodesPlugin = () => {
                 },
               },
               { type: "removeRelation", transaction: { relationId: relation.id } },
-              { type: "removeNode", transaction: { nodeId: object.id } },
             ])
             .catch(() => {}) // TODO: investigate missing relation error
             .finally(() => {
