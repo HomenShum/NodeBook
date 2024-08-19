@@ -218,6 +218,14 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
                 />
               </div>
               <div className={s.SwitchItem}>
+                <label htmlFor="show-at-sign-on-mention">Show @ sign on mention</label>
+                <Switch
+                  id="show-at-sign-on-mention"
+                  checked={settingsStore.showAtSignOnMention}
+                  onCheckedChange={(checked: boolean) => settingsStore.setShowAtSignOnMention(checked)}
+                />
+              </div>
+              <div className={s.SwitchItem}>
                 <label htmlFor="hide-thoughtstream-bullets">Hide bullets in thoughtstream view</label>
                 <Switch
                   id="hide-thoughtstream-bullets"
