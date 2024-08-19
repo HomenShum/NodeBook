@@ -136,7 +136,7 @@ export function checkForSearchAndReplaceMatch(
     case SearchAndReplaceDropdownOption.Always:
       return checkForSearchAndReplaceMatchAny(text);
 
-    case SearchAndReplaceDropdownOption.LabelledOnly:
+    case SearchAndReplaceDropdownOption.ColonOrSemiColon:
       return isLabellingRelation
         ? checkForSearchAndReplaceMatchAny(text)
         : checkForSearchAndReplaceOnSemiColonAtStart(text);
