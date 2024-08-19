@@ -4,7 +4,7 @@ import { autorun, isObservable, makeAutoObservable } from "mobx";
 
 export enum SearchAndReplaceDropdownOption {
   Always = "always",
-  ColonOrSemiColon = "colon-or-semicolon",
+  LabelledOnly = "labelled-only",
   SemicolonOnly = "semicolon-only"
 }
 
@@ -50,7 +50,7 @@ export class SettingsStore {
   public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
   public searchAndReplaceEnabled = true;
-  public searchAndReplaceDropdown: SearchAndReplaceDropdownOption = SearchAndReplaceDropdownOption.ColonOrSemiColon;
+  public searchAndReplaceDropdown: SearchAndReplaceDropdownOption = SearchAndReplaceDropdownOption.SemicolonOnly;
   public disableCycles = true;
   public addStreamLabeledRelationsToMyLists = true;
   public allowShiftTabAboveViewRoot = false;
@@ -84,7 +84,7 @@ export class SettingsStore {
     this.hideThoughtstreamBullets = true;
     this.hideBulletBackgroundIfParentsOnly = true;
     this.searchAndReplaceEnabled = false;
-    this.searchAndReplaceDropdown = SearchAndReplaceDropdownOption.ColonOrSemiColon;
+    this.searchAndReplaceDropdown = SearchAndReplaceDropdownOption.Always;
     this.disableCycles = true;
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;

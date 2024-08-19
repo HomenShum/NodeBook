@@ -17,14 +17,14 @@ const SelectSearchAndReplaceDropdown = observer(() => {
 
   const searchAndReplaceDropdownOptions: { label: string; value: SearchAndReplaceDropdownOption }[] = [
     { label: "Always", value: SearchAndReplaceDropdownOption.Always },
-    { label: "After typing in a labelled relation or semicolon", value: SearchAndReplaceDropdownOption.ColonOrSemiColon },
+    { label: "After typing in a labelled relations or semicolon", value: SearchAndReplaceDropdownOption.LabelledOnly },
     { label: "After typing semicolon", value: SearchAndReplaceDropdownOption.SemicolonOnly },
   ];
 
   return (
     <select
       value={settingsStore.searchAndReplaceDropdown}
-      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+      onChange={(e) =>
         settingsStore.setSearchAndReplaceDropdown(e.target.value as SearchAndReplaceDropdownOption)
       }
     >
