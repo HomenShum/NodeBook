@@ -551,9 +551,15 @@ export class Tree {
 
     const oldNode = treeNode;
     const newNodeId = uuid();
-    const after = treeNode.parentGroup.id === "pinned" ? -1 : oldNode.relationWithParent;
 
-    const reassignRelationTxs: TxCombined = oldNode.object.relations.filter(r => r.id != oldNode.relationWithParent.id).map((r) => {
+    //If new node should become a child of the oldNode or a sibling of the oldNode.
+    //if false, it will become a sibling.
+    const shouldBecomeChild = oldNode.isExpanded;
+
+    const after = oldNode.parentGroup.id === "pinned" ? -1 : oldNode.relationWithParent;
+
+    //Create transactions to reassign relations if the new node is to become a sibling.
+    const reassignRelationTxs: TxCombined = shouldBecomeChild ? [] : oldNode.object.relations.filter(r => r.id != oldNode.relationWithParent.id).map((r) => {
       return {
         type: "replaceRelationLink",
         transaction: {
@@ -568,7 +574,7 @@ export class Tree {
       {
         type: "addChildNode",
         transaction: {
-          parentId: oldNode.parent.object.id,
+          parentId: shouldBecomeChild ? oldNode.object.id : oldNode.parent.object.id,
           after,
           nodeProps: { content: contentAfterSelection, id: newNodeId },
         }
@@ -583,9 +589,9 @@ export class Tree {
     const newNode = results[0].node as GraphNode;
     const relation = results[0].relation as GraphRelation;
 
-    //If we are splitting inside pinned group,
+    //If we are splitting inside pinned group and new node is a sibling,
     //we want the new node to be pinned after the old node
-    if(oldNode.parentGroup.id === "pinned"){
+    if(oldNode.parentGroup.id === "pinned" && !shouldBecomeChild){
       oldNode.parent.object.pinChildRelation(relation, oldNode?.relationWithParent);
     }
 
