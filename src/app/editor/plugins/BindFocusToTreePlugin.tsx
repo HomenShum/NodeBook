@@ -58,6 +58,14 @@ export const BindFocusToTreePlugin = observer(() => {
       editor.registerCommand(
         FOCUS_COMMAND,
         action(() => {
+          //`setFocusedNode` has a optional position param that defaults to "end",
+          // now because of that the editor and the Tree get in an inconsistent state,
+          // If we call setFocusedNode(newNodePath, "start") from anywhere, it triggers
+          // the editor focus (in the autorun above) but then that focus dispatches
+          // this FOCUS_COMMAND without a position, which defaults to end, but since we set
+          // selection position to `true` initially, it triggers the autorun again).
+          // Hence we "compute" the position from the editorState and pass it to
+          // `setFocusedNode` here.
           let position: EditorSelectionPosition = "end";
           const startEndPoints = editor.getEditorState()._selection?.getStartEndPoints();
           if(Array.isArray(startEndPoints) && startEndPoints[0].offset === 0 && startEndPoints[1].offset === 0){
