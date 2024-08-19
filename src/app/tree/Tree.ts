@@ -596,10 +596,7 @@ export class Tree {
       this.setPathExpanded(newNodePath, true)
     }
 
-    window.setFocusedNode = this.setFocusedNode;
-
-    console.log("path",newNodePath);
-    this.setFocusedNode(newNodePath);
+    this.setFocusedNode(newNodePath, "start");
 
     return { node: newNode, relation, path: newNodePath }
   }

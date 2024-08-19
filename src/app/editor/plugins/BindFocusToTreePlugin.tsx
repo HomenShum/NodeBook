@@ -1,12 +1,13 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
-import { $getRoot, BLUR_COMMAND, COMMAND_PRIORITY_EDITOR, FOCUS_COMMAND } from "lexical";
+import { BLUR_COMMAND, COMMAND_PRIORITY_EDITOR, FOCUS_COMMAND } from "lexical";
 import { action, autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useTree } from "@/app/tree/TreeContext";
+import { EditorSelectionPosition } from "@/app/tree/selection";
 
 export const BindFocusToTreePlugin = observer(() => {
   const [editor] = useLexicalComposerContext();
@@ -17,24 +18,28 @@ export const BindFocusToTreePlugin = observer(() => {
     // Update the editor focus to match the tree selection
     const disposeAutorun = autorun(() => {
       const editorFocused = editor.getRootElement()?.contains(document.activeElement);
-      if (!editorFocused && tree.isNodeFocused(treeNode.id)) {
-        const sel = tree.selection;
-        if (!editorFocused && sel?.type === "editor" && sel.treeNodeId === treeNode.id) {
-          editor.update(() => {
-            const root = $getRoot();
-            if (sel.position === "start") {
-              root.selectStart();
-            } else if (sel.position === "end") {
-              root.selectEnd();
-            }
-          });
-          editor.focus();
-        } else if (tree.selection?.type === "node" && editorFocused) {
-          editor.blur();
-        }
+      const sel = tree.selection;
 
-      } else if (tree.selection?.type === "node" && editorFocused) {
-        editor.blur();
+      switch (sel?.type) {
+        case "node": {
+          if(editorFocused){
+            editor.blur();
+          }
+          break;
+        }
+        case "editor": {
+          if(tree.isNodeFocused(treeNode.id)){
+            editor.update(() => {
+              editor.focus(undefined, {
+                defaultSelection: sel.position === "start" ?
+                  "rootStart" : sel.position === "end"
+                    ? "rootEnd" : undefined
+              });
+            })
+          } else {
+            editor.blur();
+          }
+        }
       }
     });
 
@@ -53,7 +58,12 @@ export const BindFocusToTreePlugin = observer(() => {
       editor.registerCommand(
         FOCUS_COMMAND,
         action(() => {
-          tree.setFocusedNode(treeNode.id);
+          let position: EditorSelectionPosition = "end";
+          const startEndPoints = editor.getEditorState()._selection?.getStartEndPoints();
+          if(Array.isArray(startEndPoints) && startEndPoints[0].offset === 0 && startEndPoints[1].offset === 0){
+            position = "start";
+          }
+          tree.setFocusedNode(treeNode.id, position);
           return false;
         }),
         COMMAND_PRIORITY_EDITOR,
