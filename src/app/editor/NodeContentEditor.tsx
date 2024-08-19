@@ -6,15 +6,14 @@ import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 
+import { DropdownMenuPlugin } from '@/app/components/UIPrimitives/DropdownMenuPlugin';
 import { createConfig } from "@/app/editor/createConfig";
-import { AutocompleteDropdownPlugin } from "@/app/editor/plugins/AutocompleteDropdownPlugin";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { BindFocusToTreePlugin } from "@/app/editor/plugins/BindFocusToTreePlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowAtEndsPlugin";
-import { MentionPlugin } from "@/app/editor/plugins/MentionPlugin";
 import { PastePlugin } from "@/app/editor/plugins/pastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
 import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin";
@@ -22,7 +21,6 @@ import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControlle
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { createRouteUrl } from "@/app/util";
 import { ViewType } from "@/app/view/ViewType";
@@ -39,10 +37,8 @@ type NodeEditorProps = {
 };
 
 export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: NodeEditorProps) => {
-  const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const router = useRouter();
-  const [mentionDropdownOpen, setMentionDropdownOpen] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);
   if (!(treeNode.object instanceof GraphNode)) {
@@ -59,13 +55,8 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
     [graphStore, router],
   );
 
-  const showSearchAndReplaceDropdown =
-    !mentionDropdownOpen &&
-    (settingsStore.searchAndReplaceDropdown === "all" ||
-      (settingsStore.searchAndReplaceDropdown === "labelled-only" && treeNode.relationWithParent?.isLabelled()));
-
   return (
-    <div ref={ref} className={cn(styles.EditorWrapper, settingsStore.showAtSignOnMention && styles.showAtSignPrefix)}>
+    <div ref={ref} className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
       <LexicalComposer initialConfig={createConfig({ namespace: "descendant-editor", treeNode })}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
@@ -75,7 +66,7 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
         <ClearEditorPlugin />
         {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
         <EnterKeyPlugin treeNode={treeNode} />
-        <MentionPlugin treeNode={treeNode} setDropdownOpen={setMentionDropdownOpen} />
+        <DropdownMenuPlugin treeNode={treeNode} />
         <LeftRightArrowAtEndsPlugin />
         <BackspaceMergeNodesPlugin />
         <PastePlugin />
@@ -88,7 +79,6 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
             setPathToNodeAsRoot((e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!);
           }}
         />
-        {showSearchAndReplaceDropdown && <AutocompleteDropdownPlugin parentRef={ref} />}
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
         <BindFocusToTreePlugin />
         <ToggleEditablePlugin treeNode={treeNode} isEditable={isEditable} setIsEditable={setIsEditable} />
