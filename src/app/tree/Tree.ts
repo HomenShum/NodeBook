@@ -552,9 +552,9 @@ export class Tree {
     const oldNode = treeNode;
     const newNodeId = uuid();
 
-    //If new node should become a child of the oldNode or a sibling of the oldNode.
-    //if false, it will become a sibling.
-    const shouldBecomeChild = oldNode.isExpanded;
+    // If content after selection is empty and current node has children,
+    // new node becomes a child, else a sibling.
+    const shouldBecomeChild = contentAfterSelection.map(c => c.value).join().length === 0 && oldNode.childCount > 0;
 
     const after = oldNode.parentGroup.id === "pinned" ? -1 : oldNode.relationWithParent;
 
@@ -595,10 +595,12 @@ export class Tree {
       oldNode.parent.object.pinChildRelation(relation, oldNode?.relationWithParent);
     }
 
-    const newNodePath = oldNode.parentGroup.path + "/" + relation.id;
+    //If we are adding a sibling, the path should not include oldNode path.
+    const newNodePath = (shouldBecomeChild ? oldNode.childrenGroupsById.all.path : oldNode.parentGroup.path) + "/" + relation.id;
 
-    //If old node was expanded during splitting, expand the new node as well.
-    if(oldNode.isExpanded){
+    // If old node was expanded during splitting or we are adding a child,
+    // expand the new node as well.
+    if(oldNode.isExpanded || shouldBecomeChild){
       this.setPathExpanded(newNodePath, true)
     }
 
