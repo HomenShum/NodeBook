@@ -11,6 +11,7 @@ import { getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
+import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 import { EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
@@ -24,6 +25,7 @@ import {
   groupSiblings,
   walkTree,
 } from "./utils";
+
 
 /**
  * Forward slash delimited relation ids.
@@ -74,7 +76,8 @@ export class Tree {
     this.pathToRoot = pathToRoot;
     this.search = search;
     this.partialFilter = filter;
-    this.expansionsByPath = expansions;
+    this.expansionLocalStorageCache = new ExpansionLocalStorageCache();
+    this.expansionsByPath = expansions.size === 0 ? this.expansionLocalStorageCache.load() : expansions;
     this.selection = selection;
     this.makeObservable();
   }
@@ -138,6 +141,9 @@ export class Tree {
   public search: string = "";
 
   private partialFilter: Partial<Filter> = {};
+
+  /** Helper class to read and sync expansion state with local storage */
+  private expansionLocalStorageCache: ExpansionLocalStorageCache;
 
   /** Expanded paths in the tree. */
   public expansionsByPath: Map<string, boolean>;
@@ -316,10 +322,12 @@ export class Tree {
 
   setPathExpanded(path: Path, isExpanded: boolean) {
     this.expansionsByPath.set(path, isExpanded);
+    this.expansionLocalStorageCache.update(this.expansionsByPath);
   }
 
   togglePathExpanded(path: Path) {
     this.expansionsByPath.set(path, !this.expansionsByPath.get(path));
+    this.expansionLocalStorageCache.update(this.expansionsByPath);
   }
 
   // For groups, we default to expanded.
@@ -329,10 +337,12 @@ export class Tree {
 
   setGroupExpanded(path: Path, isExpanded: boolean) {
     this.expansionsByPath.set(path, isExpanded);
+    this.expansionLocalStorageCache.update(this.expansionsByPath);
   }
 
   toggleGroupExpanded(path: Path) {
     this.expansionsByPath.set(path, !this.isGroupExpanded(path));
+    this.expansionLocalStorageCache.update(this.expansionsByPath);
   }
 
   /**
@@ -813,6 +823,7 @@ export class Tree {
     this.expansionsByPath.clear();
     // this.textsCache.clear();
     this.textsByObjectId.clear();
+    this.expansionLocalStorageCache.clear();
   }
 
   serialize(): SerializedTree {
@@ -848,6 +859,7 @@ export class Tree {
     this.expansionsByPath = expansionsByPath;
     return true;
   }
+
 }
 
 type Filter = {
