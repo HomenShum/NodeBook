@@ -35,16 +35,20 @@
   z-index: 29;
 }
 
-@media (max-width: 600px) {
-  .Backdrop {
-    display: block;
-  }
-}
-
 .BackNavigation {
   align-self: flex-start;
   margin-left: 32px;
   color: var(--gray-9);
+}
+
+@media (max-width: 600px) {
+  .Backdrop {
+    display: block;
+  }
+
+  .BackNavigation {
+    margin-left: 48px;
+  }
 }
 
 .SidebarContent {
