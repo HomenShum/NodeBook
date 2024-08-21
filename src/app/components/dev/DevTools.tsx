@@ -3,6 +3,7 @@ import { observer } from "mobx-react-lite";
 import { useAuth } from "@/app/auth/useAuth";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { SearchAndReplaceDropdownOption } from "@/app/graph/SettingsStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
@@ -10,20 +11,21 @@ import { useUser } from "@/app/StoresProvider";
 
 import styles from "./DevTools.module.css";
 
+
 const SelectSearchAndReplaceDropdown = observer(() => {
   const settingsStore = useSettingsStore();
 
-  const searchAndReplaceDropdownOptions: { label: string; value: typeof settingsStore.searchAndReplaceDropdown }[] = [
-    { label: "Only after labelled relations", value: "labelled-only" },
-    { label: "All", value: "all" },
-    { label: "None", value: "none" },
+  const searchAndReplaceDropdownOptions: { label: string; value: SearchAndReplaceDropdownOption }[] = [
+    { label: "Always", value: SearchAndReplaceDropdownOption.Always },
+    { label: "After typing in a labelled relations or semicolon", value: SearchAndReplaceDropdownOption.LabelledOnly },
+    { label: "After typing semicolon", value: SearchAndReplaceDropdownOption.SemicolonOnly },
   ];
 
   return (
     <select
       value={settingsStore.searchAndReplaceDropdown}
       onChange={(e) =>
-        settingsStore.setSearchAndReplaceDropdown(e.target.value as typeof settingsStore.searchAndReplaceDropdown)
+        settingsStore.setSearchAndReplaceDropdown(e.target.value as SearchAndReplaceDropdownOption)
       }
     >
       {searchAndReplaceDropdownOptions.map((option) => (
@@ -109,24 +111,8 @@ export const DevTools = observer(() => {
           />
           On removing node as direct child of thoughtstream, delete the node everywhere
         </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.atSignTriggerToReplaceObject}
-            onChange={(e) => settingsStore.setAtSignTriggerToReplaceObject(e.target.checked)}
-          />
-          Type @ in an empty editor to trigger search and replace for current object
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.semicolonTriggerToReplaceObject}
-            onChange={(e) => settingsStore.setSemicolonTriggerToReplaceObject(e.target.checked)}
-          />
-          Type ; in an empty editor to trigger search and replace for current object
-        </label>
         <div className={styles.SearchReplaceContainer}>
-          <label>Search and replace dropdown:</label>
+          <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />
         </div>
         <hr style={{ border: ".5px solid var(--gray-6)" }} />

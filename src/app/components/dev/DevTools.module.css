@@ -22,13 +22,73 @@
 
 .LabelSetting {
   display: flex;
-  gap: 12px;
   align-items: baseline;
   color: var(--gray-11);
+  white-space: nowrap; /* Prevents unwanted line breaks */
+}
+
+.LabelSetting input[type="checkbox"] {
+  margin-right: 12px; /* Add gap between checkbox and text */
+}
+
+.LabelSetting code {
+  font-family: monospace;
+  background-color: var(--gray-3);
+  border: 1px solid var(--gray-6);
+  border-radius: 4px;
+  padding: 0 2px;
+  font-size: 0.9em;
+  color: var(--gray-12);
+  display: inline-block;
+  vertical-align: baseline;
+}
+
+/* Remove any space between text and code elements */
+.LabelSetting span {
+  display: flex;
+  align-items: baseline;
 }
 
 .SearchReplaceContainer {
   display: flex;
   margin-left: 26px;
   gap: 8px;
+}
+
+.SearchReplaceLabel {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 500;
+  color: var(--gray-11);
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
+.SearchReplaceSelect {
+  flex: 1;
+  min-width: 200px;
+}
+
+.SearchReplaceRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.SearchReplaceRow.Checkbox {
+  margin-left: 16px;
+}
+
+.HelpText {
+  font-size: 0.9em;
+  color: var(--gray-9);
+  margin-left: 8px;
+}
+
+.SearchReplaceLabel {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: var(--gray-11);
+  margin-bottom: 4px;
 }

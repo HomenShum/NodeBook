@@ -2,6 +2,12 @@
 
 import { autorun, isObservable, makeAutoObservable } from "mobx";
 
+export enum SearchAndReplaceDropdownOption {
+  Always = "always",
+  LabelledOnly = "labelled-only",
+  SemicolonOnly = "semicolon-only"
+}
+
 type SerializedUserSettings = {
   addThoughtstreamDirectChildrenToOutline?: boolean;
   addAllOutlineDescendantsToThoughtstream?: boolean;
@@ -14,23 +20,16 @@ type SerializedUserSettings = {
   hideBackrelations?: boolean;
   hideBundles?: boolean;
   hideZones?: boolean;
-  showAtSignOnMention?: boolean;
   hideThoughtstreamBullets?: boolean;
   hideBulletBackgroundIfParentsOnly?: boolean;
-  searchAndReplaceDropdown?: "labelled-only" | "all" | "none";
+  searchAndReplaceEnabled?: boolean;
+  searchAndReplaceDropdown?: SearchAndReplaceDropdownOption;
   disableCycles?: boolean;
-  atSignTriggerToReplaceObject?: boolean;
-  semicolonTriggerToReplaceObject?: boolean;
   addStreamLabeledRelationsToMyLists?: boolean;
   allowShiftTabAboveViewRoot?: boolean;
   hidePinnedItems?: boolean;
 };
 
-/**
- * Store for user settings
- *
- * Loads from local storage on creation and saves to local storage on change
- */
 export class SettingsStore {
   /** Add outline descendants which are direct children of outline to outline */
   public addThoughtstreamDirectChildrenToOutline = false;
@@ -48,13 +47,11 @@ export class SettingsStore {
   public hideBackrelations = false;
   public hideBundles = true;
   public hideZones = false;
-  public showAtSignOnMention = true;
   public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
-  public searchAndReplaceDropdown: "labelled-only" | "all" | "none" = "labelled-only";
+  public searchAndReplaceEnabled = true;
+  public searchAndReplaceDropdown: SearchAndReplaceDropdownOption = SearchAndReplaceDropdownOption.LabelledOnly;
   public disableCycles = true;
-  public atSignTriggerToReplaceObject = false;
-  public semicolonTriggerToReplaceObject = true;
   public addStreamLabeledRelationsToMyLists = true;
   public allowShiftTabAboveViewRoot = false;
   public hidePinnedItems = false;
@@ -84,13 +81,11 @@ export class SettingsStore {
     this.hideBackrelations = false;
     this.hideBundles = true;
     this.hideZones = false;
-    this.showAtSignOnMention = true;
     this.hideThoughtstreamBullets = true;
     this.hideBulletBackgroundIfParentsOnly = true;
-    this.searchAndReplaceDropdown = "labelled-only";
+    this.searchAndReplaceEnabled = false;
+    this.searchAndReplaceDropdown = SearchAndReplaceDropdownOption.LabelledOnly;
     this.disableCycles = true;
-    this.atSignTriggerToReplaceObject = false;
-    this.semicolonTriggerToReplaceObject = true;
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
     this.hidePinnedItems = false;
@@ -114,7 +109,7 @@ export class SettingsStore {
       }
     }
   }
-
+  
   serialize(): SerializedUserSettings {
     return {
       addThoughtstreamDirectChildrenToOutline: this.addThoughtstreamDirectChildrenToOutline,
@@ -128,12 +123,11 @@ export class SettingsStore {
       hideBackrelations: this.hideBackrelations,
       hideBundles: this.hideBundles,
       hideZones: this.hideZones,
-      showAtSignOnMention: this.showAtSignOnMention,
       hideThoughtstreamBullets: this.hideThoughtstreamBullets,
       hideBulletBackgroundIfParentsOnly: this.hideBulletBackgroundIfParentsOnly,
+      searchAndReplaceEnabled: this.searchAndReplaceEnabled,
       searchAndReplaceDropdown: this.searchAndReplaceDropdown,
       disableCycles: this.disableCycles,
-      atSignTriggerToReplaceObject: this.atSignTriggerToReplaceObject,
       addStreamLabeledRelationsToMyLists: this.addStreamLabeledRelationsToMyLists,
       allowShiftTabAboveViewRoot: this.allowShiftTabAboveViewRoot,
       hidePinnedItems: this.hidePinnedItems,
@@ -156,13 +150,12 @@ export class SettingsStore {
     this.hideBackrelations = data.hideBackrelations ?? this.hideBackrelations;
     this.hideBundles = data.hideBundles ?? this.hideBundles;
     this.hideZones = data.hideZones ?? this.hideZones;
-    this.showAtSignOnMention = data.showAtSignOnMention ?? this.showAtSignOnMention;
     this.hideThoughtstreamBullets = data.hideThoughtstreamBullets ?? this.hideThoughtstreamBullets;
     this.hideBulletBackgroundIfParentsOnly =
       data.hideBulletBackgroundIfParentsOnly ?? this.hideBulletBackgroundIfParentsOnly;
+    this.searchAndReplaceEnabled = data.searchAndReplaceEnabled ?? this.searchAndReplaceEnabled;
     this.searchAndReplaceDropdown = data.searchAndReplaceDropdown ?? this.searchAndReplaceDropdown;
     this.disableCycles = data.disableCycles ?? this.disableCycles;
-    this.atSignTriggerToReplaceObject = data.atSignTriggerToReplaceObject ?? this.atSignTriggerToReplaceObject;
     this.addStreamLabeledRelationsToMyLists =
       data.addStreamLabeledRelationsToMyLists ?? this.addStreamLabeledRelationsToMyLists;
     this.allowShiftTabAboveViewRoot = data.allowShiftTabAboveViewRoot ?? this.allowShiftTabAboveViewRoot;
@@ -213,10 +206,6 @@ export class SettingsStore {
     this.hideZones = value;
   }
 
-  setShowAtSignOnMention(value: boolean) {
-    this.showAtSignOnMention = value;
-  }
-
   setHideThoughtstreamBullets(value: boolean) {
     this.hideThoughtstreamBullets = value;
   }
@@ -225,22 +214,17 @@ export class SettingsStore {
     this.hideBulletBackgroundIfParentsOnly = value;
   }
 
-  setSearchAndReplaceDropdown(value: "labelled-only" | "all" | "none") {
+  setSearchAndReplaceEnabled(value: boolean) {
+    this.searchAndReplaceEnabled = value;
+  }
+
+  setSearchAndReplaceDropdown(value: SearchAndReplaceDropdownOption) {
     this.searchAndReplaceDropdown = value;
   }
 
   setDisableCycles(value: boolean) {
     this.disableCycles = value;
   }
-
-  setAtSignTriggerToReplaceObject(value: boolean) {
-    this.atSignTriggerToReplaceObject = value;
-  }
-
-  setSemicolonTriggerToReplaceObject(value: boolean) {
-    this.semicolonTriggerToReplaceObject = value;
-  }
-
   setAddStreamLabeledRelationsToMyLists(value: boolean) {
     this.addStreamLabeledRelationsToMyLists = value;
   }

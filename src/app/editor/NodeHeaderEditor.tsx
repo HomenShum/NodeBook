@@ -6,12 +6,13 @@ import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 
 import { createConfig } from "@/app/editor/createConfig";
-import { MentionPlugin } from "@/app/editor/plugins/MentionPlugin";
+import { DropdownMenuPlugin } from '@/app/editor/plugins/DropdownMenuPlugin';
 import { SyncWithGraphPlugin } from "@/app/editor/plugins/SyncWithGraphPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { RootTreeNode } from "@/app/tree/nodes";
 
 import styles from "./Editor.module.css";
+
 
 export const NodeHeaderEditor = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
   return (
@@ -22,9 +23,9 @@ export const NodeHeaderEditor = observer(({ treeNode }: { treeNode: RootTreeNode
           contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
           placeholder={null}
         />
+        <DropdownMenuPlugin treeNode={treeNode} />
         <ClearEditorPlugin />
         {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
-        <MentionPlugin treeNode={treeNode} />
       </LexicalComposer>
     </div>
   );
