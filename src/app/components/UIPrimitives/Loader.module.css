@@ -1,7 +1,8 @@
 .LoaderContainer {
-  position: relative;
+  position: fixed;
   left: 50%;
-  transform: translate(-50%);
+  top: 50%;
+  transform: translate(-50%, -50%);
   font-size: var(--font-size-md);
   display: flex;
   gap: 4px;

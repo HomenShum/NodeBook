@@ -42,8 +42,9 @@
 }
 
 .BackNavigation {
-  align-self: flex-end;
-  margin-bottom: 24px;
+  align-self: flex-start;
+  margin-left: 32px;
+  color: var(--gray-9);
 }
 
 .SidebarContent {
@@ -78,11 +79,6 @@
 
 .Resizer:active {
   background-color: var(--teal-a4);
-}
-
-.BackButton {
-  position: absolute;
-  top: 0;
 }
 
 .TopContent {

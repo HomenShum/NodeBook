@@ -1,5 +1,4 @@
 declare const styles: {
-  readonly "BackButton": string;
   readonly "BackNavigation": string;
   readonly "Backdrop": string;
   readonly "Button": string;

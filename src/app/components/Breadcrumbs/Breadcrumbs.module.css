@@ -17,10 +17,6 @@
   color: var(--gray-9);
 }
 
-.BreadcrumbContainer > :first-child > :first-child {
-  margin-right: 4px;
-}
-
 .BreadcrumbWrapper {
   display: flex;
   align-items: center;
@@ -35,6 +31,7 @@
   align-items: center;
   user-select: none;
   text-wrap: nowrap;
+  font-size: var(--font-size-sm);
 }
 
 .Breadcrumb:hover {

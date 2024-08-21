@@ -7,6 +7,7 @@ import { useAuth } from "@/app/auth/useAuth";
 import { SidebarIcon } from "@/app/components/CustomIcons";
 import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import Loader from "@/app/components/UIPrimitives/Loader";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useRenderController } from "@/app/render/useRenderController";
 
@@ -55,7 +56,7 @@ export default observer(
     } else if (auth && !auth.isAuthenticated) {
       return <LoginScreen />;
     } else if (isLoading) {
-      return <div>Loading...</div>;
+      return <Loader />;
     } else {
       return (
         <div className={styles.App}>

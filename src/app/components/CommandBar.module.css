@@ -6,17 +6,18 @@
 }
 
 .Content {
-  background-color: white;
+  background-color: var(--gray-1);
   border-radius: 6px;
-  box-shadow: hsl(206 22% 7% / 35%) 0px 10px 38px -10px, hsl(206 22% 7% / 20%) 0px 10px 20px -15px;
+  border: solid 0.5px var(--gray-6);
+  box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
   position: fixed;
   top: 20%;
   left: 50%;
   transform: translateX(-50%);
   width: 90vw;
   max-width: 450px;
-  max-height: 30%;
-  padding: 25px;
+  max-height: 34vh;
+  padding: 2px;
   display: flex;
   flex-direction: column;
 }
@@ -25,17 +26,36 @@
   flex-grow: 1;
   overflow-y: auto; /* Make the list scrollable */
   max-height: calc(85vh - 100px); /* Adjust based on your input height and padding */
+  position: relative; /* Add this */
+}
+
+.List::after {
+  content: "";
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background: linear-gradient(to top, var(--gray-1), transparent);
+  pointer-events: none;
+  border-radius: 6px;
 }
 
 .Item {
   padding: 12px 16px;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: var(--font-size-md);
   cursor: pointer;
+  color: var(--gray-11);
 }
 
 .Item.Selected {
-  background-color: #f0f0f0;
+  background-color: var(--teal-2);
+  color: var(--gray-12);
+}
+.Item:hover {
+  background-color: var(--teal-2);
+  color: var(--teal-12);
 }
 
 .Input {
@@ -43,6 +63,9 @@
   padding: 12px 16px;
   font-size: 16px;
   border: none;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: solid 0.5px var(--gray-6);
+  margin-bottom: 2px;
+  color: var(--gray-12);
+  background-color: var(--teal-1);
   outline: none;
 }
