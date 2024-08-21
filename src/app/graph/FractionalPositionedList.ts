@@ -69,8 +69,8 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
         this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
       });
     } else {
-      const { newPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
-      newPositions.forEach((position, i) => {
+      const { addedPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
+      addedPositions.forEach((position, i) => {
         this.map.set(items[i].id, { position, item: items[i] });
       });
       updatedPositions.forEach((position, id) => {
@@ -100,8 +100,8 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
         this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
       });
     } else {
-      const { newPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
-      newPositions.forEach((position, i) => {
+      const { addedPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
+      addedPositions.forEach((position, i) => {
         this.map.set(items[i].id, { position, item: items[i] });
       });
       updatedPositions.forEach((position, id) => {
@@ -170,14 +170,14 @@ export function generatePositionsForInsert(items: { position: Position; id: stri
     throw new Error("Number of positions to insert must be positive");
   }
 
-  const newPositions: Position[] = [];
+  const addedPositions: Position[] = [];
   const updatedPositions = new Map<string, Position>();
 
   // Handle empty list case
   if (items.length === 0) {
     const int = Math.floor(Date.now() / 1000); // Use seconds instead of milliseconds
-    generateNKeysBetween(null, null, n).forEach((frac) => newPositions.push({ int, frac }));
-    return { newPositions, updatedPositions };
+    generateNKeysBetween(null, null, n).forEach((frac) => addedPositions.push({ int, frac }));
+    return { addedPositions, updatedPositions };
   }
 
   // Check for index out of bounds
@@ -208,11 +208,11 @@ export function generatePositionsForInsert(items: { position: Position; id: stri
   );
 
   // Create new positions and update existing ones if necessary
-  newFracs.slice(0, n).forEach((frac) => newPositions.push({ int: currentPosition.int, frac }));
+  newFracs.slice(0, n).forEach((frac) => addedPositions.push({ int: currentPosition.int, frac }));
   newFracs.slice(n).forEach((frac, index) => {
     const itemToUpdate = items[i + 1 + index];
     updatedPositions.set(itemToUpdate.id, { int: currentPosition.int, frac });
   });
 
-  return { newPositions, updatedPositions };
+  return { addedPositions, updatedPositions };
 }

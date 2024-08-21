@@ -12,9 +12,9 @@ function expectPositionsSorted(positions: Position[]) {
 describe("insertPositions", () => {
   it("should insert positions into an empty list", () => {
     const result = generatePositionsForInsert([], 0, 3);
-    expect(result.newPositions.length).toBe(3);
+    expect(result.addedPositions.length).toBe(3);
     expect(result.updatedPositions.size).toBe(0);
-    expect(result.newPositions).toEqual(result.newPositions.sort((a, b) => comparePositions(a, b)));
+    expect(result.addedPositions).toEqual(result.addedPositions.sort((a, b) => comparePositions(a, b)));
   });
 
   it("should insert positions after a specified index", () => {
@@ -23,7 +23,7 @@ describe("insertPositions", () => {
       { id: "2", position: { int: 1000, frac: "a1" } },
     ];
     const result = generatePositionsForInsert(items, 0, 1);
-    const expectedOrder = [items[0].position, ...result.newPositions];
+    const expectedOrder = [items[0].position, ...result.addedPositions];
     expectPositionsSorted(expectedOrder);
     expectUniquePositions(expectedOrder);
     expect(result.updatedPositions.size).toBe(0);
@@ -34,7 +34,7 @@ describe("insertPositions", () => {
       { id: "2", position: { int: 1001, frac: "a0" } },
     ];
     const result = generatePositionsForInsert(items, 0, 1);
-    const expectedOrder = [items[0].position, ...result.newPositions, items[1].position];
+    const expectedOrder = [items[0].position, ...result.addedPositions, items[1].position];
     expectPositionsSorted(expectedOrder);
     expectUniquePositions(expectedOrder);
     expect(result.updatedPositions.size).toBe(0);
@@ -49,7 +49,7 @@ describe("insertPositions", () => {
     const result = generatePositionsForInsert(items, 0, 1);
     const expectedOrder = [
       items[0].position,
-      ...result.newPositions,
+      ...result.addedPositions,
       ...items.slice(1).map(({ id }) => result.updatedPositions.get(id)!),
     ];
     expectPositionsSorted(expectedOrder);
@@ -59,7 +59,7 @@ describe("insertPositions", () => {
   it("should handle insertion at the end of the list", () => {
     const items = [{ id: "1", position: { int: 1000, frac: "a1" } }];
     const result = generatePositionsForInsert(items, 0, 2);
-    const expectedOrder = [items[0].position, ...result.newPositions];
+    const expectedOrder = [items[0].position, ...result.addedPositions];
     expectPositionsSorted(expectedOrder);
     expectUniquePositions(expectedOrder);
   });

@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/tree/TreeContext";
@@ -19,6 +20,7 @@ export const PastePlugin = () => {
   const { treeNode } = useTreeNode();
   const { object, relationWithParent: relation, path } = treeNode;
   const parent = treeNode.parent.object;
+
   useEffect(() => {
     return editor.registerCommand<ClipboardEvent>(
       PASTE_COMMAND,
@@ -26,29 +28,26 @@ export const PastePlugin = () => {
         if (!(object instanceof GraphNode)) return false;
         const lines = event.clipboardData?.getData("Text")?.split("\n") ?? [];
         if (lines.length > 1) {
-          let promise = Promise.resolve();
+          const txs: TxCombined = [];
+
           // if the current node is empty, set the first line as its content
           if (object.text === "") {
             const line = lines.shift() ?? "";
-            promise = graphStore.updateNode({ nodeId: object.id, nodeProps: { content: line } });
+            txs.push({ type: "updateNode", transaction: { nodeId: object.id, nodeProps: { content: line } } });
           }
+
           // then for the remaining lines, create children positioned after the parent
-          promise.then(() =>
-            Promise.all(
-              lines.map((line) =>
-                graphStore.addChildNode({
-                  parentId: parent.id,
-                  nodeProps: { content: line },
-                }),
-              ),
-            ).then((children) => {
-              graphStore.getRelationList(parent).move(
-                children.map((c) => c.relation),
-                relation,
-              );
-              tree.setFocusedNode(path);
-            }),
-          );
+          lines.reverse().forEach((line) => {
+            txs.push({
+              type: "addChildNode",
+              transaction: { parentId: parent.id, nodeProps: { content: line }, after: relation },
+            });
+          });
+
+          graphStore.applyCombinedTransaction(txs).then(() => {
+            tree.setFocusedNode(path);
+          });
+
           return true;
         }
         return false;

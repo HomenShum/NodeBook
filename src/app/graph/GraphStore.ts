@@ -11,6 +11,7 @@ import {
   SerializedPositionList,
   SerializedRelation,
 } from "@/app/persistence/SerializedData";
+import { DescendantTreeNode, PinnedGroup } from "@/app/tree/nodes";
 import { uuid } from "@/app/util";
 import logger from "@/lib/logger";
 import { CappedKeywordIndex } from "@/lib/trie";
@@ -32,6 +33,7 @@ import {
   TxReplaceRelationLink,
   TxUpdateNode,
   TxUpdateRelation,
+  TxUpdateRelationPositionsList,
 } from "./GraphTransactionTypes";
 import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
 
@@ -252,6 +254,11 @@ export class GraphStore {
           const { object, relation, updates } = this._replaceRelationLink(tx.transaction);
           updatesArray.push(...updates);
           results.push({ object, relation });
+          break;
+        }
+        case "updateRelationPositionsList": {
+          const { updates } = this._updateRelationPositionsList(tx.transaction);
+          updatesArray.push(...updates);
           break;
         }
         default:
@@ -993,6 +1000,45 @@ export class GraphStore {
     }
 
     return { object: newObject, relation, updates };
+  }
+
+  async updateRelationPositionsList(tx: TxUpdateRelationPositionsList) {
+    const { updates } = this._updateRelationPositionsList(tx);
+    this.updateManager.queueUpdates(updates);
+  }
+  private _updateRelationPositionsList(tx: TxUpdateRelationPositionsList): { updates: GraphUpdate[] } {
+    const __nodes = tx.nodes.map((n) => this.getObject(n.object.id));
+    if (!__nodes.every((n) => n instanceof GraphNode)) {
+      throw new Error("Invalid nodes");
+    }
+
+    if (tx.after) {
+      const __after = this.getObject(tx.after.object.id);
+      if (!__after || !(__after instanceof GraphNode)) {
+        throw new Error("Invalid after node");
+      }
+    }
+
+    const oldList = tx.group.relationsList.serialize();
+    tx.group.relationsList.move(
+      tx.nodes.map((n) => n.relationWithParent),
+      tx.after instanceof DescendantTreeNode ? tx.after.relationWithParent : tx.after,
+    );
+    const newList = tx.group.relationsList.serialize();
+
+    return {
+      updates: tx.nodes.map(({ object, relationWithParent }) => {
+        const nodeId = object.id === relationWithParent.from.id ? relationWithParent.to.id : relationWithParent.from.id;
+        return {
+          operation: "updateRelationList",
+          authorId: this.user.id,
+          nodeId,
+          pinned: tx.group instanceof PinnedGroup,
+          listBefore: oldList,
+          listAfter: newList,
+        };
+      }),
+    };
   }
 
   /**

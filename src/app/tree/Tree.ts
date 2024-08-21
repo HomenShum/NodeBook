@@ -635,7 +635,11 @@ export class Tree {
       // swap with sibling above in same group
       if (siblingAbove.parentGroup !== top.parentGroup) return false;
       const siblingTwoAbove = siblingAbove.siblingAboveInSameGroup ?? undefined;
-      top.parentGroup.move(subtreeRoots, siblingTwoAbove);
+      await this.graphStore.updateRelationPositionsList({
+        group: top.parentGroup,
+        nodes: subtreeRoots,
+        after: siblingTwoAbove,
+      });
       return true;
     } else if (siblingAboveParent) {
       // we're at the top - move underneath the next parent above
@@ -660,7 +664,11 @@ export class Tree {
     if (siblingBelow) {
       // swap with sibling below (if in same group)
       if (siblingBelow.parentGroup !== bottom.parentGroup) return false;
-      bottom.parentGroup.move(subtreeRoots, siblingBelow);
+      await this.graphStore.updateRelationPositionsList({
+        group: bottom.parentGroup,
+        nodes: subtreeRoots,
+        after: siblingBelow,
+      });
       return true;
     } else if (siblingBelowParent) {
       // we're at the bottom - move underneath next node

@@ -331,13 +331,6 @@ export abstract class BaseGroup {
     const relation = child instanceof DescendantTreeNode ? child.relationWithParent : child;
     return this.path + "/" + relation.id;
   }
-
-  move(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
-    this.relationsList.move(
-      nodes.map((n) => n.relationWithParent),
-      after instanceof DescendantTreeNode ? after.relationWithParent : after,
-    );
-  }
 }
 // TODO Can define a type for this?
 
