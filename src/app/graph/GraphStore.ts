@@ -12,7 +12,7 @@ import {
   SerializedRelation,
 } from "@/app/persistence/SerializedData";
 import { DescendantTreeNode, PinnedGroup } from "@/app/tree/nodes";
-import { uuid } from "@/app/util";
+import { Position, uuid } from "@/app/util";
 import logger from "@/lib/logger";
 import { CappedKeywordIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
@@ -176,7 +176,8 @@ export class GraphStore {
           this._deleteRelationType(update.relationType.id);
           break;
         case "addRelation":
-          this._addRelation(update.relation);
+          const { relation } = this._addRelation(update.relation);
+          this.setRelationPositions(relation, update);
           break;
         case "updateRelation":
           this._updateRelation(update.oldProps, update.newProps);
@@ -877,30 +878,7 @@ export class GraphStore {
         this.relationsById.set(relation.id, relation);
         this.cappedKeywordIndex.add(relation.id, () => relation.searchText);
       }
-      if (deleted.fromPos) {
-        this.getRelationList(relation.from).undoDelete({
-          item: relation,
-          position: deleted.fromPos,
-        });
-      }
-      if (deleted.fromPinnedPos) {
-        this.getPinnedRelationList(relation.from).undoDelete({
-          item: relation,
-          position: deleted.fromPinnedPos,
-        });
-      }
-      if (deleted.toPos) {
-        this.getRelationList(relation.to).undoDelete({
-          item: relation,
-          position: deleted.toPos,
-        });
-      }
-      if (deleted.toPinnedPos) {
-        this.getPinnedRelationList(relation.to).undoDelete({
-          item: relation,
-          position: deleted.toPinnedPos,
-        });
-      }
+      this.setRelationPositions(relation, deleted);
       deleted.relationsList.forEach((relData) => {
         this.restoreRelation(relData);
       });
@@ -928,6 +906,28 @@ export class GraphStore {
     const relation = this.loadSerializedRelation(serializedRelation);
     this.relationsById.set(relation.id, relation);
     this.cappedKeywordIndex.add(relation.id, () => relation.searchText);
+    this.setRelationPositions(relation, { fromPos, fromPinnedPos, toPos, toPinnedPos });
+    for (const rel of relationsList) {
+      this.restoreRelation(rel);
+    }
+    bundles.forEach((serializedBundle) => {
+      const bundle = this.nodesById.get(serializedBundle.id);
+      if (bundle) {
+        this.addToBundle(relation, bundle);
+      }
+    });
+  }
+
+  private setRelationPositions(
+    relation: GraphRelation,
+    positions: {
+      fromPos?: Position;
+      fromPinnedPos?: Position;
+      toPos?: Position;
+      toPinnedPos?: Position;
+    },
+  ) {
+    const { fromPos, fromPinnedPos, toPos, toPinnedPos } = positions;
     if (fromPos) {
       this.getRelationList(relation.from).undoDelete({
         item: relation,
@@ -952,15 +952,6 @@ export class GraphStore {
         position: toPinnedPos,
       });
     }
-    for (const rel of relationsList) {
-      this.restoreRelation(rel);
-    }
-    bundles.forEach((serializedBundle) => {
-      const bundle = this.nodesById.get(serializedBundle.id);
-      if (bundle) {
-        this.addToBundle(relation, bundle);
-      }
-    });
   }
 
   /**
