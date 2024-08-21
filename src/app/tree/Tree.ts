@@ -9,9 +9,9 @@ import { Positioner, TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
+import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
-import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 import { EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
@@ -25,7 +25,6 @@ import {
   groupSiblings,
   walkTree,
 } from "./utils";
-
 
 /**
  * Forward slash delimited relation ids.
@@ -554,7 +553,6 @@ export class Tree {
     contentBeforeSelection: Chip[],
     contentAfterSelection: Chip[],
   ): Promise<{ node: GraphObject; relation: GraphRelation; path: string }> {
-
     if (!(treeNode.object instanceof GraphNode)) {
       throw new Error("Only splitting nodes is supported for now.");
     }
@@ -562,23 +560,35 @@ export class Tree {
     const oldNode = treeNode;
     const newNodeId = uuid();
 
-    // If content after selection is empty and current node has children,
-    // new node becomes a child, else a sibling.
-    const shouldBecomeChild = contentAfterSelection.map(c => c.value).join().length === 0 && oldNode.childCount > 0;
+    const textAfterCursorEmpty =
+      contentAfterSelection
+        .map((c) => c.value)
+        .join()
+        .trim().length === 0;
+
+    // Special handling to allow users to make a child node by hitting enter at the end of an expanded node.
+    // Normally we add a sibling node, but if the node is expanded and there's no text after the selection
+    // (i.e. cursor is at the end of the editor), then we add a child node instead.
+    const shouldBecomeChild = treeNode.isExpanded && oldNode.childCount > 0 && textAfterCursorEmpty;
 
     const after = oldNode.parentGroup.id === "pinned" ? -1 : oldNode.relationWithParent;
 
-    //Create transactions to reassign relations if the new node is to become a sibling.
-    const reassignRelationTxs: TxCombined = shouldBecomeChild ? [] : oldNode.object.relations.filter(r => r.id != oldNode.relationWithParent.id).map((r) => {
-      return {
-        type: "replaceRelationLink",
-        transaction: {
-          relationId: r.id,
-          direction: r.from.id === oldNode.object.id ? "from" : "to",
-          replaceWith: {type: "existing-object", id: newNodeId}
-        }
-      }
-    })
+    // Create transactions to reassign relations if doing a full "split" operation (not just adding a child or blank sibling)
+    const reassignRelationTxs: TxCombined =
+      shouldBecomeChild || textAfterCursorEmpty
+        ? []
+        : oldNode.object.relations
+            .filter((r) => r.id != oldNode.relationWithParent.id)
+            .map((r) => {
+              return {
+                type: "replaceRelationLink",
+                transaction: {
+                  relationId: r.id,
+                  direction: r.from.id === oldNode.object.id ? "from" : "to",
+                  replaceWith: { type: "existing-object", id: newNodeId },
+                },
+              };
+            });
 
     const results = await this.graphStore.applyCombinedTransaction([
       {
@@ -587,13 +597,13 @@ export class Tree {
           parentId: shouldBecomeChild ? oldNode.object.id : oldNode.parent.object.id,
           after,
           nodeProps: { content: contentAfterSelection, id: newNodeId },
-        }
+        },
       },
       ...reassignRelationTxs,
       {
         type: "updateNode",
-        transaction: { nodeId: oldNode.object.id, nodeProps: { content: contentBeforeSelection } }
-      }
+        transaction: { nodeId: oldNode.object.id, nodeProps: { content: contentBeforeSelection } },
+      },
     ]);
 
     const newNode = results[0].node as GraphNode;
@@ -601,22 +611,23 @@ export class Tree {
 
     //If we are splitting inside pinned group and new node is a sibling,
     //we want the new node to be pinned after the old node
-    if(oldNode.parentGroup.id === "pinned" && !shouldBecomeChild){
+    if (oldNode.parentGroup.id === "pinned" && !shouldBecomeChild) {
       oldNode.parent.object.pinChildRelation(relation, oldNode?.relationWithParent);
     }
 
     //If we are adding a sibling, the path should not include oldNode path.
-    const newNodePath = (shouldBecomeChild ? oldNode.childrenGroupsById.all.path : oldNode.parentGroup.path) + "/" + relation.id;
+    const newNodePath =
+      (shouldBecomeChild ? oldNode.childrenGroupsById.all.path : oldNode.parentGroup.path) + "/" + relation.id;
 
     // If old node was expanded during splitting or we are adding a child,
     // expand the new node as well.
-    if(oldNode.isExpanded || shouldBecomeChild){
-      this.setPathExpanded(newNodePath, true)
+    if (oldNode.isExpanded || shouldBecomeChild) {
+      this.setPathExpanded(newNodePath, true);
     }
 
     this.setFocusedNode(newNodePath, "start");
 
-    return { node: newNode, relation, path: newNodePath }
+    return { node: newNode, relation, path: newNodePath };
   }
 
   /**
@@ -867,7 +878,6 @@ export class Tree {
     this.expansionsByPath = expansionsByPath;
     return true;
   }
-
 }
 
 type Filter = {
