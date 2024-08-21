@@ -1,10 +1,10 @@
 .Sidebar {
   position: fixed;
   z-index: 30;
-  height: 100vh;
   background-color: var(--gray-2);
   border-top: 1px solid var(--gray-4);
-  overflow-y: auto;
+  height: 100%;
+  max-height: -webkit-fill-available; /* For iOS */
   transition: transform 0.15s ease;
   transform: translateX(-100%);
 }

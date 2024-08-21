@@ -1,6 +1,7 @@
 "use client";
 import dynamic from "next/dynamic";
 import { Inter } from "next/font/google";
+import Head from "next/head";
 
 import { AuthProvider } from "@/app/auth/AuthProvider";
 
@@ -24,6 +25,12 @@ export default function Layout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
+      <Head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+        />
+      </Head>
       <AuthProvider>
         <StoresProvider>
           <body>

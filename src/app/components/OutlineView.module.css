@@ -1,11 +1,12 @@
 .OutlineView {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   width: 100%;
   margin: 0 8px 8px 0;
   border-radius: 6px;
-  min-height: calc(100vh - 16px);
+  height: 100vh;
   background-color: var(--gray-2);
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .OutlineViewFull {
@@ -17,10 +18,13 @@
   flex-direction: column;
   background-color: var(--gray-1);
   padding-bottom: 72px;
-  min-height: calc(100vh - 96px);
+  height: calc(100% - 96px);
   border-radius: 6px;
   border: 0.5px solid var(--gray-6);
   border-top: none;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
 }
 
 .WindowNav {
