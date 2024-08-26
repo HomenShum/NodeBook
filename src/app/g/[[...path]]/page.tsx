@@ -16,7 +16,7 @@ export default function Page({ params: { path } }: { params: { path: string[] | 
     if (relationPath === null) {
       return redirect(createRouteUrl(ViewType.GRAPH, "home"));
     }
-    viewStore.mainOutlineView.setRoot(relationPath);
+    viewStore.mainOutlineView.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
   }, [graphStore, path, viewStore.mainOutlineView]);
   return <OutlineView tree={viewStore.mainOutlineView}></OutlineView>;
 }

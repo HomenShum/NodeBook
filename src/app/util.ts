@@ -10,6 +10,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { getOtherObject } from "@/app/graph/utils";
 import { isViewType, ViewType } from "@/app/view/ViewType";
+import { TreeNode } from "@/app/tree/nodes";
 
 // TODO: what should we actually use for this?
 export const uuid = () => uuidv4().slice(0, 8);
@@ -114,21 +115,29 @@ export function objectPathToObjects(path: ObjectPath): GraphObject[] | null {
   return objects;
 }
 
-export function createRouteUrl(viewType: ViewType, path?: ObjectPath | GraphRelation[] | typeof home): string {
-  if (path && path !== home) {
+export function createRouteUrl(viewType: ViewType, path?: ObjectPath | GraphRelation[] | string | typeof home): string {
+  let pathSuffix = "/home";
+
+  if (path && path !== home && typeof path === "string") {
+    pathSuffix = path;
+  }
+
+  if (path && path !== home && typeof path !== "string") {
     const objectPath = Array.isArray(path) ? relationsToObjectPath(path) : path;
     if (objectPath) {
-      const ids = [...(objectPath.relations || []).map((r) => r.id), objectPath.object.id];
-      return "/" + viewType + "/" + ids.join("/");
+      pathSuffix = (objectPath.relations || []).map((r) => "/all/" + r.id).join("");
+      pathSuffix += (pathSuffix.length > 0 ? "/" : "/all/") + objectPath.object.id;
     }
   }
-  return "/" + viewType + "/" + home;
+
+  return "/" + viewType + pathSuffix;
 }
 
 export function parsePathString(path: string[], graphStore: GraphStore): ObjectPath | null {
   if (path.length === 0) return null;
   let relations = [];
-  for (const id of path.slice(0, -1)) {
+  //If path contains group, ignore them.
+  for (const id of path.slice(0, -1).filter((p) => !(p === "all" || p === "pinned"))) {
     const graphRel = graphStore.getRelation(id);
     if (!graphRel) return null;
     relations.push(graphRel);

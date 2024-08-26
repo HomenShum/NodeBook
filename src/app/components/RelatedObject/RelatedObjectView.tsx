@@ -9,11 +9,11 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { getAncestorsAsArray, isUnlabelledChild } from "@/app/tree/utils";
-import { createRouteUrl } from "@/app/util";
+import { isUnlabelledChild } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/ViewType";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import { createRouteUrl } from "@/app/util";
 
 import { RelatedNodeView } from "./RelatedNodeView";
 import { RelatedObjectChildren } from "./RelatedObjectChildren";
@@ -149,14 +149,10 @@ const Bullet = observer(() => {
   const settingsStore = useSettingsStore();
   const { treeNode } = useTreeNode();
 
-  const handleBulletClick = useCallback(
-    (e: React.MouseEvent) => {
-      logger.debug("Clicked bullet", treeNode.path);
-      const relations = getAncestorsAsArray(treeNode).map((p) => p.relationToChild);
-      router.push(createRouteUrl(ViewType.GRAPH, { relations, object: treeNode.object }));
-    },
-    [treeNode, router],
-  );
+  const handleBulletClick = useCallback(() => {
+    logger.debug("Clicked bullet", treeNode.path);
+    router.push(createRouteUrl(ViewType.GRAPH, `${treeNode.path}/${treeNode.object.id}`));
+  }, [treeNode, router]);
 
   return (
     <div

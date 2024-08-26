@@ -121,28 +121,29 @@ export class RootTreeNode extends BaseTreeNode {
   }
 
   hydrate() {
-    this.hydrateAncestors(this.tree.pathToRoot);
-    this.path = this.parent && this.relationWithParent ? this.parent.path + "/" + this.relationWithParent.id : "";
+    this.hydrateAncestors();
     this.id = this.path;
+    this.path = this.parent ? this.tree.path.substring(0, this.tree.path.lastIndexOf("/")) : "";
     this.depth = this.parent ? this.parent.depth + 1 : 0;
     this.hydrateChildren();
     return this;
   }
 
-  private hydrateAncestors(pathToRoot: GraphRelation[]) {
-    let prevNode: PathToRootNode | RootTreeNode = this;
+  private hydrateAncestors() {
+    const pathToRoot: GraphRelation[] = this.tree.pathToRoot;
+    let currentNode: PathToRootNode | RootTreeNode = this;
     for (let i = pathToRoot.length - 1; i >= 0; i--) {
       const relation = pathToRoot[i];
-      const nextNode: PathToRootNode = new PathToRootNode({
-        object: getOtherObjectOrThrow(relation, prevNode.object.id),
+      const parentNode: PathToRootNode = new PathToRootNode({
+        object: getOtherObjectOrThrow(relation, currentNode.object.id),
         relationToChild: relation,
-        child: prevNode,
+        child: currentNode,
       });
-      prevNode.parent = nextNode;
-      if (prevNode instanceof RootTreeNode) {
-        prevNode.relationWithParent = nextNode.relationToChild;
+      currentNode.parent = parentNode;
+      if (currentNode instanceof RootTreeNode) {
+        currentNode.relationWithParent = parentNode.relationToChild;
       }
-      prevNode = nextNode;
+      currentNode = parentNode;
     }
   }
 

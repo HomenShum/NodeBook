@@ -59,18 +59,20 @@ export class Tree {
       filter = {},
       expansions = new Map(),
       selection = null,
+      path = "",
     }: {
       id?: string;
       search?: string;
       filter?: Partial<Filter>;
       expansions?: Map<string, boolean>;
       selection?: TreeSelection | null;
+      path?: string;
     } = {},
   ) {
     this.id = id;
     this.graphStore = graphStore;
     this.settingsStore = settingsStore;
-    const { rootObject, pathToRoot } = this.setRoot(root);
+    const { rootObject, pathToRoot } = this.setRoot(root, path);
     this.rootObject = rootObject;
     this.pathToRoot = pathToRoot;
     this.search = search;
@@ -78,6 +80,7 @@ export class Tree {
     this.expansionLocalStorageCache = new ExpansionLocalStorageCache();
     this.expansionsByPath = expansions.size === 0 ? this.expansionLocalStorageCache.load() : expansions;
     this.selection = selection;
+    this.path = path;
     this.makeObservable();
   }
 
@@ -90,6 +93,7 @@ export class Tree {
       search: observable,
       expansionsByPath: observable,
       partialFilter: observable,
+      path: observable,
       filter: computed,
       updateFilter: action,
       state: computed,
@@ -146,6 +150,9 @@ export class Tree {
 
   /** Expanded paths in the tree. */
   public expansionsByPath: Map<string, boolean>;
+
+  /** Connected path of relations and groups leading to the root object. */
+  public path: string;
 
   /**
    * Cache of object texts for tree search filtering.
@@ -299,7 +306,7 @@ export class Tree {
    * If an array of relations is given, it must be a contiguous path,
    * and the object at the end of the path will be considered the "root".
    */
-  setRoot(root: DescendantTreeNode | ObjectPath | GraphObject) {
+  setRoot(root: DescendantTreeNode | ObjectPath | GraphObject, path: string) {
     logger.debug("Setting tree root", root);
     if (root instanceof DescendantTreeNode) {
       this.rootObject = root.object;
@@ -311,6 +318,7 @@ export class Tree {
       this.rootObject = root.object;
       this.pathToRoot = root.relations || [];
     }
+    this.path = path;
     return { rootObject: this.rootObject, pathToRoot: this.pathToRoot };
   }
 
@@ -839,6 +847,7 @@ export class Tree {
 
   clear(root: GraphRelation[]) {
     this.pathToRoot = root;
+    this.path = "";
     this.expansionsByPath.clear();
     // this.textsCache.clear();
     this.textsByObjectId.clear();
