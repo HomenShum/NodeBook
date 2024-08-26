@@ -67,7 +67,7 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
         <ClearEditorPlugin />
         {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
         <EnterKeyPlugin treeNode={treeNode} />
-        <DropdownMenuPlugin treeNode={treeNode} />
+        {isEditable && <DropdownMenuPlugin treeNode={treeNode} />}
         <LeftRightArrowAtEndsPlugin />
         <BackspaceMergeNodesPlugin />
         <PastePlugin />
