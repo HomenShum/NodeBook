@@ -59,10 +59,19 @@ export const TreeNodeInputSuffix = observer(({ treeNode, backspaceCallback }: Tr
           tree.moveEditorSelectionUp("end");
         }
       }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.shiftKey) {
+          tree.selectBetweenShiftClick();
+        } else {
+          tree.setFocusedNode(treeNode.path);
+        }
+      }}
       ref={inputRef}
       type="text"
       value=""
-      onChange={() => {}}
+      onChange={() => { }}
     />
   );
 });

@@ -26,6 +26,24 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   useOutlineHotkeys({ tree, hasFocus });
   const treeNode = tree.state.root;
   const renderController = useRenderController();
+
+  const handleShiftClickToSelectMultipleNodes = useCallback((e: React.MouseEvent) => {
+    const nodeElement = (e.target as HTMLElement).closest('[data-nodeid]');
+    if (!nodeElement) return;
+
+    const pathToClickedNode = nodeElement.getAttribute('data-editor-path');
+    if (!pathToClickedNode) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e.shiftKey) {
+      tree.selectBetweenShiftClick();
+    } else {
+      tree.setFocusedNode(pathToClickedNode);
+    }
+  }, [tree]);
+
   return (
     <TreeContext.Provider value={tree}>
       <div
@@ -48,7 +66,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
 
             <CreateNewButton tree={tree} />
           </div>
-          <div className={s.Nodes}>
+          <div className={s.Nodes} onClick={handleShiftClickToSelectMultipleNodes}>
             <RelatedObjectChildren treeNode={treeNode} />
           </div>
         </div>
@@ -56,7 +74,6 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
     </TreeContext.Provider>
   );
 });
-
 function CreateNewButton({ tree }: { tree: Tree }) {
   return (
     <Button

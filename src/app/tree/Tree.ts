@@ -101,6 +101,7 @@ export class Tree {
       selectionWithNodes: computed,
       setFocusedNode: action,
       selectBetween: action,
+      selectBetweenShiftClick: action,
       setRoot: action,
       setPathExpanded: action,
       togglePathExpanded: action,
@@ -145,6 +146,9 @@ export class Tree {
 
   private partialFilter: Partial<Filter> = {};
 
+  // For Shift Click Selection
+  private prevFocusedNodeId: string | null = null;
+
   /** Helper class to read and sync expansion state with local storage */
   private expansionLocalStorageCache: ExpansionLocalStorageCache;
 
@@ -168,6 +172,8 @@ export class Tree {
    * text cache for the graph store as well.
    */
   textsByObjectId = new Map<string, string>();
+
+  
 
   /**
    * @DesignNote The settings store is used as the default filter, and any
@@ -245,7 +251,6 @@ export class Tree {
         });
         return null;
       }
-      // TODO find a way to do this without walking the tree twice
       let top: DescendantTreeNode | undefined;
       walkTree(this.state.root, (n) => {
         if (!top && n instanceof DescendantTreeNode && (n.id === anchor.id || n.id === head.id)) {
@@ -259,11 +264,23 @@ export class Tree {
       const bottom = top === anchor ? head : anchor;
       // walk from the top node to the bottom node, selecting all nodes along the way
       const subtreeRoots = getSubtreesBetween(top, bottom);
+      let foundAnchor = false;
+      let foundHead = false;
+
       const allNodes = subtreeRoots.flatMap((root) => {
         const nodes: DescendantTreeNode[] = [];
         walkTree(root, (n) => {
           if (n instanceof DescendantTreeNode) {
-            nodes.push(n);
+            const isAnchorOrHead = n.id === anchor.id || n.id === head.id;
+            const isInSelectionPath = n.isDescendantOf(head) || n.isDescendantOf(anchor);
+            const shouldInclude = !foundAnchor || !foundHead || isAnchorOrHead || isInSelectionPath;
+
+            if (isAnchorOrHead) {
+              if (n.id === anchor.id) foundAnchor = true;
+              if (n.id === head.id) foundHead = true;
+            }
+
+            if (shouldInclude) nodes.push(n);
           }
         });
         return nodes;
@@ -280,8 +297,17 @@ export class Tree {
     }
   }
 
-  /** Set the selection to the editor of the given node. */
+  /**
+   * Sets the focused node in the editor.
+   * @param treeNodeId - ID of the node to focus, or null to maintain current selection.
+   * @param position - Position of the cursor in the editor.
+   */
   setFocusedNode(treeNodeId: string | null, position: EditorSelectionPosition = "end") {
+    if (this.selection?.type === "editor") {
+      this.prevFocusedNodeId = this.selection.treeNodeId;
+    } else if (this.selection?.type === "node") {
+      this.prevFocusedNodeId  = null;
+    }
     this.selection = treeNodeId ? { type: "editor", treeNodeId, position } : null;
   }
 
@@ -299,6 +325,31 @@ export class Tree {
   selectBetween(anchorNodeId: string, headNodeId: string) {
     this.selection = { type: "node", anchorNodeId, headNodeId };
   }
+
+  /**
+   * Handles shift-click selection between two nodes.
+   * selection.treeNode.id is the node that was shift-clicked.
+   */
+  selectBetweenShiftClick() {
+    const selection = this.selectionWithNodes;
+    if (!selection) return false;
+    if (selection.type === "editor") {
+      const pathToClickedNode = selection.treeNode.id;
+      this.selection = { type: "node", anchorNodeId: this.prevFocusedNodeId || pathToClickedNode, headNodeId: pathToClickedNode };
+      this.prevFocusedNodeId = null;
+      return true;
+    } else if (selection.type === "node") {
+      if (selection.type !== this.selection?.type) {
+        // This should never happen. The selection and computed selection types should always match.
+        logger.warn("Selection type mismatch", { selection, current: this.selection });
+        return false;
+      }
+      return true;
+    } else {
+      return selection satisfies never;
+    }
+  }
+
 
   /**
    * Set the root of the tree.
