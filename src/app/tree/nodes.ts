@@ -5,8 +5,10 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { getOtherObjectOrThrow } from "@/app/graph/utils";
 import { Tree } from "@/app/tree/Tree";
-import { Position } from "@/app/util";
+import { createRouteUrl, Position } from "@/app/util";
 import logger from "@/lib/logger";
+import { ViewType } from "@/app/view/ViewType";
+import { env } from "@/app/envFrontend";
 
 export class PathToRootNode {
   object: GraphObject;
@@ -121,11 +123,19 @@ export class RootTreeNode extends BaseTreeNode {
   }
 
   hydrate() {
-    this.hydrateAncestors();
-    this.id = this.path;
-    this.path = this.parent ? this.tree.path.substring(0, this.tree.path.lastIndexOf("/")) : "";
-    this.depth = this.parent ? this.parent.depth + 1 : 0;
-    this.hydrateChildren();
+    try {
+      this.hydrateAncestors();
+      this.id = this.path;
+      this.path = this.parent ? this.tree.path.substring(0, this.tree.path.lastIndexOf("/")) : "";
+      this.depth = this.parent ? this.parent.depth + 1 : 0;
+      this.hydrateChildren();
+    } catch (e) {
+      logger.error("error hydrating node", e);
+      if (env.isFrontend) {
+        //Force page refresh, we do not want a partial broken state.
+        window.location.href = createRouteUrl(ViewType.GRAPH, "home");
+      }
+    }
     return this;
   }
 
