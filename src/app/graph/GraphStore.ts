@@ -42,6 +42,7 @@ export const defaultRelationTypes: Record<string, GraphRelationType> = {
   child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent" },
   relatedTo: { version: 1, id: "relatedTo", authorId: TEMP_USER_ID, label: "relates to", reverseLabel: "relates to" },
   author: { version: 1, id: "author", authorId: TEMP_USER_ID, label: "author", reverseLabel: "authored" },
+  sublist: { version: 1, id: "sublist", authorId: TEMP_USER_ID, label: "sublist", reverseLabel: "parent list" },
   empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "" },
 };
 
@@ -1480,14 +1481,20 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.allRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.pinnedRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.allRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.pinnedRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 
