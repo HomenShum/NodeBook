@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { createSnapshotFromDb } from "@/app/api/sync/createSnapshot";
@@ -64,7 +64,14 @@ async function postHandler(req: NextAuthenticatedRequest) {
             await deleteRelation(tx, update.deleted.relation);
             break;
           case "updateRelationList":
-            await upsertRelationList(tx, update.nodeId, update.authorId, update.listAfter, update.pinned);
+            await upsertRelationList(
+              tx,
+              update.nodeId,
+              update.authorId,
+              update.pinned,
+              update.relationId,
+              update.newPosition,
+            );
             break;
           default:
             update satisfies never;

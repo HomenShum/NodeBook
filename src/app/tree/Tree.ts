@@ -7,7 +7,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
 import { Positioner, TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { getSideOrThrow } from "@/app/graph/utils";
+import { extractGroupId, extractPointedAtObjectId, getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
@@ -706,9 +706,13 @@ export class Tree {
       if (siblingAbove.parentGroup !== top.parentGroup) return false;
       const siblingTwoAbove = siblingAbove.siblingAboveInSameGroup ?? undefined;
       await this.graphStore.updateRelationPositionsList({
-        group: top.parentGroup,
-        nodes: subtreeRoots,
-        after: siblingTwoAbove,
+        containingNodeId: top.parent.object.id,
+        groupId: extractGroupId(top.parentGroup),
+        objectAndRelationIds: subtreeRoots.map((root) => ({
+          objectId: extractPointedAtObjectId(root),
+          relationId: root.relationWithParent.id,
+        })),
+        afterObjectId: siblingTwoAbove?.relationWithParent.id,
       });
       return true;
     } else if (siblingAboveParent) {
@@ -735,9 +739,13 @@ export class Tree {
       // swap with sibling below (if in same group)
       if (siblingBelow.parentGroup !== bottom.parentGroup) return false;
       await this.graphStore.updateRelationPositionsList({
-        group: bottom.parentGroup,
-        nodes: subtreeRoots,
-        after: siblingBelow,
+        containingNodeId: bottom.parent.object.id,
+        groupId: extractGroupId(bottom.parentGroup),
+        objectAndRelationIds: subtreeRoots.map((root) => ({
+          objectId: extractPointedAtObjectId(root),
+          relationId: root.relationWithParent.id,
+        })),
+        afterObjectId: siblingBelow?.relationWithParent.id,
       });
       return true;
     } else if (siblingBelowParent) {

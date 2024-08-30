@@ -69,9 +69,6 @@ describe("GraphStore.replaceRelationLink", () => {
   it("should queue correct GraphUpdates when replacing a relation link with an existing node", async () => {
     const abAtStart = relationAB.serialize();
     const abPosition = graphStore.getRelationList(nodeA).get(relationAB.id)?.position;
-    const acPosition = graphStore.getRelationList(nodeA).get(relationAC.id)?.position;
-
-    const bcPosition = graphStore.getRelationList(nodeB).get(relationBC.id)?.position;
 
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
@@ -92,28 +89,18 @@ describe("GraphStore.replaceRelationLink", () => {
           nodeId: nodeA.id,
           authorId: nodeA.authorId,
           pinned: false,
-          listBefore: {
-            ab: abPosition,
-            ac: acPosition,
-          },
-          listAfter: {
-            ac: acPosition,
-          },
+          relationId: relationAB.id,
+          oldPosition: abPosition,
+          newPosition: null,
         },
         {
           operation: "updateRelationList",
           nodeId: nodeC.id,
           authorId: nodeC.authorId,
           pinned: false,
-          listBefore: {
-            ac: acPosition,
-            bc: bcPosition,
-          },
-          listAfter: {
-            ab: abPosition,
-            ac: acPosition,
-            bc: bcPosition,
-          },
+          relationId: relationAB.id,
+          oldPosition: null,
+          newPosition: abPosition,
         },
       ],
     ]);
@@ -157,7 +144,6 @@ describe("GraphStore.replaceRelationLink", () => {
   it("should queue two GraphUpdates for replacing a relation link with a new node", async () => {
     const abAtStart = relationAB.serialize();
     const abPosition = graphStore.getRelationList(nodeA).get(relationAB.id)?.position;
-    const acPosition = graphStore.getRelationList(nodeA).get(relationAC.id)?.position;
 
     await graphStore.replaceRelationLink({
       relationId: relationAB.id,
@@ -186,23 +172,18 @@ describe("GraphStore.replaceRelationLink", () => {
           nodeId: nodeA.id,
           authorId: nodeA.authorId,
           pinned: false,
-          listBefore: {
-            ab: abPosition,
-            ac: acPosition,
-          },
-          listAfter: {
-            ac: acPosition,
-          },
+          relationId: relationAB.id,
+          oldPosition: abPosition,
+          newPosition: null,
         },
         {
           operation: "updateRelationList",
           nodeId: newNode.id,
           authorId: newNode.authorId,
           pinned: false,
-          listBefore: {},
-          listAfter: {
-            ab: abPosition,
-          },
+          relationId: relationAB.id,
+          oldPosition: null,
+          newPosition: abPosition,
         },
       ],
     ]);

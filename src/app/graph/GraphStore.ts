@@ -11,7 +11,6 @@ import {
   SerializedPositionList,
   SerializedRelation,
 } from "@/app/persistence/SerializedData";
-import { DescendantTreeNode, PinnedGroup } from "@/app/tree/nodes";
 import { Position, uuid } from "@/app/util";
 import logger from "@/lib/logger";
 import { CappedKeywordIndex } from "@/lib/trie";
@@ -181,13 +180,13 @@ export class GraphStore {
           this.setRelationPositions(relation, update);
           break;
         case "updateRelation":
-          this._updateRelation(update.oldProps, update.newProps);
+          this._updateRelation(update.oldProps, update.newProps, true);
           break;
         case "deleteRelation":
           this.deleteRelation(update.deleted.relation.id); // TODO: Why not _removeRelation? The logic seems to differ slightly
           break;
         case "updateRelationList":
-          this._updateRelationList(update.nodeId, update.pinned, update.listAfter);
+          this._updateRelationList(update.nodeId, update.pinned, update.relationId, update.newPosition);
           break;
         default:
           update satisfies never;
@@ -564,7 +563,11 @@ export class GraphStore {
 
     return { updates, oldProps, newProps };
   }
-  private _updateRelation(oldProps: SerializedRelation, newProps: SerializedRelation): GraphUpdate[] {
+  private _updateRelation(
+    oldProps: SerializedRelation,
+    newProps: SerializedRelation,
+    noUpdatesNeeded = false,
+  ): GraphUpdate[] {
     const relation = this.relationsById.get(oldProps.id);
     if (!relation) {
       throw new Error(`Relation with id ${oldProps.id} does not exist`);
@@ -573,9 +576,9 @@ export class GraphStore {
     let propsForUpdate: Partial<GraphRelationProps> = { ...newProps };
 
     let oldFrom;
-    let oldFromListBefore;
+    let oldFromPositionBefore;
     let newFrom;
-    let newFromListBefore;
+    let newFromPositionBefore;
     if (oldProps.fromId !== newProps.fromId) {
       oldFrom = relation.from;
       newFrom = this.getObject(newProps.fromId);
@@ -584,15 +587,15 @@ export class GraphStore {
           `Error setting "from" property of ${relation.id}: object with id ${newProps.fromId} does not exist`,
         );
       }
-      oldFromListBefore = this.getRelationList(oldFrom).serialize();
-      newFromListBefore = this.getRelationList(newFrom).serialize();
+      oldFromPositionBefore = this.getRelationList(oldFrom).get(relation.id)?.position;
+      newFromPositionBefore = this.getRelationList(newFrom).get(relation.id)?.position;
       propsForUpdate.from = newFrom;
     }
 
     let oldTo;
-    let oldToListBefore;
+    let oldToPositionBefore;
     let newTo;
-    let newToListBefore;
+    let newToPositionBefore;
     if (oldProps.toId !== newProps.toId) {
       oldTo = relation.to;
       newTo = this.getObject(newProps.toId);
@@ -601,8 +604,8 @@ export class GraphStore {
           `Error setting "to" property of ${relation.id}: object with id ${newProps.toId} does not exist`,
         );
       }
-      oldToListBefore = this.getRelationList(oldTo).serialize();
-      newToListBefore = this.getRelationList(newTo).serialize();
+      oldToPositionBefore = this.getRelationList(oldTo).get(relation.id)?.position;
+      newToPositionBefore = this.getRelationList(newTo).get(relation.id)?.position;
       propsForUpdate.to = newTo;
     }
 
@@ -625,43 +628,91 @@ export class GraphStore {
     ];
     relation.update(propsForUpdate);
 
-    if (newFrom) {
-      updates.push({
-        operation: "updateRelationList",
-        authorId: this.user.id,
-        nodeId: oldFrom!.id,
-        pinned: false,
-        listBefore: oldFromListBefore!,
-        listAfter: this.getRelationList(oldFrom!).serialize(),
-      });
-      updates.push({
-        operation: "updateRelationList",
-        authorId: this.user.id,
-        nodeId: newFrom!.id,
-        pinned: false,
-        listBefore: newFromListBefore!,
-        listAfter: this.getRelationList(newFrom!).serialize(),
-      });
-    }
+    // In case we're calling this method from `undo` or `redo` (but probably better to rewrite this)
+    if (noUpdatesNeeded) return [];
+
     const isReversal = oldFrom && oldTo && newFrom && newTo && oldFrom.id === newTo.id && oldTo.id === newFrom.id;
-    if (newTo && !isReversal) {
+
+    if (isReversal) {
+      if (!oldFrom || !oldTo || !newFrom || !newTo) throw new Error("oldFrom, oldTo, newFrom, newTo should be defined");
+      if (!oldFromPositionBefore || !oldToPositionBefore) throw new Error("Both old positions should be defined");
+
+      const newFromPosition = this.getRelationList(newFrom).get(relation.id)?.position;
+      const newToPosition = this.getRelationList(newTo).get(relation.id)?.position;
+      if (!newFromPosition || !newToPosition) throw new Error("Both new positions should be defined");
+
       updates.push({
         operation: "updateRelationList",
         authorId: this.user.id,
-        nodeId: oldTo!.id,
+        nodeId: oldFrom.id,
         pinned: false,
-        listBefore: oldToListBefore!,
-        listAfter: this.getRelationList(oldTo!).serialize(),
+        relationId: relation.id,
+        oldPosition: oldFromPositionBefore,
+        newPosition: newToPosition,
       });
       updates.push({
         operation: "updateRelationList",
         authorId: this.user.id,
-        nodeId: newTo!.id,
+        nodeId: oldTo.id,
         pinned: false,
-        listBefore: newToListBefore!,
-        listAfter: this.getRelationList(newTo!).serialize(),
+        relationId: relation.id,
+        oldPosition: oldToPositionBefore,
+        newPosition: newFromPosition,
       });
     }
+
+    if (newFrom && !isReversal) {
+      if (!oldFrom || !oldFromPositionBefore) throw new Error("oldFrom should be defined if newFrom is defined");
+
+      const newFromPosition = this.getRelationList(newFrom).get(relation.id)?.position;
+      if (!newFromPosition) throw new Error("newFromPosition should be defined");
+
+      updates.push({
+        operation: "updateRelationList",
+        authorId: this.user.id,
+        nodeId: oldFrom.id,
+        pinned: false,
+        relationId: relation.id,
+        oldPosition: oldFromPositionBefore,
+        newPosition: null,
+      });
+      updates.push({
+        operation: "updateRelationList",
+        authorId: this.user.id,
+        nodeId: newFrom.id,
+        pinned: false,
+        relationId: relation.id,
+        oldPosition: newFromPositionBefore ?? null,
+        newPosition: newFromPosition,
+      });
+    }
+
+    if (newTo && !isReversal) {
+      if (!oldTo || !oldToPositionBefore) throw new Error("oldTo should be defined if newTo is defined");
+
+      const newToPosition = this.getRelationList(newTo).get(relation.id)?.position;
+      if (!newToPosition) throw new Error("newToPosition should be defined");
+
+      updates.push({
+        operation: "updateRelationList",
+        authorId: this.user.id,
+        nodeId: oldTo.id,
+        pinned: false,
+        relationId: relation.id,
+        oldPosition: oldToPositionBefore,
+        newPosition: null,
+      });
+      updates.push({
+        operation: "updateRelationList",
+        authorId: this.user.id,
+        nodeId: newTo.id,
+        pinned: false,
+        relationId: relation.id,
+        oldPosition: newToPositionBefore ?? null,
+        newPosition: newToPosition,
+      });
+    }
+
     return updates;
   }
 
@@ -700,20 +751,20 @@ export class GraphStore {
   private _updateRelationList(
     objectId: string,
     pinned: boolean,
-    serializedList: SerializedPositionList<GraphRelation>,
-  ) {
+    relationId: string,
+    newPosition: Position | null,
+  ): void {
     const object = this.getObject(objectId);
-    if (!object) {
-      throw new Error(`Object with id ${objectId} does not exist`);
-    }
+    if (!object) throw new Error(`Object with id ${objectId} does not exist`);
+    const relation = this.getRelation(relationId);
+    if (!relation) throw new Error(`Relation with id ${relationId} does not exist`);
+
     const list = pinned ? object.pinnedRelationsList : object.allRelationsList;
-    list.clear();
-    const positionedRelations = Object.entries(serializedList).map(([relationId, position]) => {
-      const relation = this.relationsById.get(relationId);
-      if (!relation) throw new Error(`Relation with id ${relationId} does not exist`);
-      return { item: relation, position };
-    });
-    list.load(positionedRelations);
+    if (newPosition === null) {
+      list.delete(relationId);
+    } else {
+      list.load([{ item: relation, position: newPosition }]);
+    }
   }
 
   private deleteNode(nodeOrId: GraphNode | string): GraphUpdate[] {
@@ -776,13 +827,11 @@ export class GraphStore {
       this.relationsById.set(relation.id, relation);
       this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
 
-      const fromListBefore = relation.from.allRelationsList.serialize();
-      relation.from.allRelationsList.add(relation);
-      const fromListAfter = relation.from.allRelationsList.serialize();
-
-      const toListBefore = relation.to.allRelationsList.serialize();
-      relation.to.allRelationsList.add(relation);
-      const toListAfter = relation.to.allRelationsList.serialize();
+      const commonUpdatePart = { authorId, pinned: false };
+      const fromId = relation.from.id;
+      const partialFromUpdates = relation.from.allRelationsList.add(relation);
+      const toId = relation.to.id;
+      const partialToUpdates = relation.to.allRelationsList.add(relation);
 
       updates = [
         {
@@ -791,36 +840,13 @@ export class GraphStore {
           fromPos: relation.fromPosition!,
           toPos: relation.toPosition!,
         },
-        {
-          operation: "updateRelationList",
-          authorId,
-          nodeId: relation.from.id,
-          pinned: false,
-          listBefore: fromListBefore,
-          listAfter: fromListAfter,
-        },
-        {
-          operation: "updateRelationList",
-          authorId,
-          nodeId: relation.to.id,
-          pinned: false,
-          listBefore: toListBefore,
-          listAfter: toListAfter,
-        },
+        ...partialFromUpdates.map((update) => ({ ...update, ...commonUpdatePart, nodeId: fromId })),
+        ...partialToUpdates.map((update) => ({ ...update, ...commonUpdatePart, nodeId: toId })),
       ];
 
       if (after) {
-        const listBefore = relation.from.allRelationsList.serialize();
-        relation.from.allRelationsList.move([relation], after);
-        const listAfter = relation.from.allRelationsList.serialize();
-        updates.push({
-          operation: "updateRelationList",
-          authorId,
-          nodeId: relation.from.id,
-          pinned: false,
-          listBefore,
-          listAfter,
-        });
+        const partialUpdates = relation.from.allRelationsList.move([relation], after);
+        updates = [...updates, ...partialUpdates.map((update) => ({ ...update, ...commonUpdatePart, nodeId: fromId }))];
       }
 
       return { relation, updates };
@@ -999,35 +1025,46 @@ export class GraphStore {
     this.updateManager.queueUpdates(updates);
   }
   private _updateRelationPositionsList(tx: TxUpdateRelationPositionsList): { updates: GraphUpdate[] } {
-    const __nodes = tx.nodes.map((n) => this.getObject(n.object.id));
-    if (!__nodes.every((n) => n instanceof GraphNode)) {
-      throw new Error("Invalid nodes");
+    const withinNode = this.getObject(tx.containingNodeId);
+    if (!withinNode || !(withinNode instanceof GraphObject)) {
+      throw new Error(`Node with id ${tx.containingNodeId} does not exist`);
     }
 
-    if (tx.after) {
-      const __after = this.getObject(tx.after.object.id);
-      if (!__after || !(__after instanceof GraphNode)) {
-        throw new Error("Invalid after node");
+    const objectRelationPairs = tx.objectAndRelationIds.map(({ objectId, relationId }) => {
+      const object = this.getObject(objectId);
+      const relation = this.getRelation(relationId);
+      if (!object || !relation || !(object instanceof GraphObject) || !(relation instanceof GraphRelation)) {
+        throw new Error(`GraphObject with id ${objectId} or ${relationId} does not exist`);
       }
+      return { object, relationWithParent: relation };
+    });
+
+    const after = tx.afterObjectId ? this.getObject(tx.afterObjectId) : undefined;
+    if (after && !(after instanceof GraphRelation)) {
+      throw new Error("Invalid after relation");
     }
 
-    const oldList = tx.group.relationsList.serialize();
-    tx.group.relationsList.move(
-      tx.nodes.map((n) => n.relationWithParent),
-      tx.after instanceof DescendantTreeNode ? tx.after.relationWithParent : tx.after,
+    const oldPositions = objectRelationPairs.map(({ object, relationWithParent }) => {
+      return this.getRelationList(object).get(relationWithParent.id)?.position;
+    });
+
+    const relationsList = tx.groupId === "pinned" ? withinNode.pinnedRelationsList : withinNode.allRelationsList;
+    relationsList.move(
+      objectRelationPairs.map(({ relationWithParent }) => relationWithParent),
+      after,
     );
-    const newList = tx.group.relationsList.serialize();
 
     return {
-      updates: tx.nodes.map(({ object, relationWithParent }) => {
+      updates: objectRelationPairs.map(({ object, relationWithParent }, i) => {
         const nodeId = object.id === relationWithParent.from.id ? relationWithParent.to.id : relationWithParent.from.id;
         return {
           operation: "updateRelationList",
           authorId: this.user.id,
-          nodeId,
-          pinned: tx.group instanceof PinnedGroup,
-          listBefore: oldList,
-          listAfter: newList,
+          nodeId: withinNode.id,
+          pinned: tx.groupId === "pinned",
+          relationId: relationWithParent.id,
+          newPosition: relationsList.get(relationWithParent.id)?.position ?? null,
+          oldPosition: oldPositions[i] ?? null,
         };
       }),
     };
@@ -1047,8 +1084,7 @@ export class GraphStore {
     try {
       const oldRelation = relation.serialize();
       const oldFrom = relation.from;
-      const oldFromListBefore = this.getRelationList(oldFrom).serialize();
-      const newFromListBefore = this.getRelationList(newFrom).serialize();
+      const oldFromPosition = this.getRelationList(oldFrom).get(relation.id)?.position ?? null;
 
       relation.setFrom(newFrom, after);
       relation.incrementVersion();
@@ -1063,16 +1099,18 @@ export class GraphStore {
         authorId: this.user.id,
         nodeId: oldFrom.id,
         pinned: false,
-        listBefore: oldFromListBefore,
-        listAfter: this.getRelationList(oldFrom).serialize(),
+        relationId: relation.id,
+        oldPosition: oldFromPosition,
+        newPosition: null,
       });
       updates.push({
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: newFrom.id,
         pinned: false,
-        listBefore: newFromListBefore,
-        listAfter: this.getRelationList(newFrom).serialize(),
+        relationId: relation.id,
+        oldPosition: null,
+        newPosition: this.getRelationList(newFrom).get(relation.id)?.position ?? null,
       });
       updates.push(...this.deleteIfNoRelations(oldFrom));
     } catch (e) {
@@ -1093,8 +1131,7 @@ export class GraphStore {
     try {
       const oldRelation = relation.serialize();
       const oldTo = relation.to;
-      const oldToListBefore = this.getRelationList(oldTo).serialize();
-      const newToListBefore = this.getRelationList(newTo).serialize();
+      const oldToPosition = this.getRelationList(oldTo).get(relation.id)?.position ?? null;
 
       relation.setTo(newTo, after);
       relation.incrementVersion();
@@ -1103,21 +1140,24 @@ export class GraphStore {
         oldProps: oldRelation,
         newProps: relation.serialize(),
       });
+
       updates.push({
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: oldTo.id,
         pinned: false,
-        listBefore: oldToListBefore,
-        listAfter: this.getRelationList(oldTo).serialize(),
+        relationId: relation.id,
+        oldPosition: oldToPosition,
+        newPosition: null,
       });
       updates.push({
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: newTo.id,
         pinned: false,
-        listBefore: newToListBefore,
-        listAfter: this.getRelationList(newTo).serialize(),
+        relationId: relation.id,
+        oldPosition: null,
+        newPosition: this.getRelationList(newTo).get(relation.id)?.position ?? null,
       });
 
       updates.push(...this.deleteIfNoRelations(oldTo));
@@ -1181,7 +1221,6 @@ export class GraphStore {
     const { updates } = this._pinRelations(objectId, relationIds, after);
     this.updateManager.queueUpdates(updates);
   }
-
   private _pinRelations(
     objectId: string,
     relationIds: string[],
@@ -1194,21 +1233,20 @@ export class GraphStore {
       }
       return relation;
     });
+
     const list = this.getPinnedRelationList(objectId);
-    const listBefore = list.serialize();
     list.add(relations, after);
-    const listAfter = list.serialize();
+
     return {
-      updates: [
-        {
-          operation: "updateRelationList",
-          authorId: this.user.id,
-          nodeId: objectId,
-          pinned: true,
-          listBefore,
-          listAfter,
-        },
-      ],
+      updates: relationIds.map((relationId, i) => ({
+        operation: "updateRelationList",
+        authorId: this.user.id,
+        nodeId: objectId,
+        pinned: true,
+        relationId,
+        oldPosition: null, // TODO: should we preserve the old position from allRelationsList?
+        newPosition: this.getPinnedRelationList(objectId).get(relationId)?.position ?? null,
+      })),
     };
   }
 
@@ -1216,25 +1254,24 @@ export class GraphStore {
     const { updates } = this._unpinRelations(objectId, relationIds);
     this.updateManager.queueUpdates(updates);
   }
-
   private _unpinRelations(objectId: string, relationIds: string[]): { updates: GraphUpdate[] } {
+    const oldPositions = relationIds.map((id) => this.getPinnedRelationList(objectId).get(id)?.position);
+
     const list = this.getPinnedRelationList(objectId);
-    const listBefore = list.serialize();
     relationIds.forEach((id) => {
       list.delete(id);
     });
-    const listAfter = list.serialize();
+
     return {
-      updates: [
-        {
-          operation: "updateRelationList",
-          authorId: this.user.id,
-          nodeId: objectId,
-          pinned: true,
-          listBefore,
-          listAfter,
-        },
-      ],
+      updates: relationIds.map((relationId) => ({
+        operation: "updateRelationList",
+        authorId: this.user.id,
+        nodeId: objectId,
+        pinned: true,
+        relationId,
+        oldPosition: oldPositions[relationIds.indexOf(relationId)] ?? null,
+        newPosition: null, // TODO: should we preserve the old position from pinnedRelationsList?
+      })),
     };
   }
 

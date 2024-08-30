@@ -69,20 +69,18 @@ describe("GraphStore.addRelation", () => {
           nodeId: startNode.id,
           authorId: startNode.authorId,
           pinned: false,
-          listBefore: {},
-          listAfter: {
-            [relation.id]: relation.fromPosition,
-          },
+          relationId: relation.id,
+          oldPosition: null,
+          newPosition: relation.fromPosition,
         },
         {
           operation: "updateRelationList",
           nodeId: endNode.id,
           authorId: endNode.authorId,
           pinned: false,
-          listBefore: {},
-          listAfter: {
-            [relation.id]: relation.toPosition,
-          },
+          relationId: relation.id,
+          oldPosition: null,
+          newPosition: relation.toPosition,
         },
       ],
     ]);

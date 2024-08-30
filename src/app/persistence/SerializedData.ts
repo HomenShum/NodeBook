@@ -32,6 +32,7 @@ export const PositionSchema = z.object({
   int: z.number(),
   frac: z.string(),
 });
+export type SerializedPosition = z.infer<typeof PositionSchema>;
 
 export const SerializedRelationSchema = z.object({
   version: z.number(),

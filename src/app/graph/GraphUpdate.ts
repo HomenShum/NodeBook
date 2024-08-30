@@ -5,7 +5,6 @@ import {
   DeletedRelationDataSchema,
   PositionSchema,
   SerializedNodeSchema,
-  SerializedPositionListSchema,
   SerializedRelationSchema,
   SerializedRelationTypeSchema,
 } from "@/app/persistence/SerializedData";
@@ -76,10 +75,12 @@ const UpdateRelationListSchema = z.object({
   authorId: z.string(),
   nodeId: z.string(),
   pinned: z.boolean(),
-  listBefore: SerializedPositionListSchema,
-  listAfter: SerializedPositionListSchema,
+  relationId: z.string(),
+  oldPosition: z.union([PositionSchema, z.null()]),
+  newPosition: z.union([PositionSchema, z.null()]),
 });
 export type UpdateRelationList = z.infer<typeof UpdateRelationListSchema>;
+export type PartialUpdateRelationList = Omit<UpdateRelationList, "authorId" | "nodeId" | "pinned">;
 
 export const GraphUpdateSchema = z.discriminatedUnion("operation", [
   AddNodeSchema,
@@ -94,8 +95,6 @@ export const GraphUpdateSchema = z.discriminatedUnion("operation", [
   UpdateRelationListSchema,
 ]);
 export type GraphUpdate = z.infer<typeof GraphUpdateSchema>;
-
-// TODO: Figure out
 
 export const generateInverseUpdates = (updates: GraphUpdate[]): GraphUpdate[] => {
   const inverseUpdates: GraphUpdate[] = [];
@@ -179,8 +178,9 @@ export const generateInverseUpdates = (updates: GraphUpdate[]): GraphUpdate[] =>
           authorId: update.authorId,
           nodeId: update.nodeId,
           pinned: update.pinned,
-          listBefore: update.listAfter,
-          listAfter: update.listBefore,
+          relationId: update.relationId,
+          oldPosition: update.newPosition,
+          newPosition: update.oldPosition,
         });
         break;
 

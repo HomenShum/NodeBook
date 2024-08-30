@@ -1,4 +1,5 @@
 import { GraphRelation } from "@/app/graph/GraphRelation";
+import { BaseGroup, DescendantTreeNode, GroupId, PinnedGroup } from "@/app/tree/nodes";
 
 const getSide = (relation: GraphRelation, id: string): "from" | "to" | undefined => {
   if (relation.from.id === id) {
@@ -49,4 +50,14 @@ export const getOtherSideOrThrow = (relation: GraphRelation, id: string): "from"
 export const getOtherObject = (relation: GraphRelation, id: string) => {
   const side = getOtherSide(relation, id);
   return side ? relation[side] : undefined;
+};
+
+export const extractGroupId = (group: BaseGroup): GroupId => {
+  return group instanceof PinnedGroup ? "pinned" : "all";
+};
+
+export const extractPointedAtObjectId = (node: DescendantTreeNode): string => {
+  return node.relationWithParent.from.id === node.object.id
+    ? node.relationWithParent.to.id
+    : node.relationWithParent.from.id;
 };

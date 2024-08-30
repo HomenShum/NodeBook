@@ -3,7 +3,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 
-import { getRelationPosition, MIN_NUM_RELATIONS } from "./helpers";
+import { MIN_NUM_RELATIONS } from "./helpers";
 
 describe("GraphStore.updateRelation", () => {
   let graphStore: GraphStore;
@@ -130,8 +130,8 @@ describe("GraphStore.updateRelation", () => {
 
   it("should queue appropriate GraphUpdates when reversing a relation", async () => {
     const relationAtStart = relation.serialize();
-    const startNodeRelationsAtStart = graphStore.getRelationList(startNode).serialize();
-    const endNodeRelationsAtStart = graphStore.getRelationList(endNode).serialize();
+    const startNodeRelationPositionAtStart = graphStore.getRelationList(startNode).get(relation.id)?.position;
+    const endNodeRelationPositionAtStart = graphStore.getRelationList(endNode).get(relation.id)?.position;
 
     await graphStore.updateRelation({
       relationId: relation.id,
@@ -150,16 +150,18 @@ describe("GraphStore.updateRelation", () => {
           nodeId: startNode.id,
           authorId: startNode.authorId,
           pinned: false,
-          listBefore: startNodeRelationsAtStart,
-          listAfter: graphStore.getRelationList(startNode).serialize(),
+          relationId: relation.id,
+          oldPosition: startNodeRelationPositionAtStart,
+          newPosition: graphStore.getRelationList(startNode).get(relation.id)?.position,
         },
         {
           operation: "updateRelationList",
           nodeId: endNode.id,
           authorId: endNode.authorId,
           pinned: false,
-          listBefore: endNodeRelationsAtStart,
-          listAfter: graphStore.getRelationList(endNode).serialize(),
+          relationId: relation.id,
+          oldPosition: endNodeRelationPositionAtStart,
+          newPosition: graphStore.getRelationList(endNode).get(relation.id)?.position,
         },
       ],
     ]);
@@ -221,9 +223,11 @@ describe("GraphStore.updateRelation", () => {
   });
 
   it("should be able to swap the direction of a relation while preserving the position", async () => {
-    const oldFromPosition = getRelationPosition(relation, true);
-    const oldToPosition = getRelationPosition(relation, false);
+    const oldFromPosition = startNode.allRelationsList.get(relation.id)?.position;
+    const oldToPosition = endNode.allRelationsList.get(relation.id)?.position;
 
+    expect(oldFromPosition).toBeDefined();
+    expect(oldToPosition).toBeDefined();
     expect(relation.from).toBe(startNode);
     expect(relation.to).toBe(endNode);
 
@@ -232,25 +236,112 @@ describe("GraphStore.updateRelation", () => {
       reverse: true,
     });
 
-    const newFromPosition = getRelationPosition(relation, true);
-    const newToPosition = getRelationPosition(relation, false);
+    const newFromPosition = startNode.allRelationsList.get(relation.id)?.position;
+    const newToPosition = endNode.allRelationsList.get(relation.id)?.position;
 
     expect(relation.from).toBe(endNode);
     expect(relation.to).toBe(startNode);
-    expect(newFromPosition).toBe(oldToPosition);
-    expect(newToPosition).toBe(oldFromPosition);
+    expect(newFromPosition).toEqual(oldToPosition);
+    expect(newToPosition).toEqual(oldFromPosition);
 
     await graphStore.updateRelation({
       relationId: relation.id,
       reverse: true,
     });
 
-    const finalFromPosition = getRelationPosition(relation, true);
-    const finalToPosition = getRelationPosition(relation, false);
+    const finalFromPosition = startNode.allRelationsList.get(relation.id)?.position;
+    const finalToPosition = endNode.allRelationsList.get(relation.id)?.position;
 
     expect(relation.from).toBe(startNode);
     expect(relation.to).toBe(endNode);
-    expect(finalFromPosition).toBe(oldFromPosition);
-    expect(finalToPosition).toBe(oldToPosition);
+    expect(finalFromPosition).toEqual(oldFromPosition);
+    expect(finalToPosition).toEqual(oldToPosition);
+  });
+
+  it("should be able to swap the direction of a relation while preserving the position, then undo, then redo", async () => {
+    const oldFromPosition = startNode.allRelationsList.get(relation.id)?.position;
+    const oldToPosition = endNode.allRelationsList.get(relation.id)?.position;
+
+    expect(oldFromPosition).toBeDefined();
+    expect(oldToPosition).toBeDefined();
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+
+    await graphStore.updateRelation({
+      relationId: relation.id,
+      reverse: true,
+    });
+
+    const newFromPosition = startNode.allRelationsList.get(relation.id)?.position;
+    const newToPosition = endNode.allRelationsList.get(relation.id)?.position;
+
+    expect(relation.from).toBe(endNode);
+    expect(relation.to).toBe(startNode);
+    expect(newFromPosition).toEqual(oldToPosition);
+    expect(newToPosition).toEqual(oldFromPosition);
+
+    graphStore.updateManager.undo();
+
+    const revertedFromPosition = startNode.allRelationsList.get(relation.id)?.position;
+    const revertedToPosition = endNode.allRelationsList.get(relation.id)?.position;
+
+    expect(relation.from).toBe(startNode);
+    expect(relation.to).toBe(endNode);
+    expect(revertedFromPosition).toEqual(oldFromPosition);
+    expect(revertedToPosition).toEqual(oldToPosition);
+
+    graphStore.updateManager.redo();
+
+    const finalFromPosition = startNode.allRelationsList.get(relation.id)?.position;
+    const finalToPosition = endNode.allRelationsList.get(relation.id)?.position;
+
+    expect(relation.from).toBe(endNode);
+    expect(relation.to).toBe(startNode);
+    expect(finalFromPosition).toEqual(oldToPosition);
+    expect(finalToPosition).toEqual(oldFromPosition);
+  });
+
+  it("should be able to select several nodes, move them to a new parent, and then undo and redo all of it", async () => {
+    const parent = await graphStore.addNode({ nodeProps: { id: "parent" } });
+
+    const { node: child1, relation: relation1 } = await graphStore.addChildNode({
+      parentId: "parent",
+      nodeProps: { id: "child1" },
+    });
+    const { node: child2, relation: relation2 } = await graphStore.addChildNode({
+      parentId: "parent",
+      nodeProps: { id: "child2" },
+    });
+    const { node: child3, relation: relation3 } = await graphStore.addChildNode({
+      parentId: "parent",
+      nodeProps: { id: "child3" },
+    });
+
+    expect(relation1.to).toBe(child1);
+    expect(relation1.from).toBe(parent);
+    expect(relation2.to).toBe(child2);
+    expect(relation2.from).toBe(parent);
+    expect(relation3.to).toBe(child3);
+    expect(relation3.from).toBe(parent);
+
+    const initialPositionList = parent.relationsSortedByPosition;
+
+    await graphStore.updateRelationPositionsList({
+      containingNodeId: "parent",
+      groupId: "all",
+      objectAndRelationIds: [{ objectId: child1.id, relationId: relation1.id }],
+      afterObjectId: relation3.id,
+    });
+
+    const reorderedPositionList = parent.relationsSortedByPosition;
+    expect(initialPositionList[0]).toBe(reorderedPositionList[2]);
+
+    graphStore.updateManager.undo();
+    const undonePositionList = parent.relationsSortedByPosition;
+    expect(undonePositionList).toEqual(initialPositionList);
+
+    graphStore.updateManager.redo();
+    const redonePositionList = parent.relationsSortedByPosition;
+    expect(redonePositionList).toEqual(reorderedPositionList);
   });
 });

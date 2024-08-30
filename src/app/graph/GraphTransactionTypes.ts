@@ -1,4 +1,4 @@
-import { BaseGroup, DescendantTreeNode } from "@/app/tree/nodes";
+import { GroupId } from "@/app/tree/nodes";
 
 import { GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationPropsWithoutTargets, GraphRelationType } from "./GraphRelation";
@@ -66,11 +66,11 @@ export type TxAddChildNode = {
   after?: Positioner<GraphRelation>;
 };
 
-// TODO: all these objects should be referenced by id, but DescendantTreeNodes are not stored in the graph store
 export type TxUpdateRelationPositionsList = {
-  group: BaseGroup;
-  nodes: DescendantTreeNode[];
-  after?: DescendantTreeNode;
+  containingNodeId: string;
+  groupId: GroupId;
+  objectAndRelationIds: { objectId: string; relationId: string }[];
+  afterObjectId?: string;
 };
 
 // TODO: probably can be done with less boilerplate code?

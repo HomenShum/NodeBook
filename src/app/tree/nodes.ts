@@ -1,4 +1,3 @@
-import { FractionalPositionedList } from "@/app/graph/FractionalPositionedList";
 import { PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
@@ -301,7 +300,6 @@ export abstract class BaseGroup {
   parent: TreeNode;
   nodes: DescendantTreeNode[];
   abstract relationsWithPositions: PositionedRelation[];
-  abstract relationsList: FractionalPositionedList<GraphRelation>;
   abstract path: string;
   abstract add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>): Promise<void>;
 
@@ -355,10 +353,6 @@ export class PinnedGroup extends BaseGroup {
     return this.parent.path + "/pinned";
   }
 
-  get relationsList() {
-    return this.parent.object.pinnedRelationsList;
-  }
-
   get relationsWithPositions() {
     return this.parent.object.pinnedRelationsWithPositions;
   }
@@ -388,10 +382,6 @@ export class AllGroup extends BaseGroup {
 
   get path() {
     return this.parent.path + "/all";
-  }
-
-  get relationsList() {
-    return this.parent.object.allRelationsList;
   }
 
   get relationsWithPositions() {

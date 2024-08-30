@@ -2,6 +2,7 @@ import { generateNKeysBetween } from "fractional-indexing";
 import { action, computed, isObservable, makeObservable, observable } from "mobx";
 
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
+import { PartialUpdateRelationList } from "@/app/graph/GraphUpdate";
 import { Serializable } from "@/app/persistence/serialization";
 import { SerializedPositionList } from "@/app/persistence/SerializedData";
 import { Position, comparePositions, generateDefaultPosition } from "@/app/util";
@@ -18,7 +19,8 @@ type ListItem = {
 };
 
 export class FractionalPositionedList<T extends ListItem & Serializable> implements Serializable {
-  map = new Map<string, ItemWithPosition<T>>();
+  private map = new Map<string, ItemWithPosition<T>>();
+
   constructor(items: T[] = []) {
     items.forEach((item) => {
       this.map.set(item.id, {
@@ -57,7 +59,11 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
     return Array.from(this.map.keys());
   }
 
-  add(item: T | T[], after?: Positioner<T>) {
+  add(item: T | T[], after?: Positioner<T>): PartialUpdateRelationList[] {
+    const partialUpdates: PartialUpdateRelationList[] = [];
+    const oldPosition = null;
+    const operation = "updateRelationList";
+
     const items = Array.isArray(item) ? item : [item];
     let int: number, fracs: string[];
     if (this.map.size === 0 || !after) {
@@ -66,50 +72,71 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
       items.forEach((item, i) => {
         // TODO: should this throw?
         if (this.map.has(item.id)) return logger.error("Attempted to add item that is already in the list");
-        this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
+        const newPosition = { int, frac: fracs[i] };
+        this.map.set(item.id, { position: newPosition, item });
+        partialUpdates.push({ operation, relationId: item.id, oldPosition, newPosition });
       });
     } else {
       const { addedPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
       addedPositions.forEach((position, i) => {
         this.map.set(items[i].id, { position, item: items[i] });
+        partialUpdates.push({ operation, relationId: items[i].id, oldPosition, newPosition: position });
       });
       updatedPositions.forEach((position, id) => {
         const existing = this.map.get(id);
         if (!existing) return logger.error("Attempted to reposition item that is not in the list");
         this.map.set(id, { ...existing, position });
+        partialUpdates.push({ operation, relationId: id, oldPosition, newPosition: position });
       });
     }
+
+    return partialUpdates;
   }
 
-  delete(id: string) {
-    return this.map.delete(id);
+  delete(id: string): PartialUpdateRelationList[] {
+    const { position } = this.map.get(id) ?? {};
+    if (!position) return [];
+    this.map.delete(id);
+    return [{ operation: "updateRelationList", relationId: id, oldPosition: position, newPosition: null }];
   }
 
+  // TODO: check if this should return updates
   undoDelete(itemWithPosition: ItemWithPosition<T> | undefined) {
     if (!itemWithPosition) return;
     this.map.set(itemWithPosition.item.id, itemWithPosition);
   }
 
-  move(items: T[], after?: Positioner<T>) {
+  move(items: T[], after?: Positioner<T>): PartialUpdateRelationList[] {
+    const partialUpdates: PartialUpdateRelationList[] = [];
+    const operation = "updateRelationList";
+
     let int: number, fracs: string[];
     if (!after) {
       int = Date.now();
       fracs = generateNKeysBetween(null, null, items.length);
       items.forEach((item, i) => {
-        if (!this.map.has(item.id)) return logger.error("Attempted to move item that is not in the list");
-        this.map.set(item.id, { position: { int, frac: fracs[i] }, item });
+        const { position } = this.map.get(item.id) ?? {};
+        if (!position) return logger.error("Attempted to move item that is not in the list");
+        const newPosition = { int, frac: fracs[i] };
+        this.map.set(item.id, { position: newPosition, item });
+        partialUpdates.push({ operation, relationId: item.id, oldPosition: position, newPosition });
       });
     } else {
       const { addedPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
       addedPositions.forEach((position, i) => {
         this.map.set(items[i].id, { position, item: items[i] });
+        partialUpdates.push({ operation, relationId: items[i].id, oldPosition: null, newPosition: position }); // TODO: not sure if there is no old position
       });
       updatedPositions.forEach((position, id) => {
         const existing = this.map.get(id);
         if (!existing) return logger.error("Attempted to reposition item that is not in the list");
+        const oldPosition = existing.position;
         this.map.set(id, { ...existing, position });
+        partialUpdates.push({ operation, relationId: id, oldPosition: oldPosition, newPosition: position });
       });
     }
+
+    return partialUpdates;
   }
 
   private generatePositionsForInsert(positioner: Positioner<T>, n: number) {

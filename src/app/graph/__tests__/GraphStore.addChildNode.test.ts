@@ -63,20 +63,18 @@ describe("GraphStore.addChildNode", () => {
           nodeId: parent.id,
           authorId: parent.authorId,
           pinned: false,
-          listBefore: {},
-          listAfter: {
-            [relation.id]: graphStore.getRelationList(parent).get(relation.id)?.position,
-          },
+          relationId: relation.id,
+          oldPosition: null,
+          newPosition: graphStore.getRelationList(parent).get(relation.id)?.position,
         },
         {
           operation: "updateRelationList",
           nodeId: child.id,
           authorId: child.authorId,
           pinned: false,
-          listBefore: {},
-          listAfter: {
-            [relation.id]: graphStore.getRelationList(child).get(relation.id)?.position,
-          },
+          relationId: relation.id,
+          oldPosition: null,
+          newPosition: graphStore.getRelationList(child).get(relation.id)?.position,
         },
       ],
     ]);

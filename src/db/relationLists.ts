@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
-import { GraphRelation } from "@/app/graph/GraphRelation";
-import { SerializedPositionList } from "@/app/persistence/SerializedData";
+import { SerializedPosition } from "@/app/persistence/SerializedData";
 import { relationListsTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
 
@@ -9,13 +8,21 @@ export const upsertRelationList = async (
   tx: MewDbTransaction,
   nodeId: string,
   authorId: string,
-  relationList: SerializedPositionList<GraphRelation>,
   pinned: boolean,
+  relationId: string,
+  position: SerializedPosition | null,
 ) => {
-  await tx
-    .delete(relationListsTable)
-    .where(and(eq(relationListsTable.nodeId, nodeId), eq(relationListsTable.pinned, pinned)));
-  for (const [relationId, position] of Object.entries(relationList)) {
+  if (!position) {
+    await tx
+      .delete(relationListsTable)
+      .where(
+        and(
+          eq(relationListsTable.nodeId, nodeId),
+          eq(relationListsTable.relationId, relationId),
+          eq(relationListsTable.pinned, pinned),
+        ),
+      );
+  } else {
     await tx
       .insert(relationListsTable)
       .values({
