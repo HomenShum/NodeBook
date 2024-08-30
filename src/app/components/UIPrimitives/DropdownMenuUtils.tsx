@@ -56,15 +56,19 @@ export class DropdownOption extends MenuOption {
     super(typeof value === "string" ? value : value.id);
     if (value === ActionId.CREATE_NEW_NODE) {
       this.value = { type: DropdownOptionType.ACTION, id: ActionId.CREATE_NEW_NODE };
+      this.key = ActionId.CREATE_NEW_NODE;
     } else if (value instanceof GraphNode) {
       this.value = { type: DropdownOptionType.NODE, object: value };
+      this.key = value.id;
     } else if (value instanceof GraphRelation) {
       this.value = { type: DropdownOptionType.RELATION, object: value };
-    }
-    else if (isGraphRelationType(value)) {
+      this.key = value.id;
+    } else if (isGraphRelationType(value)) {
       this.value = { type: DropdownOptionType.RELATION_TYPE, object: value, isForward: isForward ?? true };
+      this.key = value.id + (isForward ? "-fwd" : "-revrevrev");
     } else {
       this.value = { type: DropdownOptionType.ACTION, id: ActionId.CREATE_NEW_NODE };
+      this.key = ActionId.CREATE_NEW_NODE;
     }
   }
 
