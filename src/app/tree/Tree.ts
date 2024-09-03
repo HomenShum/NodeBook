@@ -173,8 +173,6 @@ export class Tree {
    */
   textsByObjectId = new Map<string, string>();
 
-  
-
   /**
    * @DesignNote The settings store is used as the default filter, and any
    * filter props assigned to the tree will override the settings store.
@@ -302,11 +300,11 @@ export class Tree {
    * @param treeNodeId - ID of the node to focus, or null to maintain current selection.
    * @param position - Position of the cursor in the editor.
    */
-  setFocusedNode(treeNodeId: string | null, position: EditorSelectionPosition = "end") {
+  setFocusedNode(treeNodeId: string | null, position?: EditorSelectionPosition) {
     if (this.selection?.type === "editor") {
       this.prevFocusedNodeId = this.selection.treeNodeId;
     } else if (this.selection?.type === "node") {
-      this.prevFocusedNodeId  = null;
+      this.prevFocusedNodeId = null;
     }
     this.selection = treeNodeId ? { type: "editor", treeNodeId, position } : null;
   }
@@ -335,7 +333,11 @@ export class Tree {
     if (!selection) return false;
     if (selection.type === "editor") {
       const pathToClickedNode = selection.treeNode.id;
-      this.selection = { type: "node", anchorNodeId: this.prevFocusedNodeId || pathToClickedNode, headNodeId: pathToClickedNode };
+      this.selection = {
+        type: "node",
+        anchorNodeId: this.prevFocusedNodeId || pathToClickedNode,
+        headNodeId: pathToClickedNode,
+      };
       this.prevFocusedNodeId = null;
       return true;
     } else if (selection.type === "node") {
@@ -349,7 +351,6 @@ export class Tree {
       return selection satisfies never;
     }
   }
-
 
   /**
    * Set the root of the tree.
