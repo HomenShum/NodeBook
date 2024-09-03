@@ -1,27 +1,30 @@
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { LexicalTypeaheadMenuPlugin } from '@lexical/react/LexicalTypeaheadMenuPlugin';
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { LexicalTypeaheadMenuPlugin } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from "react";
 
-import { ActionId, DropdownOption, DropdownOptionType, filterAndSortOptions, getMentionSearchResults, getMenuRenderFn, getSearchAndReplaceResults } from '@/app/components/UIPrimitives/DropdownMenuUtils';
-import { GraphNode } from '@/app/graph/GraphNode';
-import { defaultRelationTypes } from '@/app/graph/GraphStore';
-import { $createMentionNode } from '@/app/graph/MentionNode';
-import { useGraphStore } from '@/app/graph/useGraphStore';
-import { useSettingsStore } from '@/app/graph/useSettingsStore';
-import { DescendantTreeNode, RootTreeNode } from '@/app/tree/nodes';
-import { useTree } from '@/app/tree/TreeContext';
+import {
+  ActionId,
+  DropdownOption,
+  DropdownOptionType,
+  filterAndSortOptions,
+  getMentionSearchResults,
+  getMenuRenderFn,
+  getSearchAndReplaceResults,
+} from "@/app/components/UIPrimitives/DropdownMenuUtils";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { defaultRelationTypes } from "@/app/graph/GraphStore";
+import { $createMentionNode } from "@/app/graph/MentionNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
+import { useTree } from "@/app/tree/TreeContext";
 import { uuid } from "@/app/util";
-import logger from '@/lib/logger';
-import { checkForMentionMatch, checkForSearchAndReplaceMatch } from '@/lib/utils';
+import logger from "@/lib/logger";
+import { checkForMentionMatch, checkForSearchAndReplaceMatch } from "@/lib/utils";
 const SUGGESTION_LIST_LENGTH_LIMIT = 5;
 
-
-export function DropdownMenuPlugin({
-  treeNode,
-}: {
-  treeNode: DescendantTreeNode | RootTreeNode;
-}): JSX.Element | null {
+export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode | RootTreeNode }): JSX.Element | null {
   const node = treeNode.object;
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
@@ -31,14 +34,13 @@ export function DropdownMenuPlugin({
   const isLabellingRelation = relation?.isLabelled() ?? false;
   const { searchAndReplaceDropdown } = useSettingsStore();
 
-
   const prevText = useRef<string | null>(null);
 
   const [options, setOptions] = useState<DropdownOption[]>([]);
   const limitedOptions = options.slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
   const [isOnSelectOptionMention, setIsOnSelectOptionMention] = useState(true);
   const allOptions = isOnSelectOptionMention
-    ? [...limitedOptions.slice(0, -1), new DropdownOption(ActionId.CREATE_NEW_NODE)]
+    ? [...limitedOptions, new DropdownOption(ActionId.CREATE_NEW_NODE)]
     : limitedOptions;
 
   const onMention = useCallback(
@@ -59,7 +61,8 @@ export function DropdownMenuPlugin({
         }
         // add relation
         const hasMentionRelation = node.relations.some(
-          (r) => r.relationType === defaultRelationTypes.child && r.from === node && r.to.id === graphNodeId,);
+          (r) => r.relationType === defaultRelationTypes.child && r.from === node && r.to.id === graphNodeId,
+        );
         if (!hasMentionRelation) {
           await graphStore.addRelation({
             fromId: graphNodeId,
@@ -75,6 +78,7 @@ export function DropdownMenuPlugin({
 
   const onSearchAndReplace = useCallback(
     async (option: DropdownOption) => {
+      console.log("HERE");
       try {
         switch (option.value.type) {
           case DropdownOptionType.RELATION_TYPE: {
@@ -106,7 +110,7 @@ export function DropdownMenuPlugin({
                 break;
               }
               default: {
-                (option.value as never) satisfies never;
+                option.value.id satisfies never;
               }
             }
             break;
@@ -132,7 +136,7 @@ export function DropdownMenuPlugin({
             break;
           }
           default:
-            (option as never) satisfies never;
+            option.value satisfies never;
         }
       } catch (e) {
         logger.error("Error selecting dropdown option", e);
@@ -141,15 +145,20 @@ export function DropdownMenuPlugin({
     },
     [graphStore, relation, object, tree, treeNode],
   );
-  const menuRenderFn = getMenuRenderFn(allOptions, prevText.current ?? '');
+
+  const menuRenderFn = getMenuRenderFn(allOptions, prevText.current ?? "");
 
   return (
     <LexicalTypeaheadMenuPlugin<DropdownOption>
-      onQueryChange={() => { }}
+      onQueryChange={() => {}}
       onSelectOption={isOnSelectOptionMention ? onMention : onSearchAndReplace}
       triggerFn={(text) => {
-        const mentionMatch = checkForMentionMatch(text)
-        const searchAndReplaceMatch = checkForSearchAndReplaceMatch(text, isLabellingRelation, searchAndReplaceDropdown);
+        const mentionMatch = checkForMentionMatch(text);
+        const searchAndReplaceMatch = checkForSearchAndReplaceMatch(
+          text,
+          isLabellingRelation,
+          searchAndReplaceDropdown,
+        );
 
         if (mentionMatch) {
           setIsOnSelectOptionMention(true);
@@ -178,7 +187,7 @@ export function DropdownMenuPlugin({
                 isLabellingRelation,
                 treeNode.object.id,
                 treeNode.relationWithParent?.id,
-                relation?.relationType.id
+                relation?.relationType.id,
               );
             }
           });
@@ -189,7 +198,7 @@ export function DropdownMenuPlugin({
       }}
       options={allOptions}
       menuRenderFn={menuRenderFn}
-      // High priority so it takes precedence over the split on enterkeyPlugin 
+      // High priority so it takes precedence over the split on enterkeyPlugin
       // and same level as toggleEditable Plugin command (which lets the enter key event propogate to this plugin on opening the dropdown)
       commandPriority={COMMAND_PRIORITY_HIGH}
     />
