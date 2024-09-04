@@ -124,7 +124,12 @@ export class GraphNode extends GraphObject implements Serializable {
           case "mention":
             const referencedNode = this.store.getNode(chip.value);
             if (!referencedNode) return "[Deleted node]";
-            return `@[${referencedNode.text}]`;
+            try {
+              return `@[${referencedNode.text}]`;
+            } catch (error) {
+              console.error("Error accessing referencedNode.text:", error);
+              return "@[Error]";
+            }
         }
       })
       .join("");

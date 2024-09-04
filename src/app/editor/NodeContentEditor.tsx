@@ -8,7 +8,6 @@ import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef } from "react";
 
-
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { BindFocusToTreePlugin } from "@/app/editor/plugins/BindFocusToTreePlugin";
@@ -61,7 +60,11 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
       <LexicalComposer initialConfig={createConfig({ namespace: "descendant-editor", treeNode })}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
+          contentEditable={<ContentEditable
+            className={`${styles.ContentEditable}`}
+            data-nodeid={treeNode.object.id}
+            suppressContentEditableWarning
+          />}
           placeholder={null}
         />
         <ClearEditorPlugin />
@@ -80,6 +83,7 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
             setPathToNodeAsRoot((e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!);
           }}
         />
+
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
         <BindFocusToTreePlugin />
         <ToggleEditablePlugin treeNode={treeNode} isEditable={isEditable} setIsEditable={setIsEditable} />
