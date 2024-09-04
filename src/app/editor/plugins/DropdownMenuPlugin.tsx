@@ -11,7 +11,7 @@ import {
   getMenuRenderFn,
   getSearchAndReplaceResults,
 } from "@/app/components/UIPrimitives/DropdownMenuUtils";
-import { TriggerType } from '@/app/components/UIPrimitives/LexicalMenu';
+import { TriggerType } from "@/app/components/UIPrimitives/LexicalMenu";
 import { LexicalTypeaheadMenuPlugin } from "@/app/editor/plugins/LexicalTypeaheadMenuPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { defaultRelationTypes } from "@/app/graph/GraphStore";
@@ -149,7 +149,8 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
     },
     [graphStore, relation, tree, treeNode],
   );
-  const menuRenderFn = getMenuRenderFn(allOptions, prevText.current ?? "");
+  const [showMenu, setShowMenu] = useState(true);
+  const menuRenderFn = getMenuRenderFn(allOptions, prevText.current ?? "", showMenu, setShowMenu);
 
   const handleRecentNodes = useCallback(() => {
     const nodeValues = Array.from(graphStore.nodesById.values())
@@ -185,7 +186,6 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
 
   const triggerFn = useCallback(
     (text: string, trigger: TriggerType = TriggerType.SHOW_MATCHING_TEXT) => {
-
       // Handle semicolon trigger for recently created nodes
       if (trigger === TriggerType.SHOW_RECENTLY_CREATED) {
         setOptions(handleRecentNodes());
@@ -227,7 +227,7 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
       triggerFn={triggerFn}
       options={allOptions}
       menuRenderFn={menuRenderFn}
-      // High priority so it takes precedence over the split on enterkeyPlugin
+      isMenuOpen={showMenu}
       // High priority so it takes precedence over the split on enterkeyPlugin
       // and same level as toggleEditable Plugin command (which lets the enter key event propogate to this plugin on opening the dropdown)
       commandPriority={COMMAND_PRIORITY_HIGH}

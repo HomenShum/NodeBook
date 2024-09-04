@@ -1,15 +1,14 @@
-import { MenuOption, MenuRenderFn } from '@lexical/react/LexicalTypeaheadMenuPlugin';
-import { ReactPortal, Ref, useEffect, useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
+import { MenuOption, MenuRenderFn } from "@lexical/react/LexicalTypeaheadMenuPlugin";
+import { ReactPortal, Ref, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 
-import { Path } from '@/app/components/Path';
-import { GraphNode } from '@/app/graph/GraphNode';
-import { GraphRelation, GraphRelationType, isGraphRelationType } from '@/app/graph/GraphRelation';
-import { GraphStore } from '@/app/graph/GraphStore';
-import { scoreMatch } from '@/lib/utils';
+import { Path } from "@/app/components/Path";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphRelation, GraphRelationType, isGraphRelationType } from "@/app/graph/GraphRelation";
+import { GraphStore } from "@/app/graph/GraphStore";
+import { scoreMatch } from "@/lib/utils";
 
-import styles from './DropdownMenuUtils.module.css';
-
+import styles from "./DropdownMenuUtils.module.css";
 
 enum DropdownOptionType {
   NODE = "node",
@@ -103,15 +102,11 @@ export class DropdownOption extends MenuOption {
   }
 }
 
-function getMentionSearchResults(
-  graphStore: GraphStore,
-  queryString: string,
-  currentNodeId: string
-): DropdownOption[] {
+function getMentionSearchResults(graphStore: GraphStore, queryString: string, currentNodeId: string): DropdownOption[] {
   let { nodes } = graphStore.search({
     text: queryString,
     filters: {
-      types: [DropdownOptionType.NODE]
+      types: [DropdownOptionType.NODE],
     },
     sort: { by: "score" },
   });
@@ -126,7 +121,7 @@ function getSearchAndReplaceResults(
   isLabellingRelation: boolean,
   currentNodeId: string,
   currentRelationId: string | undefined,
-  currentRelationTypeId: string | undefined
+  currentRelationTypeId: string | undefined,
 ): DropdownOption[] {
   let { nodes, relations, relationTypes } = graphStore.search({
     text: queryString,
@@ -140,23 +135,23 @@ function getSearchAndReplaceResults(
 
   // ignore the current object and relation
   nodes = nodes.filter(({ node }) => node.id !== currentNodeId);
-  relations = relations.filter(
-    ({ relation }) => relation.id !== currentNodeId && relation.id !== currentRelationId
-  );
+  relations = relations.filter(({ relation }) => relation.id !== currentNodeId && relation.id !== currentRelationId);
   relationTypes = relationTypes.filter(({ relationType }) => relationType.id !== currentRelationTypeId);
 
   // map to dropdown options
   return [
-    ...relationTypes.flatMap(({ relationType }) => {
-      const options: DropdownOption[] = [];
-      if (relationType.label.toLowerCase().includes(queryString)) {
-        options.push(new DropdownOption(relationType, true));
-      }
-      if (relationType.reverseLabel.toLowerCase().includes(queryString)) {
-        options.push(new DropdownOption(relationType, false));
-      }
-      return options;
-    }).slice(0, 5),
+    ...relationTypes
+      .flatMap(({ relationType }) => {
+        const options: DropdownOption[] = [];
+        if (relationType.label.toLowerCase().includes(queryString)) {
+          options.push(new DropdownOption(relationType, true));
+        }
+        if (relationType.reverseLabel.toLowerCase().includes(queryString)) {
+          options.push(new DropdownOption(relationType, false));
+        }
+        return options;
+      })
+      .slice(0, 5),
     ...nodes.map(({ node }) => new DropdownOption(node)).slice(0, 5),
     ...relations.map(({ relation }) => new DropdownOption(relation)).slice(0, 5),
   ];
@@ -166,25 +161,28 @@ function filterAndSortOptions(prevOptions: DropdownOption[], queryString: string
   return prevOptions
     .filter((option) => option.name.toLowerCase().includes(queryString))
     .sort(
-      (a, b) =>
-        scoreMatch(queryString, b.matchText.toLowerCase()) -
-        scoreMatch(queryString, a.matchText.toLowerCase()),
+      (a, b) => scoreMatch(queryString, b.matchText.toLowerCase()) - scoreMatch(queryString, a.matchText.toLowerCase()),
     );
 }
 
-function getMenuRenderFn(options: DropdownOption[], queryString: string): MenuRenderFn<DropdownOption> {
+function getMenuRenderFn(
+  options: DropdownOption[],
+  queryString: string,
+  showMenu: boolean,
+  setShowMenu: React.Dispatch<React.SetStateAction<boolean>>,
+): MenuRenderFn<DropdownOption> {
   return (
     anchorElementRef,
     { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
   ): ReactPortal | JSX.Element | null => {
     // enable closing the autocomplete menu when clicking elsewhere
     const ref: Ref<HTMLDivElement> = useRef(null);
-    const [show, setShow] = useState(true);
+
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         const target = event.target as Node;
         if (ref.current && !ref.current.contains(target)) {
-          setShow(false);
+          setShowMenu(false);
         }
       };
       document.addEventListener("mousedown", handleClickOutside);
@@ -193,7 +191,7 @@ function getMenuRenderFn(options: DropdownOption[], queryString: string): MenuRe
       };
     });
 
-    return anchorElementRef.current && options.length && show
+    return anchorElementRef.current && options.length && showMenu
       ? ReactDOM.createPortal(
         <div ref={ref} className={styles.TypeaheadPopover}>
           <ul>
@@ -236,16 +234,16 @@ function DropdownMenuItem({
   option: DropdownOption;
   queryString: string;
 }) {
-  const className = `${styles.TypeaheadPopoverItem} ${isSelected ? styles.Selected : ''}`;
+  const className = `${styles.TypeaheadPopoverItem} ${isSelected ? styles.Selected : ""}`;
 
   const renderOptionContent = () => {
     switch (option.value.type) {
       case DropdownOptionType.RELATION_TYPE:
-        const label = option.value.isForward ? option.value.object.label : option.value.object.reverseLabel
-        return <div>{label + ':'}</div>;
+        const label = option.value.isForward ? option.value.object.label : option.value.object.reverseLabel;
+        return <div>{label + ":"}</div>;
       case DropdownOptionType.ACTION:
         // Remove the '@' symbol and any preceding characters from the query string
-        return <div>{"Create new node: " + queryString.slice(queryString.lastIndexOf('@') + 1)} </div>;
+        return <div>{"Create new node: " + queryString.slice(queryString.lastIndexOf("@") + 1)} </div>;
       case DropdownOptionType.NODE:
         return <div>{option.value.object.text}</div>;
       case DropdownOptionType.RELATION:
@@ -282,4 +280,13 @@ function DropdownMenuItem({
   );
 }
 
-export { ActionId, DropdownMenuItem, DropdownOptionType, filterAndSortOptions, getMentionSearchResults, getMenuRenderFn, getSearchAndReplaceResults };
+export {
+  ActionId,
+  DropdownMenuItem,
+  DropdownOptionType,
+  filterAndSortOptions,
+  getMentionSearchResults,
+  getMenuRenderFn,
+  getSearchAndReplaceResults
+};
+
