@@ -65,7 +65,7 @@ export abstract class GraphObject {
    * or number) or as a reference (like a link or a mention).
    */
   get locality(): "local" | "global" {
-    if (this.id === this.store.userRoot.id) {
+    if (this.id === this.store.userRoot.id || this.id === this.store.globalRoot.id) {
       return "global";
     }
     // As soon as you have more than one relation pointing to you, you're global

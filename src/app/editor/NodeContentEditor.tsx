@@ -87,7 +87,9 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
 
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
         <BindFocusToTreePlugin />
-        <ToggleEditablePlugin treeNode={treeNode} isEditable={isEditable} setIsEditable={setIsEditable} />
+        {treeNode.object.authorId === graphStore.user.id && (
+          <ToggleEditablePlugin treeNode={treeNode} isEditable={isEditable} setIsEditable={setIsEditable} />
+        )}
       </LexicalComposer>
     </div>
   );

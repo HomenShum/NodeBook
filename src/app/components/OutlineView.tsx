@@ -10,7 +10,7 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { EditorSelectionAction } from '@/app/tree/selection';
+import { EditorSelectionAction } from "@/app/tree/selection";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useSetCurrentNodeAsRoot } from "@/app/tree/utils";
@@ -43,7 +43,9 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
       } else {
         tree.setFocusedNode(pathToClickedNode, undefined, EditorSelectionAction.ClickedOnTextEditor);
       }
-    }, [tree]);
+    },
+    [tree],
+  );
 
   return (
     <TreeContext.Provider value={tree}>
@@ -61,7 +63,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
             <div className={s.TitleContainer}>
               {treeNode.object.id === graphStore.userRoot.id && <HomeIcon size={20} />}
               <h1 className={s.TitleText}>
-                <NodeHeaderEditor treeNode={treeNode} />
+                <NodeHeaderEditor key={treeNode.object.id} treeNode={treeNode} />
               </h1>
             </div>
 

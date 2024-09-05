@@ -5,6 +5,7 @@ import { useState } from "react";
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { NodeEditor } from "@/app/editor/NodeContentEditor";
+import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,7 @@ import styles from "./RelatedNodeView.module.css";
 
 export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const tree = useTree();
+  const graphStore = useGraphStore();
 
   const isLocal = treeNode.object.isLocal;
   const isExpanded = tree.isPathExpanded(treeNode.path);
@@ -46,7 +48,7 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
           }}
         >
           <NodeEditor treeNode={treeNode} isEditable={isEditable} setIsEditable={setIsEditable} />
-          {isNonEditableMention && (
+          {isNonEditableMention && treeNode.object.authorId === graphStore.user.id && (
             <Button
               variant="ghost"
               size="icon"

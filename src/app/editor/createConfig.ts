@@ -4,7 +4,15 @@ import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { TreeNode } from "@/app/tree/nodes";
 
-export const createConfig = ({ namespace, treeNode }: { namespace: string; treeNode: TreeNode }): InitialConfigType => {
+export const createConfig = ({
+  namespace,
+  editable,
+  treeNode,
+}: {
+  namespace: string;
+  editable: boolean;
+  treeNode: TreeNode;
+}): InitialConfigType => {
   return {
     namespace,
     theme: {},
@@ -16,5 +24,6 @@ export const createConfig = ({ namespace, treeNode }: { namespace: string; treeN
       paragraph.append(text);
       $getRoot().append(paragraph);
     },
+    editable,
   };
 };
