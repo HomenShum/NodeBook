@@ -36,8 +36,8 @@ export abstract class GraphObject {
     this.isPrivate = value;
   }
 
-  get isUserRoot() {
-    return this.id === this.store.userRoot.id;
+  get isRoot() {
+    return this.id === this.store.userRoot.id || this.id === this.store.globalRoot.id;
   }
 
   get relationsWithPositions(): PositionedRelation[] {

@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { graphRelationTable, relationListsTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
+import { GLOBAL_TO_USER_RELATION_ID } from "@/lib/constants";
 
 export const createRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
   await tx.insert(graphRelationTable).values({
@@ -49,6 +50,10 @@ export const updateRelation = async (
 };
 
 export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
+  if (relation.id === GLOBAL_TO_USER_RELATION_ID) {
+    throw new Error("Cannot delete relation from global to user");
+  }
+
   // Delete all relationLists entries that reference this relation
   await tx.delete(relationListsTable).where(eq(relationListsTable.relationId, relation.id));
 

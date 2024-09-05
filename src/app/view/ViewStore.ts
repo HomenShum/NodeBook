@@ -17,7 +17,7 @@ export class ViewStore {
     this.makeObservable();
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
-    this.mainView = new Tree(graphStore, this.settingsStore, graphStore.userRoot);
+    this.mainView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
   }
 
   makeObservable() {
@@ -36,7 +36,7 @@ export class ViewStore {
   }
 
   cleanup() {
-    this.mainView.clear(this.graphStore.userRoot);
+    this.mainView.clear(this.graphStore.getDefaultRootForUser());
   }
 
   serialize(): SerializedViewStore {

@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { graphNodeTable, relationListsTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
+import { GLOBAL_ROOT_ID, USER_ROOT_ID } from "@/lib/constants";
 
 export const createNode = async (tx: MewDbTransaction, node: SerializedNode) => {
   await tx.insert(graphNodeTable).values({
@@ -47,6 +48,13 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
 };
 
 export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => {
+  if (node.id === USER_ROOT_ID) {
+    throw new Error("Cannot delete user root node");
+  }
+  if (node.id === GLOBAL_ROOT_ID) {
+    throw new Error("Cannot delete global root node");
+  }
+
   // Delete all relationLists entries that reference this node
   await tx.delete(relationListsTable).where(eq(relationListsTable.nodeId, node.id));
 

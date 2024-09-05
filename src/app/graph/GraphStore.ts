@@ -11,7 +11,8 @@ import {
   SerializedPositionList,
   SerializedRelation,
 } from "@/app/persistence/SerializedData";
-import { Position, uuid } from "@/app/util";
+import { ObjectPath, Position, uuid } from "@/app/util";
+import { GLOBAL_ADMIN_USER_ID, GLOBAL_ROOT_ID, GLOBAL_TO_USER_RELATION_ID, USER_ROOT_ID } from "@/lib/constants";
 import logger from "@/lib/logger";
 import { CappedKeywordIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
@@ -44,8 +45,6 @@ export const defaultRelationTypes: Record<string, GraphRelationType> = {
   sublist: { version: 1, id: "sublist", authorId: TEMP_USER_ID, label: "sublist", reverseLabel: "parent list" },
   empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "" },
 };
-
-const USER_ROOT_ID = "user-root-id";
 
 /**
  * GraphStore is a collection of nodes and relations.
@@ -114,6 +113,29 @@ export class GraphStore {
       throw new Error("User root node not found");
     }
     return node;
+  }
+
+  get globalRoot(): GraphNode {
+    const node = this.nodesById.get(GLOBAL_ROOT_ID);
+    if (!node) {
+      throw new Error("Global root node not found");
+    }
+    return node;
+  }
+
+  get globalToUserRelation(): GraphRelation {
+    const relation = this.relationsById.get(GLOBAL_TO_USER_RELATION_ID);
+    if (!relation) {
+      throw new Error("Global to user relation not found");
+    }
+    return relation;
+  }
+
+  /**
+   * The default place to put a user in the graph.
+   */
+  getDefaultRootForUser(): ObjectPath {
+    return { object: this.userRoot, relations: [this.globalToUserRelation] };
   }
 
   // TODO: Investigate why some operations don't have a transaction counterpart (and why some transactions don't have an operation counterpart)
@@ -735,6 +757,12 @@ export class GraphStore {
     if (!node) {
       throw new Error("Node does not exist");
     }
+    if (node.id === this.userRoot.id) {
+      throw new Error("Cannot delete user root node");
+    }
+    if (node.id === this.globalRoot.id) {
+      throw new Error("Cannot delete global root node");
+    }
 
     const relationsDeleted: DeletedRelationData[] = [];
     try {
@@ -828,6 +856,9 @@ export class GraphStore {
     const relation = typeof relationOrId === "string" ? this.getRelation(relationOrId) : relationOrId;
     if (!relation) {
       throw new Error("Relation does not exist");
+    }
+    if (relation.id === GLOBAL_TO_USER_RELATION_ID) {
+      throw new Error("Cannot delete relation from global to user");
     }
 
     const deleted: DeletedRelationData = {
@@ -1294,12 +1325,39 @@ export class GraphStore {
       }
     }
 
-    if (!this.nodesById.get(USER_ROOT_ID)) {
-      const { updates: userRootUpdates } = this._addNode({
+    let userRoot = this.nodesById.get(USER_ROOT_ID);
+    if (!userRoot) {
+      const { node, updates: userRootUpdates } = this._addNode({
         id: USER_ROOT_ID,
         content: [{ type: "text", value: this.user.name || this.user.id || "Untitled User" }],
       });
+      userRoot = node;
       updates.push(...userRootUpdates);
+    }
+
+    let globalRoot = this.nodesById.get(GLOBAL_ROOT_ID);
+    if (!globalRoot) {
+      const { node } = this._addNode({
+        id: GLOBAL_ROOT_ID,
+        content: [{ type: "text", value: "Global Root" }],
+        isPrivate: false,
+        authorId: GLOBAL_ADMIN_USER_ID,
+        createdAt: new Date(0),
+      });
+      globalRoot = node;
+      // Don't push the change. The global root already exists on the server.
+    }
+
+    let globalToUserRelation = this.relationsById.get(GLOBAL_TO_USER_RELATION_ID);
+    if (!globalToUserRelation) {
+      const { relation, updates: globalToUserRelationUpdates } = this.createRelation({
+        id: GLOBAL_TO_USER_RELATION_ID,
+        from: globalRoot,
+        to: userRoot,
+        relationType: defaultRelationTypes.sublist,
+      });
+      globalToUserRelation = relation;
+      updates.push(...globalToUserRelationUpdates);
     }
 
     this.updateManager.queueUpdates(updates);

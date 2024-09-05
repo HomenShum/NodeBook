@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 
 import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { SerializedGraphStore, SerializedNode } from "@/app/persistence/SerializedData";
@@ -16,7 +16,10 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
 
   const db = getDb();
 
-  const nodeRows = await db.select().from(graphNodeTable).where(eq(graphNodeTable.authorId, userId));
+  const nodeRows = await db
+    .select()
+    .from(graphNodeTable)
+    .where(or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPrivate, false)));
   for (const row of nodeRows) {
     const node: SerializedNode = {
       version: row.version,
@@ -42,7 +45,10 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
     };
   }
 
-  const relationRows = await db.select().from(graphRelationTable).where(eq(graphRelationTable.authorId, userId));
+  const relationRows = await db
+    .select()
+    .from(graphRelationTable)
+    .where(or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPrivate, false)));
   for (const row of relationRows) {
     snapshot.relationsById[row.id] = {
       version: row.version,

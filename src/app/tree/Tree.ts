@@ -475,14 +475,16 @@ export class Tree {
       }
       /** Parent from the perspective of the graph, not the current tree */
       const isParentRelation =
-        treeNode.isBackrelation && treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id;
+        treeNode.isBackrelation &&
+        (treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id ||
+          treeNode.relationWithParent.relationType.id === defaultRelationTypes.sublist.id);
       const isParentRelationToGrandparent =
         isParentRelation &&
         treeNode.object.id === treeNode.parent.parent?.object.id &&
         !(treeNode.parent.parent instanceof PathToRootNode);
       if (filter.hideAllParents && isParentRelation) {
         return false;
-      } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isUserRoot) {
+      } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
         return false;
       } else if (filter.hideDirectParent && isParentRelationToGrandparent) {
         return false;

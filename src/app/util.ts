@@ -140,11 +140,15 @@ export function parsePathString(path: string[], graphStore: GraphStore): ObjectP
     relations.push(graphRel);
   }
   const lastId = path[path.length - 1];
-  const object = lastId === home ? graphStore.userRoot : graphStore.getObject(lastId);
-  if (!object) return null;
-  const objectPath = { relations, object };
-  if (!isPathContinuous(objectPath)) return null;
-  return objectPath;
+  if (lastId === home) {
+    return { object: graphStore.userRoot, relations: [graphStore.globalToUserRelation] };
+  } else {
+    const object = graphStore.getObject(lastId);
+    if (!object) return null;
+    const objectPath = { relations, object };
+    if (!isPathContinuous(objectPath)) return null;
+    return objectPath;
+  }
 }
 
 export function formatDate(date: Date | undefined): string {

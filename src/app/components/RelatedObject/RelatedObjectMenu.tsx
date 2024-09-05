@@ -71,9 +71,13 @@ export const RelatedObjectMenu = observer(
           </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={action(async () => {
-              await graphStore.removeRelation({ relationId: relation.id });
-              if (treeNode.siblingAbove) {
-                tree.setFocusedNode(treeNode.siblingAbove.path);
+              try {
+                await graphStore.removeRelation({ relationId: relation.id });
+                if (treeNode.siblingAbove) {
+                  tree.setFocusedNode(treeNode.siblingAbove.path);
+                }
+              } catch (e) {
+                alert(e instanceof Error ? e.message : "Failed to delete relation");
               }
             })}
           >
