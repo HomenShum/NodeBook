@@ -19,6 +19,9 @@ export const createNode = async (tx: MewDbTransaction, node: SerializedNode) => 
 };
 
 export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode, newProps: SerializedNode) => {
+  if (newProps.id === GLOBAL_ROOT_ID) {
+    throw new Error("Cannot update global root node");
+  }
   const updated = await tx
     .update(graphNodeTable)
     .set({
