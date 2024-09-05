@@ -14,7 +14,7 @@ import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
-import { EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
+import { EditorSelectionAction, EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
   getAncestorsAsArray,
@@ -150,6 +150,7 @@ export class Tree {
 
   // For Shift Click Selection
   private prevFocusedNodeId: string | null = null;
+  private prevFocusedNodeAction: EditorSelectionAction | null = null;
 
   /** Helper class to read and sync expansion state with local storage */
   private expansionLocalStorageCache: ExpansionLocalStorageCache;
@@ -228,73 +229,87 @@ export class Tree {
    * Returns selection with referenced nodes resolved.
    */
   get selectionWithNodes(): TreeSelectionWithNodes | null {
-    if (!this.selection) {
-      return null;
-    } else if (this.selection.type === "editor") {
-      const node = this.state.descendantTreeNodesById.get(this.selection.treeNodeId);
+    if (!this.selection) return null;
+
+    const { descendantTreeNodesById } = this.state;
+
+    if (this.selection.type === "editor") {
+      const node = descendantTreeNodesById.get(this.selection.treeNodeId);
       if (!node) {
-        logger.warn("Selection node not found", this.selection.treeNodeId);
         return null;
       }
       return { ...this.selection, treeNode: node, subtreeRoots: [node], top: node, bottom: node };
-    } else {
-      const state = this.state;
-      logger.debug("Recomputing selected nodes", { selection: toJS(this.selection), state });
-      const anchor = state.descendantTreeNodesById.get(this.selection.anchorNodeId);
-      const head = state.descendantTreeNodesById.get(this.selection.headNodeId);
-      if (!anchor || !head) {
-        logger.warn("Selection anchor or head not found", {
-          anchor,
-          head,
-          anchorId: this.selection.anchorNodeId,
-          headId: this.selection.headNodeId,
-        });
-        return null;
-      }
-      let top: DescendantTreeNode | undefined;
-      walkTree(this.state.root, (n) => {
-        if (!top && n instanceof DescendantTreeNode && (n.id === anchor.id || n.id === head.id)) {
-          top = n;
-        }
-      });
-      if (!top) {
-        logger.warn("Selection start not found in tree", { anchor, head });
-        return null;
-      }
-      const bottom = top === anchor ? head : anchor;
-      // walk from the top node to the bottom node, selecting all nodes along the way
-      const subtreeRoots = getSubtreesBetween(top, bottom);
-      let foundAnchor = false;
-      let foundHead = false;
+    }
 
-      const allNodes = subtreeRoots.flatMap((root) => {
-        const nodes: DescendantTreeNode[] = [];
-        walkTree(root, (n) => {
-          if (n instanceof DescendantTreeNode) {
-            const isAnchorOrHead = n.id === anchor.id || n.id === head.id;
-            const isInSelectionPath = n.isDescendantOf(head) || n.isDescendantOf(anchor);
-            const shouldInclude = !foundAnchor || !foundHead || isAnchorOrHead || isInSelectionPath;
+    logger.debug("Recomputing selected nodes", { selection: toJS(this.selection), state: this.state });
 
-            if (isAnchorOrHead) {
-              if (n.id === anchor.id) foundAnchor = true;
-              if (n.id === head.id) foundHead = true;
-            }
+    const anchor = descendantTreeNodesById.get(this.selection.anchorNodeId);
+    const head = descendantTreeNodesById.get(this.selection.headNodeId);
 
-            if (shouldInclude) nodes.push(n);
-          }
-        });
-        return nodes;
-      });
-      return {
-        ...this.selection,
-        top,
-        bottom,
+    if (!anchor || !head) {
+      logger.warn("Selection anchor or head not found", {
         anchor,
         head,
-        nodes: allNodes,
-        subtreeRoots,
-      };
+        anchorId: this.selection.anchorNodeId,
+        headId: this.selection.headNodeId,
+      });
+      return null;
     }
+
+    const top = this.findTopNode(anchor, head);
+    if (!top) {
+      logger.warn("Selection start not found in tree", { anchor, head });
+      return null;
+    }
+
+    const bottom = top === anchor ? head : anchor;
+    const subtreeRoots = getSubtreesBetween(top, bottom);
+    const allNodes = this.collectSelectedNodes(subtreeRoots, anchor, head);
+
+    return {
+      ...this.selection,
+      top,
+      bottom,
+      anchor,
+      head,
+      nodes: allNodes,
+      subtreeRoots,
+    };
+  }
+
+  private findTopNode(anchor: DescendantTreeNode, head: DescendantTreeNode): DescendantTreeNode | undefined {
+    let top: DescendantTreeNode | undefined;
+    walkTree(this.state.root, (n) => {
+      if (!top && n instanceof DescendantTreeNode && (n.id === anchor.id || n.id === head.id)) {
+        top = n;
+      }
+    });
+    return top;
+  }
+
+  private collectSelectedNodes(subtreeRoots: DescendantTreeNode[], anchor: DescendantTreeNode, head: DescendantTreeNode): DescendantTreeNode[] {
+    let foundAnchor = false;
+    let foundHead = false;
+    return subtreeRoots.flatMap((root) => {
+      const nodes: DescendantTreeNode[] = [];
+      walkTree(root, (n) => {
+        if (n instanceof DescendantTreeNode) {
+          const isAnchorOrHead = n.id === anchor.id || n.id === head.id;
+          
+          // Include all descendants of the bottom node's ancestors for consistency.
+          const isInSelectionPath = n.isDescendantOf(head) || n.isDescendantOf(anchor) || nodes.some((node) => n.isDescendantOf(node));
+          const shouldInclude = !foundAnchor || !foundHead || isAnchorOrHead || isInSelectionPath;
+
+          if (isAnchorOrHead) {
+            if (n.id === anchor.id) foundAnchor = true;
+            if (n.id === head.id) foundHead = true;
+          }
+
+          if (shouldInclude) nodes.push(n);
+        }
+      });
+      return nodes;
+    });
   }
 
   /**
@@ -302,12 +317,16 @@ export class Tree {
    * @param treeNodeId - ID of the node to focus, or null to maintain current selection.
    * @param position - Position of the cursor in the editor.
    */
-  setFocusedNode(treeNodeId: string | null, position?: EditorSelectionPosition) {
-    if (this.selection?.type === "editor") {
-      this.prevFocusedNodeId = this.selection.treeNodeId;
-    } else if (this.selection?.type === "node") {
-      this.prevFocusedNodeId = null;
+  setFocusedNode(treeNodeId: string | null, position?: EditorSelectionPosition, selectionAction?: EditorSelectionAction) {
+    switch (this.selection?.type) {
+      case "editor":
+        this.prevFocusedNodeId = this.selection.treeNodeId;
+        break;
+      case "node":
+        this.prevFocusedNodeId = this.selection.headNodeId;
+        break;
     }
+    if (selectionAction) this.prevFocusedNodeAction = selectionAction;
     this.selection = treeNodeId ? { type: "editor", treeNodeId, position } : null;
   }
 
@@ -328,29 +347,36 @@ export class Tree {
 
   /**
    * Handles shift-click selection between two nodes.
-   * selection.treeNode.id is the node that was shift-clicked.
    */
-  selectBetweenShiftClick() {
-    const selection = this.selectionWithNodes;
-    if (!selection) return false;
-    if (selection.type === "editor") {
-      const pathToClickedNode = selection.treeNode.id;
-      this.selection = {
-        type: "node",
-        anchorNodeId: this.prevFocusedNodeId || pathToClickedNode,
-        headNodeId: pathToClickedNode,
-      };
-      this.prevFocusedNodeId = null;
-      return true;
-    } else if (selection.type === "node") {
-      if (selection.type !== this.selection?.type) {
-        // This should never happen. The selection and computed selection types should always match.
-        logger.warn("Selection type mismatch", { selection, current: this.selection });
-        return false;
-      }
-      return true;
-    } else {
-      return selection satisfies never;
+  selectBetweenShiftClick(clickedNodePath: string, headNodeType: EditorSelectionAction) {
+    // the focus on non-editbale suffix inputs is handled inside the suffix input component so don't set the focus here
+    if (headNodeType !== EditorSelectionAction.ClickedOnSuffixInput) {
+      this.setFocusedNode(clickedNodePath);
+    }
+  
+    const currentSelection = this.selectionWithNodes;
+    if (!currentSelection) return false;
+
+    switch (currentSelection.type) {
+      case "editor":
+        this.selection = {
+          type: "node",
+          anchorNodeId: this.prevFocusedNodeId || clickedNodePath,
+          headNodeId: clickedNodePath,
+        };
+        this.prevFocusedNodeId = null;
+        return true;
+
+      case "node":
+        if (currentSelection.type !== this.selection?.type) {
+          // This should never happen. The selection and computed selection types should always match.
+          logger.warn("Selection type mismatch", { currentSelection, activeSelection: this.selection });
+          return false;
+        }
+        return true;
+
+      default:
+        return currentSelection satisfies never;
     }
   }
 

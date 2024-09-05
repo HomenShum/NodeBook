@@ -169,7 +169,6 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
 
   const openTypeahead = useCallback(
     (res: MenuResolution) => {
-      console.log("[openTypeahead] menu resolution", res);
       setResolution(res);
       if (onOpen != null && resolution === null) {
         onOpen(res);

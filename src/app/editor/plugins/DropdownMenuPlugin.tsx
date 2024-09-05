@@ -25,6 +25,12 @@ import { uuid } from "@/app/util";
 import logger from "@/lib/logger";
 import { checkForMentionMatch, checkForSearchAndReplaceMatch } from "@/lib/utils";
 
+enum DropdownAction {
+  NONE,
+  MENTION,
+  SEARCH_AND_REPLACE
+}
+
 const SUGGESTION_LIST_LENGTH_LIMIT = 5;
 
 export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode | RootTreeNode }): JSX.Element | null {
@@ -42,13 +48,13 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
 
   const [options, setOptions] = useState<DropdownOption[]>([]);
   const limitedOptions = options.slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
-  const [isOnSelectOptionMention, setIsOnSelectOptionMention] = useState(true);
-  const allOptions = isOnSelectOptionMention
+  const [currentAction, setCurrentAction] = useState<DropdownAction>(DropdownAction.NONE);
+  const allOptions = currentAction === DropdownAction.MENTION
     ? [...limitedOptions, new DropdownOption(ActionId.CREATE_NEW_NODE)]
     : limitedOptions;
 
   const onMention = useCallback(
-    async (opt: DropdownOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
+    async (opt: DropdownOption, nodeToReplace: TextNode | null, closeMenu: () => void, _: string) => {
       if (!nodeToReplace) return;
       // update editor
       const graphNodeId = opt.value.type === DropdownOptionType.ACTION ? uuid() : opt.value.object.id;
@@ -81,7 +87,7 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
   );
 
   const onSearchAndReplace = useCallback(
-    async (option: DropdownOption, _: TextNode | null, closeMenu: () => void) => {
+    async (option: DropdownOption, _: TextNode | null, closeMenu: () => void, __: string) => {
       try {
         switch (option.value.type) {
           case DropdownOptionType.RELATION_TYPE: {
@@ -160,14 +166,14 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
   }, [graphStore, treeNode]);
 
   const updateOptions = useCallback(
-    (text: string, queryString: string, isMentionMatch: boolean) => {
+    (text: string, queryString: string, action: DropdownAction) => {
       setOptions((prevOptions) => {
         if (prevOptions.length > 0 && prevText.current && text.startsWith(prevText.current)) {
           prevText.current = text;
           return filterAndSortOptions(prevOptions, queryString);
         } else {
           prevText.current = text;
-          if (isMentionMatch) {
+          if (action === DropdownAction.MENTION) {
             return getMentionSearchResults(graphStore, queryString, treeNode.object.id);
           }
           return getSearchAndReplaceResults(
@@ -203,27 +209,49 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
       const searchAndReplaceMatch = checkForSearchAndReplaceMatch(text, isLabellingRelation, searchAndReplaceSetting);
 
       if (mentionMatch) {
-        setIsOnSelectOptionMention(true);
+        setCurrentAction(DropdownAction.MENTION);
       } else if (searchAndReplaceMatch) {
-        setIsOnSelectOptionMention(false);
+        setCurrentAction(DropdownAction.SEARCH_AND_REPLACE);
+      } else {
+        setCurrentAction(DropdownAction.NONE);
       }
 
       const match = mentionMatch ?? searchAndReplaceMatch;
       if (match && match.matchingString.length > 0) {
         const queryString = match.matchingString.toLowerCase();
-        updateOptions(text, queryString, !!mentionMatch);
+        updateOptions(text, queryString, currentAction);
       } else {
         setOptions([]);
       }
       return match;
     },
-    [isLabellingRelation, searchAndReplaceSetting, handleRecentNodes, updateOptions, searchAndReplaceDropdown],
+    [isLabellingRelation, searchAndReplaceSetting, handleRecentNodes, updateOptions, searchAndReplaceDropdown, currentAction],
+  );
+
+  const handleSelectOption = useCallback(
+    (opt: DropdownOption, nodeToReplace: TextNode | null, closeMenu: () => void, matchingString: string) => {
+      switch (currentAction) {
+        case DropdownAction.MENTION:
+          onMention(opt, nodeToReplace, closeMenu, matchingString);
+          break;
+        case DropdownAction.SEARCH_AND_REPLACE:
+          onSearchAndReplace(opt, nodeToReplace, closeMenu, matchingString);
+          break;
+        case DropdownAction.NONE:
+          // Default to search and replace with recent nodes when no action or text input
+          // Used when semicolon is pressed without any text input to choose most recently created node
+          onSearchAndReplace(opt, nodeToReplace, closeMenu, matchingString);
+
+          break;
+      }
+    },
+    [currentAction, onMention, onSearchAndReplace]
   );
 
   return (
     <LexicalTypeaheadMenuPlugin<DropdownOption>
-      onQueryChange={() => {}}
-      onSelectOption={isOnSelectOptionMention ? onMention : onSearchAndReplace}
+      onQueryChange={() => { }}
+      onSelectOption={handleSelectOption}
       triggerFn={triggerFn}
       options={allOptions}
       menuRenderFn={menuRenderFn}

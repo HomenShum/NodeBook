@@ -1,9 +1,10 @@
 import { autorun } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useEffect, useRef } from "react";
+import { KeyboardEvent, useEffect, useRef } from "react";
 
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
+import { EditorSelectionAction } from '@/app/tree/selection';
 import { useTree } from "@/app/tree/TreeContext";
 
 type TreeNodeInputSuffixProps = {
@@ -11,17 +12,58 @@ type TreeNodeInputSuffixProps = {
   backspaceCallback?: () => void;
 };
 
-/**
- * For non-editable object renderings, we still want to allow the user to place focus at the end
- * of the object so they can add a sibling below it. Place this component at the end of the object
- * rendering to support this behaviour.
- */
-export const TreeNodeInputSuffix = observer(({ treeNode, backspaceCallback }: TreeNodeInputSuffixProps) => {
+const useTreeNodeInputHandlers = (treeNode: DescendantTreeNode, backspaceCallback?: () => void) => {
   const tree = useTree();
   const graph = useGraphStore();
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Update the input focus to match the tree selection
+  const handleFocus = () => tree.setFocusedNode(treeNode.path);
+
+
+  const handleKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
+    switch (e.key) {
+      case "Enter":
+        e.preventDefault();
+        const path = await treeNode.parent.createChild({ after: treeNode });
+        tree.setFocusedNode(path);
+        break;
+      case "Backspace":
+        e.preventDefault();
+        if (!treeNode.object.isLocal && backspaceCallback) {
+          backspaceCallback();
+        } else {
+          const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
+          await treeNode.setObject(node);
+        }
+        break;
+      case "ArrowRight":
+        e.preventDefault();
+        tree.moveEditorSelectionDown("start");
+        break;
+      case "ArrowLeft":
+        e.preventDefault();
+        tree.moveEditorSelectionUp("end");
+        break;
+    }
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.shiftKey) {
+      tree.selectBetweenShiftClick(treeNode.path, EditorSelectionAction.ClickedOnSuffixInput);
+    } else {
+      tree.setFocusedNode(treeNode.path);
+    }
+  };
+
+  return { handleFocus, handleKeyDown, handleClick };
+};
+
+export const TreeNodeInputSuffix = observer(({ treeNode, backspaceCallback }: TreeNodeInputSuffixProps) => {
+  const tree = useTree();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const { handleFocus, handleKeyDown, handleClick } = useTreeNodeInputHandlers(treeNode, backspaceCallback);
+
   useEffect(() => {
     return autorun(() => {
       if (tree.isNodeFocused(treeNode.id)) {
@@ -35,39 +77,9 @@ export const TreeNodeInputSuffix = observer(({ treeNode, backspaceCallback }: Tr
   return (
     <input
       style={{ display: "flex", background: "none", border: "none", outline: "none" }}
-      // Update the tree selection to match the input focus
-      onFocus={() => tree.setFocusedNode(treeNode.path)}
-      onBlur={() => tree.isNodeFocused(treeNode.id) && tree.setFocusedNode(null)}
-      onKeyDown={async (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          const path = await treeNode.parent.createChild({ after: treeNode });
-          tree.setFocusedNode(path);
-        } else if (e.key === "Backspace") {
-          e.preventDefault();
-          if (!treeNode.object.isLocal && backspaceCallback) {
-            backspaceCallback();
-          } else {
-            const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
-            await treeNode.setObject(node);
-          }
-        } else if (e.key === "ArrowRight") {
-          e.preventDefault();
-          tree.moveEditorSelectionDown("start");
-        } else if (e.key === "ArrowLeft") {
-          e.preventDefault();
-          tree.moveEditorSelectionUp("end");
-        }
-      }}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.shiftKey) {
-          tree.selectBetweenShiftClick();
-        } else {
-          tree.setFocusedNode(treeNode.path);
-        }
-      }}
+      onFocus={handleFocus}
+      onKeyDown={handleKeyDown}
+      onClick={handleClick}
       ref={inputRef}
       type="text"
       value=""

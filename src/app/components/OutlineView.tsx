@@ -10,6 +10,7 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
+import { EditorSelectionAction } from '@/app/tree/selection';
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useSetCurrentNodeAsRoot } from "@/app/tree/utils";
@@ -37,15 +38,12 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
 
       e.preventDefault();
       e.stopPropagation();
-
       if (e.shiftKey) {
-        tree.selectBetweenShiftClick();
+        tree.selectBetweenShiftClick(pathToClickedNode, EditorSelectionAction.ClickedOnTextEditor);
       } else {
-        tree.setFocusedNode(pathToClickedNode);
+        tree.setFocusedNode(pathToClickedNode, undefined, EditorSelectionAction.ClickedOnTextEditor);
       }
-    },
-    [tree],
-  );
+    }, [tree]);
 
   return (
     <TreeContext.Provider value={tree}>

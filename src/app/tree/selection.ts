@@ -48,7 +48,10 @@ export type TreeSelectionWithNodes =
     });
 
 export type EditorSelectionPosition = "start" | "end" | { anchorOffset: number; focusOffset: number };
-
+export enum EditorSelectionAction {
+  ClickedOnTextEditor = "clicked-on-text-editor",
+  ClickedOnSuffixInput = "clicked-on-suffix-input",
+}
 export type EditorSelection = {
   type: "editor";
   treeNodeId: string;
