@@ -1,5 +1,5 @@
 "use client";
-import { HomeIcon, Plus } from "lucide-react";
+import { Globe, HomeIcon, Plus } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useCallback, useRef } from "react";
 import { Options, useHotkeys } from "react-hotkeys-hook";
@@ -61,7 +61,11 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
         <div className={s.OutlineContent}>
           <div className={s.HeadingContainer}>
             <div className={s.TitleContainer}>
-              {treeNode.object.id === graphStore.userRoot.id && <HomeIcon size={20} />}
+              {treeNode.object.id === graphStore.userRoot.id ? (
+                <HomeIcon size={20} />
+              ) : treeNode.object.id === graphStore.globalRoot.id ? (
+                <Globe size={20} />
+              ) : null}
               <h1 className={s.TitleText}>
                 <NodeHeaderEditor key={treeNode.object.id} treeNode={treeNode} />
               </h1>

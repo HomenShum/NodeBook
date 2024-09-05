@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { useGraphStore } from "@/app/graph/useGraphStore";
 import { TreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray } from "@/app/tree/utils";
 import { createRouteUrl, truncateText, useIsMobile } from "@/app/util";
@@ -20,6 +21,7 @@ import styles, { default as s } from "./Breadcrumbs.module.css";
 const MAX_VISIBLE_ITEMS = 4; // For desktop view
 
 export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
+  const graphStore = useGraphStore();
   const router = useRouter();
   const isMobile = useIsMobile();
   const ancestors = getAncestorsAsArray(treeNode);
@@ -39,7 +41,17 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
     ({ ancestor, index, isRoot = false }: { ancestor: any; index: number; isRoot?: boolean }) => (
       <React.Fragment key={`${ancestor?.path}-${ancestor?.object?.text}`}>
         {index > 0 && <ChevronRight size={14} strokeWidth={2} className={s.Separator} />}
+
         <span className={s.Breadcrumb} onClick={() => handleNavigation(index)}>
+          {ancestor.object.id === graphStore.globalRoot.id ? (
+            <span className={s.Home}>
+              <Globe size={14} />
+            </span>
+          ) : ancestor.object.id === graphStore.userRoot.id ? (
+            <span className={s.Home}>
+              <Home size={14} />
+            </span>
+          ) : null}
           <span>{truncateText(isRoot ? treeNode.object.text : ancestor?.object?.text || "", isMobile ? 15 : 32)}</span>
         </span>
       </React.Fragment>
@@ -131,9 +143,6 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
 
   return (
     <nav className={s.BreadcrumbContainer} aria-label="breadcrumb">
-      <button className={s.Home} onClick={() => router.push(createRouteUrl("home"))}>
-        <Home size={14} />
-      </button>
       <div className={s.BreadcrumbWrapper}>{renderBreadcrumbs()}</div>
       <span className={s.ActionButtons}>
         {!treeNode.object.isPrivate ? (

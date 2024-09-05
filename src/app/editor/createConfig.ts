@@ -6,12 +6,12 @@ import { TreeNode } from "@/app/tree/nodes";
 
 export const createConfig = ({
   namespace,
-  editable,
   treeNode,
+  editable = false,
 }: {
   namespace: string;
-  editable: boolean;
   treeNode: TreeNode;
+  editable?: boolean;
 }): InitialConfigType => {
   return {
     namespace,

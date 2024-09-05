@@ -18,14 +18,15 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
 
   const isLocal = treeNode.object.isLocal;
   const isExpanded = tree.isPathExpanded(treeNode.path);
+  const isMyNode = treeNode.object.authorId === graphStore.user.id;
 
-  const [isEditable, setIsEditable] = useState(isLocal || tree.isNodeFocused(treeNode.id));
-  const isNonEditableMention = !isLocal && !isEditable;
+  const [isEditable, setIsEditable] = useState(isLocal || (tree.isNodeFocused(treeNode.id) && isMyNode));
+  const isGlobalReference = !isLocal && !isEditable;
 
   const cnOuterContainer = cn(
     isLocal && styles.ColumnContainer,
     !isLocal && styles.TreeNodeReference,
-    isNonEditableMention && styles.PillContainer,
+    isGlobalReference && styles.PillContainer,
   );
 
   const cnInnerContainer = cn(
@@ -44,11 +45,11 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
         <div
           className={cnInnerContainer}
           onClick={() => {
-            if (isNonEditableMention) tree.togglePathExpanded(treeNode.path);
+            if (isGlobalReference) tree.togglePathExpanded(treeNode.path);
           }}
         >
           <NodeEditor treeNode={treeNode} isEditable={isEditable} setIsEditable={setIsEditable} />
-          {isNonEditableMention && treeNode.object.authorId === graphStore.user.id && (
+          {isGlobalReference && isMyNode && (
             <Button
               variant="ghost"
               size="icon"
@@ -62,7 +63,7 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
             </Button>
           )}
         </div>
-        {isNonEditableMention && <TreeNodeInputSuffix treeNode={treeNode} backspaceCallback={focusNonLocalNode} />}
+        {isGlobalReference && <TreeNodeInputSuffix treeNode={treeNode} backspaceCallback={focusNonLocalNode} />}
       </div>
     </div>
   );
