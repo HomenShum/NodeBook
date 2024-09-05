@@ -1,7 +1,6 @@
 "use client";
 import { generateKeyBetween } from "fractional-indexing";
 import { autorun, toJS } from "mobx";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -9,8 +8,6 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { getOtherObject } from "@/app/graph/utils";
-import { isViewType, ViewType } from "@/app/view/ViewType";
-import { TreeNode } from "@/app/tree/nodes";
 
 // TODO: what should we actually use for this?
 export const uuid = () => uuidv4().slice(0, 8);
@@ -115,7 +112,7 @@ export function objectPathToObjects(path: ObjectPath): GraphObject[] | null {
   return objects;
 }
 
-export function createRouteUrl(viewType: ViewType, path?: ObjectPath | GraphRelation[] | string | typeof home): string {
+export function createRouteUrl(path?: ObjectPath | GraphRelation[] | string | typeof home): string {
   let pathSuffix = "/home";
 
   if (path && path !== home && typeof path === "string") {
@@ -130,7 +127,7 @@ export function createRouteUrl(viewType: ViewType, path?: ObjectPath | GraphRela
     }
   }
 
-  return "/" + viewType + pathSuffix;
+  return "/g" + pathSuffix;
 }
 
 export function parsePathString(path: string[], graphStore: GraphStore): ObjectPath | null {
@@ -143,7 +140,7 @@ export function parsePathString(path: string[], graphStore: GraphStore): ObjectP
     relations.push(graphRel);
   }
   const lastId = path[path.length - 1];
-  const object = lastId === home ? graphStore.outlineRoot : graphStore.getObject(lastId);
+  const object = lastId === home ? graphStore.userRoot : graphStore.getObject(lastId);
   if (!object) return null;
   const objectPath = { relations, object };
   if (!isPathContinuous(objectPath)) return null;
@@ -168,12 +165,6 @@ export function formatDate(date: Date | undefined): string {
       year: "2-digit",
     });
   }
-}
-
-export function useCurView() {
-  const pathname = usePathname();
-  const firstElement = pathname.split("/")[1];
-  return isViewType(firstElement) ? firstElement : ViewType.GRAPH;
 }
 
 export function sortByPrefixMatch(objects: GraphObject[], query: string) {

@@ -84,16 +84,6 @@ export const RelationPlugin = () => {
             },
           });
 
-          const parent = relation.to.id === object.id ? relation.from : relation.to;
-          if (settingsStore.addStreamLabeledRelationsToMyLists && parent === graphStore.thoughtstreamRoot) {
-            graphStoreTransaction.push({
-              type: "addRelation",
-              transaction: {
-                fromId: graphStore.thoughtstreamRoot.id,
-                toId: object.id,
-              },
-            });
-          }
           graphStore.applyCombinedTransaction(graphStoreTransaction);
           return true;
         },

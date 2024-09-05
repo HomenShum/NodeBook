@@ -32,7 +32,7 @@ export default observer(() => {
   const graphStore = useGraphStore();
   return (
     <div className={styles.SidebarTreeContainer}>
-      <TreeElement object={graphStore.outlineRoot}></TreeElement>
+      <TreeElement object={graphStore.userRoot}></TreeElement>
     </div>
   );
 });

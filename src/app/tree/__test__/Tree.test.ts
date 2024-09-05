@@ -15,7 +15,7 @@ describe("Tree", () => {
     it("basic", async () => {
       const settingsStore = new SettingsStore();
       const graphStore = new GraphStore();
-      const root = graphStore.outlineRoot;
+      const root = graphStore.userRoot;
       // Add 2 children of the root, each with a child of their own
       const { node: n1, relation: r1 } = await graphStore.addChildNode({
         parentId: root.id,
@@ -26,7 +26,7 @@ describe("Tree", () => {
         nodeProps: { content: "2" },
       });
       const { node: n3, relation: r3 } = await graphStore.addChildNode({
-        parentId: graphStore.outlineRoot.id,
+        parentId: graphStore.userRoot.id,
         nodeProps: { content: "3" },
         after: r1,
       });
@@ -35,7 +35,7 @@ describe("Tree", () => {
         nodeProps: { content: "4" },
       });
       // Create a tree starting from the root, but only with the first child expanded
-      const tree = new Tree(graphStore, settingsStore, graphStore.outlineRoot, {
+      const tree = new Tree(graphStore, settingsStore, graphStore.userRoot, {
         expansions: new Map<string, boolean>([[`/all/${r1.id}`, true]]),
       });
       // prettier-ignore

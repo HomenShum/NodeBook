@@ -38,6 +38,8 @@ import {
  */
 export type Path = string;
 
+type Root = DescendantTreeNode | ObjectPath | GraphObject;
+
 const logger = appLogger.child({ service: "tree" });
 
 /**
@@ -358,7 +360,7 @@ export class Tree {
    * If an array of relations is given, it must be a contiguous path,
    * and the object at the end of the path will be considered the "root".
    */
-  setRoot(root: DescendantTreeNode | ObjectPath | GraphObject, path: string) {
+  setRoot(root: Root, path: string) {
     logger.debug("Setting tree root", root);
     if (root instanceof DescendantTreeNode) {
       this.rootObject = root.object;
@@ -454,7 +456,7 @@ export class Tree {
         !(treeNode.parent.parent instanceof PathToRootNode);
       if (filter.hideAllParents && isParentRelation) {
         return false;
-      } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
+      } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isUserRoot) {
         return false;
       } else if (filter.hideDirectParent && isParentRelationToGrandparent) {
         return false;
@@ -905,8 +907,10 @@ export class Tree {
     this.setPathExpanded(selection.treeNodeId, true);
   }
 
-  clear(root: GraphRelation[]) {
-    this.pathToRoot = root;
+  clear(root: Root) {
+    const { rootObject, pathToRoot } = this.setRoot(root, "");
+    this.pathToRoot = pathToRoot;
+    this.rootObject = rootObject;
     this.path = "";
     this.expansionsByPath.clear();
     // this.textsCache.clear();

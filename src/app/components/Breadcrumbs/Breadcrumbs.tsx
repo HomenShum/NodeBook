@@ -14,7 +14,6 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { TreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray } from "@/app/tree/utils";
 import { createRouteUrl, truncateText, useIsMobile } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
 
 import styles, { default as s } from "./Breadcrumbs.module.css";
 
@@ -29,7 +28,7 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
   const handleNavigation = (index: number) => {
     if (index > ancestors.length) return;
     router.push(
-      createRouteUrl(ViewType.GRAPH, {
+      createRouteUrl({
         relations: ancestors.slice(0, index).map((ancestor) => ancestor.relationToChild),
         object: index === ancestors.length ? treeNode.object : ancestors[index].object,
       }),
@@ -132,7 +131,7 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
 
   return (
     <nav className={s.BreadcrumbContainer} aria-label="breadcrumb">
-      <button className={s.Home} onClick={() => router.push(createRouteUrl(ViewType.GRAPH, "home"))}>
+      <button className={s.Home} onClick={() => router.push(createRouteUrl("home"))}>
         <Home size={14} />
       </button>
       <div className={s.BreadcrumbWrapper}>{renderBreadcrumbs()}</div>

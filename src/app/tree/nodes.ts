@@ -1,3 +1,4 @@
+import { env } from "@/app/envFrontend";
 import { PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
@@ -6,8 +7,6 @@ import { getOtherObjectOrThrow } from "@/app/graph/utils";
 import { Tree } from "@/app/tree/Tree";
 import { createRouteUrl, Position } from "@/app/util";
 import logger from "@/lib/logger";
-import { ViewType } from "@/app/view/ViewType";
-import { env } from "@/app/envFrontend";
 
 export class PathToRootNode {
   object: GraphObject;
@@ -132,7 +131,7 @@ export class RootTreeNode extends BaseTreeNode {
       logger.error("error hydrating node", e);
       if (env.isFrontend) {
         //Force page refresh, we do not want a partial broken state.
-        window.location.href = createRouteUrl(ViewType.GRAPH, "home");
+        window.location.href = createRouteUrl("home");
       }
     }
     return this;

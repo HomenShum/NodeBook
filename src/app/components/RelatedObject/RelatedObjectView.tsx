@@ -1,4 +1,4 @@
-import { Circle, Dot, GlobeIcon } from "lucide-react";
+import { Circle, Dot } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -10,10 +10,9 @@ import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { isUnlabelledChild } from "@/app/tree/utils";
-import { ViewType } from "@/app/view/ViewType";
+import { createRouteUrl } from "@/app/util";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
-import { createRouteUrl } from "@/app/util";
 
 import { RelatedNodeView } from "./RelatedNodeView";
 import { RelatedObjectChildren } from "./RelatedObjectChildren";
@@ -128,13 +127,6 @@ const Content = observer(() => {
               <PinCustomIcon />
             </button>
           )}
-        {!treeNode.object.isPrivate &&
-          settingsStore.hideThoughtstreamBullets &&
-          treeNode.parent.object === graphStore.thoughtstreamRoot && ( // TODO: what is this for?
-            <div className={styles.RelatedObjectPublic}>
-              <GlobeIcon size={12} strokeWidth={2} />
-            </div>
-          )}
         {treeNode.object.relations.length > 1 && (
           <div className={styles.RelationCounter}>{treeNode.object.relations.length - 1}</div>
         )}
@@ -144,25 +136,16 @@ const Content = observer(() => {
 });
 
 const Bullet = observer(() => {
-  const graphStore = useGraphStore();
   const router = useRouter();
-  const settingsStore = useSettingsStore();
   const { treeNode } = useTreeNode();
 
   const handleBulletClick = useCallback(() => {
     logger.debug("Clicked bullet", treeNode.path);
-    router.push(createRouteUrl(ViewType.GRAPH, `${treeNode.path}/${treeNode.object.id}`));
+    router.push(createRouteUrl(`${treeNode.path}/${treeNode.object.id}`));
   }, [treeNode, router]);
 
   return (
-    <div
-      className={cn(
-        styles.RelatedObjectBulletContainer,
-        settingsStore.hideThoughtstreamBullets &&
-          treeNode.parent.object === graphStore.thoughtstreamRoot &&
-          styles.Hidden,
-      )}
-    >
+    <div className={cn(styles.RelatedObjectBulletContainer)}>
       {treeNode.instanceCountInPath <= 1 ? (
         // Default solid bullet
         <>

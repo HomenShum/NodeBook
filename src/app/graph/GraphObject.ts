@@ -36,12 +36,8 @@ export abstract class GraphObject {
     this.isPrivate = value;
   }
 
-  get isRoot() {
-    return (
-      this.id === this.store.thoughtstreamRoot.id ||
-      this.id === this.store.outlineRoot.id ||
-      this.id === this.store.userRoot.id
-    );
+  get isUserRoot() {
+    return this.id === this.store.userRoot.id;
   }
 
   get relationsWithPositions(): PositionedRelation[] {
@@ -69,11 +65,7 @@ export abstract class GraphObject {
    * or number) or as a reference (like a link or a mention).
    */
   get locality(): "local" | "global" {
-    if (
-      this.id === this.store.thoughtstreamRoot.id ||
-      this.id === this.store.outlineRoot.id ||
-      this.id === this.store.userRoot.id
-    ) {
+    if (this.id === this.store.userRoot.id) {
       return "global";
     }
     // As soon as you have more than one relation pointing to you, you're global

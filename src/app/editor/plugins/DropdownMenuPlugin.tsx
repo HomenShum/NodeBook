@@ -59,7 +59,7 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
         mentionNode.selectEnd();
         if (opt.value.type === DropdownOptionType.ACTION) {
           await graphStore.addChildNode({
-            parentId: graphStore.outlineRoot.id,
+            parentId: graphStore.userRoot.id,
             nodeProps: { id: graphNodeId, content: mentionText },
           });
         }
@@ -222,7 +222,7 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
 
   return (
     <LexicalTypeaheadMenuPlugin<DropdownOption>
-      onQueryChange={() => { }}
+      onQueryChange={() => {}}
       onSelectOption={isOnSelectOptionMention ? onMention : onSearchAndReplace}
       triggerFn={triggerFn}
       options={allOptions}

@@ -46,10 +46,6 @@ export const defaultRelationTypes: Record<string, GraphRelationType> = {
 };
 
 const USER_ROOT_ID = "user-root-id";
-const OUTLINE_ROOT_ID = "outline-root-id";
-const THOUGHTSTREAM_ROOT_ID = "thoughtstream-root-id";
-const OUTLINE_USER_ROOT_REL_ID = "outline-to-user-root-relation-id";
-const THOUGHTSTREAM_USER_ROOT_REL_ID = "thoughtstream-to-user-root-relation-id";
 
 /**
  * GraphStore is a collection of nodes and relations.
@@ -112,45 +108,12 @@ export class GraphStore {
     }
   }
 
-  // Default nodes and relations
   get userRoot(): GraphNode {
     const node = this.nodesById.get(USER_ROOT_ID);
     if (!node) {
       throw new Error("User root node not found");
     }
     return node;
-  }
-
-  get outlineRoot(): GraphNode {
-    const node = this.nodesById.get(OUTLINE_ROOT_ID);
-    if (!node) {
-      throw new Error("Outline root node not found");
-    }
-    return node;
-  }
-
-  get thoughtstreamRoot(): GraphNode {
-    const node = this.nodesById.get(THOUGHTSTREAM_ROOT_ID);
-    if (!node) {
-      throw new Error("Thoughtstream root node not found");
-    }
-    return node;
-  }
-
-  get outlineRootRelationFromUserRoot(): GraphRelation {
-    const relation = this.relationsById.get(OUTLINE_USER_ROOT_REL_ID);
-    if (!relation) {
-      throw new Error("User Root -> Outline Root relation not found");
-    }
-    return relation;
-  }
-
-  get thoughtstreamRootRelationFromUserRoot(): GraphRelation {
-    const relation = this.relationsById.get(THOUGHTSTREAM_USER_ROOT_REL_ID);
-    if (!relation) {
-      throw new Error("User Root -> Thoughtstream Root relation not found");
-    }
-    return relation;
   }
 
   // TODO: Investigate why some operations don't have a transaction counterpart (and why some transactions don't have an operation counterpart)
@@ -1184,11 +1147,11 @@ export class GraphStore {
   }
 
   private hasNoRelations(node: GraphNode) {
-    return node.relations.length === 0 || this.doAllRelationsPointTo(node, this.thoughtstreamRoot);
+    return node.relations.length === 0;
   }
 
   private deleteIfNoRelations(object: GraphObject): GraphUpdate[] {
-    if (object.relations.length === 0 || this.doAllRelationsPointTo(object, this.thoughtstreamRoot)) {
+    if (object.relations.length === 0) {
       if (object instanceof GraphNode) {
         return this.deleteNode(object);
       } else {
@@ -1334,41 +1297,9 @@ export class GraphStore {
     if (!this.nodesById.get(USER_ROOT_ID)) {
       const { updates: userRootUpdates } = this._addNode({
         id: USER_ROOT_ID,
-        content: [{ type: "text", value: "User" }],
+        content: [{ type: "text", value: this.user.name || this.user.id || "Untitled User" }],
       });
       updates.push(...userRootUpdates);
-    }
-    if (!this.nodesById.get(OUTLINE_ROOT_ID)) {
-      const { updates: outlineRootUpdates } = this._addNode({
-        id: OUTLINE_ROOT_ID,
-        content: [{ type: "text", value: "My Graph" }],
-      });
-      updates.push(...outlineRootUpdates);
-    }
-    if (!this.nodesById.get(THOUGHTSTREAM_ROOT_ID)) {
-      const { updates: tsRootUpdates } = this._addNode({
-        id: THOUGHTSTREAM_ROOT_ID,
-        content: [{ type: "text", value: "Stream" }],
-      });
-      updates.push(...tsRootUpdates);
-    }
-    if (!this.relationsById.get(OUTLINE_USER_ROOT_REL_ID)) {
-      const { updates: userOutlineUpdates } = this.createRelation({
-        id: OUTLINE_USER_ROOT_REL_ID,
-        from: this.userRoot,
-        to: this.outlineRoot,
-        relationType: this.relationTypesById.child,
-      });
-      updates.push(...userOutlineUpdates);
-    }
-    if (!this.relationsById.get(THOUGHTSTREAM_USER_ROOT_REL_ID)) {
-      const { updates: userThoughtstreamUpdates } = this.createRelation({
-        id: THOUGHTSTREAM_USER_ROOT_REL_ID,
-        from: this.userRoot,
-        to: this.thoughtstreamRoot,
-        relationType: this.relationTypesById.child,
-      });
-      updates.push(...userThoughtstreamUpdates);
     }
 
     this.updateManager.queueUpdates(updates);
@@ -1518,20 +1449,14 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.allRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.pinnedRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.allRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.pinnedRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 
@@ -1674,25 +1599,6 @@ export class GraphStore {
         relationsById.set(obj.id, obj);
         relationToBundles.set(obj.id, this.relationToBundles.get(obj.id) || []);
       }
-    }
-
-    // Need a relation between the subtree root and outline root so it shows up after import
-    const subtreeRootRelation = new GraphRelation(this, {
-      authorId: this.user.id,
-      from: this.outlineRoot,
-      to: root,
-      relationType: this.relationTypesById.child,
-    });
-    relationsById.set(subtreeRootRelation.id, subtreeRootRelation);
-    relationsByNodeId.get(root.id)!.add(subtreeRootRelation);
-    if (!nodesById.has(OUTLINE_ROOT_ID)) {
-      nodesById.set(OUTLINE_ROOT_ID, this.outlineRoot);
-      const newList = new FractionalPositionedList<GraphRelation>();
-      newList.add(subtreeRootRelation);
-      relationsByNodeId.set(OUTLINE_ROOT_ID, newList);
-      pinnedRelationsByNodeId.set(OUTLINE_ROOT_ID, new FractionalPositionedList());
-    } else {
-      relationsByNodeId.get(OUTLINE_ROOT_ID)!.add(subtreeRootRelation);
     }
 
     return {

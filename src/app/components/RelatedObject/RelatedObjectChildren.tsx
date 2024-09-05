@@ -71,9 +71,7 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
             ))}
             <div
               className={`${styles.PinSectionSeparator} ${
-                parentNode.parent?.object === graphStore.thoughtstreamRoot
-                  ? styles.StreamSpacing
-                  : styles.DefaultSpacing
+                viewStore.viewType === "note" ? styles.StreamSpacing : styles.DefaultSpacing
               }`}
             />
           </>

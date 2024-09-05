@@ -41,7 +41,7 @@ import { Tree } from "@/app/tree/Tree";
 export async function createTestTreeFromTemplate(template: TemplateNode[]) {
   const settingsStore = new SettingsStore();
   const graphStore = new GraphStore();
-  const tree = new Tree(graphStore, settingsStore, graphStore.outlineRoot);
+  const tree = new Tree(graphStore, settingsStore, graphStore.userRoot);
   let selectionHeadPath: string | undefined;
   let selectionAnchorPath: string | undefined;
   let isFocusedPath: string | undefined;

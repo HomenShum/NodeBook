@@ -11,7 +11,7 @@ import { useCallback, useRef } from "react";
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { BindFocusToTreePlugin } from "@/app/editor/plugins/BindFocusToTreePlugin";
-import { DropdownMenuPlugin } from '@/app/editor/plugins/DropdownMenuPlugin';
+import { DropdownMenuPlugin } from "@/app/editor/plugins/DropdownMenuPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowAtEndsPlugin";
 import { PastePlugin } from "@/app/editor/plugins/pastePlugin";
@@ -23,7 +23,6 @@ import { MentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { createRouteUrl } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
 import { cn } from "@/lib/utils";
 
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
@@ -49,7 +48,7 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
     (nodeId: string) => {
       const node = graphStore.getNode(nodeId);
       if (node) {
-        router.push(createRouteUrl(ViewType.GRAPH, { object: node }));
+        router.push(createRouteUrl({ object: node }));
       }
     },
     [graphStore, router],
@@ -60,11 +59,13 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
       <LexicalComposer initialConfig={createConfig({ namespace: "descendant-editor", treeNode })}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable
-            className={`${styles.ContentEditable}`}
-            data-nodeid={treeNode.object.id}
-            suppressContentEditableWarning
-          />}
+          contentEditable={
+            <ContentEditable
+              className={`${styles.ContentEditable}`}
+              data-nodeid={treeNode.object.id}
+              suppressContentEditableWarning
+            />
+          }
           placeholder={null}
         />
         <ClearEditorPlugin />

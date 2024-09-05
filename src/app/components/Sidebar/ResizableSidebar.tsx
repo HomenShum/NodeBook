@@ -1,12 +1,10 @@
 import { ArrowLeft, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
 import { action } from "mobx";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useUser } from "@/app/StoresProvider";
 import CommandBar from "@/app/components/CommandBar";
-import { ListIcon, StreamIcon } from "@/app/components/CustomIcons";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import SidebarTree from "@/app/components/Sidebar/SidebarTree";
@@ -14,8 +12,6 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { createRouteUrl, useCurView } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./ResizableSidebar.module.css";
@@ -36,7 +32,6 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
   onResizeStateChange,
 }) => {
   const user = useUser();
-  const curView = useCurView();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -111,25 +106,6 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
     };
   }, [isResizing, resize, stopResizing]);
 
-  const ButtonNavigation = () => (
-    <>
-      <Link
-        className={`${styles.Button} ${curView === ViewType.GRAPH && styles.Selected}`}
-        href={createRouteUrl(ViewType.GRAPH)}
-      >
-        <ListIcon className={styles.ButtonIcon} />
-        List
-      </Link>
-      <Link
-        className={`${styles.Button} ${curView === ViewType.STREAM && styles.Selected}`}
-        href={createRouteUrl(ViewType.STREAM)}
-      >
-        <StreamIcon className={styles.ButtonIcon} />
-        Stream
-      </Link>
-    </>
-  );
-
   return (
     <>
       {isOpen && <div className={styles.Backdrop} onClick={() => renderController.toggleLeftSidebar()} />}
@@ -146,14 +122,8 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
               <ArrowLeft size={16} />
             </Button>
             <CommandBar />
-            {/* <Button variant="ghost" size="sm">
-              Workspace
-              <Play size={7} fill="currentColor" />
-            </Button>
-            <ButtonNavigation /> */}
             <Button variant="ghost" size="sm" style={{ marginTop: "24px" }}>
               My Graph
-              {/* <Play size={7} fill="currentColor" /> */}
             </Button>
             <SidebarTree />
           </div>

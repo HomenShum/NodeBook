@@ -27,22 +27,25 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   const treeNode = tree.state.root;
   const renderController = useRenderController();
 
-  const handleShiftClickToSelectMultipleNodes = useCallback((e: React.MouseEvent) => {
-    const nodeElement = (e.target as HTMLElement).closest('[data-nodeid]');
-    if (!nodeElement) return;
+  const handleShiftClickToSelectMultipleNodes = useCallback(
+    (e: React.MouseEvent) => {
+      const nodeElement = (e.target as HTMLElement).closest("[data-nodeid]");
+      if (!nodeElement) return;
 
-    const pathToClickedNode = nodeElement.getAttribute('data-editor-path');
-    if (!pathToClickedNode) return;
+      const pathToClickedNode = nodeElement.getAttribute("data-editor-path");
+      if (!pathToClickedNode) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+      e.preventDefault();
+      e.stopPropagation();
 
-    if (e.shiftKey) {
-      tree.selectBetweenShiftClick();
-    } else {
-      tree.setFocusedNode(pathToClickedNode);
-    }
-  }, [tree]);
+      if (e.shiftKey) {
+        tree.selectBetweenShiftClick();
+      } else {
+        tree.setFocusedNode(pathToClickedNode);
+      }
+    },
+    [tree],
+  );
 
   return (
     <TreeContext.Provider value={tree}>
@@ -58,7 +61,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
         <div className={s.OutlineContent}>
           <div className={s.HeadingContainer}>
             <div className={s.TitleContainer}>
-              {treeNode.object.id === graphStore.outlineRoot.id && <HomeIcon size={20} />}
+              {treeNode.object.id === graphStore.userRoot.id && <HomeIcon size={20} />}
               <h1 className={s.TitleText}>
                 <NodeHeaderEditor treeNode={treeNode} />
               </h1>

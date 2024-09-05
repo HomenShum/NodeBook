@@ -5,7 +5,6 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { Tree } from "@/app/tree/Tree";
 import { createRouteUrl } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
 
 import { DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 
@@ -171,7 +170,7 @@ export function useSetCurrentNodeAsRoot(tree: Tree) {
     if (tree.selectionWithNodes?.type === "editor") {
       const node = tree.selectionWithNodes.treeNode;
       const relations = getAncestorsAsArray(node).map((node) => node.relationToChild);
-      router.push(createRouteUrl(ViewType.GRAPH, { object: node.object, relations }));
+      router.push(createRouteUrl({ object: node.object, relations }));
     }
   }, [tree, router]);
 }

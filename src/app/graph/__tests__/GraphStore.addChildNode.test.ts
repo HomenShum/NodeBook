@@ -80,7 +80,7 @@ describe("GraphStore.addChildNode", () => {
     ]);
   });
   it("should create a working revert operation", async () => {
-    const { node, relation } = await graphStore.addChildNode({ parentId: graphStore.outlineRoot.id });
+    const { node, relation } = await graphStore.addChildNode({ parentId: graphStore.userRoot.id });
 
     graphStore.updateManager.revertAllPending();
 
@@ -88,7 +88,5 @@ describe("GraphStore.addChildNode", () => {
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START);
     expect(graphStore.getRelation(relation.id)).toBeUndefined();
     expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
-    expect(graphStore.outlineRoot.relations).toHaveLength(1);
-    expect(graphStore.outlineRoot.relations).toEqual([graphStore.outlineRootRelationFromUserRoot]);
   });
 });

@@ -147,9 +147,9 @@ export class GraphNode extends GraphObject implements Serializable {
     const relations: GraphRelation[] = [];
     let current: GraphObject | undefined = this;
 
-    for (let i = 0; i < limit && current && current !== this.store.outlineRoot; i++) {
+    for (let i = 0; i < limit && current && current !== this.store.userRoot; i++) {
       const parentRelation: GraphRelation | undefined = current.relationsSortedByPosition.find(
-        (r) => r.relationType.id === "child" && r.to === current && r.from.id !== this.store.thoughtstreamRoot.id,
+        (r) => r.relationType.id === "child" && r.to === current,
       );
       if (!parentRelation || relations.some((p) => p.id === parentRelation.id)) {
         return { relations, object: this };

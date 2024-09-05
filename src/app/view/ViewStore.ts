@@ -4,7 +4,6 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { Tree } from "@/app/tree/Tree";
-import { ViewType } from "@/app/view/ViewType";
 
 export class ViewStore {
   private settingsStore: SettingsStore;
@@ -12,33 +11,18 @@ export class ViewStore {
   public searchQuery: string = "";
 
   public viewType: "outline" | "note" = "outline";
-  public mainStreamView: Tree;
-  public mainOutlineView: Tree;
+  public mainView: Tree;
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.makeObservable();
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
-    this.mainStreamView = new Tree(graphStore, this.settingsStore, graphStore.outlineRoot);
-    this.mainOutlineView = new Tree(graphStore, this.settingsStore, graphStore.thoughtstreamRoot);
+    this.mainView = new Tree(graphStore, this.settingsStore, graphStore.userRoot);
   }
 
   makeObservable() {
     if (!isObservable(this)) {
       makeAutoObservable(this);
-    }
-  }
-
-  // TODO: This is a bit of a hack. We should probably have a more structured way of handling focus.
-  // Like in our editor, you can do .focus(), .getRootElement(), etc. We should have a similar API for
-  // our outline/stream views.
-  focusedView(): ViewType.GRAPH | ViewType.STREAM | null {
-    if (document.getElementById(ViewType.GRAPH)?.contains(document.activeElement)) {
-      return ViewType.GRAPH;
-    } else if (document.getElementById(ViewType.STREAM)?.contains(document.activeElement)) {
-      return ViewType.STREAM;
-    } else {
-      return null;
     }
   }
 
@@ -48,23 +32,20 @@ export class ViewStore {
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
-    [this.mainStreamView, this.mainOutlineView].forEach((view) => view.setSearch(query));
+    this.mainView.setSearch(query);
   }
 
   cleanup() {
-    this.mainOutlineView.clear([this.graphStore.outlineRootRelationFromUserRoot]);
-    this.mainStreamView.clear([this.graphStore.thoughtstreamRootRelationFromUserRoot]);
+    this.mainView.clear(this.graphStore.userRoot);
   }
 
   serialize(): SerializedViewStore {
     return {
-      mainStreamView: this.mainStreamView.serialize(),
-      mainOutlineView: this.mainOutlineView.serialize(),
+      mainView: this.mainView.serialize(),
     };
   }
 
   deserializeInPlace(data: SerializedViewStore) {
-    this.mainStreamView.deserializeInPlace(data.mainStreamView);
-    this.mainOutlineView.deserializeInPlace(data.mainOutlineView);
+    this.mainView.deserializeInPlace(data.mainView);
   }
 }

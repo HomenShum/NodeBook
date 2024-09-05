@@ -1,10 +1,9 @@
 import { GraphRelation } from "@/app/graph/GraphRelation";
 
-// Store always initializes with at least 3 nodes: userRoot, outlineRoot, and thoughtstreamRoot
-export const MIN_NUM_NODES = 3;
+// Store always initializes with user node
+export const MIN_NUM_NODES = 1;
 
-// Store always initializes with at least 2 relations: userRoot -> outlineRoot and userRoot -> thoughtstreamRoot
-export const MIN_NUM_RELATIONS = 2;
+export const MIN_NUM_RELATIONS = 0;
 
 export const getRelationPosition = (relation: GraphRelation, forward: boolean): number => {
   if (forward) {

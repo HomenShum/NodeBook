@@ -7,7 +7,6 @@ import { Path } from "@/app/components/Path";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { createRouteUrl, ObjectPath } from "@/app/util";
-import { ViewType } from "@/app/view/ViewType";
 import { cn } from "@/lib/utils";
 
 import styles from "./CommandBar.module.css";
@@ -52,7 +51,7 @@ const CommandBar = () => {
           perform: async () => {
             const node = await graphStore.addNode({});
             close();
-            router.push(createRouteUrl(ViewType.GRAPH, { object: node }));
+            router.push(createRouteUrl({ object: node }));
           },
         },
       ];
@@ -70,7 +69,7 @@ const CommandBar = () => {
             path,
             perform: () => {
               close();
-              router.push(createRouteUrl(ViewType.GRAPH, path));
+              router.push(createRouteUrl(path));
             },
           };
         }),
@@ -80,7 +79,7 @@ const CommandBar = () => {
         name: `Create new node: "${search}"`,
         perform: async () => {
           const node = await graphStore.addNode({ nodeProps: { content: search } });
-          router.push(createRouteUrl(ViewType.GRAPH, { object: node }));
+          router.push(createRouteUrl({ object: node }));
           close();
         },
       },
