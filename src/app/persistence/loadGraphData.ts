@@ -4,11 +4,10 @@ import { PostUserResponseSchema } from "@/app/api/types";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SerializedGraphStoreSchema, SerializedStores } from "@/app/persistence/SerializedData";
-import { ViewStore } from "@/app/view/ViewStore";
 import { PersistedUser } from "@/db/schema";
 import logger from "@/lib/logger";
 
-const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
+const localLocalData = (graphStore: GraphStore) => {
   logger.debug("Loading data from local storage");
   const dataString = localStorage.getItem("data");
   if (!dataString) return;
@@ -18,14 +17,10 @@ const localLocalData = (graphStore: GraphStore, viewStore: ViewStore) => {
     graphStore.resetAndLoad(data.graphStore);
   }
 
-  if (data.viewStore) {
-    viewStore.deserializeInPlace(data.viewStore);
-  }
-
   logger.debug(`Successfully loaded data from ${env.persistTo}`);
 };
 
-const loadRemoteData = async (graphStore: GraphStore, viewStore: ViewStore, authFetch: typeof fetch) => {
+const loadRemoteData = async (graphStore: GraphStore, authFetch: typeof fetch) => {
   logger.debug("Loading data from server");
 
   const syncData = await authFetch("/api/sync").then((res) => res.json());
@@ -36,24 +31,13 @@ const loadRemoteData = async (graphStore: GraphStore, viewStore: ViewStore, auth
   } else {
     logger.error("Failed to parse graph store data from server", parsed.error);
   }
-
-  // Legacy loading of viewStore from /api/persist
-  // TODO: We probably should just delete this?
-  const json = await fetch("/api/persist").then((res) => res.json());
-  const dataString = json.data;
-  if (!dataString) return;
-
-  const data = JSON.parse(dataString) as SerializedStores;
-  if (data.viewStore) {
-    viewStore.deserializeInPlace(data.viewStore);
-  }
 };
 
-export async function loadGraphData(graphStore: GraphStore, viewStore: ViewStore, authFetch: typeof fetch) {
+export async function loadGraphData(graphStore: GraphStore, authFetch: typeof fetch) {
   if (env.persistTo === "local") {
-    localLocalData(graphStore, viewStore);
+    localLocalData(graphStore);
   } else if (env.persistTo === "server") {
-    await loadRemoteData(graphStore, viewStore, authFetch);
+    await loadRemoteData(graphStore, authFetch);
   }
 }
 export const fetchGetOrCreateUser = async (user: User, authFetch: typeof fetch): Promise<PersistedUser | undefined> => {

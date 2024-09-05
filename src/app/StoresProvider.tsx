@@ -75,7 +75,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       try {
         if (env.isPersistenceEnabled && !newUser.isUnlogged) {
           logger.debug("Loading data", newUser.id);
-          await loadGraphData(graph, view, authedFetch);
+          await loadGraphData(graph, authedFetch);
           logger.debug("Starting sync");
           syncCleanup = startSync({ graphStore: graph, authFetch: authedFetch });
         }
