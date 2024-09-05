@@ -47,6 +47,7 @@
   padding: 36px 52px 4px 48px;
   color: var(--gray-12);
   gap: 8px;
+  position: relative;
 }
 
 .TitleContainer {
@@ -55,6 +56,15 @@
   width: 100%;
   gap: 8px;
   padding-left: 3px;
+}
+
+.TitleContainer > :first-child {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.HeadingContainer:hover .TitleContainer > :first-child {
+  opacity: 1;
 }
 
 .TitleText {

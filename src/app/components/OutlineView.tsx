@@ -6,6 +6,7 @@ import { Options, useHotkeys } from "react-hotkeys-hook";
 
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
+import { NodeHeaderSettingsMenu } from '@/app/components/RelatedObject/NodeHeaderSettingsMenu';
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -61,6 +62,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
         <div className={s.OutlineContent}>
           <div className={s.HeadingContainer}>
             <div className={s.TitleContainer}>
+              <NodeHeaderSettingsMenu treeNode={treeNode} />
               {treeNode.object.id === graphStore.userRoot.id ? (
                 <HomeIcon size={20} />
               ) : treeNode.object.id === graphStore.globalRoot.id ? (
