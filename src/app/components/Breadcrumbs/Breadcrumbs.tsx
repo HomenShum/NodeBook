@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
-import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { TreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray } from "@/app/tree/utils";
@@ -25,7 +24,6 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
   const router = useRouter();
   const isMobile = useIsMobile();
   const ancestors = getAncestorsAsArray(treeNode);
-  if (!(treeNode.object instanceof GraphNode)) return null;
 
   const handleNavigation = (index: number) => {
     if (index > ancestors.length) return;
