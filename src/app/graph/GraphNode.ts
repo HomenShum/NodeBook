@@ -143,19 +143,26 @@ export class GraphNode extends GraphObject implements Serializable {
     return `Node(${this.id.slice(0, 8)}: ${this.text.slice(0, 8)})`;
   }
 
+  /**
+   * This uses somewhat arbitrary heuristics to try to find a path to the global root.
+   * In the future, we'll probably introduce canonical paths which reliably
+   * lead to the root. See https://linear.app/ideaflow/issue/ENT-3930/canonical-paths
+   */
   getPath({ limit = 10 }: { limit?: number } = {}): ObjectPath {
     const relations: GraphRelation[] = [];
     let current: GraphObject | undefined = this;
 
     for (let i = 0; i < limit && current && current !== this.store.globalRoot; i++) {
-      const firstRelation: GraphRelation | undefined = current.relations.sort(
-        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
-      )[0];
-      if (!firstRelation || relations.some((p) => p.id === firstRelation.id)) {
+      const nextRelations: GraphRelation[] = current.relations
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+        .filter((r) => r.to.id === current?.id);
+      const nextRelation =
+        nextRelations.find((r) => r.relationType.id === "child" || r.relationType.id === "sublist") || nextRelations[0];
+      if (!nextRelation || relations.some((p) => p.id === nextRelation.id)) {
         return { relations, object: this };
       }
-      relations.unshift(firstRelation);
-      current = firstRelation.from;
+      relations.unshift(nextRelation);
+      current = nextRelation.from;
     }
     return { relations, object: this };
   }
