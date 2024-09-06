@@ -12,13 +12,13 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getChips, $getText, getSelectionPositions, matchDefaultRelationType } from "@/app/editor/utils";
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/tree/TreeContext";
-import { defaultRelationTypes } from "@/app/graph/constants";
 
 export const RelationPlugin = () => {
   const settingsStore = useSettingsStore();
@@ -112,7 +112,7 @@ export const RelationPlugin = () => {
                 type: "updateNode",
                 transaction: {
                   nodeId: object.id,
-                  nodeProps: { content: [{ type: "text", value: label + ":" }] },
+                  nodeProps: { content: [{ type: "text", value: label }] },
                 },
               },
             ]);
