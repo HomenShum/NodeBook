@@ -12,6 +12,7 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
+import { createRouteUrl } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./ResizableSidebar.module.css";
@@ -121,11 +122,20 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
             <Button className={styles.BackNavigation} variant="ghost" size="icon" onClick={() => router.back()}>
               <ArrowLeft size={16} />
             </Button>
+            <div style={{ display: "flex", flexDirection: "column", marginTop: "24px" }}>
+              <Button
+                style={{ width: "100%" }}
+                variant="ghost"
+                className={styles.Button}
+                onClick={() => {
+                  router.push(createRouteUrl(graphStore.getDefaultRootForUser()));
+                }}
+              >
+                Home
+              </Button>
+              <SidebarTree />
+            </div>
             <CommandBar />
-            <Button variant="ghost" size="sm" style={{ marginTop: "24px" }}>
-              My Graph
-            </Button>
-            <SidebarTree />
           </div>
 
           <div className={styles.RightNav}>
