@@ -1,6 +1,7 @@
 import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 import { SetStateAction } from "react";
 
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
 import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
@@ -12,7 +13,6 @@ import { SerializedTree } from "@/app/persistence/SerializedData";
 import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
-import { defaultRelationTypes } from "@/app/graph/constants";
 
 import { BaseTreeNode, DescendantTreeNode, RootTreeNode, TreeNode } from "./nodes";
 import { EditorSelectionAction, EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
@@ -582,6 +582,28 @@ export class Tree {
       replaceWith: { type: "existing-object", id: object.id },
       after: after instanceof DescendantTreeNode ? after.relationWithParent : after,
     });
+  }
+
+  /**
+   * Remove the current object on the node and replace it with a new object with
+   * the same raw text
+   *
+   * This is used in cases where the user was typing and then selects something
+   * from autocomplete to replace the current node with. Then they change their
+   * mind and want to revert to back to editing a new object.
+   */
+  async replaceObjectAtNodeWithCopy(treeNodeId: string) {
+    const treeNode = this.getNodeOrThrow(treeNodeId);
+    let node: GraphNode | null = null;
+    try {
+      node = await this.graphStore.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
+      await this.setObjectOnNode(treeNode.path, node);
+    } catch (error) {
+      if (node) {
+        await this.graphStore.removeNode({ nodeId: node.id });
+      }
+      throw error;
+    }
   }
 
   async deleteSelection() {

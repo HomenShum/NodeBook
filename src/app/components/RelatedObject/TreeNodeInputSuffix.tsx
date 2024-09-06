@@ -4,20 +4,18 @@ import { KeyboardEvent, useEffect, useRef } from "react";
 
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { EditorSelectionAction } from '@/app/tree/selection';
+import { EditorSelectionAction } from "@/app/tree/selection";
 import { useTree } from "@/app/tree/TreeContext";
 
 type TreeNodeInputSuffixProps = {
   treeNode: DescendantTreeNode;
-  backspaceCallback?: () => void;
 };
 
-const useTreeNodeInputHandlers = (treeNode: DescendantTreeNode, backspaceCallback?: () => void) => {
+const useTreeNodeInputHandlers = (treeNode: DescendantTreeNode) => {
   const tree = useTree();
   const graph = useGraphStore();
 
   const handleFocus = () => tree.setFocusedNode(treeNode.path);
-
 
   const handleKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
     switch (e.key) {
@@ -27,12 +25,14 @@ const useTreeNodeInputHandlers = (treeNode: DescendantTreeNode, backspaceCallbac
         tree.setFocusedNode(path);
         break;
       case "Backspace":
-        e.preventDefault();
-        if (!treeNode.object.isLocal && backspaceCallback) {
-          backspaceCallback();
-        } else {
-          const node = await graph.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
-          await treeNode.setObject(node);
+        if (!treeNode.object.isLocal) {
+          try {
+            e.preventDefault();
+            await tree.replaceObjectAtNodeWithCopy(treeNode.id);
+            tree.setFocusedNode(treeNode.id);
+          } catch (error) {
+            alert(error instanceof Error ? error.message : "Unknown error");
+          }
         }
         break;
       case "ArrowRight":
@@ -59,10 +59,10 @@ const useTreeNodeInputHandlers = (treeNode: DescendantTreeNode, backspaceCallbac
   return { handleFocus, handleKeyDown, handleClick };
 };
 
-export const TreeNodeInputSuffix = observer(({ treeNode, backspaceCallback }: TreeNodeInputSuffixProps) => {
+export const TreeNodeInputSuffix = observer(({ treeNode }: TreeNodeInputSuffixProps) => {
   const tree = useTree();
   const inputRef = useRef<HTMLInputElement>(null);
-  const { handleFocus, handleKeyDown, handleClick } = useTreeNodeInputHandlers(treeNode, backspaceCallback);
+  const { handleFocus, handleKeyDown, handleClick } = useTreeNodeInputHandlers(treeNode);
 
   useEffect(() => {
     return autorun(() => {
@@ -83,7 +83,7 @@ export const TreeNodeInputSuffix = observer(({ treeNode, backspaceCallback }: Tr
       ref={inputRef}
       type="text"
       value=""
-      onChange={() => { }}
+      onChange={() => {}}
     />
   );
 });

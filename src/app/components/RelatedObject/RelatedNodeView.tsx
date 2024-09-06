@@ -63,7 +63,7 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
             </Button>
           )}
         </div>
-        {isGlobalReference && <TreeNodeInputSuffix treeNode={treeNode} backspaceCallback={focusNonLocalNode} />}
+        {isGlobalReference && <TreeNodeInputSuffix treeNode={treeNode} />}
       </div>
     </div>
   );

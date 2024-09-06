@@ -1,7 +1,9 @@
 import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
+import { GraphRelationType } from "@/app/graph/types";
 import { UpdateManager } from "@/app/graph/UpdateManager";
 import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
 import {
@@ -21,8 +23,6 @@ import {
 import logger from "@/lib/logger";
 import { CappedKeywordIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
-import { defaultRelationTypes } from "@/app/graph/constants";
-import { GraphRelationType } from "@/app/graph/types";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
@@ -1138,6 +1138,9 @@ export class GraphStore {
     if (!relation) {
       throw new Error(`Relation with id ${tx.relationId} does not exist`);
     }
+    if (relation.id.startsWith(GLOBAL_TO_USER_RELATION_ID_PREFIX)) {
+      throw new Error("Cannot replace relation from global to user");
+    }
 
     const updates: GraphUpdate[] = [];
 
@@ -1667,20 +1670,14 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.allRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.pinnedRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.allRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.pinnedRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 
