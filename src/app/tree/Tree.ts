@@ -4,7 +4,7 @@ import { SetStateAction } from "react";
 import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
 import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
-import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
+import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner, TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { extractGroupId, extractPointedAtObjectId, getSideOrThrow } from "@/app/graph/utils";
@@ -12,6 +12,7 @@ import { SerializedTree } from "@/app/persistence/SerializedData";
 import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 import { BaseTreeNode, DescendantTreeNode, RootTreeNode, TreeNode } from "./nodes";
 import { EditorSelectionAction, EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";

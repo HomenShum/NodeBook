@@ -6,10 +6,10 @@ import * as React from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
-import { GraphRelationType } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
+import { GraphRelationType } from "@/app/graph/types";
 
 import styles from "./RelationCombobox.module.css";
 

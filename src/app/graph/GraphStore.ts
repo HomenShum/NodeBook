@@ -21,11 +21,13 @@ import {
 import logger from "@/lib/logger";
 import { CappedKeywordIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
+import { defaultRelationTypes } from "@/app/graph/constants";
+import { GraphRelationType } from "@/app/graph/types";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
 import { GraphNode, GraphNodeProps } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
-import { GraphRelation, GraphRelationProps, GraphRelationType, isGraphRelationType } from "./GraphRelation";
+import { GraphRelation, GraphRelationProps, isGraphRelationType } from "./GraphRelation";
 import {
   Positioner,
   TxAddChildNode,
@@ -42,36 +44,6 @@ import {
   TxUpdateRelationPositionsList,
 } from "./GraphTransactionTypes";
 import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
-
-const TEMP_USER_ID = UNLOGGED_USER.id; // TODO: This is simply to satisfy the type checker, we should change this
-export const defaultRelationTypes: Record<string, GraphRelationType> = {
-  child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent", isPublic: false },
-  relatedTo: {
-    version: 1,
-    id: "relatedTo",
-    authorId: TEMP_USER_ID,
-    label: "relates to",
-    reverseLabel: "relates to",
-    isPublic: false,
-  },
-  author: {
-    version: 1,
-    id: "author",
-    authorId: TEMP_USER_ID,
-    label: "author",
-    reverseLabel: "authored",
-    isPublic: false,
-  },
-  sublist: {
-    version: 1,
-    id: "sublist",
-    authorId: TEMP_USER_ID,
-    label: "sublist",
-    reverseLabel: "parent list",
-    isPublic: false,
-  },
-  empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "", isPublic: false },
-};
 
 /**
  * GraphStore is a collection of nodes and relations.
@@ -1695,14 +1667,20 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.allRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.pinnedRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.allRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.pinnedRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 

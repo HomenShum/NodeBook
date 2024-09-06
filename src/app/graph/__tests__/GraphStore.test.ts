@@ -1,5 +1,6 @@
 import { MOCK_MEW_USER } from "@/app/auth/MewUser";
-import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
+import { GraphStore } from "@/app/graph/GraphStore";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 import { MIN_NUM_CREATED_NODES, MIN_NUM_RELATIONS } from "./helpers";
 

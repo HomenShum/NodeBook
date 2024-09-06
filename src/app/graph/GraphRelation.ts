@@ -4,18 +4,11 @@ import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { Position, uuid } from "@/app/util";
+import { GraphRelationType } from "@/app/graph/types";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 import { BaseGraphObject, GraphObject } from "./GraphObject";
-import { GraphStore, defaultRelationTypes } from "./GraphStore";
-
-export type GraphRelationType = {
-  version: number;
-  id: string;
-  authorId: string;
-  label: string; // e.g. author
-  reverseLabel: string; // e.g. authored by
-  isPublic: boolean;
-};
+import { GraphStore } from "./GraphStore";
 
 export function isGraphRelationType(obj: any): obj is GraphRelationType {
   return obj && obj.id && obj.label && obj.reverseLabel;

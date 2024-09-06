@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { GraphRelationType } from "@/app/graph/GraphRelation";
 import { Position } from "@/app/util";
+import { GraphRelationType } from "@/app/graph/types";
 
 const SerializedChipSchema = z.object({
   type: z.union([z.literal("text"), z.literal("mention"), z.literal("linebreak")]),

@@ -1,7 +1,8 @@
 import { GroupId } from "@/app/tree/nodes";
+import { GraphRelationType } from "@/app/graph/types";
 
 import { GraphNodeProps } from "./GraphNode";
-import { GraphRelation, GraphRelationPropsWithoutTargets, GraphRelationType } from "./GraphRelation";
+import { GraphRelation, GraphRelationPropsWithoutTargets } from "./GraphRelation";
 
 /**
  * Specifies a position in a list. Can be an index (number), the id of an object

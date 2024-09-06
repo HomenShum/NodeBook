@@ -5,6 +5,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { comparePositions } from "@/app/util";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 export type GraphObject = GraphNode | GraphRelation | PlaceholderGraphObject;
 
@@ -70,10 +71,12 @@ export abstract class BaseGraphObject {
     if (this.id === this.store.userRoot.id || this.id === this.store.globalRoot.id) {
       return "global";
     }
+
     // As soon as you have more than one relation pointing to you, you're global
-    const labelledRelations = this.relations.filter((r) => r.isLabelled()).length;
-    const unlablledRelationsTo = this.relations.filter((r) => r.to.id === this.id && !r.isLabelled()).length;
-    if (labelledRelations > 1 || unlablledRelationsTo > 1) {
+    const nonChildRelations = this.relations.filter(
+      (r) => !(r.relationType === defaultRelationTypes.child && r.from.id === this.id),
+    );
+    if (nonChildRelations.length > 1) {
       return "global";
     }
 

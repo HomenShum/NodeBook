@@ -1,7 +1,8 @@
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
-import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
+import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 import { MIN_NUM_RELATIONS } from "./helpers";
 

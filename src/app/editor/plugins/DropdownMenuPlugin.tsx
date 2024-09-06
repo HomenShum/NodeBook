@@ -14,7 +14,6 @@ import {
 import { TriggerType } from "@/app/components/UIPrimitives/LexicalMenu";
 import { LexicalTypeaheadMenuPlugin } from "@/app/editor/plugins/LexicalTypeaheadMenuPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { SearchAndReplaceDropdownOption } from "@/app/graph/SettingsStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -24,11 +23,12 @@ import { useTree } from "@/app/tree/TreeContext";
 import { uuid } from "@/app/util";
 import logger from "@/lib/logger";
 import { checkForMentionMatch, checkForSearchAndReplaceMatch } from "@/lib/utils";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 enum DropdownAction {
   NONE,
   MENTION,
-  SEARCH_AND_REPLACE
+  SEARCH_AND_REPLACE,
 }
 
 const SUGGESTION_LIST_LENGTH_LIMIT = 5;
@@ -49,9 +49,10 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
   const [options, setOptions] = useState<DropdownOption[]>([]);
   const limitedOptions = options.slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
   const [currentAction, setCurrentAction] = useState<DropdownAction>(DropdownAction.NONE);
-  const allOptions = currentAction === DropdownAction.MENTION
-    ? [...limitedOptions, new DropdownOption(ActionId.CREATE_NEW_NODE)]
-    : limitedOptions;
+  const allOptions =
+    currentAction === DropdownAction.MENTION
+      ? [...limitedOptions, new DropdownOption(ActionId.CREATE_NEW_NODE)]
+      : limitedOptions;
 
   const onMention = useCallback(
     async (opt: DropdownOption, nodeToReplace: TextNode | null, closeMenu: () => void, _: string) => {
@@ -225,7 +226,14 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
       }
       return match;
     },
-    [isLabellingRelation, searchAndReplaceSetting, handleRecentNodes, updateOptions, searchAndReplaceDropdown, currentAction],
+    [
+      isLabellingRelation,
+      searchAndReplaceSetting,
+      handleRecentNodes,
+      updateOptions,
+      searchAndReplaceDropdown,
+      currentAction,
+    ],
   );
 
   const handleSelectOption = useCallback(
@@ -245,12 +253,12 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
           break;
       }
     },
-    [currentAction, onMention, onSearchAndReplace]
+    [currentAction, onMention, onSearchAndReplace],
   );
 
   return (
     <LexicalTypeaheadMenuPlugin<DropdownOption>
-      onQueryChange={() => { }}
+      onQueryChange={() => {}}
       onSelectOption={handleSelectOption}
       triggerFn={triggerFn}
       options={allOptions}

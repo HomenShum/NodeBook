@@ -4,9 +4,10 @@ import ReactDOM from "react-dom";
 
 import { Path } from "@/app/components/Path";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { GraphRelation, GraphRelationType, isGraphRelationType } from "@/app/graph/GraphRelation";
+import { GraphRelation, isGraphRelationType } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { scoreMatch } from "@/lib/utils";
+import { GraphRelationType } from "@/app/graph/types";
 
 import styles from "./DropdownMenuUtils.module.css";
 
@@ -193,28 +194,28 @@ function getMenuRenderFn(
 
     return anchorElementRef.current && options.length && showMenu
       ? ReactDOM.createPortal(
-        <div ref={ref} className={styles.TypeaheadPopover}>
-          <ul>
-            {options.map((option, i: number) => (
-              <DropdownMenuItem
-                index={i}
-                isSelected={selectedIndex === i}
-                onClick={() => {
-                  setHighlightedIndex(i);
-                  selectOptionAndCleanUp(option);
-                }}
-                onMouseEnter={() => {
-                  setHighlightedIndex(i);
-                }}
-                key={option.key}
-                queryString={queryString}
-                option={option}
-              />
-            ))}
-          </ul>
-        </div>,
-        anchorElementRef.current,
-      )
+          <div ref={ref} className={styles.TypeaheadPopover}>
+            <ul>
+              {options.map((option, i: number) => (
+                <DropdownMenuItem
+                  index={i}
+                  isSelected={selectedIndex === i}
+                  onClick={() => {
+                    setHighlightedIndex(i);
+                    selectOptionAndCleanUp(option);
+                  }}
+                  onMouseEnter={() => {
+                    setHighlightedIndex(i);
+                  }}
+                  key={option.key}
+                  queryString={queryString}
+                  option={option}
+                />
+              ))}
+            </ul>
+          </div>,
+          anchorElementRef.current,
+        )
       : null;
   };
 }
@@ -287,6 +288,5 @@ export {
   filterAndSortOptions,
   getMentionSearchResults,
   getMenuRenderFn,
-  getSearchAndReplaceResults
+  getSearchAndReplaceResults,
 };
-

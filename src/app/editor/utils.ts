@@ -13,9 +13,10 @@ import {
 } from "lexical";
 
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
-import { GraphRelationType } from "@/app/graph/GraphRelation";
-import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
+import { GraphStore } from "@/app/graph/GraphStore";
 import { $createMentionNode, $isMentionNode, MentionNode } from "@/app/graph/MentionNode";
+import { GraphRelationType } from "@/app/graph/types";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 type LexicalEditorPosition = { index: number; offset: number };
 

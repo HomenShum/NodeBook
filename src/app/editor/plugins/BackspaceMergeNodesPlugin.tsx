@@ -4,10 +4,10 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 /**
  * Plugin to merge nodes when backspace is pressed at the start of a node.
@@ -78,20 +78,25 @@ export const BackspaceMergeNodesPlugin = () => {
           }
         }
 
-        if(!targetNode){
+        if (!targetNode) {
           return false;
         }
 
         //Update all child nodes to point to the targetNode. We want to delete the
         //edge/relation between the "node to be deleted" and it's parent so ignore and do
         //not update that relation.
-        const updateRelationTxs: TxCombinedPart[] = object.relations.filter(r => r.id != relation.id).map(r => {
-          return {type: "replaceRelationLink", transaction: {
-            relationId: r.id,
-              direction: r.from.id === object.id ? "from" : "to",
-              replaceWith: { type: "existing-object", id: targetNode.id }
-          }};
-        })
+        const updateRelationTxs: TxCombinedPart[] = object.relations
+          .filter((r) => r.id != relation.id)
+          .map((r) => {
+            return {
+              type: "replaceRelationLink",
+              transaction: {
+                relationId: r.id,
+                direction: r.from.id === object.id ? "from" : "to",
+                replaceWith: { type: "existing-object", id: targetNode.id },
+              },
+            };
+          });
 
         if (targetNode && object instanceof GraphNode) {
           graphStore

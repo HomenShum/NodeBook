@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 
-import { GraphRelationType } from "@/app/graph/GraphRelation";
 import { relationTypeTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
+import { GraphRelationType } from "@/app/graph/types";
 
 export const createRelationType = async (tx: MewDbTransaction, relType: GraphRelationType) => {
   await tx.insert(relationTypeTable).values({

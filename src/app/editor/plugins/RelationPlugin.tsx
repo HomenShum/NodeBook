@@ -13,12 +13,12 @@ import { useEffect } from "react";
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getChips, $getText, getSelectionPositions, matchDefaultRelationType } from "@/app/editor/utils";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/tree/TreeContext";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 export const RelationPlugin = () => {
   const settingsStore = useSettingsStore();

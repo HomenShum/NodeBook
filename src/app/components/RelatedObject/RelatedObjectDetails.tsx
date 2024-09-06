@@ -5,9 +5,9 @@ import styles from "@/app/components/RelatedObject/RelatedObjectDetails.module.c
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
-import { defaultRelationTypes } from "@/app/graph/GraphStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { Position } from "@/app/util";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 function getParentZones(relation: GraphRelation) {
   return Array.from(
