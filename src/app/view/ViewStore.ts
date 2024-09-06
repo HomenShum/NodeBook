@@ -1,43 +1,53 @@
-import { isObservable, makeAutoObservable } from "mobx";
+import { action, isObservable, makeAutoObservable } from "mobx";
 
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { Tree } from "@/app/tree/Tree";
-import { ViewType } from "@/app/view/types";
+import { SublistTree } from "@/app/tree/SublistTree";
+
+export type ViewType = "outline" | "note" | "sublist";
 
 export class ViewStore {
-  private settingsStore: SettingsStore;
-  private graphStore: GraphStore;
+  private readonly settingsStore: SettingsStore;
+  private readonly graphStore: GraphStore;
   public searchQuery: string = "";
 
-  public viewType: ViewType = ViewType.Outline;
+  public viewType: ViewType = "outline";
   public mainView: Tree;
+  public sublistView: Tree;
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.makeObservable();
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
     this.mainView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
+    this.sublistView = new SublistTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
   }
 
   makeObservable() {
     if (!isObservable(this)) {
-      makeAutoObservable(this);
+      makeAutoObservable(this, {
+        setViewType: action,
+        setSearchQuery: action,
+      });
     }
   }
 
   setViewType(viewType: ViewType) {
     this.viewType = viewType;
+    this.sublistView = new SublistTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser());
   }
 
   setSearchQuery(query: string) {
     this.searchQuery = query;
     this.mainView.setSearch(query);
+    this.sublistView.setSearch(query);
   }
 
   cleanup() {
     this.mainView.clear(this.graphStore.getDefaultRootForUser());
+    this.sublistView.clear(this.graphStore.getDefaultRootForUser());
   }
 
   serialize(): SerializedViewStore {

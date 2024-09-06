@@ -1,6 +1,7 @@
 "use client";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
+import { observer } from "mobx-react-lite";
 
 import { MainView } from "@/app/components/MainView";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -8,7 +9,7 @@ import { createRouteUrl, parsePathString } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 
-export default function Page({ params: { path } }: { params: { path: string[] | undefined } }) {
+function Page({ params: { path } }: { params: { path: string[] | undefined } }) {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   useEffect(() => {
@@ -18,7 +19,14 @@ export default function Page({ params: { path } }: { params: { path: string[] | 
       return redirect(createRouteUrl("home"));
     }
     viewStore.mainView.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
-  }, [graphStore, path, viewStore.mainView]);
+    viewStore.sublistView.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
+  }, [graphStore, path, viewStore.mainView, viewStore.sublistView]);
 
-  return <MainView tree={viewStore.mainView} />;
+  if (viewStore.viewType === "sublist") {
+    return <MainView tree={viewStore.sublistView}></MainView>;
+  }
+
+  return <MainView tree={viewStore.mainView}></MainView>;
 }
+
+export default observer(Page);
