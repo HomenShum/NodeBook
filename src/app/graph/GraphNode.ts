@@ -147,15 +147,15 @@ export class GraphNode extends GraphObject implements Serializable {
     const relations: GraphRelation[] = [];
     let current: GraphObject | undefined = this;
 
-    for (let i = 0; i < limit && current && current !== this.store.userRoot; i++) {
-      const parentRelation: GraphRelation | undefined = current.relationsSortedByPosition.find(
-        (r) => r.relationType.id === "child" && r.to === current,
-      );
-      if (!parentRelation || relations.some((p) => p.id === parentRelation.id)) {
+    for (let i = 0; i < limit && current && current !== this.store.globalRoot; i++) {
+      const firstRelation: GraphRelation | undefined = current.relations.sort(
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
+      )[0];
+      if (!firstRelation || relations.some((p) => p.id === firstRelation.id)) {
         return { relations, object: this };
       }
-      relations.unshift(parentRelation);
-      current = parentRelation.from;
+      relations.unshift(firstRelation);
+      current = firstRelation.from;
     }
     return { relations, object: this };
   }
