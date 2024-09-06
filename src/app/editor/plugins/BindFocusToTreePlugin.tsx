@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
-import { $getRoot, COMMAND_PRIORITY_EDITOR, FOCUS_COMMAND } from "lexical";
+import { $getRoot, BLUR_COMMAND, COMMAND_PRIORITY_EDITOR, FOCUS_COMMAND } from "lexical";
 import { action, autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
@@ -21,13 +21,8 @@ export const BindFocusToTreePlugin = observer(() => {
     // Update the editor focus to match the tree selection
     const disposeAutorun = autorun(() => {
       const sel = tree.selection;
-      if (sel === null) {
-        if (isEditorFocused()) {
-          editor.blur();
-        }
-        return;
-      }
-      switch (sel.type) {
+
+      switch (sel?.type) {
         case "node": {
           if (isEditorFocused()) {
             // When the selection switches to node type, blur all editors
@@ -59,6 +54,17 @@ export const BindFocusToTreePlugin = observer(() => {
 
     // Update the tree selection to match the editor focus
     const disposeCommands = mergeRegister(
+      editor.registerCommand(
+        BLUR_COMMAND,
+        action(() => {
+          if (isEditorFocused() && tree.isNodeFocused(treeNode.id)) {
+            // Editor is blurring while node is focused -> set tree selection to null
+            tree.setFocusedNode(null);
+          }
+          return false;
+        }),
+        COMMAND_PRIORITY_EDITOR,
+      ),
       editor.registerCommand(
         FOCUS_COMMAND,
         action(() => {
