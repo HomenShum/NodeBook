@@ -18,6 +18,7 @@
 .BreadcrumbWrapper {
   display: flex;
   align-items: center;
+  padding-top: 1px;
   overflow-x: auto;
   flex-grow: 1;
 }
