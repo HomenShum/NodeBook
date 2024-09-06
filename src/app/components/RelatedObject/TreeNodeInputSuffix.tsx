@@ -16,9 +16,10 @@ export const TreeNodeInputSuffix = observer(({ treeNode }: TreeNodeInputSuffixPr
 
   useEffect(() => {
     return autorun(() => {
-      if (tree.isNodeFocused(treeNode.id)) {
+      const inputFocused = inputRef.current?.contains(document.activeElement);
+      if (!inputFocused && tree.isNodeFocused(treeNode.id)) {
         inputRef.current?.focus();
-      } else if (tree.selection?.type === "node" && inputRef.current?.contains(document.activeElement)) {
+      } else if (inputFocused && tree.selection?.type === "node") {
         inputRef.current?.blur();
       }
     });

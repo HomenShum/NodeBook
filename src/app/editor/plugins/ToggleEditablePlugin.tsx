@@ -18,8 +18,10 @@ export const ToggleEditablePlugin = ({ treeNode, editable }: { treeNode: Descend
   useEffect(() => {
     return editor.registerCommand(
       KEY_ESCAPE_COMMAND,
-      () => {
+      (e) => {
         if (tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id && tree.selection.editMode) {
+          e.preventDefault();
+          e.stopPropagation();
           tree.setFocusedNode(treeNode.id, "start", undefined, false);
           return true;
         }
