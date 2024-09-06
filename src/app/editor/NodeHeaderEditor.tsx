@@ -16,7 +16,7 @@ import styles from "./Editor.module.css";
 
 export const NodeHeaderEditor = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
   const graphStore = useGraphStore();
-  const editable = treeNode.object.authorId === graphStore.user.id;
+  const editable = treeNode.object instanceof GraphNode && treeNode.object.authorId === graphStore.user.id;
   return (
     <div>
       <LexicalComposer initialConfig={createConfig({ namespace: "header-editor", treeNode, editable })}>
