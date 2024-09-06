@@ -11,7 +11,6 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
-import { EditorSelectionAction } from "@/app/tree/selection";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useSetCurrentNodeAsRoot } from "@/app/tree/utils";
@@ -29,24 +28,25 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   const treeNode = tree.state.root;
   const renderController = useRenderController();
 
-  const handleShiftClickToSelectMultipleNodes = useCallback(
-    (e: React.MouseEvent) => {
-      const nodeElement = (e.target as HTMLElement).closest("[data-nodeid]");
-      if (!nodeElement) return;
+  // const handleShiftClickToSelectMultipleNodes = useCallback(
+  //   (e: React.MouseEvent) => {
+  //     const nodeElement = (e.target as HTMLElement).closest("[data-nodeid]");
+  //     if (!nodeElement) return;
 
-      const pathToClickedNode = nodeElement.getAttribute("data-editor-path");
-      if (!pathToClickedNode) return;
+  //     const pathToClickedNode = nodeElement.getAttribute("data-editor-path");
+  //     if (!pathToClickedNode) return;
 
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.shiftKey) {
-        tree.selectBetweenShiftClick(pathToClickedNode, EditorSelectionAction.ClickedOnTextEditor);
-      } else {
-        tree.setFocusedNode(pathToClickedNode, undefined, EditorSelectionAction.ClickedOnTextEditor);
-      }
-    },
-    [tree],
-  );
+  //     e.preventDefault();
+  //     e.stopPropagation();
+  //     if (e.shiftKey) {
+  //       tree.selectBetweenShiftClick(pathToClickedNode, EditorSelectionAction.ClickedOnTextEditor);
+  //     } else {
+  //       console.log("handleShiftClickToSelectMultipleNodes", pathToClickedNode);
+  //       tree.setFocusedNode(pathToClickedNode, undefined, EditorSelectionAction.ClickedOnTextEditor);
+  //     }
+  //   },
+  //   [tree],
+  // );
 
   return (
     <TreeContext.Provider value={tree}>
@@ -75,7 +75,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
 
             <CreateNewButton tree={tree} />
           </div>
-          <div className={s.Nodes} onClick={handleShiftClickToSelectMultipleNodes}>
+          <div className={s.Nodes}>
             <RelatedObjectChildren treeNode={treeNode} />
           </div>
         </div>
