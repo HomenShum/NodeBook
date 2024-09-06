@@ -134,8 +134,8 @@ export function createRouteUrl(path?: ObjectPath | GraphRelation[] | string | ty
 export function parsePathString(path: string[], graphStore: GraphStore): ObjectPath | null {
   if (path.length === 0) return null;
   let relations = [];
-  // Some object ids include user subs with pipes that would have been url encoded.
-  path = path.map((p) => p.replace("%7C", "|"));
+  // Some object ids include user subs with pipes or colons that would have been url encoded.
+  path = path.map((p) => p.replace(/%7C/g, "|").replace(/%3A/g, ":"));
   //If path contains group, ignore them.
   for (let id of path.slice(0, -1).filter((p) => !(p === "all" || p === "pinned"))) {
     const graphRel = graphStore.getRelation(id);
