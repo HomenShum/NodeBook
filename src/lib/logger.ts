@@ -33,7 +33,7 @@ function gte(a: LogLevel, b: LogLevel): boolean {
  * Global filter object that is applied to all loggers.
  */
 const globalLoggerFilter: GlobalFilter = {
-  level: "debug",
+  level: process.env.NODE_ENV === "production" ? "info" : process.env.NODE_ENV === "test" ? "error" : "debug",
 };
 /**
  * Update the global filter object. This will affect all loggers.
@@ -89,10 +89,10 @@ function defaultFormatter(logMessage: LogMessage): [string, ...any[]] {
 class Logger {
   private options: LoggerOptions;
 
-  constructor(options: Partial<LoggerOptions>) {
+  constructor(options: Partial<LoggerOptions> = {}) {
     const formatter = options.formatter || defaultFormatter;
     this.options = {
-      level: "info",
+      level: "debug",
       formatter,
       transports: [new ConsoleTransport(formatter)],
       ...options,
@@ -180,8 +180,6 @@ class Logger {
  * updateGlobalLoggerFilter({ level: "info" });
  * logger.debug("This message will not be logged");
  */
-const logger = new Logger({
-  level: process.env.NODE_ENV === "production" ? "info" : process.env.NODE_ENV === "test" ? "error" : "debug",
-});
+const logger = new Logger();
 
 export default logger;
