@@ -13,7 +13,7 @@ import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCach
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
-import { BaseTreeNode, DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
+import { BaseTreeNode, DescendantTreeNode, RootTreeNode, TreeNode } from "./nodes";
 import { EditorSelectionAction, EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
@@ -287,7 +287,11 @@ export class Tree {
     return top;
   }
 
-  private collectSelectedNodes(subtreeRoots: DescendantTreeNode[], anchor: DescendantTreeNode, head: DescendantTreeNode): DescendantTreeNode[] {
+  private collectSelectedNodes(
+    subtreeRoots: DescendantTreeNode[],
+    anchor: DescendantTreeNode,
+    head: DescendantTreeNode,
+  ): DescendantTreeNode[] {
     let foundAnchor = false;
     let foundHead = false;
     return subtreeRoots.flatMap((root) => {
@@ -295,9 +299,10 @@ export class Tree {
       walkTree(root, (n) => {
         if (n instanceof DescendantTreeNode) {
           const isAnchorOrHead = n.id === anchor.id || n.id === head.id;
-          
+
           // Include all descendants of the bottom node's ancestors for consistency.
-          const isInSelectionPath = n.isDescendantOf(head) || n.isDescendantOf(anchor) || nodes.some((node) => n.isDescendantOf(node));
+          const isInSelectionPath =
+            n.isDescendantOf(head) || n.isDescendantOf(anchor) || nodes.some((node) => n.isDescendantOf(node));
           const shouldInclude = !foundAnchor || !foundHead || isAnchorOrHead || isInSelectionPath;
 
           if (isAnchorOrHead) {
@@ -317,7 +322,11 @@ export class Tree {
    * @param treeNodeId - ID of the node to focus, or null to maintain current selection.
    * @param position - Position of the cursor in the editor.
    */
-  setFocusedNode(treeNodeId: string | null, position?: EditorSelectionPosition, selectionAction?: EditorSelectionAction) {
+  setFocusedNode(
+    treeNodeId: string | null,
+    position?: EditorSelectionPosition,
+    selectionAction?: EditorSelectionAction,
+  ) {
     switch (this.selection?.type) {
       case "editor":
         this.prevFocusedNodeId = this.selection.treeNodeId;
@@ -353,7 +362,7 @@ export class Tree {
     if (headNodeType !== EditorSelectionAction.ClickedOnSuffixInput) {
       this.setFocusedNode(clickedNodePath);
     }
-  
+
     const currentSelection = this.selectionWithNodes;
     if (!currentSelection) return false;
 
@@ -478,15 +487,11 @@ export class Tree {
         treeNode.isBackrelation &&
         (treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id ||
           treeNode.relationWithParent.relationType.id === defaultRelationTypes.sublist.id);
-      const isParentRelationToGrandparent =
-        isParentRelation &&
-        treeNode.object.id === treeNode.parent.parent?.object.id &&
-        !(treeNode.parent.parent instanceof PathToRootNode);
       if (filter.hideAllParents && isParentRelation) {
         return false;
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
         return false;
-      } else if (filter.hideDirectParent && isParentRelationToGrandparent) {
+      } else if (filter.hideDirectParent && treeNode.relationWithParent.id === treeNode.parent.relationWithParent?.id) {
         return false;
       }
       return true;
