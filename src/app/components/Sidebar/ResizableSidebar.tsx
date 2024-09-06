@@ -1,4 +1,4 @@
-import { ArrowLeft, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
+import { ArrowLeft, Globe, Home, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
 import { action } from "mobx";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -128,12 +128,30 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = ({
                 variant="ghost"
                 className={styles.Button}
                 onClick={() => {
+                  router.push(createRouteUrl({ object: graphStore.globalRoot }));
+                }}
+              >
+                <span>
+                  <Globe size={16} />
+                </span>
+                <span>{graphStore.globalRoot.text}</span>
+              </Button>
+              <Button
+                style={{ width: "100%" }}
+                variant="ghost"
+                className={styles.Button}
+                onClick={() => {
                   router.push(createRouteUrl(graphStore.getDefaultRootForUser()));
                 }}
               >
-                Home
+                <span>
+                  <Home size={16} />
+                </span>
+                <span>{graphStore.userRoot.text}</span>
               </Button>
-              <SidebarTree />
+              <div style={{ marginTop: "16px" }}>
+                <SidebarTree />
+              </div>
             </div>
             <CommandBar />
           </div>
