@@ -1,6 +1,5 @@
 import { Edit2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
 
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -20,13 +19,14 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
   const isExpanded = tree.isPathExpanded(treeNode.path);
   const isMyNode = treeNode.object.authorId === graphStore.user.id;
 
-  const [isEditMode, setIsEditMode] = useState(isLocal || (tree.isNodeFocused(treeNode.id) && isMyNode));
-  const isGlobalReference = !isLocal && !isEditMode;
+  const isEditMode =
+    tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id && tree.selection.editMode;
+  const isReadOnlyReference = treeNode.object.isGlobal && !isEditMode;
 
   const cnOuterContainer = cn(
     isLocal && styles.ColumnContainer,
     !isLocal && styles.TreeNodeReference,
-    isGlobalReference && styles.PillContainer,
+    isReadOnlyReference && styles.PillContainer,
   );
 
   const cnInnerContainer = cn(
@@ -34,36 +34,31 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
     isLocal ? "" : isEditMode ? cn(styles.Pill, styles.Editor) : cn(isExpanded && styles.Expanded, styles.Pill),
   );
 
-  const focusNonLocalNode = () => {
-    setIsEditMode(true);
-    setTimeout(() => tree.setFocusedNode(treeNode.id), 50);
-  };
-
   return (
     <div className={styles.Container}>
       <div className={cnOuterContainer}>
         <div
           className={cnInnerContainer}
           onClick={() => {
-            if (isGlobalReference) tree.togglePathExpanded(treeNode.path);
+            if (isReadOnlyReference) tree.togglePathExpanded(treeNode.path);
           }}
         >
-          <NodeEditor treeNode={treeNode} isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
-          {isGlobalReference && isMyNode && (
+          <NodeEditor treeNode={treeNode} />
+          {isReadOnlyReference && isMyNode && (
             <Button
               variant="ghost"
               size="icon"
               className={styles.EditButton}
               onClick={(e) => {
                 e.stopPropagation(); // Prevent the node from expanding/collapsing
-                focusNonLocalNode();
+                tree.setFocusedNode(treeNode.id, undefined, undefined, true);
               }}
             >
               <Edit2 size={14} />
             </Button>
           )}
         </div>
-        {isGlobalReference && <TreeNodeInputSuffix treeNode={treeNode} />}
+        {isReadOnlyReference && <TreeNodeInputSuffix treeNode={treeNode} />}
       </div>
     </div>
   );

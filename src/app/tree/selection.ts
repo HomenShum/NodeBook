@@ -51,13 +51,14 @@ export type EditorSelectionPosition = "start" | "end" | { anchorOffset: number; 
 export enum EditorSelectionAction {
   ClickedOnTextEditor = "clicked-on-text-editor",
   ClickedOnSuffixInput = "clicked-on-suffix-input",
+  FocusingCreatedNode = "focusing-created-node",
 }
 export type EditorSelection = {
   type: "editor";
   treeNodeId: string;
   position?: EditorSelectionPosition;
+  editMode?: boolean;
 };
-
 
 export type NodeSelection = {
   type: "node";

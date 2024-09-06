@@ -327,6 +327,7 @@ export class Tree {
     treeNodeId: string | null,
     position?: EditorSelectionPosition,
     selectionAction?: EditorSelectionAction,
+    editMode?: boolean,
   ) {
     switch (this.selection?.type) {
       case "editor":
@@ -337,7 +338,7 @@ export class Tree {
         break;
     }
     if (selectionAction) this.prevFocusedNodeAction = selectionAction;
-    this.selection = treeNodeId ? { type: "editor", treeNodeId, position } : null;
+    this.selection = treeNodeId ? { type: "editor", treeNodeId, position, editMode } : null;
   }
 
   /** Returns true if the given node's editor is focused. */
@@ -743,7 +744,7 @@ export class Tree {
       this.setPathExpanded(newNodePath, true);
     }
 
-    this.setFocusedNode(newNodePath, "start");
+    this.setFocusedNode(newNodePath, "start", undefined, true);
 
     return { node: newNode, relation, path: newNodePath };
   }

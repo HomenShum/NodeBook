@@ -290,7 +290,6 @@ export class GraphStore {
         isZone: props.isZone ?? false,
         isPublic: props.isPublic ?? this.settings?.publicMode ?? false,
       });
-      console.log("node", node);
 
       this.nodesById.set(node.id, node);
       this.cappedKeywordIndex.add(node.id, () => node!.searchText);
@@ -317,9 +316,11 @@ export class GraphStore {
    */
   async addChildNode(tx: TxAddChildNode): Promise<{ node: GraphNode; relation: GraphRelation }> {
     const { node, relation, updates } = this._addChildNode(tx);
+
     this.updateManager.queueUpdates(updates);
     return { node, relation };
   }
+
   private _addChildNode(tx: TxAddChildNode): {
     node: GraphNode;
     relation: GraphRelation;
@@ -348,6 +349,16 @@ export class GraphStore {
       });
       newRelation = relation;
       updates.push(...newRelationUpdates);
+
+      if (this.settings?.addAllNewNodesAsChildrenOfUserNode) {
+        if (wannaBeParent !== this.userRoot) {
+          const { updates: userRelationUpdates } = this._addRelation({
+            fromId: this.userRoot.id,
+            toId: node.id,
+          });
+          updates.push(...userRelationUpdates);
+        }
+      }
 
       return { node: newNode, relation: newRelation, updates };
     } catch (e) {

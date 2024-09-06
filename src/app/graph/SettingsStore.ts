@@ -9,10 +9,7 @@ export enum SearchAndReplaceDropdownOption {
 }
 
 type SerializedUserSettings = {
-  addThoughtstreamDirectChildrenToOutline?: boolean;
-  addAllOutlineDescendantsToThoughtstream?: boolean;
-  addThoughtstreamNestedChildrenToThoughtstream?: boolean;
-  removingNodeAsDirectChildOfThoughtstreamDeletesIt?: boolean;
+  addAllNewNodesAsChildrenOfUserNode?: boolean;
   showNodeDetails?: boolean;
   hideDirectParent?: boolean;
   hideAllRootParents?: boolean;
@@ -25,22 +22,13 @@ type SerializedUserSettings = {
   searchAndReplaceEnabled?: boolean;
   searchAndReplaceDropdown?: SearchAndReplaceDropdownOption;
   disableCycles?: boolean;
-  addStreamLabeledRelationsToMyLists?: boolean;
   allowShiftTabAboveViewRoot?: boolean;
   hidePinnedItems?: boolean;
   publicMode?: boolean;
 };
 
 export class SettingsStore {
-  /** Add outline descendants which are direct children of outline to outline */
-  public addThoughtstreamDirectChildrenToOutline = false;
-  /** Add thoughtstream descendants which are direct children of thoughtstream to thoughtstream */
-  public addAllOutlineDescendantsToThoughtstream = true;
-  /** Add thoughtstream descendants which are not direct children of thoughtstream as direct children of thoughtstream */
-  public addThoughtstreamNestedChildrenToThoughtstream = false;
-  /** When enabled, removing a node as a direct child of a thoughtstream will delete it */
-  public removingNodeAsDirectChildOfThoughtstreamDeletesIt = false;
-
+  public addAllNewNodesAsChildrenOfUserNode = false;
   public showNodeDetails = false;
   public hideDirectParent = true;
   public hideAllRootParents = true;
@@ -72,10 +60,7 @@ export class SettingsStore {
   }
 
   resetToDefaults() {
-    this.addThoughtstreamDirectChildrenToOutline = false;
-    this.addAllOutlineDescendantsToThoughtstream = true;
-    this.addThoughtstreamNestedChildrenToThoughtstream = false;
-    this.removingNodeAsDirectChildOfThoughtstreamDeletesIt = false;
+    this.addAllNewNodesAsChildrenOfUserNode = false;
     this.showNodeDetails = false;
     this.hideDirectParent = true;
     this.hideAllRootParents = true;
@@ -114,10 +99,7 @@ export class SettingsStore {
 
   serialize(): SerializedUserSettings {
     return {
-      addThoughtstreamDirectChildrenToOutline: this.addThoughtstreamDirectChildrenToOutline,
-      addAllOutlineDescendantsToThoughtstream: this.addAllOutlineDescendantsToThoughtstream,
-      addThoughtstreamNestedChildrenToThoughtstream: this.addThoughtstreamNestedChildrenToThoughtstream,
-      removingNodeAsDirectChildOfThoughtstreamDeletesIt: this.removingNodeAsDirectChildOfThoughtstreamDeletesIt,
+      addAllNewNodesAsChildrenOfUserNode: this.addAllNewNodesAsChildrenOfUserNode,
       showNodeDetails: this.showNodeDetails,
       hideDirectParent: this.hideDirectParent,
       hideAllRootParents: this.hideAllRootParents,
@@ -130,21 +112,14 @@ export class SettingsStore {
       searchAndReplaceEnabled: this.searchAndReplaceEnabled,
       searchAndReplaceDropdown: this.searchAndReplaceDropdown,
       disableCycles: this.disableCycles,
-      addStreamLabeledRelationsToMyLists: this.addStreamLabeledRelationsToMyLists,
       allowShiftTabAboveViewRoot: this.allowShiftTabAboveViewRoot,
       hidePinnedItems: this.hidePinnedItems,
     };
   }
 
   deserialize(data: SerializedUserSettings) {
-    this.addThoughtstreamDirectChildrenToOutline =
-      data.addThoughtstreamDirectChildrenToOutline ?? this.addThoughtstreamDirectChildrenToOutline;
-    this.addAllOutlineDescendantsToThoughtstream =
-      data.addAllOutlineDescendantsToThoughtstream ?? this.addAllOutlineDescendantsToThoughtstream;
-    this.addThoughtstreamNestedChildrenToThoughtstream =
-      data.addThoughtstreamNestedChildrenToThoughtstream ?? this.addThoughtstreamNestedChildrenToThoughtstream;
-    this.removingNodeAsDirectChildOfThoughtstreamDeletesIt =
-      data.removingNodeAsDirectChildOfThoughtstreamDeletesIt ?? this.removingNodeAsDirectChildOfThoughtstreamDeletesIt;
+    this.addAllNewNodesAsChildrenOfUserNode =
+      data.addAllNewNodesAsChildrenOfUserNode ?? this.addAllNewNodesAsChildrenOfUserNode;
     this.showNodeDetails = data.showNodeDetails ?? this.showNodeDetails;
     this.hideDirectParent = data.hideDirectParent ?? this.hideDirectParent;
     this.hideAllRootParents = data.hideAllRootParents ?? this.hideAllRootParents;
@@ -158,30 +133,16 @@ export class SettingsStore {
     this.searchAndReplaceEnabled = data.searchAndReplaceEnabled ?? this.searchAndReplaceEnabled;
     this.searchAndReplaceDropdown = data.searchAndReplaceDropdown ?? this.searchAndReplaceDropdown;
     this.disableCycles = data.disableCycles ?? this.disableCycles;
-    this.addStreamLabeledRelationsToMyLists =
-      data.addStreamLabeledRelationsToMyLists ?? this.addStreamLabeledRelationsToMyLists;
     this.allowShiftTabAboveViewRoot = data.allowShiftTabAboveViewRoot ?? this.allowShiftTabAboveViewRoot;
     this.hidePinnedItems = data.hidePinnedItems ?? this.hidePinnedItems;
   }
 
+  setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
+    this.addAllNewNodesAsChildrenOfUserNode = value;
+  }
+
   setPublicMode(value: boolean) {
     this.publicMode = value;
-  }
-
-  setAddThoughtstreamDirectChildrenToOutline(value: boolean) {
-    this.addThoughtstreamDirectChildrenToOutline = value;
-  }
-
-  setAddAllOutlineDescendantsToThoughtstream(value: boolean) {
-    this.addAllOutlineDescendantsToThoughtstream = value;
-  }
-
-  setAddThoughtstreamNestedChildrenToThoughtstream(value: boolean) {
-    this.addThoughtstreamNestedChildrenToThoughtstream = value;
-  }
-
-  setRemovingNodeAsDirectChildOfThoughtstreamDeletesIt(value: boolean) {
-    this.removingNodeAsDirectChildOfThoughtstreamDeletesIt = value;
   }
 
   setShowNodeDetails(value: boolean) {

@@ -11,7 +11,6 @@ import { useUser } from "@/app/StoresProvider";
 
 import styles from "./DevTools.module.css";
 
-
 const SelectSearchAndReplaceDropdown = observer(() => {
   const settingsStore = useSettingsStore();
 
@@ -24,9 +23,7 @@ const SelectSearchAndReplaceDropdown = observer(() => {
   return (
     <select
       value={settingsStore.searchAndReplaceDropdown}
-      onChange={(e) =>
-        settingsStore.setSearchAndReplaceDropdown(e.target.value as SearchAndReplaceDropdownOption)
-      }
+      onChange={(e) => settingsStore.setSearchAndReplaceDropdown(e.target.value as SearchAndReplaceDropdownOption)}
     >
       {searchAndReplaceDropdownOptions.map((option) => (
         <option key={option.value} value={option.value}>
@@ -58,34 +55,10 @@ export const DevTools = observer(() => {
         <label className={styles.LabelSetting}>
           <input
             type="checkbox"
-            checked={settingsStore.addAllOutlineDescendantsToThoughtstream}
-            onChange={(e) => settingsStore.setAddAllOutlineDescendantsToThoughtstream(e.target.checked)}
+            checked={settingsStore.addAllNewNodesAsChildrenOfUserNode}
+            onChange={(e) => settingsStore.setAddAllNewNodesAsChildrenOfUserNode(e.target.checked)}
           />
-          Add all outline descendants to thoughtstream
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.addThoughtstreamDirectChildrenToOutline}
-            onChange={(e) => settingsStore.setAddThoughtstreamDirectChildrenToOutline(e.target.checked)}
-          />
-          Add thoughtstream direct children to outline
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.addThoughtstreamNestedChildrenToThoughtstream}
-            onChange={(e) => settingsStore.setAddThoughtstreamNestedChildrenToThoughtstream(e.target.checked)}
-          />
-          Add thoughtstream nested children as direct children of thoughtstream
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.addStreamLabeledRelationsToMyLists}
-            onChange={(e) => settingsStore.setAddStreamLabeledRelationsToMyLists(e.target.checked)}
-          />
-          Add stream labeled relations to My Lists
+          Add all new nodes as children of user node
         </label>
         <label className={styles.LabelSetting}>
           <input
@@ -102,14 +75,6 @@ export const DevTools = observer(() => {
             onChange={(e) => settingsStore.setDisableCycles(e.target.checked)}
           />
           Disable expanding cycles
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.removingNodeAsDirectChildOfThoughtstreamDeletesIt}
-            onChange={(e) => settingsStore.setRemovingNodeAsDirectChildOfThoughtstreamDeletesIt(e.target.checked)}
-          />
-          On removing node as direct child of thoughtstream, delete the node everywhere
         </label>
         <div className={styles.SearchReplaceContainer}>
           <label>Trigger search and replace dropdown:</label>

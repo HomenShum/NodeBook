@@ -29,13 +29,7 @@ import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 
 import styles from "./Editor.module.css";
 
-type NodeEditorProps = {
-  treeNode: DescendantTreeNode;
-  isEditMode: boolean;
-  setIsEditMode: (isEditMode: boolean) => void;
-};
-
-export const NodeEditor = observer(({ treeNode, isEditMode, setIsEditMode }: NodeEditorProps) => {
+export const NodeEditor = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
@@ -43,14 +37,13 @@ export const NodeEditor = observer(({ treeNode, isEditMode, setIsEditMode }: Nod
   const router = useRouter();
   const tree = useTree();
   const isMyNode = treeNode.object.authorId === graphStore.user.id;
+  const isEditMode =
+    tree.selection?.type === "editor" ? tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode : false;
   const editable = isMyNode && (treeNode.object.isLocal || isEditMode);
-
-  const config = createConfig({ namespace: "descendant-editor", treeNode, editable });
-  console.log(`${treeNode.path}/NodeEditor/config`, config);
 
   return (
     <div className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
-      <LexicalComposer initialConfig={config}>
+      <LexicalComposer initialConfig={createConfig({ namespace: "descendant-editor", treeNode, editable })}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
           contentEditable={
@@ -84,7 +77,7 @@ export const NodeEditor = observer(({ treeNode, isEditMode, setIsEditMode }: Nod
         />
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
         {editable && <BindFocusToTreePlugin />}
-        <ToggleEditablePlugin treeNode={treeNode} isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
+        <ToggleEditablePlugin treeNode={treeNode} editable={editable} />
       </LexicalComposer>
     </div>
   );

@@ -13,6 +13,7 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenuUtils";
 import { TriggerType } from "@/app/components/UIPrimitives/LexicalMenu";
 import { LexicalTypeaheadMenuPlugin } from "@/app/editor/plugins/LexicalTypeaheadMenuPlugin";
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { SearchAndReplaceDropdownOption } from "@/app/graph/SettingsStore";
@@ -23,7 +24,6 @@ import { useTree } from "@/app/tree/TreeContext";
 import { uuid } from "@/app/util";
 import logger from "@/lib/logger";
 import { checkForMentionMatch, checkForSearchAndReplaceMatch } from "@/lib/utils";
-import { defaultRelationTypes } from "@/app/graph/constants";
 
 enum DropdownAction {
   NONE,
@@ -132,7 +132,7 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
             } else if (treeNode instanceof RootTreeNode) {
               treeNode.object = newObject;
             }
-            tree.setFocusedNode(treeNode.path);
+            tree.setFocusedNode(treeNode.path, "end", undefined, true);
             break;
           }
           case DropdownOptionType.RELATION: {
