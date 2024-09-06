@@ -17,7 +17,7 @@ import { RenderControllerProvider } from "@/app/render/useRenderController";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
-import appLogger from "@/lib/logger";
+import appLogger, { getGlobalLoggerFilter, updateGlobalLoggerFilter } from "@/lib/logger";
 import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
 
 export const logger = appLogger.child({ service: "store-provider" });
@@ -34,7 +34,17 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
   const [renderController, setRenderController] = useState<RenderController>(new RenderController());
   // expose stores to window for debugging
   if (env.env !== "production" && typeof window !== "undefined") {
-    window.mew = { env, toJS, graphStore, viewStore, renderController, getDependencyTree, getObserverTree };
+    window.mew = {
+      env,
+      toJS,
+      graphStore,
+      viewStore,
+      renderController,
+      getDependencyTree,
+      getObserverTree,
+      updateGlobalLoggerFilter,
+      getGlobalLoggerFilter,
+    };
   }
 
   // when auth changes, clean up current stores and setup up new ones
