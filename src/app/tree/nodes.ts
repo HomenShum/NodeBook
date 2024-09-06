@@ -227,6 +227,7 @@ export class SublistRootTreeNode extends RootTreeNode {
       );
 
       if (isLeaf) {
+        current.showRelation = false;
         pointerNodes.push(current);
         continue;
       }
@@ -253,6 +254,9 @@ export class DescendantTreeNode extends BaseTreeNode {
   path: string;
   depth: number;
   id: string;
+  //Todo: Remove this, just a temporary workaround for sublist view,
+  //we do not want to show relations for pointer nodes in sublist view.
+  showRelation: boolean = true;
   constructor({
     object,
     position,
