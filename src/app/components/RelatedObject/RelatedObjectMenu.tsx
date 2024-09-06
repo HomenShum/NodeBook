@@ -31,6 +31,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import { useTreeNode } from "./RelatedObjectContext";
 
@@ -40,12 +41,17 @@ export const RelatedObjectMenu = observer(
   ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {
     const graphStore = useGraphStore();
     const tree = useTree();
+    const viewStore = useViewStore();
     const { treeNode, viewType, setViewType } = useTreeNode();
     const object = treeNode.object;
     const parent = treeNode.parent.object;
     const relation = treeNode.relationWithParent;
 
     const [publicDialogOpen, setPublicDialogOpen] = useState(false);
+
+    if (viewStore.viewType === "sublist") {
+      return null;
+    }
 
     return (
       <DropdownMenu>

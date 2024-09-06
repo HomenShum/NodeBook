@@ -10,6 +10,7 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
 import { GraphRelationType } from "@/app/graph/types";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./RelationCombobox.module.css";
 
@@ -32,10 +33,15 @@ export const RelationCombobox = observer(
     const parent = treeNode.parent.object;
     const relation = treeNode.relationWithParent;
     const graphStore = useGraphStore();
+    const viewStore = useViewStore();
     const isForward = relation.to.id === object.id;
 
     const [search, setSearch] = React.useState(relation.relationType.label);
     const [selected, setSelected] = React.useState(`${relation.relationType.id}-${isForward ? "forward" : "reverse"}`);
+
+    if (viewStore.viewType === "sublist") {
+      return null;
+    }
 
     const close = () => {
       setIsOpen(false);

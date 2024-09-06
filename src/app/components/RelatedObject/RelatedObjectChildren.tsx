@@ -4,8 +4,8 @@ import { observer } from "mobx-react-lite";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
-import { AllGroup, ChildrenGroups, PinnedGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { ViewType } from "@/app/view/types";
+import { AllGroup, ChildrenGroups, PinnedGroup, PointerGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
@@ -19,12 +19,12 @@ export const RelatedObjectChildren = observer(({ treeNode }: { treeNode: TreeNod
   return (
     <div className={cn(!isRoot && styles.NodeIndentation)}>
       {children.map((group) => {
-        if (group instanceof PinnedGroup) {
+        if (group instanceof PointerGroup) {
+          return <PointerSection key={group.path} parentNode={treeNode} group={group} />;
+        } else if (group instanceof PinnedGroup) {
           return <PinnedSection key={group.path} parentNode={treeNode} group={group} />;
-        } else if (group instanceof AllGroup) {
-          return <AllSection key={group.path} parentNode={treeNode} group={group} />;
         } else {
-          return group satisfies never;
+          return <AllSection key={group.path} parentNode={treeNode} group={group} />;
         }
       })}
     </div>
@@ -78,7 +78,12 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
 
 const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: AllGroup }) => {
   const viewStore = useViewStore();
-  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
+  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === "note";
+  const sublistView = parentNode instanceof RootTreeNode && viewStore.viewType === "sublist";
+
+  if (sublistView) {
+    return null;
+  }
   return (
     <div>
       {group.nodes.map((childTreeNode, i) => {
@@ -86,6 +91,27 @@ const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; grou
           <div key={childTreeNode.path}>
             {noteView && <Separator i={i} />}
             <RelatedObjectView treeNode={childTreeNode} showBullet={!noteView} />
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
+const PointerSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: PointerGroup }) => {
+  const viewStore = useViewStore();
+  const sublistView = parentNode instanceof RootTreeNode && viewStore.viewType === "sublist";
+
+  if (!sublistView) {
+    return null;
+  }
+
+  return (
+    <div>
+      {group.nodes.map((childTreeNode, i) => {
+        return (
+          <div key={childTreeNode.path}>
+            <RelatedObjectView treeNode={childTreeNode} showBullet={true} />
           </div>
         );
       })}
