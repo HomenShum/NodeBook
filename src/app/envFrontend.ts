@@ -10,6 +10,7 @@ const processEnvSchema = z.object({
   NEXT_PUBLIC_USE_MOCK_USER_IF_AUTH_DISABLED: z.union([z.literal("true"), z.literal("false")]).optional(),
   NEXT_PUBLIC_PUSHER_KEY: z.string().optional(),
   NEXT_PUBLIC_PUSHER_CLUSTER: z.string().optional(),
+  NEXT_PUBLIC_GIT_COMMIT_SHA: z.string().optional(),
   ENV: z.union([z.literal("development"), z.literal("production")]).optional(),
 });
 processEnvSchema.parse(process.env);
@@ -27,6 +28,7 @@ export const env: {
   auth0ApiAudience: string | undefined;
   isAuthEnabled: boolean;
   useMockUserIfAuthDisabled: boolean;
+  gitCommitSha: string | undefined;
   isFrontend: boolean;
   pusherKey: string;
   pusherCluster: string;
@@ -39,6 +41,7 @@ export const env: {
   auth0ApiAudience: process.env.NEXT_PUBLIC_AUTH0_API_AUDIENCE || undefined,
   isAuthEnabled: process.env.NEXT_PUBLIC_IS_AUTH_ENABLED === "true",
   useMockUserIfAuthDisabled: process.env.NEXT_PUBLIC_USE_MOCK_USER_IF_AUTH_DISABLED === "true",
+  gitCommitSha: process.env.NEXT_PUBLIC_GIT_COMMIT_SHA || undefined,
   isFrontend: typeof window !== "undefined",
   pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY || "",
   pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",

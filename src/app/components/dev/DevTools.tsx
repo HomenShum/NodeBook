@@ -3,6 +3,7 @@ import { observer } from "mobx-react-lite";
 import { useAuth } from "@/app/auth/useAuth";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { env } from "@/app/envFrontend";
 import { SearchAndReplaceDropdownOption } from "@/app/graph/SettingsStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
@@ -116,7 +117,11 @@ export const DevTools = observer(() => {
         <p>
           <span>User ID:</span> {user.id}
         </p>
-
+        {env.gitCommitSha && (
+          <p>
+            <span>Git commit SHA:</span> {env.gitCommitSha}
+          </p>
+        )}
         <Button
           size="default"
           variant="default"
