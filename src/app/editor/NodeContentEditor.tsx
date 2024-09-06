@@ -6,7 +6,6 @@ import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useRef } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
@@ -22,6 +21,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
+import { useTree } from "@/app/tree/TreeContext";
 import { createRouteUrl } from "@/app/util";
 import { cn } from "@/lib/utils";
 
@@ -31,32 +31,26 @@ import styles from "./Editor.module.css";
 
 type NodeEditorProps = {
   treeNode: DescendantTreeNode;
-  isEditable: boolean;
-  setIsEditable: (isEditable: boolean) => void;
+  isEditMode: boolean;
+  setIsEditMode: (isEditMode: boolean) => void;
 };
 
-export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: NodeEditorProps) => {
-  const graphStore = useGraphStore();
-  const router = useRouter();
-
-  const ref = useRef<HTMLDivElement>(null);
+export const NodeEditor = observer(({ treeNode, isEditMode, setIsEditMode }: NodeEditorProps) => {
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
+  const graphStore = useGraphStore();
+  const router = useRouter();
+  const tree = useTree();
+  const isMyNode = treeNode.object.authorId === graphStore.user.id;
+  const editable = isMyNode && (treeNode.object.isLocal || isEditMode);
 
-  const setPathToNodeAsRoot = useCallback(
-    (nodeId: string) => {
-      const node = graphStore.getNode(nodeId);
-      if (node) {
-        router.push(createRouteUrl({ object: node }));
-      }
-    },
-    [graphStore, router],
-  );
+  const config = createConfig({ namespace: "descendant-editor", treeNode, editable });
+  console.log(`${treeNode.path}/NodeEditor/config`, config);
 
   return (
-    <div ref={ref} className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
-      <LexicalComposer initialConfig={createConfig({ namespace: "descendant-editor", treeNode })}>
+    <div className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
+      <LexicalComposer initialConfig={config}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
           contentEditable={
@@ -68,28 +62,29 @@ export const NodeEditor = observer(({ treeNode, isEditable, setIsEditable }: Nod
           }
           placeholder={null}
         />
-        <ClearEditorPlugin />
-        {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
-        <EnterKeyPlugin treeNode={treeNode} />
-        {isEditable && <DropdownMenuPlugin treeNode={treeNode} />}
-        <LeftRightArrowAtEndsPlugin />
-        <BackspaceMergeNodesPlugin />
-        <PastePlugin />
-        <RelationPlugin />
+        <SyncWithGraphPlugin node={treeNode.object} />
+        {editable && <ClearEditorPlugin />}
+        {editable && <EnterKeyPlugin treeNode={treeNode} />}
+        {editable && tree.isNodeFocused(treeNode.id) && <DropdownMenuPlugin treeNode={treeNode} />}
+        {editable && <LeftRightArrowAtEndsPlugin />}
+        {editable && <BackspaceMergeNodesPlugin />}
+        {editable && <PastePlugin />}
+        {editable && <RelationPlugin />}
         <NodeEventPlugin
           nodeType={MentionNode}
           eventType={"click"}
           eventListener={(e: Event) => {
+            const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
             e.stopPropagation();
-            setPathToNodeAsRoot((e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!);
+            const node = graphStore.getNode(nodeId);
+            if (node) {
+              router.push(createRouteUrl({ object: node }));
+            }
           }}
         />
-
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
-        <BindFocusToTreePlugin />
-        {treeNode.object.authorId === graphStore.user.id && (
-          <ToggleEditablePlugin treeNode={treeNode} isEditable={isEditable} setIsEditable={setIsEditable} />
-        )}
+        {editable && <BindFocusToTreePlugin />}
+        <ToggleEditablePlugin treeNode={treeNode} isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
       </LexicalComposer>
     </div>
   );

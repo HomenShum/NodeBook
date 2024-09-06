@@ -2,12 +2,12 @@ import { observer } from "mobx-react-lite";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import styles from "@/app/components/RelatedObject/RelatedObjectDetails.module.css";
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { Position } from "@/app/util";
-import { defaultRelationTypes } from "@/app/graph/constants";
 
 function getParentZones(relation: GraphRelation) {
   return Array.from(

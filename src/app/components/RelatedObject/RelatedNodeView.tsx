@@ -20,8 +20,8 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
   const isExpanded = tree.isPathExpanded(treeNode.path);
   const isMyNode = treeNode.object.authorId === graphStore.user.id;
 
-  const [isEditable, setIsEditable] = useState(isLocal || (tree.isNodeFocused(treeNode.id) && isMyNode));
-  const isGlobalReference = !isLocal && !isEditable;
+  const [isEditMode, setIsEditMode] = useState(isLocal || (tree.isNodeFocused(treeNode.id) && isMyNode));
+  const isGlobalReference = !isLocal && !isEditMode;
 
   const cnOuterContainer = cn(
     isLocal && styles.ColumnContainer,
@@ -31,11 +31,11 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
 
   const cnInnerContainer = cn(
     styles.FlexContainer,
-    isLocal ? "" : isEditable ? cn(styles.Pill, styles.Editor) : cn(isExpanded && styles.Expanded, styles.Pill),
+    isLocal ? "" : isEditMode ? cn(styles.Pill, styles.Editor) : cn(isExpanded && styles.Expanded, styles.Pill),
   );
 
   const focusNonLocalNode = () => {
-    setIsEditable(true);
+    setIsEditMode(true);
     setTimeout(() => tree.setFocusedNode(treeNode.id), 50);
   };
 
@@ -48,7 +48,7 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
             if (isGlobalReference) tree.togglePathExpanded(treeNode.path);
           }}
         >
-          <NodeEditor treeNode={treeNode} isEditable={isEditable} setIsEditable={setIsEditable} />
+          <NodeEditor treeNode={treeNode} isEditMode={isEditMode} setIsEditMode={setIsEditMode} />
           {isGlobalReference && isMyNode && (
             <Button
               variant="ghost"

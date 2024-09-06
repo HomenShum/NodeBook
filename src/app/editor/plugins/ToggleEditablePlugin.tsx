@@ -9,30 +9,33 @@ import {
 } from "lexical";
 import { useEffect } from "react";
 
-import { useSettingsStore } from '@/app/graph/useSettingsStore';
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { checkForMentionMatch, checkForSearchAndReplaceMatch } from '@/lib/utils';
+import { checkForMentionMatch, checkForSearchAndReplaceMatch } from "@/lib/utils";
 
 type ToggleEditablePluginProps = {
   treeNode: DescendantTreeNode;
-  isEditable: boolean;
-  setIsEditable: (isEditable: boolean) => void;
+  isEditMode: boolean;
+  setIsEditMode: (isEditMode: boolean) => void;
 };
 
-export const ToggleEditablePlugin = ({ treeNode, isEditable, setIsEditable }: ToggleEditablePluginProps) => {
+export const ToggleEditablePlugin = ({ treeNode, isEditMode, setIsEditMode }: ToggleEditablePluginProps) => {
+  const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
-  const { searchAndReplaceDropdown } = useSettingsStore()
+  const { searchAndReplaceDropdown } = useSettingsStore();
 
   useEffect(() => {
     if (!editor) return;
 
-    editor.setEditable(isEditable || treeNode.object.isLocal); // Local nodes are always editable
+    const editable = treeNode.object.authorId === graphStore.user.id && (treeNode.object.isLocal || isEditMode);
+    editor.setEditable(editable);
 
-    if (!treeNode.object.isLocal && isEditable) {
+    if (!treeNode.object.isLocal && isEditMode) {
       const commandHandler = (e: Event) => {
         e.stopPropagation();
         editor.blur();
-        setIsEditable(false);
+        setIsEditMode(false);
         return true;
       };
 
@@ -48,7 +51,7 @@ export const ToggleEditablePlugin = ({ treeNode, isEditable, setIsEditable }: To
         }
         e.stopPropagation();
         editor.blur();
-        setIsEditable(false);
+        setIsEditMode(false);
         return true;
       };
 
@@ -58,7 +61,7 @@ export const ToggleEditablePlugin = ({ treeNode, isEditable, setIsEditable }: To
         editor.registerCommand(KEY_ENTER_COMMAND, commandHandlerForEnterKey, COMMAND_PRIORITY_HIGH), // Higher than EnterKeyPlugin
       );
     }
-  }, [editor, treeNode, isEditable, setIsEditable, searchAndReplaceDropdown]);
+  }, [editor, treeNode, isEditMode, setIsEditMode, searchAndReplaceDropdown, graphStore.user.id]);
 
   return null;
 };
