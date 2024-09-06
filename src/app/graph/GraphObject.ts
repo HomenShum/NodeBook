@@ -24,11 +24,13 @@ export abstract class BaseGraphObject {
   protected store: GraphStore;
   allRelationsList: FractionalPositionedList<GraphRelation>;
   pinnedRelationsList: FractionalPositionedList<GraphRelation>;
+  pointerRelationsList: FractionalPositionedList<GraphRelation>;
 
-  constructor(store: GraphStore) {
+  protected constructor(store: GraphStore) {
     this.store = store;
     this.allRelationsList = new FractionalPositionedList();
     this.pinnedRelationsList = new FractionalPositionedList();
+    this.pointerRelationsList = new FractionalPositionedList();
   }
 
   get children(): GraphObject[] {
@@ -59,6 +61,10 @@ export abstract class BaseGraphObject {
 
   get pinnedRelationsWithPositions(): PositionedRelation[] {
     return this.pinnedRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
+  }
+
+  get pointerRelationsWithPositions(): PositionedRelation[] {
+    return this.pointerRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
   }
 
   /**

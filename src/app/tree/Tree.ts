@@ -133,11 +133,11 @@ export class Tree {
     });
   }
 
-  private id: string;
+  protected id: string;
 
-  private graphStore: GraphStore;
+  protected graphStore: GraphStore;
 
-  private settingsStore: SettingsStore;
+  protected settingsStore: SettingsStore;
 
   /** The current selection in the tree. This can be a node selection or an editor selection. */
   selection: TreeSelection | null;
@@ -150,14 +150,14 @@ export class Tree {
 
   public search: string = "";
 
-  private partialFilter: Partial<Filter> = {};
+  protected partialFilter: Partial<Filter> = {};
 
   // For Shift Click Selection
-  private prevFocusedNodeId: string | null = null;
-  private prevFocusedNodeAction: EditorSelectionAction | null = null;
+  protected prevFocusedNodeId: string | null = null;
+  protected prevFocusedNodeAction: EditorSelectionAction | null = null;
 
   /** Helper class to read and sync expansion state with local storage */
-  private expansionLocalStorageCache: ExpansionLocalStorageCache;
+  protected expansionLocalStorageCache: ExpansionLocalStorageCache;
 
   /** Expanded paths in the tree. */
   public expansionsByPath: Map<string, boolean>;
@@ -470,7 +470,7 @@ export class Tree {
     this.partialFilter = typeof filter === "function" ? filter(this.partialFilter) : filter;
   }
 
-  private applyFilter(treeNode: TreeNode): boolean {
+  protected applyFilter(treeNode: TreeNode): boolean {
     function walk(treeNode: TreeNode, filter: Filter) {
       if (filter.hidePinnedSection) {
         treeNode.childrenGroupsById.pinned.nodes = [];
@@ -504,7 +504,7 @@ export class Tree {
     return walk(treeNode, this.filter);
   }
 
-  private applySearch(treeNode: TreeNode) {
+  protected applySearch(treeNode: TreeNode) {
     if (!this.search) return;
     logger.debug("Applying search:", `"${this.search}"`);
     const search = this.search;
@@ -528,7 +528,7 @@ export class Tree {
     walk(treeNode);
   }
 
-  private applySort(treeNode: TreeNode) {
+  protected applySort(treeNode: TreeNode) {
     function walk(treeNode: TreeNode) {
       treeNode.childrenGroups.forEach((group) => {
         group.nodes.sort((a, b) => comparePositions(a.position, b.position));

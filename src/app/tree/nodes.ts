@@ -7,6 +7,7 @@ import { getOtherObjectOrThrow } from "@/app/graph/utils";
 import { Tree } from "@/app/tree/Tree";
 import { createRouteUrl, Position } from "@/app/util";
 import logger from "@/lib/logger";
+import { defaultRelationTypes } from "@/app/graph/constants";
 
 export class PathToRootNode {
   object: GraphObject;
@@ -43,7 +44,7 @@ export abstract class BaseTreeNode {
   abstract childrenGroups: ChildrenGroups;
   abstract relationWithParent: GraphRelation | null;
   abstract path: string;
-  constructor({ tree, object }: { tree: Tree; object: GraphObject }) {
+  protected constructor({ tree, object }: { tree: Tree; object: GraphObject }) {
     this.tree = tree;
     this.object = object;
   }
@@ -66,7 +67,7 @@ export abstract class BaseTreeNode {
   }
 
   get childrenGroupsById() {
-    return { pinned: this.childrenGroups[0], all: this.childrenGroups[1] };
+    return { pinned: this.childrenGroups[0], all: this.childrenGroups[1], pointer: this.childrenGroups[2] };
   }
 
   createChildPath(child: DescendantTreeNode | GraphRelation, groupId: GroupId = "all"): string {
@@ -117,7 +118,11 @@ export class RootTreeNode extends BaseTreeNode {
   relationWithParent: GraphRelation | null = null;
   constructor({ tree }: { tree: Tree }) {
     super({ tree, object: tree.rootObject });
-    this.childrenGroups = [new PinnedGroup({ tree, parent: this }), new AllGroup({ tree, parent: this })];
+    this.childrenGroups = [
+      new PinnedGroup({ tree, parent: this }),
+      new AllGroup({ tree, parent: this }),
+      new PointerGroup({ tree, parent: this }),
+    ];
   }
 
   hydrate() {
@@ -137,7 +142,7 @@ export class RootTreeNode extends BaseTreeNode {
     return this;
   }
 
-  private hydrateAncestors() {
+  protected hydrateAncestors() {
     const pathToRoot: GraphRelation[] = this.tree.pathToRoot;
     let currentNode: PathToRootNode | RootTreeNode = this;
     for (let i = pathToRoot.length - 1; i >= 0; i--) {
@@ -155,12 +160,86 @@ export class RootTreeNode extends BaseTreeNode {
     }
   }
 
-  private hydrateChildren() {
+  protected hydrateChildren() {
     this.childrenGroups.forEach((group) => group.hydrate());
   }
 
   get isExpanded() {
     return true;
+  }
+}
+
+export class SublistRootTreeNode extends RootTreeNode {
+  hydrate() {
+    try {
+      this.hydrateAncestors();
+      this.id = this.path;
+      this.path = this.parent ? this.tree.path.substring(0, this.tree.path.lastIndexOf("/")) : "";
+      this.depth = this.parent ? this.parent.depth + 1 : 0;
+      this.hydrateChildren();
+      //When the tree nodes are ready, start creating pointer nodes.
+      this.hydratePointerNodes();
+    } catch (e) {
+      logger.error("error hydrating node", e);
+      if (env.isFrontend) {
+        //Force page refresh, we do not want a partial broken state.
+        window.location.href = createRouteUrl("home");
+      }
+    }
+    return this;
+  }
+
+  protected hydrateChildren() {
+    //In sublist view, we do not want pinned items.
+    this.childrenGroups.forEach((group) => {
+      if (group.id === "all") {
+        group.hydrate();
+      }
+    });
+  }
+
+  protected hydratePointerNodes() {
+    const pointerNodes: PointerTreeNode[] = [];
+    //If two nodes point to same child, we do not want to push the same child
+    //twice inside pointerNodes.
+    // type StackType = {node: RootTreeNode | DescendantTreeNode, type: sublist}
+    const stack: [RootTreeNode | DescendantTreeNode] = [this];
+    const visitedObjectIds: Record<string, boolean> = {
+      [this.object.id]: true,
+      "outline-root-id": true,
+    };
+
+    //Prevent going back to parent
+    this.object.relations.forEach((r) => {
+      if (r.to.id === this.object.id) {
+        visitedObjectIds[r.from.id] = true;
+      }
+    });
+
+    //Simple DFS, add sublist nodes to stack, normal nodes to pointer nodes
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!current) continue;
+
+      const isLeaf = !(
+        current instanceof RootTreeNode ||
+        current.relationWithParent.relationType.id === defaultRelationTypes.sublist.id
+      );
+
+      if (isLeaf) {
+        pointerNodes.push(current);
+        continue;
+      }
+
+      for (const childNode of current.childrenGroupsById["all"].nodes.toSorted((a, b) =>
+        `${b.position.int}-${b.position.frac}`.localeCompare(`${a.position.int}-${a.position.frac}`),
+      )) {
+        if (visitedObjectIds[childNode.object.id]) continue;
+        stack.push(childNode);
+        visitedObjectIds[childNode.object.id] = true;
+      }
+    }
+    this.childrenGroups[2].add(pointerNodes);
   }
 }
 
@@ -196,6 +275,7 @@ export class DescendantTreeNode extends BaseTreeNode {
     this.childrenGroups = [
       new PinnedGroup({ tree: group.tree, parent: this }),
       new AllGroup({ tree: group.tree, parent: this }),
+      new PointerGroup({ tree: group.tree, parent: this }),
     ];
     this.parentGroup = group;
     this.isSearchMatch = isSearchMatch;
@@ -285,7 +365,9 @@ export class DescendantTreeNode extends BaseTreeNode {
   }
 }
 
-export type TreeNode = RootTreeNode | DescendantTreeNode;
+export class PointerTreeNode extends DescendantTreeNode {}
+
+export type TreeNode = PointerTreeNode | RootTreeNode | DescendantTreeNode;
 
 /**
  * When you expand a node in the tree, it's children are shown in distinct
@@ -294,7 +376,7 @@ export type TreeNode = RootTreeNode | DescendantTreeNode;
  * groupby operations like "by type" or "by relation" (similar to Linear).
  */
 export abstract class BaseGroup {
-  abstract id: "all" | "pinned";
+  abstract id: "all" | "pinned" | "pointer";
   tree: Tree;
   parent: TreeNode;
   nodes: DescendantTreeNode[];
@@ -302,7 +384,7 @@ export abstract class BaseGroup {
   abstract path: string;
   abstract add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>): Promise<void>;
 
-  constructor({ tree, parent, nodes = [] }: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
+  protected constructor({ tree, parent, nodes = [] }: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
     this.tree = tree;
     this.parent = parent;
     this.nodes = nodes;
@@ -401,5 +483,26 @@ export class AllGroup extends BaseGroup {
   }
 }
 
-export type ChildrenGroups = [PinnedGroup, AllGroup];
+export class PointerGroup extends BaseGroup {
+  id = "pointer" as const;
+
+  constructor(props: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
+    super(props);
+  }
+
+  get path() {
+    return this.parent.path + "/" + this.id;
+  }
+
+  get relationsWithPositions() {
+    return this.parent.object.pointerRelationsWithPositions;
+  }
+
+  async add(nodes: PointerTreeNode[], after?: Positioner<DescendantTreeNode>) {
+    this.nodes = nodes;
+    this.tree.setPathExpanded(this.parent.path, true);
+  }
+}
+
+export type ChildrenGroups = [PinnedGroup, AllGroup, PointerGroup];
 export type GroupId = BaseGroup["id"];
