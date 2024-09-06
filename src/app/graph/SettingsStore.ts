@@ -5,7 +5,7 @@ import { autorun, isObservable, makeAutoObservable } from "mobx";
 export enum SearchAndReplaceDropdownOption {
   Always = "always",
   LabelledOnly = "labelled-only",
-  SemicolonOnly = "semicolon-only"
+  SemicolonOnly = "semicolon-only",
 }
 
 type SerializedUserSettings = {
@@ -28,6 +28,7 @@ type SerializedUserSettings = {
   addStreamLabeledRelationsToMyLists?: boolean;
   allowShiftTabAboveViewRoot?: boolean;
   hidePinnedItems?: boolean;
+  publicMode?: boolean;
 };
 
 export class SettingsStore {
@@ -55,6 +56,7 @@ export class SettingsStore {
   public addStreamLabeledRelationsToMyLists = true;
   public allowShiftTabAboveViewRoot = false;
   public hidePinnedItems = false;
+  public publicMode = false;
 
   private stopAutosave: () => void;
 
@@ -109,7 +111,7 @@ export class SettingsStore {
       }
     }
   }
-  
+
   serialize(): SerializedUserSettings {
     return {
       addThoughtstreamDirectChildrenToOutline: this.addThoughtstreamDirectChildrenToOutline,
@@ -160,6 +162,10 @@ export class SettingsStore {
       data.addStreamLabeledRelationsToMyLists ?? this.addStreamLabeledRelationsToMyLists;
     this.allowShiftTabAboveViewRoot = data.allowShiftTabAboveViewRoot ?? this.allowShiftTabAboveViewRoot;
     this.hidePinnedItems = data.hidePinnedItems ?? this.hidePinnedItems;
+  }
+
+  setPublicMode(value: boolean) {
+    this.publicMode = value;
   }
 
   setAddThoughtstreamDirectChildrenToOutline(value: boolean) {

@@ -28,8 +28,8 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
 
   // instantiate empty stores with unlogged user
   const [user, setUser] = useState<MewUser>(UNLOGGED_USER);
-  const [graphStore, setGraphStore] = useState<GraphStore>(new GraphStore(UNLOGGED_USER));
   const [settingsStore, setSettingsStore] = useState<SettingsStore>(new SettingsStore());
+  const [graphStore, setGraphStore] = useState<GraphStore>(new GraphStore(UNLOGGED_USER, settingsStore));
   const [viewStore, setViewStore] = useState<ViewStore>(new ViewStore(settingsStore, graphStore));
   const [renderController, setRenderController] = useState<RenderController>(new RenderController());
   // expose stores to window for debugging
@@ -65,8 +65,8 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       }
 
       // create new stores (shorter names to disttinguish from the state variables)
-      const graph = new GraphStore(newUser, authedFetch);
       const settings = new SettingsStore();
+      const graph = new GraphStore(newUser, settings, authedFetch);
       const view = new ViewStore(settings, graph);
       const render = new RenderController();
 

@@ -3,6 +3,7 @@ import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
+import { SettingsStore } from "@/app/graph/SettingsStore";
 import { GraphRelationType } from "@/app/graph/types";
 import { UpdateManager } from "@/app/graph/UpdateManager";
 import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
@@ -53,6 +54,7 @@ import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
  * - asynchronous and transactional (i.e. they return a new state of the graph)
  */
 export class GraphStore {
+  settings: SettingsStore | undefined;
   cappedKeywordIndex = new CappedKeywordIndex(3);
 
   user: MewUser;
@@ -63,8 +65,9 @@ export class GraphStore {
   relationToBundles: Map<string, GraphNode[]> = new Map(); // Relation id to list of bundle-nodes that contain it
   relationTypesById: Record<string, GraphRelationType> = {};
 
-  constructor(user: MewUser = UNLOGGED_USER, authedFetch?: typeof fetch) {
+  constructor(user: MewUser = UNLOGGED_USER, settings?: SettingsStore, authedFetch?: typeof fetch) {
     this.user = user;
+    this.settings = settings;
     this.updateManager = new UpdateManager(
       user.id,
       authedFetch ?? fetch,
@@ -285,8 +288,9 @@ export class GraphStore {
         content: props.content,
         isBundle: props.isBundle ?? false,
         isZone: props.isZone ?? false,
-        isPublic: props.isPublic ?? false,
+        isPublic: props.isPublic ?? this.settings?.publicMode ?? false,
       });
+      console.log("node", node);
 
       this.nodesById.set(node.id, node);
       this.cappedKeywordIndex.add(node.id, () => node!.searchText);
@@ -959,6 +963,7 @@ export class GraphStore {
 
       relation = new GraphRelation(this, {
         ...relationProps,
+        isPublic: relationProps.isPublic ?? this.settings?.publicMode ?? false,
         authorId,
       });
       this.relationsById.set(relation.id, relation);

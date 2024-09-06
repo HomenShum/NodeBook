@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { TreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray } from "@/app/tree/utils";
 import { createRouteUrl, truncateText, useIsMobile } from "@/app/util";
@@ -20,6 +21,7 @@ import styles, { default as s } from "./Breadcrumbs.module.css";
 const MAX_VISIBLE_ITEMS = 4; // For desktop view
 
 export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
+  const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -142,8 +144,8 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
   return (
     <nav className={s.BreadcrumbContainer} aria-label="breadcrumb">
       <div className={s.BreadcrumbWrapper}>{renderBreadcrumbs()}</div>
-      <span className={s.ActionButtons}>
-        {treeNode.object.isPublic ? (
+      <span className={s.PublicModeToggle} onClick={() => settingsStore.setPublicMode(!settingsStore.publicMode)}>
+        {settingsStore.publicMode ? (
           <span className={styles.Icon}>
             <Globe size={14} strokeWidth={1.5} />
           </span>

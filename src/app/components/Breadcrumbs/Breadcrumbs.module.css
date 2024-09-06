@@ -47,11 +47,12 @@
   flex-shrink: 0;
 }
 
-.ActionButtons {
+.PublicModeToggle {
   display: flex;
   gap: 16px;
   align-items: center;
   margin-right: 24px;
+  cursor: pointer;
 }
 
 .Icon {
