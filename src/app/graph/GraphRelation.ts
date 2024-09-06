@@ -14,6 +14,7 @@ export type GraphRelationType = {
   authorId: string;
   label: string; // e.g. author
   reverseLabel: string; // e.g. authored by
+  isPublic: boolean;
 };
 
 export function isGraphRelationType(obj: any): obj is GraphRelationType {
@@ -27,13 +28,13 @@ export type GraphRelationProps = {
   from: GraphObject;
   to: GraphObject;
   relationType?: GraphRelationType;
-  isPrivate?: boolean;
+  isPublic?: boolean;
 };
 
 export type GraphRelationPropsWithoutTargets = {
   id?: string;
   relationTypeId?: GraphRelationType["id"];
-  isPrivate?: boolean;
+  isPublic?: boolean;
 };
 
 export class GraphRelation extends GraphObject implements Serializable {
@@ -42,7 +43,7 @@ export class GraphRelation extends GraphObject implements Serializable {
   authorId: string;
   version: number;
   createdAt: Date = new Date();
-  isPrivate: boolean = true;
+  isPublic: boolean = false;
   relationType: GraphRelationType;
   from: GraphObject;
   to: GraphObject;
@@ -56,7 +57,7 @@ export class GraphRelation extends GraphObject implements Serializable {
       from,
       to,
       relationType: type = defaultRelationTypes.child,
-      isPrivate = true,
+      isPublic = false,
     }: GraphRelationProps & { authorId: string },
   ) {
     super(store);
@@ -67,7 +68,7 @@ export class GraphRelation extends GraphObject implements Serializable {
     this.from = from;
     this.to = to;
     this.relationType = type;
-    this.isPrivate = isPrivate;
+    this.isPublic = isPublic;
     this.makeObservable();
   }
 
@@ -75,7 +76,7 @@ export class GraphRelation extends GraphObject implements Serializable {
     if (isObservable(this)) return;
     makeObservable(this, {
       createdAt: observable,
-      isPrivate: observable,
+      isPublic: observable,
       relationType: observable.ref,
       from: observable.ref,
       to: observable.ref,
@@ -84,7 +85,6 @@ export class GraphRelation extends GraphObject implements Serializable {
       setType: action,
       setFrom: action,
       setTo: action,
-      setIsPrivate: action,
       incrementVersion: action,
     });
   }
@@ -108,8 +108,8 @@ export class GraphRelation extends GraphObject implements Serializable {
     if (props.relationType && props.relationType !== this.relationType) {
       this.setType(props.relationType);
     }
-    if (props.isPrivate !== undefined && props.isPrivate !== this.isPrivate) {
-      this.setIsPrivate(props.isPrivate);
+    if (props.isPublic !== undefined && props.isPublic !== this.isPublic) {
+      this.isPublic = props.isPublic;
     }
   }
 
@@ -183,7 +183,7 @@ export class GraphRelation extends GraphObject implements Serializable {
       fromId: this.from.id,
       toId: this.to.id,
       relationTypeId: this.relationType.id,
-      isPrivate: this.isPrivate,
+      isPublic: this.isPublic,
     };
   }
 }

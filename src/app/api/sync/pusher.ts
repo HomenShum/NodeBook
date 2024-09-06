@@ -3,7 +3,7 @@ import Pusher from "pusher";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 import { SyncData } from "@/app/graph/SyncData";
 import { env } from "@/envBackend";
-import { userIdToPusherChannel } from "@/lib/pusher";
+import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
 
 const pusher = new Pusher({
   appId: env.PUSHER_APP_ID ?? "",
@@ -38,24 +38,61 @@ const updatesToSize = (updates: GraphUpdate[]): GraphUpdate[][] => {
   return resized;
 };
 
+const updateIsPublic = (update: GraphUpdate): boolean => {
+  switch (update.operation) {
+    case "addNode":
+      return update.node.isPublic;
+    case "updateNode":
+      return update.oldProps.isPublic || update.newProps.isPublic;
+    case "deleteNode":
+      return update.node.isPublic;
+    case "addRelationType":
+      return update.relationType.isPublic;
+    case "updateRelationType":
+      return update.oldProps.isPublic || update.newProps.isPublic;
+    case "deleteRelationType":
+      return update.relationType.isPublic;
+    case "addRelation":
+      return update.relation.isPublic;
+    case "updateRelation":
+      return update.oldProps.isPublic || update.newProps.isPublic;
+    case "deleteRelation":
+      return update.deleted.relation.isPublic;
+    case "updateRelationList":
+      return update.oldIsPublic || update.newIsPublic;
+    default:
+      update satisfies never;
+  }
+  return false; // unreachable but needed to satisfy TypeScript
+};
+
+const broadcastUpdateChunk = async (channel: string, msgData: SyncData) => {
+  let attempts = 0;
+  while (attempts < 3) {
+    try {
+      await pusher.trigger(channel, "transaction-accepted", msgData);
+      break;
+    } catch (e) {
+      attempts++;
+      console.warn("Failed to send pusher message", e);
+    }
+  }
+  if (attempts === 3) {
+    throw new Error("Failed to send pusher message after 3 attempts");
+  }
+};
+
 export const broadcastSyncSuccess = async ({ clientId, userId, transactionId, updates }: SyncData) => {
-  const channel = userIdToPusherChannel(userId);
+  const userChannel = userIdToPusherChannel(userId);
   const updateChunks = updatesToSize(updates);
   for (const chunk of updateChunks) {
-    let attempts = 0;
-    while (attempts < 3) {
-      try {
-        // msgData declaration here not strictly needed but helps with type checking as we continue to play with the structure of SyncData
-        const msgData: SyncData = { clientId, userId, transactionId, updates: chunk };
-        await pusher.trigger(channel, "transaction-accepted", msgData);
-        break;
-      } catch (e) {
-        attempts++;
-        console.warn("Failed to send pusher message", e);
-      }
-    }
-    if (attempts === 3) {
-      throw new Error("Failed to send pusher message after 3 attempts");
+    // Broadcast the chunk to the user's channel
+    broadcastUpdateChunk(userChannel, { clientId, userId, transactionId, updates: chunk });
+
+    // Broadcast the public updates to the global channel
+    const publicUpdates = chunk.filter(updateIsPublic);
+    if (publicUpdates.length > 0) {
+      broadcastUpdateChunk(GLOBAL_GRAPH_CHANNEL, { clientId, userId, transactionId, updates: publicUpdates });
     }
   }
 };

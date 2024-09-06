@@ -13,7 +13,7 @@ export abstract class GraphObject {
   abstract createdAt: Date;
   abstract text: string;
   abstract searchText: string;
-  abstract isPrivate: boolean;
+  abstract isPublic: boolean;
   protected store: GraphStore;
   allRelationsList: FractionalPositionedList<GraphRelation>;
   pinnedRelationsList: FractionalPositionedList<GraphRelation>;
@@ -30,10 +30,6 @@ export abstract class GraphObject {
 
   connectedObjects(): GraphObject[] {
     return this.relations.map((r) => (r.from.id === this.id ? r.to : r.from));
-  }
-
-  setIsPrivate(value: boolean) {
-    this.isPrivate = value;
   }
 
   get isRoot() {

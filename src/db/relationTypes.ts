@@ -11,6 +11,7 @@ export const createRelationType = async (tx: MewDbTransaction, relType: GraphRel
     version: relType.version,
     label: relType.label,
     reverseLabel: relType.reverseLabel,
+    isPublic: relType.isPublic,
   });
 };
 
@@ -27,6 +28,7 @@ export const updateRelationType = async (
       version: newProps.version,
       label: newProps.label,
       reverseLabel: newProps.reverseLabel,
+      isPublic: newProps.isPublic,
     })
     .where(
       and(

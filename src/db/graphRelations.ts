@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { graphRelationTable, relationListsTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
-import { GLOBAL_TO_USER_RELATION_ID } from "@/lib/constants";
+import { GLOBAL_TO_USER_RELATION_ID_PREFIX } from "@/lib/constants";
 
 export const createRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
   await tx.insert(graphRelationTable).values({
@@ -13,7 +13,7 @@ export const createRelation = async (tx: MewDbTransaction, relation: SerializedR
     fromId: relation.fromId,
     toId: relation.toId,
     relationTypeId: relation.relationTypeId,
-    isPrivate: relation.isPrivate,
+    isPublic: relation.isPublic,
   });
 };
 
@@ -31,7 +31,7 @@ export const updateRelation = async (
       fromId: newProps.fromId,
       toId: newProps.toId,
       relationTypeId: newProps.relationTypeId,
-      isPrivate: newProps.isPrivate,
+      isPublic: newProps.isPublic,
     })
     .where(
       and(
@@ -47,10 +47,20 @@ export const updateRelation = async (
     );
     tx.rollback();
   }
+  if (!oldProps.isPublic && newProps.isPublic) {
+    // When making a relation public, update all relationLists entries that reference this relation to be public.
+    // We don't have to worry about updating when making a relation private, because the position just won't get
+    // serialized into the snapshot without the relation.
+    // TODO: Figure out if this is a sign that we should be doing something differently
+    await tx
+      .update(relationListsTable)
+      .set({ isPublic: true })
+      .where(and(eq(relationListsTable.authorId, newProps.authorId), eq(relationListsTable.relationId, newProps.id)));
+  }
 };
 
 export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
-  if (relation.id === GLOBAL_TO_USER_RELATION_ID) {
+  if (relation.id.startsWith(GLOBAL_TO_USER_RELATION_ID_PREFIX)) {
     throw new Error("Cannot delete relation from global to user");
   }
 

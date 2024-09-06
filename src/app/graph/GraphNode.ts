@@ -21,7 +21,7 @@ export type GraphNodeProps = {
   createdAt?: Date;
   isBundle?: boolean;
   isZone?: boolean;
-  isPrivate?: boolean;
+  isPublic?: boolean;
 };
 
 export type PositionedRelation = {
@@ -38,7 +38,7 @@ export class GraphNode extends GraphObject implements Serializable {
   createdAt: Date;
   isBundle: boolean;
   isZone: boolean;
-  isPrivate: boolean = true;
+  isPublic: boolean = true;
 
   constructor(
     store: GraphStore,
@@ -50,7 +50,7 @@ export class GraphNode extends GraphObject implements Serializable {
       createdAt = new Date(),
       isBundle = false,
       isZone = false,
-      isPrivate = true,
+      isPublic = false,
     }: GraphNodeProps & { authorId: string },
   ) {
     super(store);
@@ -65,7 +65,7 @@ export class GraphNode extends GraphObject implements Serializable {
     this.createdAt = createdAt;
     this.isBundle = isBundle;
     this.isZone = isZone;
-    this.isPrivate = isPrivate;
+    this.isPublic = isPublic;
     this.makeObservable();
   }
 
@@ -76,7 +76,7 @@ export class GraphNode extends GraphObject implements Serializable {
       createdAt: observable,
       isBundle: observable,
       isZone: observable,
-      isPrivate: observable,
+      isPublic: observable,
       content: observable.shallow,
       update: action,
       text: computed,
@@ -100,9 +100,9 @@ export class GraphNode extends GraphObject implements Serializable {
       oldValues.isZone = this.isZone;
       this.isZone = newProps.isZone;
     }
-    if (newProps.isPrivate !== undefined) {
-      oldValues.isPrivate = this.isPrivate;
-      this.isPrivate = newProps.isPrivate;
+    if (newProps.isPublic !== undefined) {
+      oldValues.isPublic = this.isPublic;
+      this.isPublic = newProps.isPublic;
     }
     oldValues.version = this.version;
     if (newProps.version !== undefined) {
@@ -169,7 +169,7 @@ export class GraphNode extends GraphObject implements Serializable {
       content: toJS(this.content),
       isBundle: this.isBundle,
       isZone: this.isZone,
-      isPrivate: this.isPrivate,
+      isPublic: this.isPublic,
     };
   }
 }

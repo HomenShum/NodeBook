@@ -19,7 +19,7 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
   const nodeRows = await db
     .select()
     .from(graphNodeTable)
-    .where(or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPrivate, false)));
+    .where(or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPublic, true)));
   for (const row of nodeRows) {
     const node: SerializedNode = {
       version: row.version,
@@ -29,26 +29,44 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       content: JSON.parse(row.content ?? ""),
       isBundle: !!row.isBundle,
       isZone: !!row.isZone,
-      isPrivate: !!row.isPrivate,
+      isPublic: !!row.isPublic,
     };
     snapshot.nodesById[node.id] = node;
   }
 
-  const relationTypeRows = await db.select().from(relationTypeTable).where(eq(relationTypeTable.authorId, userId));
-  for (const row of relationTypeRows) {
+  // Load public rows for relation types first, then authored rows.
+  // This way if there's any ID collision, then the authored row will overwrite the public row.
+  // TODO: figure out a better way to handle this
+  const relationTypePublicRows = await db.select().from(relationTypeTable).where(eq(relationTypeTable.isPublic, true));
+  for (const row of relationTypePublicRows) {
     snapshot.relationTypesById[row.id] = {
       id: row.id,
       authorId: row.authorId,
       version: row.version,
       label: row.label ?? "",
       reverseLabel: row.reverseLabel ?? "",
+      isPublic: !!row.isPublic,
+    };
+  }
+  const relationTypeAuthoredRows = await db
+    .select()
+    .from(relationTypeTable)
+    .where(eq(relationTypeTable.authorId, userId));
+  for (const row of relationTypeAuthoredRows) {
+    snapshot.relationTypesById[row.id] = {
+      id: row.id,
+      authorId: row.authorId,
+      version: row.version,
+      label: row.label ?? "",
+      reverseLabel: row.reverseLabel ?? "",
+      isPublic: !!row.isPublic,
     };
   }
 
   const relationRows = await db
     .select()
     .from(graphRelationTable)
-    .where(or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPrivate, false)));
+    .where(or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPublic, true)));
   for (const row of relationRows) {
     snapshot.relationsById[row.id] = {
       version: row.version,
@@ -57,11 +75,14 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       fromId: row.fromId ?? "",
       toId: row.toId ?? "",
       relationTypeId: row.relationTypeId ?? "",
-      isPrivate: !!row.isPrivate,
+      isPublic: !!row.isPublic,
     };
   }
 
-  const relationListRows = await db.select().from(relationListsTable).where(eq(relationListsTable.authorId, userId));
+  const relationListRows = await db
+    .select()
+    .from(relationListsTable)
+    .where(or(eq(relationListsTable.authorId, userId), eq(relationListsTable.isPublic, true)));
   for (const row of relationListRows) {
     const { nodeId, relationId } = row;
     if (!nodeId || !relationId) continue;

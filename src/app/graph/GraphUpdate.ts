@@ -78,9 +78,14 @@ const UpdateRelationListSchema = z.object({
   relationId: z.string(),
   oldPosition: z.union([PositionSchema, z.null()]),
   newPosition: z.union([PositionSchema, z.null()]),
+  oldIsPublic: z.boolean(),
+  newIsPublic: z.boolean(),
 });
 export type UpdateRelationList = z.infer<typeof UpdateRelationListSchema>;
-export type PartialUpdateRelationList = Omit<UpdateRelationList, "authorId" | "nodeId" | "pinned">;
+export type PartialUpdateRelationList = Omit<
+  UpdateRelationList,
+  "authorId" | "nodeId" | "pinned" | "oldIsPublic" | "newIsPublic"
+>;
 
 export const GraphUpdateSchema = z.discriminatedUnion("operation", [
   AddNodeSchema,
@@ -181,6 +186,8 @@ export const generateInverseUpdates = (updates: GraphUpdate[]): GraphUpdate[] =>
           relationId: update.relationId,
           oldPosition: update.newPosition,
           newPosition: update.oldPosition,
+          oldIsPublic: update.newIsPublic,
+          newIsPublic: update.oldIsPublic,
         });
         break;
 

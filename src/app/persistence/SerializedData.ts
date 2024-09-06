@@ -16,7 +16,7 @@ export const SerializedNodeSchema = z.object({
   content: z.array(SerializedChipSchema),
   isBundle: z.boolean(),
   isZone: z.boolean(),
-  isPrivate: z.boolean(),
+  isPublic: z.boolean(),
 });
 export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
 
@@ -26,6 +26,7 @@ export const SerializedRelationTypeSchema = z.object({
   version: z.number(),
   label: z.string(),
   reverseLabel: z.string(),
+  isPublic: z.boolean(),
 });
 
 export const PositionSchema = z.object({
@@ -41,7 +42,7 @@ export const SerializedRelationSchema = z.object({
   fromId: z.string(),
   toId: z.string(),
   relationTypeId: z.string(),
-  isPrivate: z.boolean(),
+  isPublic: z.boolean(),
 });
 export type SerializedRelation = z.infer<typeof SerializedRelationSchema>;
 

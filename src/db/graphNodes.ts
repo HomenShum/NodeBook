@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { graphNodeTable, relationListsTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
-import { GLOBAL_ROOT_ID, USER_ROOT_ID } from "@/lib/constants";
+import { GLOBAL_ROOT_ID, USER_ROOT_ID_PREFIX } from "@/lib/constants";
 
 export const createNode = async (tx: MewDbTransaction, node: SerializedNode) => {
   await tx.insert(graphNodeTable).values({
@@ -14,7 +14,7 @@ export const createNode = async (tx: MewDbTransaction, node: SerializedNode) => 
     content: JSON.stringify(node.content),
     isBundle: node.isBundle,
     isZone: node.isZone,
-    isPrivate: node.isPrivate,
+    isPublic: node.isPublic,
   });
 };
 
@@ -32,7 +32,7 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
       content: JSON.stringify(newProps.content),
       isBundle: newProps.isBundle,
       isZone: newProps.isZone,
-      isPrivate: newProps.isPrivate,
+      isPublic: newProps.isPublic,
     })
     .where(
       and(
@@ -51,7 +51,7 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
 };
 
 export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => {
-  if (node.id === USER_ROOT_ID) {
+  if (node.id.startsWith(USER_ROOT_ID_PREFIX)) {
     throw new Error("Cannot delete user root node");
   }
   if (node.id === GLOBAL_ROOT_ID) {

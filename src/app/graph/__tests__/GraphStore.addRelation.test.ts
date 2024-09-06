@@ -72,6 +72,8 @@ describe("GraphStore.addRelation", () => {
           relationId: relation.id,
           oldPosition: null,
           newPosition: relation.fromPosition,
+          oldIsPublic: false,
+          newIsPublic: false,
         },
         {
           operation: "updateRelationList",
@@ -81,6 +83,8 @@ describe("GraphStore.addRelation", () => {
           relationId: relation.id,
           oldPosition: null,
           newPosition: relation.toPosition,
+          oldIsPublic: false,
+          newIsPublic: false,
         },
       ],
     ]);

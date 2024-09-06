@@ -18,7 +18,7 @@ import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
 import appLogger from "@/lib/logger";
-import { userIdToPusherChannel } from "@/lib/pusher";
+import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
 
 export const logger = appLogger.child({ service: "store-provider" });
 
@@ -77,7 +77,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
           logger.debug("Loading data", newUser.id);
           await loadGraphData(graph, authedFetch);
           logger.debug("Starting sync");
-          syncCleanup = startSync({ graphStore: graph, authFetch: authedFetch });
+          syncCleanup = startSync({ graphStore: graph });
         }
       } catch (e) {
         toast("Failed to load data from server. Starting with an empty graph.");
@@ -125,19 +125,22 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
   );
 }
 
-function startSync({ graphStore, authFetch }: { graphStore: GraphStore; authFetch: typeof fetch }) {
+function startSync({ graphStore }: { graphStore: GraphStore }) {
   const pusher = new Pusher(env.pusherKey, {
     cluster: env.pusherCluster,
   });
-  const channel = pusher.subscribe(userIdToPusherChannel(graphStore.user.id));
-  channel.bind("transaction-accepted", async (data: any) => {
-    const parsed = SyncDataSchema.safeParse(data);
-    if (!parsed.success) {
+  const handlePusherMessage = async (data: any) => {
+    const parsedSyncData = SyncDataSchema.safeParse(data);
+    if (!parsedSyncData.success) {
       console.error("Invalid sync data received", data);
       return;
     }
-    await graphStore.updateManager.handleSyncData(parsed.data);
-  });
+    await graphStore.updateManager.handleSyncData(parsedSyncData.data);
+  };
+  const userChannel = pusher.subscribe(userIdToPusherChannel(graphStore.user.id));
+  userChannel.bind("transaction-accepted", handlePusherMessage);
+  const globalChannel = pusher.subscribe(GLOBAL_GRAPH_CHANNEL);
+  globalChannel.bind("transaction-accepted", handlePusherMessage);
   const stopSyncing = graphStore.updateManager.startSync();
   return () => {
     pusher.disconnect();

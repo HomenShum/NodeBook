@@ -10,7 +10,7 @@ export class PlaceholderGraphObject extends GraphObject {
   id: string;
   authorId: string;
   createdAt: Date;
-  public isPrivate: boolean = false;
+  public isPublic: boolean = false;
   constructor(id: string, authorId: string) {
     super(null as any);
     this.id = id;

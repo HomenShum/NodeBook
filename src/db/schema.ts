@@ -33,7 +33,7 @@ export const graphNodeTable = pgTable(
     content: text("content"),
     isBundle: boolean("is_bundle"),
     isZone: boolean("is_zone"),
-    isPrivate: boolean("is_private").default(true),
+    isPublic: boolean("is_public").default(false),
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),
@@ -53,7 +53,7 @@ export const graphRelationTable = pgTable(
     fromId: text("from_id"),
     toId: text("to_id"),
     relationTypeId: text("relation_type_id"),
-    isPrivate: boolean("is_private").default(true),
+    isPublic: boolean("is_public").default(false),
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),
@@ -71,6 +71,7 @@ export const relationTypeTable = pgTable(
     version: integer("version").notNull().default(1),
     label: text("label"),
     reverseLabel: text("reverseLabel"),
+    isPublic: boolean("is_public").default(false),
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),
@@ -89,6 +90,7 @@ export const relationListsTable = pgTable(
     pinned: boolean("pinned"),
     positionInt: bigint("bigint", { mode: "number" }),
     positionFrac: text("position_frac"),
+    isPublic: boolean("is_public").default(false),
   },
   (t) => ({
     unique: unique().on(t.nodeId, t.relationId, t.pinned),

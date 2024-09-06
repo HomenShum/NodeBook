@@ -92,6 +92,8 @@ describe("GraphStore.replaceRelationLink", () => {
           relationId: relationAB.id,
           oldPosition: abPosition,
           newPosition: null,
+          oldIsPublic: false,
+          newIsPublic: false,
         },
         {
           operation: "updateRelationList",
@@ -101,6 +103,8 @@ describe("GraphStore.replaceRelationLink", () => {
           relationId: relationAB.id,
           oldPosition: null,
           newPosition: abPosition,
+          oldIsPublic: false,
+          newIsPublic: false,
         },
       ],
     ]);
@@ -175,6 +179,8 @@ describe("GraphStore.replaceRelationLink", () => {
           relationId: relationAB.id,
           oldPosition: abPosition,
           newPosition: null,
+          oldIsPublic: false,
+          newIsPublic: false,
         },
         {
           operation: "updateRelationList",
@@ -184,6 +190,8 @@ describe("GraphStore.replaceRelationLink", () => {
           relationId: relationAB.id,
           oldPosition: null,
           newPosition: abPosition,
+          oldIsPublic: false,
+          newIsPublic: false,
         },
       ],
     ]);

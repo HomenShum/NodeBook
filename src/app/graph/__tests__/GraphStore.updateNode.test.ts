@@ -21,9 +21,6 @@ describe("GraphStore.updateNode", () => {
         id: "test-node",
         content: "test content",
         createdAt: new Date(1994, 5, 4),
-        isBundle: false,
-        isZone: false,
-        isPrivate: true,
       },
     });
 

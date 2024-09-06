@@ -103,7 +103,7 @@ const Content = observer(() => {
           ) : treeNode.object.objectType === "relation" ? (
             <RelatedRelationView treeNode={treeNode} />
           ) : treeNode.object.objectType === "placeholder" ? (
-            <span>TODO never</span>
+            <span>(Private)</span>
           ) : (
             <>{treeNode.object.objectType satisfies never}</>
           )}
@@ -153,8 +153,8 @@ const Bullet = observer(() => {
             strokeWidth={5}
             height={16}
             className={cn(styles.Bullet, {
-              [styles.DotInsidePublic]: !treeNode.object.isPrivate,
-              [styles.DotInsidePrivate]: treeNode.object.isPrivate,
+              [styles.DotInsidePublic]: treeNode.object.isPublic,
+              [styles.DotInsidePrivate]: !treeNode.object.isPublic,
             })}
             onClick={handleBulletClick}
           />
@@ -164,8 +164,8 @@ const Bullet = observer(() => {
               height={16}
               strokeWidth={17}
               className={cn(styles.BulletShadow, {
-                [styles.DotOutsidePublic]: !treeNode.object.isPrivate,
-                [styles.DotOutsidePrivate]: treeNode.object.isPrivate,
+                [styles.DotOutsidePublic]: treeNode.object.isPublic,
+                [styles.DotOutsidePrivate]: !treeNode.object.isPublic,
               })}
             />
           )}
@@ -175,7 +175,7 @@ const Bullet = observer(() => {
         <Circle
           strokeWidth={6}
           height={8}
-          className={cn(styles.Circle, { [styles.CirclePrivate]: treeNode.object.isPrivate })}
+          className={cn(styles.Circle, { [styles.CirclePrivate]: !treeNode.object.isPublic })}
           onClick={handleBulletClick}
         />
       )}

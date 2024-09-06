@@ -71,6 +71,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
               update.pinned,
               update.relationId,
               update.newPosition,
+              update.newIsPublic,
             );
             break;
           default:

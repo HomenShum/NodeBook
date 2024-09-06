@@ -45,7 +45,7 @@ export type TxReplaceRelationLink = {
 export type TxUpdateRelation = {
   relationId: string;
   relationProps?: {
-    isPrivate?: boolean;
+    isPublic?: boolean;
     relationType?: GraphRelationType;
     relationTypeLabel?: string;
     isInitiallyReversed?: boolean;
@@ -71,6 +71,11 @@ export type TxUpdateRelationPositionsList = {
   groupId: GroupId;
   objectAndRelationIds: { objectId: string; relationId: string }[];
   afterObjectId?: string;
+};
+
+export type TxSetIsPublic = {
+  objectIds: string[];
+  isPublic: boolean;
 };
 
 // TODO: probably can be done with less boilerplate code?
@@ -114,6 +119,10 @@ export type TxCombinedPart =
   | {
       type: "updateRelationPositionsList";
       transaction: TxUpdateRelationPositionsList;
+    }
+  | {
+      type: "setIsPublic";
+      transaction: TxSetIsPublic;
     };
 
 /**

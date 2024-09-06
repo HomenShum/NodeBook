@@ -145,7 +145,7 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
     <nav className={s.BreadcrumbContainer} aria-label="breadcrumb">
       <div className={s.BreadcrumbWrapper}>{renderBreadcrumbs()}</div>
       <span className={s.ActionButtons}>
-        {!treeNode.object.isPrivate ? (
+        {treeNode.object.isPublic ? (
           <span className={styles.Icon}>
             <Globe size={14} strokeWidth={1.5} />
           </span>

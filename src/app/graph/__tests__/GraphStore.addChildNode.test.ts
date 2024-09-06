@@ -66,6 +66,8 @@ describe("GraphStore.addChildNode", () => {
           relationId: relation.id,
           oldPosition: null,
           newPosition: graphStore.getRelationList(parent).get(relation.id)?.position,
+          oldIsPublic: false,
+          newIsPublic: false,
         },
         {
           operation: "updateRelationList",
@@ -75,6 +77,8 @@ describe("GraphStore.addChildNode", () => {
           relationId: relation.id,
           oldPosition: null,
           newPosition: graphStore.getRelationList(child).get(relation.id)?.position,
+          oldIsPublic: false,
+          newIsPublic: false,
         },
       ],
     ]);

@@ -27,7 +27,7 @@ import { Tree } from "@/app/tree/Tree";
  *  { rid: "o4", isAnchor: true }
  * ]);
  * // Defaults to the outline root node
- * assert(tree.root.object.id === "user-root-id");
+ * assert(tree.root.object.id === "user-root-id-SPECIAL::mew|unlogged");
  * // The rid property sets the relation id, which in turn sets the path
  * assert(tree.getNode("/all/o2/all/o3"));
  * // The isHead and isAnchor properties above are used to set the selection

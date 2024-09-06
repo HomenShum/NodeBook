@@ -36,6 +36,20 @@
       "when": 1725558734280,
       "tag": "0004_productive_wrecking_crew",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1725573726913,
+      "tag": "0005_steep_carnage",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1725576736240,
+      "tag": "0006_acoustic_tarot",
+      "breakpoints": true
     }
   ]
 }

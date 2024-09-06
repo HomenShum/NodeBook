@@ -12,7 +12,12 @@ import {
   SerializedRelation,
 } from "@/app/persistence/SerializedData";
 import { ObjectPath, Position, uuid } from "@/app/util";
-import { GLOBAL_ADMIN_USER_ID, GLOBAL_ROOT_ID, GLOBAL_TO_USER_RELATION_ID, USER_ROOT_ID } from "@/lib/constants";
+import {
+  GLOBAL_ADMIN_USER_ID,
+  GLOBAL_ROOT_ID,
+  GLOBAL_TO_USER_RELATION_ID_PREFIX,
+  USER_ROOT_ID_PREFIX,
+} from "@/lib/constants";
 import logger from "@/lib/logger";
 import { CappedKeywordIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
@@ -31,6 +36,7 @@ import {
   TxRemoveNode,
   TxRemoveRelation,
   TxReplaceRelationLink,
+  TxSetIsPublic,
   TxUpdateNode,
   TxUpdateRelation,
   TxUpdateRelationPositionsList,
@@ -39,11 +45,32 @@ import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
 
 const TEMP_USER_ID = UNLOGGED_USER.id; // TODO: This is simply to satisfy the type checker, we should change this
 export const defaultRelationTypes: Record<string, GraphRelationType> = {
-  child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent" },
-  relatedTo: { version: 1, id: "relatedTo", authorId: TEMP_USER_ID, label: "relates to", reverseLabel: "relates to" },
-  author: { version: 1, id: "author", authorId: TEMP_USER_ID, label: "author", reverseLabel: "authored" },
-  sublist: { version: 1, id: "sublist", authorId: TEMP_USER_ID, label: "sublist", reverseLabel: "parent list" },
-  empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "" },
+  child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent", isPublic: false },
+  relatedTo: {
+    version: 1,
+    id: "relatedTo",
+    authorId: TEMP_USER_ID,
+    label: "relates to",
+    reverseLabel: "relates to",
+    isPublic: false,
+  },
+  author: {
+    version: 1,
+    id: "author",
+    authorId: TEMP_USER_ID,
+    label: "author",
+    reverseLabel: "authored",
+    isPublic: false,
+  },
+  sublist: {
+    version: 1,
+    id: "sublist",
+    authorId: TEMP_USER_ID,
+    label: "sublist",
+    reverseLabel: "parent list",
+    isPublic: false,
+  },
+  empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "", isPublic: false },
 };
 
 /**
@@ -107,8 +134,12 @@ export class GraphStore {
     }
   }
 
+  get userRootId(): string {
+    return USER_ROOT_ID_PREFIX + this.user.id;
+  }
+
   get userRoot(): GraphNode {
-    const node = this.nodesById.get(USER_ROOT_ID);
+    const node = this.nodesById.get(this.userRootId);
     if (!node) {
       throw new Error("User root node not found");
     }
@@ -123,8 +154,12 @@ export class GraphStore {
     return node;
   }
 
+  get globalToUserRelationId(): string {
+    return GLOBAL_TO_USER_RELATION_ID_PREFIX + this.user.id;
+  }
+
   get globalToUserRelation(): GraphRelation {
-    const relation = this.relationsById.get(GLOBAL_TO_USER_RELATION_ID);
+    const relation = this.relationsById.get(this.globalToUserRelationId);
     if (!relation) {
       throw new Error("Global to user relation not found");
     }
@@ -138,7 +173,6 @@ export class GraphStore {
     return { object: this.userRoot, relations: [this.globalToUserRelation] };
   }
 
-  // TODO: Investigate why some operations don't have a transaction counterpart (and why some transactions don't have an operation counterpart)
   applyUpdates(updates: GraphUpdate[]) {
     for (const update of updates) {
       switch (update.operation) {
@@ -168,7 +202,7 @@ export class GraphStore {
           this._updateRelation(update.oldProps, update.newProps, true);
           break;
         case "deleteRelation":
-          this.deleteRelation(update.deleted.relation.id); // TODO: Why not _removeRelation? The logic seems to differ slightly
+          this.deleteRelation(update.deleted.relation.id);
           break;
         case "updateRelationList":
           this._updateRelationList(update.nodeId, update.pinned, update.relationId, update.newPosition);
@@ -247,6 +281,13 @@ export class GraphStore {
           updatesArray.push(...updates);
           break;
         }
+        case "setIsPublic": {
+          for (const objectId of tx.transaction.objectIds) {
+            const { updates } = this._setIsPublic(objectId, tx.transaction.isPublic);
+            updatesArray.push(...updates);
+          }
+          break;
+        }
         default:
           tx satisfies never;
       }
@@ -274,6 +315,7 @@ export class GraphStore {
         content: props.content,
         isBundle: props.isBundle ?? false,
         isZone: props.isZone ?? false,
+        isPublic: props.isPublic ?? false,
       });
 
       this.nodesById.set(node.id, node);
@@ -385,6 +427,59 @@ export class GraphStore {
     return { updates: this.deleteNode(node) };
   }
 
+  async setIsPublic(tx: TxSetIsPublic) {
+    const updates: GraphUpdate[] = [];
+    for (const objectId of tx.objectIds) {
+      const { updates: updatesFromObject } = this._setIsPublic(objectId, tx.isPublic);
+      updates.push(...updatesFromObject);
+    }
+    this.updateManager.queueUpdates(updates);
+  }
+  private _setIsPublic(objectId: string, isPublic: boolean): { updates: GraphUpdate[] } {
+    const object = this.getObject(objectId);
+    if (!object) {
+      throw new Error(`Object with id ${objectId} does not exist`);
+    }
+
+    const updates: GraphUpdate[] = [];
+
+    if (object.isPublic === isPublic) {
+      return { updates };
+    }
+
+    switch (object.objectType) {
+      case "node":
+        const nodeAtStart = object.serialize();
+        object.update({ isPublic });
+        updates.push({
+          operation: "updateNode",
+          oldProps: nodeAtStart,
+          newProps: object.serialize(),
+        });
+        break;
+      case "relation":
+        const relAtStart = object.serialize();
+        object.update({ isPublic });
+        updates.push({
+          operation: "updateRelation",
+          oldProps: relAtStart,
+          newProps: object.serialize(),
+        });
+        // If relation type is private and we're making the relation public, update the relation type too
+        if (!object.relationType.isPublic && isPublic) {
+          const { updates: relTypeUpdates } = this._updateRelationType(object.relationType.id, {
+            isPublic: true,
+          });
+          updates.push(...relTypeUpdates);
+        }
+        break;
+      default:
+        object satisfies never;
+    }
+
+    return { updates };
+  }
+
   async addRelationType(tx: TxAddRelationType) {
     const { relationType, updates } = this._addRelationType(tx);
     this.updateManager.queueUpdates(updates);
@@ -416,6 +511,7 @@ export class GraphStore {
       authorId: this.user.id,
       label,
       reverseLabel,
+      isPublic: false,
     };
     this.relationTypesById[id] = newRelationType;
     this.cappedKeywordIndex.add(newRelationType.id, () => newRelationType.label);
@@ -431,7 +527,7 @@ export class GraphStore {
 
   private _updateRelationType(
     id: string,
-    props: { label?: string; reverseLabel?: string },
+    props: { label?: string; reverseLabel?: string; isPublic?: boolean },
   ): { relationType: GraphRelationType; updates: GraphUpdate[] } {
     if (!this.relationTypesById[id]) {
       throw new Error(`Relation type with id ${id} does not exist`);
@@ -513,7 +609,7 @@ export class GraphStore {
     const oldProps = relation.serialize();
     const newProps = {
       ...oldProps,
-      isPrivate: tx.relationProps?.isPrivate ?? oldProps.isPrivate,
+      isPublic: tx.relationProps?.isPublic ?? oldProps.isPublic,
       relationTypeId: tx.relationProps?.relationType?.id ?? oldProps.relationTypeId,
       version: oldProps.version + 1,
     };
@@ -634,6 +730,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: oldFromPositionBefore,
         newPosition: newToPosition,
+        oldIsPublic: oldProps.isPublic,
+        newIsPublic: newProps.isPublic,
       });
       updates.push({
         operation: "updateRelationList",
@@ -643,6 +741,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: oldToPositionBefore,
         newPosition: newFromPosition,
+        oldIsPublic: oldProps.isPublic,
+        newIsPublic: newProps.isPublic,
       });
     }
 
@@ -660,6 +760,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: oldFromPositionBefore,
         newPosition: null,
+        oldIsPublic: oldProps.isPublic,
+        newIsPublic: newProps.isPublic,
       });
       updates.push({
         operation: "updateRelationList",
@@ -669,6 +771,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: newFromPositionBefore ?? null,
         newPosition: newFromPosition,
+        oldIsPublic: oldProps.isPublic,
+        newIsPublic: newProps.isPublic,
       });
     }
 
@@ -686,6 +790,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: oldToPositionBefore,
         newPosition: null,
+        oldIsPublic: oldProps.isPublic,
+        newIsPublic: newProps.isPublic,
       });
       updates.push({
         operation: "updateRelationList",
@@ -695,6 +801,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: newToPositionBefore ?? null,
         newPosition: newToPosition,
+        oldIsPublic: oldProps.isPublic,
+        newIsPublic: newProps.isPublic,
       });
     }
 
@@ -757,7 +865,7 @@ export class GraphStore {
     if (!node) {
       throw new Error("Node does not exist");
     }
-    if (node.id === this.userRoot.id) {
+    if (node.id.startsWith(USER_ROOT_ID_PREFIX)) {
       throw new Error("Cannot delete user root node");
     }
     if (node.id === this.globalRoot.id) {
@@ -818,7 +926,7 @@ export class GraphStore {
       this.relationsById.set(relation.id, relation);
       this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
 
-      const commonUpdatePart = { authorId, pinned: false };
+      const commonUpdatePart = { authorId, pinned: false, oldIsPublic: false, newIsPublic: !!relationProps.isPublic };
       const fromId = relation.from.id;
       const partialFromUpdates = relation.from.allRelationsList.add(relation);
       const toId = relation.to.id;
@@ -857,7 +965,7 @@ export class GraphStore {
     if (!relation) {
       throw new Error("Relation does not exist");
     }
-    if (relation.id === GLOBAL_TO_USER_RELATION_ID) {
+    if (relation.id.startsWith(GLOBAL_TO_USER_RELATION_ID_PREFIX)) {
       throw new Error("Cannot delete relation from global to user");
     }
 
@@ -1059,6 +1167,8 @@ export class GraphStore {
           relationId: relationWithParent.id,
           newPosition: relationsList.get(relationWithParent.id)?.position ?? null,
           oldPosition: oldPositions[i] ?? null,
+          oldIsPublic: relationWithParent.isPublic,
+          newIsPublic: relationWithParent.isPublic,
         };
       }),
     };
@@ -1096,6 +1206,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: oldFromPosition,
         newPosition: null,
+        oldIsPublic: relation.isPublic,
+        newIsPublic: false,
       });
       updates.push({
         operation: "updateRelationList",
@@ -1105,6 +1217,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: null,
         newPosition: this.getRelationList(newFrom).get(relation.id)?.position ?? null,
+        oldIsPublic: false,
+        newIsPublic: relation.isPublic,
       });
       updates.push(...this.deleteIfNoRelations(oldFrom));
     } catch (e) {
@@ -1143,6 +1257,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: oldToPosition,
         newPosition: null,
+        oldIsPublic: relation.isPublic,
+        newIsPublic: relation.isPublic,
       });
       updates.push({
         operation: "updateRelationList",
@@ -1152,6 +1268,8 @@ export class GraphStore {
         relationId: relation.id,
         oldPosition: null,
         newPosition: this.getRelationList(newTo).get(relation.id)?.position ?? null,
+        oldIsPublic: relation.isPublic,
+        newIsPublic: relation.isPublic,
       });
 
       updates.push(...this.deleteIfNoRelations(oldTo));
@@ -1240,6 +1358,8 @@ export class GraphStore {
         relationId,
         oldPosition: null, // TODO: should we preserve the old position from allRelationsList?
         newPosition: this.getPinnedRelationList(objectId).get(relationId)?.position ?? null,
+        oldIsPublic: this.relationsById.get(relationId)?.isPublic ?? false,
+        newIsPublic: this.relationsById.get(relationId)?.isPublic ?? false,
       })),
     };
   }
@@ -1265,6 +1385,8 @@ export class GraphStore {
         relationId,
         oldPosition: oldPositions[relationIds.indexOf(relationId)] ?? null,
         newPosition: null, // TODO: should we preserve the old position from pinnedRelationsList?
+        oldIsPublic: this.relationsById.get(relationId)?.isPublic ?? false,
+        newIsPublic: this.relationsById.get(relationId)?.isPublic ?? false,
       })),
     };
   }
@@ -1325,10 +1447,10 @@ export class GraphStore {
       }
     }
 
-    let userRoot = this.nodesById.get(USER_ROOT_ID);
+    let userRoot = this.nodesById.get(this.userRootId);
     if (!userRoot) {
       const { node, updates: userRootUpdates } = this._addNode({
-        id: USER_ROOT_ID,
+        id: this.userRootId,
         content: [{ type: "text", value: this.user.name || this.user.id || "Untitled User" }],
       });
       userRoot = node;
@@ -1340,7 +1462,7 @@ export class GraphStore {
       const { node } = this._addNode({
         id: GLOBAL_ROOT_ID,
         content: [{ type: "text", value: "Global Root" }],
-        isPrivate: false,
+        isPublic: true,
         authorId: GLOBAL_ADMIN_USER_ID,
         createdAt: new Date(0),
       });
@@ -1348,10 +1470,10 @@ export class GraphStore {
       // Don't push the change. The global root already exists on the server.
     }
 
-    let globalToUserRelation = this.relationsById.get(GLOBAL_TO_USER_RELATION_ID);
+    let globalToUserRelation = this.relationsById.get(this.globalToUserRelationId);
     if (!globalToUserRelation) {
       const { relation, updates: globalToUserRelationUpdates } = this.createRelation({
-        id: GLOBAL_TO_USER_RELATION_ID,
+        id: this.globalToUserRelationId,
         from: globalRoot,
         to: userRoot,
         relationType: defaultRelationTypes.sublist,

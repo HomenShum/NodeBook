@@ -38,11 +38,11 @@ describe("GraphStore.updateRelation", () => {
     graphStore.updateManager.cleanup();
   });
 
-  it("should be able to update isPrivate and increment version properly", async () => {
+  it("should be able to update isPublic and increment version properly", async () => {
     expect(relation).toBeDefined();
     expect(graphStore.getRelation(relation.id)).toBe(relation);
     expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
-    expect(relation.isPrivate).toBe(true);
+    expect(relation.isPublic).toBe(false);
     expect(relation.version).toBe(1);
     expect(relation.from).toBe(startNode);
     expect(relation.to).toBe(endNode);
@@ -51,7 +51,7 @@ describe("GraphStore.updateRelation", () => {
 
     await graphStore.updateRelation({
       relationId: relation.id,
-      relationProps: { isPrivate: false },
+      relationProps: { isPublic: true },
     });
 
     // Check most things stayed the same...
@@ -60,8 +60,8 @@ describe("GraphStore.updateRelation", () => {
     expect(relation.from).toBe(startNode);
     expect(relation.to).toBe(endNode);
 
-    // Check that isPrivate and version were updated
-    expect(relation.isPrivate).toBe(false);
+    // Check that isPublic and version were updated
+    expect(relation.isPublic).toBe(true);
     expect(relation.version).toBe(2);
   });
 
@@ -94,21 +94,21 @@ describe("GraphStore.updateRelation", () => {
     await graphStore.updateRelation({
       relationId: relation.id,
       relationProps: {
-        isPrivate: false,
+        isPublic: true,
       },
       reverse: true,
     });
 
     expect(relation.from).toBe(endNode);
     expect(relation.to).toBe(startNode);
-    expect(relation.isPrivate).toBe(false);
+    expect(relation.isPublic).toBe(true);
     expect(relation.version).toBe(2);
 
     graphStore.updateManager.revertAllPending();
 
     expect(relation.from).toBe(startNode);
     expect(relation.to).toBe(endNode);
-    expect(relation.isPrivate).toBe(true);
+    expect(relation.isPublic).toBe(false);
     expect(relation.version).toBe(1);
   });
 
@@ -118,7 +118,7 @@ describe("GraphStore.updateRelation", () => {
     await graphStore.updateRelation({
       relationId: relation.id,
       relationProps: {
-        isPrivate: false,
+        isPublic: true,
       },
     });
 
@@ -136,7 +136,7 @@ describe("GraphStore.updateRelation", () => {
     await graphStore.updateRelation({
       relationId: relation.id,
       relationProps: {
-        isPrivate: false,
+        isPublic: true,
       },
       reverse: true,
     });
@@ -153,6 +153,8 @@ describe("GraphStore.updateRelation", () => {
           relationId: relation.id,
           oldPosition: startNodeRelationPositionAtStart,
           newPosition: graphStore.getRelationList(startNode).get(relation.id)?.position,
+          oldIsPublic: false,
+          newIsPublic: true,
         },
         {
           operation: "updateRelationList",
@@ -162,6 +164,8 @@ describe("GraphStore.updateRelation", () => {
           relationId: relation.id,
           oldPosition: endNodeRelationPositionAtStart,
           newPosition: graphStore.getRelationList(endNode).get(relation.id)?.position,
+          oldIsPublic: false,
+          newIsPublic: true,
         },
       ],
     ]);

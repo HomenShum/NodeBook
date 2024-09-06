@@ -89,12 +89,12 @@ export const RelatedObjectMenu = observer(
             Replace related object
           </DropdownMenuItem>
           <DropdownMenuItem
-            onSelect={action(() => {
-              object.setIsPrivate(!object.isPrivate);
-            })}
+            onSelect={async () => {
+              await graphStore.setIsPublic({ objectIds: [object.id, relation.id], isPublic: !object.isPublic });
+            }}
           >
-            {object.isPrivate ? <Globe size={14} /> : <Lock size={14} />}
-            {object.isPrivate ? "Make public" : "Make private"}
+            {object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
+            {object.isPublic ? "Make private" : "Make public"}
           </DropdownMenuItem>
           {viewType !== "edit" && (
             <DropdownMenuItem

@@ -16,6 +16,7 @@ export type ItemWithPosition<T> = {
 type ListItem = {
   id: string;
   createdAt: Date;
+  isPublic: boolean;
 };
 
 export class FractionalPositionedList<T extends ListItem & Serializable> implements Serializable {
@@ -74,19 +75,34 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
         if (this.map.has(item.id)) return logger.error("Attempted to add item that is already in the list");
         const newPosition = { int, frac: fracs[i] };
         this.map.set(item.id, { position: newPosition, item });
-        partialUpdates.push({ operation, relationId: item.id, oldPosition, newPosition });
+        partialUpdates.push({
+          operation,
+          relationId: item.id,
+          oldPosition,
+          newPosition,
+        });
       });
     } else {
       const { addedPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
       addedPositions.forEach((position, i) => {
         this.map.set(items[i].id, { position, item: items[i] });
-        partialUpdates.push({ operation, relationId: items[i].id, oldPosition, newPosition: position });
+        partialUpdates.push({
+          operation,
+          relationId: items[i].id,
+          oldPosition,
+          newPosition: position,
+        });
       });
       updatedPositions.forEach((position, id) => {
         const existing = this.map.get(id);
         if (!existing) return logger.error("Attempted to reposition item that is not in the list");
         this.map.set(id, { ...existing, position });
-        partialUpdates.push({ operation, relationId: id, oldPosition, newPosition: position });
+        partialUpdates.push({
+          operation,
+          relationId: id,
+          oldPosition,
+          newPosition: position,
+        });
       });
     }
 
@@ -94,10 +110,17 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
   }
 
   delete(id: string): PartialUpdateRelationList[] {
-    const { position } = this.map.get(id) ?? {};
-    if (!position) return [];
+    const { item, position } = this.map.get(id) ?? {};
+    if (!item || !position) return [];
     this.map.delete(id);
-    return [{ operation: "updateRelationList", relationId: id, oldPosition: position, newPosition: null }];
+    return [
+      {
+        operation: "updateRelationList",
+        relationId: id,
+        oldPosition: position,
+        newPosition: null,
+      },
+    ];
   }
 
   // TODO: check if this should return updates
@@ -119,20 +142,35 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
         if (!position) return logger.error("Attempted to move item that is not in the list");
         const newPosition = { int, frac: fracs[i] };
         this.map.set(item.id, { position: newPosition, item });
-        partialUpdates.push({ operation, relationId: item.id, oldPosition: position, newPosition });
+        partialUpdates.push({
+          operation,
+          relationId: item.id,
+          oldPosition: position,
+          newPosition,
+        });
       });
     } else {
       const { addedPositions, updatedPositions } = this.generatePositionsForInsert(after, items.length);
       addedPositions.forEach((position, i) => {
         this.map.set(items[i].id, { position, item: items[i] });
-        partialUpdates.push({ operation, relationId: items[i].id, oldPosition: null, newPosition: position }); // TODO: not sure if there is no old position
+        partialUpdates.push({
+          operation,
+          relationId: items[i].id,
+          oldPosition: null, // TODO: not sure if there is no old position
+          newPosition: position,
+        });
       });
       updatedPositions.forEach((position, id) => {
         const existing = this.map.get(id);
         if (!existing) return logger.error("Attempted to reposition item that is not in the list");
         const oldPosition = existing.position;
         this.map.set(id, { ...existing, position });
-        partialUpdates.push({ operation, relationId: id, oldPosition: oldPosition, newPosition: position });
+        partialUpdates.push({
+          operation,
+          relationId: id,
+          oldPosition: oldPosition,
+          newPosition: position,
+        });
       });
     }
 

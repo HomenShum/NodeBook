@@ -11,6 +11,7 @@ export const upsertRelationList = async (
   pinned: boolean,
   relationId: string,
   position: SerializedPosition | null,
+  isPublic: boolean,
 ) => {
   if (!position) {
     await tx
@@ -32,12 +33,14 @@ export const upsertRelationList = async (
         pinned: pinned,
         positionInt: position.int,
         positionFrac: position.frac,
+        isPublic: isPublic,
       })
       .onConflictDoUpdate({
         target: [relationListsTable.nodeId, relationListsTable.relationId, relationListsTable.pinned],
         set: {
           positionInt: position.int,
           positionFrac: position.frac,
+          isPublic: isPublic,
         },
       });
   }
