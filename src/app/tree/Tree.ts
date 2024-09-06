@@ -1,4 +1,4 @@
-import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
+import { action, autorun, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 import { SetStateAction } from "react";
 
 import { defaultRelationTypes } from "@/app/graph/constants";
@@ -85,6 +85,9 @@ export class Tree {
     this.selection = selection;
     this.path = path;
     this.makeObservable();
+    autorun(() => {
+      logger.debug("Selection", toJS(this.selection));
+    });
   }
 
   makeObservable() {
