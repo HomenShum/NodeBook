@@ -6,8 +6,8 @@ import { Path } from "@/app/components/Path";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation, isGraphRelationType } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
-import { scoreMatch } from "@/lib/utils";
 import { GraphRelationType } from "@/app/graph/types";
+import { scoreMatch } from "@/lib/utils";
 
 import styles from "./DropdownMenuUtils.module.css";
 
@@ -136,7 +136,10 @@ function getSearchAndReplaceResults(
 
   // ignore the current object and relation
   nodes = nodes.filter(({ node }) => node.id !== currentNodeId);
-  relations = relations.filter(({ relation }) => relation.id !== currentNodeId && relation.id !== currentRelationId);
+  relations = relations.filter(
+    ({ relation }) =>
+      relation.from.id !== currentNodeId && relation.to.id !== currentNodeId && relation.id !== currentRelationId,
+  );
   relationTypes = relationTypes.filter(({ relationType }) => relationType.id !== currentRelationTypeId);
 
   // map to dropdown options
