@@ -202,21 +202,25 @@ export class SublistRootTreeNode extends RootTreeNode {
     const pointerNodes: PointerTreeNode[] = [];
     //If two nodes point to same child, we do not want to push the same child
     //twice inside pointerNodes.
-    // type StackType = {node: RootTreeNode | DescendantTreeNode, type: sublist}
+
     const stack: [RootTreeNode | DescendantTreeNode] = [this];
+
     const visitedObjectIds: Record<string, boolean> = {
       [this.object.id]: true,
-      "outline-root-id": true,
     };
 
-    //Prevent going back to parent
+    // Prevent going back to parent, current.childrenGroupsById["all"] gives back us the parent.
     this.object.relations.forEach((r) => {
       if (r.to.id === this.object.id) {
         visitedObjectIds[r.from.id] = true;
       }
     });
 
-    //Simple DFS, add sublist nodes to stack, normal nodes to pointer nodes
+    // Simple DFS.
+    // We can push the childNodes of a sublist node directly to the flat list `pointerNodes`
+    // but we do not do so to preserve their ordering. Hence we push them to the stack instead,
+    // and when we come across these "child" nodes, we check if they are leaf nodes or not,
+    // if yes, push them to the flat list, if not, explore them more.
     while (stack.length > 0) {
       const current = stack.pop();
       if (!current) continue;
