@@ -8,6 +8,7 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { getOtherObject } from "@/app/graph/utils";
+import logger from "@/lib/logger";
 
 // TODO: what should we actually use for this?
 export const uuid = () => uuidv4().slice(0, 8);
@@ -133,10 +134,15 @@ export function createRouteUrl(path?: ObjectPath | GraphRelation[] | string | ty
 export function parsePathString(path: string[], graphStore: GraphStore): ObjectPath | null {
   if (path.length === 0) return null;
   let relations = [];
+  // Some object ids include user subs with pipes that would have been url encoded.
+  path = path.map((p) => p.replace("%7C", "|"));
   //If path contains group, ignore them.
-  for (const id of path.slice(0, -1).filter((p) => !(p === "all" || p === "pinned"))) {
+  for (let id of path.slice(0, -1).filter((p) => !(p === "all" || p === "pinned"))) {
     const graphRel = graphStore.getRelation(id);
-    if (!graphRel) return null;
+    if (!graphRel) {
+      logger.debug("Could not find relation", id);
+      return null;
+    }
     relations.push(graphRel);
   }
   const lastId = path[path.length - 1];
@@ -144,9 +150,15 @@ export function parsePathString(path: string[], graphStore: GraphStore): ObjectP
     return { object: graphStore.userRoot, relations: [graphStore.globalToUserRelation] };
   } else {
     const object = graphStore.getObject(lastId);
-    if (!object) return null;
+    if (!object) {
+      logger.debug("Could not find object", lastId);
+      return null;
+    }
     const objectPath = { relations, object };
-    if (!isPathContinuous(objectPath)) return null;
+    if (!isPathContinuous(objectPath)) {
+      logger.debug("Path is not continuous", objectPath);
+      return null;
+    }
     return objectPath;
   }
 }
