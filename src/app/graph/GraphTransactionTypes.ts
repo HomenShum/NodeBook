@@ -74,8 +74,11 @@ export type TxUpdateRelationPositionsList = {
 };
 
 export type TxSetIsPublic = {
-  objectIds: string[];
+  objectId: string;
+  relationId?: string;
   isPublic: boolean;
+  alsoSetRelatedObjects: boolean;
+  alsoSetChildrenAndDescendants: boolean;
 };
 
 // TODO: probably can be done with less boilerplate code?

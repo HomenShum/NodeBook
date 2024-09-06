@@ -1,7 +1,9 @@
 import { Download, Ellipsis, Globe, Lock, Plus } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
+import { useState } from "react";
 
+import { SetPublicDialog } from "@/app/components/SetPublicDialog/SetPublicDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +22,8 @@ export const NodeHeaderSettingsMenu = observer(({ treeNode }: { treeNode: Descen
   const graphStore = useGraphStore();
   const tree = useTree();
 
+  const [publicDialogOpen, setPublicDialogOpen] = useState(false);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={styles.MenuTrigger}>
@@ -36,19 +40,10 @@ export const NodeHeaderSettingsMenu = observer(({ treeNode }: { treeNode: Descen
           Add child
         </DropdownMenuItem>
 
-        {!(treeNode instanceof RootTreeNode) && (
-          <DropdownMenuItem
-            onSelect={async () => {
-              await graphStore.setIsPublic({
-                objectIds: [treeNode.object.id, treeNode.relationWithParent.id],
-                isPublic: !treeNode.object.isPublic,
-              });
-            }}
-          >
-            {treeNode.object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
-            {treeNode.object.isPublic ? "Make private" : "Make public"}
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem onSelect={() => setPublicDialogOpen(true)}>
+          {treeNode.object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
+          {treeNode.object.isPublic ? "Make private" : "Make public"}
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onSelect={() => {
@@ -72,6 +67,13 @@ export const NodeHeaderSettingsMenu = observer(({ treeNode }: { treeNode: Descen
           Export subtree
         </DropdownMenuItem>
       </DropdownMenuContent>
+      <SetPublicDialog
+        isOpen={publicDialogOpen}
+        setOpen={setPublicDialogOpen}
+        objectId={treeNode.object.id}
+        relationId={treeNode.relationWithParent?.id}
+        isPublic={!treeNode.object.isPublic}
+      />
     </DropdownMenu>
   );
 });

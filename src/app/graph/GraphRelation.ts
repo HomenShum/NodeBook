@@ -5,7 +5,7 @@ import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { Position, uuid } from "@/app/util";
 
-import { GraphObject } from "./GraphObject";
+import { BaseGraphObject, GraphObject } from "./GraphObject";
 import { GraphStore, defaultRelationTypes } from "./GraphStore";
 
 export type GraphRelationType = {
@@ -37,8 +37,8 @@ export type GraphRelationPropsWithoutTargets = {
   isPublic?: boolean;
 };
 
-export class GraphRelation extends GraphObject implements Serializable {
-  objectType: "relation" = "relation";
+export class GraphRelation extends BaseGraphObject implements Serializable {
+  readonly objectType = "relation";
   id: string;
   authorId: string;
   version: number;
@@ -90,8 +90,10 @@ export class GraphRelation extends GraphObject implements Serializable {
   }
 
   update(props: Partial<GraphRelationProps>) {
-    if (props.version && props.version !== this.version) {
+    if (props.version) {
       this.version = props.version;
+    } else {
+      this.version++;
     }
     if (props.from && props.to && this.from.id === props.to.id && this.to.id === props.from.id) {
       const newFromPosition = this.to.relationsSortedByPosition.findIndex((r) => r.id === this.id);

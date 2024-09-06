@@ -16,7 +16,7 @@ export class RenderController {
   public rightSidebarOpen = false;
   public isDarkMode = false;
   public sidebarWidth = 268;
-  public activeModal: "devTools" | "importData" | "clearData" | null = null;
+  public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | null = null;
 
   constructor() {
     this.makeObservable();
@@ -42,7 +42,7 @@ export class RenderController {
     this.rightSidebarOpen = !this.rightSidebarOpen;
   }
 
-  setActiveModal(modal: "devTools" | "importData" | "clearData" | null) {
+  setActiveModal(modal: "devTools" | "importData" | "clearData" | "setPublic" | null) {
     this.activeModal = modal;
   }
 

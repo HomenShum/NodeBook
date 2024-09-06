@@ -105,7 +105,7 @@ const Content = observer(() => {
           ) : treeNode.object.objectType === "placeholder" ? (
             <span>(Private)</span>
           ) : (
-            <>{treeNode.object.objectType satisfies never}</>
+            <>{treeNode.object satisfies never}</>
           )}
         </div>
         {settingsStore.showNodeDetails && viewType !== "replace" && (

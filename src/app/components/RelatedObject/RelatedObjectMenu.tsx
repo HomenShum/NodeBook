@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
+import { useState } from "react";
 
+import { SetPublicDialog } from "@/app/components/SetPublicDialog/SetPublicDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,6 +44,9 @@ export const RelatedObjectMenu = observer(
     const object = treeNode.object;
     const parent = treeNode.parent.object;
     const relation = treeNode.relationWithParent;
+
+    const [publicDialogOpen, setPublicDialogOpen] = useState(false);
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger className={styles.TrailMenuTrigger}>
@@ -88,11 +93,7 @@ export const RelatedObjectMenu = observer(
             <GitCompare size={14} />
             Replace related object
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={async () => {
-              await graphStore.setIsPublic({ objectIds: [object.id, relation.id], isPublic: !object.isPublic });
-            }}
-          >
+          <DropdownMenuItem onSelect={() => setPublicDialogOpen(true)}>
             {object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
             {object.isPublic ? "Make private" : "Make public"}
           </DropdownMenuItem>
@@ -175,6 +176,13 @@ export const RelatedObjectMenu = observer(
             Export subtree
           </DropdownMenuItem>
         </DropdownMenuContent>
+        <SetPublicDialog
+          isOpen={publicDialogOpen}
+          setOpen={setPublicDialogOpen}
+          objectId={object.id}
+          relationId={relation.id}
+          isPublic={!object.isPublic}
+        />
       </DropdownMenu>
     );
   },

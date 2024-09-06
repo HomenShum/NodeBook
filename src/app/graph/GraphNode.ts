@@ -4,7 +4,7 @@ import { SerializedNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { ObjectPath, Position, uuid } from "@/app/util";
 
-import { GraphObject } from "./GraphObject";
+import { BaseGraphObject, GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 
@@ -29,8 +29,8 @@ export type PositionedRelation = {
   relation: GraphRelation;
 };
 
-export class GraphNode extends GraphObject implements Serializable {
-  objectType = "node" as const;
+export class GraphNode extends BaseGraphObject implements Serializable {
+  readonly objectType = "node";
   version: number;
   id: string;
   authorId: string;

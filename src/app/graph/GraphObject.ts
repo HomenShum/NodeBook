@@ -1,13 +1,19 @@
 import { FractionalPositionedList } from "@/app/graph/FractionalPositionedList";
-import { PositionedRelation } from "@/app/graph/GraphNode";
+import { GraphNode, PositionedRelation } from "@/app/graph/GraphNode";
+import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
+import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { comparePositions } from "@/app/util";
 
-import { GraphRelation } from "./GraphRelation";
+export type GraphObject = GraphNode | GraphRelation | PlaceholderGraphObject;
 
-export abstract class GraphObject {
-  abstract objectType: "node" | "relation" | "placeholder";
+export const isGraphObject = (obj: any): obj is GraphObject => {
+  return obj && obj.objectType;
+};
+
+export abstract class BaseGraphObject {
+  abstract readonly objectType: string;
   abstract id: string;
   abstract authorId: string;
   abstract createdAt: Date;

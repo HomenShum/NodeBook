@@ -2,7 +2,7 @@ import { action, computed, isObservable, makeObservable, observable, toJS } from
 import { SetStateAction } from "react";
 
 import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
-import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { defaultRelationTypes, GraphStore } from "@/app/graph/GraphStore";
 import { Positioner, TxCombined } from "@/app/graph/GraphTransactionTypes";
@@ -400,7 +400,7 @@ export class Tree {
     if (root instanceof DescendantTreeNode) {
       this.rootObject = root.object;
       this.pathToRoot = getAncestorsAsArray(root).map((node) => node.relationToChild);
-    } else if (root instanceof GraphObject) {
+    } else if (isGraphObject(root)) {
       this.rootObject = root;
       this.pathToRoot = [];
     } else {

@@ -282,10 +282,8 @@ export class GraphStore {
           break;
         }
         case "setIsPublic": {
-          for (const objectId of tx.transaction.objectIds) {
-            const { updates } = this._setIsPublic(objectId, tx.transaction.isPublic);
-            updatesArray.push(...updates);
-          }
+          const { updates } = this._setIsPublic(tx.transaction);
+          updatesArray.push(...updates);
           break;
         }
         default:
@@ -428,24 +426,89 @@ export class GraphStore {
   }
 
   async setIsPublic(tx: TxSetIsPublic) {
-    const updates: GraphUpdate[] = [];
-    for (const objectId of tx.objectIds) {
-      const { updates: updatesFromObject } = this._setIsPublic(objectId, tx.isPublic);
-      updates.push(...updatesFromObject);
-    }
+    const { updates } = this._setIsPublic(tx);
     this.updateManager.queueUpdates(updates);
   }
-  private _setIsPublic(objectId: string, isPublic: boolean): { updates: GraphUpdate[] } {
+  private _setIsPublic({
+    objectId,
+    relationId,
+    isPublic,
+    alsoSetRelatedObjects,
+    alsoSetChildrenAndDescendants,
+  }: TxSetIsPublic): { updates: GraphUpdate[] } {
     const object = this.getObject(objectId);
     if (!object) {
       throw new Error(`Object with id ${objectId} does not exist`);
     }
 
+    let relation = relationId ? this.getRelation(relationId) : undefined;
+    if (relationId && !relation) {
+      throw new Error(`Relation with id ${relationId} does not exist`);
+    }
+
     const updates: GraphUpdate[] = [];
 
-    if (object.isPublic === isPublic) {
-      return { updates };
+    const { updates: objectUpdates } = this._setObjectIsPublic(object, isPublic);
+    updates.push(...objectUpdates);
+
+    if (relation) {
+      const { updates: relationUpdates } = this._setObjectIsPublic(relation, isPublic);
+      updates.push(...relationUpdates);
     }
+
+    if (alsoSetRelatedObjects) {
+      for (const rel of object.relations) {
+        // Skip relations from other authors
+        if (rel.authorId !== this.user.id) continue;
+        // No updates to parents (and parent relations) of the specified object
+        if (rel.relationType.id === "child" && rel.to.id === object.id) continue;
+        // First set the value on the relation itself
+        const { updates: relUpdates } = this._setObjectIsPublic(rel, isPublic);
+        updates.push(...relUpdates);
+        // ...then set the value for the other object in the relation
+        const otherObject = rel.from.id === object.id ? rel.to : rel.from;
+        const { updates: otherObjectUpdates } = this._setObjectIsPublic(otherObject, isPublic);
+        updates.push(...otherObjectUpdates);
+      }
+    }
+
+    if (alsoSetChildrenAndDescendants) {
+      const toVisit = [
+        ...object.relations.filter(
+          (r) => r.authorId === this.user.id && r.relationType.id === "child" && r.from.id === object.id,
+        ),
+      ];
+      const visited = new Set<string>();
+      let childRelation = toVisit.shift();
+      while (childRelation) {
+        // First set the value on the relation itself
+        const { updates: childRelationUpdates } = this._setObjectIsPublic(childRelation, isPublic);
+        updates.push(...childRelationUpdates);
+        // ...then set the value for the child object
+        const { updates: childUpdates } = this._setObjectIsPublic(childRelation.to, isPublic);
+        updates.push(...childUpdates);
+        // Track that we've visited this relation, then recursively visit any descendants
+        visited.add(childRelation.id);
+        const child = childRelation.to;
+        const descendants = child.relations.filter(
+          (r) => r.authorId === this.user.id && r.relationType.id === "child" && r.from.id === child.id,
+        );
+        toVisit.push(...descendants.filter((r) => !toVisit.includes(r) && !visited.has(r.id)));
+        childRelation = toVisit.shift();
+      }
+    }
+
+    return { updates };
+  }
+
+  private _setObjectIsPublic(object: GraphObject, isPublic: boolean): { updates: GraphUpdate[] } {
+    // Don't try to set public status for other people's objects
+    if (object.authorId !== this.user.id) return { updates: [] };
+
+    // If object is already desired state, do nothing
+    if (object.isPublic === isPublic) return { updates: [] };
+
+    const updates: GraphUpdate[] = [];
 
     switch (object.objectType) {
       case "node":
@@ -472,6 +535,9 @@ export class GraphStore {
           });
           updates.push(...relTypeUpdates);
         }
+        break;
+      case "placeholder":
+        // Do nothing
         break;
       default:
         object satisfies never;
@@ -1128,14 +1194,14 @@ export class GraphStore {
   }
   private _updateRelationPositionsList(tx: TxUpdateRelationPositionsList): { updates: GraphUpdate[] } {
     const withinNode = this.getObject(tx.containingNodeId);
-    if (!withinNode || !(withinNode instanceof GraphObject)) {
+    if (!withinNode) {
       throw new Error(`Node with id ${tx.containingNodeId} does not exist`);
     }
 
     const objectRelationPairs = tx.objectAndRelationIds.map(({ objectId, relationId }) => {
       const object = this.getObject(objectId);
       const relation = this.getRelation(relationId);
-      if (!object || !relation || !(object instanceof GraphObject) || !(relation instanceof GraphRelation)) {
+      if (!object || !relation) {
         throw new Error(`GraphObject with id ${objectId} or ${relationId} does not exist`);
       }
       return { object, relationWithParent: relation };
