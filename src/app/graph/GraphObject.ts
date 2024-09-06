@@ -1,3 +1,4 @@
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { FractionalPositionedList } from "@/app/graph/FractionalPositionedList";
 import { GraphNode, PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
@@ -5,7 +6,6 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { comparePositions } from "@/app/util";
-import { defaultRelationTypes } from "@/app/graph/constants";
 
 export type GraphObject = GraphNode | GraphRelation | PlaceholderGraphObject;
 
@@ -74,7 +74,7 @@ export abstract class BaseGraphObject {
 
     // As soon as you have more than one relation pointing to you, you're global
     const nonChildRelations = this.relations.filter(
-      (r) => !(r.relationType === defaultRelationTypes.child && r.from.id === this.id),
+      (r) => !(r.relationType.id === defaultRelationTypes.child.id && r.from.id === this.id),
     );
     if (nonChildRelations.length > 1) {
       return "global";
