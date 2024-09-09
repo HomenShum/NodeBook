@@ -77,6 +77,14 @@ export const DevTools = observer(() => {
           />
           Disable expanding cycles
         </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.showAllNodesOption}
+            onChange={(e) => settingsStore.setShowAllNodesOption(e.target.checked)}
+          />
+          Show All Nodes Tab in Sidebar
+        </label>
         <div className={styles.SearchReplaceContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />

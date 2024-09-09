@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrim
 import { Switch } from "@/app/components/UIPrimitives/Switch";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { Tree } from "@/app/tree/Tree";
+import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import { default as s, default as styles } from "./ControlsBar.module.css";
@@ -132,8 +133,8 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
             >
               <Button
                 size="sm"
-                variant={viewStore.viewType === "outline" ? "active" : "default"}
-                onClick={() => viewStore.setViewType("outline")}
+                variant={viewStore.viewType === ViewType.Outline ? "active" : "default"}
+                onClick={() => viewStore.setViewType(ViewType.Outline)}
                 style={{ width: "100%", height: 36, flex: "grow", display: "flex" }}
               >
                 <ListIcon />
@@ -141,8 +142,8 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
               </Button>
               <Button
                 size="sm"
-                variant={viewStore.viewType === "note" ? "active" : "default"}
-                onClick={() => viewStore.setViewType("note")}
+                variant={viewStore.viewType === ViewType.Note ? "active" : "default"}
+                onClick={() => viewStore.setViewType(ViewType.Note)}
                 style={{ width: "100%", flex: "grow", height: 36, display: "flex" }}
               >
                 <StreamIcon />

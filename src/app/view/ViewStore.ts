@@ -4,13 +4,14 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { Tree } from "@/app/tree/Tree";
+import { ViewType } from "@/app/view/types";
 
 export class ViewStore {
   private settingsStore: SettingsStore;
   private graphStore: GraphStore;
   public searchQuery: string = "";
 
-  public viewType: "outline" | "note" = "outline";
+  public viewType: ViewType = ViewType.Outline;
   public mainView: Tree;
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
@@ -26,7 +27,7 @@ export class ViewStore {
     }
   }
 
-  setViewType(viewType: "outline" | "note") {
+  setViewType(viewType: ViewType) {
     this.viewType = viewType;
   }
 

@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
 
-import { OutlineView } from "@/app/components/OutlineView";
+import { MainView } from "@/app/components/MainView";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { createRouteUrl, parsePathString } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -19,5 +19,6 @@ export default function Page({ params: { path } }: { params: { path: string[] | 
     }
     viewStore.mainView.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
   }, [graphStore, path, viewStore.mainView]);
-  return <OutlineView tree={viewStore.mainView}></OutlineView>;
+
+  return <MainView tree={viewStore.mainView} />;
 }

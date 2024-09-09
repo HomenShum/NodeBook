@@ -25,6 +25,7 @@ type SerializedUserSettings = {
   allowShiftTabAboveViewRoot?: boolean;
   hidePinnedItems?: boolean;
   publicMode?: boolean;
+  showAllNodesOption?: boolean;
 };
 
 export class SettingsStore {
@@ -45,7 +46,7 @@ export class SettingsStore {
   public allowShiftTabAboveViewRoot = false;
   public hidePinnedItems = false;
   public publicMode = false;
-
+  public showAllNodesOption = false;
   private stopAutosave: () => void;
 
   constructor() {
@@ -76,6 +77,7 @@ export class SettingsStore {
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
     this.hidePinnedItems = false;
+    this.showAllNodesOption = true;
   }
 
   saveToLocalStorage() {
@@ -202,6 +204,10 @@ export class SettingsStore {
 
   setHidePinnedItems(value: boolean) {
     this.hidePinnedItems = value;
+  }
+
+  setShowAllNodesOption(value: boolean) {
+    this.showAllNodesOption = value;
   }
 
   cleanup() {
