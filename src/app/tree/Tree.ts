@@ -471,7 +471,11 @@ export class Tree {
   }
 
   protected applyFilter(treeNode: TreeNode): boolean {
+    const hidePointerSection = Object.getPrototypeOf(this).constructor.name === "Tree";
     function walk(treeNode: TreeNode, filter: Filter) {
+      if (hidePointerSection) {
+        treeNode.childrenGroupsById.pointer.nodes = [];
+      }
       if (filter.hidePinnedSection) {
         treeNode.childrenGroupsById.pinned.nodes = [];
       }

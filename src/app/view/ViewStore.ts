@@ -36,7 +36,6 @@ export class ViewStore {
 
   setViewType(viewType: ViewType) {
     this.viewType = viewType;
-    this.sublistView = new SublistTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser());
   }
 
   setSearchQuery(query: string) {

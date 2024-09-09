@@ -5,7 +5,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { getOtherObjectOrThrow } from "@/app/graph/utils";
 import { Tree } from "@/app/tree/Tree";
-import { createRouteUrl, Position } from "@/app/util";
+import { comparePositions, createRouteUrl, Position } from "@/app/util";
 import logger from "@/lib/logger";
 import { defaultRelationTypes } from "@/app/graph/constants";
 
@@ -161,7 +161,7 @@ export class RootTreeNode extends BaseTreeNode {
   }
 
   protected hydrateChildren() {
-    this.childrenGroups.forEach((group) => group.hydrate());
+    this.childrenGroups.forEach((group) => group.hydrate({}, true));
   }
 
   get isExpanded() {
@@ -177,8 +177,6 @@ export class SublistRootTreeNode extends RootTreeNode {
       this.path = this.parent ? this.tree.path.substring(0, this.tree.path.lastIndexOf("/")) : "";
       this.depth = this.parent ? this.parent.depth + 1 : 0;
       this.hydrateChildren();
-      //When the tree nodes are ready, start creating pointer nodes.
-      this.hydratePointerNodes();
     } catch (e) {
       logger.error("error hydrating node", e);
       if (env.isFrontend) {
@@ -192,59 +190,10 @@ export class SublistRootTreeNode extends RootTreeNode {
   protected hydrateChildren() {
     //In sublist view, we do not want pinned items.
     this.childrenGroups.forEach((group) => {
-      if (group.id === "all") {
-        group.hydrate();
+      if (group.id === "pointer") {
+        group.hydrate({}, true);
       }
     });
-  }
-
-  protected hydratePointerNodes() {
-    const pointerNodes: PointerTreeNode[] = [];
-    //If two nodes point to same child, we do not want to push the same child
-    //twice inside pointerNodes.
-
-    const stack: [RootTreeNode | DescendantTreeNode] = [this];
-
-    const visitedObjectIds: Record<string, boolean> = {
-      [this.object.id]: true,
-    };
-
-    // Prevent going back to parent, current.childrenGroupsById["all"] gives back us the parent.
-    this.object.relations.forEach((r) => {
-      if (r.to.id === this.object.id) {
-        visitedObjectIds[r.from.id] = true;
-      }
-    });
-
-    // Simple DFS.
-    // We can push the childNodes of a sublist node directly to the flat list `pointerNodes`
-    // but we do not do so to preserve their ordering. Hence we push them to the stack instead,
-    // and when we come across these "child" nodes, we check if they are leaf nodes or not,
-    // if yes, push them to the flat list, if not, explore them more.
-    while (stack.length > 0) {
-      const current = stack.pop();
-      if (!current) continue;
-
-      const isLeaf = !(
-        current instanceof RootTreeNode ||
-        current.relationWithParent.relationType.id === defaultRelationTypes.sublist.id
-      );
-
-      if (isLeaf) {
-        current.showRelation = false;
-        pointerNodes.push(current);
-        continue;
-      }
-
-      for (const childNode of current.childrenGroupsById["all"].nodes.toSorted((a, b) =>
-        `${b.position.int}-${b.position.frac}`.localeCompare(`${a.position.int}-${a.position.frac}`),
-      )) {
-        if (visitedObjectIds[childNode.object.id]) continue;
-        stack.push(childNode);
-        visitedObjectIds[childNode.object.id] = true;
-      }
-    }
-    this.childrenGroups[2].add(pointerNodes);
   }
 }
 
@@ -259,8 +208,6 @@ export class DescendantTreeNode extends BaseTreeNode {
   depth: number;
   id: string;
   //Todo: Remove this, just a temporary workaround for sublist view,
-  //we do not want to show relations for pointer nodes in sublist view.
-  showRelation: boolean = true;
   constructor({
     object,
     position,
@@ -292,8 +239,8 @@ export class DescendantTreeNode extends BaseTreeNode {
     this.position = position;
   }
 
-  hydrate() {
-    this.childrenGroups.forEach((group) => group.hydrate());
+  hydrate(visitedMap: {} = {}, isConnectedSublist: boolean = false) {
+    this.childrenGroups.forEach((group) => group.hydrate(visitedMap, isConnectedSublist));
   }
 
   get parent() {
@@ -373,8 +320,47 @@ export class DescendantTreeNode extends BaseTreeNode {
   }
 }
 
-export class PointerTreeNode extends DescendantTreeNode {}
+export class PointerTreeNode extends DescendantTreeNode {
+  private sourceNode: DescendantTreeNode;
 
+  constructor(sourceNode: DescendantTreeNode) {
+    super({
+      object: sourceNode.object,
+      position: sourceNode.position,
+      relationWithParent: sourceNode.relationWithParent,
+      group: sourceNode.parentGroup,
+      isSearchMatch: sourceNode.isSearchMatch,
+      searchMatchInDescendants: sourceNode.searchMatchInDescendants,
+    });
+    this.sourceNode = sourceNode;
+  }
+
+  hydrate(visitedMap: {} = {}, isConnectedSublist: boolean = false) {
+    this.childrenGroups.forEach((group) => {
+      if (group.id === "all") {
+        group.hydrate(visitedMap, isConnectedSublist);
+      }
+    });
+  }
+
+  get siblingAbove(): DescendantTreeNode | null {
+    //Flat List
+    const nodeIndex = this.parentGroup.nodes.map((n) => n.id).indexOf(this.id);
+    if (nodeIndex < 0) {
+      throw new Error("Current not found in group. Are you high on salted margarita?");
+    }
+    return this.parentGroup.nodes[nodeIndex - 1] || null;
+  }
+
+  get siblingBelow(): DescendantTreeNode | null {
+    //Flat List
+    const nodeIndex = this.parentGroup.nodes.map((n) => n.id).indexOf(this.id);
+    if (nodeIndex < 0) {
+      throw new Error("Current not found in group. Are you high on chicken salami?");
+    }
+    return this.parentGroup.nodes[nodeIndex + 1] || null;
+  }
+}
 export type TreeNode = PointerTreeNode | RootTreeNode | DescendantTreeNode;
 
 /**
@@ -398,7 +384,7 @@ export abstract class BaseGroup {
     this.nodes = nodes;
   }
 
-  hydrate() {
+  hydrate(visitedMap: {} = {}, isConnectedSublist: boolean = false) {
     const nodes = [];
     for (const { relation, position } of this.relationsWithPositions) {
       try {
@@ -492,6 +478,8 @@ export class AllGroup extends BaseGroup {
 }
 
 export class PointerGroup extends BaseGroup {
+  static hydrationDepth = 0;
+  static groupNodesBySublist = new Map<string, PointerTreeNode[]>();
   id = "pointer" as const;
 
   constructor(props: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
@@ -499,18 +487,118 @@ export class PointerGroup extends BaseGroup {
   }
 
   get path() {
-    return this.parent.path + "/" + this.id;
+    return this.parent.path + "/pointer";
   }
 
   get relationsWithPositions() {
-    return this.parent.object.pointerRelationsWithPositions;
+    return this.parent.object.relationsWithPositions;
   }
 
-  async add(nodes: PointerTreeNode[], after?: Positioner<DescendantTreeNode>) {
-    this.nodes = nodes;
+  private static partitions = {
+    create: (id: string): void => {
+      if (PointerGroup.groupNodesBySublist.has(id)) {
+        return;
+      }
+      PointerGroup.groupNodesBySublist.set(id, []);
+    },
+    push: (node: PointerTreeNode): void => {
+      const lastPartitionId = Array.from(PointerGroup.groupNodesBySublist.keys()).pop();
+      if (!lastPartitionId) {
+        throw new Error("Unable to add pointer node to non existent partition");
+      }
+      PointerGroup.groupNodesBySublist.get(lastPartitionId)?.push(node);
+    },
+    getNodes: (sublistId: string) => {
+      return PointerGroup.groupNodesBySublist.get(sublistId) || [];
+    },
+    exists: (sublistId: string) => {
+      return PointerGroup.groupNodesBySublist.has(sublistId);
+    },
+    reset: () => {
+      PointerGroup.groupNodesBySublist.clear();
+    },
+  };
+
+  hydrate(visitedMap: Record<string, boolean> = {}, isConnectedSublist: boolean = false) {
+    visitedMap[this.parent.object.id] = true;
+    PointerGroup.hydrationDepth++;
+    const nodes = [];
+    for (const { relation, position } of this.relationsWithPositions) {
+      try {
+        const node = new DescendantTreeNode({
+          object: getOtherObjectOrThrow(relation, this.parent.object.id),
+          position,
+          relationWithParent: relation,
+          group: this,
+        });
+
+        //If the child node has a sublist relationship
+        // and the current node is connected to the root via sublist chain
+        //then the next node (being a sublist) is considered part of the connected sublist
+        const isChildConnectedSublist = isConnectedSublist
+          ? relation.relationType.id === defaultRelationTypes.sublist.id &&
+            node.relationWithParent.from.id === this.parent.object.id
+          : false;
+
+        if (isConnectedSublist && PointerGroup.hydrationDepth == 2) {
+          PointerGroup.partitions.create(this.parent.object.id);
+        }
+
+        const isChildMyParent = node.relationWithParent.to.id === this.parent.object.id;
+
+        //Push all children of the current sublist except it's parent.
+        if (PointerGroup.hydrationDepth > 1 && isConnectedSublist && !isChildConnectedSublist && !isChildMyParent) {
+          PointerGroup.partitions.push(new PointerTreeNode(node));
+        }
+
+        // Only hydrate children if the parent is expanded. This is important to avoid
+        // infinite recursion since we allow circular references in the graph.
+        if ((this.parent.isExpanded && this.isExpanded) || (isChildConnectedSublist && !visitedMap[node.object.id])) {
+          node.hydrate(visitedMap, isChildConnectedSublist);
+        }
+
+        nodes.push(node);
+      } catch (e) {
+        logger.error("Error hydrating node", e);
+      }
+    }
+    PointerGroup.hydrationDepth--;
+
+    this.nodes = [];
+    nodes.toSorted((a, b) => comparePositions(a.position, b.position));
+
+    if (PointerGroup.hydrationDepth === 0) {
+      for (const node of nodes) {
+        const sublistId = node.object.id;
+        if (PointerGroup.partitions.exists(sublistId)) {
+          for (const nodeToInject of PointerGroup.partitions.getNodes(sublistId)) {
+            this.nodes.push(nodeToInject);
+          }
+        } else {
+          this.nodes.push(node);
+        }
+      }
+    } else {
+      this.nodes = nodes;
+    }
+
+    if (PointerGroup.hydrationDepth === 0) {
+      PointerGroup.partitions.reset();
+    }
+  }
+
+  /**
+   * Moves the nodes into the given group while maintaining any expanded or
+   * selected states.
+   */
+  async add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+    for (const node of nodes) {
+      await node.setParent(this.parent, after);
+      this.tree.updateSubtreeExpansionAndSelectionPathState(node.path, this.createChildPath(node));
+      after = node;
+    }
     this.tree.setPathExpanded(this.parent.path, true);
   }
 }
-
 export type ChildrenGroups = [PinnedGroup, AllGroup, PointerGroup];
 export type GroupId = BaseGroup["id"];

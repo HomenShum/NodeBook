@@ -39,7 +39,7 @@ export const RelationCombobox = observer(
     const [search, setSearch] = React.useState(relation.relationType.label);
     const [selected, setSelected] = React.useState(`${relation.relationType.id}-${isForward ? "forward" : "reverse"}`);
 
-    if (viewStore.viewType === "sublist" && !treeNode.showRelation) {
+    if (viewStore.viewType === "sublist" && treeNode instanceof PointerTreeNode) {
       return null;
     }
 
