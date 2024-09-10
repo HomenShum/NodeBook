@@ -520,10 +520,14 @@ export class PointerGroup extends BaseGroup {
   };
 
   hydrate(visitedMap: Record<string, boolean> = {}, isConnectedSublist: boolean = false) {
-    visitedMap[this.parent.object.id] = true;
+    if (Object.getPrototypeOf(this.tree).constructor.name !== "SublistTree") {
+      return;
+    }
     PointerGroup.hydrationDepth++;
     const nodes = [];
-    for (const { relation, position } of this.relationsWithPositions) {
+    for (const { relation, position } of this.relationsWithPositions.sort((a, b) =>
+      comparePositions(a.position, b.position),
+    )) {
       try {
         const node = new DescendantTreeNode({
           object: getOtherObjectOrThrow(relation, this.parent.object.id),
@@ -565,7 +569,6 @@ export class PointerGroup extends BaseGroup {
     PointerGroup.hydrationDepth--;
 
     this.nodes = [];
-    nodes.toSorted((a, b) => comparePositions(a.position, b.position));
 
     if (PointerGroup.hydrationDepth === 0) {
       for (const node of nodes) {
