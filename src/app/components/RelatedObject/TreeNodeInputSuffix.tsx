@@ -37,7 +37,10 @@ export const TreeNodeInputSuffix = observer(({ treeNode }: TreeNodeInputSuffixPr
         switch (e.key) {
           case "Enter":
             e.preventDefault();
-            const path = await treeNode.parent.createChild({ after: treeNode });
+            const path = await treeNode.parent.createChild({
+              after: treeNode,
+              shouldPin: treeNode.parentGroup.id === "pinned",
+            });
             tree.setFocusedNode(path, "start", undefined, true);
             break;
           case "Backspace":

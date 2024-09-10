@@ -54,8 +54,15 @@ export abstract class BaseTreeNode {
    * Create a new graph node and adds it as a child of this node. Returns the
    * path to the new node in the "all" section of the children.
    */
-  async createChild(props: Omit<Parameters<Tree["createChildNode"]>[0], "parent"> = {}) {
+  async createChild(props: Omit<Parameters<Tree["createChildNode"]>[0], "parent"> & { shouldPin?: boolean } = {}) {
     const { relation } = await this.tree.createChildNode({ ...props, parent: this });
+    if (props.shouldPin) {
+      this.object.pinChildRelation(
+        relation,
+        props.after instanceof DescendantTreeNode ? props.after.relationWithParent : undefined,
+      );
+      return this.createChildPath(relation, "pinned");
+    }
     return this.createChildPath(relation);
   }
 
