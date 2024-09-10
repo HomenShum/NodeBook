@@ -30,8 +30,8 @@ import {
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
-import { cn } from "@/lib/utils";
 import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import { useTreeNode } from "./RelatedObjectContext";
 
@@ -49,7 +49,7 @@ export const RelatedObjectMenu = observer(
 
     const [publicDialogOpen, setPublicDialogOpen] = useState(false);
 
-    if (viewStore.viewType === "sublist") {
+    if (viewStore.flattenSublists) {
       return null;
     }
 

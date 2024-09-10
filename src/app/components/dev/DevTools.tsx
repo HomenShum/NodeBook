@@ -51,8 +51,9 @@ export const DevTools = observer(() => {
   };
 
   return (
-    <DataDialog title="Settings" description="" modalType="devTools">
+    <DataDialog title="" description="" modalType="devTools">
       <div className={styles.SettingsGroup}>
+        <h1>Settings</h1>
         <label className={styles.LabelSetting}>
           <input
             type="checkbox"
@@ -89,6 +90,15 @@ export const DevTools = observer(() => {
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />
         </div>
+        <h2>Experimental features</h2>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.isFlattenSublistsEnabled}
+            onChange={(e) => settingsStore.setIsFlattenSublistsEnabled(e.target.checked)}
+          />
+          Enable flatten sublists feature
+        </label>
         <hr style={{ border: ".5px solid var(--gray-6)" }} />
         <div style={{ display: "flex", gap: 12 }}>
           <Button size="default" variant="default" onClick={handleOpenImportData}>

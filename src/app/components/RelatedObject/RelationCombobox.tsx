@@ -6,11 +6,11 @@ import * as React from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
+import { GraphRelationType } from "@/app/graph/types";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode, PointerTreeNode } from "@/app/tree/nodes";
-import { cn } from "@/lib/utils";
-import { GraphRelationType } from "@/app/graph/types";
 import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import styles from "./RelationCombobox.module.css";
 
@@ -39,7 +39,7 @@ export const RelationCombobox = observer(
     const [search, setSearch] = React.useState(relation.relationType.label);
     const [selected, setSelected] = React.useState(`${relation.relationType.id}-${isForward ? "forward" : "reverse"}`);
 
-    if (viewStore.viewType === "sublist" && treeNode instanceof PointerTreeNode) {
+    if (viewStore.flattenSublists && treeNode instanceof PointerTreeNode) {
       return null;
     }
 

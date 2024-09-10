@@ -2,7 +2,7 @@ import { Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react"
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
-import { ListIcon, PinIconMew, SplitIcon, StreamIcon, ViewsIconMew } from "@/app/components/CustomIcons";
+import { ListIcon, PinIconMew, StreamIcon, ViewsIconMew } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -113,6 +113,16 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {settingsStore.isFlattenSublistsEnabled && (
+          <div className={s.SwitchItem}>
+            <Switch
+              id="show-node-details"
+              checked={viewStore.flattenSublists}
+              onCheckedChange={(checked: boolean) => viewStore.setFlattenSublists(checked)}
+            />
+            <label htmlFor="show-node-details">Flatten sublists</label>
+          </div>
+        )}
       </div>
       <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
         <Popover>
@@ -148,15 +158,6 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
               >
                 <StreamIcon />
                 Note
-              </Button>
-              <Button
-                size="sm"
-                variant={viewStore.viewType === ViewType.Sublist ? "active" : "default"}
-                onClick={() => viewStore.setViewType(ViewType.Sublist)}
-                style={{ width: "100%", flex: "grow", height: 36, display: "flex" }}
-              >
-                <SplitIcon />
-                Sublist
               </Button>
             </div>
           </PopoverContent>

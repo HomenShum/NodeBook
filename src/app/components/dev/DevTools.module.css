@@ -20,6 +20,16 @@
   color: var(--gray-11);
 }
 
+.SettingsGroup h1 {
+  font-size: var(--font-size-h3);
+  color: var(--gray-11);
+}
+
+.SettingsGroup h2 {
+  font-size: var(--font-size-h4);
+  color: var(--gray-11);
+}
+
 .LabelSetting {
   display: flex;
   align-items: baseline;

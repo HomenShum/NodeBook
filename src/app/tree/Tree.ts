@@ -39,7 +39,7 @@ import {
  */
 export type Path = string;
 
-type Root = DescendantTreeNode | ObjectPath | GraphObject;
+export type Root = DescendantTreeNode | ObjectPath | GraphObject;
 
 const logger = appLogger.child({ service: "tree" });
 

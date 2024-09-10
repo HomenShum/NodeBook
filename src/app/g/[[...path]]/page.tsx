@@ -1,14 +1,13 @@
 "use client";
+import { observer } from "mobx-react-lite";
 import { redirect } from "next/navigation";
 import { useEffect } from "react";
-import { observer } from "mobx-react-lite";
 
 import { MainView } from "@/app/components/MainView";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { createRouteUrl, parsePathString } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
-import { ViewType } from "@/app/view/types";
 
 function Page({ params: { path } }: { params: { path: string[] | undefined } }) {
   const viewStore = useViewStore();
@@ -19,13 +18,8 @@ function Page({ params: { path } }: { params: { path: string[] | undefined } }) 
       logger.debug("Could not parse path, redirecting to home", path);
       return redirect(createRouteUrl("home"));
     }
-    viewStore.mainView.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
-    viewStore.sublistView.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
-  }, [graphStore, path, viewStore.mainView, viewStore.sublistView]);
-
-  if (viewStore.viewType === ViewType.Sublist) {
-    return <MainView tree={viewStore.sublistView}></MainView>;
-  }
+    viewStore.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
+  }, [graphStore, path, viewStore]);
 
   return <MainView tree={viewStore.mainView}></MainView>;
 }

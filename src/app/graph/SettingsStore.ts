@@ -47,6 +47,7 @@ export class SettingsStore {
   public hidePinnedItems = false;
   public publicMode = false;
   public showAllNodesOption = false;
+  public isFlattenSublistsEnabled = false;
   private stopAutosave: () => void;
 
   constructor() {
@@ -208,6 +209,10 @@ export class SettingsStore {
 
   setShowAllNodesOption(value: boolean) {
     this.showAllNodesOption = value;
+  }
+
+  setIsFlattenSublistsEnabled(value: boolean) {
+    this.isFlattenSublistsEnabled = value;
   }
 
   cleanup() {
