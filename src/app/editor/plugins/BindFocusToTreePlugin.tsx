@@ -62,7 +62,7 @@ export const BindFocusToTreePlugin = observer(() => {
       editor.registerCommand(
         FOCUS_COMMAND,
         action(() => {
-          if (!isEditorFocused() && !tree.isNodeFocused(treeNode.id)) {
+          if (!tree.isNodeFocused(treeNode.id)) {
             // Editor is becoming focused but node isn't focused -> set tree selection to this node
             tree.setFocusedNode(treeNode.id);
             return true;
