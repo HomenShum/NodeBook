@@ -5,10 +5,9 @@ import { useCallback, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
-import { DescendantTreeNode } from "@/app/tree/nodes";
+import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { isUnlabelledChild } from "@/app/tree/utils";
 import { createRouteUrl } from "@/app/util";
 import logger from "@/lib/logger";
@@ -39,6 +38,30 @@ export const RelatedObjectView = observer(
     );
   },
 );
+
+export const ClickToCreateNode = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
+  const tree = useTree();
+  const handleCreateAndFocusNode = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    tree.createChildOfRootAndFocus();
+  }, [tree]);
+
+  if (treeNode.childCount !== 0) return null;
+
+  return (
+    <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)} onClick={handleCreateAndFocusNode}>
+      <div className={styles.RelatedObjectContent}>
+        <div className={cn(styles.RelatedObjectBulletContainer)}>
+          <Dot strokeWidth={5} height={16} className={cn(styles.Bullet, styles.DotInsideClickToCreateNode)} />
+        </div>
+        <div className={cn(styles.RelatedObjectNode)}>
+          <div className={styles.ClickToCreateNode}>Click to create</div>
+        </div>
+      </div>
+    </div>
+  );
+});
 
 const Main = observer(({ treeNode, children }: { treeNode: DescendantTreeNode; children: React.ReactNode }) => {
   const [updatingRelationType, setUpdatingRelationType] = useState(false);
@@ -81,7 +104,6 @@ const Content = observer(() => {
     setUpdatingRelationType,
     viewType,
   } = useTreeNode();
-  const graphStore = useGraphStore();
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
 
   return (

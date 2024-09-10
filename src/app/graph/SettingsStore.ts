@@ -77,7 +77,7 @@ export class SettingsStore {
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
     this.hidePinnedItems = false;
-    this.showAllNodesOption = true;
+    this.showAllNodesOption = false;
   }
 
   saveToLocalStorage() {

@@ -90,6 +90,9 @@ Bullet
 .DotInsidePublic {
   stroke: var(--teal-10);
 }
+.DotInsideClickToCreateNode {
+  stroke: var(--gray-8);
+}
 
 .Circle {
   cursor: pointer;
@@ -130,6 +133,17 @@ Node
   width: 100%;
   gap: 4px;
   align-items: baseline;
+}
+
+.ClickToCreateNode {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  gap: 4px;
+  align-items: baseline;
+  cursor: pointer;
+  color: var(--gray-8);
+  user-select: none;
 }
 
 .HoverCardTrigger {

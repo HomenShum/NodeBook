@@ -2,9 +2,9 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
+import { AllGroup, ChildrenGroups, PinnedGroup, PointerGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { ViewType } from "@/app/view/types";
-import { AllGroup, ChildrenGroups, PinnedGroup, PointerGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
@@ -42,16 +42,14 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
     <>
       <button
         onClick={() => tree.toggleGroupExpanded(group.path)}
-        className={`${styles.PinnedToggleButton}  ${
-          tree.isGroupExpanded(group.id)
+        className={`${styles.PinnedToggleButton}  ${tree.isGroupExpanded(group.id)
             ? styles.PinnedToggleButton_PinnedVisible
             : styles.PinnedToggleButton_PinnedHidden
-        }`}
+          }`}
       >
         <span
-          className={`${styles.PinIcon} ${
-            group.isExpanded ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
-          }`}
+          className={`${styles.PinIcon} ${group.isExpanded ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
+            }`}
         >
           <PinCustomIcon />
         </span>
@@ -67,9 +65,8 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
               </div>
             ))}
             <div
-              className={`${styles.PinSectionSeparator} ${
-                viewStore.viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
-              }`}
+              className={`${styles.PinSectionSeparator} ${viewStore.viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
+                }`}
             />
           </>
         )}
