@@ -5,15 +5,14 @@ import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { Tree } from "@/app/tree/Tree";
 import { SublistTree } from "@/app/tree/SublistTree";
-
-export type ViewType = "outline" | "note" | "sublist";
+import { ViewType } from "@/app/view/types";
 
 export class ViewStore {
   private readonly settingsStore: SettingsStore;
   private readonly graphStore: GraphStore;
   public searchQuery: string = "";
 
-  public viewType: ViewType = "outline";
+  public viewType = ViewType.Outline;
   public mainView: Tree;
   public sublistView: Tree;
 

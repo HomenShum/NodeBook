@@ -2,7 +2,7 @@ import { Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react"
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
-import { ListIcon, PinIconMew, StreamIcon, SplitIcon, ViewsIconMew } from "@/app/components/CustomIcons";
+import { ListIcon, PinIconMew, SplitIcon, StreamIcon, ViewsIconMew } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -151,8 +151,8 @@ export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
               </Button>
               <Button
                 size="sm"
-                variant={viewStore.viewType === "sublist" ? "active" : "default"}
-                onClick={() => viewStore.setViewType("sublist")}
+                variant={viewStore.viewType === ViewType.Sublist ? "active" : "default"}
+                onClick={() => viewStore.setViewType(ViewType.Sublist)}
                 style={{ width: "100%", flex: "grow", height: 36, display: "flex" }}
               >
                 <SplitIcon />

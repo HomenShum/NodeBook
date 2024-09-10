@@ -2,7 +2,6 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { ViewType } from "@/app/view/types";
 import { AllGroup, ChildrenGroups, PinnedGroup, PointerGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
@@ -34,23 +33,25 @@ export const RelatedObjectChildren = observer(({ treeNode }: { treeNode: TreeNod
 const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: PinnedGroup }) => {
   const viewStore = useViewStore();
   const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
+  const sublistView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Sublist;
   const tree = useTree();
-  const graphStore = useGraphStore();
-  if (group.nodes.length === 0) {
+  if (group.nodes.length === 0 || sublistView) {
     return null;
   }
   return (
     <>
       <button
         onClick={() => tree.toggleGroupExpanded(group.path)}
-        className={`${styles.PinnedToggleButton}  ${tree.isGroupExpanded(group.id)
-          ? styles.PinnedToggleButton_PinnedVisible
-          : styles.PinnedToggleButton_PinnedHidden
-          }`}
+        className={`${styles.PinnedToggleButton}  ${
+          tree.isGroupExpanded(group.id)
+            ? styles.PinnedToggleButton_PinnedVisible
+            : styles.PinnedToggleButton_PinnedHidden
+        }`}
       >
         <span
-          className={`${styles.PinIcon} ${group.isExpanded ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
-            }`}
+          className={`${styles.PinIcon} ${
+            group.isExpanded ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
+          }`}
         >
           <PinCustomIcon />
         </span>
@@ -66,8 +67,9 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
               </div>
             ))}
             <div
-              className={`${styles.PinSectionSeparator} ${viewStore.viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
-                }`}
+              className={`${styles.PinSectionSeparator} ${
+                viewStore.viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
+              }`}
             />
           </>
         )}
@@ -78,8 +80,8 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
 
 const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: AllGroup }) => {
   const viewStore = useViewStore();
-  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === "note";
-  const sublistView = parentNode instanceof RootTreeNode && viewStore.viewType === "sublist";
+  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
+  const sublistView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Sublist;
 
   if (sublistView) {
     return null;
@@ -100,7 +102,7 @@ const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; grou
 
 const PointerSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: PointerGroup }) => {
   const viewStore = useViewStore();
-  const sublistView = parentNode instanceof RootTreeNode && viewStore.viewType === "sublist";
+  const sublistView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Sublist;
 
   if (!sublistView) {
     return null;

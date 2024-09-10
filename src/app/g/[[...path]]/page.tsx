@@ -8,6 +8,7 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { createRouteUrl, parsePathString } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
+import { ViewType } from "@/app/view/types";
 
 function Page({ params: { path } }: { params: { path: string[] | undefined } }) {
   const viewStore = useViewStore();
@@ -22,7 +23,7 @@ function Page({ params: { path } }: { params: { path: string[] | undefined } }) 
     viewStore.sublistView.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
   }, [graphStore, path, viewStore.mainView, viewStore.sublistView]);
 
-  if (viewStore.viewType === "sublist") {
+  if (viewStore.viewType === ViewType.Sublist) {
     return <MainView tree={viewStore.sublistView}></MainView>;
   }
 
