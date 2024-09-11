@@ -8,6 +8,12 @@ import { createRouteUrl } from "@/app/util";
 
 import { DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 
+export type Ancestor = {
+  object: GraphObject;
+  relationToChild: GraphRelation;
+  path: string;
+};
+
 /**
  * Get all ancestors of a tree node as an array.
  *
@@ -16,11 +22,8 @@ import { DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./no
  * Includes the nodes leading to the root, the root itself, and all
  * the nodes leading to the given one.
  */
-
-export const getAncestorsAsArray = (
-  node: TreeNode,
-): { object: GraphObject; relationToChild: GraphRelation; path: string }[] => {
-  const ancestors: { object: GraphObject; relationToChild: GraphRelation; path: string }[] = [];
+export const getAncestorsAsArray = (node: TreeNode): Ancestor[] => {
+  const ancestors: Ancestor[] = [];
   // Get up to the root and including the root
   let treeNode = node;
   while (!(treeNode instanceof RootTreeNode)) {

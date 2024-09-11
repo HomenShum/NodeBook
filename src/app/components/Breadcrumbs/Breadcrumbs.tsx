@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
+import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { TreeNode } from "@/app/tree/nodes";
@@ -38,21 +39,31 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
   };
 
   const BreadcrumbItem = observer(
-    ({ ancestor, index, isRoot = false }: { ancestor: any; index: number; isRoot?: boolean }) => (
-      <React.Fragment key={`${ancestor?.path}-${ancestor?.object?.text}`}>
+    ({
+      object,
+      path,
+      index,
+      isRoot = false,
+    }: {
+      object: GraphObject;
+      path: string;
+      index: number;
+      isRoot?: boolean;
+    }) => (
+      <React.Fragment key={`${path}-${object.text}`}>
         {index > 0 && <ChevronRight size={14} strokeWidth={2} className={s.Separator} />}
 
         <span className={s.Breadcrumb} onClick={() => handleNavigation(index)}>
-          {ancestor.object.id === graphStore.globalRoot.id ? (
+          {object.id === graphStore.globalRoot.id ? (
             <span className={s.Home}>
               <Globe size={14} />
             </span>
-          ) : ancestor.object.id === graphStore.userRoot.id ? (
+          ) : object.id === graphStore.userRoot.id ? (
             <span className={s.Home}>
               <Home size={14} />
             </span>
           ) : null}
-          <span>{truncateText(isRoot ? treeNode.object.text : ancestor?.object?.text || "", isMobile ? 15 : 32)}</span>
+          <span>{truncateText(isRoot ? object.text : object.text, isMobile ? 15 : 32)}</span>
         </span>
       </React.Fragment>
     ),
@@ -68,9 +79,65 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
 
       return (
         <>
-          <BreadcrumbItem ancestor={firstItem} index={0} />
-          {middleItems.length > 0 && (
+          {ancestors.length > 0 && (
             <>
+              <BreadcrumbItem object={firstItem.object} path={firstItem.path} index={0} />
+              {middleItems.length > 0 && (
+                <>
+                  <ChevronRight size={14} strokeWidth={2} className={s.Separator} />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <span className={s.Breadcrumb}>
+                        <Ellipsis size={14} />
+                      </span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent sideOffset={4}>
+                      {middleItems.map((ancestor, index) => (
+                        <DropdownMenuItem
+                          key={`${ancestor.path}-${ancestor.object.text}`}
+                          onSelect={() => handleNavigation(index + 1)}
+                        >
+                          {truncateText(ancestor.object.text, 32)}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              )}
+            </>
+          )}
+          <BreadcrumbItem object={treeNode.object} path={treeNode.path} index={totalItems} isRoot={true} />
+        </>
+      );
+    } else {
+      // Desktop view
+      if (totalItems <= MAX_VISIBLE_ITEMS) {
+        return (
+          <>
+            {ancestors.map((ancestor, index) => (
+              <BreadcrumbItem
+                key={`${ancestor.path}-${ancestor.object.text}`}
+                object={ancestor.object}
+                path={ancestor.path}
+                index={index}
+              />
+            ))}
+            <BreadcrumbItem
+              key={`root-${treeNode.object.text}`}
+              object={treeNode.object}
+              path={treeNode.path}
+              index={totalItems}
+              isRoot={true}
+            />
+          </>
+        );
+      }
+
+      return (
+        <>
+          {ancestors.length > 0 && (
+            <>
+              <BreadcrumbItem object={ancestors[0].object} path={ancestors[0].path} index={0} />
               <ChevronRight size={14} strokeWidth={2} className={s.Separator} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -79,7 +146,7 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
                   </span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent sideOffset={4}>
-                  {middleItems.map((ancestor, index) => (
+                  {ancestors.slice(1, -MAX_VISIBLE_ITEMS + 2).map((ancestor, index) => (
                     <DropdownMenuItem
                       key={`${ancestor.path}-${ancestor.object.text}`}
                       onSelect={() => handleNavigation(index + 1)}
@@ -89,53 +156,23 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+              {ancestors.slice(-MAX_VISIBLE_ITEMS + 2).map((ancestor, index) => (
+                <BreadcrumbItem
+                  key={`${ancestor.path}-${ancestor.object.text}`}
+                  object={ancestor.object}
+                  path={ancestor.path}
+                  index={totalItems - MAX_VISIBLE_ITEMS + 2 + index}
+                />
+              ))}
             </>
           )}
-          <BreadcrumbItem ancestor={treeNode} index={totalItems} isRoot={true} />
-        </>
-      );
-    } else {
-      // Desktop view
-      if (totalItems <= MAX_VISIBLE_ITEMS) {
-        return (
-          <>
-            {ancestors.map((ancestor, index) => (
-              <BreadcrumbItem key={`${ancestor.path}-${ancestor.object.text}`} ancestor={ancestor} index={index} />
-            ))}
-            <BreadcrumbItem key={`root-${treeNode.object.text}`} ancestor={treeNode} index={totalItems} isRoot={true} />
-          </>
-        );
-      }
-
-      return (
-        <>
-          <BreadcrumbItem ancestor={ancestors[0]} index={0} />
-          <ChevronRight size={14} strokeWidth={2} className={s.Separator} />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <span className={s.Breadcrumb}>
-                <Ellipsis size={14} />
-              </span>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent sideOffset={4}>
-              {ancestors.slice(1, -MAX_VISIBLE_ITEMS + 2).map((ancestor, index) => (
-                <DropdownMenuItem
-                  key={`${ancestor.path}-${ancestor.object.text}`}
-                  onSelect={() => handleNavigation(index + 1)}
-                >
-                  {truncateText(ancestor.object.text, 32)}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {ancestors.slice(-MAX_VISIBLE_ITEMS + 2).map((ancestor, index) => (
-            <BreadcrumbItem
-              key={`${ancestor.path}-${ancestor.object.text}`}
-              ancestor={ancestor}
-              index={totalItems - MAX_VISIBLE_ITEMS + 2 + index}
-            />
-          ))}
-          <BreadcrumbItem key={`root-${treeNode.object.text}`} ancestor={treeNode} index={totalItems} isRoot={true} />
+          <BreadcrumbItem
+            key={`root-${treeNode.object.text}`}
+            object={treeNode.object}
+            path={treeNode.path}
+            index={totalItems}
+            isRoot={true}
+          />
         </>
       );
     }
