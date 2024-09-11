@@ -48,6 +48,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
 
   // when auth changes, clean up current stores and setup up new ones
   useEffect(() => {
+    let ignore = false;
     async function setupStores() {
       if (!auth) return logger.debug("Skip store setup while auth is disabled");
       if (!auth.user) return logger.debug("Skip store setup while not authenticated");
@@ -85,22 +86,22 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
         if (env.isPersistenceEnabled && !newUser.isUnlogged) {
           logger.debug("Loading data", newUser.id);
           await loadGraphData(graph, authedFetch);
-          logger.debug("Starting sync");
-          syncCleanup = startSync({ graphStore: graph });
         }
       } catch (e) {
         toast("Failed to load data from server. Starting with an empty graph.");
         logger.error("Failed sync setup", e);
       }
 
-      // set stores
+      // Set up stores. (unless we are unmounting, in which case ignore the result)
+      if (ignore) return;
+      logger.debug("Starting sync");
+      syncCleanup = startSync({ graphStore: graph });
       setUser(newUser);
       setGraphStore(graph);
       setSettingsStore(settings);
       setViewStore(view);
       setRenderController(render);
       setIsLoading(false);
-
       return () => {
         logger.debug("Cleaning up stores");
         graph.cleanup();
@@ -113,9 +114,8 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
 
     const cleanupPromise = setupStores();
     return () => {
-      cleanupPromise.then((cleanup) => {
-        cleanup?.();
-      });
+      ignore = true;
+      cleanupPromise.then((cleanup) => cleanup?.());
     };
   }, [auth]);
 
