@@ -9,17 +9,19 @@
 
 
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { mergeRegister } from '@lexical/utils';
 import {
   $getSelection,
   $isRangeSelection,
   $isTextNode,
+  BLUR_COMMAND,
   COMMAND_PRIORITY_LOW,
   COMMAND_PRIORITY_NORMAL,
   CommandListenerPriority, KEY_DOWN_COMMAND, LexicalEditor,
   RangeSelection,
   TextNode
 } from 'lexical';
-import React, { RefObject, useCallback, useEffect, useState } from 'react';
+import React, { RefObject, useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   LexicalMenu,
@@ -154,6 +156,7 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
 }: TypeaheadMenuPluginProps<TOption>): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   const [resolution, setResolution] = useState<MenuResolution | null>(null);
+  const typedSinceLastFocused = useRef<boolean>(false);
   const anchorElementRef = useMenuAnchorRef(
     resolution,
     setResolution,
@@ -187,12 +190,12 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
         const range = editorWindow.document.createRange();
         const selection = $getSelection();
         const text = getQueryTextForSearch(editor);
-
         if (
           !$isRangeSelection(selection) ||
           !selection.isCollapsed() ||
           text === null ||
-          range === null
+          range === null ||
+          !typedSinceLastFocused.current
         ) {
           closeTypeahead();
           return;
@@ -244,6 +247,12 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
     if (!editor) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // only show autocomplete dropdown after typing text input
+      // all characters with length of 1 ('A','B',number,symbol) is printable. source // https://stackoverflow.com/a/58658881
+      if (e.key.length !== 1 || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
+        return false;
+      }
+      typedSinceLastFocused.current = true;
       // only trigger on semicolon and if there is no text in the editor
       if (e.key !== ';') return false;
       const text = getQueryTextForSearch(editor);
@@ -293,11 +302,19 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
 
       return true;
     };
+    const handleBlur = (e: FocusEvent) => {
+      typedSinceLastFocused.current = false;
+      return false;
+    };
+
 
     return (
-      editor.registerCommand(KEY_DOWN_COMMAND, handleKeyDown, COMMAND_PRIORITY_NORMAL)
+      mergeRegister(
+        editor.registerCommand(KEY_DOWN_COMMAND, handleKeyDown, COMMAND_PRIORITY_NORMAL),
+        editor.registerCommand(BLUR_COMMAND, handleBlur, COMMAND_PRIORITY_NORMAL),
+      )
     );
-  }, [editor, triggerFn, onQueryChange, closeTypeahead, openTypeahead]);
+  }, [editor, triggerFn, onQueryChange, closeTypeahead, openTypeahead, typedSinceLastFocused]);
 
   return resolution === null || editor === null ? null : (
     <LexicalMenu
