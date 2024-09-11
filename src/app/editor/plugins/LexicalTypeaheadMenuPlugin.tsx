@@ -19,7 +19,7 @@ import {
   RangeSelection,
   TextNode
 } from 'lexical';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { RefObject, useCallback, useEffect, useState } from 'react';
 
 import {
   LexicalMenu,
@@ -134,7 +134,7 @@ export type TypeaheadMenuPluginProps<TOption extends MenuOption> = {
   commandPriority?: CommandListenerPriority;
   parent?: HTMLElement;
   isMenuOpen: boolean;
-
+  boundaryRef?: RefObject<HTMLDivElement>;
 };
 
 export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
@@ -149,6 +149,7 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
   commandPriority = COMMAND_PRIORITY_LOW,
   parent,
   isMenuOpen,
+  boundaryRef,
 
 }: TypeaheadMenuPluginProps<TOption>): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
@@ -157,6 +158,7 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
     resolution,
     setResolution,
     anchorClassName,
+    boundaryRef,
     parent,
   );
 

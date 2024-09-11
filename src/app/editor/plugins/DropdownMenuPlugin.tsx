@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
-import { useCallback, useRef, useState } from "react";
+import { RefObject, useCallback, useRef, useState } from "react";
 
 import {
   ActionId,
@@ -33,7 +33,13 @@ enum DropdownAction {
 
 const SUGGESTION_LIST_LENGTH_LIMIT = 5;
 
-export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode | RootTreeNode }): JSX.Element | null {
+export function DropdownMenuPlugin({
+  treeNode,
+  boundaryRef,
+}: {
+  treeNode: DescendantTreeNode | RootTreeNode;
+  boundaryRef?: RefObject<HTMLDivElement>;
+}): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
 
@@ -267,6 +273,7 @@ export function DropdownMenuPlugin({ treeNode }: { treeNode: DescendantTreeNode 
       // High priority so it takes precedence over the split on enterkeyPlugin
       // and same level as toggleEditable Plugin command (which lets the enter key event propogate to this plugin on opening the dropdown)
       commandPriority={COMMAND_PRIORITY_HIGH}
+      boundaryRef={boundaryRef}
     />
   );
 }

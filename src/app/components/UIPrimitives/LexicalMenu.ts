@@ -24,6 +24,7 @@ import {
 import {
   MutableRefObject,
   ReactPortal,
+  RefObject,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -433,6 +434,7 @@ export function useMenuAnchorRef(
   resolution: MenuResolution | null,
   setResolution: (r: MenuResolution | null) => void,
   className?: string,
+  boundaryRef?: RefObject<HTMLDivElement>,
   parent: HTMLElement = document.body,
 ): MutableRefObject<HTMLElement> {
   const [editor] = useLexicalComposerContext();
@@ -450,20 +452,21 @@ export function useMenuAnchorRef(
       containerDiv.style.left = `${left + window.pageXOffset}px`;
       containerDiv.style.height = `${height}px`;
       containerDiv.style.width = `${width}px`;
+
       if (menuEle !== null) {
         menuEle.style.top = `${top}`;
-        const menuRect = menuEle.getBoundingClientRect();
-        const menuHeight = menuRect.height;
-        const menuWidth = menuRect.width;
+        const { height: menuHeight, width: menuWidth } = menuEle.getBoundingClientRect();
 
-        const rootElementRect = rootElement.getBoundingClientRect();
+        const boundingElement = boundaryRef?.current ?? rootElement;
+        const boundingRect = boundingElement.getBoundingClientRect();
 
-        if (left + menuWidth > rootElementRect.right) {
-          containerDiv.style.left = `${rootElementRect.right - menuWidth + window.pageXOffset}px`;
+        // When there's overflow, make sure the menu is not cut off
+        if (left + menuWidth > boundingRect.right) {
+          containerDiv.style.left = `${boundingRect.right - menuWidth + window.pageXOffset}px`;
         }
         if (
-          (top + menuHeight > window.innerHeight || top + menuHeight > rootElementRect.bottom) &&
-          top - rootElementRect.top > menuHeight + height
+          (top + menuHeight > window.innerHeight || top + menuHeight > boundingRect.bottom) &&
+          top - boundingRect.top > menuHeight + height
         ) {
           containerDiv.style.top = `${top - menuHeight + window.pageYOffset - height}px`;
         }
@@ -483,7 +486,7 @@ export function useMenuAnchorRef(
       anchorElementRef.current = containerDiv;
       rootElement.setAttribute("aria-controls", "typeahead-menu");
     }
-  }, [editor, resolution, className, parent]);
+  }, [editor, resolution, boundaryRef, className, parent]);
 
   useEffect(() => {
     const rootElement = editor.getRootElement();

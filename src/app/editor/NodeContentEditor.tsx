@@ -6,6 +6,7 @@ import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
+import { RefObject } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
@@ -29,7 +30,7 @@ import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 
 import styles from "./Editor.module.css";
 
-export const NodeEditor = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
+export const NodeEditor = observer(({ treeNode, boundaryRef }: { treeNode: DescendantTreeNode, boundaryRef: RefObject<HTMLDivElement> }) => {
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
@@ -58,7 +59,7 @@ export const NodeEditor = observer(({ treeNode }: { treeNode: DescendantTreeNode
         <SyncWithGraphPlugin node={treeNode.object} />
         {editable && <ClearEditorPlugin />}
         {editable && <EnterKeyPlugin treeNode={treeNode} />}
-        {editable && tree.isNodeFocused(treeNode.id) && <DropdownMenuPlugin treeNode={treeNode} />}
+        {editable && tree.isNodeFocused(treeNode.id) && <DropdownMenuPlugin treeNode={treeNode} boundaryRef={boundaryRef} />}
         {editable && <LeftRightArrowAtEndsPlugin />}
         {editable && <BackspaceMergeNodesPlugin />}
         {editable && <PastePlugin />}

@@ -1,5 +1,6 @@
 import { Edit2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
+import { useRef } from "react";
 
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -14,6 +15,7 @@ import styles from "./RelatedNodeView.module.css";
 export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const tree = useTree();
   const graphStore = useGraphStore();
+  const ref = useRef<HTMLDivElement>(null);
 
   const isLocal = treeNode.object.isLocal;
   const isExpanded = tree.isPathExpanded(treeNode.path);
@@ -35,7 +37,7 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
   );
 
   return (
-    <div className={styles.Container}>
+    <div ref={ref} className={styles.Container}>
       <div className={cnOuterContainer}>
         <div
           className={cnInnerContainer}
@@ -43,7 +45,7 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
             if (isReadOnlyReference) tree.togglePathExpanded(treeNode.path);
           }}
         >
-          <NodeEditor treeNode={treeNode} />
+          <NodeEditor treeNode={treeNode} boundaryRef={ref} />
           {isReadOnlyReference && isMyNode && (
             <Button
               variant="ghost"
