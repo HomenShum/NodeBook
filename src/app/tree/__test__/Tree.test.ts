@@ -4,12 +4,12 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { createTestTreeFromTemplate, expectTreeToMatchTemplate } from "@/app/tree/__test__/helpers";
 import { Tree } from "@/app/tree/Tree";
-import { updateGlobalLoggerFilter } from "@/lib/logger";
+import appLogger from "@/lib/logger";
 import { testAllExamplesInFileExecute } from "@/lib/testAllExamplesInFileExecute";
 
 describe("Tree", () => {
   beforeAll(() => {
-    updateGlobalLoggerFilter({ level: "info" });
+    appLogger.setGlobalConsoleFilter({ level: "info" });
   });
   describe("computing state from graph", () => {
     it("basic", async () => {

@@ -9,6 +9,7 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { useUser } from "@/app/StoresProvider";
+import logger from "@/lib/logger";
 
 import styles from "./DevTools.module.css";
 
@@ -99,6 +100,27 @@ export const DevTools = observer(() => {
           />
           Enable flatten sublists feature
         </label>
+        {env.env !== "production" && (
+          <>
+            <h2>Dev tools</h2>
+            <Button
+              size="default"
+              onClick={() => {
+                throw new Error("This is a test error thrown from DevTools");
+              }}
+            >
+              Throw Test Error
+            </Button>
+            <Button
+              size="default"
+              onClick={() => {
+                logger.error("This is a test error logged from DevTools");
+              }}
+            >
+              Log Test Error
+            </Button>
+          </>
+        )}
         <hr style={{ border: ".5px solid var(--gray-6)" }} />
         <div style={{ display: "flex", gap: 12 }}>
           <Button size="default" variant="default" onClick={handleOpenImportData}>

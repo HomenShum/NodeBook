@@ -17,10 +17,10 @@ import { RenderControllerProvider } from "@/app/render/useRenderController";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
-import appLogger, { getGlobalLoggerFilter, updateGlobalLoggerFilter } from "@/lib/logger";
+import rootLogger from "@/lib/logger";
 import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
 
-export const logger = appLogger.child({ service: "store-provider" });
+export const logger = rootLogger.child({ service: "store-provider" });
 
 export function StoresProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const auth = useAuth();
@@ -42,8 +42,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       renderController,
       getDependencyTree,
       getObserverTree,
-      updateGlobalLoggerFilter,
-      getGlobalLoggerFilter,
+      rootLogger,
     };
   }
 
