@@ -1,3 +1,5 @@
+import { captureException } from "@sentry/nextjs";
+
 import { generateInverseUpdates, GraphUpdate } from "@/app/graph/GraphUpdate";
 import { condenseSyncDataBatch, SyncData } from "@/app/graph/SyncData";
 import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
@@ -75,7 +77,9 @@ export class UpdateManager {
     try {
       this.applyGraphUpdates(data.updates);
     } catch (e) {
-      logger.warn("Failed to apply updates from sync data", e);
+      const message = "Failed to apply updates from sync data";
+      logger.warn(message, e);
+      captureException(e, { extra: { message, syncData: data } });
       await this.fetchLatestDataSnapshot();
     }
   }
