@@ -2,12 +2,47 @@ import { execSync } from "child_process";
 
 import { withSentryConfig } from "@sentry/nextjs";
 
+const gitCommitHash = execSync("git rev-parse --short HEAD").toString().trim();
+
 /** @type {import('next').NextConfig} */
 let nextConfig = {
   env: {
-    NEXT_PUBLIC_GIT_COMMIT_SHA: execSync("git rev-parse --short HEAD").toString().trim(),
+    NEXT_PUBLIC_GIT_COMMIT_SHA: gitCommitHash,
   },
 };
+
+/**
+ * This function assigns the build id to the current commit sha and injects it
+ * into the client.
+ *
+ * It's important that the value returned by `generateBuildId` function and the
+ * `NEXT_PUBLIC_BUILD_ID` are the same.
+ *
+ * Nextjs uses the build id from `generateBuildId` to determine if a new build
+ * is available.
+ *
+ * We want our client to be able to determine that a build is new too.
+ * Presumably nextjs is also injecting the build id created by `generateBuildId`
+ * into the client (how else would the client know it's stale?), but I can't
+ * find any docs on how to access it, so I assume you can't. Instead, we inject
+ * the build id into the client ourselves.
+ *
+ * For background, see:
+ * https://linear.app/ideaflow/issue/ENT-3862/app-reloads-mid-session#comment-08a27abd
+ */
+function withBuildId(nextConfig) {
+  return {
+    ...nextConfig,
+    env: {
+      ...nextConfig.env,
+      NEXT_PUBLIC_BUILD_ID: gitCommitHash,
+    },
+    generateBuildId: async () => {
+      return gitCommitHash;
+    },
+  };
+}
+nextConfig = withBuildId(nextConfig);
 
 const sentryConfig = {
   // For all available options, see:

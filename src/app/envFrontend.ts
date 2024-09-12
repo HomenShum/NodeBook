@@ -11,6 +11,7 @@ const processEnvSchema = z.object({
   NEXT_PUBLIC_PUSHER_KEY: z.string().optional(),
   NEXT_PUBLIC_PUSHER_CLUSTER: z.string().optional(),
   NEXT_PUBLIC_GIT_COMMIT_SHA: z.string().optional(),
+  NEXT_PUBLIC_BUILD_ID: z.string().optional(),
   ENV: z.union([z.literal("development"), z.literal("production")]).optional(),
 });
 processEnvSchema.parse(process.env);
@@ -29,6 +30,7 @@ export const env: {
   isAuthEnabled: boolean;
   useMockUserIfAuthDisabled: boolean;
   gitCommitSha: string | undefined;
+  buildId: string | undefined;
   isFrontend: boolean;
   pusherKey: string;
   pusherCluster: string;
@@ -42,6 +44,7 @@ export const env: {
   isAuthEnabled: process.env.NEXT_PUBLIC_IS_AUTH_ENABLED === "true",
   useMockUserIfAuthDisabled: process.env.NEXT_PUBLIC_USE_MOCK_USER_IF_AUTH_DISABLED === "true",
   gitCommitSha: process.env.NEXT_PUBLIC_GIT_COMMIT_SHA || undefined,
+  buildId: process.env.NEXT_PUBLIC_BUILD_ID || undefined,
   isFrontend: typeof window !== "undefined",
   pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY || "",
   pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
