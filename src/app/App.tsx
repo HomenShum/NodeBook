@@ -1,4 +1,5 @@
 "use client";
+import * as Sentry from "@sentry/nextjs";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef, useState } from "react";
 
@@ -43,6 +44,17 @@ export default observer(
     useEffect(() => {
       document.documentElement.style.setProperty("--sidebar-width", `${renderController.sidebarWidth}px`);
     }, [renderController.sidebarWidth]);
+
+    useEffect(() => {
+      if (auth && auth.isAuthenticated && auth.user) {
+        Sentry.setUser({
+          id: auth.user.sub,
+          email: auth.user.email,
+        });
+      } else {
+        Sentry.setUser(null);
+      }
+    }, [auth]);
 
     if (auth && auth.error) {
       return (
