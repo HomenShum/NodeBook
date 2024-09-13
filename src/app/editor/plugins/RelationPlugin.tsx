@@ -2,6 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { mergeRegister } from "@lexical/utils";
 import {
   $getRoot,
+  $getSelection,
   COMMAND_PRIORITY_LOW,
   COMMAND_PRIORITY_NORMAL,
   KEY_BACKSPACE_COMMAND,
@@ -89,36 +90,66 @@ export const RelationPlugin = () => {
         },
         COMMAND_PRIORITY_NORMAL,
       ),
+      // When the user hits backspace while selection is at the start of the editor,
+      // remove the relation type and put it's label text into into the node's content.
+      // From the users perspective, it'll look like the colon in front of the relation
+      // type was deleted.
       editor.registerCommand(
         KEY_BACKSPACE_COMMAND,
         (event) => {
-          // When the user hits backspace right after creating a relation (or just on an empty relation)
-          // we want to remove the relation and make the label the content of the node
-          const text = $getRoot().getTextContent();
-          if (text.trim() === "" && relation.relationType.id !== defaultRelationTypes.child.id) {
-            event.preventDefault();
-            const isForward = relation.to.id === object.id;
-            const label = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
-            graphStore.applyCombinedTransaction([
-              {
-                type: "updateRelation",
-                transaction: {
-                  relationId: relation.id,
-                  relationProps: { relationType: defaultRelationTypes.child },
-                  reverse: !isForward,
-                },
-              },
-              {
-                type: "updateNode",
-                transaction: {
-                  nodeId: object.id,
-                  nodeProps: { content: [{ type: "text", value: label }] },
-                },
-              },
-            ]);
-            return true;
+          // If it's a child relation, or the selection isn't at the start, exit
+
+          if (relation.relationType.id === defaultRelationTypes.child.id) {
+            return false;
           }
-          return false;
+          const isSelectionAtStart = editor.getEditorState().read(() => {
+            const selection = $getSelection();
+            const points = selection?.getStartEndPoints();
+            if (!points) {
+              return false;
+            }
+            const [start, end] = points;
+            const firstDescendant = $getRoot().getFirstDescendant();
+            return (
+              start.getNode() === firstDescendant &&
+              end.getNode() === firstDescendant &&
+              start.offset === 0 &&
+              end.offset === 0
+            );
+          });
+          if (!isSelectionAtStart) {
+            return false;
+          }
+
+          // Go ahead with removing relation type and setting content
+
+          event.preventDefault();
+
+          const isForward = relation.to.id === object.id;
+          let labelText = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
+          labelText += $getRoot().getTextContent().length > 0 ? " " : "";
+
+          const oldContent = graphStore.getNode(object.id)?.content ?? [];
+
+          graphStore.applyCombinedTransaction([
+            {
+              type: "updateRelation",
+              transaction: {
+                relationId: relation.id,
+                relationProps: { relationType: defaultRelationTypes.child },
+                reverse: !isForward,
+              },
+            },
+            {
+              type: "updateNode",
+              transaction: {
+                nodeId: object.id,
+                nodeProps: { content: [{ type: "text", value: labelText }, ...oldContent] },
+              },
+            },
+          ]);
+          tree.setFocusedNode(treeNode.id, { anchorOffset: labelText.length, focusOffset: labelText.length });
+          return true;
         },
         COMMAND_PRIORITY_NORMAL,
       ),
@@ -138,6 +169,6 @@ export const RelationPlugin = () => {
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [tree, graphStore, settingsStore, renderController, editor, object, relation, treeNode.path]);
+  }, [tree, graphStore, settingsStore, renderController, editor, object, relation, treeNode.path, treeNode.id]);
   return null;
 };
