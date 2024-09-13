@@ -8,6 +8,7 @@ import { GraphRelation, isGraphRelationType } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphRelationType } from "@/app/graph/types";
 import { scoreMatch } from "@/lib/utils";
+import { MAX_PREFIX_LENGTH } from "@/app/graph/constants";
 
 import styles from "./DropdownMenuUtils.module.css";
 
@@ -144,26 +145,29 @@ function getSearchAndReplaceResults(
 
   // map to dropdown options
   return [
-    ...relationTypes
-      .flatMap(({ relationType }) => {
-        const options: DropdownOption[] = [];
-        if (relationType.label.toLowerCase().includes(queryString)) {
-          options.push(new DropdownOption(relationType, true));
-        }
-        if (relationType.reverseLabel.toLowerCase().includes(queryString)) {
-          options.push(new DropdownOption(relationType, false));
-        }
-        return options;
-      })
-      .slice(0, 5),
-    ...nodes.map(({ node }) => new DropdownOption(node)).slice(0, 5),
-    ...relations.map(({ relation }) => new DropdownOption(relation)).slice(0, 5),
+    ...relationTypes.flatMap(({ relationType }) => {
+      const options: DropdownOption[] = [];
+      if (relationType.label.toLowerCase().includes(queryString)) {
+        options.push(new DropdownOption(relationType, true));
+      }
+      if (relationType.reverseLabel.toLowerCase().includes(queryString)) {
+        options.push(new DropdownOption(relationType, false));
+      }
+      return options;
+    }),
+    ...nodes.map(({ node }) => new DropdownOption(node)),
+    ...relations.map(({ relation }) => new DropdownOption(relation)),
   ];
 }
 
 function filterAndSortOptions(prevOptions: DropdownOption[], queryString: string): DropdownOption[] {
+  const keywords = queryString
+    .toLowerCase()
+    .trim()
+    .split(/\s+/)
+    .map((str) => str.slice(0, MAX_PREFIX_LENGTH));
   return prevOptions
-    .filter((option) => option.name.toLowerCase().includes(queryString))
+    .filter((option) => keywords.every((word) => option.name.toLowerCase().includes(word)))
     .sort(
       (a, b) => scoreMatch(queryString, b.matchText.toLowerCase()) - scoreMatch(queryString, a.matchText.toLowerCase()),
     );

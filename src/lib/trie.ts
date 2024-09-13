@@ -52,10 +52,13 @@ export class CappedKeywordIndex {
    * necessary.
    */
   getIds(text: string): string[] {
-    const keywords = text.split(/\s+/).filter((word) => word.length > 0);
+    const keywords = text
+      .toLocaleLowerCase()
+      .split(/\s+/)
+      .filter((word) => word.length > 0);
+    const freqMap: Record<string, number> = {};
     let ids: Set<string> | null = null;
     for (let word of keywords) {
-      word = word.toLocaleLowerCase();
       let node = this.root;
       for (let i = 0; i < Math.min(word.length, this.maxPrefixLength); i++) {
         const char = word[i];

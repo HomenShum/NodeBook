@@ -175,7 +175,12 @@ export function DropdownMenuPlugin({
   const updateOptions = useCallback(
     (text: string, queryString: string, action: DropdownAction) => {
       setOptions((prevOptions) => {
-        if (prevOptions.length > 0 && prevText.current && text.startsWith(prevText.current)) {
+        if (
+          prevOptions.length > 0 &&
+          (prevText.current?.length || 0) > 1 &&
+          prevText.current &&
+          text.startsWith(prevText.current)
+        ) {
           prevText.current = text;
           return filterAndSortOptions(prevOptions, queryString);
         } else {

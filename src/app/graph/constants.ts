@@ -30,3 +30,5 @@ export const defaultRelationTypes: Record<string, GraphRelationType> = {
   },
   empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "", isPublic: false },
 };
+
+export const MAX_PREFIX_LENGTH = 3;
