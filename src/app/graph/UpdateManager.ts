@@ -4,7 +4,9 @@ import { generateInverseUpdates, GraphUpdate } from "@/app/graph/GraphUpdate";
 import { condenseSyncDataBatch, SyncData } from "@/app/graph/SyncData";
 import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
 import { uuid } from "@/app/util";
-import logger from "@/lib/logger";
+import appLogger from "@/lib/logger";
+
+const logger = appLogger.child({ service: "UpdateManager" });
 
 export class UpdateManager {
   private clientId = uuid();
@@ -154,7 +156,7 @@ export class UpdateManager {
         body: JSON.stringify(syncData),
       });
       if (!response.ok) {
-        console.error("Sync failed", response);
+        logger.error("Sync failed", response);
         // Revert all pending updates and the current task, moving backwards to ensure that the state is consistent.
         let lastTask = syncDataBatch.pop();
         while (lastTask) {

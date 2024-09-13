@@ -1,3 +1,4 @@
+import { captureException } from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
@@ -24,6 +25,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
 
   if (!parsedData.success) {
     console.log(parsedData.error);
+    captureException(parsedData.error, { extra: { message: "Invalid sync data request" } });
     return NextResponse.json({ status: "error", message: "Invalid sync data request" }, { status: 400 });
   }
 
@@ -82,6 +84,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
   } catch (e) {
     // Drizzle throws an error if the transaction is rolled back
     console.error(e);
+    captureException(e, { extra: { message: "Error saving sync data" } });
     return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
   }
 

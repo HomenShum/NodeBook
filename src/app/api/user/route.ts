@@ -1,3 +1,4 @@
+import { captureException } from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
@@ -11,6 +12,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
   const result = PostUserRequestSchema.safeParse(body);
   if (!result.success) {
     console.error("Invalid request", result.error);
+    captureException(result.error, { extra: { message: "Invalid request" } });
     return NextResponse.json({ error: true, message: "Invalid request" } satisfies PostUserResponse, { status: 400 });
   }
   try {
@@ -20,6 +22,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
     return NextResponse.json({ error: false, data: retrievedOrCreatedUser } satisfies PostUserResponse);
   } catch (e) {
     console.error("Error creating user", e);
+    captureException(e, { extra: { message: "Error creating user" } });
     return NextResponse.json({ error: true, message: "Error creating user" } satisfies PostUserResponse, {
       status: 500,
     });
