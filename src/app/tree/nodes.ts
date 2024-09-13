@@ -52,18 +52,12 @@ export abstract class BaseTreeNode {
 
   /**
    * Create a new graph node and adds it as a child of this node. Returns the
-   * path to the new node in the "all" section of the children.
+   * path to the new node in the "all" section of the children, if new node is
+   * created in "pinned" section, returns the pinned path.
    */
-  async createChild(props: Omit<Parameters<Tree["createChildNode"]>[0], "parent"> & { shouldPin?: boolean } = {}) {
-    const { relation } = await this.tree.createChildNode({ ...props, parent: this });
-    if (props.shouldPin) {
-      this.object.pinChildRelation(
-        relation,
-        props.after instanceof DescendantTreeNode ? props.after.relationWithParent : undefined,
-      );
-      return this.createChildPath(relation, "pinned");
-    }
-    return this.createChildPath(relation);
+  async createChild(props: Omit<Parameters<Tree["createChildNode"]>[0], "parent"> = {}) {
+    const { path } = await this.tree.createChildNode({ ...props, parent: this });
+    return path;
   }
 
   pinChild(child: DescendantTreeNode | DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {

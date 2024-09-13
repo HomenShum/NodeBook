@@ -563,12 +563,21 @@ export class Tree {
     relationProps?: { id?: string; relationTypeId?: string };
     after?: Positioner<DescendantTreeNode>;
   }) {
-    return this.graphStore.addChildNode({
+    const parent: BaseTreeNode = props.parent ?? this.root;
+    const { node, relation } = await this.graphStore.addChildNode({
       parentId: props.parent?.object.id ?? this.rootObject.id,
       nodeProps: props.nodeProps,
       relationProps: props.relationProps,
       after: props.after instanceof DescendantTreeNode ? props.after.relationWithParent : props.after,
     });
+
+    let path: string = parent.createChildPath(relation);
+    if (props.after instanceof DescendantTreeNode && props.after.parentGroup.id === "pinned") {
+      this.graphStore.pinRelations(parent.object.id, [relation.id], props.after.relationWithParent);
+      path = parent.createChildPath(relation, "pinned");
+    }
+
+    return { node, relation, path };
   }
 
   /**
