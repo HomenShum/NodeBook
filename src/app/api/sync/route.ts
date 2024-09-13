@@ -81,6 +81,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
     });
   } catch (e) {
     // Drizzle throws an error if the transaction is rolled back
+    console.error(e);
     return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
   }
 
