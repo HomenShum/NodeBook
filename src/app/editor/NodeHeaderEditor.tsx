@@ -9,17 +9,14 @@ import { createConfig } from "@/app/editor/createConfig";
 import { DropdownMenuPlugin } from "@/app/editor/plugins/DropdownMenuPlugin";
 import { SyncWithGraphPlugin } from "@/app/editor/plugins/SyncWithGraphPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { RootTreeNode } from "@/app/tree/nodes";
 
 import styles from "./Editor.module.css";
 
 export const NodeHeaderEditor = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
-  const graphStore = useGraphStore();
-  const editable = treeNode.object instanceof GraphNode && treeNode.object.authorId === graphStore.user.id;
   return (
     <div>
-      <LexicalComposer initialConfig={createConfig({ namespace: "header-editor", treeNode, editable })}>
+      <LexicalComposer initialConfig={createConfig({ namespace: "header-editor", treeNode })}>
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
           contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
@@ -27,7 +24,7 @@ export const NodeHeaderEditor = observer(({ treeNode }: { treeNode: RootTreeNode
         />
         <DropdownMenuPlugin treeNode={treeNode} />
         <ClearEditorPlugin />
-        {treeNode.object instanceof GraphNode && editable && <SyncWithGraphPlugin node={treeNode.object} />}
+        {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
       </LexicalComposer>
     </div>
   );

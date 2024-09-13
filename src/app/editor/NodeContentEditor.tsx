@@ -30,56 +30,61 @@ import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 
 import styles from "./Editor.module.css";
 
-export const NodeEditor = observer(({ treeNode, boundaryRef }: { treeNode: DescendantTreeNode, boundaryRef: RefObject<HTMLDivElement> }) => {
-  if (!(treeNode.object instanceof GraphNode)) {
-    throw new Error("Expected object to be a GraphNode");
-  }
-  const graphStore = useGraphStore();
-  const router = useRouter();
-  const tree = useTree();
-  const isMyNode = treeNode.object.authorId === graphStore.user.id;
-  const isEditMode =
-    tree.selection?.type === "editor" ? tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode : false;
-  const editable = isMyNode && (treeNode.object.isLocal || isEditMode);
+export const NodeEditor = observer(
+  ({ treeNode, boundaryRef }: { treeNode: DescendantTreeNode; boundaryRef: RefObject<HTMLDivElement> }) => {
+    if (!(treeNode.object instanceof GraphNode)) {
+      throw new Error("Expected object to be a GraphNode");
+    }
+    const graphStore = useGraphStore();
+    const router = useRouter();
+    const tree = useTree();
+    const isEditMode =
+      tree.selection?.type === "editor"
+        ? tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode
+        : false;
+    const editable = treeNode.object.isLocal || isEditMode;
 
-  return (
-    <div className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
-      <LexicalComposer initialConfig={createConfig({ namespace: "descendant-editor", treeNode, editable })}>
-        <PlainTextPlugin
-          ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={
-            <ContentEditable
-              className={`${styles.ContentEditable}`}
-              data-nodeid={treeNode.object.id}
-              suppressContentEditableWarning
-            />
-          }
-          placeholder={null}
-        />
-        <SyncWithGraphPlugin node={treeNode.object} />
-        {editable && <ClearEditorPlugin />}
-        {editable && <EnterKeyPlugin treeNode={treeNode} />}
-        {editable && tree.isNodeFocused(treeNode.id) && <DropdownMenuPlugin treeNode={treeNode} boundaryRef={boundaryRef} />}
-        {editable && <LeftRightArrowAtEndsPlugin />}
-        {editable && <BackspaceMergeNodesPlugin />}
-        {editable && <PastePlugin />}
-        {editable && <RelationPlugin />}
-        <NodeEventPlugin
-          nodeType={MentionNode}
-          eventType={"click"}
-          eventListener={(e: Event) => {
-            const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
-            e.stopPropagation();
-            const node = graphStore.getNode(nodeId);
-            if (node) {
-              router.push(createRouteUrl({ object: node }));
+    return (
+      <div className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
+        <LexicalComposer initialConfig={createConfig({ namespace: "descendant-editor", treeNode })}>
+          <PlainTextPlugin
+            ErrorBoundary={LexicalErrorBoundary}
+            contentEditable={
+              <ContentEditable
+                className={`${styles.ContentEditable}`}
+                data-nodeid={treeNode.object.id}
+                suppressContentEditableWarning
+              />
             }
-          }}
-        />
-        <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
-        {editable && <BindFocusToTreePlugin />}
-        <ToggleEditablePlugin treeNode={treeNode} editable={editable} />
-      </LexicalComposer>
-    </div>
-  );
-});
+            placeholder={null}
+          />
+          <SyncWithGraphPlugin node={treeNode.object} />
+          {editable && <ClearEditorPlugin />}
+          {editable && <EnterKeyPlugin treeNode={treeNode} />}
+          {editable && tree.isNodeFocused(treeNode.id) && (
+            <DropdownMenuPlugin treeNode={treeNode} boundaryRef={boundaryRef} />
+          )}
+          {editable && <LeftRightArrowAtEndsPlugin />}
+          {editable && <BackspaceMergeNodesPlugin />}
+          {editable && <PastePlugin />}
+          {editable && <RelationPlugin />}
+          <NodeEventPlugin
+            nodeType={MentionNode}
+            eventType={"click"}
+            eventListener={(e: Event) => {
+              const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
+              e.stopPropagation();
+              const node = graphStore.getNode(nodeId);
+              if (node) {
+                router.push(createRouteUrl(node.getPath()));
+              }
+            }}
+          />
+          <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
+          {editable && <BindFocusToTreePlugin />}
+          <ToggleEditablePlugin treeNode={treeNode} editable={editable} />
+        </LexicalComposer>
+      </div>
+    );
+  },
+);
