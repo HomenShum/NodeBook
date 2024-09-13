@@ -42,45 +42,37 @@ const CommandBar = () => {
   useHotkeys("mod+shift+k", () => setOpen(true), { enableOnContentEditable: true });
 
   const filteredCommands = useMemo<Command[]>(() => {
-    if (search === "")
-      return [
-        {
-          type: "create",
-          id: "create",
-          name: "Create blank node",
-          perform: async () => {
-            const node = await graphStore.addNode({});
-            close();
-            router.push(createRouteUrl({ object: node }));
-          },
-        },
-      ];
     return [
-      ...graphStore
-        .search({ text: search, filters: { types: ["node"] }, sort: { by: "score" } })
-        .nodes.slice(0, 30)
-        .map(({ node }) => {
-          const path = node.getPath();
-          return {
-            type: "navigate" as const,
-            id: node.id,
-            name: node.text,
-            object: node,
-            path,
-            perform: () => {
-              close();
-              router.push(createRouteUrl(path));
-            },
-          };
-        }),
+      ...(search === ""
+        ? []
+        : graphStore
+            .search({ text: search, filters: { types: ["node"] }, sort: { by: "score" } })
+            .nodes.slice(0, 30)
+            .map(({ node }) => {
+              const path = node.getPath();
+              return {
+                type: "navigate" as const,
+                id: node.id,
+                name: node.text,
+                object: node,
+                path,
+                perform: () => {
+                  close();
+                  router.push(createRouteUrl(path));
+                },
+              };
+            })),
       {
         type: "create" as const,
         id: "create",
-        name: `Create new node: "${search}"`,
+        name: search === "" ? "Create blank node" : `Create new node: "${search}"`,
         perform: async () => {
-          const node = await graphStore.addNode({ nodeProps: { content: search } });
-          router.push(createRouteUrl({ object: node }));
+          const { node } = await graphStore.addChildNode({
+            parentId: graphStore.userRoot.id,
+            nodeProps: { content: search },
+          });
           close();
+          router.push(createRouteUrl(node.getPath()));
         },
       },
     ];
