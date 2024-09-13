@@ -8,6 +8,7 @@ import { Tree } from "@/app/tree/Tree";
 import { comparePositions, createRouteUrl, Position } from "@/app/util";
 import logger from "@/lib/logger";
 import { defaultRelationTypes } from "@/app/graph/constants";
+import { SublistTree } from "@/app/tree/SublistTree";
 
 export class PathToRootNode {
   object: GraphObject;
@@ -520,10 +521,11 @@ export class PointerGroup extends BaseGroup {
   };
 
   hydrate(visitedMap: Record<string, boolean> = {}, isConnectedSublist: boolean = false) {
-    if (Object.getPrototypeOf(this.tree).constructor.name !== "SublistTree") {
+    if (Object.getPrototypeOf(this.tree).constructor.name !== `${SublistTree.name}`) {
       return;
     }
     PointerGroup.hydrationDepth++;
+
     const nodes = [];
     for (const { relation, position } of this.relationsWithPositions.sort((a, b) =>
       comparePositions(a.position, b.position),
