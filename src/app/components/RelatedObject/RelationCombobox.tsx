@@ -147,19 +147,25 @@ export const RelationCombobox = observer(
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") {
               e.preventDefault();
+              e.stopPropagation();
               const index = items.findIndex(({ key }) => key === selected);
               setSelected(items[(index + 1) % items.length].key);
             } else if (e.key === "ArrowUp") {
               e.preventDefault();
+              e.stopPropagation();
               const index = items.findIndex(({ key }) => key === selected);
               setSelected(items[(index - 1 + items.length) % items.length].key);
             } else if (e.key === "Enter") {
               const item = items.find(({ key }) => key === selected);
               if (item) {
+                e.preventDefault();
+                e.stopPropagation();
                 item.onSelect();
                 close();
               }
             } else if (e.key === "Backspace" && search === "") {
+              e.preventDefault();
+              e.stopPropagation();
               const targetKey = isForward ? "child" : "parent";
               const item = items.find(({ label }) => label === targetKey);
               if (item) {
