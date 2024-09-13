@@ -14,7 +14,7 @@ import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCach
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
-import { BaseTreeNode, DescendantTreeNode, RootTreeNode, TreeNode } from "./nodes";
+import { BaseTreeNode, DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 import { EditorSelectionAction, EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
@@ -496,11 +496,15 @@ export class Tree {
         treeNode.isBackrelation &&
         (treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id ||
           treeNode.relationWithParent.relationType.id === defaultRelationTypes.sublist.id);
+
+      const isSameRelationAsParentToGrandparent =
+        treeNode.relationWithParent.id === treeNode.parent.relationWithParent?.id;
+      const grandparentNotInBreadcrumb = !(treeNode.parent.parent instanceof PathToRootNode);
       if (filter.hideAllParents && isParentRelation) {
         return false;
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
         return false;
-      } else if (filter.hideDirectParent && treeNode.relationWithParent.id === treeNode.parent.relationWithParent?.id) {
+      } else if (filter.hideDirectParent && isSameRelationAsParentToGrandparent && grandparentNotInBreadcrumb) {
         return false;
       }
       return true;
