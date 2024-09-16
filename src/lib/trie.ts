@@ -56,7 +56,6 @@ export class CappedKeywordIndex {
       .toLocaleLowerCase()
       .split(/\s+/)
       .filter((word) => word.length > 0);
-    const freqMap: Record<string, number> = {};
     let ids: Set<string> | null = null;
     for (let word of keywords) {
       let node = this.root;
