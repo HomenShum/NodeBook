@@ -6,15 +6,25 @@ import { MewDbTransaction } from "@/db/types";
 import { GLOBAL_TO_USER_RELATION_ID_PREFIX } from "@/lib/constants";
 
 export const createRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
-  await tx.insert(graphRelationTable).values({
-    authorId: relation.authorId,
-    id: relation.id,
-    version: relation.version,
-    fromId: relation.fromId,
-    toId: relation.toId,
-    relationTypeId: relation.relationTypeId,
-    isPublic: relation.isPublic,
-  });
+  const newRelation = await tx
+    .insert(graphRelationTable)
+    .values({
+      authorId: relation.authorId,
+      id: relation.id,
+      createdAt: relation.createdAt,
+      version: relation.version,
+      fromId: relation.fromId,
+      toId: relation.toId,
+      relationTypeId: relation.relationTypeId,
+      isPublic: relation.isPublic,
+    })
+    .returning({ createdId: graphRelationTable.id });
+  if (newRelation.length === 0) {
+    console.error(
+      `[sync][createRelation] Unable to create relation with authorId ${relation.authorId}, id ${relation.id}`,
+    );
+    tx.rollback();
+  }
 };
 
 export const updateRelation = async (
@@ -27,6 +37,7 @@ export const updateRelation = async (
     .set({
       authorId: newProps.authorId,
       id: newProps.id,
+      createdAt: newProps.createdAt,
       version: newProps.version,
       fromId: newProps.fromId,
       toId: newProps.toId,
@@ -43,7 +54,7 @@ export const updateRelation = async (
     .returning({ updatedId: graphRelationTable.id });
   if (updated.length === 0) {
     console.error(
-      `Relation with authorId ${oldProps.authorId}, id ${oldProps.id}, and version ${oldProps.version} not found`,
+      `[sync][updateRelation] Relation with authorId ${oldProps.authorId}, id ${oldProps.id}, and version ${oldProps.version} not found`,
     );
     tx.rollback();
   }
@@ -70,12 +81,20 @@ export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedR
   // Delete relation from main table
   const deletedRelation = await tx
     .delete(graphRelationTable)
-    .where(and(eq(graphRelationTable.id, relation.id), eq(graphRelationTable.version, relation.version)))
+    .where(
+      and(
+        eq(graphRelationTable.authorId, relation.authorId),
+        eq(graphRelationTable.id, relation.id),
+        eq(graphRelationTable.version, relation.version),
+      ),
+    )
     .returning({ deletedId: graphRelationTable.id });
 
   // If there was no row for the relation in the main table, log an error and rollback the transaction
   if (deletedRelation.length === 0) {
-    console.error(`Relation with id ${relation.id} not found`);
+    console.error(
+      `[sync][deleteRelation] Relation with authorId ${relation.authorId}, id ${relation.id} and version ${relation.version} not found`,
+    );
     tx.rollback();
   }
 };

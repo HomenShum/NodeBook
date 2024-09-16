@@ -6,16 +6,23 @@ import { MewDbTransaction } from "@/db/types";
 import { GLOBAL_ROOT_ID, USER_ROOT_ID_PREFIX } from "@/lib/constants";
 
 export const createNode = async (tx: MewDbTransaction, node: SerializedNode) => {
-  await tx.insert(graphNodeTable).values({
-    authorId: node.authorId,
-    id: node.id,
-    version: node.version,
-    createdAt: new Date(node.createdAt),
-    content: JSON.stringify(node.content),
-    isBundle: node.isBundle,
-    isZone: node.isZone,
-    isPublic: node.isPublic,
-  });
+  const newNode = await tx
+    .insert(graphNodeTable)
+    .values({
+      authorId: node.authorId,
+      id: node.id,
+      version: node.version,
+      createdAt: new Date(node.createdAt),
+      content: JSON.stringify(node.content),
+      isBundle: node.isBundle,
+      isZone: node.isZone,
+      isPublic: node.isPublic,
+    })
+    .returning({ createdId: graphNodeTable.id });
+  if (newNode.length === 0) {
+    console.error(`[sync][createNode] Unable to create node with authorId ${node.authorId}, id ${node.id}`);
+    tx.rollback();
+  }
 };
 
 export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode, newProps: SerializedNode) => {
@@ -44,7 +51,7 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
     .returning({ updatedId: graphNodeTable.id });
   if (updated.length === 0) {
     console.error(
-      `Node with authorId ${oldProps.authorId}, id ${oldProps.id}, and version ${oldProps.version} not found`,
+      `[sync][updateNode] Node with authorId ${oldProps.authorId}, id ${oldProps.id}, and version ${oldProps.version} not found`,
     );
     tx.rollback();
   }
@@ -64,12 +71,20 @@ export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => 
   // Delete node from main table
   const deletedNode = await tx
     .delete(graphNodeTable)
-    .where(and(eq(graphNodeTable.id, node.id), eq(graphNodeTable.version, node.version)))
+    .where(
+      and(
+        eq(graphNodeTable.authorId, node.authorId),
+        eq(graphNodeTable.id, node.id),
+        eq(graphNodeTable.version, node.version),
+      ),
+    )
     .returning({ deletedId: graphNodeTable.id });
 
   // If there was no row for the node in the main table, log an error and rollback the transaction
   if (deletedNode.length === 0) {
-    console.error(`Node with id ${node.id} not found`);
+    console.error(
+      `[sync][deleteNode] Node with authorId ${node.authorId}, id ${node.id} and version ${node.version} not found`,
+    );
     tx.rollback();
   }
 };

@@ -1,11 +1,11 @@
 import { action, computed, isObservable, makeObservable, observable } from "mobx";
 
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
+import { defaultRelationTypes } from "@/app/graph/constants";
+import { GraphRelationType } from "@/app/graph/types";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { Position, uuid } from "@/app/util";
-import { GraphRelationType } from "@/app/graph/types";
-import { defaultRelationTypes } from "@/app/graph/constants";
 
 import { BaseGraphObject, GraphObject } from "./GraphObject";
 import { GraphStore } from "./GraphStore";
@@ -175,6 +175,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       version: this.version,
       id: this.id,
       authorId: this.authorId,
+      createdAt: this.createdAt,
       fromId: this.from.id,
       toId: this.to.id,
       relationTypeId: this.relationType.id,

@@ -21,10 +21,12 @@ async function getHandler(req: NextAuthenticatedRequest) {
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
   const userId = req.userId;
+  console.log("Sync data request for user", userId);
+
   const parsedData = SyncDataSchema.safeParse(await req.json());
 
   if (!parsedData.success) {
-    console.log(parsedData.error);
+    console.error(parsedData.error);
     captureException(parsedData.error, { extra: { message: "Invalid sync data request" } });
     return NextResponse.json({ status: "error", message: "Invalid sync data request" }, { status: 400 });
   }
@@ -34,6 +36,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
   const db = getDb();
 
   try {
+    console.log(`[sync][${userId}] Applying ${updates.length} updates`, updates);
     // TODO: Probably use multi-select queries instead of this for loop stuff
     await db.transaction(async (tx) => {
       for (const update of updates) {
@@ -87,6 +90,8 @@ async function postHandler(req: NextAuthenticatedRequest) {
     captureException(e, { extra: { message: "Error saving sync data" } });
     return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
   }
+
+  console.log(`[sync][${userId}] All updates applied successfully`);
 
   await broadcastSyncSuccess({ clientId, userId, transactionId, updates });
 

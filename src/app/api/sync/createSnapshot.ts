@@ -72,6 +72,7 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       version: row.version,
       id: row.id,
       authorId: row.authorId ?? UNLOGGED_USER.id,
+      createdAt: row.createdAt ?? new Date(),
       fromId: row.fromId ?? "",
       toId: row.toId ?? "",
       relationTypeId: row.relationTypeId ?? "",

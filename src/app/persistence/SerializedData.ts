@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { Position } from "@/app/util";
 import { GraphRelationType } from "@/app/graph/types";
+import { Position } from "@/app/util";
 
 const SerializedChipSchema = z.object({
   type: z.union([z.literal("text"), z.literal("mention"), z.literal("linebreak")]),
@@ -39,6 +39,7 @@ export const SerializedRelationSchema = z.object({
   version: z.number(),
   id: z.string(),
   authorId: z.string(),
+  createdAt: z.coerce.date(),
   fromId: z.string(),
   toId: z.string(),
   relationTypeId: z.string(),
