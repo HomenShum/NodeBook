@@ -35,20 +35,6 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
       const chips = editorState.read($getChips);
       // update the node's content
       await graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
-      // force the nodes with mentions of this node to update. (TODO: This is a
-      // hack. Ideally the nodes would update reactively. Also, it doesn't
-      // cover case where a node mentions another but we've deleted that
-      // relation.)
-      const mentionUpdates = node.relations
-        .map((relation) => (relation.from.id === node.id ? relation.to : relation.from))
-        .filter((obj): obj is GraphNode => {
-          return (
-            obj instanceof GraphNode && obj.content.some((item) => item.type === "mention" && item.value === node.id)
-          );
-        });
-      for (const obj of mentionUpdates) {
-        await graphStore.updateNode({ nodeId: obj.id, nodeProps: { content: [...obj.content] } });
-      }
     },
     [editor, graphStore, node],
   );
@@ -87,7 +73,7 @@ export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
 
   useEffect(() => {
     setEditorToGraphNodeText(node);
-  }, [setEditorToGraphNodeText, node, node.content]);
+  }, [setEditorToGraphNodeText, node, node.content, node.text]);
 
   useEffect(() => {
     const unsubscribe = editor.registerUpdateListener(({ editorState, prevEditorState }) => {

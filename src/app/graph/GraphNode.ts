@@ -81,6 +81,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       update: action,
       text: computed,
       isLocal: computed,
+      textWithoutMention: computed,
       relationsWithPositions: computed,
     });
   }
@@ -114,6 +115,31 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     return oldValues;
   }
 
+  /**
+   * Returns string made up of all Chips except mentions. While building
+   * the text string it removes one character space from text chips
+   * if they are next to a mention chip.
+   */
+  get textWithoutMention(): string {
+    const texts: string[] = [];
+    for (let chipIdx = 0; chipIdx < this.content.length; chipIdx++) {
+      if (this.content[chipIdx].type === "mention") {
+        continue;
+      }
+      const isNextMention = chipIdx < this.content.length - 1 && this.content[chipIdx + 1].type === "mention";
+      const wasPrevMention = chipIdx > 0 && this.content[chipIdx - 1].type === "mention";
+      let text = this.content[chipIdx].value;
+      if (isNextMention && text.endsWith(" ")) {
+        text = text.slice(0, -1);
+      }
+      if (wasPrevMention && text.startsWith(" ")) {
+        text = text.slice(1);
+      }
+      texts.push(text);
+    }
+    return texts.join("");
+  }
+
   get text(): string {
     return this.content
       .map((chip) => {
@@ -125,7 +151,16 @@ export class GraphNode extends BaseGraphObject implements Serializable {
             const referencedNode = this.store.getNode(chip.value);
             if (!referencedNode) return "[Deleted node]";
             try {
-              return `@[${referencedNode.text}]`;
+              // Filtering out mention chips and get underlying string chips
+              // because:
+              // 1) Simply returning `referencedNode.text` will result in
+              // cyclic issues with MobX if two nodes mention each other.
+              //
+              // 2) Even if we do not end up with a cyclic dependency but say a
+              // long chain of mentions instead, we would end up with
+              // something like text: `SomeText @[A @[B @[C]]]`.
+              //                       --Chip1-|----Chip2-----
+              return `@[${referencedNode.textWithoutMention}]`;
             } catch (error) {
               console.error("Error accessing referencedNode.text:", error);
               return "@[Error]";
