@@ -9,7 +9,7 @@ import {
   KEY_DOWN_COMMAND,
   KEY_SPACE_COMMAND,
 } from "lexical";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getChips, $getText, getSelectionPositions, matchDefaultRelationType } from "@/app/editor/utils";
@@ -28,6 +28,7 @@ export const RelationPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   const { treeNode } = useTreeNode();
+  const eventKeyStack = useRef<string>("");
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
@@ -38,7 +39,10 @@ export const RelationPlugin = () => {
       editor.registerCommand(
         KEY_DOWN_COMMAND,
         (event) => {
-          if (event.key !== ":") {
+          const triggerKey = settingsStore.triggerRelationOnSingleColon ? ":" : "::";
+          if (eventKeyStack.current.length > triggerKey.length) eventKeyStack.current = "";
+          eventKeyStack.current += event.key;
+          if (eventKeyStack.current !== triggerKey) {
             return false;
           }
           // Only trigger logic when current node is a regular child of the rendered parent
@@ -50,7 +54,9 @@ export const RelationPlugin = () => {
           const graphStoreTransaction: TxCombined = [];
           const [selectionLeft, selectionRight] = getSelectionPositions(editor);
           // Set the relation type to the text before the cursor
-          const textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft }).trim();
+          let textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft })
+            .trim()
+            .replace(/:+$/, ""); //trim all colon from end
 
           const relationType = matchDefaultRelationType(textBefore);
           if (relationType) {

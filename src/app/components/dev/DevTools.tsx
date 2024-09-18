@@ -87,6 +87,14 @@ export const DevTools = observer(() => {
           />
           Show All Nodes Tab in Sidebar
         </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.triggerRelationOnSingleColon}
+            onChange={(e) => settingsStore.setTriggerRelationOnSingleColon(e.target.checked)}
+          />
+          Use single colon to trigger relation combobox
+        </label>
         <div className={styles.SearchReplaceContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />

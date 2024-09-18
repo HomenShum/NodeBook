@@ -26,6 +26,7 @@ type SerializedUserSettings = {
   hidePinnedItems?: boolean;
   publicMode?: boolean;
   showAllNodesOption?: boolean;
+  triggerRelationOnSingleColon: boolean;
 };
 
 export class SettingsStore {
@@ -48,6 +49,7 @@ export class SettingsStore {
   public publicMode = true;
   public showAllNodesOption = false;
   public isFlattenSublistsEnabled = false;
+  public triggerRelationOnSingleColon = false;
   private stopAutosave: () => void;
 
   constructor() {
@@ -79,6 +81,7 @@ export class SettingsStore {
     this.allowShiftTabAboveViewRoot = false;
     this.hidePinnedItems = false;
     this.showAllNodesOption = false;
+    this.triggerRelationOnSingleColon = false;
   }
 
   saveToLocalStorage() {
@@ -117,6 +120,7 @@ export class SettingsStore {
       disableCycles: this.disableCycles,
       allowShiftTabAboveViewRoot: this.allowShiftTabAboveViewRoot,
       hidePinnedItems: this.hidePinnedItems,
+      triggerRelationOnSingleColon: this.triggerRelationOnSingleColon,
     };
   }
 
@@ -138,6 +142,7 @@ export class SettingsStore {
     this.disableCycles = data.disableCycles ?? this.disableCycles;
     this.allowShiftTabAboveViewRoot = data.allowShiftTabAboveViewRoot ?? this.allowShiftTabAboveViewRoot;
     this.hidePinnedItems = data.hidePinnedItems ?? this.hidePinnedItems;
+    this.triggerRelationOnSingleColon = data.triggerRelationOnSingleColon ?? this.triggerRelationOnSingleColon;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -213,6 +218,10 @@ export class SettingsStore {
 
   setIsFlattenSublistsEnabled(value: boolean) {
     this.isFlattenSublistsEnabled = value;
+  }
+
+  setTriggerRelationOnSingleColon(value: boolean): void {
+    this.triggerRelationOnSingleColon = value;
   }
 
   cleanup() {
