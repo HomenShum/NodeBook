@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
+import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
@@ -41,11 +42,14 @@ export const RelatedObjectView = observer(
 
 export const ClickToCreateNode = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
   const tree = useTree();
-  const handleCreateAndFocusNode = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    tree.createChildOfRootAndFocus();
-  }, [tree]);
+  const handleCreateAndFocusNode = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      tree.createChildOfRootAndFocus();
+    },
+    [tree],
+  );
 
   if (treeNode.childCount !== 0) return null;
 
@@ -158,6 +162,7 @@ const Content = observer(() => {
 });
 
 const Bullet = observer(() => {
+  const userId = useGraphStore().user?.id;
   const router = useRouter();
   const { treeNode } = useTreeNode();
 
@@ -166,8 +171,16 @@ const Bullet = observer(() => {
     router.push(createRouteUrl(`${treeNode.path}/${treeNode.object.id}`));
   }, [treeNode, router]);
 
+  const tooltip = [
+    `Object author: ${treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}`,
+    `Relation author: ${
+      treeNode.relationWithParent.authorId === userId ? "You" : treeNode.relationWithParent.authorId
+    }`,
+    `Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}`,
+  ].join("\n");
+
   return (
-    <div className={cn(styles.RelatedObjectBulletContainer)}>
+    <div className={cn(styles.RelatedObjectBulletContainer)} title={tooltip}>
       {treeNode.instanceCountInPath <= 1 ? (
         // Default solid bullet
         <>
