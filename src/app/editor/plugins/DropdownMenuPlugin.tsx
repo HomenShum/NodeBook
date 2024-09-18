@@ -105,8 +105,9 @@ export function DropdownMenuPlugin({
         }
         closeMenu();
       });
+      tree.setFocusedNode(treeNode.id, "end", undefined, true);
     },
-    [editor, graphStore, treeNode],
+    [editor, graphStore, tree, treeNode],
   );
 
   const onSearchAndReplace = useCallback(
