@@ -10,6 +10,7 @@ import {
 } from "lexical";
 import { useEffect } from "react";
 
+import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useTree } from "@/app/tree/TreeContext";
 
 /**
@@ -19,6 +20,9 @@ import { useTree } from "@/app/tree/TreeContext";
 export const LeftRightArrowAtEndsPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
+  const { treeNode } = useTreeNode();
+  const editMode =
+    tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode;
   useEffect(() => {
     return mergeRegister(
       editor.registerCommand(
@@ -27,7 +31,7 @@ export const LeftRightArrowAtEndsPlugin = () => {
           const selectionStart = $getSelection()?.getStartEndPoints()?.[0];
           // Offset is 0 when at start of text
           if (!selectionStart || selectionStart.offset !== 0) return false;
-          const focusedMoved = tree.moveEditorSelectionUp('end');
+          const focusedMoved = tree.moveEditorSelectionUp("end");
           if (!focusedMoved) return false;
           event.preventDefault();
           return true;
@@ -47,15 +51,21 @@ export const LeftRightArrowAtEndsPlugin = () => {
             // Selection not at end of editor
             return false;
           }
-          const focusedMoved = tree.moveEditorSelectionDown('start');
-          if (!focusedMoved) return false;
+          if (editMode) {
+            // disable edit mode and move selection outside of editor
+            tree.setFocusedNode(treeNode.id, "end", undefined, false);
+          } else {
+            // move down
+            const focusedMoved = tree.moveEditorSelectionDown("start");
+            if (!focusedMoved) return false;
+          }
           event.preventDefault();
           return true;
         },
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, tree]);
+  }, [editor, editMode, tree, treeNode.id]);
 
   return null;
 };

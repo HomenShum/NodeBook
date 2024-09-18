@@ -138,7 +138,7 @@ export function DropdownMenuPlugin({
             } else if (treeNode instanceof RootTreeNode) {
               treeNode.object = newObject;
             }
-            tree.setFocusedNode(treeNode.path, "end", undefined, true);
+            tree.setFocusedNode(treeNode.path);
             break;
           }
           case DropdownOptionType.RELATION: {

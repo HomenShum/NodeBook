@@ -1,13 +1,13 @@
 "use client";
 import { Globe, HomeIcon, Plus } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Options, useHotkeys } from "react-hotkeys-hook";
 
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
-import { ClickToCreateNode } from '@/app/components/RelatedObject/RelatedObjectView';
+import { ClickToCreateNode } from "@/app/components/RelatedObject/RelatedObjectView";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -28,6 +28,23 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   useOutlineHotkeys({ tree, hasFocus });
   const treeNode = tree.state.root;
   const renderController = useRenderController();
+
+  // Set the tree selection to null when the user clicks outside an editor
+  useEffect(() => {
+    function clearSelectionOnClickOutsideOutline(e: MouseEvent) {
+      const isEditor =
+        e.target instanceof HTMLElement &&
+        e.target.closest('[data-lexical-editor="true"]') !== null &&
+        (e.target.isContentEditable || e.target.tagName === "INPUT");
+      if (!isEditor) {
+        tree.setFocusedNode(null);
+      }
+    }
+    window.addEventListener("click", clearSelectionOnClickOutsideOutline);
+    return () => {
+      window.removeEventListener("click", clearSelectionOnClickOutsideOutline);
+    };
+  }, [tree]);
 
   // const handleShiftClickToSelectMultipleNodes = useCallback(
   //   (e: React.MouseEvent) => {

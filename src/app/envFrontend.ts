@@ -12,6 +12,8 @@ const processEnvSchema = z.object({
   NEXT_PUBLIC_PUSHER_CLUSTER: z.string().optional(),
   NEXT_PUBLIC_GIT_COMMIT_SHA: z.string().optional(),
   NEXT_PUBLIC_BUILD_ID: z.string().optional(),
+  NEXT_PUBLIC_LOG_SERVICE_INCLUDE: z.string().optional(),
+  NEXT_PUBLIC_LOG_SERVICE_EXCLUDE: z.string().optional(),
   ENV: z.union([z.literal("development"), z.literal("production")]).optional(),
 });
 processEnvSchema.parse(process.env);
@@ -31,6 +33,8 @@ export const env: {
   useMockUserIfAuthDisabled: boolean;
   gitCommitSha: string | undefined;
   buildId: string | undefined;
+  logServiceInclude: string[];
+  logServiceExclude: string[];
   isFrontend: boolean;
   pusherKey: string;
   pusherCluster: string;
@@ -46,6 +50,8 @@ export const env: {
   gitCommitSha: process.env.NEXT_PUBLIC_GIT_COMMIT_SHA || undefined,
   buildId: process.env.NEXT_PUBLIC_BUILD_ID || undefined,
   isFrontend: typeof window !== "undefined",
+  logServiceInclude: process.env.NEXT_PUBLIC_LOG_SERVICE_INCLUDE?.split(",") || [],
+  logServiceExclude: process.env.NEXT_PUBLIC_LOG_SERVICE_EXCLUDE?.split(",") || [],
   pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY || "",
   pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
   env: process.env.ENV || "development",

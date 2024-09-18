@@ -57,7 +57,7 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
             </Button>
           )}
         </div>
-        {isReadOnlyReference && <TreeNodeInputSuffix treeNode={treeNode} />}
+        {treeNode.object.isGlobal && <TreeNodeInputSuffix treeNode={treeNode} />}
       </div>
     </div>
   );

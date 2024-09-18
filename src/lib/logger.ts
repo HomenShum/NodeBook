@@ -1,5 +1,8 @@
 // See `logger` object at bottom for usage examples.
+
 import { captureMessage } from "@sentry/nextjs";
+
+import { env } from "@/app/envFrontend";
 
 const logLevels = Object.freeze(["debug", "info", "warn", "error"] as const);
 type LogLevel = (typeof logLevels)[number];
@@ -13,7 +16,10 @@ type LogMessage = {
 
 type Filter = {
   level?: LogLevel;
-  service?: string;
+  service?: {
+    include?: string[];
+    exclude?: string[];
+  };
 };
 
 /**
@@ -76,12 +82,21 @@ class Logger {
       ...logMessage,
       service: logMessage.service || this.service,
     };
+
     const level = logMessage.level || "info";
 
     // Log to console
     const gteLevel = Logger.consoleFilter.level ? gte(level, Logger.consoleFilter.level) : true;
-    const serviceMatch = Logger.consoleFilter.service ? logMessage.service === Logger.consoleFilter.service : true;
-    if (gteLevel && serviceMatch) {
+
+    const serviceInclude = Logger.consoleFilter.service?.include || [];
+    const serviceExclude = Logger.consoleFilter.service?.exclude || [];
+
+    const serviceIncludeMatch =
+      serviceInclude.length > 0 && logMessage.service ? serviceInclude.includes(logMessage.service) : true;
+    const serviceExcludeMatch =
+      serviceExclude.length > 0 && logMessage.service ? !serviceExclude.includes(logMessage.service) : true;
+
+    if (gteLevel && serviceIncludeMatch && serviceExcludeMatch) {
       switch (level) {
         case "debug":
           console.debug(...this.consoleFormatter(logMessage));
@@ -150,5 +165,12 @@ class Logger {
  * childLogger.info("This message will not be logged");
  */
 const logger = new Logger();
+
+logger.setGlobalConsoleFilter({
+  service: {
+    exclude: env.logServiceExclude,
+    include: env.logServiceInclude,
+  },
+});
 
 export default logger;

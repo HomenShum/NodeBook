@@ -1,4 +1,3 @@
-import { autorun } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef } from "react";
 
@@ -14,16 +13,21 @@ export const TreeNodeInputSuffix = observer(({ treeNode }: TreeNodeInputSuffixPr
   const tree = useTree();
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Update the input focus according to the tree selection state
+  const shouldBeFocused =
+    tree.selection?.type === "editor" &&
+    tree.selection.treeNodeId === treeNode.id &&
+    treeNode.object.isGlobal &&
+    !tree.selection.editMode;
+  const shouldntBeFocused = tree.selection?.type === "node";
   useEffect(() => {
-    return autorun(() => {
-      const inputFocused = inputRef.current?.contains(document.activeElement);
-      if (!inputFocused && tree.isNodeFocused(treeNode.id)) {
-        inputRef.current?.focus();
-      } else if (inputFocused && tree.selection?.type === "node") {
-        inputRef.current?.blur();
-      }
-    });
-  }, [tree, treeNode.id]);
+    const inputFocused = inputRef.current?.contains(document.activeElement);
+    if (!inputFocused && shouldBeFocused) {
+      inputRef.current?.focus();
+    } else if (inputFocused && shouldntBeFocused) {
+      inputRef.current?.blur();
+    }
+  }, [shouldBeFocused, shouldntBeFocused]);
 
   return (
     <input
