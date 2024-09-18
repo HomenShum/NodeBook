@@ -105,7 +105,7 @@ export function DropdownMenuPlugin({
         }
         closeMenu();
       });
-      tree.setFocusedNode(treeNode.id, "end", undefined, true);
+      tree.setFocusedNode(treeNode.id, undefined, undefined, true);
     },
     [editor, graphStore, tree, treeNode],
   );
