@@ -7,6 +7,7 @@ import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner, TxCombined } from "@/app/graph/GraphTransactionTypes";
+import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { extractGroupId, extractPointedAtObjectId, getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
@@ -75,9 +76,9 @@ export class Tree {
     this.id = id;
     this.graphStore = graphStore;
     this.settingsStore = settingsStore;
-    const { rootObject, pathToRoot } = this.setRoot(root, path);
-    this.rootObject = rootObject;
-    this.pathToRoot = pathToRoot;
+    const { rootObjectId, pathToRootIds } = this.setRoot(root, path);
+    this.rootObjectId = rootObjectId;
+    this.pathToRootIds = pathToRootIds;
     this.search = search;
     this.partialFilter = filter;
     this.expansionLocalStorageCache = new ExpansionLocalStorageCache();
@@ -94,8 +95,8 @@ export class Tree {
     if (isObservable(this)) return;
     makeObservable<this, "partialFilter">(this, {
       selection: observable,
-      rootObject: observable.ref,
-      pathToRoot: observable.shallow,
+      rootObject: computed,
+      pathToRoot: computed,
       search: observable,
       expansionsByPath: observable,
       partialFilter: observable,
@@ -142,11 +143,20 @@ export class Tree {
   /** The current selection in the tree. This can be a node selection or an editor selection. */
   selection: TreeSelection | null;
 
+  protected rootObjectId: string;
+
   /** The root object of the tree. */
-  public rootObject: GraphObject;
+  get rootObject(): GraphObject {
+    const rootObject = this.graphStore.getObject(this.rootObjectId);
+    return rootObject ?? new PlaceholderGraphObject(this.rootObjectId, this.graphStore.user.id);
+  }
+
+  private pathToRootIds: string[] = [];
 
   /** Connected path of relations leading to the root object. */
-  public pathToRoot: GraphRelation[] = [];
+  public get pathToRoot(): (GraphRelation | undefined)[] {
+    return this.pathToRootIds.map((id) => this.graphStore.getRelation(id));
+  }
 
   public search: string = "";
 
@@ -403,17 +413,17 @@ export class Tree {
   setRoot(root: Root, path: string) {
     logger.debug("Setting tree root", root);
     if (root instanceof DescendantTreeNode) {
-      this.rootObject = root.object;
-      this.pathToRoot = getAncestorsAsArray(root).map((node) => node.relationToChild);
+      this.rootObjectId = root.object.id;
+      this.pathToRootIds = getAncestorsAsArray(root).map((node) => node.relationToChild.id);
     } else if (isGraphObject(root)) {
-      this.rootObject = root;
-      this.pathToRoot = [];
+      this.rootObjectId = root.id;
+      this.pathToRootIds = [];
     } else {
-      this.rootObject = root.object;
-      this.pathToRoot = root.relations || [];
+      this.rootObjectId = root.object.id;
+      this.pathToRootIds = root.relations?.map((r) => r.id) || [];
     }
     this.path = path;
-    return { rootObject: this.rootObject, pathToRoot: this.pathToRoot };
+    return { rootObjectId: this.rootObjectId, pathToRootIds: this.pathToRootIds };
   }
 
   // For objects, we default to collapsed.
@@ -565,7 +575,7 @@ export class Tree {
   }) {
     const parent: BaseTreeNode = props.parent ?? this.root;
     const { node, relation } = await this.graphStore.addChildNode({
-      parentId: props.parent?.object.id ?? this.rootObject.id,
+      parentId: props.parent?.object.id ?? this.rootObjectId,
       nodeProps: props.nodeProps,
       relationProps: props.relationProps,
       after: props.after instanceof DescendantTreeNode ? props.after.relationWithParent : props.after,
@@ -980,9 +990,7 @@ export class Tree {
   }
 
   clear(root: Root) {
-    const { rootObject, pathToRoot } = this.setRoot(root, "");
-    this.pathToRoot = pathToRoot;
-    this.rootObject = rootObject;
+    this.setRoot(root, "");
     this.path = "";
     this.expansionsByPath.clear();
     // this.textsCache.clear();
@@ -993,8 +1001,8 @@ export class Tree {
   serialize(): SerializedTree {
     return {
       id: this.id,
-      pathToRootIds: this.pathToRoot.map((r) => r.id),
-      rootObjectId: this.rootObject.id,
+      pathToRootIds: this.pathToRootIds,
+      rootObjectId: this.rootObjectId,
       expansionsByPath: Object.fromEntries(this.expansionsByPath.entries()),
     };
   }
@@ -1005,6 +1013,9 @@ export class Tree {
   deserializeInPlace(data: SerializedTree): boolean {
     const expansionsByPath = new Map<string, boolean>();
     Object.entries(data.expansionsByPath ?? {}).forEach(([key, value]) => expansionsByPath.set(key, value));
+
+    // The following code that gets all objects for pathToRoot and rootObject only to revert back to the IDs might seem a bit silly
+    // but is useful for making sure that the deserialization is valid and that all objects are present in the graph store.
     let pathToRoot: GraphRelation[] = [];
     for (const id of data.pathToRootIds) {
       const relation = this.graphStore.getRelation(id);
@@ -1017,9 +1028,10 @@ export class Tree {
     if (!rootObject) {
       return false;
     }
+
     this.id = data.id;
-    this.pathToRoot = pathToRoot;
-    this.rootObject = rootObject;
+    this.pathToRootIds = pathToRoot.map((r) => r.id);
+    this.rootObjectId = rootObject.id;
     this.expansionsByPath = expansionsByPath;
     return true;
   }
