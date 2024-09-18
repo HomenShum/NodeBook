@@ -1,5 +1,5 @@
-import { GroupId } from "@/app/tree/nodes";
 import { GraphRelationType } from "@/app/graph/types";
+import { GroupId } from "@/app/tree/nodes";
 
 import { GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationPropsWithoutTargets } from "./GraphRelation";
@@ -82,6 +82,18 @@ export type TxSetIsPublic = {
   alsoSetChildrenAndDescendants: boolean;
 };
 
+export type TxPinRelation = {
+  objectId: string;
+  relationId: string;
+  after?: Positioner<GraphRelation>;
+};
+
+export type TxUnpinRelation = {
+  objectId: string;
+  relationId: string;
+};
+
+// TODO: probably can be done with less boilerplate code?
 // TODO: probably can be done with less boilerplate code?
 export type TxCombinedPart =
   | {
@@ -127,8 +139,15 @@ export type TxCombinedPart =
   | {
       type: "setIsPublic";
       transaction: TxSetIsPublic;
+    }
+  | {
+      type: "pinRelation";
+      transaction: TxPinRelation;
+    }
+  | {
+      type: "unpinRelation";
+      transaction: TxUnpinRelation;
     };
-
 /**
  * The field `type` in each element refers to a method on GraphStore.
  * The field `transaction` refers to the transaction type.

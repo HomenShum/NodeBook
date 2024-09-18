@@ -261,6 +261,20 @@ export class GraphStore {
           updatesArray.push(...updates);
           break;
         }
+        case "pinRelation": {
+          const { updates } = this._pinRelations(
+            tx.transaction.objectId,
+            [tx.transaction.relationId],
+            tx.transaction.after,
+          );
+          updatesArray.push(...updates);
+          break;
+        }
+        case "unpinRelation": {
+          const { updates } = this._unpinRelations(tx.transaction.objectId, [tx.transaction.relationId]);
+          updatesArray.push(...updates);
+          break;
+        }
         default:
           tx satisfies never;
       }
