@@ -56,10 +56,16 @@
   cursor: pointer;
 }
 
-.Icon {
+.IconPrivateMode {
   display: flex;
   align-items: center;
   color: var(--gray-10);
+}
+
+.IconPublicMode {
+  display: flex;
+  align-items: center;
+  color: var(--teal-10);
 }
 
 .Breadcrumb:hover .PinButton {

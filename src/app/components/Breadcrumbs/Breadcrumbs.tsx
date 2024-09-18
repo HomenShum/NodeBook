@@ -1,5 +1,5 @@
 "use client";
-import { ChevronRight, Ellipsis, Globe, Home, Lock } from "lucide-react";
+import { ChevronRight, Ellipsis, Globe, Home, Lock, Unlock } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -183,11 +183,11 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
       <div className={s.BreadcrumbWrapper}>{renderBreadcrumbs()}</div>
       <span className={s.PublicModeToggle} onClick={() => settingsStore.setPublicMode(!settingsStore.publicMode)}>
         {settingsStore.publicMode ? (
-          <span className={styles.Icon}>
-            <Globe size={14} strokeWidth={1.5} />
+          <span className={styles.IconPublicMode}>
+            <Unlock size={14} strokeWidth={1.5} />
           </span>
         ) : (
-          <span className={styles.Icon}>
+          <span className={styles.IconPrivateMode}>
             <Lock size={14} strokeWidth={1.5} />
           </span>
         )}

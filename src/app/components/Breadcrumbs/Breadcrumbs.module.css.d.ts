@@ -4,7 +4,8 @@ declare const styles: {
   readonly "BreadcrumbWrapper": string;
   readonly "Chevron": string;
   readonly "Home": string;
-  readonly "Icon": string;
+  readonly "IconPrivateMode": string;
+  readonly "IconPublicMode": string;
   readonly "PinButton": string;
   readonly "PublicModeToggle": string;
   readonly "Separator": string;
