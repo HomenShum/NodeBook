@@ -3,8 +3,6 @@ import {
   Download,
   Edit,
   Ellipsis,
-  GanttChart,
-  GanttChartSquare,
   GitCompare,
   Globe,
   Lock,
@@ -12,8 +10,6 @@ import {
   PinOff,
   Plus,
   RefreshCcwDot,
-  Scan,
-  ScanLine,
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -27,7 +23,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
-import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -117,48 +112,6 @@ export const RelatedObjectMenu = observer(
             <RefreshCcwDot size={14} />
             Change relation type
           </DropdownMenuItem>
-          {/* toggle bundle */}
-          {object instanceof GraphNode &&
-            (object.isBundle ? (
-              <DropdownMenuItem
-                onSelect={async () => {
-                  await graphStore.updateNode({ nodeId: object.id, nodeProps: { isBundle: false } });
-                }}
-              >
-                <GanttChart size={14} />
-                Unset as bundle
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                onSelect={async () => {
-                  await graphStore.updateNode({ nodeId: object.id, nodeProps: { isBundle: true } });
-                }}
-              >
-                <GanttChartSquare size={14} />
-                Set as bundle
-              </DropdownMenuItem>
-            ))}
-          {/* toggle zone */}
-          {object instanceof GraphNode &&
-            (object.isZone ? (
-              <DropdownMenuItem
-                onSelect={async () => {
-                  await graphStore.updateNode({ nodeId: object.id, nodeProps: { isZone: false } });
-                }}
-              >
-                <ScanLine size={14} />
-                Unset as zone
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                onSelect={async () => {
-                  await graphStore.updateNode({ nodeId: object.id, nodeProps: { isZone: true } });
-                }}
-              >
-                <Scan size={14} />
-                Set as zone
-              </DropdownMenuItem>
-            ))}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onSelect={() => {
