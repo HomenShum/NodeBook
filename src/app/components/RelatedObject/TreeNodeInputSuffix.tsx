@@ -41,8 +41,7 @@ export const TreeNodeInputSuffix = observer(({ treeNode }: TreeNodeInputSuffixPr
         switch (e.key) {
           case "Enter":
             e.preventDefault();
-            const path = await treeNode.parent.createChild({ after: treeNode });
-            tree.setFocusedNode(path, "start", undefined, true);
+            await tree.splitNode(treeNode);
             break;
           case "Backspace":
             if (!treeNode.object.isLocal) {
