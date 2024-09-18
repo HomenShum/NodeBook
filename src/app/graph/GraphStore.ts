@@ -71,7 +71,7 @@ export class GraphStore {
     this.updateManager = new UpdateManager(
       user.id,
       authedFetch ?? fetch,
-      (data: SerializedGraphStore) => this.resetAndLoad(data),
+      (data: SerializedGraphStore) => this.load(data),
       (updates) => this.applyUpdates(updates),
     );
     this.ensureDefaultObjectsCreated();
@@ -1686,14 +1686,20 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.allRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.pinnedRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.allRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.pinnedRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 

@@ -1,14 +1,14 @@
 import { env } from "@/app/envFrontend";
-import { defaultRelationTypes } from "@/app/graph/constants";
 import { PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { getOtherObjectOrThrow } from "@/app/graph/utils";
-import { SublistTree } from "@/app/tree/SublistTree";
 import { Tree } from "@/app/tree/Tree";
 import { comparePositions, createRouteUrl, Position } from "@/app/util";
 import logger from "@/lib/logger";
+import { defaultRelationTypes } from "@/app/graph/constants";
+import { SublistTree } from "@/app/tree/SublistTree";
 
 export class PathToRootNode {
   object: GraphObject;
@@ -145,13 +145,10 @@ export class RootTreeNode extends BaseTreeNode {
   }
 
   protected hydrateAncestors() {
-    const pathToRoot = this.tree.pathToRoot;
+    const pathToRoot: GraphRelation[] = this.tree.pathToRoot;
     let currentNode: PathToRootNode | RootTreeNode = this;
     for (let i = pathToRoot.length - 1; i >= 0; i--) {
       const relation = pathToRoot[i];
-      if (!relation) {
-        break;
-      }
       const parentNode: PathToRootNode = new PathToRootNode({
         object: getOtherObjectOrThrow(relation, currentNode.object.id),
         relationToChild: relation,
