@@ -433,6 +433,7 @@ export function LexicalMenu<TOption extends MenuOption>({
 export function useMenuAnchorRef(
   resolution: MenuResolution | null,
   setResolution: (r: MenuResolution | null) => void,
+  showMenu: boolean,
   className?: string,
   boundaryRef?: RefObject<HTMLDivElement>,
   parent: HTMLElement = document.body,
@@ -481,12 +482,14 @@ export function useMenuAnchorRef(
         containerDiv.setAttribute("role", "listbox");
         containerDiv.style.display = "block";
         containerDiv.style.position = "absolute";
-        parent.append(containerDiv);
+        // Render menu only if options exist to avoid unnecessary DOM elements
+        // don't render invisible menu if clicking outside or escaping of menu, or if there's no options
+        if (showMenu) parent.append(containerDiv);
       }
       anchorElementRef.current = containerDiv;
       rootElement.setAttribute("aria-controls", "typeahead-menu");
     }
-  }, [editor, resolution, boundaryRef, className, parent]);
+  }, [editor, resolution, boundaryRef, className, parent, showMenu]);
 
   useEffect(() => {
     const rootElement = editor.getRootElement();

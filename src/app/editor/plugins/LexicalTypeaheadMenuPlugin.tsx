@@ -157,9 +157,11 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
   const [editor] = useLexicalComposerContext();
   const [resolution, setResolution] = useState<MenuResolution | null>(null);
   const typedSinceLastFocused = useRef<boolean>(false);
+  // only show menu when there are options, and if user did not click outside of menu or escape out of menu
   const anchorElementRef = useMenuAnchorRef(
     resolution,
     setResolution,
+    isMenuOpen && options.length > 0,
     anchorClassName,
     boundaryRef,
     parent,
