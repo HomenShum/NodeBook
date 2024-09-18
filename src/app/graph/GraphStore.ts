@@ -1712,21 +1712,53 @@ export class GraphStore {
    * are overwritten if they already exist.
    */
   load(data: SerializedGraphStore) {
+    // Nodes
     for (const props of Object.values(data.nodesById)) {
       this.loadSerializedNode(props);
     }
+
+    // Relation Types
     for (const [key, value] of Object.entries(data.relationTypesById)) {
       this.relationTypesById[key] = value;
     }
+
+    // Relations
+    const loadedWithPlaceholders: GraphRelation[] = [];
     for (const props of Object.values(data.relationsById)) {
-      this.loadSerializedRelation(props);
+      const rel = this.loadSerializedRelation(props);
+      if (rel.from instanceof PlaceholderGraphObject || rel.to instanceof PlaceholderGraphObject) {
+        loadedWithPlaceholders.push(rel);
+      }
     }
+    // It's possible some of these relations were loaded with placeholders because their to or from objects
+    // were other relations in this same batch of data. We try to resolve those now.
+    for (const rel of loadedWithPlaceholders) {
+      if (rel.from instanceof PlaceholderGraphObject) {
+        const from = this.getObject(rel.from.id);
+        if (from) {
+          rel.setFrom(from);
+        }
+      }
+      if (rel.to instanceof PlaceholderGraphObject) {
+        const to = this.getObject(rel.to.id);
+        if (to) {
+          rel.setTo(to);
+        }
+      }
+      // Note: we might still have unresolved placeholders at this point for valid reasons, like if
+      // a relation is pointing to a node that was shared by someone else at the time but was
+      // subsequently made private.
+    }
+
+    // Relation positions
     for (const [nodeId, positionsByRelationId] of Object.entries(data.relationsByNodeId)) {
       this.loadSerializedAllRelationList(nodeId, positionsByRelationId);
     }
     for (const [nodeId, positionsByRelationId] of Object.entries(data.pinnedRelationsByNodeId)) {
       this.loadSerializedPinnedRelationList(nodeId, positionsByRelationId);
     }
+
+    // Bundles
     if (data.relationToBundles) {
       // TODO: Implement this
       logger.error("relationToBundles not implemented");

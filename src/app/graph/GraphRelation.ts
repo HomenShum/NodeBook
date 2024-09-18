@@ -113,9 +113,9 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
   }
 
   get searchText(): string {
-    return [this.from.searchText, this.relationType.label, this.relationType.reverseLabel, this.to.searchText].join(
-      " ",
-    );
+    const fromText = this.from instanceof GraphRelation ? "" : this.from.searchText;
+    const toText = this.to instanceof GraphRelation ? "" : this.to.searchText;
+    return [fromText, this.relationType.label, this.relationType.reverseLabel, toText].join(" ");
   }
 
   get fromPosition(): Position | undefined {
