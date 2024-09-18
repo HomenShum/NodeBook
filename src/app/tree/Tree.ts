@@ -718,7 +718,7 @@ export class Tree {
       ? chips.after
           .map((c) => c.value)
           .join()
-          .trim().length === 0
+          .trim().length > 0
       : false;
 
     // Special handling to allow users to make a child node by hitting enter at the end of an expanded node.

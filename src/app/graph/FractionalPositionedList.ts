@@ -68,7 +68,7 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
     const items = Array.isArray(item) ? item : [item];
     let int: number, fracs: string[];
     if (this.map.size === 0 || !after) {
-      int = Math.max(...Array.from(items).map((item) => item.createdAt.getTime()));
+      int = Date.now();
       fracs = generateNKeysBetween(null, null, items.length);
       items.forEach((item, i) => {
         // TODO: should this throw?
