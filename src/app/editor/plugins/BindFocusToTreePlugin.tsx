@@ -26,14 +26,6 @@ export const BindFocusToTreePlugin = observer(() => {
     });
   }, [editor]);
 
-  // Track the tree's selection
-  const [selection, setSelection] = useState(tree.selection);
-  useEffect(() => {
-    return autorun(() => {
-      setSelection(tree.selection ? { ...tree.selection } : null);
-    });
-  }, [tree]);
-
   useEffect(() => {
     // Update the editor focus to match the tree selection
     return autorun(() => {
