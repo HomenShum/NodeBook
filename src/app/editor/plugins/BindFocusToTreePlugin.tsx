@@ -34,31 +34,55 @@ export const BindFocusToTreePlugin = observer(() => {
     });
   }, [tree]);
 
-  // Set the editor focus and selection to match the tree's selection
   useEffect(() => {
-    if (isEditable && !isFocused(editor) && selection?.type === "editor" && selection.treeNodeId === treeNode.id) {
-      // Editor isn't focused but should be -> focus it
-      editor.update(
-        () => {
-          if (selection.position === "start") {
-            $getRoot().selectStart();
-          } else if (selection.position === "end") {
-            $getRoot().selectEnd();
+    // Update the editor focus to match the tree selection
+    return autorun(() => {
+      const sel = tree.selection;
+      if (sel === null) {
+        if (isFocused(editor)) {
+          editor.blur();
+        }
+        return;
+      }
+      switch (sel.type) {
+        case "node": {
+          if (isFocused(editor)) {
+            // When the selection switches to node type, blur all editors
+            editor.blur();
           }
-        },
-        { discrete: true }, // run this update synchronously
-      );
-      editor.focus();
-    }
-  }, [editor, tree, treeNode.id, isEditable, selection]);
+          break;
+        }
+        case "editor": {
+          if (!isFocused(editor) && sel.treeNodeId === treeNode.id) {
+            // Editor isn't focused but should be -> focus it
+            editor.update(
+              () => {
+                if (sel.position === "start") {
+                  $getRoot().selectStart();
+                } else if (sel.position === "end") {
+                  $getRoot().selectEnd();
+                }
+              },
+              { discrete: true }, // run this update synchronously
+            );
+            editor.focus();
+          } else if (isFocused(editor) && sel.treeNodeId !== treeNode.id) {
+            // Editor is focused but shouldn't be -> blur it
+            editor.blur();
+          }
+        }
+      }
+    });
+  }, [editor, isEditable, tree, treeNode.id]);
 
   useEffect(() => {
+    // Update the tree selection to match the editor focus
     return mergeRegister(
-      // When the editor is becoming focused but node isn't focused -> set tree selection to this node
       editor.registerCommand(
         FOCUS_COMMAND,
         action(() => {
           if (!tree.isNodeFocused(treeNode.id)) {
+            // Editor is becoming focused but node isn't focused -> set tree selection to this node
             tree.setFocusedNode(treeNode.id);
             return true;
           }
