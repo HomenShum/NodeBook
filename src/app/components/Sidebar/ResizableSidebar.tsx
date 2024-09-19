@@ -146,7 +146,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                   <span>
                     <Home size={16} />
                   </span>
-                  <span>{graphStore.userRoot.text}</span>
+                  <span className={styles.ButtonText}>{graphStore.userRoot.text}</span>
                 </Button>
                 {showAllNodesOption === true && (
                   <Button

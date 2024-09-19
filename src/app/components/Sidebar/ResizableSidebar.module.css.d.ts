@@ -3,6 +3,7 @@ declare const styles: {
   readonly "Backdrop": string;
   readonly "Button": string;
   readonly "ButtonIcon": string;
+  readonly "ButtonText": string;
   readonly "Hidden": string;
   readonly "Open": string;
   readonly "Resizer": string;
