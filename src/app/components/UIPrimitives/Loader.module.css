@@ -5,45 +5,49 @@
   transform: translate(-50%, -50%);
   font-size: var(--font-size-md);
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 8px;
   align-items: center;
   color: var(--gray-10);
-}
-
-.Loader {
-  width: 16px;
-  height: 16px;
-  display: inline-block;
-  position: relative;
-}
-.Loader::after,
-.Loader::before {
-  content: "";
-  box-sizing: border-box;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--teal-10);
-  position: absolute;
-  left: 0;
-  top: 0;
   opacity: 0;
-  animation: LoadingMotion 2s linear infinite;
-}
-.Loader::after {
-  animation-delay: 1s;
+  animation: fadeIn 1s ease-out forwards;
 }
 
-@keyframes LoadingMotion {
+.Beta {
+  font-size: var(--font-size-xs);
+  color: var(--gray-8);
+  font-weight: 500;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.Logo {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 4px;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  opacity: 0;
+  animation: fadeIn 1s ease-out forwards, logoFade 2s ease-in-out infinite;
+  mix-blend-mode: normal;
+}
+
+@keyframes fadeIn {
   0% {
-    transform: scale(0);
     opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes logoFade {
+  0%,
+  100% {
+    opacity: 0.6;
   }
   50% {
     opacity: 1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0;
   }
 }

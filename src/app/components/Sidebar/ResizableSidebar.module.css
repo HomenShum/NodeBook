@@ -91,10 +91,20 @@
   flex-direction: column;
 }
 
-.RightNav {
+.BottomNav {
   display: flex;
+  align-items: center;
   width: 100%;
   justify-content: space-between;
+}
+
+.BetaLabel {
+  font-size: 12px;
+  color: var(--gray-10);
+  font-weight: bold;
+  margin-right: 8px;
+  cursor: help;
+  position: relative;
 }
 
 .Button {

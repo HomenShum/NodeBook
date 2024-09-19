@@ -1,6 +1,8 @@
 declare const styles: {
   readonly "BackNavigation": string;
   readonly "Backdrop": string;
+  readonly "BetaLabel": string;
+  readonly "BottomNav": string;
   readonly "Button": string;
   readonly "ButtonIcon": string;
   readonly "ButtonText": string;
@@ -8,7 +10,6 @@ declare const styles: {
   readonly "Open": string;
   readonly "Resizer": string;
   readonly "Resizing": string;
-  readonly "RightNav": string;
   readonly "Selected": string;
   readonly "Sidebar": string;
   readonly "SidebarContent": string;

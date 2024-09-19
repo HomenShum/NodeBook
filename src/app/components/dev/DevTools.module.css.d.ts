@@ -1,13 +1,14 @@
 declare const styles: {
+  readonly "Checkbox": string;
   readonly "DevToolsContainer": string;
   readonly "DevToolsHeader": string;
+  readonly "HelpText": string;
   readonly "LabelSetting": string;
   readonly "SearchReplaceContainer": string;
-  readonly "SettingsGroup": string;
-  readonly "SearchReplaceRow": string;
-  readonly "Checkbox": string;
-  readonly "HelpText": string;
   readonly "SearchReplaceLabel": string;
+  readonly "SearchReplaceRow": string;
   readonly "SearchReplaceSelect": string;
+  readonly "SettingsGroup": string;
 };
 export = styles;
+

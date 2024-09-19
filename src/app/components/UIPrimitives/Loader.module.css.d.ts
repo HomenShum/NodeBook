@@ -1,7 +1,9 @@
 declare const styles: {
-  readonly "Loader": string;
+  readonly "Beta": string;
   readonly "LoaderContainer": string;
-  readonly "LoadingMotion": string;
+  readonly "Logo": string;
+  readonly "fadeIn": string;
+  readonly "logoFade": string;
 };
 export = styles;
 

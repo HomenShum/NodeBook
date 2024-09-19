@@ -10,6 +10,7 @@ import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import SidebarTree from "@/app/components/Sidebar/SidebarTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
@@ -170,7 +171,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
               <CommandBar />
             </div>
 
-            <div className={styles.RightNav}>
+            <div className={styles.BottomNav}>
               <Button
                 variant="ghost"
                 size="icon"
@@ -184,6 +185,16 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                   <MoonIcon size={16} strokeWidth={1.5} />
                 )}
               </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <span className={styles.BetaLabel}>BETA</span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    This app is in beta testing. It may contain bugs, lose data, or change without notice
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button variant="ghost" size="icon" onClick={handleOpenDevTools}>
                 <SettingsIcon size={16} strokeWidth={1.5} />
               </Button>

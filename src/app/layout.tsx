@@ -1,23 +1,18 @@
-"use client";
-import dynamic from "next/dynamic";
+import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Head from "next/head";
 
-import { AuthProvider } from "@/app/auth/AuthProvider";
+import LayoutClient from "./LayoutClient";
 
 import "./global.css";
-import { StoresProvider } from "./StoresProvider";
 
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 
-const App = dynamic(() => import("./App"), {
-  ssr: false,
-});
+export const metadata: Metadata = {
+  title: "(Beta) Zephyr",
+  description: "A global graph for human coordination",
+};
 
-/**
- * The root component which wraps every page in the application
- * and provides app-wide state and ui
- */
 export default function Layout({
   children,
 }: Readonly<{
@@ -31,13 +26,9 @@ export default function Layout({
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
         />
       </Head>
-      <AuthProvider>
-        <StoresProvider>
-          <body>
-            <App>{children}</App>
-          </body>
-        </StoresProvider>
-      </AuthProvider>
+      <body>
+        <LayoutClient>{children}</LayoutClient>
+      </body>
     </html>
   );
 }

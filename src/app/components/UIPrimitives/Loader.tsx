@@ -1,4 +1,5 @@
 import { captureMessage } from "@sentry/nextjs";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 import { env } from "@/app/envFrontend";
@@ -9,8 +10,11 @@ const Loader = () => {
   const newBuild = useNewBuild();
   return (
     <div className={styles.LoaderContainer}>
-      <span className={styles.Loader} />
-      {newBuild ? "A new version of Mew is loading..." : "Loading..."}
+      <div className={styles.Logo}>
+        <Image src="/logo.svg" alt="Logo" fill sizes="100%" />
+      </div>
+      {newBuild ? "Loading new version" : " "}
+      <div className={styles.Beta}>BETA</div>
     </div>
   );
 };
