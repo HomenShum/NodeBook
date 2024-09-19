@@ -704,52 +704,92 @@ export class Tree {
     if (!(treeNode.object instanceof GraphNode)) {
       throw new Error("Only splitting nodes is supported for now.");
     }
-    const oldNode = treeNode;
 
-    let newNodePath: string;
-    const relationId = uuid();
-    const txs: TxCombined = [];
-    if (treeNode.isExpanded && oldNode.childCount > 0) {
-      // If the node is expanded with children, add the new node as a child
-      txs.push({
-        type: "addChildNode",
-        transaction: {
-          parentId: oldNode.object.id,
-          nodeProps: { content: chips?.after ?? [] },
-          relationProps: { id: relationId },
-        },
-      });
-      newNodePath = oldNode.childrenGroupsById.all.path + "/" + relationId;
-    } else {
-      // Otherwise, add the new node as a sibling
-      txs.push({
-        type: "addChildNode",
-        transaction: {
-          parentId: oldNode.parent.object.id,
-          after: oldNode.parentGroup.id === "pinned" ? -1 : oldNode.relationWithParent,
-          nodeProps: { content: chips?.after ?? [] },
-          relationProps: { id: relationId },
-        },
-      });
-      if (oldNode.parentGroup.id === "pinned") {
-        //If we are splitting inside pinned group and new node is a sibling,
-        //we want the new node to be pinned after the old node
+    if (chips?.before.length === 0) {
+      // Cursor is at the start of the line. Create a blank node above.
+      const txs: TxCombined = [];
+      if (treeNode.parentGroup.id === "pinned") {
+        // Add new node at bottom of all-nodes group then pin it just above the current node
+        const relationId = uuid();
+        txs.push({
+          type: "addChildNode",
+          transaction: {
+            parentId: treeNode.parent.object.id,
+            after: -1,
+            nodeProps: { content: [] },
+            relationProps: { id: relationId },
+          },
+        });
         txs.push({
           type: "pinRelation",
-          transaction: { objectId: oldNode.parent.object.id, relationId, after: oldNode.relationWithParent },
+          transaction: {
+            objectId: treeNode.parent.object.id,
+            relationId,
+            after: treeNode.siblingAbove?.relationWithParent,
+          },
+        });
+      } else {
+        // Add sibling above
+        txs.push({
+          type: "addChildNode",
+          transaction: {
+            parentId: treeNode.parent.object.id,
+            after: treeNode.siblingAbove?.relationWithParent,
+            nodeProps: { content: [] },
+          },
         });
       }
-      newNodePath = oldNode.parentGroup.path + "/" + relationId;
+      await this.graphStore.applyCombinedTransaction(txs);
+      // keep selection where it is
+    } else {
+      // Cursor is in middle/end of line. Split the node.
+      const relationId = uuid();
+      const oldNode = treeNode;
+      let newNodePath: string;
+
+      const txs: TxCombined = [];
+      if (treeNode.isExpanded && oldNode.childCount > 0) {
+        // If the node is expanded with children, add the new node as a child of the current node
+        txs.push({
+          type: "addChildNode",
+          transaction: {
+            parentId: oldNode.object.id,
+            nodeProps: { content: chips?.after ?? [] },
+            relationProps: { id: relationId },
+          },
+        });
+        newNodePath = oldNode.childrenGroupsById.all.path + "/" + relationId;
+      } else {
+        // Otherwise, add the new node as a sibling of the current node
+        txs.push({
+          type: "addChildNode",
+          transaction: {
+            parentId: oldNode.parent.object.id,
+            after: oldNode.parentGroup.id === "pinned" ? -1 : oldNode.relationWithParent,
+            nodeProps: { content: chips?.after ?? [] },
+            relationProps: { id: relationId },
+          },
+        });
+        if (oldNode.parentGroup.id === "pinned") {
+          // If we are splitting inside pinned group and new node is a sibling,
+          // we want the new node to be pinned after the old node
+          txs.push({
+            type: "pinRelation",
+            transaction: { objectId: oldNode.parent.object.id, relationId, after: oldNode.relationWithParent },
+          });
+        }
+        newNodePath = oldNode.parentGroup.path + "/" + relationId;
+      }
+      // Update the node with the new content
+      if (chips) {
+        txs.push({
+          type: "updateNode",
+          transaction: { nodeId: oldNode.object.id, nodeProps: { content: chips.before } },
+        });
+      }
+      await this.graphStore.applyCombinedTransaction(txs);
+      this.setFocusedNode(newNodePath, "start", undefined, true);
     }
-    // Update the node with the new content
-    if (chips) {
-      txs.push({
-        type: "updateNode",
-        transaction: { nodeId: oldNode.object.id, nodeProps: { content: chips.before } },
-      });
-    }
-    await this.graphStore.applyCombinedTransaction(txs);
-    this.setFocusedNode(newNodePath, "start", undefined, true);
   }
 
   /**
