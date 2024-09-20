@@ -1,4 +1,5 @@
 import { BaseGraphObject } from "@/app/graph/GraphObject";
+import { GraphStore } from "@/app/graph/GraphStore";
 
 /**
  * Placeholder object used during deserialize to represent a reference to an object that has not yet been deserialized.
@@ -12,8 +13,8 @@ export class PlaceholderGraphObject extends BaseGraphObject {
   authorId: string;
   createdAt: Date;
   public isPublic: boolean = false;
-  constructor(id: string, authorId: string) {
-    super(null as any);
+  constructor(store: GraphStore, id: string, authorId: string) {
+    super(store);
     this.id = id;
     this.authorId = authorId;
     this.createdAt = new Date();

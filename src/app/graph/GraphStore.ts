@@ -1663,7 +1663,7 @@ export class GraphStore {
     objectId: string,
     positionsByRelationId: SerializedPositionList<GraphRelation>,
   ) {
-    const object = this.getObject(objectId) ?? new PlaceholderGraphObject(objectId, this.user.id); // TODO: what if it's a relation?
+    const object = this.getObject(objectId) ?? new PlaceholderGraphObject(this, objectId, this.user.id); // TODO: what if it's a relation?
     const relationsWithPositions: ItemWithPosition<GraphRelation>[] = [];
     for (const [relationId, position] of Object.entries(positionsByRelationId)) {
       const relation = this.getRelation(relationId);
@@ -1800,8 +1800,8 @@ export class GraphStore {
    * @see file://./design-notes.md#load-methods
    */
   private loadSerializedRelation(props: SerializedRelation): GraphRelation {
-    const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(props.fromId, this.user.id);
-    const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(props.toId, this.user.id);
+    const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(this, props.fromId, this.user.id);
+    const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(this, props.toId, this.user.id);
     const existing = this.getRelation(props.id);
     const relationType = this.relationTypesById[props.relationTypeId] ?? defaultRelationTypes.child;
     if (existing) {

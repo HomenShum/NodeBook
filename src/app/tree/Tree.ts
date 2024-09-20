@@ -150,7 +150,7 @@ export class Tree {
   /** The root object of the tree. */
   get rootObject(): GraphObject {
     const rootObject = this.graphStore.getObject(this.rootObjectId);
-    return rootObject ?? new PlaceholderGraphObject(this.rootObjectId, this.graphStore.user.id);
+    return rootObject ?? new PlaceholderGraphObject(this.graphStore, this.rootObjectId, this.graphStore.user.id);
   }
 
   pathToRootIds: string[] = [];
