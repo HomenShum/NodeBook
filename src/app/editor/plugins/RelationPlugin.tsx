@@ -98,8 +98,10 @@ export const RelationPlugin = () => {
         KEY_BACKSPACE_COMMAND,
         (event) => {
           // If it's a child relation, or the selection isn't at the start, exit
-
-          if (relation.relationType.id === defaultRelationTypes.child.id) {
+          if (
+            treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id &&
+            treeNode.relationWithParent.to === object
+          ) {
             return false;
           }
           const isSelectionAtStart = editor.getEditorState().read(() => {
