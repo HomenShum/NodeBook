@@ -7,7 +7,7 @@ import { TreeNode } from "@/app/tree/nodes";
 export const createConfig = ({
   namespace,
   treeNode,
-  editable = false,
+  editable = true,
 }: {
   namespace: string;
   treeNode: TreeNode;

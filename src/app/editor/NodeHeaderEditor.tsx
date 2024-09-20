@@ -16,7 +16,13 @@ import styles from "./Editor.module.css";
 export const NodeHeaderEditor = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
   return (
     <div>
-      <LexicalComposer initialConfig={createConfig({ namespace: "header-editor", treeNode })}>
+      <LexicalComposer
+        initialConfig={createConfig({
+          namespace: "header-editor",
+          treeNode,
+          editable: treeNode.object instanceof GraphNode,
+        })}
+      >
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
           contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
