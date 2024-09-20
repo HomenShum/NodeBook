@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { NodeEditor } from "@/app/editor/NodeContentEditor";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
@@ -19,8 +20,9 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
   const isExpanded = tree.isPathExpanded(treeNode.path);
 
   const isEditMode =
-    tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id && tree.selection.editMode;
+    tree.selection?.type === "editor" ? tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode : false;
   const isReadOnlyReference = treeNode.object.isGlobal && !isEditMode;
+  const editableEditor = treeNode.object instanceof GraphNode ? treeNode.object.isLocal || isEditMode : false;
 
   const cnOuterContainer = cn(
     isLocal && styles.ColumnContainer,
@@ -42,7 +44,7 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
             if (isReadOnlyReference) tree.togglePathExpanded(treeNode.path);
           }}
         >
-          <NodeEditor treeNode={treeNode} boundaryRef={ref} />
+          <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} boundaryRef={ref} />
           {isReadOnlyReference && (
             <Button
               variant="ghost"
@@ -57,7 +59,7 @@ export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTre
             </Button>
           )}
         </div>
-        {treeNode.object.isGlobal && <TreeNodeInputSuffix treeNode={treeNode} />}
+        {treeNode.object.isGlobal && <TreeNodeInputSuffix treeNode={treeNode} isEditorEditable={editableEditor} />}
       </div>
     </div>
   );

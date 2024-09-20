@@ -97,7 +97,7 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: DescendantTreeNode }) =
         event.preventDefault();
         event.stopPropagation();
         const { chipsBefore, chipsAfter } = getChipsAroundSelection(selection);
-        tree.splitNode(treeNode, { before: chipsBefore, after: chipsAfter });
+        tree.split(treeNode, { before: chipsBefore, after: chipsAfter });
         return true;
       }),
       COMMAND_PRIORITY_NORMAL,

@@ -122,7 +122,7 @@ export class Tree {
       deleteSelection: action,
       indentSelection: action,
       dedentSelection: action,
-      splitNode: action,
+      split: action,
       moveSelectedNodesUp: action,
       moveSelectedNodesDown: action,
       moveNodeSelectionHeadUp: action,
@@ -541,7 +541,7 @@ export class Tree {
       });
       if (treeNode instanceof DescendantTreeNode) {
         const text = texts.get(treeNode.object.id);
-        treeNode.isSearchMatch = search ? text?.includes(search) ?? true : true;
+        treeNode.isSearchMatch = search ? (text?.includes(search) ?? true) : true;
         treeNode.searchMatchInDescendants = searchMatchInDescendants;
       }
     }
@@ -686,7 +686,7 @@ export class Tree {
   }
 
   /**
-   * Splits a node and returns the newly created graph object, relation, and
+   * Splits an object and returns the newly created graph object, relation, and
    * expected path to it in the tree.
    *
    * If no chips are provided, we split the node as if the cursor is at the end of the node.
@@ -700,9 +700,10 @@ export class Tree {
    * and split the node, you expect the mention text to get split accordingly.
    * So we let the editor determine the split content and pass it to this method.
    */
-  async splitNode(treeNode: DescendantTreeNode, chips?: { before: Chip[]; after: Chip[] }) {
-    if (!(treeNode.object instanceof GraphNode)) {
-      throw new Error("Only splitting nodes is supported for now.");
+  async split(treeNode: DescendantTreeNode, chips?: { before: Chip[]; after: Chip[] }) {
+    if (!(treeNode.object instanceof GraphNode) && chips !== undefined) {
+      logger.warn("Chips are ignored when splitting non-node objects", { chips });
+      chips = undefined;
     }
 
     const textBefore =

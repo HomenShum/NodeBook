@@ -7,27 +7,33 @@ import { useTree } from "@/app/tree/TreeContext";
 
 type TreeNodeInputSuffixProps = {
   treeNode: DescendantTreeNode;
+  isEditorEditable: boolean;
 };
 
-export const TreeNodeInputSuffix = observer(({ treeNode }: TreeNodeInputSuffixProps) => {
+/**
+ * Renders an invisible input at the end of a tree node, allowing user
+ * interaction with non-editable content. This allows the user to still focus
+ * the node and enabling actions like splitting nodes.
+ *
+ * When isEditorEditable is false, it becomes responsible for grabbing the
+ * selection in response to tree selection changes.
+ */
+export const TreeNodeInputSuffix = observer(({ treeNode, isEditorEditable }: TreeNodeInputSuffixProps) => {
   const tree = useTree();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Update the input focus according to the tree selection state
-  const shouldBeFocused =
-    tree.selection?.type === "editor" &&
-    tree.selection.treeNodeId === treeNode.id &&
-    treeNode.object.isGlobal &&
-    !tree.selection.editMode;
-  const shouldntBeFocused = tree.selection?.type === "node";
+  // Only grab selection if  tree node
+  const treeNodeShouldHaveFocus = tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id;
   useEffect(() => {
-    const inputFocused = inputRef.current?.contains(document.activeElement);
-    if (!inputFocused && shouldBeFocused) {
-      inputRef.current?.focus();
-    } else if (inputFocused && shouldntBeFocused) {
-      inputRef.current?.blur();
+    if (!isEditorEditable) {
+      const inputFocused = inputRef.current?.contains(document.activeElement);
+      if (!inputFocused && treeNodeShouldHaveFocus) {
+        inputRef.current?.focus();
+      } else if (inputFocused && !treeNodeShouldHaveFocus) {
+        inputRef.current?.blur();
+      }
     }
-  }, [shouldBeFocused, shouldntBeFocused]);
+  }, [treeNodeShouldHaveFocus, isEditorEditable]);
 
   return (
     <input
@@ -41,7 +47,7 @@ export const TreeNodeInputSuffix = observer(({ treeNode }: TreeNodeInputSuffixPr
         switch (e.key) {
           case "Enter":
             e.preventDefault();
-            await tree.splitNode(treeNode);
+            await tree.split(treeNode);
             break;
           case "Backspace":
             if (!treeNode.object.isLocal) {

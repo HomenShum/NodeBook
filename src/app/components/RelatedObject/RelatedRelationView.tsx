@@ -7,7 +7,7 @@ export const RelatedRelationView = observer(({ treeNode }: { treeNode: Descendan
   return (
     <div style={{ display: "flex" }}>
       <span style={{ fontStyle: "italic" }}>{treeNode.object.text}</span>
-      <TreeNodeInputSuffix treeNode={treeNode} />
+      <TreeNodeInputSuffix treeNode={treeNode} isEditorEditable={false} />
     </div>
   );
 });
