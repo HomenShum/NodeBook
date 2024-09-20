@@ -705,12 +705,23 @@ export class Tree {
       throw new Error("Only splitting nodes is supported for now.");
     }
 
-    if (chips?.before.length === 0) {
-      // Cursor is at the start of the line. Create a blank node above.
+    const textBefore =
+      chips?.before
+        .map((c) => c.value)
+        .join()
+        .trim() || "";
+    const textAfter =
+      chips?.after
+        .map((c) => c.value)
+        .join()
+        .trim() || "";
+
+    if (textBefore.length === 0 && textAfter.length > 0) {
+      // Cursor is at the start of a line with content. Create a blank node above and put the cursor there.
+      const relationId = uuid();
       const txs: TxCombined = [];
       if (treeNode.parentGroup.id === "pinned") {
         // Add new node at bottom of all-nodes group then pin it just above the current node
-        const relationId = uuid();
         txs.push({
           type: "addChildNode",
           transaction: {
@@ -736,11 +747,13 @@ export class Tree {
             parentId: treeNode.parent.object.id,
             after: treeNode.siblingAbove?.relationWithParent,
             nodeProps: { content: [] },
+            relationProps: { id: relationId },
           },
         });
       }
       await this.graphStore.applyCombinedTransaction(txs);
-      // keep selection where it is
+      const newNodePath = treeNode.parentGroup.path + "/" + relationId;
+      this.setFocusedNode(newNodePath);
     } else {
       // Cursor is in middle/end of line. Split the node.
       const relationId = uuid();
