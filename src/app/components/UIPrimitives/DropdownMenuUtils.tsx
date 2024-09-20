@@ -1,14 +1,14 @@
 import { MenuOption, MenuRenderFn } from "@lexical/react/LexicalTypeaheadMenuPlugin";
-import { ReactPortal, Ref, useEffect, useRef } from "react";
+import { ReactPortal, useEffect } from "react";
 import ReactDOM from "react-dom";
 
 import { Path } from "@/app/components/Path";
+import { MAX_PREFIX_LENGTH } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation, isGraphRelationType } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphRelationType } from "@/app/graph/types";
 import { scoreMatch } from "@/lib/utils";
-import { MAX_PREFIX_LENGTH } from "@/app/graph/constants";
 
 import styles from "./DropdownMenuUtils.module.css";
 
@@ -173,56 +173,49 @@ function filterAndSortOptions(prevOptions: DropdownOption[], queryString: string
     );
 }
 
-function getMenuRenderFn(
-  options: DropdownOption[],
-  queryString: string,
-  showMenu: boolean,
-  setShowMenu: React.Dispatch<React.SetStateAction<boolean>>,
-): MenuRenderFn<DropdownOption> {
+function getMenuRenderFn(options: DropdownOption[], queryString: string): MenuRenderFn<DropdownOption> {
   return (
     anchorElementRef,
     { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
   ): ReactPortal | JSX.Element | null => {
-    // enable closing the autocomplete menu when clicking elsewhere
-    const ref: Ref<HTMLDivElement> = useRef(null);
-
     useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-        const target = event.target as Node;
-        if (ref.current && !ref.current.contains(target)) {
-          setShowMenu(false);
+      const isDropdownMenuItem = (target: EventTarget | null) =>
+        anchorElementRef.current?.contains(target as Node);
+
+      const handleClickOutside = (e: MouseEvent) => {
+        if (isDropdownMenuItem(e.target)) {
+          e.preventDefault();
         }
       };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    });
 
-    return anchorElementRef.current && options.length && showMenu
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [anchorElementRef]);
+
+    return anchorElementRef.current && options.length
       ? ReactDOM.createPortal(
-          <div ref={ref} className={styles.TypeaheadPopover}>
-            <ul>
-              {options.map((option, i: number) => (
-                <DropdownMenuItem
-                  index={i}
-                  isSelected={selectedIndex === i}
-                  onClick={() => {
-                    setHighlightedIndex(i);
-                    selectOptionAndCleanUp(option);
-                  }}
-                  onMouseEnter={() => {
-                    setHighlightedIndex(i);
-                  }}
-                  key={option.key}
-                  queryString={queryString}
-                  option={option}
-                />
-              ))}
-            </ul>
-          </div>,
-          anchorElementRef.current,
-        )
+        <div className={styles.TypeaheadPopover}>
+          <ul>
+            {options.map((option, i: number) => (
+              <DropdownMenuItem
+                index={i}
+                isSelected={selectedIndex === i}
+                onClick={() => {
+                  setHighlightedIndex(i);
+                  selectOptionAndCleanUp(option);
+                }}
+                onMouseEnter={() => {
+                  setHighlightedIndex(i);
+                }}
+                key={option.key}
+                queryString={queryString}
+                option={option}
+              />
+            ))}
+          </ul>
+        </div>,
+        anchorElementRef.current,
+      )
       : null;
   };
 }
@@ -295,5 +288,6 @@ export {
   filterAndSortOptions,
   getMentionSearchResults,
   getMenuRenderFn,
-  getSearchAndReplaceResults,
+  getSearchAndReplaceResults
 };
+

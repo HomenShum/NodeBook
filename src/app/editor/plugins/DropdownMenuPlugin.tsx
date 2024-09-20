@@ -1,4 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { MenuResolution } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
 import { RefObject, useCallback, useRef, useState } from "react";
 
@@ -11,7 +12,7 @@ import {
   getMenuRenderFn,
   getSearchAndReplaceResults,
 } from "@/app/components/UIPrimitives/DropdownMenuUtils";
-import { TriggerType } from "@/app/components/UIPrimitives/LexicalMenu";
+import { MenuEventTrigger, MenuState } from "@/app/components/UIPrimitives/LexicalMenu";
 import { LexicalTypeaheadMenuPlugin } from "@/app/editor/plugins/LexicalTypeaheadMenuPlugin";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -51,6 +52,7 @@ export function DropdownMenuPlugin({
     useState<SearchAndReplaceDropdownOption>(searchAndReplaceDropdown);
 
   const prevText = useRef<string | null>(null);
+  const queryString = prevText.current ?? "";
 
   const [options, setOptions] = useState<DropdownOption[]>([]);
   const limitedOptions = options.slice(0, SUGGESTION_LIST_LENGTH_LIMIT);
@@ -59,6 +61,8 @@ export function DropdownMenuPlugin({
     currentAction === DropdownAction.MENTION
       ? [...limitedOptions, new DropdownOption(ActionId.CREATE_NEW_NODE)]
       : limitedOptions;
+
+  const [menuState, setMenuState] = useState<MenuState>({ isOpen: false, resolution: null });
 
   const onMention = useCallback(
     async (opt: DropdownOption, nodeToReplace: TextNode | null, closeMenu: () => void, _: string) => {
@@ -179,8 +183,6 @@ export function DropdownMenuPlugin({
     },
     [graphStore, relation, tree, treeNode],
   );
-  const [showMenu, setShowMenu] = useState(true);
-  const menuRenderFn = getMenuRenderFn(allOptions, prevText.current ?? "", showMenu, setShowMenu);
 
   const handleRecentNodes = useCallback(() => {
     const nodeValues = Array.from(graphStore.nodesById.values())
@@ -190,24 +192,23 @@ export function DropdownMenuPlugin({
   }, [graphStore, treeNode]);
 
   const updateOptions = useCallback(
-    (text: string, queryString: string, action: DropdownAction) => {
+    (fullText: string, matchingString: string, action: DropdownAction) => {
       setOptions((prevOptions) => {
         if (
           prevOptions.length > 0 &&
           (prevText.current?.length || 0) > 1 &&
           prevText.current &&
-          text.startsWith(prevText.current)
+          fullText.startsWith(prevText.current)
         ) {
-          prevText.current = text;
+          prevText.current = fullText;
           return filterAndSortOptions(prevOptions, queryString);
         } else {
-          prevText.current = text;
           if (action === DropdownAction.MENTION) {
-            return getMentionSearchResults(graphStore, queryString, treeNode.object.id);
+            return getMentionSearchResults(graphStore, matchingString, treeNode.object.id);
           }
           return getSearchAndReplaceResults(
             graphStore,
-            queryString,
+            matchingString,
             isLabellingRelation,
             treeNode.object.id,
             treeNode.relationWithParent?.id,
@@ -216,43 +217,69 @@ export function DropdownMenuPlugin({
         }
       });
     },
-    [graphStore, treeNode, isLabellingRelation],
+    [graphStore, treeNode, isLabellingRelation, queryString],
   );
 
-  const triggerFn = useCallback(
-    (text: string, trigger: TriggerType = TriggerType.SHOW_MATCHING_TEXT) => {
+  const menuStateHandler = useCallback(
+    (
+      trigger: MenuEventTrigger = MenuEventTrigger.SHOW_MATCHING_TEXT,
+      fullText: string = "",
+      resolution: MenuResolution | null = null,
+    ) => {
       // Handle semicolon trigger for recently created nodes
-      if (trigger === TriggerType.SHOW_RECENTLY_CREATED) {
-        setOptions(handleRecentNodes());
-        // Toggle search and replace options visibility
-        if (searchAndReplaceSetting !== searchAndReplaceDropdown) {
-          setSearchAndReplaceSetting(searchAndReplaceDropdown);
-          return null;
-        } else {
+      switch (trigger) {
+        case MenuEventTrigger.SHOW_RECENTLY_CREATED:
+          setOptions(handleRecentNodes());
+          // Toggle search and replace options visibility
+          if (searchAndReplaceSetting !== searchAndReplaceDropdown) {
+            setSearchAndReplaceSetting(searchAndReplaceDropdown);
+            return null;
+          }
           setSearchAndReplaceSetting(SearchAndReplaceDropdownOption.Always);
           return checkForSearchAndReplaceMatch(";", isLabellingRelation, SearchAndReplaceDropdownOption.Always);
-        }
-      }
+        case MenuEventTrigger.HIDE_MENU_ON_ESCAPE:
+          // RULE: Trigger -> Escape -> Text should not show dropdown
+          // RULE: Trigger -> Escape -> Trigger -> text should show dropdown
+          // Always Mode should never disable search & replace after Escape and require semi colon trigger to re-enable
+          // Restore search and replace options visibility for handle semi colon trigger
+          if (searchAndReplaceSetting !== searchAndReplaceDropdown)
+            setSearchAndReplaceSetting(searchAndReplaceDropdown);
+          return null;
+        case MenuEventTrigger.SHOW_MENTIONS:
+          return null;
+        case MenuEventTrigger.SHOW_MATCHING_TEXT:
+          prevText.current = fullText;
+          const mentionMatch = checkForMentionMatch(fullText);
+          const searchAndReplaceMatch = checkForSearchAndReplaceMatch(
+            fullText,
+            isLabellingRelation,
+            searchAndReplaceSetting,
+          );
 
-      const mentionMatch = checkForMentionMatch(text);
-      const searchAndReplaceMatch = checkForSearchAndReplaceMatch(text, isLabellingRelation, searchAndReplaceSetting);
-
-      if (mentionMatch) {
-        setCurrentAction(DropdownAction.MENTION);
-      } else if (searchAndReplaceMatch) {
-        setCurrentAction(DropdownAction.SEARCH_AND_REPLACE);
-      } else {
-        setCurrentAction(DropdownAction.NONE);
+          if (mentionMatch) {
+            setCurrentAction(DropdownAction.MENTION);
+          } else if (searchAndReplaceMatch) {
+            setCurrentAction(DropdownAction.SEARCH_AND_REPLACE);
+          } else {
+            setCurrentAction(DropdownAction.NONE);
+          }
+          const match = mentionMatch ?? searchAndReplaceMatch;
+          if (match && match.matchingString.length > 0) {
+            const matchingText = match.matchingString.toLowerCase();
+            updateOptions(fullText, matchingText, currentAction);
+          } else {
+            setOptions([]);
+          }
+          return match;
+        case MenuEventTrigger.HIDE_MENU_ON_BLUR:
+          setMenuState({ isOpen: false, resolution: null });
+          return null;
+        case MenuEventTrigger.SHOW_WITH_RESOLUTION:
+          setMenuState({ isOpen: true, resolution });
+        default:
+          break;
       }
-
-      const match = mentionMatch ?? searchAndReplaceMatch;
-      if (match && match.matchingString.length > 0) {
-        const queryString = match.matchingString.toLowerCase();
-        updateOptions(text, queryString, currentAction);
-      } else {
-        setOptions([]);
-      }
-      return match;
+      return null;
     },
     [
       isLabellingRelation,
@@ -261,8 +288,10 @@ export function DropdownMenuPlugin({
       updateOptions,
       searchAndReplaceDropdown,
       currentAction,
+      setMenuState,
     ],
   );
+  const menuRenderFn = getMenuRenderFn(allOptions, queryString);
 
   const handleSelectOption = useCallback(
     (opt: DropdownOption, nodeToReplace: TextNode | null, closeMenu: () => void, matchingString: string) => {
@@ -277,7 +306,6 @@ export function DropdownMenuPlugin({
           // Default to search and replace with recent nodes when no action or text input
           // Used when semicolon is pressed without any text input to choose most recently created node
           onSearchAndReplace(opt, nodeToReplace, closeMenu, matchingString);
-
           break;
       }
     },
@@ -286,12 +314,11 @@ export function DropdownMenuPlugin({
 
   return (
     <LexicalTypeaheadMenuPlugin<DropdownOption>
-      onQueryChange={() => {}}
       onSelectOption={handleSelectOption}
-      triggerFn={triggerFn}
+      menuState={menuState}
+      menuStateHandler={menuStateHandler}
       options={allOptions}
       menuRenderFn={menuRenderFn}
-      isMenuOpen={showMenu}
       // High priority so it takes precedence over the split on enterkeyPlugin
       // and same level as toggleEditable Plugin command (which lets the enter key event propogate to this plugin on opening the dropdown)
       commandPriority={COMMAND_PRIORITY_HIGH}

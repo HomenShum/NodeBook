@@ -1,15 +1,15 @@
 /**
  * Ported from Lexical GitHub repo due to components not being directly exportable.
  * Source: https://github.com/facebook/lexical/blob/main/packages/lexical-react/src/LexicalTypeaheadMenuPlugin.tsx
- * 
+ *
  * Modified to:
  * 1. Add key down listener for semicolon (;) to trigger dropdown menu.
  * 2. Handle edge case for empty Lexical node positioning.
  */
 
 
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { mergeRegister } from '@lexical/utils';
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { mergeRegister } from "@lexical/utils";
 import {
   $getSelection,
   $isRangeSelection,
@@ -17,25 +17,26 @@ import {
   BLUR_COMMAND,
   COMMAND_PRIORITY_LOW,
   COMMAND_PRIORITY_NORMAL,
-  CommandListenerPriority, KEY_DOWN_COMMAND, LexicalEditor,
+  CommandListenerPriority,
+  KEY_DOWN_COMMAND,
+  LexicalEditor,
   RangeSelection,
-  TextNode
-} from 'lexical';
-import React, { RefObject, useCallback, useEffect, useRef, useState } from 'react';
+  TextNode,
+} from "lexical";
+import React, { RefObject, useEffect, useRef } from "react";
 
 import {
   LexicalMenu,
+  MenuEventTrigger,
   MenuOption,
-  TriggerType,
+  MenuResolution,
+  MenuState,
   useMenuAnchorRef,
   type MenuRenderFn,
-  type MenuResolution,
-  type MenuTextMatch,
-  type TriggerFn,
-} from '@/app/components/UIPrimitives/LexicalMenu';
+  type MenuStateHandler,
+} from "@/app/components/UIPrimitives/LexicalMenu";
 
-
-const START_TRANSITION = 'startTransition';
+const START_TRANSITION = "startTransition";
 // Webpack + React 17 fails to compile on the usage of `React.startTransition` or
 // `React["startTransition"]` even if it's behind a feature detection of
 // `"startTransition" in React`. Moving this to a constant avoids the issue :/
@@ -49,7 +50,7 @@ function startTransition(callback: () => void) {
 
 function getTextUpToAnchor(selection: RangeSelection): string | null {
   const anchor = selection.anchor;
-  if (anchor.type !== 'text') {
+  if (anchor.type !== "text") {
     return null;
   }
   const anchorNode = anchor.getNode();
@@ -60,11 +61,7 @@ function getTextUpToAnchor(selection: RangeSelection): string | null {
   return anchorNode.getTextContent().slice(0, anchorOffset);
 }
 
-function tryToPositionRange(
-  leadOffset: number,
-  range: Range,
-  editorWindow: Window,
-): boolean {
+function tryToPositionRange(leadOffset: number, range: Range, editorWindow: Window): boolean {
   const domSelection = editorWindow.getSelection();
   if (domSelection === null || !domSelection.isCollapsed) {
     return false;
@@ -80,7 +77,6 @@ function tryToPositionRange(
   try {
     range.setStart(anchorNode, startOffset);
     range.setEnd(anchorNode, endOffset);
-
   } catch (error) {
     return false;
   }
@@ -100,10 +96,7 @@ function getQueryTextForSearch(editor: LexicalEditor): string | null {
   return text;
 }
 
-function isSelectionOnEntityBoundary(
-  editor: LexicalEditor,
-  offset: number,
-): boolean {
+function isSelectionOnEntityBoundary(editor: LexicalEditor, offset: number): boolean {
   if (offset !== 0) {
     return false;
   }
@@ -120,7 +113,6 @@ function isSelectionOnEntityBoundary(
 }
 
 export type TypeaheadMenuPluginProps<TOption extends MenuOption> = {
-  onQueryChange: (matchingString: string | null) => void;
   onSelectOption: (
     option: TOption,
     textNodeContainingQuery: TextNode | null,
@@ -129,61 +121,39 @@ export type TypeaheadMenuPluginProps<TOption extends MenuOption> = {
   ) => void;
   options: Array<TOption>;
   menuRenderFn: MenuRenderFn<TOption>;
-  triggerFn: TriggerFn;
+  menuState: MenuState;
+  menuStateHandler: MenuStateHandler;
   onOpen?: (resolution: MenuResolution) => void;
   onClose?: () => void;
   anchorClassName?: string;
   commandPriority?: CommandListenerPriority;
   parent?: HTMLElement;
-  isMenuOpen: boolean;
   boundaryRef?: RefObject<HTMLDivElement>;
 };
 
 export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
   options,
-  onQueryChange,
   onSelectOption,
-  onOpen,
-  onClose,
   menuRenderFn,
-  triggerFn,
+  menuState,
+  menuStateHandler,
   anchorClassName,
   commandPriority = COMMAND_PRIORITY_LOW,
   parent,
-  isMenuOpen,
   boundaryRef,
-
 }: TypeaheadMenuPluginProps<TOption>): JSX.Element | null {
   const [editor] = useLexicalComposerContext();
-  const [resolution, setResolution] = useState<MenuResolution | null>(null);
-  const typedSinceLastFocused = useRef<boolean>(false);
-  // only show menu when there are options, and if user did not click outside of menu or escape out of menu
+  // Trigger -> Escape/Click Away -> Trigger to re-enable dropdown (autocomplete + mentions) when not on Always Autocomplete mode
+  const typedSinceLastFocusedRef = useRef(false);
+
   const anchorElementRef = useMenuAnchorRef(
-    resolution,
-    setResolution,
-    isMenuOpen && options.length > 0,
+    menuState,
+    menuStateHandler,
+    menuState.isOpen && options.length > 0,
     anchorClassName,
     boundaryRef,
     parent,
   );
-
-  const closeTypeahead = useCallback(() => {
-    setResolution(null);
-    if (onClose != null && resolution !== null) {
-      onClose();
-    }
-  }, [onClose, resolution]);
-
-  const openTypeahead = useCallback(
-    (res: MenuResolution) => {
-      setResolution(res);
-      if (onOpen != null && resolution === null) {
-        onOpen(res);
-      }
-    },
-    [onOpen, resolution],
-  );
-
 
   useEffect(() => {
     const updateListener = () => {
@@ -197,38 +167,27 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
           !selection.isCollapsed() ||
           text === null ||
           range === null ||
-          !typedSinceLastFocused.current
+          !typedSinceLastFocusedRef.current
         ) {
-          closeTypeahead();
+          menuStateHandler(MenuEventTrigger.HIDE_MENU_ON_BLUR);
           return;
         }
 
-        const match = triggerFn(text, TriggerType.SHOW_MATCHING_TEXT);
-
-        onQueryChange(match ? match.matchingString : null);
-
-        if (
-          match !== null &&
-          !isSelectionOnEntityBoundary(editor, match.leadOffset)
-        ) {
-          const isRangePositioned = tryToPositionRange(
-            match.leadOffset,
-            range,
-            editorWindow,
-          );
+        const match = menuStateHandler(MenuEventTrigger.SHOW_MATCHING_TEXT, text);
+        if (match !== null && !isSelectionOnEntityBoundary(editor, match.leadOffset)) {
+          const isRangePositioned = tryToPositionRange(match.leadOffset, range, editorWindow);
           if (isRangePositioned !== null) {
-
-
-            startTransition(() =>
-              openTypeahead({
+            startTransition(() => {
+              const resolution = {
                 getRect: () => range.getBoundingClientRect(),
                 match: match,
-              }),
-            );
+              };
+              menuStateHandler(MenuEventTrigger.SHOW_WITH_RESOLUTION, undefined, resolution);
+            });
             return;
           }
         }
-        closeTypeahead();
+        menuStateHandler(MenuEventTrigger.HIDE_MENU_ON_BLUR);
       });
     };
     const removeUpdateListener = editor.registerUpdateListener(updateListener);
@@ -236,92 +195,74 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
     return () => {
       removeUpdateListener();
     };
-  }, [
-    editor,
-    triggerFn,
-    onQueryChange,
-    resolution,
-    closeTypeahead,
-    openTypeahead,
-  ]);
+  }, [editor, typedSinceLastFocusedRef, menuStateHandler]);
 
   useEffect(() => {
     if (!editor) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // only show autocomplete dropdown after typing text input
-      // all characters with length of 1 ('A','B',number,symbol) is printable. source // https://stackoverflow.com/a/58658881
-      if (e.key.length !== 1 || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
+      if (e.key === "Escape") {
+        menuStateHandler(MenuEventTrigger.HIDE_MENU_ON_ESCAPE);
+        return true;
+      }
+      // Rules: @ behavior for mentions dropdown
+      if (!menuState.isOpen && e.key === "@") {
+        // Note: @ takes precedence due to shift key
+        menuStateHandler(MenuEventTrigger.SHOW_MENTIONS);
+        return true;
+      }
+      // Rule: Only show autocomplete for single-character inputs and exclude modifier keys
+      if (e.key.length !== 1 || e.key === " " || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) {
+        // let other plugins handle modifier key commands
         return false;
       }
-      typedSinceLastFocused.current = true;
-      // only trigger on semicolon and if there is no text in the editor
-      if (e.key !== ';') return false;
-      const text = getQueryTextForSearch(editor);
-      if (text !== null) return false;
 
-      e.preventDefault();
+      typedSinceLastFocusedRef.current = true;
       const editorWindow = editor._window || window;
       const range = editorWindow.document.createRange();
-      const selection = $getSelection();
 
-      if (!$isRangeSelection(selection) || !selection.isCollapsed() || range === null) {
-        closeTypeahead();
-        return true;
+      const text = getQueryTextForSearch(editor);
+      let match = null;
+      // Rule: Show Recently Created on Semicolon on empty node
+      if (e.key === ";" && text === null) {
+        match = menuStateHandler(MenuEventTrigger.SHOW_RECENTLY_CREATED);
+        e.preventDefault();
+      } else {
+        match = menuStateHandler(MenuEventTrigger.SHOW_MATCHING_TEXT, text ?? "");
       }
-
-      const match = triggerFn('', TriggerType.SHOW_RECENTLY_CREATED);
-      onQueryChange(match ? match.matchingString : null);
-
-      if (!match || isSelectionOnEntityBoundary(editor, match.leadOffset)) {
-        closeTypeahead();
-        return true;
-      }
-
-      const isRangePositioned = tryToPositionRange(match.leadOffset, range, editorWindow);
-      if (!isRangePositioned) {
-        closeTypeahead();
-        return true;
-      }
-
       const menuPosition = range.getBoundingClientRect();
-      if (menuPosition.x !== 0 || menuPosition.y !== 0) {
+      if (menuPosition.x === 0 && menuPosition.y === 0) {
+        const input = document.activeElement as HTMLInputElement;
+        const inputRect = input.getBoundingClientRect();
+        startTransition(() => {
+          const resolution: MenuResolution = {
+            getRect: () => (menuPosition.x !== 0 || menuPosition.y !== 0 ? menuPosition : inputRect),
+            match: match || undefined,
+          };
+          menuStateHandler(MenuEventTrigger.SHOW_WITH_RESOLUTION, undefined, resolution);
+        });
         return true;
       }
 
-      const input = document.activeElement;
-      if (!(input instanceof HTMLElement)) {
-        return true;
-      }
-
-      // handle edge case where dropdown apppears on top left (x=0, y=0) when 
-      // lexical node is empty, dropdown should appear below the input
-      const inputRect = input.getBoundingClientRect();
-      startTransition(() => openTypeahead({
-        getRect: () => inputRect,
-        match: match,
-      }));
-
-      return true;
-    };
-    const handleBlur = (e: FocusEvent) => {
-      typedSinceLastFocused.current = false;
       return false;
     };
 
+    const handleBlur = () => {
+      menuStateHandler(MenuEventTrigger.HIDE_MENU_ON_BLUR);
+      typedSinceLastFocusedRef.current = false;
+      return false;
+    };
 
-    return (
-      mergeRegister(
-        editor.registerCommand(KEY_DOWN_COMMAND, handleKeyDown, COMMAND_PRIORITY_NORMAL),
-        editor.registerCommand(BLUR_COMMAND, handleBlur, COMMAND_PRIORITY_NORMAL),
-      )
+    return mergeRegister(
+      editor.registerCommand(KEY_DOWN_COMMAND, handleKeyDown, COMMAND_PRIORITY_NORMAL),
+      editor.registerCommand(BLUR_COMMAND, handleBlur, COMMAND_PRIORITY_NORMAL),
     );
-  }, [editor, triggerFn, onQueryChange, closeTypeahead, openTypeahead, typedSinceLastFocused]);
+  }, [editor, menuState, typedSinceLastFocusedRef, menuStateHandler]);
 
-  return resolution === null || editor === null ? null : (
+  return editor && menuState.isOpen && menuState.resolution ? (
     <LexicalMenu
-      close={closeTypeahead}
-      resolution={resolution}
+      close={() => menuStateHandler(MenuEventTrigger.HIDE_MENU_ON_BLUR)}
+      menuState={menuState}
       editor={editor}
       anchorElementRef={anchorElementRef}
       options={options}
@@ -329,9 +270,6 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
       shouldSplitNodeWithQuery={true}
       onSelectOption={onSelectOption}
       commandPriority={commandPriority}
-      isMenuOpen={isMenuOpen}
     />
-  );
+  ) : null;
 }
-
-export { MenuOption, MenuRenderFn, MenuResolution, MenuTextMatch, TriggerFn };

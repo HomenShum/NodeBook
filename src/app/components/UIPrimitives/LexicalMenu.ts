@@ -44,12 +44,24 @@ export type MenuResolution = {
   getRect: () => DOMRect;
 };
 
-export enum TriggerType {
+export enum MenuEventTrigger {
   SHOW_MATCHING_TEXT = "show-matching-text",
   SHOW_RECENTLY_CREATED = "show-recently-created",
+  SHOW_MENTIONS = "show-mentions",
+  HIDE_MENU_ON_ESCAPE = "hide-on-escape",
+  HIDE_MENU_ON_BLUR = "hide",
+  SHOW_WITH_RESOLUTION = "show-with-resolution",
 }
 
-export type TriggerFn = (text: string, trigger: TriggerType) => MenuTextMatch | null;
+export type MenuStateHandler = (
+  trigger: MenuEventTrigger,
+  text?: string,
+  resolution?: MenuResolution,
+) => MenuTextMatch | null;
+export type MenuState = {
+  isOpen: boolean;
+  resolution: MenuResolution | null;
+};
 
 export class MenuOption {
   key: string;
@@ -227,11 +239,10 @@ export const SCROLL_TYPEAHEAD_OPTION_INTO_VIEW_COMMAND: LexicalCommand<{
 }> = createCommand("SCROLL_TYPEAHEAD_OPTION_INTO_VIEW_COMMAND");
 
 export function LexicalMenu<TOption extends MenuOption>({
-  isMenuOpen,
   close,
   editor,
   anchorElementRef,
-  resolution,
+  menuState,
   options,
   menuRenderFn,
   onSelectOption,
@@ -241,7 +252,7 @@ export function LexicalMenu<TOption extends MenuOption>({
   close: () => void;
   editor: LexicalEditor;
   anchorElementRef: MutableRefObject<HTMLElement>;
-  resolution: MenuResolution;
+  menuState: MenuState;
   options: Array<TOption>;
   shouldSplitNodeWithQuery?: boolean;
   menuRenderFn: MenuRenderFn<TOption>;
@@ -252,11 +263,10 @@ export function LexicalMenu<TOption extends MenuOption>({
     matchingString: string,
   ) => void;
   commandPriority?: CommandListenerPriority;
-  isMenuOpen: boolean;
 }): JSX.Element | null {
   const [selectedIndex, setHighlightedIndex] = useState<null | number>(null);
 
-  const matchingString = resolution.match && resolution.match.matchingString;
+  const matchingString = menuState.resolution?.match && menuState.resolution.match.matchingString;
 
   useEffect(() => {
     setHighlightedIndex(0);
@@ -266,17 +276,19 @@ export function LexicalMenu<TOption extends MenuOption>({
     (selectedEntry: TOption) => {
       editor.update(() => {
         const textNodeContainingQuery =
-          resolution.match != null && shouldSplitNodeWithQuery ? $splitNodeContainingQuery(resolution.match) : null;
+          menuState.resolution?.match != null && shouldSplitNodeWithQuery
+            ? $splitNodeContainingQuery(menuState.resolution.match)
+            : null;
 
         onSelectOption(
           selectedEntry,
           textNodeContainingQuery,
           close,
-          resolution.match ? resolution.match.matchingString : "",
+          menuState.resolution?.match ? menuState.resolution.match.matchingString : "",
         );
       });
     },
-    [editor, shouldSplitNodeWithQuery, resolution.match, onSelectOption, close],
+    [editor, shouldSplitNodeWithQuery, menuState.resolution?.match, onSelectOption, close],
   );
 
   const updateSelectedIndex = useCallback(
@@ -330,7 +342,7 @@ export function LexicalMenu<TOption extends MenuOption>({
         KEY_ARROW_DOWN_COMMAND,
         (payload) => {
           ``;
-          if (!isMenuOpen) return false;
+          if (!menuState.isOpen) return false;
 
           const event = payload;
           if (options !== null && options.length && selectedIndex !== null) {
@@ -353,7 +365,7 @@ export function LexicalMenu<TOption extends MenuOption>({
       editor.registerCommand<KeyboardEvent>(
         KEY_ARROW_UP_COMMAND,
         (payload) => {
-          if (!isMenuOpen) return false;
+          if (!menuState.isOpen) return false;
 
           const event = payload;
           if (options !== null && options.length && selectedIndex !== null) {
@@ -373,8 +385,9 @@ export function LexicalMenu<TOption extends MenuOption>({
       editor.registerCommand<KeyboardEvent>(
         KEY_ESCAPE_COMMAND,
         (payload) => {
-          if (!isMenuOpen) return false;
-
+          if (!menuState.isOpen) return false;
+          // RULE: Trigger -> Escape -> Text should not show dropdown
+          // RULE: Trigger -> Escape -> Trigger -> text should show dropdown
           const event = payload;
           event.preventDefault();
           event.stopImmediatePropagation();
@@ -386,7 +399,7 @@ export function LexicalMenu<TOption extends MenuOption>({
       editor.registerCommand<KeyboardEvent>(
         KEY_TAB_COMMAND,
         (payload) => {
-          if (!isMenuOpen) return false;
+          if (!menuState.isOpen) return false;
 
           const event = payload;
           if (options === null || selectedIndex === null || options[selectedIndex] == null) {
@@ -402,7 +415,7 @@ export function LexicalMenu<TOption extends MenuOption>({
       editor.registerCommand(
         KEY_ENTER_COMMAND,
         (event: KeyboardEvent | null) => {
-          if (!isMenuOpen || options === null || selectedIndex === null || options[selectedIndex] == null) {
+          if (!menuState.isOpen || options === null || selectedIndex === null || options[selectedIndex] == null) {
             return false;
           }
           if (event !== null) {
@@ -415,7 +428,16 @@ export function LexicalMenu<TOption extends MenuOption>({
         commandPriority,
       ),
     );
-  }, [selectOptionAndCleanUp, close, editor, options, selectedIndex, updateSelectedIndex, commandPriority, isMenuOpen]);
+  }, [
+    selectOptionAndCleanUp,
+    close,
+    editor,
+    options,
+    selectedIndex,
+    updateSelectedIndex,
+    commandPriority,
+    menuState.isOpen,
+  ]);
 
   const listItemProps = useMemo(
     () => ({
@@ -427,12 +449,16 @@ export function LexicalMenu<TOption extends MenuOption>({
     [selectOptionAndCleanUp, selectedIndex, options],
   );
 
-  return menuRenderFn(anchorElementRef, listItemProps, resolution.match ? resolution.match.matchingString : "");
+  return menuRenderFn(
+    anchorElementRef,
+    listItemProps,
+    menuState.resolution?.match ? menuState.resolution.match.matchingString : "",
+  );
 }
 
 export function useMenuAnchorRef(
-  resolution: MenuResolution | null,
-  setResolution: (r: MenuResolution | null) => void,
+  menuState: MenuState,
+  menuStateHandler: MenuStateHandler,
   showMenu: boolean,
   className?: string,
   boundaryRef?: RefObject<HTMLDivElement>,
@@ -446,8 +472,8 @@ export function useMenuAnchorRef(
     const containerDiv = anchorElementRef.current;
 
     const menuEle = containerDiv.firstChild as HTMLElement;
-    if (rootElement !== null && resolution !== null) {
-      const { left, top, width, height } = resolution.getRect();
+    if (rootElement !== null && menuState.resolution !== null) {
+      const { left, top, width, height } = menuState.resolution.getRect();
       const anchorHeight = anchorElementRef.current.offsetHeight; // use to position under anchor
       containerDiv.style.top = `${top + window.pageYOffset + anchorHeight + 3}px`;
       containerDiv.style.left = `${left + window.pageXOffset}px`;
@@ -489,11 +515,11 @@ export function useMenuAnchorRef(
       anchorElementRef.current = containerDiv;
       rootElement.setAttribute("aria-controls", "typeahead-menu");
     }
-  }, [editor, resolution, boundaryRef, className, parent, showMenu]);
+  }, [editor, menuState.resolution, showMenu, boundaryRef, className, parent]);
 
   useEffect(() => {
     const rootElement = editor.getRootElement();
-    if (resolution !== null) {
+    if (menuState.resolution !== null) {
       positionMenu();
       return () => {
         if (rootElement !== null) {
@@ -506,20 +532,20 @@ export function useMenuAnchorRef(
         }
       };
     }
-  }, [editor, positionMenu, resolution]);
+  }, [editor, positionMenu, menuState]);
 
   const onVisibilityChange = useCallback(
     (isInView: boolean) => {
-      if (resolution !== null) {
+      if (menuState.resolution !== null) {
         if (!isInView) {
-          setResolution(null);
+          menuStateHandler(MenuEventTrigger.HIDE_MENU_ON_BLUR);
         }
       }
     },
-    [resolution, setResolution],
+    [menuState, menuStateHandler],
   );
 
-  useDynamicPositioning(resolution, anchorElementRef.current, positionMenu, onVisibilityChange);
+  useDynamicPositioning(menuState.resolution, anchorElementRef.current, positionMenu, onVisibilityChange);
 
   return anchorElementRef;
 }
