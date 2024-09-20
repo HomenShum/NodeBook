@@ -69,7 +69,7 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
     ),
   );
 
-  const renderBreadcrumbs = () => {
+  const RenderBreadcrumbs = () => {
     const totalItems = ancestors.length;
 
     if (isMobile) {
@@ -180,7 +180,9 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
 
   return (
     <nav className={s.BreadcrumbContainer} aria-label="breadcrumb">
-      <div className={s.BreadcrumbWrapper}>{renderBreadcrumbs()}</div>
+      <div className={s.BreadcrumbWrapper}>
+        <RenderBreadcrumbs />
+      </div>
       <span className={s.PublicModeToggle} onClick={() => settingsStore.setPublicMode(!settingsStore.publicMode)}>
         {settingsStore.publicMode ? (
           <span className={styles.IconPublicMode}>
