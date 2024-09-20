@@ -1,8 +1,9 @@
-import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
+import { action, computed, isObservable, makeObservable, observable, reaction, toJS } from "mobx";
 
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { ObjectPath, Position, uuid } from "@/app/util";
+import { DELETED_NODE_TEXT } from "@/app/graph/constants";
 
 import { BaseGraphObject, GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
@@ -67,6 +68,30 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     this.isZone = isZone;
     this.isPublic = isPublic;
     this.makeObservable();
+
+    //Whenever a mentioned node is deleted, the text changes.
+    //If the updated text contains a "deleted node", iterate over
+    //the chips and remove the mention chip.
+    reaction(
+      () => this.text,
+      (text) => {
+        if (!text.includes(DELETED_NODE_TEXT)) return;
+        const content: Chip[] = [];
+        let updateChips = false;
+        for (const chip of this.content) {
+          if (chip.type === "mention") {
+            if (!store.hasNode(chip.value)) {
+              updateChips = true;
+              continue;
+            }
+          }
+          content.push(chip);
+        }
+        if (updateChips) {
+          store.updateNode({ nodeId: this.id, nodeProps: { content } });
+        }
+      },
+    );
   }
 
   makeObservable() {
@@ -81,7 +106,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       update: action,
       text: computed,
       isLocal: computed,
-      textWithoutMention: computed,
       relationsWithPositions: computed,
     });
   }
@@ -115,32 +139,12 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     return oldValues;
   }
 
-  /**
-   * Returns string made up of all Chips except mentions. While building
-   * the text string it removes one character space from text chips
-   * if they are next to a mention chip.
-   */
-  get textWithoutMention(): string {
-    const texts: string[] = [];
-    for (let chipIdx = 0; chipIdx < this.content.length; chipIdx++) {
-      if (this.content[chipIdx].type === "mention") {
-        continue;
-      }
-      const isNextMention = chipIdx < this.content.length - 1 && this.content[chipIdx + 1].type === "mention";
-      const wasPrevMention = chipIdx > 0 && this.content[chipIdx - 1].type === "mention";
-      let text = this.content[chipIdx].value;
-      if (isNextMention && text.endsWith(" ")) {
-        text = text.slice(0, -1);
-      }
-      if (wasPrevMention && text.startsWith(" ")) {
-        text = text.slice(1);
-      }
-      texts.push(text);
-    }
-    return texts.join("");
-  }
-
-  get text(): string {
+  // Todo: Since text is a getter property, we cannot pass
+  // parameters to it. For now text property acts as a proxy
+  // to _dfsText. Need to come up with a cleaner solution
+  // without breaking things.
+  _dfsText(visitedMap: Record<string, boolean> = {}): string {
+    visitedMap[this.id] = true;
     return this.content
       .map((chip) => {
         switch (chip.type) {
@@ -149,18 +153,9 @@ export class GraphNode extends BaseGraphObject implements Serializable {
             return chip.value;
           case "mention":
             const referencedNode = this.store.getNode(chip.value);
-            if (!referencedNode) return "[Deleted node]";
+            if (!referencedNode) return `@[${DELETED_NODE_TEXT}]`;
             try {
-              // Filtering out mention chips and get underlying string chips
-              // because:
-              // 1) Simply returning `referencedNode.text` will result in
-              // cyclic issues with MobX if two nodes mention each other.
-              //
-              // 2) Even if we do not end up with a cyclic dependency but say a
-              // long chain of mentions instead, we would end up with
-              // something like text: `SomeText @[A @[B @[C]]]`.
-              //                       --Chip1-|----Chip2-----
-              return `@[${referencedNode.textWithoutMention}]`;
+              return visitedMap[referencedNode.id] ? "" : `@[${referencedNode._dfsText(visitedMap)}]`;
             } catch (error) {
               console.error("Error accessing referencedNode.text:", error);
               return "@[Error]";
@@ -168,6 +163,10 @@ export class GraphNode extends BaseGraphObject implements Serializable {
         }
       })
       .join("");
+  }
+
+  get text(): string {
+    return this._dfsText();
   }
 
   get searchText(): string {

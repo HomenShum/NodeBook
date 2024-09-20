@@ -32,3 +32,4 @@ export const defaultRelationTypes: Record<string, GraphRelationType> = {
 };
 
 export const MAX_PREFIX_LENGTH = 3;
+export const DELETED_NODE_TEXT = "Deleted Node";

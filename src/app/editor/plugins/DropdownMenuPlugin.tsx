@@ -73,7 +73,7 @@ export function DropdownMenuPlugin({
       const mentionText =
         opt.value.type === DropdownOptionType.ACTION
           ? nodeToReplace.getTextContent().slice(1)
-          : graphStore.getNode(opt.value.object.id)?.textWithoutMention || "";
+          : graphStore.getNode(opt.value.object.id)?.text || "";
       editor.update(async () => {
         const mentionNode = $createMentionNode(graphNodeId, mentionText);
         nodeToReplace.replace(mentionNode);
@@ -83,18 +83,6 @@ export function DropdownMenuPlugin({
             parentId: graphStore.userRoot.id,
             nodeProps: { id: graphNodeId, content: mentionText },
           });
-        } else {
-          if (opt.value.type === DropdownOptionType.NODE) {
-            // Todo: When mentioning an existing node, we need to
-            // do this to make the mobx observable work.
-            // Sometimes the dropdown option for a node mention shows
-            // stale value too. We do not need this when creating a new node.
-            // Hmm...
-            await graphStore.updateNode({
-              nodeId: opt.value.object.id,
-              nodeProps: { content: [...opt.value.object.content] },
-            });
-          }
         }
         // add relation
         const hasMentionRelation = treeNode.object.relations.some(

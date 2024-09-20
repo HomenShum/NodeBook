@@ -185,9 +185,7 @@ export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphN
 
     if (chip.type === "mention") {
       const referencedNode = graphStore.getNode(chip.value);
-      return (
-        referencedNode !== undefined && referencedNode.textWithoutMention === paragraphChildren[idx].getTextContent()
-      );
+      return referencedNode !== undefined && referencedNode.text === paragraphChildren[idx].getTextContent();
     } else {
       return chip.value === paragraphChildren[idx].getTextContent();
     }
@@ -200,7 +198,7 @@ export const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: Gr
   const paragraph = $createParagraphNode();
   node.content.forEach((chip) => {
     if (chip.type == "mention") {
-      const mentionNodeText = graphStore.getNode(chip.value)?.textWithoutMention || "";
+      const mentionNodeText = graphStore.getNode(chip.value)?.text || "";
       paragraph.append($createMentionNode(chip.value, mentionNodeText));
     } else {
       paragraph.append($createTextNode(chip.value));
