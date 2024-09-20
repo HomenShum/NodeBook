@@ -97,3 +97,7 @@
     padding: 0 18px 0 48px;
   }
 }
+
+.TitleContainer:hover .Transparent {
+  opacity: 1;
+}

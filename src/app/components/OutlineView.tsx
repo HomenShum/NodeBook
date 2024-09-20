@@ -17,6 +17,7 @@ import { TreeContext } from "@/app/tree/TreeContext";
 import { useSetCurrentNodeAsRoot } from "@/app/tree/utils";
 import { cn } from "@/lib/utils";
 
+import menuStyles from "./RelatedObject/NodeHeaderSettingsMenu.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
 
 import s from "./OutlineView.module.css";
@@ -80,7 +81,11 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
         <div className={s.OutlineContent}>
           <div className={s.HeadingContainer}>
             <div className={s.TitleContainer}>
-              <NodeHeaderSettingsMenu treeNode={treeNode} />
+              <div className={menuStyles.MenuTrigger}>
+                <div className={cn(menuStyles.Transparent, menuStyles.MenuIcon)}>
+                  <NodeHeaderSettingsMenu treeNode={treeNode} />
+                </div>
+              </div>
               {treeNode.object.id === graphStore.userRoot.id ? (
                 <HomeIcon size={20} />
               ) : treeNode.object.id === graphStore.globalRoot.id ? (

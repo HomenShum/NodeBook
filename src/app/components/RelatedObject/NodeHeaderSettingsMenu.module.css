@@ -3,21 +3,16 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: opacity 0.2s ease-in-out;
 }
 
 .MenuIcon {
   color: var(--gray-11);
+  background-color: var(--gray-1);
+  border-radius: 4px;
+  transition: opacity 0.15s ease-in-out;
 }
 
 .MenuIcon:hover {
   color: var(--gray-12);
-}
-
-.Transparent {
-  opacity: 0;
-}
-
-.MenuTrigger:hover .Transparent {
-  opacity: 1;
+  background-color: var(--gray-3);
 }
