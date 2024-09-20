@@ -132,7 +132,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                   }}
                 >
                   <span>
-                    <Globe size={16} />
+                    <Globe size={16} strokeWidth={1.5} />
                   </span>
                   <span>{graphStore.globalRoot.text}</span>
                 </Button>
@@ -145,7 +145,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                   }}
                 >
                   <span>
-                    <Home size={16} />
+                    <Home size={16} strokeWidth={1.5} />
                   </span>
                   <span className={styles.ButtonText}>{graphStore.userRoot.text}</span>
                 </Button>
