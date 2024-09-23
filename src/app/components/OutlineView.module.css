@@ -80,6 +80,19 @@
   padding: 0 52px;
 }
 
+@media (min-width: 1200px) {
+  .HeadingContainer {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .Nodes {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+}
+
 @media (max-width: 600px) {
   .OutlineContent {
     height: calc(100dvh - 130px);
