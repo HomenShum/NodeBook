@@ -10,8 +10,9 @@
   border: 0.5px solid var(--gray-6);
 }
 
-.Home {
-  margin-top: 3px;
+.Icon {
+  display: flex;
+  align-items: center;
   color: var(--gray-9);
 }
 
@@ -46,6 +47,12 @@
   height: 14px;
   margin-left: 4px;
   flex-shrink: 0;
+}
+
+.PublicStatus {
+  display: flex;
+  align-items: center;
+  padding-left: 2px;
 }
 
 .PublicModeToggle {

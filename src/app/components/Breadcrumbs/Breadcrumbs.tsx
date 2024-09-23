@@ -51,19 +51,22 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
       isRoot?: boolean;
     }) => (
       <React.Fragment key={`${path}-${object.text}`}>
-        {index > 0 && <ChevronRight size={14} strokeWidth={2} className={s.Separator} />}
+        {index > 0 && <ChevronRight size={12} strokeWidth={2} className={s.Separator} />}
 
         <span className={s.Breadcrumb} onClick={() => handleNavigation(index)}>
           {object.id === graphStore.globalRoot.id ? (
-            <span className={s.Home}>
-              <Globe size={14} />
+            <span className={s.Icon}>
+              <Globe size={14} strokeWidth={1.5} />
             </span>
           ) : object.id === graphStore.userRoot.id ? (
-            <span className={s.Home}>
-              <Home size={14} />
+            <span className={s.Icon}>
+              <Home size={14} strokeWidth={1.5} />
             </span>
           ) : null}
           <span>{truncateText(isRoot ? object.text : object.text, isMobile ? 15 : 32)}</span>
+          {isRoot && object.id !== graphStore.globalRoot.id && object.id !== graphStore.userRoot.id && (
+            <span className={s.PublicStatus}>{object.isPublic && <Globe size={14} strokeWidth={1.5} />}</span>
+          )}
         </span>
       </React.Fragment>
     ),
