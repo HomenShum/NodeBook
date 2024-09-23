@@ -1732,8 +1732,8 @@ export class GraphStore {
     }
 
     // Relation Types
-    for (const [key, value] of Object.entries(data.relationTypesById)) {
-      this.relationTypesById[key] = value;
+    for (const props of Object.values(data.relationTypesById)) {
+      this._addRelationType(props);
     }
 
     // Relations
