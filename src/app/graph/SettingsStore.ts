@@ -45,7 +45,7 @@ export class SettingsStore {
   public addStreamLabeledRelationsToMyLists = true;
   public allowShiftTabAboveViewRoot = false;
   public hidePinnedItems = false;
-  public publicMode = false;
+  public publicMode = true;
   public showAllNodesOption = false;
   public isFlattenSublistsEnabled = false;
   private stopAutosave: () => void;
