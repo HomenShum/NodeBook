@@ -15,6 +15,7 @@
     "db:generate-migration": "drizzle-kit generate:pg",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:reset": "tsx scripts/reset-database.ts",
+    "db:export": "tsx scripts/export-database.ts",
     "vercel:link": "yarn vercel link --cwd . -p mew --scope ideaflowco -y",
     "find-dead-code": "knip"
   },
