@@ -25,7 +25,7 @@ export const defaultRelationTypes: Record<string, GraphRelationType> = {
     id: "sublist",
     authorId: TEMP_USER_ID,
     label: "sublist",
-    reverseLabel: "parent list",
+    reverseLabel: "sublist of",
     isPublic: false,
   },
   empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "", isPublic: false },
