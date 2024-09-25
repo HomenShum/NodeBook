@@ -159,7 +159,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                     }}
                   >
                     <span>
-                      <FileSpreadsheet size={16} />
+                      <FileSpreadsheet size={16} strokeWidth={1.5} />
                     </span>
                     <span>All Nodes</span>
                   </Button>
