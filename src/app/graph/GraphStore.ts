@@ -1834,8 +1834,8 @@ export class GraphStore {
   private loadBatchedSerializedRelation(relationsById: Object) {
     let allUpdates: GraphUpdate[] = [];
     for (const props of Object.values(relationsById)) {
-      const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(props.fromId, this.user.id);
-      const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(props.toId, this.user.id);
+      const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(this, props.fromId, this.user.id);
+      const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(this, props.toId, this.user.id);
       const existing = this.getRelation(props.id);
       const relationType = this.relationTypesById[props.relationTypeId] ?? defaultRelationTypes.child;
       if (!existing) {
