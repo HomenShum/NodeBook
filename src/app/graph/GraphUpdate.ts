@@ -9,7 +9,7 @@ import {
   SerializedRelationTypeSchema,
 } from "@/app/persistence/SerializedData";
 
-const AddNodeSchema = z.object({
+export const AddNodeSchema = z.object({
   operation: z.literal("addNode"),
   node: SerializedNodeSchema,
 });
@@ -28,7 +28,7 @@ const DeleteNodeSchema = z.object({
 });
 export type DeleteNode = z.infer<typeof DeleteNodeSchema>;
 
-const AddRelationTypeSchema = z.object({
+export const AddRelationTypeSchema = z.object({
   operation: z.literal("addRelationType"),
   relationType: SerializedRelationTypeSchema,
 });
@@ -47,7 +47,7 @@ const DeleteRelationTypeSchema = z.object({
 });
 export type DeleteRelationType = z.infer<typeof DeleteRelationTypeSchema>;
 
-const AddRelationSchema = z.object({
+export const AddRelationSchema = z.object({
   operation: z.literal("addRelation"),
   relation: SerializedRelationSchema,
   fromPos: PositionSchema.optional(),
@@ -70,7 +70,7 @@ const DeleteRelationSchema = z.object({
 });
 export type DeleteRelation = z.infer<typeof DeleteRelationSchema>;
 
-const UpdateRelationListSchema = z.object({
+export const UpdateRelationListSchema = z.object({
   operation: z.literal("updateRelationList"),
   authorId: z.string(),
   nodeId: z.string(),

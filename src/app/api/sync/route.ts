@@ -6,10 +6,10 @@ import { createSnapshotFromDb } from "@/app/api/sync/createSnapshot";
 import { broadcastSyncSuccess } from "@/app/api/sync/pusher";
 import { SyncDataSchema } from "@/app/graph/SyncData";
 import { getDb } from "@/db";
-import { createNode, deleteNode, updateNode } from "@/db/graphNodes";
-import { createRelation, deleteRelation, updateRelation } from "@/db/graphRelations";
+import { createNodes, deleteNode, updateNode } from "@/db/graphNodes";
+import { createRelations, deleteRelation, updateRelation } from "@/db/graphRelations";
 import { upsertRelationList } from "@/db/relationLists";
-import { createRelationType, deleteRelationType, updateRelationType } from "@/db/relationTypes";
+import { createRelationTypes, deleteRelationType, updateRelationType } from "@/db/relationTypes";
 
 export const GET = withAuth(getHandler);
 async function getHandler(req: NextAuthenticatedRequest) {
@@ -42,7 +42,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
       for (const update of updates) {
         switch (update.operation) {
           case "addNode":
-            await createNode(tx, update.node);
+            await createNodes(tx, [update.node]);
             break;
           case "updateNode":
             await updateNode(tx, update.oldProps, update.newProps);
@@ -51,7 +51,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
             await deleteNode(tx, update.node);
             break;
           case "addRelationType":
-            await createRelationType(tx, update.relationType);
+            await createRelationTypes(tx, [update.relationType]);
             break;
           case "updateRelationType":
             await updateRelationType(tx, update.oldProps, update.newProps);
@@ -60,7 +60,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
             await deleteRelationType(tx, update.relationType);
             break;
           case "addRelation":
-            await createRelation(tx, update.relation);
+            await createRelations(tx, [update.relation]);
             break;
           case "updateRelation":
             await updateRelation(tx, update.oldProps, update.newProps);

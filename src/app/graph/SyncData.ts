@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-import { GraphUpdate, GraphUpdateSchema } from "@/app/graph/GraphUpdate";
+import {
+  AddNodeSchema,
+  AddRelationSchema,
+  AddRelationTypeSchema,
+  GraphUpdate,
+  GraphUpdateSchema,
+  UpdateRelationListSchema,
+} from "@/app/graph/GraphUpdate";
 import { uuid } from "@/app/util";
 
 export const SyncDataSchema = z.object({
@@ -10,6 +17,20 @@ export const SyncDataSchema = z.object({
   updates: GraphUpdateSchema.array(),
 });
 export type SyncData = z.infer<typeof SyncDataSchema>;
+
+export const ImportChunkDataSchema = z.object({
+  clientId: z.string(),
+  userId: z.string(),
+  transactionId: z.string(),
+  updates: z.union([
+    AddNodeSchema.array(),
+    AddRelationSchema.array(),
+    AddRelationTypeSchema.array(),
+    UpdateRelationListSchema.array(),
+  ]),
+});
+
+export type ImportChunkData = z.infer<typeof ImportChunkDataSchema>;
 
 /**
  * Try to combine SyncTasks to reduce the number of requests sent to the server.

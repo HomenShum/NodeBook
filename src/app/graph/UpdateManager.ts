@@ -143,18 +143,92 @@ export class UpdateManager {
     return syncData.clientId === this.clientId;
   }
 
+  private async sendSyncChunk(syncData: SyncData) {
+    const endpoint = "/api/sync/import-chunk";
+    const response = await this.authedFetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(syncData),
+    });
+    return response;
+  }
+
+  private async sendChunkedSyncData(syncData: SyncData) {
+    // implements the following:
+    // - throws "size" error on rows larger than maxRows
+    // - chunks the updates into chunks of maxChunkSize
+    const maxRows = 1000000;
+    const maxChunkSize = 2000;
+    const updatesLength = syncData.updates.length;
+    if (updatesLength > maxRows) {
+      throw new Error(`Sync data exceeds maximum number of rows: ${updatesLength}`);
+    }
+
+    const chunks = [];
+    for (let i = 0; i < updatesLength; i += maxChunkSize) {
+      const chunk = syncData.updates.slice(i, i + maxChunkSize);
+      chunks.push(chunk);
+    }
+
+    for (const chunk of chunks) {
+      const chunkSyncData: SyncData = {
+        clientId: syncData.clientId,
+        userId: syncData.userId,
+        transactionId: syncData.transactionId,
+        updates: chunk,
+      };
+      const resp = await this.sendSyncChunk(chunkSyncData);
+      if (!resp.ok) {
+        console.error("Sync update failed");
+        this.fetchLatestDataSnapshot();
+      }
+    }
+  }
+
+  async syncImportUpdates(updates: GraphUpdate[]) {
+    const supportedTypes = ["addNode", "addRelation", "addRelationType"];
+
+    // log a warning if updates contains an unsupported type
+    const unsupported = updates
+      .filter((update) => !supportedTypes.includes(update.operation))
+      .map((update) => update.operation);
+
+    if (unsupported.length > 0) {
+      console.warn("Unsupported update type(s) in sync:", ...new Set(unsupported));
+    }
+
+    // Send the data by supported type over to be chunked and sent to the server
+    for (const type of supportedTypes) {
+      const curUpdates = updates.filter((update) => update.operation === type);
+      if (curUpdates.length > 0) {
+        const typeBatch: SyncData = {
+          clientId: this.clientId,
+          userId: this.userId,
+          transactionId: uuid(),
+          updates: curUpdates,
+        };
+        await this.sendChunkedSyncData(typeBatch);
+      }
+    }
+  }
+
   private async syncLocalUpdates(authFetch: typeof fetch) {
     const syncDataBatch = condenseSyncDataBatch(this.syncQueue);
     this.syncQueue = [];
     let syncData = syncDataBatch.shift();
     while (syncData) {
-      const response = await authFetch(`/api/sync`, {
+      let endpoint = "/api/sync";
+
+      const response = await authFetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(syncData),
       });
+
       if (!response.ok) {
         logger.error("Sync failed", response);
         // Revert all pending updates and the current task, moving backwards to ensure that the state is consistent.

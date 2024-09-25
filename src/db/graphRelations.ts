@@ -5,24 +5,23 @@ import { graphRelationTable, relationListsTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
 import { GLOBAL_TO_USER_RELATION_ID_PREFIX } from "@/lib/constants";
 
-export const createRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
-  const newRelation = await tx
+export const createRelations = async (tx: MewDbTransaction, relations: SerializedRelation[]) => {
+  const newRelations = await tx
     .insert(graphRelationTable)
-    .values({
-      authorId: relation.authorId,
-      id: relation.id,
-      createdAt: relation.createdAt,
-      version: relation.version,
-      fromId: relation.fromId,
-      toId: relation.toId,
-      relationTypeId: relation.relationTypeId,
-      isPublic: relation.isPublic,
-    })
+    .values(
+      relations.map((relation) => ({
+        authorId: relation.authorId,
+        id: relation.id,
+        version: relation.version,
+        fromId: relation.fromId,
+        toId: relation.toId,
+        relationTypeId: relation.relationTypeId,
+        isPublic: relation.isPublic,
+      })),
+    )
     .returning({ createdId: graphRelationTable.id });
-  if (newRelation.length === 0) {
-    console.error(
-      `[sync][createRelation] Unable to create relation with authorId ${relation.authorId}, id ${relation.id}`,
-    );
+  if (newRelations.length !== relations.length) {
+    console.error(`[sync][createRelations] Unable to create all relations`);
     tx.rollback();
   }
 };

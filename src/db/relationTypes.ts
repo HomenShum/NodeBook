@@ -4,23 +4,23 @@ import { GraphRelationType } from "@/app/graph/types";
 import { relationTypeTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
 
-export const createRelationType = async (tx: MewDbTransaction, relType: GraphRelationType) => {
-  const newRelType = await tx
+export const createRelationTypes = async (tx: MewDbTransaction, relTypes: GraphRelationType[]) => {
+  const newRelTypes = await tx
     .insert(relationTypeTable)
-    .values({
-      authorId: relType.authorId,
-      id: relType.id,
-      version: relType.version,
-      label: relType.label,
-      reverseLabel: relType.reverseLabel,
-      isPublic: relType.isPublic,
-    })
+    .values(
+      relTypes.map((relType) => ({
+        authorId: relType.authorId,
+        id: relType.id,
+        version: relType.version,
+        label: relType.label,
+        reverseLabel: relType.reverseLabel,
+        isPublic: relType.isPublic,
+      })),
+    )
     .returning({ createdId: relationTypeTable.id });
 
-  if (newRelType.length === 0) {
-    console.error(
-      `[sync][createRelationType] Unable to create relation type with authorId ${relType.authorId}, id ${relType.id}`,
-    );
+  if (newRelTypes.length !== relTypes.length) {
+    console.error(`[sync][createRelationTypes] Unable to create all relation types`);
     tx.rollback();
   }
 };

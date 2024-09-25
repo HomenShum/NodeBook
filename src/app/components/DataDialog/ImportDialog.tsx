@@ -15,6 +15,7 @@ export const ImportDialog = observer(() => {
   const renderController = useRenderController();
 
   const graphStore = useGraphStore();
+  const [isLoading, setIsLoading] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -33,20 +34,22 @@ export const ImportDialog = observer(() => {
 
   const onAddToGraphClick = useCallback(() => {
     if (!file) return;
-
+    setIsLoading(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       const fileContent = event.target!.result;
-      graphStore.load(JSON.parse(fileContent as string));
-      renderController.setActiveModal(null);
+      graphStore.importData(JSON.parse(fileContent as string)).finally(() => {
+        renderController.setActiveModal(null);
+        setIsLoading(false);
+      });
     };
     reader.readAsText(file);
-  }, [file, graphStore, renderController]);
+  }, [file, graphStore, renderController, setIsLoading]);
 
   return (
     <DataDialog
       title="Import Data"
-      description="Import your data."
+      description={isLoading ? "Loading your data..." : "Import your data."}
       modalType="importData"
       showBackButton
       onBack={() => renderController.setActiveModal("devTools")}
@@ -87,15 +90,15 @@ export const ImportDialog = observer(() => {
         )}
       </fieldset>
       <div className={styles.DialogActions}>
-        <ConfirmReplace disabled={!file} onConfirm={onReplaceConfirm} />
+        <ConfirmReplace disabled={!file || isLoading} onConfirm={onReplaceConfirm} />
         <Button
-          disabled={!file}
+          disabled={!file || isLoading}
           onClick={onAddToGraphClick}
           variant="default"
           size="sm"
           style={{ maxWidth: "fit-content" }}
         >
-          Add to graph
+          {isLoading ? "Loading..." : "Add to graph"}
         </Button>
       </div>
     </DataDialog>

@@ -552,6 +552,7 @@ export class GraphStore {
     this.updateManager.queueUpdates(updates);
     return relationType;
   }
+
   private _addRelationType(
     props: { id?: string; label: string; reverseLabel?: string },
     fromServer = false,
@@ -1793,6 +1794,74 @@ export class GraphStore {
 
       return node;
     }
+  }
+
+  /**
+   * Load the serialized data into the store. If there are conflicts of data
+   * that isn't the relationType, it'll push it.
+   */
+  importData(data: SerializedGraphStore) {
+    let allNodeUpdates = this.loadBatchedSerializedNode(data.nodesById);
+
+    // cut out into its own load serialized relationtype function?
+    let allRelationTypeUpdates: GraphUpdate[] = [];
+    for (const [key, value] of Object.entries(data.relationTypesById)) {
+      // check if it exists, if it does, don't push it to the array
+      if (!this.relationTypesById[key]) {
+        this.relationTypesById[key] = value;
+        allRelationTypeUpdates.push({
+          operation: "addRelationType",
+          relationType: {
+            version: value.version ?? 1,
+            id: value.id ?? uuid(),
+            authorId: value.authorId ?? this.user.id,
+            isPublic: value.isPublic ?? this.settings?.publicMode ?? false,
+            label: value.label ?? "",
+            reverseLabel: value.reverseLabel ?? `is ${value.label} of`,
+          },
+        });
+      }
+    }
+
+    let allRelationUpdates = this.loadBatchedSerializedRelation(data.relationsById);
+
+    return this.updateManager.syncImportUpdates(allNodeUpdates.concat(allRelationUpdates, allRelationTypeUpdates));
+  }
+
+  /**
+   * Load a batch of serialized graph relations into the store.
+   */
+  private loadBatchedSerializedRelation(relationsById: Object) {
+    let allUpdates: GraphUpdate[] = [];
+    for (const props of Object.values(relationsById)) {
+      const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(props.fromId, this.user.id);
+      const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(props.toId, this.user.id);
+      const existing = this.getRelation(props.id);
+      const relationType = this.relationTypesById[props.relationTypeId] ?? defaultRelationTypes.child;
+      if (!existing) {
+        const { updates } = this.createRelation({ ...props, from, to, relationType });
+        allUpdates.push(...updates);
+      }
+      // Existing is NOT handled!!!
+    }
+    return allUpdates;
+  }
+
+  /**
+   * Load a batch of serialized graph nodes into the store.
+   * @see file://./design-notes.md#load-methods
+   */
+  private loadBatchedSerializedNode(nodesById: Object) {
+    let allUpdates: GraphUpdate[] = [];
+    for (const props of Object.values(nodesById)) {
+      const existing = this.getNode(props.id);
+      if (!existing) {
+        const { updates } = this._addNode(props);
+        allUpdates.push(...updates);
+      }
+      // Existing is NOT handled!!!
+    }
+    return allUpdates;
   }
 
   /**

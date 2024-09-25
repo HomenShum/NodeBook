@@ -5,22 +5,24 @@ import { graphNodeTable, relationListsTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
 import { GLOBAL_ROOT_ID, USER_ROOT_ID_PREFIX } from "@/lib/constants";
 
-export const createNode = async (tx: MewDbTransaction, node: SerializedNode) => {
-  const newNode = await tx
+export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[]) => {
+  const newNodes = await tx
     .insert(graphNodeTable)
-    .values({
-      authorId: node.authorId,
-      id: node.id,
-      version: node.version,
-      createdAt: new Date(node.createdAt),
-      content: JSON.stringify(node.content),
-      isBundle: node.isBundle,
-      isZone: node.isZone,
-      isPublic: node.isPublic,
-    })
+    .values(
+      nodes.map((node) => ({
+        authorId: node.authorId,
+        id: node.id,
+        version: node.version,
+        createdAt: new Date(node.createdAt),
+        content: JSON.stringify(node.content),
+        isBundle: node.isBundle,
+        isZone: node.isZone,
+        isPublic: node.isPublic,
+      })),
+    )
     .returning({ createdId: graphNodeTable.id });
-  if (newNode.length === 0) {
-    console.error(`[sync][createNode] Unable to create node with authorId ${node.authorId}, id ${node.id}`);
+  if (newNodes.length !== nodes.length) {
+    console.error(`[sync][createNodes] Unable to create all nodes`);
     tx.rollback();
   }
 };
