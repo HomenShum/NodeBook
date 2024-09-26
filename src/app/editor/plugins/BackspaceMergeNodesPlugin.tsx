@@ -8,6 +8,7 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { defaultRelationTypes } from "@/app/graph/constants";
+import { PointerTreeNode } from "@/app/tree/nodes";
 
 /**
  * Plugin to merge nodes when backspace is pressed at the start of a node.
@@ -29,6 +30,11 @@ export const BackspaceMergeNodesPlugin = () => {
         // logic at work for the other relation types in RelationPlugin
         if (!graphStore || relation.relationType.id !== defaultRelationTypes.child.id) return false;
         event.preventDefault();
+
+        if (treeNode instanceof PointerTreeNode) {
+          return false;
+        }
+
         if (object.text === "") {
           if (treeNode.relationWithParent) {
             graphStore.removeRelation({ relationId: relation.id }).then(() => {

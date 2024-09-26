@@ -81,9 +81,6 @@ const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; grou
   const viewStore = useViewStore();
   const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
 
-  if (viewStore.flattenSublists) {
-    return null;
-  }
   return (
     <div>
       {group.nodes.map((childTreeNode, i) => {

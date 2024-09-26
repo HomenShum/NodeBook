@@ -15,7 +15,7 @@ import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCach
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
-import { BaseTreeNode, DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
+import { BaseTreeNode, DescendantTreeNode, PathToRootNode, PointerTreeNode, RootTreeNode, TreeNode } from "./nodes";
 import { EditorSelectionAction, EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
@@ -541,7 +541,7 @@ export class Tree {
       });
       if (treeNode instanceof DescendantTreeNode) {
         const text = texts.get(treeNode.object.id);
-        treeNode.isSearchMatch = search ? (text?.includes(search) ?? true) : true;
+        treeNode.isSearchMatch = search ? text?.includes(search) ?? true : true;
         treeNode.searchMatchInDescendants = searchMatchInDescendants;
       }
     }
@@ -642,6 +642,9 @@ export class Tree {
   async deleteSelection() {
     const selection = this.selectionWithNodes;
     if (selection?.type === "node") {
+      if (selection?.subtreeRoots.some((node) => node instanceof PointerTreeNode)) {
+        return;
+      }
       await this.graphStore.applyCombinedTransaction(
         selection.nodes.map((treeNode) => ({
           type: "removeRelation",
@@ -660,6 +663,9 @@ export class Tree {
    */
   async indentSelection(): Promise<boolean> {
     const selection = this.selectionWithNodes;
+    if (selection?.subtreeRoots.some((node) => node instanceof PointerTreeNode)) {
+      return true;
+    }
     for (const nodes of groupSiblings(selection?.subtreeRoots ?? [])) {
       if (nodes.length === 0) continue;
       const { parentGroup, siblingAbove } = nodes[0];
@@ -676,6 +682,9 @@ export class Tree {
    */
   dedentSelection(): boolean {
     const selection = this.selectionWithNodes;
+    if (selection?.subtreeRoots.some((node) => node instanceof PointerTreeNode)) {
+      return true;
+    }
     for (const nodes of groupSiblings(selection?.subtreeRoots ?? [])) {
       if (nodes.length === 0) continue;
       const parent = nodes[0].parent;
@@ -700,10 +709,15 @@ export class Tree {
    * and split the node, you expect the mention text to get split accordingly.
    * So we let the editor determine the split content and pass it to this method.
    */
-  async split(treeNode: DescendantTreeNode, chips?: { before: Chip[]; after: Chip[] }) {
+  async split(treeNode: DescendantTreeNode | PointerTreeNode, chips?: { before: Chip[]; after: Chip[] }) {
     if (!(treeNode.object instanceof GraphNode) && chips !== undefined) {
       logger.warn("Chips are ignored when splitting non-node objects", { chips });
       chips = undefined;
+    }
+
+    if (treeNode instanceof PointerTreeNode) {
+      logger.debug("Cannot split PointerTreeNode");
+      return;
     }
 
     const textBefore =
@@ -813,9 +827,10 @@ export class Tree {
     if (!this.selectionWithNodes) return false;
     const { top, subtreeRoots } = this.selectionWithNodes;
     // don't allow moving nodes that belong to different groups
-    if (subtreeRoots.some((n) => n.parentGroup !== top.parentGroup)) {
+    if (subtreeRoots.some((n) => n.parentGroup !== top.parentGroup || n instanceof PointerTreeNode)) {
       return false;
     }
+
     const siblingAbove = top.siblingAbove;
     const siblingAboveParent = top.parent instanceof DescendantTreeNode && top.parent.siblingAbove;
     if (siblingAbove) {
@@ -847,7 +862,7 @@ export class Tree {
     if (!this.selectionWithNodes) return false;
     const { bottom, subtreeRoots } = this.selectionWithNodes;
     // don't allow moving nodes that belong to different groups
-    if (subtreeRoots.some((n) => n.parentGroup !== bottom.parentGroup)) {
+    if (subtreeRoots.some((n) => n.parentGroup !== bottom.parentGroup || n instanceof PointerTreeNode)) {
       return false;
     }
     const siblingBelow = bottom.siblingBelow;
