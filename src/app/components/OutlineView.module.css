@@ -84,6 +84,18 @@
   opacity: 1;
 }
 
+.IconAndTitle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+}
+
+.TooltipContent {
+  color: var(--gray-10);
+  font-size: var(--font-size-mini);
+}
+
 .TitleText {
   font-size: var(--font-size-h2);
   font-weight: 400;

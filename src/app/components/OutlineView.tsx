@@ -9,6 +9,7 @@ import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
 import { ClickToCreateNode } from "@/app/components/RelatedObject/RelatedObjectView";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useRenderController } from "@/app/render/useRenderController";
@@ -29,6 +30,18 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   useOutlineHotkeys({ tree, hasFocus });
   const treeNode = tree.state.root;
   const renderController = useRenderController();
+
+  const userId = graphStore.user?.id;
+  const isGlobalRoot = treeNode.object.id === graphStore.globalRoot.id;
+
+  const tooltipContent = !isGlobalRoot && (
+    <>
+      <div className={s.TooltipContent}>
+        Object author: {treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}
+      </div>
+      <div className={s.TooltipContent}>Created: {new Date(treeNode.object.createdAt).toLocaleDateString()}</div>
+    </>
+  );
 
   // Set the tree selection to null when the user clicks outside an editor
   useEffect(() => {
@@ -82,18 +95,31 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
           <div className={s.HeadingContainer}>
             <div className={s.TitleContainer}>
               <div className={menuStyles.MenuTrigger}>
-                <div className={cn(menuStyles.Transparent, menuStyles.MenuIcon)}>
+                <div className={menuStyles.MenuIcon}>
                   <NodeHeaderSettingsMenu treeNode={treeNode} />
                 </div>
               </div>
-              {treeNode.object.id === graphStore.userRoot.id ? (
-                <HomeIcon size={20} />
-              ) : treeNode.object.id === graphStore.globalRoot.id ? (
-                <Globe size={20} />
-              ) : null}
-              <h1 className={s.TitleText}>
-                <NodeHeaderEditor key={treeNode.object.id} treeNode={treeNode} />
-              </h1>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={s.IconAndTitle}>
+                      {treeNode.object.id === graphStore.userRoot.id ? (
+                        <HomeIcon size={20} />
+                      ) : isGlobalRoot ? (
+                        <Globe size={20} />
+                      ) : null}
+                      <h1 className={s.TitleText}>
+                        <NodeHeaderEditor key={treeNode.object.id} treeNode={treeNode} />
+                      </h1>
+                    </div>
+                  </TooltipTrigger>
+                  {tooltipContent && (
+                    <TooltipContent side="top" align="start" sideOffset={5}>
+                      {tooltipContent}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             <CreateNewButton tree={tree} />

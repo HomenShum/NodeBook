@@ -10,12 +10,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { TreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray } from "@/app/tree/utils";
 import { createRouteUrl, truncateText, useIsMobile } from "@/app/util";
+import { cn } from "@/lib/utils";
 
 import styles, { default as s } from "./Breadcrumbs.module.css";
 
@@ -186,17 +188,25 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
       <div className={s.BreadcrumbWrapper}>
         <RenderBreadcrumbs />
       </div>
-      <span className={s.PublicModeToggle} onClick={() => settingsStore.setPublicMode(!settingsStore.publicMode)}>
-        {settingsStore.publicMode ? (
-          <span className={styles.IconPublicMode}>
-            <Unlock size={14} strokeWidth={1.5} />
-          </span>
-        ) : (
-          <span className={styles.IconPrivateMode}>
-            <Lock size={14} strokeWidth={1.5} />
-          </span>
-        )}
-      </span>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className={cn(s.PublicModeToggle, {
+                [styles.IconPublicMode]: settingsStore.publicMode,
+                [styles.IconPrivateMode]: !settingsStore.publicMode,
+              })}
+              onClick={() => settingsStore.setPublicMode(!settingsStore.publicMode)}
+              style={{ cursor: "pointer" }}
+            >
+              {settingsStore.publicMode ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="left" align="center" sideOffset={5}>
+            <div>{settingsStore.publicMode ? "Public mode" : "Private mode"}</div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </nav>
   );
 });

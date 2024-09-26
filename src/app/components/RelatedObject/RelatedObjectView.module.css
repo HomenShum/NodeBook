@@ -54,6 +54,11 @@ Bullet
   display: none;
 }
 
+.TooltipContent {
+  font-size: var(--font-size-mini);
+  color: var(--gray-10);
+}
+
 .Bullet {
   cursor: pointer;
   position: absolute;
@@ -87,9 +92,11 @@ Bullet
 .DotInsidePrivate {
   stroke: var(--gray-11);
 }
+
 .DotInsidePublic {
   stroke: var(--teal-10);
 }
+
 .DotInsideClickToCreateNode {
   stroke: var(--gray-8);
 }

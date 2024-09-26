@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
@@ -154,7 +155,16 @@ const Content = observer(() => {
             </button>
           )}
         {treeNode.object.relations.length > 1 && (
-          <div className={styles.RelationCounter}>{treeNode.object.relations.length - 1}</div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className={styles.RelationCounter}>{treeNode.object.relations.length - 1}</div>
+              </TooltipTrigger>
+              <TooltipContent side="left" align="center" sideOffset={5}>
+                Direct relations
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
     </>
@@ -171,50 +181,64 @@ const Bullet = observer(() => {
     router.push(createRouteUrl(`${treeNode.path}/${treeNode.object.id}`));
   }, [treeNode, router]);
 
-  const tooltip = [
-    `Object author: ${treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}`,
-    `Relation author: ${
-      treeNode.relationWithParent.authorId === userId ? "You" : treeNode.relationWithParent.authorId
-    }`,
-    `Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}`,
-  ].join("\n");
+  const tooltipContent = (
+    <>
+      <div className={styles.TooltipContent}>
+        Object author: {treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}
+      </div>
+      <div className={styles.TooltipContent}>
+        Relation author:{" "}
+        {treeNode.relationWithParent.authorId === userId ? "You" : treeNode.relationWithParent.authorId}
+      </div>
+      <div className={styles.TooltipContent}>Created: {new Date(treeNode.object.createdAt).toLocaleDateString()}</div>
+    </>
+  );
 
   return (
-    <div className={cn(styles.RelatedObjectBulletContainer)} title={tooltip}>
-      {treeNode.instanceCountInPath <= 1 ? (
-        // Default solid bullet
-        <>
-          <Dot
-            strokeWidth={5}
-            height={16}
-            className={cn(styles.Bullet, {
-              [styles.DotInsidePublic]: treeNode.object.isPublic,
-              [styles.DotInsidePrivate]: !treeNode.object.isPublic,
-            })}
-            onClick={handleBulletClick}
-          />
-          {treeNode.childCount > 0 && !treeNode.isExpanded && (
-            // with a shadow around it if it has children
-            <Dot
-              height={16}
-              strokeWidth={17}
-              className={cn(styles.BulletShadow, {
-                [styles.DotOutsidePublic]: treeNode.object.isPublic,
-                [styles.DotOutsidePrivate]: !treeNode.object.isPublic,
-              })}
-            />
-          )}
-        </>
-      ) : (
-        // Hollow circle if this node has appeared in the path more than once
-        <Circle
-          strokeWidth={6}
-          height={8}
-          className={cn(styles.Circle, { [styles.CirclePrivate]: !treeNode.object.isPublic })}
-          onClick={handleBulletClick}
-        />
-      )}
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={cn(styles.RelatedObjectBulletContainer)}>
+            {treeNode.instanceCountInPath <= 1 ? (
+              // Default solid bullet
+              <>
+                <Dot
+                  strokeWidth={5}
+                  height={16}
+                  className={cn(styles.Bullet, {
+                    [styles.DotInsidePublic]: treeNode.object.isPublic,
+                    [styles.DotInsidePrivate]: !treeNode.object.isPublic,
+                  })}
+                  onClick={handleBulletClick}
+                />
+                {treeNode.childCount > 0 && !treeNode.isExpanded && (
+                  // with a shadow around it if it has children
+                  <Dot
+                    height={16}
+                    strokeWidth={17}
+                    className={cn(styles.BulletShadow, {
+                      [styles.DotOutsidePublic]: treeNode.object.isPublic,
+                      [styles.DotOutsidePrivate]: !treeNode.object.isPublic,
+                    })}
+                  />
+                )}
+              </>
+            ) : (
+              // Hollow circle if this node has appeared in the path more than once
+              <Circle
+                strokeWidth={6}
+                height={8}
+                className={cn(styles.Circle, { [styles.CirclePrivate]: !treeNode.object.isPublic })}
+                onClick={handleBulletClick}
+              />
+            )}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" align="start" sideOffset={5}>
+          {tooltipContent}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 });
 

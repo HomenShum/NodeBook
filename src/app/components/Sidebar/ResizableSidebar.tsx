@@ -190,8 +190,8 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                   <TooltipTrigger>
                     <span className={styles.BetaLabel}>BETA</span>
                   </TooltipTrigger>
-                  <TooltipContent>
-                    This app is in beta testing. It may contain bugs, lose data, or change without notice
+                  <TooltipContent side="top" align="center" sideOffset={5}>
+                    This app is in beta testing. It may contain bugs, lose data, or change without notice.
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

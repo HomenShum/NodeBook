@@ -14,7 +14,6 @@ import {
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
-import { cn } from "@/lib/utils";
 
 import styles from "./NodeHeaderSettingsMenu.module.css";
 
@@ -27,7 +26,7 @@ export const NodeHeaderSettingsMenu = observer(({ treeNode }: { treeNode: Descen
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className={styles.MenuTrigger}>
-        <Ellipsis size={16} className={cn(styles.MenuIcon, styles.Transparent)} />
+        <Ellipsis size={16} className={styles.MenuIcon} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" alignOffset={-5} onCloseAutoFocus={(e) => e.preventDefault()}>
         <DropdownMenuItem

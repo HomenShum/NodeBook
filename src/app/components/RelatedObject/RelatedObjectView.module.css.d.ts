@@ -25,6 +25,7 @@ declare const styles: {
   readonly "RelationCounter": string;
   readonly "RelationHoverCard": string;
   readonly "Selected": string;
+  readonly "TooltipContent": string;
 };
 export = styles;
 
