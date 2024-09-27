@@ -30,6 +30,7 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       isBundle: !!row.isBundle,
       isZone: !!row.isZone,
       isPublic: !!row.isPublic,
+      isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
     };
     snapshot.nodesById[node.id] = node;
   }

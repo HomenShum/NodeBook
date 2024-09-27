@@ -82,6 +82,7 @@ describe("GraphStore.setIsPublic", () => {
       isPublic: true,
       alsoSetRelatedObjects: false,
       alsoSetChildrenAndDescendants: false,
+      isNewRelatedObjectsPublic: false,
     });
 
     expect(rootNode.isPublic).toBe(true);
@@ -94,6 +95,7 @@ describe("GraphStore.setIsPublic", () => {
       isPublic: true,
       alsoSetRelatedObjects: false,
       alsoSetChildrenAndDescendants: false,
+      isNewRelatedObjectsPublic: false,
     });
 
     expect(rootNode.isPublic).toBe(true);
@@ -118,6 +120,7 @@ describe("GraphStore.setIsPublic", () => {
       isPublic: true,
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: false,
+      isNewRelatedObjectsPublic: false,
     });
 
     // Direct object should be set
@@ -155,6 +158,7 @@ describe("GraphStore.setIsPublic", () => {
       isPublic: true,
       alsoSetRelatedObjects: false,
       alsoSetChildrenAndDescendants: true,
+      isNewRelatedObjectsPublic: false,
     });
 
     // Direct object should be set
@@ -191,6 +195,7 @@ describe("GraphStore.setIsPublic", () => {
       isPublic: true,
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
+      isNewRelatedObjectsPublic: false,
     });
 
     // Direct object should be set
@@ -228,6 +233,7 @@ describe("GraphStore.setIsPublic", () => {
       isPublic: true,
       alsoSetRelatedObjects: false,
       alsoSetChildrenAndDescendants: false,
+      isNewRelatedObjectsPublic: false,
     });
 
     // These updated
@@ -261,6 +267,7 @@ describe("GraphStore.setIsPublic", () => {
       isPublic: true,
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
+      isNewRelatedObjectsPublic: false,
     });
 
     // Everything but the parent objects updated

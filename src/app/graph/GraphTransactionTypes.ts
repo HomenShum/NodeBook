@@ -80,6 +80,7 @@ export type TxSetIsPublic = {
   isPublic: boolean;
   alsoSetRelatedObjects: boolean;
   alsoSetChildrenAndDescendants: boolean;
+  isNewRelatedObjectsPublic: boolean;
 };
 
 export type TxPinRelation = {

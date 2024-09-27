@@ -1,0 +1,1 @@
+ALTER TABLE "graph_node" ADD COLUMN "is_new_related_objects_public" boolean DEFAULT false;

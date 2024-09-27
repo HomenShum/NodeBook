@@ -19,6 +19,7 @@ export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[])
         isBundle: node.isBundle,
         isZone: node.isZone,
         isPublic: node.isPublic,
+        isNewRelatedObjectsPublic: node.isNewRelatedObjectsPublic,
       })),
     )
     .returning({ createdId: graphNodeTable.id });
@@ -42,6 +43,7 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
       isBundle: newProps.isBundle,
       isZone: newProps.isZone,
       isPublic: newProps.isPublic,
+      isNewRelatedObjectsPublic: newProps.isNewRelatedObjectsPublic,
     })
     .where(and(eq(graphNodeTable.authorId, oldProps.authorId), eq(graphNodeTable.id, oldProps.id)))
     .returning({ updatedId: graphNodeTable.id });

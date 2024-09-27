@@ -26,6 +26,7 @@ import {
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
+import { downloadSubtree } from "@/app/util";
 
 import { useTreeNode } from "./RelatedObjectContext";
 import styles from "./styles/RelatedObjectMenu.module.css";
@@ -115,35 +116,12 @@ export const RelatedObjectMenu = observer(
             Change relation type
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onSelect={() => {
-              const subtreeData = JSON.stringify(graphStore.serializeSubtree(object));
-              const blob = new Blob([subtreeData], { type: "application/json" });
-
-              // Create a temporary URL for the Blob
-              const url = URL.createObjectURL(blob);
-
-              // Create a link element and trigger the download
-              const link = document.createElement("a");
-              link.href = url;
-              link.download = "data.json";
-              link.click();
-
-              // Clean up the temporary URL
-              URL.revokeObjectURL(url);
-            }}
-          >
+          <DropdownMenuItem onSelect={() => downloadSubtree(graphStore, object)}>
             <Download size={14} />
             Export subtree
           </DropdownMenuItem>
         </DropdownMenuContent>
-        <SetPublicDialog
-          isOpen={publicDialogOpen}
-          setOpen={setPublicDialogOpen}
-          objectId={object.id}
-          relationId={relation.id}
-          isPublic={!object.isPublic}
-        />
+        <SetPublicDialog isOpen={publicDialogOpen} setOpen={setPublicDialogOpen} treeNode={treeNode} />
       </DropdownMenu>
     );
   },

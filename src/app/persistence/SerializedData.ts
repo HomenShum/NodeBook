@@ -24,6 +24,7 @@ export const SerializedNodeSchema = z.object({
   isBundle: z.boolean(),
   isZone: z.boolean(),
   isPublic: z.boolean(),
+  isNewRelatedObjectsPublic: z.boolean(),
 });
 export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
 

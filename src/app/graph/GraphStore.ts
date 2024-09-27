@@ -304,6 +304,7 @@ export class GraphStore {
         isBundle: props.isBundle ?? false,
         isZone: props.isZone ?? false,
         isPublic: props.isPublic ?? this.settings?.publicMode ?? false,
+        isNewRelatedObjectsPublic: !!props.isNewRelatedObjectsPublic,
       });
 
       this.nodesById.set(node.id, node);
@@ -351,7 +352,11 @@ export class GraphStore {
     const updates: GraphUpdate[] = [];
 
     try {
-      const { node, updates: newNodeUpdates } = this._addNode(tx.nodeProps);
+      const { node, updates: newNodeUpdates } = this._addNode({
+        ...tx.nodeProps,
+        isPublic: tx.nodeProps?.isPublic || (wannaBeParent as GraphNode).isNewRelatedObjectsPublic,
+        isNewRelatedObjectsPublic: (wannaBeParent as GraphNode).isNewRelatedObjectsPublic,
+      });
       newNode = node;
       updates.push(...newNodeUpdates);
 
@@ -437,6 +442,7 @@ export class GraphStore {
     isPublic,
     alsoSetRelatedObjects,
     alsoSetChildrenAndDescendants,
+    isNewRelatedObjectsPublic,
   }: TxSetIsPublic): { updates: GraphUpdate[] } {
     const object = this.getObject(objectId);
     if (!object) {
@@ -450,7 +456,9 @@ export class GraphStore {
 
     const updates: GraphUpdate[] = [];
 
-    const { updates: objectUpdates } = this._setObjectIsPublic(object, isPublic);
+    const { updates: objectUpdates } = this._setObjectIsPublic(object, isPublic, {
+      isNewRelatedObjectsPublic,
+    });
     updates.push(...objectUpdates);
 
     if (relation) {
@@ -503,7 +511,13 @@ export class GraphStore {
     return { updates };
   }
 
-  private _setObjectIsPublic(object: GraphObject, isPublic: boolean): { updates: GraphUpdate[] } {
+  private _setObjectIsPublic(
+    object: GraphObject,
+    isPublic: boolean,
+    optionals: {
+      isNewRelatedObjectsPublic?: boolean;
+    } = {},
+  ): { updates: GraphUpdate[] } {
     // Don't try to set public status for other people's objects
     if (object.authorId !== this.user.id) return { updates: [] };
 
@@ -515,7 +529,7 @@ export class GraphStore {
     switch (object.objectType) {
       case "node":
         const nodeAtStart = object.serialize();
-        object.update({ isPublic });
+        object.update({ isPublic, isNewRelatedObjectsPublic: !!optionals.isNewRelatedObjectsPublic });
         updates.push({
           operation: "updateNode",
           oldProps: nodeAtStart,
@@ -1015,6 +1029,23 @@ export class GraphStore {
         ...partialFromUpdates.map((update) => ({ ...update, ...commonUpdatePart, nodeId: fromId })),
         ...partialToUpdates.map((update) => ({ ...update, ...commonUpdatePart, nodeId: toId })),
       ];
+
+      if (
+        !relationProps.to.isPublic &&
+        relationProps.from.isPublic &&
+        (relationProps.from as GraphNode).isNewRelatedObjectsPublic
+      ) {
+        const nodeUpdates = this._updateNode({
+          nodeId: relationProps.to.id,
+          nodeProps: {
+            isPublic: true,
+            isNewRelatedObjectsPublic: true,
+          },
+        });
+        for (const nodeUpdate of nodeUpdates.updates) {
+          updates.push(nodeUpdate);
+        }
+      }
 
       if (after) {
         const partialUpdates = relation.from.allRelationsList.move([relation], after);

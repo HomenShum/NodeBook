@@ -60,6 +60,7 @@ export const graphNodeTable = pgTable(
     isBundle: boolean("is_bundle"),
     isZone: boolean("is_zone"),
     isPublic: boolean("is_public").default(false),
+    isNewRelatedObjectsPublic: boolean("is_new_related_objects_public").default(false),
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),

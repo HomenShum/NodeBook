@@ -29,6 +29,7 @@ export type GraphNodeProps = {
   isBundle?: boolean;
   isZone?: boolean;
   isPublic?: boolean;
+  isNewRelatedObjectsPublic?: boolean;
 };
 
 export type PositionedRelation = {
@@ -46,6 +47,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   isBundle: boolean;
   isZone: boolean;
   isPublic: boolean = true;
+  isNewRelatedObjectsPublic: boolean;
 
   constructor(
     store: GraphStore,
@@ -58,6 +60,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isBundle = false,
       isZone = false,
       isPublic = false,
+      isNewRelatedObjectsPublic = false,
     }: GraphNodeProps & { authorId: string },
   ) {
     super(store);
@@ -73,6 +76,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     this.isBundle = isBundle;
     this.isZone = isZone;
     this.isPublic = isPublic;
+    this.isNewRelatedObjectsPublic = isNewRelatedObjectsPublic;
     this.makeObservable();
   }
 
@@ -84,6 +88,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isBundle: observable,
       isZone: observable,
       isPublic: observable,
+      isNewRelatedObjectsPublic: observable,
       content: observable.shallow,
       update: action,
       text: computed,
@@ -110,6 +115,10 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     if (newProps.isPublic !== undefined) {
       oldValues.isPublic = this.isPublic;
       this.isPublic = newProps.isPublic;
+    }
+    if (newProps.isNewRelatedObjectsPublic !== undefined) {
+      oldValues.isNewRelatedObjectsPublic = this.isNewRelatedObjectsPublic;
+      this.isNewRelatedObjectsPublic = newProps.isNewRelatedObjectsPublic;
     }
     oldValues.version = this.version;
     if (newProps.version !== undefined) {
@@ -196,6 +205,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isBundle: this.isBundle,
       isZone: this.isZone,
       isPublic: this.isPublic,
+      isNewRelatedObjectsPublic: this.isNewRelatedObjectsPublic,
     };
   }
 }

@@ -52,13 +52,7 @@ export const NodeHeaderSettingsMenu = observer(({ treeNode }: { treeNode: Descen
               Export subtree
             </DropdownMenuItem>
           </DropdownMenuContent>
-          <SetPublicDialog
-            isOpen={publicDialogOpen}
-            setOpen={setPublicDialogOpen}
-            objectId={treeNode.object.id}
-            relationId={treeNode.relationWithParent?.id}
-            isPublic={!treeNode.object.isPublic}
-          />
+          <SetPublicDialog isOpen={publicDialogOpen} setOpen={setPublicDialogOpen} treeNode={treeNode} />
         </DropdownMenu>
       </div>
     </div>

@@ -32,6 +32,7 @@ describe("GraphStore.load", () => {
           isPublic: false,
           isBundle: false,
           isZone: false,
+          isNewRelatedObjectsPublic: false,
         },
         b: {
           id: "b",
@@ -42,6 +43,7 @@ describe("GraphStore.load", () => {
           isPublic: false,
           isBundle: false,
           isZone: false,
+          isNewRelatedObjectsPublic: false,
         },
       },
       relationTypesById: {
