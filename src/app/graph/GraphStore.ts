@@ -85,7 +85,6 @@ export class GraphStore {
         nodesById: observable.shallow,
         relationsById: observable.shallow,
         relationTypesById: observable.shallow,
-        relationTypes: computed,
         relationToBundles: observable.shallow,
         // TODO: does the fact these are async mess up the action?
         // node
