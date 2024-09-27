@@ -14,4 +14,11 @@ export class SublistTree extends Tree {
       descendantTreeNodesById: createDescendantTreeNodesById(rootTreeNode),
     };
   }
+
+  async createChildOfRootAndFocus() {
+    const { node, relation } = await this.createChildNode({ parent: this.root });
+    const path = this.root.childrenGroupsById.pointer.createChildPath(relation);
+    this.setFocusedNode(path);
+    return { node, relation, path };
+  }
 }
