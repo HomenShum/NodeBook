@@ -71,7 +71,7 @@ export class UpdateManager {
     }
   }
 
-  async handleSyncData(data: SyncData) {
+  async handleSyncData(data: SyncData, resetIfApplyFails: boolean) {
     if (this.isLocalUpdate(data)) {
       return;
     }
@@ -82,7 +82,9 @@ export class UpdateManager {
       const message = "Failed to apply updates from sync data";
       logger.warn(message, e);
       captureException(e, { extra: { message, syncData: data } });
-      await this.fetchLatestDataSnapshot();
+      if (resetIfApplyFails) {
+        await this.fetchLatestDataSnapshot();
+      }
     }
   }
 

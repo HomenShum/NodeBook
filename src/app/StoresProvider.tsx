@@ -138,18 +138,18 @@ function startSync({ graphStore }: { graphStore: GraphStore }) {
   const pusher = new Pusher(env.pusherKey, {
     cluster: env.pusherCluster,
   });
-  const handlePusherMessage = async (data: any) => {
+  const handlePusherMessage = async (data: any, resetIfApplyFails: boolean) => {
     const parsedSyncData = SyncDataSchema.safeParse(data);
     if (!parsedSyncData.success) {
       console.error("Invalid sync data received", data);
       return;
     }
-    await graphStore.updateManager.handleSyncData(parsedSyncData.data);
+    await graphStore.updateManager.handleSyncData(parsedSyncData.data, resetIfApplyFails);
   };
   const userChannel = pusher.subscribe(userIdToPusherChannel(graphStore.user.id));
-  userChannel.bind("transaction-accepted", handlePusherMessage);
+  userChannel.bind("transaction-accepted", (data: any) => handlePusherMessage(data, true));
   const globalChannel = pusher.subscribe(GLOBAL_GRAPH_CHANNEL);
-  globalChannel.bind("transaction-accepted", handlePusherMessage);
+  globalChannel.bind("transaction-accepted", (data: any) => handlePusherMessage(data, false));
   const stopSyncing = graphStore.updateManager.startSync();
   return () => {
     pusher.disconnect();
