@@ -7,8 +7,10 @@ declare const styles: {
   readonly "IconPrivateMode": string;
   readonly "IconPublicMode": string;
   readonly "PinButton": string;
+  readonly "PrivateColor": string;
+  readonly "PublicColor": string;
   readonly "PublicModeToggle": string;
-  readonly "PublicStatus": string;
+  readonly "PublishingStatusPill": string;
   readonly "Separator": string;
 };
 export = styles;

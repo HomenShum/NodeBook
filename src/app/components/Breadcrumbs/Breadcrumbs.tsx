@@ -67,7 +67,13 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
           ) : null}
           <span>{truncateText(isRoot ? object.text : object.text, isMobile ? 15 : 32)}</span>
           {isRoot && object.id !== graphStore.globalRoot.id && object.id !== graphStore.userRoot.id && (
-            <span className={s.PublicStatus}>{object.isPublic && <Globe size={14} strokeWidth={1.5} />}</span>
+            <span>
+              {object.isPublic ? (
+                <div className={cn(s.PublicColor, s.PublishingStatusPill)}>Public</div>
+              ) : (
+                <div className={cn(s.PrivateColor, s.PublishingStatusPill)}>Private</div>
+              )}
+            </span>
           )}
         </span>
       </React.Fragment>

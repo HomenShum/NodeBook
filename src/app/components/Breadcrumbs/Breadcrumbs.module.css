@@ -49,10 +49,24 @@
   flex-shrink: 0;
 }
 
-.PublicStatus {
+.PublishingStatusPill {
   display: flex;
   align-items: center;
-  padding-left: 2px;
+  font-size: var(--font-size-mini);
+  border-radius: 4px;
+  margin-left: 4px;
+  padding: 0 6px;
+  width: fit-content;
+}
+
+.PublicColor {
+  color: var(--teal-10);
+  background-color: var(--teal-3);
+}
+
+.PrivateColor {
+  color: var(--gray-10);
+  background-color: var(--gray-3);
 }
 
 .PublicModeToggle {
