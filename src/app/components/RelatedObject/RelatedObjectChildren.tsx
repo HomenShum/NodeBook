@@ -34,7 +34,7 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
   const viewStore = useViewStore();
   const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
   const tree = useTree();
-  if (group.nodes.length === 0 || viewStore.flattenSublists) {
+  if (group.nodes.length === 0) {
     return null;
   }
   return (

@@ -342,7 +342,7 @@ export class PointerTreeNode extends DescendantTreeNode {
 
   hydrate() {
     this.childrenGroups.forEach((group) => {
-      if (group.id === "all") {
+      if (group.id !== "pointer") {
         group.hydrate();
       }
     });
@@ -498,9 +498,9 @@ export class PointerGroup extends BaseGroup {
   }
 
   hydrate() {
-    const isSublistTree = Object.getPrototypeOf(this.tree).constructor.name === `${SublistTree.name}`;
-    const isHydrateBySubtreeRootNode =
-      Object.getPrototypeOf(this.parent).constructor.name === `${SublistRootTreeNode.name}`;
+    const isSublistTree = this.tree instanceof SublistTree;
+    const isHydrateBySubtreeRootNode = this.parent instanceof SublistRootTreeNode;
+
     if (!isSublistTree || !isHydrateBySubtreeRootNode) {
       return;
     }
@@ -508,7 +508,6 @@ export class PointerGroup extends BaseGroup {
     visitedMap[this.parent.object.id] = true;
     const group = this;
     const pointers: PointerTreeNode[] = [];
-    const shouldHydrate: boolean[] = [];
 
     function buildPointerFlatList(treeNode: TreeNode): void {
       for (const { relation, position } of treeNode.object.relationsWithPositions.sort((a, b) =>
@@ -537,7 +536,6 @@ export class PointerGroup extends BaseGroup {
           relation.relationType.id === defaultRelationTypes.sublist.id && relation.from.id === treeNode.object.id;
 
         pointers.push(new PointerTreeNode(descendantNode));
-        shouldHydrate.push(!isSublist);
 
         if (isSublist) {
           buildPointerFlatList(descendantNode);
@@ -549,9 +547,7 @@ export class PointerGroup extends BaseGroup {
 
     this.nodes = pointers;
     for (let i = 0; i < this.nodes.length; i++) {
-      if (shouldHydrate[i]) {
-        this.nodes[i].hydrate();
-      }
+      this.nodes[i].hydrate();
     }
   }
   /**
