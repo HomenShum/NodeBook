@@ -37,7 +37,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
   version: number;
   createdAt: Date = new Date();
   isPublic: boolean = false;
-  relationType: GraphRelationType;
+  relationTypeId: string;
   from: GraphObject;
   to: GraphObject;
 
@@ -60,7 +60,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     this.authorId = authorId;
     this.from = from;
     this.to = to;
-    this.relationType = type;
+    this.relationTypeId = type.id;
     this.isPublic = isPublic;
     this.makeObservable();
   }
@@ -70,7 +70,8 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     makeObservable(this, {
       createdAt: observable,
       isPublic: observable,
-      relationType: observable.ref,
+      relationTypeId: observable,
+      relationType: computed,
       from: observable.ref,
       to: observable.ref,
       text: computed,
@@ -134,8 +135,12 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     return this.to.pinnedRelationsList.get(this.id)?.position;
   }
 
+  get relationType(): GraphRelationType {
+    return this.store.relationTypesById[this.relationTypeId];
+  }
+
   setType(type: GraphRelationType) {
-    this.relationType = type;
+    this.relationTypeId = type.id;
   }
 
   setFrom(node: GraphObject, after?: Positioner<GraphRelation>) {
@@ -178,7 +183,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       createdAt: this.createdAt,
       fromId: this.from.id,
       toId: this.to.id,
-      relationTypeId: this.relationType.id,
+      relationTypeId: this.relationTypeId,
       isPublic: this.isPublic,
     };
   }
