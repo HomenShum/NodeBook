@@ -9,7 +9,8 @@ import {
   KEY_DOWN_COMMAND,
   KEY_SPACE_COMMAND,
 } from "lexical";
-import { useEffect, useRef } from "react";
+import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getChips, $getText, getSelectionPositions, matchDefaultRelationType } from "@/app/editor/utils";
@@ -21,14 +22,13 @@ import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/tree/TreeContext";
 
-export const RelationPlugin = () => {
+export const RelationPlugin = observer(() => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   const { treeNode } = useTreeNode();
-  const eventKeyStack = useRef<string>("");
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
@@ -39,26 +39,25 @@ export const RelationPlugin = () => {
       editor.registerCommand(
         KEY_DOWN_COMMAND,
         (event) => {
-          const triggerKey = settingsStore.triggerRelationOnSingleColon ? ":" : "::";
-          if (eventKeyStack.current.length > triggerKey.length) eventKeyStack.current = "";
-          eventKeyStack.current += event.key;
-          if (eventKeyStack.current !== triggerKey) {
+          // Only trigger after pressing colon, inside a child, next to another colon
+          if (event.key !== ":") {
             return false;
           }
-          // Only trigger logic when current node is a regular child of the rendered parent
           if (relation.relationType.id !== defaultRelationTypes.child.id || relation.to.id !== object.id) {
+            return false;
+          }
+          const [selectionLeft, selectionRight] = getSelectionPositions(editor);
+          let textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft });
+          if (!settingsStore.triggerRelationOnSingleColon && !textBefore.endsWith(":")) {
             return false;
           }
           event.preventDefault();
           event.stopPropagation();
-          const graphStoreTransaction: TxCombined = [];
-          const [selectionLeft, selectionRight] = getSelectionPositions(editor);
-          // Set the relation type to the text before the cursor
-          let textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft })
-            .trim()
-            .replace(/:+$/, ""); //trim all colon from end
 
-          const relationType = matchDefaultRelationType(textBefore);
+          // Set the relation type to the text before the cursor
+          const graphStoreTransaction: TxCombined = [];
+          let relationTypeText = textBefore.trim().replace(/:+$/, ""); //trim all colon from end
+          const relationType = matchDefaultRelationType(relationTypeText);
           if (relationType) {
             graphStoreTransaction.push({
               type: "updateRelation",
@@ -68,12 +67,12 @@ export const RelationPlugin = () => {
               },
             });
           } else {
-            const isInitiallyReversed = textBefore.endsWith(" of");
+            const isInitiallyReversed = relationTypeText.endsWith(" of");
             graphStoreTransaction.push({
               type: "updateRelation",
               transaction: {
                 relationId: relation.id,
-                relationProps: { relationTypeLabel: textBefore, isInitiallyReversed },
+                relationProps: { relationTypeLabel: relationTypeText, isInitiallyReversed },
               },
             });
           }
@@ -177,6 +176,19 @@ export const RelationPlugin = () => {
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [tree, graphStore, settingsStore, renderController, editor, object, relation, treeNode.path, treeNode.id]);
+  }, [
+    tree,
+    graphStore,
+    settingsStore,
+    settingsStore.triggerRelationOnSingleColon,
+    renderController,
+    editor,
+    object,
+    relation,
+    treeNode.path,
+    treeNode.id,
+    treeNode.relationWithParent.relationType.id,
+    treeNode.relationWithParent.to,
+  ]);
   return null;
-};
+});
