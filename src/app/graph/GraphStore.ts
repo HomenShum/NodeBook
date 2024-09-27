@@ -1,4 +1,4 @@
-import { action, isObservable, makeObservable, observable, toJS } from "mobx";
+import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { defaultRelationTypes, MAX_PREFIX_LENGTH } from "@/app/graph/constants";
@@ -84,7 +84,8 @@ export class GraphStore {
         user: observable,
         nodesById: observable.shallow,
         relationsById: observable.shallow,
-        relationTypesById: observable,
+        relationTypesById: observable.shallow,
+        relationTypes: computed,
         relationToBundles: observable.shallow,
         // TODO: does the fact these are async mess up the action?
         // node
