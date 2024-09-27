@@ -1602,10 +1602,6 @@ export class GraphStore {
     return this.relationsById.values();
   }
 
-  get relationTypes(): GraphRelationType[] {
-    return Object.values(this.relationTypesById);
-  }
-
   hasNode(id: string): boolean {
     return this.nodesById.has(id);
   }
