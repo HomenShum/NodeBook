@@ -153,9 +153,11 @@ export const DevTools = observer(() => {
           >
             Export as JSON
           </Button>
-          <Button size="default" variant="destructive" onClick={() => renderController.setActiveModal("clearData")}>
-            Clear all data
-          </Button>
+          {env.env !== "production" && (
+            <Button size="default" variant="destructive" onClick={() => renderController.setActiveModal("clearData")}>
+              Clear all data
+            </Button>
+          )}
         </div>
 
         <hr style={{ border: ".5px solid var(--gray-6)" }} />
