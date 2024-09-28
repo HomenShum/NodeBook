@@ -1,18 +1,18 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useEffect } from "react";
 
-import { useRenderController } from "@/app/render/useRenderController";
+import { useViewStore } from "@/app/view/useViewStore";
 
 export const ViewControllerRegistryPlugin = ({ pathToNodeStr }: { pathToNodeStr: string }) => {
-  const renderController = useRenderController();
+  const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
-    renderController.registerEditor(pathToNodeStr, editor);
+    viewStore.registerEditor(pathToNodeStr, editor);
     editor.getRootElement()?.setAttribute("data-editor-path", pathToNodeStr);
 
     return () => {
-      renderController.removeEditor(pathToNodeStr);
+      viewStore.removeEditor(pathToNodeStr);
     };
-  }, [pathToNodeStr, editor, renderController]);
+  }, [pathToNodeStr, editor, viewStore]);
   return null;
 };

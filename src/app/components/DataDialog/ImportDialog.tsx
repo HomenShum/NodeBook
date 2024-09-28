@@ -5,14 +5,14 @@ import { useCallback, useRef, useState } from "react";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useRenderController } from "@/app/render/useRenderController";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import { ConfirmReplace } from "./ConfirmReplace";
 
 import styles from "./DataDialog.module.css";
 
 export const ImportDialog = observer(() => {
-  const renderController = useRenderController();
+  const viewStore = useViewStore();
 
   const graphStore = useGraphStore();
   const [isLoading, setIsLoading] = useState(false);
@@ -27,10 +27,10 @@ export const ImportDialog = observer(() => {
     reader.onload = async (event) => {
       const fileContent = event.target!.result;
       graphStore.resetAndLoad(JSON.parse(fileContent as string));
-      renderController.setActiveModal(null); // Close the ImportDialog after replacing data
+      viewStore.setActiveModal(null); // Close the ImportDialog after replacing data
     };
     reader.readAsText(file);
-  }, [graphStore, file, renderController]);
+  }, [graphStore, file, viewStore]);
 
   const onAddToGraphClick = useCallback(() => {
     if (!file) return;
@@ -39,12 +39,12 @@ export const ImportDialog = observer(() => {
     reader.onload = (event) => {
       const fileContent = event.target!.result;
       graphStore.importData(JSON.parse(fileContent as string)).finally(() => {
-        renderController.setActiveModal(null);
+        viewStore.setActiveModal(null);
         setIsLoading(false);
       });
     };
     reader.readAsText(file);
-  }, [file, graphStore, renderController, setIsLoading]);
+  }, [file, graphStore, viewStore, setIsLoading]);
 
   return (
     <DataDialog
@@ -52,7 +52,7 @@ export const ImportDialog = observer(() => {
       description={isLoading ? "Loading your data..." : "Import your data."}
       modalType="importData"
       showBackButton
-      onBack={() => renderController.setActiveModal("devTools")}
+      onBack={() => viewStore.setActiveModal("devTools")}
     >
       <fieldset className={styles.FileFieldset}>
         <Button

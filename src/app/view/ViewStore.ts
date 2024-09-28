@@ -1,4 +1,5 @@
 import { action, autorun, isObservable, makeAutoObservable } from "mobx";
+import { LexicalEditor } from "lexical";
 
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
@@ -6,6 +7,7 @@ import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Path, Root, Tree } from "@/app/tree/Tree";
 import { ViewType } from "@/app/view/types";
+import { makeAutoSaving } from "@/app/util";
 
 export class ViewStore {
   private readonly settingsStore: SettingsStore;
@@ -17,8 +19,25 @@ export class ViewStore {
   public treeView: Tree;
   public sublistView: Tree;
 
+  public hoveredNode: Path | null = null;
+
+  editorsByPath: Map<string, LexicalEditor> = new Map();
+
+  public leftSidebarOpen = false;
+  public rightSidebarOpen = false;
+  public isDarkMode = false;
+  public sidebarWidth = 268;
+  public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | null = null;
+
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.makeObservable();
+    makeAutoSaving(this, {
+      leftSidebarOpen: true,
+      rightSidebarOpen: true,
+      isDarkMode: true,
+      sidebarWidth: true,
+      activeModal: true,
+    });
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
     this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
@@ -69,6 +88,7 @@ export class ViewStore {
   }
 
   cleanup() {
+    this.setActiveModal(null);
     this.treeView.clear(this.graphStore.getDefaultRootForUser());
     this.sublistView.clear(this.graphStore.getDefaultRootForUser());
   }
@@ -81,5 +101,33 @@ export class ViewStore {
 
   deserializeInPlace(data: SerializedViewStore) {
     this.treeView.deserializeInPlace(data.mainView);
+  }
+
+  toggleLeftSidebar() {
+    this.leftSidebarOpen = !this.leftSidebarOpen;
+  }
+
+  toggleRightSidebar() {
+    this.rightSidebarOpen = !this.rightSidebarOpen;
+  }
+
+  setActiveModal(modal: "devTools" | "importData" | "clearData" | "setPublic" | null) {
+    this.activeModal = modal;
+  }
+
+  setHoveredNode(path: Path | null) {
+    this.hoveredNode = path;
+  }
+
+  registerEditor(pathStr: Path, editor: LexicalEditor) {
+    this.editorsByPath.set(pathStr, editor);
+  }
+
+  removeEditor(pathStr: Path) {
+    this.editorsByPath.delete(pathStr);
+  }
+
+  setSidebarWidth(width: number) {
+    this.sidebarWidth = width;
   }
 }

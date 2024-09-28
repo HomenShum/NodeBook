@@ -1,7 +1,7 @@
 "use client";
 import * as Sentry from "@sentry/nextjs";
 import { observer } from "mobx-react-lite";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { LoginScreen } from "@/app/auth/LoginScreen";
 import { useAuth } from "@/app/auth/useAuth";
@@ -10,7 +10,7 @@ import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import Loader from "@/app/components/UIPrimitives/Loader";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
-import { useRenderController } from "@/app/render/useRenderController";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import { useLoading } from "./StoresProvider";
 
@@ -28,22 +28,21 @@ export default observer(
     const auth = useAuth();
     const isLoading = useLoading();
 
-    const appContainerRef = useRef<HTMLDivElement>(null);
-    const renderController = useRenderController();
+    const viewStore = useViewStore();
     useKeyboardShortcuts();
 
     useEffect(() => {
       const htmlElement = document.documentElement;
-      if (renderController.isDarkMode) {
+      if (viewStore.isDarkMode) {
         htmlElement.classList.add("dark");
       } else {
         htmlElement.classList.remove("dark");
       }
-    }, [renderController.isDarkMode]);
+    }, [viewStore.isDarkMode]);
 
     useEffect(() => {
-      document.documentElement.style.setProperty("--sidebar-width", `${renderController.sidebarWidth}px`);
-    }, [renderController.sidebarWidth]);
+      document.documentElement.style.setProperty("--sidebar-width", `${viewStore.sidebarWidth}px`);
+    }, [viewStore.sidebarWidth]);
 
     useEffect(() => {
       if (auth && auth.isAuthenticated && auth.user) {
@@ -72,14 +71,14 @@ export default observer(
     } else {
       return (
         <div className={styles.App}>
-          <div ref={appContainerRef} className={styles.AppContainer}>
-            <ResizableSidebar isOpen={renderController.leftSidebarOpen} onResizeStateChange={setIsResizing} />
+          <div className={styles.AppContainer}>
+            <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
             <div className={styles.Container}>
               <Button
                 className={styles.SidebarToggle}
                 variant="ghost"
                 size="icon"
-                onClick={() => renderController.toggleLeftSidebar()}
+                onClick={() => viewStore.toggleLeftSidebar()}
               >
                 <SidebarIcon />
               </Button>
@@ -87,19 +86,19 @@ export default observer(
                 className={styles.RightSidebarToggle}
                 variant="ghost"
                 size="icon"
-                onClick={() => renderController.toggleRightSidebar()}
+                onClick={() => viewStore.toggleRightSidebar()}
               >
                 <SidebarIcon />
               </Button> */}
               <div className={styles.MainContainer}>
                 <main
-                  className={`${styles.Main} ${renderController.leftSidebarOpen ? styles.ShiftMain : ""} ${
+                  className={`${styles.Main} ${viewStore.leftSidebarOpen ? styles.ShiftMain : ""} ${
                     isResizing ? styles.MainDragging : ""
                   }`}
                 >
                   {children}
                 </main>
-                {/* {renderController.rightSidebarOpen && (
+                {/* {viewStore.rightSidebarOpen && (
                   <aside className={styles.DevToolsSidebar}>
                     <SidebarOutlines />
                     <DevTools />

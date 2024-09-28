@@ -6,7 +6,6 @@ import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext
 import { GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/tree/TreeContext";
 
 /**
@@ -15,7 +14,6 @@ import { useTree } from "@/app/tree/TreeContext";
 export const PastePlugin = () => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
-  const renderController = useRenderController();
   const tree = useTree();
   const { treeNode } = useTreeNode();
   const { object, relationWithParent: relation, path } = treeNode;
@@ -54,6 +52,6 @@ export const PastePlugin = () => {
       },
       COMMAND_PRIORITY_LOW,
     );
-  }, [object, parent, relation, graphStore, editor, renderController, path, tree]);
+  }, [object, parent, relation, graphStore, editor, path, tree]);
   return null;
 };

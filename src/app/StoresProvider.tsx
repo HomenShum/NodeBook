@@ -1,7 +1,7 @@
 "use client";
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import Pusher from "pusher-js";
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { useAuth } from "@/app/auth/useAuth";
@@ -12,8 +12,6 @@ import { SyncDataSchema } from "@/app/graph/SyncData";
 import { GraphStoreProvider } from "@/app/graph/useGraphStore";
 import { SettingsStoreProvider } from "@/app/graph/useSettingsStore";
 import { fetchGetOrCreateUser, loadGraphData } from "@/app/persistence/loadGraphData";
-import { RenderController } from "@/app/render/RenderController";
-import { RenderControllerProvider } from "@/app/render/useRenderController";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
@@ -31,7 +29,6 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
   const [settingsStore, setSettingsStore] = useState<SettingsStore>(new SettingsStore());
   const [graphStore, setGraphStore] = useState<GraphStore>(new GraphStore(UNLOGGED_USER, settingsStore));
   const [viewStore, setViewStore] = useState<ViewStore>(new ViewStore(settingsStore, graphStore));
-  const [renderController, setRenderController] = useState<RenderController>(new RenderController());
   // expose stores to window for debugging
   if (env.env !== "production" && typeof window !== "undefined") {
     window.mew = {
@@ -39,7 +36,6 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       toJS,
       graphStore,
       viewStore,
-      renderController,
       getDependencyTree,
       getObserverTree,
       rootLogger,
@@ -74,11 +70,10 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
         newUser = UNLOGGED_USER;
       }
 
-      // create new stores (shorter names to disttinguish from the state variables)
+      // create new stores (shorter names to distinguish from the state variables)
       const settings = new SettingsStore();
       const graph = new GraphStore(newUser, settings, authedFetch);
       const view = new ViewStore(settings, graph);
-      const render = new RenderController();
 
       // load and start sync
       let syncCleanup = () => {};
@@ -100,14 +95,12 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       setGraphStore(graph);
       setSettingsStore(settings);
       setViewStore(view);
-      setRenderController(render);
       setIsLoading(false);
       return () => {
         logger.debug("Cleaning up stores");
         graph.cleanup();
         settings.cleanup();
         view.cleanup();
-        render.cleanup();
         syncCleanup();
       };
     }
@@ -124,9 +117,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       <UserContext.Provider value={user}>
         <SettingsStoreProvider value={settingsStore}>
           <GraphStoreProvider value={graphStore}>
-            <ViewStoreProvider value={viewStore}>
-              <RenderControllerProvider value={renderController}>{children}</RenderControllerProvider>
-            </ViewStoreProvider>
+            <ViewStoreProvider value={viewStore}>{children}</ViewStoreProvider>
           </GraphStoreProvider>
         </SettingsStoreProvider>
       </UserContext.Provider>

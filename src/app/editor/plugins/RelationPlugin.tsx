@@ -19,13 +19,11 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/tree/TreeContext";
 
 export const RelationPlugin = observer(() => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
-  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   const { treeNode } = useTreeNode();
@@ -181,7 +179,6 @@ export const RelationPlugin = observer(() => {
     graphStore,
     settingsStore,
     settingsStore.triggerRelationOnSingleColon,
-    renderController,
     editor,
     object,
     relation,

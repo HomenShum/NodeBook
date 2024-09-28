@@ -12,11 +12,11 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useSetCurrentNodeAsRoot } from "@/app/tree/utils";
 import { cn } from "@/lib/utils";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import menuStyles from "./RelatedObject/NodeHeaderSettingsMenu.module.css";
 import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
@@ -29,7 +29,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
   const hasFocus = useCallback(() => !!treeRef.current?.contains(document.activeElement), [treeRef]);
   useOutlineHotkeys({ tree, hasFocus });
   const treeNode = tree.state.root;
-  const renderController = useRenderController();
+  const viewStore = useViewStore();
 
   const userId = graphStore.user?.id;
   const isGlobalRoot = treeNode.object.id === graphStore.globalRoot.id;
@@ -84,7 +84,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
     <TreeContext.Provider value={tree}>
       <div
         className={cn(s.OutlineView, {
-          [s.OutlineViewFull]: !renderController.leftSidebarOpen,
+          [s.OutlineViewFull]: !viewStore.leftSidebarOpen,
         })}
       >
         <div className={s.WindowNav}>

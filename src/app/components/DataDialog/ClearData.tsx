@@ -2,7 +2,7 @@ import { observer } from "mobx-react-lite";
 
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
-import { useRenderController } from "@/app/render/useRenderController";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./DataDialog.module.css";
 
@@ -11,7 +11,7 @@ interface Props {
 }
 
 export const ClearData = observer(({ onConfirm }: Props) => {
-  const renderController = useRenderController();
+  const viewStore = useViewStore();
   return (
     <DataDialog
       title="Clear Data"
@@ -20,7 +20,7 @@ export const ClearData = observer(({ onConfirm }: Props) => {
       showBackButton
     >
       <div className={styles.DialogActions}>
-        <Button variant="outline" size="sm" onClick={() => renderController.setActiveModal("devTools")}>
+        <Button variant="outline" size="sm" onClick={() => viewStore.setActiveModal("devTools")}>
           Cancel
         </Button>
         <Button variant="destructive" size="sm" onClick={onConfirm}>

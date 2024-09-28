@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { ReactNode } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
-import { useRenderController } from "@/app/render/useRenderController";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./DataDialog.module.css";
 
@@ -18,22 +18,22 @@ interface Props {
 }
 
 export const DataDialog = observer(({ title, description, children, modalType, showBackButton, onBack }: Props) => {
-  const renderController = useRenderController();
+  const viewStore = useViewStore();
 
   const handleClose = () => {
-    renderController.setActiveModal(null);
+    viewStore.setActiveModal(null);
   };
 
   const handleBack = () => {
     if (onBack) {
       onBack();
     } else {
-      renderController.setActiveModal("devTools");
+      viewStore.setActiveModal("devTools");
     }
   };
 
   return (
-    <Dialog.Root open={renderController.activeModal === modalType} onOpenChange={handleClose}>
+    <Dialog.Root open={viewStore.activeModal === modalType} onOpenChange={handleClose}>
       <Dialog.Portal>
         <Dialog.Overlay className={styles.DialogOverlay} />
         <Dialog.Content className={styles.DialogContent}>

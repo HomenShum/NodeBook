@@ -14,7 +14,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { createRouteUrl } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -36,13 +35,12 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
     const [isResizing, setIsResizing] = useState(false);
     const [activePointerId, setActivePointerId] = useState<number | null>(null);
 
-    const renderController = useRenderController();
     const graphStore = useGraphStore();
     const viewStore = useViewStore();
     const router = useRouter();
 
     const handleOpenDevTools = () => {
-      renderController.setActiveModal("devTools");
+      viewStore.setActiveModal("devTools");
     };
 
     const startResizing = useCallback(
@@ -76,11 +74,11 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
         if (isResizing && sidebarRef.current) {
           const newWidth = e.clientX - sidebarRef.current.getBoundingClientRect().left;
           if (newWidth >= minWidth && newWidth <= maxWidth) {
-            renderController.setSidebarWidth(newWidth);
+            viewStore.setSidebarWidth(newWidth);
           }
         }
       },
-      [isResizing, minWidth, maxWidth, renderController],
+      [isResizing, minWidth, maxWidth, viewStore],
     );
 
     const { showAllNodesOption } = useSettingsStore();
@@ -109,12 +107,12 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
 
     return (
       <>
-        {isOpen && <div className={styles.Backdrop} onClick={() => renderController.toggleLeftSidebar()} />}
+        {isOpen && <div className={styles.Backdrop} onClick={() => viewStore.toggleLeftSidebar()} />}
         <aside
           ref={sidebarRef}
           className={`${styles.Sidebar} ${isOpen ? styles.Open : ""} ${className || ""}`}
           style={{
-            width: `${renderController.sidebarWidth}px`,
+            width: `${viewStore.sidebarWidth}px`,
           }}
         >
           <div className={`${styles.SidebarContent} ${isResizing ? styles.Resizing : ""}`}>
@@ -149,7 +147,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                   </span>
                   <span className={styles.ButtonText}>{graphStore.userRoot.text}</span>
                 </Button>
-                {showAllNodesOption === true && (
+                {showAllNodesOption && (
                   <Button
                     style={{ width: "100%" }}
                     variant="ghost"
@@ -176,10 +174,10 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                 variant="ghost"
                 size="icon"
                 onClick={action(() => {
-                  renderController.isDarkMode = !renderController.isDarkMode;
+                  viewStore.isDarkMode = !viewStore.isDarkMode;
                 })}
               >
-                {renderController.isDarkMode ? (
+                {viewStore.isDarkMode ? (
                   <SunIcon size={16} strokeWidth={1.5} />
                 ) : (
                   <MoonIcon size={16} strokeWidth={1.5} />
@@ -209,7 +207,6 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
             onConfirm={() => {
               graphStore.cleanup();
               viewStore.cleanup();
-              renderController.setActiveModal(null);
             }}
           />
         )}

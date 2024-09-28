@@ -7,9 +7,9 @@ import { env } from "@/app/envFrontend";
 import { SearchAndReplaceDropdownOption } from "@/app/graph/SettingsStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { useUser } from "@/app/StoresProvider";
 import logger from "@/lib/logger";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./DevTools.module.css";
 
@@ -41,14 +41,14 @@ export const DevTools = observer(() => {
   const user = useUser();
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
-  const renderController = useRenderController();
+  const viewStore = useViewStore();
 
   const handleClose = () => {
-    renderController.setActiveModal(null);
+    viewStore.setActiveModal(null);
   };
 
   const handleOpenImportData = () => {
-    renderController.setActiveModal("importData");
+    viewStore.setActiveModal("importData");
   };
 
   return (
@@ -154,7 +154,7 @@ export const DevTools = observer(() => {
             Export as JSON
           </Button>
           {env.env !== "production" && (
-            <Button size="default" variant="destructive" onClick={() => renderController.setActiveModal("clearData")}>
+            <Button size="default" variant="destructive" onClick={() => viewStore.setActiveModal("clearData")}>
               Clear all data
             </Button>
           )}

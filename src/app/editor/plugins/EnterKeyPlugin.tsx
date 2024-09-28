@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { nodeToChip } from "@/app/editor/utils";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useRenderController } from "@/app/render/useRenderController";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 
@@ -72,7 +71,6 @@ function getChipsAroundSelection(selection: BaseSelection) {
  */
 export const EnterKeyPlugin = ({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const graphStore = useGraphStore();
-  const renderController = useRenderController();
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   const object = treeNode.object;
@@ -102,18 +100,7 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: DescendantTreeNode }) =
       }),
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [
-    editor,
-    graphStore,
-    tree,
-    object,
-    parent,
-    pathToNodeStr,
-    pathToParentNodes,
-    relation,
-    renderController,
-    treeNode,
-  ]);
+  }, [editor, graphStore, tree, object, parent, pathToNodeStr, pathToParentNodes, relation, treeNode]);
 
   return null;
 };
