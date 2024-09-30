@@ -13,21 +13,26 @@ function Page({ params: { path } }: { params: { path: string[] | undefined } }) 
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   useEffect(() => {
+    const relationPath = parsePathString(path ?? [], graphStore);
+
+    if (relationPath) {
+      return viewStore.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
+    }
+
     const object = path ? graphStore.getNode(path[path.length - 1]) : false;
+
     if (!object) {
       logger.debug("Could not find object, redirecting to home", path);
       return redirect(createRouteUrl("home"));
     }
-    const relationPath = parsePathString(path ?? [], graphStore);
-    relationPath
-      ? viewStore.setRoot(relationPath, "/" + (path ? path.join("/") : ""))
-      : viewStore.setRoot(
-          {
-            relations: [],
-            object,
-          },
-          `/all/${object.id}`,
-        );
+
+    viewStore.setRoot(
+      {
+        relations: [],
+        object,
+      },
+      `/all/${object.id}`,
+    );
   }, [graphStore, path, viewStore]);
 
   return <MainView tree={viewStore.mainView}></MainView>;
