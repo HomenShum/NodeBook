@@ -7,7 +7,6 @@
  * 2. Handle edge case for empty Lexical node positioning.
  */
 
-
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
@@ -201,10 +200,6 @@ export function LexicalTypeaheadMenuPlugin<TOption extends MenuOption>({
     if (!editor) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        menuStateHandler(MenuEventTrigger.HIDE_MENU_ON_ESCAPE);
-        return true;
-      }
       // Rules: @ behavior for mentions dropdown
       if (!menuState.isOpen && e.key === "@") {
         // Note: @ takes precedence due to shift key

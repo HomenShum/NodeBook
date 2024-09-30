@@ -1,5 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
+import { COMMAND_PRIORITY_NORMAL, KEY_ESCAPE_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { DescendantTreeNode } from "@/app/tree/nodes";
@@ -17,16 +17,9 @@ export const ToggleEditablePlugin = ({ treeNode, editable }: { treeNode: Descend
   // disable editor when escape is pressed
   useEffect(() => {
     return editor.registerCommand(
-      // We were using KEY_ESCAPE_COMMAND, but it wasn't firing on the first escape press
-      // for some reason. KEY_DOWN_COMMAND does.
-      KEY_DOWN_COMMAND,
+      KEY_ESCAPE_COMMAND,
       (e) => {
-        if (
-          e.key === "Escape" &&
-          tree.selection?.type === "editor" &&
-          tree.selection.treeNodeId === treeNode.id &&
-          tree.selection.editMode
-        ) {
+        if (tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id && tree.selection.editMode) {
           e.preventDefault();
           e.stopPropagation();
           tree.setFocusedNode(treeNode.id, "start", undefined, false);

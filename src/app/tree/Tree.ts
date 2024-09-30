@@ -541,7 +541,7 @@ export class Tree {
       });
       if (treeNode instanceof DescendantTreeNode) {
         const text = texts.get(treeNode.object.id);
-        treeNode.isSearchMatch = search ? text?.includes(search) ?? true : true;
+        treeNode.isSearchMatch = text && search ? text.includes(search) : true;
         treeNode.searchMatchInDescendants = searchMatchInDescendants;
       }
     }
@@ -979,9 +979,7 @@ export class Tree {
   escapeSelection() {
     if (this.selection === null) {
       return;
-    } else if (this.selection?.type === "editor") {
-      this.selection = null;
-    } else {
+    } else if (this.selection?.type === "node") {
       this.setFocusedNode(this.selection.headNodeId);
     }
   }
