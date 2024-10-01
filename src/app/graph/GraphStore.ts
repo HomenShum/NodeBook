@@ -70,9 +70,9 @@ export class GraphStore {
     this.settings = settings;
     this.updateManager = new UpdateManager(
       user.id,
-      authedFetch ?? fetch,
       (data: SerializedGraphStore) => this.resetAndLoad(data),
       (updates) => this.applyUpdates(updates),
+      authedFetch,
     );
     this.ensureDefaultObjectsCreated();
     this.makeObservable();
@@ -1831,7 +1831,6 @@ export class GraphStore {
     }
 
     let allRelationUpdates = this.loadBatchedSerializedRelation(data.relationsById);
-
     return this.updateManager.syncImportUpdates(allNodeUpdates.concat(allRelationUpdates, allRelationTypeUpdates));
   }
 

@@ -19,16 +19,17 @@ export class UpdateManager {
   private redoStack: GraphUpdate[][] = [];
   private syncQueue: SyncData[] = [];
 
-  private authedFetch: typeof fetch;
+  private authedFetch?: typeof fetch;
 
   private refetchCallback: (data: SerializedGraphStore) => void;
   private applyGraphUpdates: (updates: GraphUpdate[]) => void;
 
   constructor(
     userId: string,
-    authedFetch: typeof fetch,
     refetchCallback: (data: SerializedGraphStore) => void,
     applyUpdatesFn: (updates: GraphUpdate[]) => void,
+    // When undefined, the manager will not sync with the server
+    authedFetch?: typeof fetch,
   ) {
     this.userId = userId;
     this.authedFetch = authedFetch;
@@ -46,6 +47,7 @@ export class UpdateManager {
   private syncLoop() {
     if (!this.isSyncing) return;
     this.nextSyncId = setTimeout(async () => {
+      if (!this.authedFetch) return;
       await this.syncLocalUpdates(this.authedFetch);
       this.syncLoop();
     }, 500);
@@ -61,6 +63,7 @@ export class UpdateManager {
   }
 
   private async fetchLatestDataSnapshot() {
+    if (!this.authedFetch) return;
     logger.info("Fetching latest data snapshot from backend");
     const latestData = await this.authedFetch("/api/sync").then((res) => res.json());
     const parsed = SerializedGraphStoreSchema.safeParse(latestData.data);
@@ -145,19 +148,8 @@ export class UpdateManager {
     return syncData.clientId === this.clientId;
   }
 
-  private async sendSyncChunk(syncData: SyncData) {
-    const endpoint = "/api/sync/import-chunk";
-    const response = await this.authedFetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(syncData),
-    });
-    return response;
-  }
-
   private async sendChunkedSyncData(syncData: SyncData) {
+    if (!this.authedFetch) return;
     // implements the following:
     // - throws "size" error on rows larger than maxRows
     // - chunks the updates into chunks of maxChunkSize
@@ -181,7 +173,13 @@ export class UpdateManager {
         transactionId: syncData.transactionId,
         updates: chunk,
       };
-      const resp = await this.sendSyncChunk(chunkSyncData);
+      const resp = await this.authedFetch("/api/sync/import-chunk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(chunkSyncData),
+      });
       if (!resp.ok) {
         console.error("Sync update failed");
         this.fetchLatestDataSnapshot();
@@ -190,6 +188,7 @@ export class UpdateManager {
   }
 
   async syncImportUpdates(updates: GraphUpdate[]) {
+    if (!this.authedFetch) return;
     const supportedTypes = ["addNode", "addRelation", "addRelationType"];
 
     // log a warning if updates contains an unsupported type
