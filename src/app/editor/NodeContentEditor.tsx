@@ -14,6 +14,7 @@ import { BindFocusToTreePlugin } from "@/app/editor/plugins/BindFocusToTreePlugi
 import { DropdownMenuPlugin } from "@/app/editor/plugins/DropdownMenuPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowAtEndsPlugin";
+import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { PastePlugin } from "@/app/editor/plugins/pastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
 import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin";
@@ -63,6 +64,7 @@ export const NodeEditor = observer(
             }
             placeholder={null}
           />
+          <LinkPlugin nodeId={treeNode.object.id} />
           <SyncWithGraphPlugin node={treeNode.object} />
           {isEditorEditable && <ClearEditorPlugin />}
           {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}

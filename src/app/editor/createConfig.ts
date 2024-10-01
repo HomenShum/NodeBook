@@ -1,6 +1,7 @@
 import { InitialConfigType } from "@lexical/react/LexicalComposer";
 import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 
+import { LinkNode } from "@/app/graph/LinkNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { TreeNode } from "@/app/tree/nodes";
 
@@ -17,7 +18,7 @@ export const createConfig = ({
     namespace,
     theme: {},
     onError: (e: any) => console.error(e),
-    nodes: [MentionNode],
+    nodes: [LinkNode, MentionNode],
     editorState: () => {
       const paragraph = $createParagraphNode();
       const text = $createTextNode(treeNode.object.text);

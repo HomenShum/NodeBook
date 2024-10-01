@@ -1,18 +1,24 @@
 import { action, computed, isObservable, makeObservable, observable, reaction, toJS } from "mobx";
 
+import { DELETED_NODE_TEXT } from "@/app/graph/constants";
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { ObjectPath, Position, uuid } from "@/app/util";
-import { DELETED_NODE_TEXT } from "@/app/graph/constants";
 
 import { BaseGraphObject, GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 
-export type Chip = {
-  type: "text" | "mention" | "linebreak";
-  value: string;
-};
+export type Chip =
+  | {
+      type: "text" | "mention" | "linebreak";
+      value: string;
+    }
+  | {
+      type: "link";
+      value: string;
+      url: string;
+    };
 
 export type GraphNodeProps = {
   version?: number;
@@ -150,6 +156,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
         switch (chip.type) {
           case "text":
           case "linebreak":
+          case "link":
             return chip.value;
           case "mention":
             const referencedNode = this.store.getNode(chip.value);
@@ -160,6 +167,8 @@ export class GraphNode extends BaseGraphObject implements Serializable {
               console.error("Error accessing referencedNode.text:", error);
               return "@[Error]";
             }
+          default:
+            chip satisfies never;
         }
       })
       .join("");

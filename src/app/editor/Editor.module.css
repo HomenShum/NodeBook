@@ -29,3 +29,13 @@
   outline: 2px solid transparent;
   outline-offset: 2px;
 }
+
+.LinkNode {
+  color: var(--teal-11);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.LinkNode:hover {
+  text-decoration: underline;
+}

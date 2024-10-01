@@ -12,11 +12,12 @@ import {
   TextNode,
 } from "lexical";
 
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
+import { $createLinkNode, $isLinkNode, LinkNode } from "@/app/graph/LinkNode";
 import { $createMentionNode, $isMentionNode, MentionNode } from "@/app/graph/MentionNode";
 import { GraphRelationType } from "@/app/graph/types";
-import { defaultRelationTypes } from "@/app/graph/constants";
 
 type LexicalEditorPosition = { index: number; offset: number };
 
@@ -128,6 +129,15 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
         } else {
           // skip the mention node
         }
+      } else if ($isLinkNode(node)) {
+        const text = node.getTextContent();
+        if (from.offset === 0) {
+          chips.push(nodeToChip(node));
+        } else if (from.offset < text.length) {
+          chips.push({ type: "link", url: node.getURL(), value: text.slice(from.offset) });
+        } else {
+          // skip the link node
+        }
       } else if ($isTextNode(node)) {
         const text = node.getTextContent();
         if (from.offset < text.length) {
@@ -146,6 +156,15 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
           chips.push(nodeToChip(node));
         } else if (toDefined.offset > 0) {
           chips.push({ type: "text", value: text.slice(0, toDefined.offset) });
+        } else {
+          console.error("Unexpected offset", toDefined);
+        }
+      } else if ($isLinkNode(node)) {
+        const text = node.getTextContent();
+        if (toDefined.offset >= text.length) {
+          chips.push(nodeToChip(node));
+        } else if (toDefined.offset > 0) {
+          chips.push({ type: "link", url: node.getURL(), value: text.slice(0, toDefined.offset) });
         } else {
           console.error("Unexpected offset", toDefined);
         }
@@ -186,6 +205,9 @@ export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphN
     if (chip.type === "mention") {
       const referencedNode = graphStore.getNode(chip.value);
       return referencedNode !== undefined && referencedNode.text === paragraphChildren[idx].getTextContent();
+    } else if (chip.type === "link") {
+      const linkNode = paragraphChildren[idx] as LinkNode;
+      return chip.url === linkNode.getURL() && chip.value === linkNode.getTextContent();
     } else {
       return chip.value === paragraphChildren[idx].getTextContent();
     }
@@ -200,6 +222,8 @@ export const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: Gr
     if (chip.type == "mention") {
       const mentionNodeText = graphStore.getNode(chip.value)?.text || "";
       paragraph.append($createMentionNode(chip.value, mentionNodeText));
+    } else if (chip.type == "link") {
+      paragraph.append($createLinkNode(chip.url, chip.value));
     } else {
       paragraph.append($createTextNode(chip.value));
     }
@@ -208,8 +232,11 @@ export const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: Gr
 };
 
 export function nodeToChip(node: LexicalNode): Chip {
+  // For future reference, all classes extending TextNode should be processed before TextNode
   if (node instanceof MentionNode) {
     return { type: "mention", value: node.mentionedGraphNodeId };
+  } else if (node instanceof LinkNode) {
+    return { type: "link", value: node.getTextContent(), url: node.getURL() };
   } else if (node instanceof TextNode) {
     return { type: "text", value: node.getTextContent() };
   } else if (node instanceof LineBreakNode) {

@@ -3,10 +3,17 @@ import { z } from "zod";
 import { GraphRelationType } from "@/app/graph/types";
 import { Position } from "@/app/util";
 
-const SerializedChipSchema = z.object({
-  type: z.union([z.literal("text"), z.literal("mention"), z.literal("linebreak")]),
-  value: z.string(),
-});
+const SerializedChipSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.enum(["text", "mention", "linebreak"]),
+    value: z.string(),
+  }),
+  z.object({
+    type: z.literal("link"),
+    value: z.string(),
+    url: z.string(),
+  }),
+]);
 
 export const SerializedNodeSchema = z.object({
   version: z.number(),
