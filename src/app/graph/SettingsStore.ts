@@ -100,6 +100,7 @@ export class SettingsStore {
       allowShiftTabAboveViewRoot: this.allowShiftTabAboveViewRoot,
       hidePinnedItems: this.hidePinnedItems,
       triggerRelationOnSingleColon: this.triggerRelationOnSingleColon,
+      publicMode: this.publicMode,
     };
   }
 
@@ -122,6 +123,7 @@ export class SettingsStore {
     this.allowShiftTabAboveViewRoot = data.allowShiftTabAboveViewRoot ?? this.allowShiftTabAboveViewRoot;
     this.hidePinnedItems = data.hidePinnedItems ?? this.hidePinnedItems;
     this.triggerRelationOnSingleColon = data.triggerRelationOnSingleColon ?? this.triggerRelationOnSingleColon;
+    this.publicMode = data.publicMode ?? this.publicMode;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
