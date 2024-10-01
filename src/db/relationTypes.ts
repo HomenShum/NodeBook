@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 
 import { GraphRelationType } from "@/app/graph/types";
 import { relationTypeTable } from "@/db/schema";
+import { SyncError } from "@/db/SyncError";
 import { MewDbTransaction } from "@/db/types";
 
 export const createRelationTypes = async (tx: MewDbTransaction, relTypes: GraphRelationType[]) => {
@@ -20,8 +21,10 @@ export const createRelationTypes = async (tx: MewDbTransaction, relTypes: GraphR
     .returning({ createdId: relationTypeTable.id });
 
   if (newRelTypes.length !== relTypes.length) {
-    console.error(`[sync][createRelationTypes] Unable to create all relation types`);
-    tx.rollback();
+    throw new SyncError("Unable to create all relation types", {
+      actionName: "createRelationTypes",
+      data: { relTypes },
+    });
   }
 };
 
@@ -49,10 +52,10 @@ export const updateRelationType = async (
     )
     .returning({ updatedId: relationTypeTable.id });
   if (updated.length === 0) {
-    console.error(
-      `[sync][updateRelationType] Relation type with authorId ${oldProps.authorId}, id ${oldProps.id}, and version ${oldProps.version} not found`,
-    );
-    tx.rollback();
+    throw new SyncError("Relation type to update not found", {
+      actionName: "updateRelationType",
+      data: { oldProps, newProps },
+    });
   }
 };
 
@@ -70,9 +73,9 @@ export const deleteRelationType = async (tx: MewDbTransaction, relType: GraphRel
 
   // If there was no row for the relation type in the table, log an error and rollback the transaction
   if (deletedRelationType.length === 0) {
-    console.error(
-      `[sync][deleteRelationType] RelationType with authorId ${relType.authorId}, id ${relType.id} and version ${relType.version} not found`,
-    );
-    tx.rollback();
+    throw new SyncError("Relation type to delete not found", {
+      actionName: "deleteRelationType",
+      data: { relType },
+    });
   }
 };

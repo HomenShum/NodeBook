@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { graphNodeTable, relationListsTable } from "@/db/schema";
+import { SyncError } from "@/db/SyncError";
 import { MewDbTransaction } from "@/db/types";
 import { GLOBAL_ROOT_ID, USER_ROOT_ID_PREFIX } from "@/lib/constants";
 
@@ -22,14 +23,13 @@ export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[])
     )
     .returning({ createdId: graphNodeTable.id });
   if (newNodes.length !== nodes.length) {
-    console.error(`[sync][createNodes] Unable to create all nodes`);
-    tx.rollback();
+    throw new SyncError("Unable to create all nodes", { actionName: "createNodes", data: { nodes } });
   }
 };
 
 export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode, newProps: SerializedNode) => {
   if (newProps.id === GLOBAL_ROOT_ID) {
-    throw new Error("Cannot update global root node");
+    throw new SyncError("Cannot update global root node", { actionName: "updateNode", data: { oldProps, newProps } });
   }
   const updated = await tx
     .update(graphNodeTable)
@@ -43,28 +43,19 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
       isZone: newProps.isZone,
       isPublic: newProps.isPublic,
     })
-    .where(
-      and(
-        eq(graphNodeTable.authorId, oldProps.authorId),
-        eq(graphNodeTable.id, oldProps.id),
-        eq(graphNodeTable.version, oldProps.version),
-      ),
-    )
+    .where(and(eq(graphNodeTable.authorId, oldProps.authorId), eq(graphNodeTable.id, oldProps.id)))
     .returning({ updatedId: graphNodeTable.id });
   if (updated.length === 0) {
-    console.error(
-      `[sync][updateNode] Node with authorId ${oldProps.authorId}, id ${oldProps.id}, and version ${oldProps.version} not found`,
-    );
-    tx.rollback();
+    throw new SyncError("Node to update not found", { actionName: "updateNode", data: { oldProps, newProps } });
   }
 };
 
 export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => {
   if (node.id.startsWith(USER_ROOT_ID_PREFIX)) {
-    throw new Error("Cannot delete user root node");
+    throw new SyncError("Cannot delete user root node", { actionName: "deleteNode", data: { node } });
   }
   if (node.id === GLOBAL_ROOT_ID) {
-    throw new Error("Cannot delete global root node");
+    throw new SyncError("Cannot delete global root node", { actionName: "deleteNode", data: { node } });
   }
 
   // Delete all relationLists entries that reference this node
@@ -84,9 +75,6 @@ export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => 
 
   // If there was no row for the node in the main table, log an error and rollback the transaction
   if (deletedNode.length === 0) {
-    console.error(
-      `[sync][deleteNode] Node with authorId ${node.authorId}, id ${node.id} and version ${node.version} not found`,
-    );
-    tx.rollback();
+    throw new SyncError("Node to delete not found", { actionName: "deleteNode", data: { node } });
   }
 };

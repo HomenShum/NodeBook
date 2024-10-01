@@ -10,6 +10,7 @@ import { createNodes, deleteNode, updateNode } from "@/db/graphNodes";
 import { createRelations, deleteRelation, updateRelation } from "@/db/graphRelations";
 import { upsertRelationList } from "@/db/relationLists";
 import { createRelationTypes, deleteRelationType, updateRelationType } from "@/db/relationTypes";
+import { formatSyncErrorForLog, SyncError } from "@/db/SyncError";
 
 export const GET = withAuth(getHandler);
 async function getHandler(req: NextAuthenticatedRequest) {
@@ -85,9 +86,14 @@ async function postHandler(req: NextAuthenticatedRequest) {
       }
     });
   } catch (e) {
-    // Drizzle throws an error if the transaction is rolled back
-    console.error(e);
-    captureException(e, { extra: { message: "Error saving sync data" } });
+    // If any error is thrown, Drizzle rolls back the transaction for us
+    if (e instanceof SyncError) {
+      console.error(formatSyncErrorForLog(e, { userId }), e.data);
+      captureException(e, { user: { id: userId }, extra: { data: e.data } });
+    } else {
+      console.error(e);
+      captureException(e, { user: { id: userId }, extra: { message: "Error saving sync data" } });
+    }
     return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
   }
 

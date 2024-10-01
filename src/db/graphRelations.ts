@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { graphRelationTable, relationListsTable } from "@/db/schema";
+import { SyncError } from "@/db/SyncError";
 import { MewDbTransaction } from "@/db/types";
 import { GLOBAL_TO_USER_RELATION_ID_PREFIX } from "@/lib/constants";
 
@@ -21,8 +22,7 @@ export const createRelations = async (tx: MewDbTransaction, relations: Serialize
     )
     .returning({ createdId: graphRelationTable.id });
   if (newRelations.length !== relations.length) {
-    console.error(`[sync][createRelations] Unable to create all relations`);
-    tx.rollback();
+    throw new SyncError("Unable to create all relations", { actionName: "createRelations", data: { relations } });
   }
 };
 
@@ -52,10 +52,7 @@ export const updateRelation = async (
     )
     .returning({ updatedId: graphRelationTable.id });
   if (updated.length === 0) {
-    console.error(
-      `[sync][updateRelation] Relation with authorId ${oldProps.authorId}, id ${oldProps.id}, and version ${oldProps.version} not found`,
-    );
-    tx.rollback();
+    throw new SyncError("Relation to update not found", { actionName: "updateRelation", data: { oldProps, newProps } });
   }
   if (!oldProps.isPublic && newProps.isPublic) {
     // When making a relation public, update all relationLists entries that reference this relation to be public.
@@ -71,7 +68,10 @@ export const updateRelation = async (
 
 export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
   if (relation.id.startsWith(GLOBAL_TO_USER_RELATION_ID_PREFIX)) {
-    throw new Error("Cannot delete relation from global to user");
+    throw new SyncError("Cannot delete relation from global to user", {
+      actionName: "deleteRelation",
+      data: { relation },
+    });
   }
 
   // Delete all relationLists entries that reference this relation
@@ -91,9 +91,6 @@ export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedR
 
   // If there was no row for the relation in the main table, log an error and rollback the transaction
   if (deletedRelation.length === 0) {
-    console.error(
-      `[sync][deleteRelation] Relation with authorId ${relation.authorId}, id ${relation.id} and version ${relation.version} not found`,
-    );
-    tx.rollback();
+    throw new SyncError("Relation to delete not found", { actionName: "deleteRelation", data: { relation } });
   }
 };
