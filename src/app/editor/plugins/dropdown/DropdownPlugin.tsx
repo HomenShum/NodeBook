@@ -13,6 +13,8 @@ import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
 import { checkForMentionMatch } from "@/lib/utils";
 
+const MAX_DROPDOWN_RESULTS = 20;
+
 /**
  * This plugin handles the dropdowns that appear below the editor.
  *
@@ -85,7 +87,9 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
           }
           return res;
         }),
-      ].sort((a, b) => b.score - a.score);
+      ]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, MAX_DROPDOWN_RESULTS);
     },
     [treeNode, graphStore],
   );
@@ -95,6 +99,7 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
       .filter((node) => treeNode.object.id !== node.id)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .filter((node) => node.id !== treeNode.object.id && node.text.length > 0)
+      .slice(0, MAX_DROPDOWN_RESULTS)
       .map((node) => ({ key: node.id, type: "node" as const, object: node, score: 0 }));
   }, [graphStore, treeNode]);
 
