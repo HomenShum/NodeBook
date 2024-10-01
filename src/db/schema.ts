@@ -6,9 +6,33 @@ export const dataTable = pgTable("data", {
   id: serial("id").primaryKey(),
   json: text("json"),
 });
-
 export const PersistedDataSchema = createSelectSchema(dataTable);
 export type PersistedData = z.infer<typeof PersistedDataSchema>;
+
+export const SearchAndReplaceDropdownOptionEnum = z.enum(["Always", "LabelledOnly", "SemicolonOnly"]);
+export type SearchAndReplaceDropdownOption = z.infer<typeof SearchAndReplaceDropdownOptionEnum>;
+
+const SerializedUserSettingsSchema = z.object({
+  addAllNewNodesAsChildrenOfUserNode: z.boolean().optional(),
+  showNodeDetails: z.boolean().optional(),
+  hideDirectParent: z.boolean().optional(),
+  hideAllRootParents: z.boolean().optional(),
+  hideAllParents: z.boolean().optional(),
+  hideBackrelations: z.boolean().optional(),
+  hideBundles: z.boolean().optional(),
+  hideZones: z.boolean().optional(),
+  hideThoughtstreamBullets: z.boolean().optional(),
+  hideBulletBackgroundIfParentsOnly: z.boolean().optional(),
+  searchAndReplaceEnabled: z.boolean().optional(),
+  searchAndReplaceDropdown: SearchAndReplaceDropdownOptionEnum.optional(),
+  disableCycles: z.boolean().optional(),
+  allowShiftTabAboveViewRoot: z.boolean().optional(),
+  hidePinnedItems: z.boolean().optional(),
+  publicMode: z.boolean().optional(),
+  showAllNodesOption: z.boolean().optional(),
+  triggerRelationOnSingleColon: z.boolean().optional(),
+});
+export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 
 export const userTable = pgTable("mew_user", {
   id: text("id").primaryKey(),
@@ -16,9 +40,11 @@ export const userTable = pgTable("mew_user", {
   name: text("name"),
   picture: text("picture"),
   createdAt: timestamp("created_at"),
+  settings: text("settings").default("{}").notNull(),
 });
 export const UserSchema = createSelectSchema(userTable, {
   createdAt: z.coerce.date(),
+  settings: SerializedUserSettingsSchema,
 });
 export type PersistedUser = z.infer<typeof UserSchema>;
 

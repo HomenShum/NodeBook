@@ -1,4 +1,4 @@
-import { PersistedUser } from "@/db/schema";
+import { PersistedUser, SerializedUserSettings } from "@/db/schema";
 
 export class MewUser {
   id: string;
@@ -6,6 +6,7 @@ export class MewUser {
   name: string;
   picture: string;
   createdAt: Date;
+  settings: SerializedUserSettings;
 
   constructor(u: PersistedUser) {
     this.id = u.id;
@@ -13,6 +14,7 @@ export class MewUser {
     this.name = u.name ?? "unknown";
     this.picture = u.picture ?? "/profile-default.jpg";
     this.createdAt = u.createdAt ?? new Date("2020-01-01");
+    this.settings = u.settings ?? {};
   }
 
   get isUnlogged() {
@@ -27,6 +29,7 @@ export const UNLOGGED_USER = new MewUser({
   name: "Unlogged User",
   picture: "/profile-default.jpg",
   createdAt: new Date("2024-07-16T17:14:31.223Z"),
+  settings: {},
 });
 
 const MOCK_MEW_USER_ID = "SPECIAL::mew|0123456789";
@@ -36,4 +39,5 @@ export const MOCK_MEW_USER = new MewUser({
   name: "Tyler Durden",
   picture: "/profile-default.jpg",
   createdAt: new Date("2024-07-16T17:14:31.223Z"),
+  settings: {},
 });

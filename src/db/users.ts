@@ -23,8 +23,13 @@ const createUser = async (tx: MewDbTransaction, user: PersistedUser) => {
       name: user.name,
       picture: user.picture,
       createdAt: user.createdAt,
+      settings: "{}", // Settings are ignored here as they are updated in a separate request
     })
     .onConflictDoNothing()
     .returning();
   return result[0];
+};
+
+export const updateUserSettings = async (db: MewDatabase, user: PersistedUser) => {
+  await db.update(userTable).set({ settings: JSON.stringify(user.settings) }).where(eq(userTable.id, user.id));
 };

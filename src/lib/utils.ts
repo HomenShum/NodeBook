@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 
-import { SearchAndReplaceDropdownOption } from '@/app/graph/SettingsStore';
+import { SearchAndReplaceDropdownOption, SearchAndReplaceDropdownOptionEnum } from "@/db/schema";
 
 // Utility function to combine class names
 export function cn(...inputs: ClassValue[]) {
@@ -57,9 +57,9 @@ function createMatchRegex({ triggers, maxLength = REGEX_CONSTANTS.MAX_LENGTH, ma
   if (triggers === '') {
     return new RegExp(`${matchOnlyStart ? '^' : '(^|\\s)'}(${REGEX_CONSTANTS.VALID_CHARS}{1,${maxLength}})$`);
   }
-  
+
   return new RegExp(
-    triggers === ';' 
+    triggers === ';'
       ? `^(;(${REGEX_CONSTANTS.VALID_CHARS}{0,${maxLength}}))$`
       : `${matchOnlyStart ? '^' : '(^|\\s|\\()'}([${triggers}](${REGEX_CONSTANTS.VALID_CHARS}{0,${maxLength}}))$`
   );
@@ -124,20 +124,20 @@ export function checkForMentionMatch(text: string): MenuTextMatch | null {
 
 // Check for a search and replace match based on configuration and context
 export function checkForSearchAndReplaceMatch(
-  text: string, 
-  isLabellingRelation: boolean, 
+  text: string,
+  isLabellingRelation: boolean,
   config: SearchAndReplaceDropdownOption
 ): MenuTextMatch | null {
   switch (config) {
-    case SearchAndReplaceDropdownOption.Always:
+    case SearchAndReplaceDropdownOptionEnum.enum.Always:
       return checkForSearchAndReplaceMatchAny(text);
 
-    case SearchAndReplaceDropdownOption.LabelledOnly:
+    case SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly:
       return isLabellingRelation
         ? checkForSearchAndReplaceMatchAny(text)
         : checkForSearchAndReplaceOnSemiColonAtStart(text);
 
-    case SearchAndReplaceDropdownOption.SemicolonOnly:
+    case SearchAndReplaceDropdownOptionEnum.enum.SemicolonOnly:
     default:
       return checkForSearchAndReplaceOnSemiColonAtStart(text);
   }

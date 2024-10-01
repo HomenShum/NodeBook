@@ -71,7 +71,21 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       }
 
       // create new stores (shorter names to distinguish from the state variables)
-      const settings = new SettingsStore();
+      const settings = new SettingsStore(newUser.settings, async (newSettings) => {
+        if (newUser.isUnlogged) return;
+        const userData = { ...newUser, settings: newSettings };
+        try {
+          await authedFetch("/api/user/settings", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ user: userData }),
+          });
+        } catch (e) {
+          logger.error("Failed to save user settings", e);
+        }
+      });
       const graph = new GraphStore(newUser, settings, authedFetch);
       const view = new ViewStore(settings, graph);
 

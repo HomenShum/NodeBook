@@ -17,12 +17,12 @@ import { LexicalTypeaheadMenuPlugin } from "@/app/editor/plugins/LexicalTypeahea
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
-import { SearchAndReplaceDropdownOption } from "@/app/graph/SettingsStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { uuid } from "@/app/util";
+import { SearchAndReplaceDropdownOption, SearchAndReplaceDropdownOptionEnum } from "@/db/schema";
 import logger from "@/lib/logger";
 import { checkForMentionMatch, checkForSearchAndReplaceMatch } from "@/lib/utils";
 
@@ -223,8 +223,8 @@ export function DropdownMenuPlugin({
             setSearchAndReplaceSetting(searchAndReplaceDropdown);
             return null;
           }
-          setSearchAndReplaceSetting(SearchAndReplaceDropdownOption.Always);
-          return checkForSearchAndReplaceMatch(";", isLabellingRelation, SearchAndReplaceDropdownOption.Always);
+          setSearchAndReplaceSetting(SearchAndReplaceDropdownOptionEnum.enum.Always);
+          return checkForSearchAndReplaceMatch(";", isLabellingRelation, SearchAndReplaceDropdownOptionEnum.enum.Always);
         case MenuEventTrigger.HIDE_MENU_ON_ESCAPE:
           // RULE: Trigger -> Escape -> Text should not show dropdown
           // RULE: Trigger -> Escape -> Trigger -> text should show dropdown

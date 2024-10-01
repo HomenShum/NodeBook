@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { PostUserRequestSchema, PostUserResponse } from "@/app/api/types";
 import { getDb } from "@/db";
-import { getOrCreateUser } from "@/db/users";
+import { updateUserSettings } from "@/db/users";
 
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
@@ -20,18 +20,12 @@ async function postHandler(req: NextAuthenticatedRequest) {
   try {
     const db = getDb();
     const { user } = result.data;
-    const retrievedOrCreatedUser = await getOrCreateUser(db, user);
-    return NextResponse.json({
-      error: false,
-      data: {
-        ...retrievedOrCreatedUser,
-        settings: JSON.parse(retrievedOrCreatedUser.settings),
-      },
-    } satisfies PostUserResponse);
+    await updateUserSettings(db, user);
+    return NextResponse.json({ error: false, data: user } satisfies PostUserResponse);
   } catch (e) {
     console.error("Error creating user", e);
-    captureException(e, { extra: { message: "Error creating user" } });
-    return NextResponse.json({ error: true, message: "Error creating user" } satisfies PostUserResponse, {
+    captureException(e, { extra: { message: "Error updating user settings" } });
+    return NextResponse.json({ error: true, message: "Error updating user settings" } satisfies PostUserResponse, {
       status: 500,
     });
   }

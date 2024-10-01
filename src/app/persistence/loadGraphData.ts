@@ -54,6 +54,7 @@ export const fetchGetOrCreateUser = async (user: User, authFetch: typeof fetch):
         name: user.name ?? user.nickname ?? "The Nameless One",
         picture: user.picture,
         createdAt: user.updated_at ?? new Date().toISOString(),
+        settings: {},
       },
     }),
   }).then((res) => res.json());

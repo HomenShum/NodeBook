@@ -1,0 +1,1 @@
+ALTER TABLE "mew_user" ADD COLUMN "settings" text DEFAULT '{}' NOT NULL;

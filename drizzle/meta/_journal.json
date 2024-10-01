@@ -57,6 +57,13 @@
       "when": 1727186135533,
       "tag": "0007_sharp_night_thrasher",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1727197922411,
+      "tag": "0008_acoustic_mister_fear",
+      "breakpoints": true
     }
   ]
 }

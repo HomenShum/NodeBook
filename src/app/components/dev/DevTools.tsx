@@ -4,10 +4,10 @@ import { useAuth } from "@/app/auth/useAuth";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { env } from "@/app/envFrontend";
-import { SearchAndReplaceDropdownOption } from "@/app/graph/SettingsStore";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useUser } from "@/app/StoresProvider";
+import { SearchAndReplaceDropdownOption, SearchAndReplaceDropdownOptionEnum } from "@/db/schema";
 import logger from "@/lib/logger";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -17,9 +17,9 @@ const SelectSearchAndReplaceDropdown = observer(() => {
   const settingsStore = useSettingsStore();
 
   const searchAndReplaceDropdownOptions: { label: string; value: SearchAndReplaceDropdownOption }[] = [
-    { label: "Always", value: SearchAndReplaceDropdownOption.Always },
-    { label: "After typing in a labelled relations or semicolon", value: SearchAndReplaceDropdownOption.LabelledOnly },
-    { label: "After typing semicolon", value: SearchAndReplaceDropdownOption.SemicolonOnly },
+    { label: "Always", value: SearchAndReplaceDropdownOptionEnum.enum.Always },
+    { label: "After typing in a labelled relations or semicolon", value: SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly },
+    { label: "After typing semicolon", value: SearchAndReplaceDropdownOptionEnum.enum.SemicolonOnly },
   ];
 
   return (

@@ -2,34 +2,15 @@
 
 import { autorun, isObservable, makeAutoObservable } from "mobx";
 
-export enum SearchAndReplaceDropdownOption {
-  Always = "always",
-  LabelledOnly = "labelled-only",
-  SemicolonOnly = "semicolon-only",
-}
-
-type SerializedUserSettings = {
-  addAllNewNodesAsChildrenOfUserNode?: boolean;
-  showNodeDetails?: boolean;
-  hideDirectParent?: boolean;
-  hideAllRootParents?: boolean;
-  hideAllParents?: boolean;
-  hideBackrelations?: boolean;
-  hideBundles?: boolean;
-  hideZones?: boolean;
-  hideThoughtstreamBullets?: boolean;
-  hideBulletBackgroundIfParentsOnly?: boolean;
-  searchAndReplaceEnabled?: boolean;
-  searchAndReplaceDropdown?: SearchAndReplaceDropdownOption;
-  disableCycles?: boolean;
-  allowShiftTabAboveViewRoot?: boolean;
-  hidePinnedItems?: boolean;
-  publicMode?: boolean;
-  showAllNodesOption?: boolean;
-  triggerRelationOnSingleColon: boolean;
-};
+import {
+  SearchAndReplaceDropdownOption,
+  SearchAndReplaceDropdownOptionEnum,
+  SerializedUserSettings,
+} from "@/db/schema";
 
 export class SettingsStore {
+  private saveUserSettings?: (settings: SerializedUserSettings) => Promise<void>;
+
   public addAllNewNodesAsChildrenOfUserNode = false;
   public showNodeDetails = false;
   public hideDirectParent = true;
@@ -41,7 +22,8 @@ export class SettingsStore {
   public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
   public searchAndReplaceEnabled = true;
-  public searchAndReplaceDropdown: SearchAndReplaceDropdownOption = SearchAndReplaceDropdownOption.LabelledOnly;
+  public searchAndReplaceDropdown: SearchAndReplaceDropdownOption =
+    SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly;
   public disableCycles = true;
   public addStreamLabeledRelationsToMyLists = true;
   public allowShiftTabAboveViewRoot = false;
@@ -52,10 +34,16 @@ export class SettingsStore {
   public triggerRelationOnSingleColon = false;
   private stopAutosave: () => void;
 
-  constructor() {
+  constructor(
+    initialSettings?: SerializedUserSettings,
+    saveUserSettings?: (settings: SerializedUserSettings) => Promise<void>,
+  ) {
+    this.saveUserSettings = saveUserSettings;
     this.makeObservable();
-    this.loadFromLocalStorage();
-    this.stopAutosave = autorun(() => this.saveToLocalStorage());
+    if (initialSettings) {
+      this.deserialize(initialSettings);
+    }
+    this.stopAutosave = autorun(() => this.syncToServer());
   }
 
   makeObservable() {
@@ -75,7 +63,7 @@ export class SettingsStore {
     this.hideThoughtstreamBullets = true;
     this.hideBulletBackgroundIfParentsOnly = true;
     this.searchAndReplaceEnabled = false;
-    this.searchAndReplaceDropdown = SearchAndReplaceDropdownOption.LabelledOnly;
+    this.searchAndReplaceDropdown = SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly;
     this.disableCycles = true;
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
@@ -84,26 +72,17 @@ export class SettingsStore {
     this.triggerRelationOnSingleColon = false;
   }
 
-  saveToLocalStorage() {
-    if (typeof localStorage === "undefined") return;
-    localStorage.setItem("userSettings", JSON.stringify(this.serialize()));
-  }
-
-  loadFromLocalStorage() {
-    if (typeof localStorage === "undefined") return;
-    const dataString = localStorage.getItem("userSettings");
-    if (dataString) {
+  private async syncToServer() {
+    if (this.saveUserSettings) {
       try {
-        const data = JSON.parse(dataString);
-        if (!data || typeof data !== "object") return;
-        this.deserialize(data);
+        await this.saveUserSettings(this.serialize());
       } catch (e) {
-        console.warn("Error loading user settings from local storage", e);
+        console.warn("Error saving user settings", e);
       }
     }
   }
 
-  serialize(): SerializedUserSettings {
+  private serialize(): SerializedUserSettings {
     return {
       addAllNewNodesAsChildrenOfUserNode: this.addAllNewNodesAsChildrenOfUserNode,
       showNodeDetails: this.showNodeDetails,
@@ -124,7 +103,7 @@ export class SettingsStore {
     };
   }
 
-  deserialize(data: SerializedUserSettings) {
+  private deserialize(data: SerializedUserSettings) {
     this.addAllNewNodesAsChildrenOfUserNode =
       data.addAllNewNodesAsChildrenOfUserNode ?? this.addAllNewNodesAsChildrenOfUserNode;
     this.showNodeDetails = data.showNodeDetails ?? this.showNodeDetails;
