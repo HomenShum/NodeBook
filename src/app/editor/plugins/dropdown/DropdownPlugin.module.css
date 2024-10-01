@@ -1,15 +1,25 @@
-.TypeaheadPopover {
+.Dropdown {
   background: var(--gray-1);
   border: solid 0.5px var(--teal-4);
   padding: 2px;
   border-radius: 4px;
-  position: fixed;
   max-width: 50vw;
   z-index: 30;
-  box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
+  box-shadow:
+    rgba(0, 0, 0, 0.067) 0px 3px 8px,
+    rgba(0, 0, 0, 0.067) 0px 2px 5px,
+    rgba(0, 0, 0, 0.067) 0px 1px 1px;
 }
 
-.TypeaheadPopover ul {
+.SearchAndReplace {
+  position: absolute;
+}
+
+.TypeaheadPopover {
+  position: fixed;
+}
+
+.Dropdown ul {
   padding: 2px;
   list-style: none;
   margin: 0;
@@ -18,11 +28,11 @@
   scrollbar-width: none;
 }
 
-.TypeaheadPopover ul > :last-child {
+.Dropdown ul > :last-child {
   padding: 8px 12px 4px 12px;
 }
 
-.TypeaheadPopover ul li {
+.Dropdown ul li {
   margin: 0;
   padding: 6px 12px;
   min-width: 180px;
@@ -32,23 +42,13 @@
   color: var(--gray-12);
 }
 
-.TypeaheadPopover ul li.Selected {
+.Dropdown ul li.Selected {
   background: var(--teal-2);
 }
 
-.TypeaheadPopoverItem {
+.DropdownItem {
   display: flex;
   gap: 2px;
   padding-bottom: 4px;
   flex-direction: column;
-}
-
-.TypeaheadPopoverItemPath {
-  display: flex;
-  flex-wrap: wrap;
-  line-height: 16px;
-  gap: 4px;
-  align-items: center;
-  font-size: var(--font-size-sm);
-  color: var(--gray-9);
 }

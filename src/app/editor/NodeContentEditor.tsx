@@ -11,7 +11,7 @@ import { RefObject } from "react";
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { BindFocusToTreePlugin } from "@/app/editor/plugins/BindFocusToTreePlugin";
-import { DropdownMenuPlugin } from "@/app/editor/plugins/DropdownMenuPlugin";
+import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowAtEndsPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
@@ -68,9 +68,7 @@ export const NodeEditor = observer(
           <SyncWithGraphPlugin node={treeNode.object} />
           {isEditorEditable && <ClearEditorPlugin />}
           {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
-          {isEditorEditable && tree.isNodeFocused(treeNode.id) && (
-            <DropdownMenuPlugin treeNode={treeNode} boundaryRef={boundaryRef} />
-          )}
+          {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
           {isEditorEditable && <LeftRightArrowAtEndsPlugin />}
           {isEditorEditable && <BackspaceMergeNodesPlugin />}
           {isEditorEditable && <PastePlugin />}
