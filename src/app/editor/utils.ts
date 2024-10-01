@@ -200,16 +200,17 @@ export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphN
   if (node.content.length !== paragraphChildren.length) return false;
 
   const match = node.content.every((chip, idx) => {
-    if (chip.type !== paragraphChildren[idx].getType()) return false;
-
+    const lexicalNode = paragraphChildren[idx];
+    if (chip.type !== lexicalNode.getType()) return false;
     if (chip.type === "mention") {
       const referencedNode = graphStore.getNode(chip.value);
-      return referencedNode !== undefined && referencedNode.text === paragraphChildren[idx].getTextContent();
+      if (!$isMentionNode(lexicalNode)) return false;
+      return referencedNode !== undefined && referencedNode.text === lexicalNode.mentionedGraphNodeText;
     } else if (chip.type === "link") {
-      const linkNode = paragraphChildren[idx] as LinkNode;
-      return chip.url === linkNode.getURL() && chip.value === linkNode.getTextContent();
+      if (!$isLinkNode(lexicalNode)) return false;
+      return chip.url === lexicalNode.getURL() && chip.value === lexicalNode.getTextContent();
     } else {
-      return chip.value === paragraphChildren[idx].getTextContent();
+      return chip.value === lexicalNode.getTextContent();
     }
   });
 

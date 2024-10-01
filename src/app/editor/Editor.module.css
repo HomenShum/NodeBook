@@ -5,10 +5,6 @@
   --descendant-content: "";
 }
 
-.EditorWrapper.showAtSignPrefix {
-  --descendant-content: "@";
-}
-
 .MentionNode {
   color: "#0b0b79";
   text-decoration: underline var(--gray-3);

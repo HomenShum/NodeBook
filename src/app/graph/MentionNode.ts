@@ -57,7 +57,7 @@ export class MentionNode extends TextNode {
 
   constructor(mentionedGraphNodeId: string, mentionedGraphNodeText: string, __key?: NodeKey) {
     // The __key parameter is required when cloning a node
-    super(mentionedGraphNodeText, __key);
+    super("@" + mentionedGraphNodeText, __key);
     this.mentionedGraphNodeId = mentionedGraphNodeId;
     this.mentionedGraphNodeText = mentionedGraphNodeText;
   }
