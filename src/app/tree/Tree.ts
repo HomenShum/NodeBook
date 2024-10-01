@@ -826,13 +826,20 @@ export class Tree {
 
     // Choose split strategy based on cursor position and node expansion
 
-    const textBefore = chips?.before.map((c) => c.value).join().trim() || "";
-    const textAfter = chips?.after.map((c) => c.value).join().trim() || "";
     const isExpandedWithChildren = treeNode.isExpanded && treeNode.childCount > 0;
+    const atStartOfLine =
+      chips?.before
+        .map((c) => c.value)
+        .join()
+        .trim() === "";
     const atStartOfChildWithContent =
       treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id &&
       treeNode.relationWithParent.to.id === treeNode.object.id &&
-      !textBefore.length && textAfter.length > 0;
+      atStartOfLine &&
+      (chips?.before ?? [])
+        .map((c) => c.value)
+        .join()
+        .trim().length > 0;
     let changes: { txs: TxCombined; newNodePath: string; expansions?: Record<string, boolean> };
     if (isExpandedWithChildren) {
       if (atStartOfChildWithContent) {
@@ -841,7 +848,7 @@ export class Tree {
         changes = splitToChild();
       }
     } else {
-      if (textBefore.length === 0) {
+      if (atStartOfLine) {
         changes = moveToNewRelationBelow();
       } else {
         changes = splitToSiblingBelow();
