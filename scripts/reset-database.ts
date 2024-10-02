@@ -6,13 +6,21 @@ import { migrate } from "drizzle-orm/vercel-postgres/migrator";
 import { end, getDb } from "@/db";
 import { env } from "@/envBackend";
 
+const PROD_DB_NAME = "verceldb";
+
 async function main() {
   if (env.STAGE !== "development") {
-    throw new Error(`This script can only be run in development. Current stage: ${env.STAGE}`);
+    console.error(`This script can only be run in development. Current stage: ${env.STAGE}`);
+    process.exit(1);
   }
 
   const connectionString = env.POSTGRES_CONNECTION_STRING;
   const dbName = new URL(connectionString).pathname.slice(1);
+
+  if (dbName === PROD_DB_NAME) {
+    console.error(`This script cannot be run on the production database. Current database: ${dbName}`);
+    process.exit(1);
+  }
 
   console.log(`You're about to reset the database: ${dbName}`);
 
