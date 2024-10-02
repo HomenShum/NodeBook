@@ -48,3 +48,9 @@ yarn dev
 - Run `yarn db:generate-migration` to create a new migration file
 - Apply the migration with `yarn db:migrate` (to the database specified in your .env file)
 - Commit and push the schema change and the migration file
+
+## Restoring database backups
+- Every 12 hours (12AM/12PM UTC) backups are stored in mew-vercel-backup (us-west-1).
+- Download the backup and run `pg_restore -v -d <database-connection-string> <path-to-backup>`
+  - Make sure `database-connection-string` ends with a database name.
+  - Example: `pg_restore -v -d postgres://user:pass@host:port/db_name /home/username/dump-2024-10-02-18-28.bak`
