@@ -6,7 +6,7 @@ import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { RefObject } from "react";
+import { RefObject, useCallback } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
@@ -48,6 +48,18 @@ export const NodeEditor = observer(
     const router = useRouter();
     const tree = useTree();
 
+    const handleMentionNodeClick = useCallback(
+      (e: Event) => {
+        const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
+        e.stopPropagation();
+        const node = graphStore.getNode(nodeId);
+        if (node) {
+          router.push(createRouteUrl(node.getPath()));
+        }
+      },
+      [graphStore, router],
+    );
+
     return (
       <div className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
         <LexicalComposer
@@ -73,18 +85,7 @@ export const NodeEditor = observer(
           {isEditorEditable && <BackspaceMergeNodesPlugin />}
           {isEditorEditable && <PastePlugin />}
           {isEditorEditable && <RelationPlugin />}
-          <NodeEventPlugin
-            nodeType={MentionNode}
-            eventType={"click"}
-            eventListener={(e: Event) => {
-              const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
-              e.stopPropagation();
-              const node = graphStore.getNode(nodeId);
-              if (node) {
-                router.push(createRouteUrl(node.getPath()));
-              }
-            }}
-          />
+          <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
           <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
           {isEditorEditable && <BindFocusToTreePlugin />}
           <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
