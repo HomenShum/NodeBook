@@ -296,4 +296,37 @@ describe("GraphStore.setIsPublic", () => {
     expect(relatedNonChildNode.isPublic).toBe(false);
     expect(rootRelatedRel.isPublic).toBe(false);
   });
+
+  it("should be able to set isPublic and isNewRelatedObjectsPublic in parallel", async () => {
+    expect(ancestorNode.isPublic).toBe(false);
+    expect(rootAncestorRel.isPublic).toBe(false);
+    expect(rootNode.isPublic).toBe(false);
+    expect(childNode.isPublic).toBe(false);
+    expect(rootChildRel.isPublic).toBe(false);
+    expect(grandChildNode.isPublic).toBe(false);
+    expect(childGrandChildRel.isPublic).toBe(false);
+    expect(relatedNonChildNode.isPublic).toBe(false);
+    expect(rootRelatedRel.isPublic).toBe(false);
+
+    await graphStore.setIsPublic({
+      objectId: childNode.id,
+      isPublic: true,
+      alsoSetRelatedObjects: true,
+      alsoSetChildrenAndDescendants: true,
+      isNewRelatedObjectsPublic: true,
+    });
+    expect(childNode.isPublic).toBe(true);
+    expect(childNode.isNewRelatedObjectsPublic).toBe(true);
+
+    await graphStore.setIsPublic({
+      objectId: childNode.id,
+      isPublic: true,
+      alsoSetRelatedObjects: true,
+      alsoSetChildrenAndDescendants: true,
+      isNewRelatedObjectsPublic: false,
+    });
+
+    expect(childNode.isPublic).toBe(true);
+    expect(childNode.isNewRelatedObjectsPublic).toBe(false);
+  });
 });

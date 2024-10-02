@@ -351,11 +351,15 @@ export class GraphStore {
     let newRelation;
     const updates: GraphUpdate[] = [];
 
+    let isNewRelatedObjectsPublic =
+      (tx.nodeProps && tx.nodeProps.isNewRelatedObjectsPublic) ||
+      (wannaBeParent instanceof GraphNode && wannaBeParent.isNewRelatedObjectsPublic);
+
     try {
       const { node, updates: newNodeUpdates } = this._addNode({
         ...tx.nodeProps,
-        isPublic: tx.nodeProps?.isPublic || (wannaBeParent as GraphNode).isNewRelatedObjectsPublic,
-        isNewRelatedObjectsPublic: (wannaBeParent as GraphNode).isNewRelatedObjectsPublic,
+        isPublic: tx.nodeProps?.isPublic || isNewRelatedObjectsPublic,
+        isNewRelatedObjectsPublic,
       });
       newNode = node;
       updates.push(...newNodeUpdates);
@@ -521,15 +525,23 @@ export class GraphStore {
     // Don't try to set public status for other people's objects
     if (object.authorId !== this.user.id) return { updates: [] };
 
+    const isNewRelatedObjectsPublic: boolean = !!optionals.isNewRelatedObjectsPublic;
+
     // If object is already desired state, do nothing
-    if (object.isPublic === isPublic) return { updates: [] };
+    if (
+      (object instanceof GraphNode &&
+        object.isPublic === isPublic &&
+        object.isNewRelatedObjectsPublic === isNewRelatedObjectsPublic) ||
+      (!(object instanceof GraphNode) && object.isPublic === isPublic)
+    )
+      return { updates: [] };
 
     const updates: GraphUpdate[] = [];
 
     switch (object.objectType) {
       case "node":
         const nodeAtStart = object.serialize();
-        object.update({ isPublic, isNewRelatedObjectsPublic: !!optionals.isNewRelatedObjectsPublic });
+        object.update({ isPublic, isNewRelatedObjectsPublic });
         updates.push({
           operation: "updateNode",
           oldProps: nodeAtStart,
@@ -1033,7 +1045,8 @@ export class GraphStore {
       if (
         !relationProps.to.isPublic &&
         relationProps.from.isPublic &&
-        (relationProps.from as GraphNode).isNewRelatedObjectsPublic
+        relationProps.from instanceof GraphNode &&
+        relationProps.from.isNewRelatedObjectsPublic
       ) {
         const nodeUpdates = this._updateNode({
           nodeId: relationProps.to.id,

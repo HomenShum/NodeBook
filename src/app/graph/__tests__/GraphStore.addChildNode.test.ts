@@ -93,4 +93,45 @@ describe("GraphStore.addChildNode", () => {
     expect(graphStore.getRelation(relation.id)).toBeUndefined();
     expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);
   });
+  it("`isNewRelatedObjectsPublic` should be inheritable from parent", async () => {
+    let { node: parentNode } = await graphStore.addChildNode({
+      parentId: graphStore.userRoot.id,
+      nodeProps: {
+        isNewRelatedObjectsPublic: true,
+      },
+    });
+    let { node: childNode } = await graphStore.addChildNode({
+      parentId: parentNode.id,
+    });
+    expect(graphStore.getNode(childNode.id)).toBeDefined();
+    expect(childNode.isNewRelatedObjectsPublic).toEqual(true);
+  });
+  it("isNewRelatedObjectsPublic should be set-able using nodeProps.isNewRelatedObjectsPublic", async () => {
+    let { node } = await graphStore.addChildNode({
+      parentId: graphStore.userRoot.id,
+      nodeProps: {
+        isNewRelatedObjectsPublic: true,
+      },
+    });
+    expect(graphStore.getNode(node.id)).toBeDefined();
+    expect(node.isNewRelatedObjectsPublic).toEqual(true);
+  });
+
+  it("should be public if parent has isNewRelatedObjectsPublic & isNewRelatedObjectsPublic both set respectively", async () => {
+    let { node } = await graphStore.addChildNode({
+      parentId: graphStore.userRoot.id,
+      nodeProps: {
+        isPublic: true,
+        isNewRelatedObjectsPublic: true,
+      },
+    });
+
+    let { node: childNode } = await graphStore.addChildNode({
+      parentId: node.id,
+    });
+
+    expect(graphStore.getNode(childNode.id)).toBeDefined();
+    expect(childNode.isPublic).toBeTruthy();
+    expect(childNode.isNewRelatedObjectsPublic).toBeTruthy();
+  });
 });

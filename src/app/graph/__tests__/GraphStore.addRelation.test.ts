@@ -103,4 +103,33 @@ describe("GraphStore.addRelation", () => {
     expect(startNode.relations).toHaveLength(0);
     expect(endNode.relations).toHaveLength(0);
   });
+  it("a node should become public if it is being related to another node which has `isPublic` and `isNewRelatedObjectsPublic` set", async () => {
+    await graphStore.setIsPublic({
+      objectId: startNode.id,
+      isPublic: true,
+      alsoSetRelatedObjects: true,
+      alsoSetChildrenAndDescendants: true,
+      isNewRelatedObjectsPublic: true,
+    });
+
+    await graphStore.setIsPublic({
+      objectId: endNode.id,
+      isPublic: false,
+      alsoSetRelatedObjects: true,
+      alsoSetChildrenAndDescendants: true,
+      isNewRelatedObjectsPublic: false,
+    });
+
+    const relation = await graphStore.addRelation({
+      id: "relation",
+      fromId: startNode.id,
+      toId: endNode.id,
+    });
+
+    expect(graphStore.getRelation(relation.id)).toBeDefined();
+    expect(startNode.isPublic).toBeTruthy();
+    expect(startNode.isNewRelatedObjectsPublic).toBeTruthy();
+    expect(endNode.isPublic).toBeTruthy();
+    expect(endNode.isNewRelatedObjectsPublic).toBeTruthy();
+  });
 });
