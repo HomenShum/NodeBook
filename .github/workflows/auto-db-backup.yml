@@ -26,7 +26,7 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          /usr/lib/postgresql/16/bin/pg_dump -Fc -v -d $DATABASE_URL -f dump.sql
+          /usr/lib/postgresql/16/bin/pg_dump -Fc -Z1 -v -d $DATABASE_URL -f dump.bak
           ls -la
 
       - name: Upload db dump to S3
@@ -35,4 +35,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-west-1
         run: |
-          aws s3 cp dump.sql s3://mew-vercel-backup/dump-$(date +%F-%H-%M).sql
+          aws s3 cp dump.bak s3://mew-vercel-backup/dump-$(date +%F-%H-%M).bak
