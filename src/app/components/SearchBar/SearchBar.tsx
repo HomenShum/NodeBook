@@ -1,7 +1,7 @@
 import { Search, X } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -11,41 +11,50 @@ import styles from "./SearchBar.module.css";
 
 export const SearchBar = observer(() => {
   const viewStore = useViewStore();
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(!!viewStore.searchQuery);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setIsExpanded(!!viewStore.searchQuery);
-  }, [viewStore.searchQuery]);
+  const handleBlur = useCallback(
+    (e: React.FocusEvent) => {
+      if (!containerRef.current?.contains(e.relatedTarget as Node) && !viewStore.searchQuery) {
+        setIsExpanded(false);
+      }
+    },
+    [viewStore],
+  );
 
-  const handleBlur = (e: React.FocusEvent) => {
-    if (!containerRef.current?.contains(e.relatedTarget as Node) && !viewStore.searchQuery) {
+  const handleCancelClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      viewStore.setSearchQuery("");
       setIsExpanded(false);
-    }
-  };
+      inputRef.current?.blur();
+    },
+    [viewStore],
+  );
 
-  const handleCancelClick = action((e: React.MouseEvent) => {
-    e.stopPropagation();
-    viewStore.setSearchQuery("");
-    setIsExpanded(false);
-    inputRef.current?.blur();
-  });
+  const handleContainerClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isExpanded || e.target === containerRef.current) {
+        inputRef.current?.focus();
+      }
+    },
+    [isExpanded],
+  );
 
-  const handleContainerClick = (e: React.MouseEvent) => {
-    if (!isExpanded || e.target === containerRef.current) {
-      inputRef.current?.focus();
-    }
-  };
-
-  const handleIconClick = (e: React.MouseEvent) => {
+  const handleIconClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     inputRef.current?.focus();
-  };
+  }, []);
 
-  const handleInputChange = action((e: React.ChangeEvent<HTMLInputElement>) => {
-    viewStore.setSearchQuery(e.target.value);
-  });
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      console.log("handleInputChange", e.target, e.target.value);
+      viewStore.setSearchQuery(e.target.value);
+    },
+    [viewStore],
+  );
 
   return (
     <div
