@@ -4,10 +4,10 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useTree } from "@/app/tree/TreeContext";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { defaultRelationTypes } from "@/app/graph/constants";
+import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useTree } from "@/app/tree/TreeContext";
 import { PointerTreeNode } from "@/app/tree/nodes";
 
 /**
@@ -32,20 +32,6 @@ export const BackspaceMergeNodesPlugin = () => {
         event.preventDefault();
 
         if (treeNode instanceof PointerTreeNode) {
-          return false;
-        }
-
-        if (object.text === "") {
-          if (treeNode.relationWithParent) {
-            graphStore.removeRelation({ relationId: relation.id }).then(() => {
-              if (treeNode.siblingAbove) {
-                tree.setFocusedNode(treeNode.siblingAbove.path);
-              } else {
-                tree.setFocusedNode(treeNode.parent.path);
-              }
-            });
-            return true;
-          }
           return false;
         }
 
@@ -119,7 +105,12 @@ export const BackspaceMergeNodesPlugin = () => {
             ])
             .catch(() => {}) // TODO: investigate missing relation error
             .finally(() => {
-              tree.setFocusedNode(targetPath);
+              if (targetPath) {
+                if (treeNode.isExpanded) {
+                  tree.setPathExpanded(targetPath, treeNode.isExpanded);
+                }
+                tree.setFocusedNode(targetPath);
+              }
             });
           return true;
         }
@@ -135,6 +126,7 @@ export const BackspaceMergeNodesPlugin = () => {
     parent,
     relation,
     tree.pathToRoot,
+    treeNode,
     treeNode.siblingAbove,
     treeNode.relationWithParent,
     treeNode.parent.path,
