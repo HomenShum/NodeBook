@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef } from "react";
 import { Options, useHotkeys } from "react-hotkeys-hook";
 
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
+import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
+import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
@@ -12,11 +14,9 @@ import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
-import { useSetCurrentNodeAsRoot } from "@/app/tree/utils";
-import { cn } from "@/lib/utils";
+import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
-import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
-import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
+import { cn } from "@/lib/utils";
 
 import { ChildGroups } from "./RelatedObject/ChildGroups";
 
@@ -124,6 +124,15 @@ function useOutlineHotkeys({ tree, hasFocus }: { tree: Tree; hasFocus: () => boo
   useHotkeys("tab", () => tree.indentSelection(), defaults, [tree]);
   useHotkeys("shift+tab", () => tree.dedentSelection(), defaults, [tree]);
   useHotkeys("esc", () => tree.escapeSelection(), defaults, [tree]);
-  const setCurrentNodeAsRoot = useSetCurrentNodeAsRoot(tree);
+  const setRoot = useSetRoot();
+  const setCurrentNodeAsRoot = useCallback(() => {
+    if (tree.selectionWithNodes?.type === "editor") {
+      const node = tree.selectionWithNodes.treeNode;
+      setRoot({
+        object: node.object,
+        relations: getAncestorsAsArray(node).map((node) => node.relationToChild),
+      });
+    }
+  }, [tree, setRoot]);
   useHotkeys("mod+.", setCurrentNodeAsRoot, defaults, [tree]);
 }

@@ -1,12 +1,12 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { Path } from "@/app/components/Path";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { createRouteUrl, ObjectPath } from "@/app/util";
+import { useSetRoot } from "@/app/tree/utils";
+import { ObjectPath } from "@/app/util";
 import { cn } from "@/lib/utils";
 
 import styles from "./CommandBar.module.css";
@@ -37,7 +37,7 @@ const CommandBar = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const graphStore = useGraphStore();
-  const router = useRouter();
+  const setRoot = useSetRoot();
 
   useHotkeys("mod+shift+k", () => setOpen(true), { enableOnContentEditable: true });
 
@@ -58,7 +58,7 @@ const CommandBar = () => {
                 path,
                 perform: () => {
                   close();
-                  router.push(createRouteUrl(path));
+                  setRoot(path);
                 },
               };
             })),
@@ -72,11 +72,11 @@ const CommandBar = () => {
             nodeProps: { content: search },
           });
           close();
-          router.push(createRouteUrl(node.getPath()));
+          setRoot(node.getPath());
         },
       },
     ];
-  }, [graphStore, router, search]);
+  }, [graphStore, setRoot, search]);
 
   useEffect(() => {
     setSelectedIndex(0);

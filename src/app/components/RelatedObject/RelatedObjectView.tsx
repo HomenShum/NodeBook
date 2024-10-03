@@ -1,6 +1,5 @@
 import { Circle, Dot } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
 import React, { useCallback, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
@@ -9,13 +8,12 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { isUnlabelledChild } from "@/app/tree/utils";
-import { createRouteUrl } from "@/app/util";
+import { getAncestorsAsArray, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
-import { RelatedNodeView } from "./RelatedNodeView";
 import { ChildGroups } from "./ChildGroups";
+import { RelatedNodeView } from "./RelatedNodeView";
 import { RelatedObjectViewType, TreeNodeProvider, useTreeNode } from "./RelatedObjectContext";
 import { RelatedObjectDetails } from "./RelatedObjectDetails";
 import { RelatedObjectMenu } from "./RelatedObjectMenu";
@@ -137,13 +135,15 @@ const Content = observer(() => {
 
 const Bullet = observer(() => {
   const userId = useGraphStore().user?.id;
-  const router = useRouter();
   const { treeNode } = useTreeNode();
-
+  const setRoot = useSetRoot();
   const handleBulletClick = useCallback(() => {
     logger.debug("Clicked bullet", treeNode.path);
-    router.push(createRouteUrl(`${treeNode.path}/${treeNode.object.id}`));
-  }, [treeNode, router]);
+    setRoot({
+      object: treeNode.object,
+      relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
+    });
+  }, [treeNode, setRoot]);
 
   const tooltipContent = [
     `Object author: ${treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}`,

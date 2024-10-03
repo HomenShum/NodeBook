@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
-import { createRouteUrl } from "@/app/util";
+import { useSetRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./ResizableSidebar.module.css";
@@ -37,6 +37,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
 
     const graphStore = useGraphStore();
     const viewStore = useViewStore();
+    const setRoot = useSetRoot();
     const router = useRouter();
 
     const handleOpenDevTools = () => {
@@ -126,7 +127,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                   variant="ghost"
                   className={styles.Button}
                   onClick={() => {
-                    router.push(createRouteUrl({ object: graphStore.globalRoot }));
+                    setRoot({ object: graphStore.globalRoot });
                   }}
                 >
                   <span>
@@ -139,7 +140,7 @@ export const ResizableSidebar: React.FC<ResizableSidebarProps> = observer(
                   variant="ghost"
                   className={styles.Button}
                   onClick={() => {
-                    router.push(createRouteUrl(graphStore.getDefaultRootForUser()));
+                    setRoot(graphStore.getDefaultRootForUser());
                   }}
                 >
                   <span>

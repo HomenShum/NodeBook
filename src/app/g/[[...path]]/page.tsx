@@ -12,6 +12,7 @@ import logger from "@/lib/logger";
 function Page({ params: { path } }: { params: { path: string[] | undefined } }) {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
+
   useEffect(() => {
     const relationPath = parsePathString(path ?? [], graphStore);
 
@@ -26,14 +27,13 @@ function Page({ params: { path } }: { params: { path: string[] | undefined } }) 
       return redirect(createRouteUrl("home"));
     }
 
-    viewStore.setRoot(
-      {
-        relations: [],
-        object,
-      },
-      `/all/${object.id}`,
-    );
-  }, [graphStore, path, viewStore]);
+    viewStore.setRoot({ relations: [], object }, `/all/${object.id}`);
+    // We only want to set root in the view store to match the path on initial load. Once the
+    // app is loaded, the app is responsible for updating both the view store and the url.
+    // To match that, we only run this effect when viewStore or graphStore are instantiated
+    // and specifically exclude path as a dependency here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewStore, graphStore]);
 
   return <MainView tree={viewStore.mainView}></MainView>;
 }

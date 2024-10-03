@@ -5,7 +5,6 @@ import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
 import { RefObject, useCallback } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
@@ -24,7 +23,7 @@ import { MentionNode } from "@/app/graph/MentionNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
-import { createRouteUrl } from "@/app/util";
+import { useSetRoot } from "@/app/tree/utils";
 import { cn } from "@/lib/utils";
 
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
@@ -45,7 +44,7 @@ export const NodeEditor = observer(
       throw new Error("Expected object to be a GraphNode");
     }
     const graphStore = useGraphStore();
-    const router = useRouter();
+    const setRoot = useSetRoot();
     const tree = useTree();
 
     const handleMentionNodeClick = useCallback(
@@ -54,10 +53,10 @@ export const NodeEditor = observer(
         e.stopPropagation();
         const node = graphStore.getNode(nodeId);
         if (node) {
-          router.push(createRouteUrl(node.getPath()));
+          setRoot(node.getPath());
         }
       },
-      [graphStore, router],
+      [graphStore, setRoot],
     );
 
     return (

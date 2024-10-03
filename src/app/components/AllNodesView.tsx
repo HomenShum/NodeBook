@@ -1,24 +1,14 @@
 "use client";
 import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
-import { useCallback } from "react";
 
-import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { createRouteUrl } from "@/app/util";
+import { useSetRoot } from "@/app/tree/utils";
 
 import s from "./AllNodesView.module.css";
 
 export const AllNodesView = observer(() => {
   const graphStore = useGraphStore();
-  const router = useRouter();
-
-  const handleNodeClick = useCallback(
-    (node: GraphNode) => {
-      router.push(createRouteUrl({ object: node }));
-    },
-    [router],
-  );
+  const setRoot = useSetRoot();
 
   return (
     <div className={s.AllNodesViewContainer}>
@@ -36,7 +26,7 @@ export const AllNodesView = observer(() => {
           {Array.from(graphStore.nodesById.values())
             .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
             .map((node) => (
-              <div key={node.id} className={s.NodeItem} onClick={() => handleNodeClick(node)}>
+              <div key={node.id} className={s.NodeItem} onClick={() => setRoot({ object: node })}>
                 <span className={s.NodeText}>{node.text}</span>
                 <span className={s.NodeDate}>{new Date(node.createdAt).toLocaleString()}</span>
               </div>

@@ -1,7 +1,6 @@
 "use client";
 import { ChevronRight, Ellipsis, Globe, Home, Lock, Unlock } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
 import React from "react";
 
 import {
@@ -15,8 +14,8 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { TreeNode } from "@/app/tree/nodes";
-import { getAncestorsAsArray } from "@/app/tree/utils";
-import { createRouteUrl, truncateText, useIsMobile } from "@/app/util";
+import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
+import { truncateText, useIsMobile } from "@/app/util";
 import { cn } from "@/lib/utils";
 
 import styles, { default as s } from "./Breadcrumbs.module.css";
@@ -26,18 +25,16 @@ const MAX_VISIBLE_ITEMS = 4; // For desktop view
 export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
-  const router = useRouter();
   const isMobile = useIsMobile();
   const ancestors = treeNode.id ? getAncestorsAsArray(treeNode) : [];
+  const setRoot = useSetRoot();
 
   const handleNavigation = (index: number) => {
     if (index > ancestors.length) return;
-    router.push(
-      createRouteUrl({
-        relations: ancestors.slice(0, index).map((ancestor) => ancestor.relationToChild),
-        object: index === ancestors.length ? treeNode.object : ancestors[index].object,
-      }),
-    );
+    setRoot({
+      relations: ancestors.slice(0, index).map((ancestor) => ancestor.relationToChild),
+      object: index === ancestors.length ? treeNode.object : ancestors[index].object,
+    });
   };
 
   const BreadcrumbItem = observer(
