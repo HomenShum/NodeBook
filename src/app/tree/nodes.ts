@@ -130,8 +130,8 @@ export class RootTreeNode extends BaseTreeNode {
   hydrate() {
     try {
       this.hydrateAncestors();
-      this.id = this.path;
       this.path = this.parent ? this.tree.path.substring(0, this.tree.path.lastIndexOf("/")) : "";
+      this.id = this.path;
       this.depth = this.parent ? this.parent.depth + 1 : 0;
       this.hydrateChildren();
     } catch (e) {
