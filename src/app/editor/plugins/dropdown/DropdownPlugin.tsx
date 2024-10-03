@@ -42,7 +42,11 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
   const graphStore = useGraphStore();
   const settingsStore = useSettingsStore();
   const textChanged = useRef(false);
-  const labelledRelation = treeNode.relationWithParent?.relationType.id !== defaultRelationTypes.child.id;
+  const isChild =
+    treeNode.relationWithParent &&
+    treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id &&
+    treeNode.relationWithParent.to.id === treeNode.object.id;
+  const labelledRelation = !isChild;
   const passiveAutocompleteActive =
     settingsStore.searchAndReplaceDropdown === "Always" ||
     (settingsStore.searchAndReplaceDropdown === "LabelledOnly" && labelledRelation);
