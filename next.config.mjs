@@ -6,6 +6,9 @@ const gitCommitHash = execSync("git rev-parse --short HEAD").toString().trim();
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
+  experimental: {
+    serverComponentsExternalPackages: ["@prisma","@opentelemetry"]
+  },
   env: {
     NEXT_PUBLIC_GIT_COMMIT_SHA: gitCommitHash,
   },
