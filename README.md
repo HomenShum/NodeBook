@@ -54,3 +54,8 @@ yarn dev
 - Download the backup and run `pg_restore -v -d <database-connection-string> <path-to-backup>`
   - Make sure `database-connection-string` ends with a database name.
   - Example: `pg_restore -v -d postgres://user:pass@host:port/db_name /home/username/dump-2024-10-02-18-28.bak`
+- Please make sure your `pg_restore` version is 16 (Vercel currently uses 16).
+- Please do not run `db:reset`, it will run migrations and hydrate the database, causing conflicts
+  with the database. 
+  - Drop the database before running `pg_restore` or run it with `--clean`/`-c` flags.
+    - Example: `pg_restore -c -v -d <connectiom-string> <backup-path>`
