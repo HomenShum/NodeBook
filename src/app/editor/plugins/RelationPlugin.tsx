@@ -21,7 +21,7 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
 
-export const RelationPlugin = observer(() => {
+export const RelationPlugin = observer(function RelationPlugin() {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
@@ -174,18 +174,6 @@ export const RelationPlugin = observer(() => {
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [
-    tree,
-    graphStore,
-    settingsStore,
-    settingsStore.triggerRelationOnSingleColon,
-    editor,
-    object,
-    relation,
-    treeNode.path,
-    treeNode.id,
-    treeNode.relationWithParent.relationType.id,
-    treeNode.relationWithParent.to,
-  ]);
+  }, [tree, graphStore, settingsStore, settingsStore.triggerRelationOnSingleColon, editor, object, relation, treeNode.path, treeNode.id, treeNode.relationWithParent.relationType.id, treeNode.relationWithParent.to]);
   return null;
 });

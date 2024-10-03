@@ -11,7 +11,7 @@ import { ConfirmReplace } from "./ConfirmReplace";
 
 import styles from "./DataDialog.module.css";
 
-export const ImportDialog = observer(() => {
+export const ImportDialog = observer(function ImportDialog() {
   const viewStore = useViewStore();
 
   const graphStore = useGraphStore();

@@ -6,7 +6,7 @@ import { useSetRoot } from "@/app/tree/utils";
 
 import s from "./AllNodesView.module.css";
 
-export const AllNodesView = observer(() => {
+export const AllNodesView = observer(function AllNodesView() {
   const graphStore = useGraphStore();
   const setRoot = useSetRoot();
 

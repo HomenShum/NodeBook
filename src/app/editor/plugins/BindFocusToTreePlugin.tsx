@@ -12,7 +12,7 @@ function isFocused(editor: LexicalEditor) {
   return editor.getRootElement()?.contains(document.activeElement);
 }
 
-export const BindFocusToTreePlugin = observer(() => {
+export const BindFocusToTreePlugin = observer(function BindFocusToTreePlugin() {
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   const { treeNode } = useTreeNode();

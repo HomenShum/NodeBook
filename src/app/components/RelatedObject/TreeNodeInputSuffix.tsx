@@ -5,7 +5,7 @@ import { DescendantTreeNode } from "@/app/tree/nodes";
 import { EditorSelectionAction } from "@/app/tree/selection";
 import { useTree } from "@/app/tree/TreeContext";
 
-type TreeNodeInputSuffixProps = {
+type Props = {
   treeNode: DescendantTreeNode;
   isEditorEditable: boolean;
 };
@@ -18,7 +18,7 @@ type TreeNodeInputSuffixProps = {
  * When isEditorEditable is false, it becomes responsible for grabbing the
  * selection in response to tree selection changes.
  */
-export const TreeNodeInputSuffix = observer(({ treeNode, isEditorEditable }: TreeNodeInputSuffixProps) => {
+export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeNode, isEditorEditable }: Props) {
   const tree = useTree();
   const inputRef = useRef<HTMLInputElement>(null);
 

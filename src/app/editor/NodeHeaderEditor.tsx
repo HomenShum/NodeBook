@@ -13,7 +13,11 @@ import { RootTreeNode } from "@/app/tree/nodes";
 
 import styles from "./Editor.module.css";
 
-export const NodeHeaderEditor = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
+interface Props {
+  treeNode: RootTreeNode;
+}
+
+export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode }: Props) {
   return (
     <div>
       <LexicalComposer

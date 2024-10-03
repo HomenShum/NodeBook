@@ -18,7 +18,11 @@ import { downloadSubtree } from "@/app/util";
 
 import styles from "./styles/NodeHeaderSettingsMenu.module.css";
 
-export const NodeHeaderSettingsMenu = observer(({ treeNode }: { treeNode: DescendantTreeNode | RootTreeNode }) => {
+interface Props {
+  treeNode: DescendantTreeNode | RootTreeNode;
+}
+
+export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({ treeNode }: Props) {
   const graphStore = useGraphStore();
   const tree = useTree();
 

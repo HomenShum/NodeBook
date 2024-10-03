@@ -17,73 +17,77 @@ import styles from "./styles/RelationCombobox.module.css";
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
   `${relationType.id}-${isForward ? "forward" : "reverse"}`;
 
-export const RelationCombobox = observer(
-  ({
-    setUpdatingRelationType,
-    treeNode,
-    isOpen,
-    setIsOpen,
-  }: {
-    setUpdatingRelationType: (updating: boolean) => void;
-    treeNode: DescendantTreeNode | PointerTreeNode;
-    isOpen: boolean;
-    setIsOpen: (value: boolean) => void;
-  }) => {
-    const object = treeNode.object;
+interface Props {
+  setUpdatingRelationType: (updating: boolean) => void;
+  treeNode: DescendantTreeNode | PointerTreeNode;
+  isOpen: boolean;
+  setIsOpen: (value: boolean) => void;
+}
 
-    const relation = treeNode.relationWithParent;
+export const RelationCombobox = observer(function RelationCombobox({
+  setUpdatingRelationType,
+  treeNode,
+  isOpen,
+  setIsOpen,
+}: Props) {
+  const object = treeNode.object;
 
-    const viewStore = useViewStore();
-    const isForward = relation.to.id === object.id;
-    const [isHovered, setIsHovered] = React.useState(false);
+  const relation = treeNode.relationWithParent;
 
-    if (viewStore.flattenSublists && treeNode instanceof PointerTreeNode) {
-      return null;
-    }
+  const viewStore = useViewStore();
+  const isForward = relation.to.id === object.id;
+  const [isHovered, setIsHovered] = React.useState(false);
 
-    const close = () => {
-      setIsOpen(false);
-      setUpdatingRelationType(false);
-      treeNode.tree.setFocusedNode(treeNode.id);
-    };
+  if (viewStore.flattenSublists && treeNode instanceof PointerTreeNode) {
+    return null;
+  }
 
-    const label = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
-    const button = (
-      <Button
-        variant="ghost"
-        size="sm"
-        role="combobox"
-        aria-expanded={isOpen}
-        className={styles.RelationComboboxLabel}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {label}:
-      </Button>
-    );
+  const close = () => {
+    setIsOpen(false);
+    setUpdatingRelationType(false);
+    treeNode.tree.setFocusedNode(treeNode.id);
+  };
 
-    if (!isHovered && !isOpen) {
-      return button;
-    }
-    return (
-      <Popover
-        open={isOpen}
-        onOpenChange={(newIsOpen) => {
-          if (newIsOpen) {
-            setIsOpen(true);
-          } else {
-            close();
-          }
-        }}
-      >
-        <PopoverTrigger asChild>{button}</PopoverTrigger>
-        <RelationTypeSelector treeNode={treeNode} />
-      </Popover>
-    );
-  },
-);
+  const label = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
+  const button = (
+    <Button
+      variant="ghost"
+      size="sm"
+      role="combobox"
+      aria-expanded={isOpen}
+      className={styles.RelationComboboxLabel}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {label}:
+    </Button>
+  );
 
-function RelationTypeSelector({ treeNode }: { treeNode: DescendantTreeNode }) {
+  if (!isHovered && !isOpen) {
+    return button;
+  }
+  return (
+    <Popover
+      open={isOpen}
+      onOpenChange={(newIsOpen) => {
+        if (newIsOpen) {
+          setIsOpen(true);
+        } else {
+          close();
+        }
+      }}
+    >
+      <PopoverTrigger asChild>{button}</PopoverTrigger>
+      <RelationTypeSelector treeNode={treeNode} />
+    </Popover>
+  );
+});
+
+interface SelectorProps {
+  treeNode: DescendantTreeNode;
+}
+
+function RelationTypeSelector({ treeNode }: SelectorProps) {
   const parent = treeNode.parent.object;
   const relation = treeNode.relationWithParent;
   const isForward = relation.to.id === treeNode.object.id;

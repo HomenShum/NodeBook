@@ -11,7 +11,11 @@ import { cn } from "@/lib/utils";
 import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./styles/ChildGroups.module.css";
 
-export const ChildGroups = observer(({ treeNode }: { treeNode: TreeNode }) => {
+interface ChildGroupsProps {
+  treeNode: TreeNode;
+}
+
+export const ChildGroups = observer(function ChildGroups({ treeNode }: ChildGroupsProps) {
   const children: ChildrenGroups = treeNode.childrenGroups;
   const isRoot = treeNode instanceof RootTreeNode;
   return (
@@ -29,7 +33,12 @@ export const ChildGroups = observer(({ treeNode }: { treeNode: TreeNode }) => {
   );
 });
 
-const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: PinnedGroup }) => {
+interface PinnedSectionProps {
+  parentNode: TreeNode;
+  group: PinnedGroup;
+}
+
+const PinnedSection = observer(function PinnedSection({ parentNode, group }: PinnedSectionProps) {
   const viewStore = useViewStore();
   const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
   const tree = useTree();
@@ -76,7 +85,12 @@ const PinnedSection = observer(({ parentNode, group }: { parentNode: TreeNode; g
   );
 });
 
-const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: AllGroup }) => {
+interface AllSectionProps {
+  parentNode: TreeNode;
+  group: AllGroup;
+}
+
+const AllSection = observer(function AllSection({ parentNode, group }: AllSectionProps) {
   const viewStore = useViewStore();
   const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
 
@@ -94,7 +108,12 @@ const AllSection = observer(({ parentNode, group }: { parentNode: TreeNode; grou
   );
 });
 
-const PointerSection = observer(({ parentNode, group }: { parentNode: TreeNode; group: PointerGroup }) => {
+interface PointerSectionProps {
+  parentNode: TreeNode;
+  group: PointerGroup;
+}
+
+const PointerSection = observer(function PointerSection({ parentNode, group }: PointerSectionProps) {
   const viewStore = useViewStore();
 
   if (!viewStore.flattenSublists) {

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 import styles from "./SearchBar.module.css";
 
-export const SearchBar = observer(() => {
+export const SearchBar = observer(function SearchBar() {
   const viewStore = useViewStore();
   const [isExpanded, setIsExpanded] = useState(!!viewStore.searchQuery);
   const inputRef = useRef<HTMLInputElement>(null);

@@ -7,7 +7,12 @@ import { cn } from "@/lib/utils";
 
 import styles from "./styles/Toggle.module.css";
 
-export default observer(({ treeNode, isHovered }: { treeNode: DescendantTreeNode; isHovered: boolean }) => {
+interface Props {
+  treeNode: DescendantTreeNode;
+  isHovered: boolean;
+}
+
+export default observer(function Toggle({ treeNode, isHovered }: Props) {
   const tree = useTree();
   return (
     <button

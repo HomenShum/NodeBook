@@ -8,7 +8,11 @@ import { cn } from "@/lib/utils";
 
 import styles from "./SidebarTree.module.css";
 
-const TreeElement = observer(({ object }: { object: GraphObject }) => {
+interface Props {
+  object: GraphObject;
+}
+
+const TreeElement = observer(function TreeElement({ object }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
   return (
     <>
@@ -28,7 +32,7 @@ const TreeElement = observer(({ object }: { object: GraphObject }) => {
   );
 });
 
-export default observer(() => {
+export default observer(function SidebarTree() {
   const graphStore = useGraphStore();
   return (
     <div className={styles.SidebarTreeContainer}>

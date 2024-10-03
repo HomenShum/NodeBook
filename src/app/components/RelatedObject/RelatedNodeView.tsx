@@ -12,7 +12,11 @@ import { cn } from "@/lib/utils";
 
 import styles from "./styles/RelatedNodeView.module.css";
 
-export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
+interface Props {
+  treeNode: DescendantTreeNode;
+}
+
+export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: Props) {
   const tree = useTree();
   const ref = useRef<HTMLDivElement>(null);
 

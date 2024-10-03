@@ -17,7 +17,14 @@ interface Props {
   onBack?: () => void;
 }
 
-export const DataDialog = observer(({ title, description, children, modalType, showBackButton, onBack }: Props) => {
+export const DataDialog = observer(function DataDialog({
+  title,
+  description,
+  children,
+  modalType,
+  showBackButton,
+  onBack,
+}: Props) {
   const viewStore = useViewStore();
 
   const handleClose = () => {

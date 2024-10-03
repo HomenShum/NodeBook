@@ -30,66 +30,62 @@ import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 
 import styles from "./Editor.module.css";
 
-export const NodeEditor = observer(
-  ({
-    treeNode,
-    isEditorEditable,
-    boundaryRef,
-  }: {
-    treeNode: DescendantTreeNode;
-    isEditorEditable: boolean;
-    boundaryRef: RefObject<HTMLDivElement>;
-  }) => {
-    if (!(treeNode.object instanceof GraphNode)) {
-      throw new Error("Expected object to be a GraphNode");
-    }
-    const graphStore = useGraphStore();
-    const setRoot = useSetRoot();
-    const tree = useTree();
+interface Props {
+  treeNode: DescendantTreeNode;
+  isEditorEditable: boolean;
+  boundaryRef: RefObject<HTMLDivElement>;
+}
 
-    const handleMentionNodeClick = useCallback(
-      (e: Event) => {
-        const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
-        e.stopPropagation();
-        const node = graphStore.getNode(nodeId);
-        if (node) {
-          setRoot(node.getPath());
-        }
-      },
-      [graphStore, setRoot],
-    );
+export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEditable, boundaryRef }: Props) {
+  if (!(treeNode.object instanceof GraphNode)) {
+    throw new Error("Expected object to be a GraphNode");
+  }
+  const graphStore = useGraphStore();
+  const setRoot = useSetRoot();
+  const tree = useTree();
 
-    return (
-      <div className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
-        <LexicalComposer
-          initialConfig={createConfig({ namespace: "descendant-editor", treeNode, editable: isEditorEditable })}
-        >
-          <PlainTextPlugin
-            ErrorBoundary={LexicalErrorBoundary}
-            contentEditable={
-              <ContentEditable
-                className={`${styles.ContentEditable}`}
-                data-nodeid={treeNode.object.id}
-                suppressContentEditableWarning
-              />
-            }
-            placeholder={null}
-          />
-          <LinkPlugin nodeId={treeNode.object.id} />
-          <SyncWithGraphPlugin node={treeNode.object} />
-          {isEditorEditable && <ClearEditorPlugin />}
-          {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
-          {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
-          {isEditorEditable && <LeftRightArrowAtEndsPlugin />}
-          {isEditorEditable && <BackspaceMergeNodesPlugin />}
-          {isEditorEditable && <PastePlugin />}
-          {isEditorEditable && <RelationPlugin />}
-          <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
-          <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
-          {isEditorEditable && <BindFocusToTreePlugin />}
-          <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
-        </LexicalComposer>
-      </div>
-    );
-  },
-);
+  const handleMentionNodeClick = useCallback(
+    (e: Event) => {
+      const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
+      e.stopPropagation();
+      const node = graphStore.getNode(nodeId);
+      if (node) {
+        setRoot(node.getPath());
+      }
+    },
+    [graphStore, setRoot],
+  );
+
+  return (
+    <div className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
+      <LexicalComposer
+        initialConfig={createConfig({ namespace: "descendant-editor", treeNode, editable: isEditorEditable })}
+      >
+        <PlainTextPlugin
+          ErrorBoundary={LexicalErrorBoundary}
+          contentEditable={
+            <ContentEditable
+              className={`${styles.ContentEditable}`}
+              data-nodeid={treeNode.object.id}
+              suppressContentEditableWarning
+            />
+          }
+          placeholder={null}
+        />
+        <LinkPlugin nodeId={treeNode.object.id} />
+        <SyncWithGraphPlugin node={treeNode.object} />
+        {isEditorEditable && <ClearEditorPlugin />}
+        {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
+        {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
+        {isEditorEditable && <LeftRightArrowAtEndsPlugin />}
+        {isEditorEditable && <BackspaceMergeNodesPlugin />}
+        {isEditorEditable && <PastePlugin />}
+        {isEditorEditable && <RelationPlugin />}
+        <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
+        <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
+        {isEditorEditable && <BindFocusToTreePlugin />}
+        <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
+      </LexicalComposer>
+    </div>
+  );
+});

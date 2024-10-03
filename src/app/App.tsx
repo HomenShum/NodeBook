@@ -18,97 +18,81 @@ import styles from "./app.module.css";
 
 import "./global.css";
 
-export default observer(
-  ({
-    children,
-  }: Readonly<{
-    children: React.ReactNode;
-  }>) => {
-    const [isResizing, setIsResizing] = useState(false);
-    const auth = useAuth();
-    const isLoading = useLoading();
+interface Props {
+  children: React.ReactNode;
+}
 
-    const viewStore = useViewStore();
-    useKeyboardShortcuts();
+export default observer(function App({ children }: Props) {
+  const [isResizing, setIsResizing] = useState(false);
+  const auth = useAuth();
+  const isLoading = useLoading();
 
-    useEffect(() => {
-      const htmlElement = document.documentElement;
-      if (viewStore.isDarkMode) {
-        htmlElement.classList.add("dark");
-      } else {
-        htmlElement.classList.remove("dark");
-      }
-    }, [viewStore.isDarkMode]);
+  const viewStore = useViewStore();
+  useKeyboardShortcuts();
 
-    useEffect(() => {
-      document.documentElement.style.setProperty("--sidebar-width", `${viewStore.sidebarWidth}px`);
-    }, [viewStore.sidebarWidth]);
-
-    useEffect(() => {
-      if (auth && auth.isAuthenticated && auth.user) {
-        Sentry.setUser({
-          id: auth.user.sub,
-          email: auth.user.email,
-        });
-      } else {
-        Sentry.setUser(null);
-      }
-    }, [auth]);
-
-    if (auth && auth.error) {
-      return (
-        <div>
-          <div>Error: {auth.error.message}</div>
-          <button onClick={() => auth.logout({ logoutParams: { returnTo: window.location.origin } })}>
-            Force logout
-          </button>
-        </div>
-      );
-    } else if (auth && !auth.isAuthenticated) {
-      return <LoginScreen />;
-    } else if (isLoading) {
-      return <Loader />;
+  useEffect(() => {
+    const htmlElement = document.documentElement;
+    if (viewStore.isDarkMode) {
+      htmlElement.classList.add("dark");
     } else {
-      return (
-        <div className={styles.App}>
-          <div className={styles.AppContainer}>
-            <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
-            <div className={styles.Container}>
-              <Button
-                className={styles.SidebarToggle}
-                variant="ghost"
-                size="icon"
-                onClick={() => viewStore.toggleLeftSidebar()}
+      htmlElement.classList.remove("dark");
+    }
+  }, [viewStore.isDarkMode]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("--sidebar-width", `${viewStore.sidebarWidth}px`);
+  }, [viewStore.sidebarWidth]);
+
+  useEffect(() => {
+    if (auth && auth.isAuthenticated && auth.user) {
+      Sentry.setUser({
+        id: auth.user.sub,
+        email: auth.user.email,
+      });
+    } else {
+      Sentry.setUser(null);
+    }
+  }, [auth]);
+
+  if (auth && auth.error) {
+    return (
+      <div>
+        <div>Error: {auth.error.message}</div>
+        <button onClick={() => auth.logout({ logoutParams: { returnTo: window.location.origin } })}>
+          Force logout
+        </button>
+      </div>
+    );
+  } else if (auth && !auth.isAuthenticated) {
+    return <LoginScreen />;
+  } else if (isLoading) {
+    return <Loader />;
+  } else {
+    return (
+      <div className={styles.App}>
+        <div className={styles.AppContainer}>
+          <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
+          <div className={styles.Container}>
+            <Button
+              className={styles.SidebarToggle}
+              variant="ghost"
+              size="icon"
+              onClick={() => viewStore.toggleLeftSidebar()}
+            >
+              <SidebarIcon />
+            </Button>
+            <div className={styles.MainContainer}>
+              <main
+                className={`${styles.Main} ${viewStore.leftSidebarOpen ? styles.ShiftMain : ""} ${
+                  isResizing ? styles.MainDragging : ""
+                }`}
               >
-                <SidebarIcon />
-              </Button>
-              {/* <Button
-                className={styles.RightSidebarToggle}
-                variant="ghost"
-                size="icon"
-                onClick={() => viewStore.toggleRightSidebar()}
-              >
-                <SidebarIcon />
-              </Button> */}
-              <div className={styles.MainContainer}>
-                <main
-                  className={`${styles.Main} ${viewStore.leftSidebarOpen ? styles.ShiftMain : ""} ${
-                    isResizing ? styles.MainDragging : ""
-                  }`}
-                >
-                  {children}
-                </main>
-                {/* {viewStore.rightSidebarOpen && (
-                  <aside className={styles.DevToolsSidebar}>
-                    <SidebarOutlines />
-                    <DevTools />
-                  </aside>
-                )} */}
-              </div>
+                {children}
+              </main>
             </div>
           </div>
         </div>
-      );
-    }
-  },
-);
+      </div>
+    );
+  }
+});

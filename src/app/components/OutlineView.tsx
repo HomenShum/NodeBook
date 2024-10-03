@@ -22,7 +22,11 @@ import { ChildGroups } from "./RelatedObject/ChildGroups";
 
 import s from "./OutlineView.module.css";
 
-export const OutlineView = observer(({ tree }: { tree: Tree }) => {
+interface Props {
+  tree: Tree;
+}
+
+export const OutlineView = observer(function OutlineView({ tree }: Props) {
   const graphStore = useGraphStore();
   const treeRef = useRef<HTMLDivElement>(null);
   const hasFocus = useCallback(() => !!treeRef.current?.contains(document.activeElement), [treeRef]);

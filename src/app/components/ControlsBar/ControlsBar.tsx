@@ -27,7 +27,11 @@ const filterIcons: { [key: string]: React.ReactNode } = {
   Places: <MapPin size={14} />,
 };
 
-export const ControlsBar = observer(({ tree }: { tree: Tree }) => {
+interface Props {
+  tree: Tree;
+}
+
+export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
   const [isPinnedHovered, setIsPinnedHovered] = useState(false);

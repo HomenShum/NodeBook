@@ -22,7 +22,11 @@ import styles, { default as s } from "./Breadcrumbs.module.css";
 
 const MAX_VISIBLE_ITEMS = 4; // For desktop view
 
-export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
+interface Props {
+  treeNode: TreeNode;
+}
+
+export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Props) {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const isMobile = useIsMobile();

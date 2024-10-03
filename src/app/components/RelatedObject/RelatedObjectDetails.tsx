@@ -27,29 +27,33 @@ function getParentZones(relation: GraphRelation) {
   );
 }
 
-export const RelatedObjectDetails = observer(
-  ({ position, object, relation }: { position: Position; object: GraphObject; relation: GraphRelation }) => {
-    const graphStore = useGraphStore();
-    const { treeNode } = useTreeNode();
-    const bundles = graphStore.getBundleRelation(relation.id);
-    const parentZones = getParentZones(relation);
+interface Props {
+  position: Position;
+  object: GraphObject;
+  relation: GraphRelation;
+}
 
-    return (
-      <div className={styles.DetailsContainer}>
-        <span className={styles.PathEllipsis}>path: {treeNode.path} </span>
-        <span>objectId: {object.id}</span>
-        <span>relationId: {relation.id}</span>
-        {position && (
-          <span>
-            position: {position.int}-{position.frac}
-          </span>
-        )}
-        <span>createdAt: {object.createdAt.toISOString()}</span>
-        {object instanceof GraphNode && object.isBundle && <span>#BUNDLE</span>}
-        {object instanceof GraphNode && object.isZone && <span>#ZONE</span>}
-        {bundles && <span>part of bundle: {bundles.map((b) => b.id).join(", ")}</span>}
-        {parentZones.length > 0 && <span>zones: {parentZones.map((z) => `${z.id}:"${z.text}"`).join(", ")}</span>}
-      </div>
-    );
-  },
-);
+export const RelatedObjectDetails = observer(function RelatedObjectDetails({ position, object, relation }: Props) {
+  const graphStore = useGraphStore();
+  const { treeNode } = useTreeNode();
+  const bundles = graphStore.getBundleRelation(relation.id);
+  const parentZones = getParentZones(relation);
+
+  return (
+    <div className={styles.DetailsContainer}>
+      <span className={styles.PathEllipsis}>path: {treeNode.path} </span>
+      <span>objectId: {object.id}</span>
+      <span>relationId: {relation.id}</span>
+      {position && (
+        <span>
+          position: {position.int}-{position.frac}
+        </span>
+      )}
+      <span>createdAt: {object.createdAt.toISOString()}</span>
+      {object instanceof GraphNode && object.isBundle && <span>#BUNDLE</span>}
+      {object instanceof GraphNode && object.isZone && <span>#ZONE</span>}
+      {bundles && <span>part of bundle: {bundles.map((b) => b.id).join(", ")}</span>}
+      {parentZones.length > 0 && <span>zones: {parentZones.map((z) => `${z.id}:"${z.text}"`).join(", ")}</span>}
+    </div>
+  );
+});

@@ -22,22 +22,30 @@ import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
 import Toggle from "./Toggle";
 import styles from "./styles/RelatedObjectView.module.css";
 
-export const RelatedObjectView = observer(
-  ({ treeNode, showBullet = true }: { treeNode: DescendantTreeNode; showBullet?: boolean }) => {
-    return (
-      <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
-        <Main treeNode={treeNode}>
-          <Controls />
-          {showBullet && <Bullet />}
-          <Content />
-        </Main>
-        {treeNode.isExpanded && <ChildGroups treeNode={treeNode} />}
-      </div>
-    );
-  },
-);
+interface Props {
+  treeNode: DescendantTreeNode;
+  showBullet?: boolean;
+}
 
-const Main = observer(({ treeNode, children }: { treeNode: DescendantTreeNode; children: React.ReactNode }) => {
+export const RelatedObjectView = observer(function RelatedObjectView({ treeNode, showBullet = true }: Props) {
+  return (
+    <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
+      <Main treeNode={treeNode}>
+        <Controls />
+        {showBullet && <Bullet />}
+        <Content />
+      </Main>
+      {treeNode.isExpanded && <ChildGroups treeNode={treeNode} />}
+    </div>
+  );
+});
+
+interface MainProps {
+  treeNode: DescendantTreeNode;
+  children: React.ReactNode;
+}
+
+const Main = observer(function Main({ treeNode, children }: MainProps) {
   const [updatingRelationType, setUpdatingRelationType] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [relationComboboxIsOpen, setRelationComboboxIsOpen] = useState(false);
@@ -67,7 +75,7 @@ const Main = observer(({ treeNode, children }: { treeNode: DescendantTreeNode; c
   );
 });
 
-const Content = observer(() => {
+const Content = observer(function Content() {
   const settingsStore = useSettingsStore();
   const tree = useTree();
   const {
@@ -133,7 +141,7 @@ const Content = observer(() => {
   );
 });
 
-const Bullet = observer(() => {
+const Bullet = observer(function Bullet() {
   const userId = useGraphStore().user?.id;
   const { treeNode } = useTreeNode();
   const setRoot = useSetRoot();
@@ -192,7 +200,7 @@ const Bullet = observer(() => {
   );
 });
 
-const Controls = observer(() => {
+const Controls = observer(function Controls() {
   const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
   return (
     <>

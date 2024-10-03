@@ -1,13 +1,17 @@
+import { Dot } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback } from "react";
-import { Dot } from "lucide-react";
 
+import styles from "@/app/components/RelatedObject/styles/RelatedObjectView.module.css";
 import { RootTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
-import styles from "@/app/components/RelatedObject/styles/RelatedObjectView.module.css";
 
-export const ClickToCreateNodeButton = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
+interface Props {
+  treeNode: RootTreeNode;
+}
+
+export const ClickToCreateNodeButton = observer(function ClickToCreateNodeButton({ treeNode }: Props) {
   const tree = useTree();
   const handleCreateAndFocusNode = useCallback(
     (e: React.MouseEvent) => {

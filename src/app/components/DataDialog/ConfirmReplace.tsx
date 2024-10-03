@@ -12,7 +12,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export const ConfirmReplace = observer(({ onConfirm, disabled }: Props) => {
+export const ConfirmReplace = observer(function ConfirmReplace({ onConfirm, disabled }: Props) {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleConfirm = useCallback(() => {

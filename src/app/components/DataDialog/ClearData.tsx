@@ -10,7 +10,7 @@ interface Props {
   onConfirm: () => void;
 }
 
-export const ClearData = observer(({ onConfirm }: Props) => {
+export const ClearData = observer(function ClearData({ onConfirm }: Props) {
   const viewStore = useViewStore();
   return (
     <DataDialog

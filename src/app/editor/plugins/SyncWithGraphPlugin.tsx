@@ -7,12 +7,16 @@ import { $getChips, createParagraphMatchingGraphNode, graphNodeMatchesParagraph 
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 
+interface Props {
+  node: GraphNode;
+}
+
 /**
  * When the graph object content changes, the editor content is updated to
  * match. It only applies a change if the new state is different from the
  * current state, to avoid infinite loops.
  */
-export const SyncWithGraphPlugin = observer(({ node }: { node: GraphNode }) => {
+export const SyncWithGraphPlugin = observer(function SyncWithGraphPlugin({ node }: Props) {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
 

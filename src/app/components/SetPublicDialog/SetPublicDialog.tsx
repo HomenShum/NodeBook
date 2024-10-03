@@ -1,7 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -15,7 +15,7 @@ interface Props {
   treeNode: TreeNode;
 }
 
-export const SetPublicDialog = observer(({ isOpen, setOpen, treeNode }: Props) => {
+export const SetPublicDialog = observer(function SetPublicDialog({ isOpen, setOpen, treeNode }: Props) {
   const graphStore = useGraphStore();
   const objectId = treeNode.object.id;
   const relationId = treeNode.relationWithParent?.id;

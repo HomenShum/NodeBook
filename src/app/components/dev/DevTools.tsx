@@ -7,18 +7,21 @@ import { env } from "@/app/envFrontend";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useUser } from "@/app/StoresProvider";
+import { useViewStore } from "@/app/view/useViewStore";
 import { SearchAndReplaceDropdownOption, SearchAndReplaceDropdownOptionEnum } from "@/db/schema";
 import logger from "@/lib/logger";
-import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./DevTools.module.css";
 
-const SelectSearchAndReplaceDropdown = observer(() => {
+const SelectSearchAndReplaceDropdown = observer(function SelectSearchAndReplaceDropdown() {
   const settingsStore = useSettingsStore();
 
   const searchAndReplaceDropdownOptions: { label: string; value: SearchAndReplaceDropdownOption }[] = [
     { label: "Always", value: SearchAndReplaceDropdownOptionEnum.enum.Always },
-    { label: "After typing in a labelled relations or semicolon", value: SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly },
+    {
+      label: "After typing in a labelled relations or semicolon",
+      value: SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly,
+    },
     { label: "After typing semicolon", value: SearchAndReplaceDropdownOptionEnum.enum.SemicolonOnly },
   ];
 
@@ -36,7 +39,7 @@ const SelectSearchAndReplaceDropdown = observer(() => {
   );
 });
 
-export const DevTools = observer(() => {
+export const DevTools = observer(function DevTools() {
   const auth = useAuth();
   const user = useUser();
   const settingsStore = useSettingsStore();
