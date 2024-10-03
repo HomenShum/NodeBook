@@ -12,7 +12,7 @@ import {
   TextNode,
 } from "lexical";
 
-import { defaultRelationTypes } from "@/app/graph/constants";
+import { defaultRelationTypes, DELETED_NODE_TEXT } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { $createLinkNode, $isLinkNode, LinkNode } from "@/app/graph/LinkNode";
@@ -203,8 +203,9 @@ export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphN
     const lexicalNode = paragraphChildren[idx];
     if (chip.type !== lexicalNode.getType()) return false;
     if (chip.type === "mention") {
-      const referencedNode = graphStore.getNode(chip.value);
       if (!$isMentionNode(lexicalNode)) return false;
+      const referencedNode = graphStore.getNode(chip.value);
+      if (!referencedNode && lexicalNode.mentionedGraphNodeText === `[${DELETED_NODE_TEXT}]`) return true;
       return referencedNode !== undefined && referencedNode.text === lexicalNode.mentionedGraphNodeText;
     } else if (chip.type === "link") {
       if (!$isLinkNode(lexicalNode)) return false;
@@ -221,7 +222,7 @@ export const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: Gr
   const paragraph = $createParagraphNode();
   node.content.forEach((chip) => {
     if (chip.type == "mention") {
-      const mentionNodeText = graphStore.getNode(chip.value)?.text || "";
+      const mentionNodeText = graphStore.getNode(chip.value)?.text ?? `[${DELETED_NODE_TEXT}]`;
       paragraph.append($createMentionNode(chip.value, mentionNodeText));
     } else if (chip.type == "link") {
       paragraph.append($createLinkNode(chip.url, chip.value));

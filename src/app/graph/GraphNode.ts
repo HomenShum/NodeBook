@@ -1,4 +1,4 @@
-import { action, computed, isObservable, makeObservable, observable, reaction, toJS } from "mobx";
+import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { DELETED_NODE_TEXT } from "@/app/graph/constants";
 import { SerializedNode } from "@/app/persistence/SerializedData";
@@ -74,30 +74,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     this.isZone = isZone;
     this.isPublic = isPublic;
     this.makeObservable();
-
-    //Whenever a mentioned node is deleted, the text changes.
-    //If the updated text contains a "deleted node", iterate over
-    //the chips and remove the mention chip.
-    reaction(
-      () => this.text,
-      (text) => {
-        if (!text.includes(DELETED_NODE_TEXT)) return;
-        const content: Chip[] = [];
-        let updateChips = false;
-        for (const chip of this.content) {
-          if (chip.type === "mention") {
-            if (!store.hasNode(chip.value)) {
-              updateChips = true;
-              continue;
-            }
-          }
-          content.push(chip);
-        }
-        if (updateChips) {
-          store.updateNode({ nodeId: this.id, nodeProps: { content } });
-        }
-      },
-    );
   }
 
   makeObservable() {
