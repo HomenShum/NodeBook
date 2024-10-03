@@ -5,7 +5,7 @@ import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
 
-import styles from "./Toggle.module.css";
+import styles from "./styles/Toggle.module.css";
 
 export default observer(({ treeNode, isHovered }: { treeNode: DescendantTreeNode; isHovered: boolean }) => {
   const tree = useTree();

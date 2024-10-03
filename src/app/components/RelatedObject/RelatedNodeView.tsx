@@ -10,7 +10,7 @@ import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
 
-import styles from "./RelatedNodeView.module.css";
+import styles from "./styles/RelatedNodeView.module.css";
 
 export const RelatedNodeView = observer(({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const tree = useTree();

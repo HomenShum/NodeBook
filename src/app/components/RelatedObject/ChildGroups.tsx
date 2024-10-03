@@ -9,10 +9,9 @@ import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
 import { RelatedObjectView } from "./RelatedObjectView";
+import styles from "./styles/ChildGroups.module.css";
 
-import styles from "./RelatedObjectChildren.module.css";
-
-export const RelatedObjectChildren = observer(({ treeNode }: { treeNode: TreeNode }) => {
+export const ChildGroups = observer(({ treeNode }: { treeNode: TreeNode }) => {
   const children: ChildrenGroups = treeNode.childrenGroups;
   const isRoot = treeNode instanceof RootTreeNode;
   return (

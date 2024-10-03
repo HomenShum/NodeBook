@@ -1,29 +1,28 @@
 import { Circle, Dot } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
-import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
+import { DescendantTreeNode } from "@/app/tree/nodes";
 import { isUnlabelledChild } from "@/app/tree/utils";
 import { createRouteUrl } from "@/app/util";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 import { RelatedNodeView } from "./RelatedNodeView";
-import { RelatedObjectChildren } from "./RelatedObjectChildren";
+import { ChildGroups } from "./ChildGroups";
 import { RelatedObjectViewType, TreeNodeProvider, useTreeNode } from "./RelatedObjectContext";
 import { RelatedObjectDetails } from "./RelatedObjectDetails";
 import { RelatedObjectMenu } from "./RelatedObjectMenu";
 import { RelationCombobox } from "./RelationCombobox";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
 import Toggle from "./Toggle";
-
-import styles from "./RelatedObjectView.module.css";
+import styles from "./styles/RelatedObjectView.module.css";
 
 export const RelatedObjectView = observer(
   ({ treeNode, showBullet = true }: { treeNode: DescendantTreeNode; showBullet?: boolean }) => {
@@ -34,38 +33,11 @@ export const RelatedObjectView = observer(
           {showBullet && <Bullet />}
           <Content />
         </Main>
-        {treeNode.isExpanded && <RelatedObjectChildren treeNode={treeNode} />}
+        {treeNode.isExpanded && <ChildGroups treeNode={treeNode} />}
       </div>
     );
   },
 );
-
-export const ClickToCreateNode = observer(({ treeNode }: { treeNode: RootTreeNode }) => {
-  const tree = useTree();
-  const handleCreateAndFocusNode = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      tree.createChildOfRootAndFocus();
-    },
-    [tree],
-  );
-
-  if (treeNode.childCount !== 0) return null;
-
-  return (
-    <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)} onClick={handleCreateAndFocusNode}>
-      <div className={styles.RelatedObjectContent}>
-        <div className={cn(styles.RelatedObjectBulletContainer)}>
-          <Dot strokeWidth={5} height={16} className={cn(styles.Bullet, styles.DotInsideClickToCreateNode)} />
-        </div>
-        <div className={cn(styles.RelatedObjectNode)}>
-          <div className={styles.ClickToCreateNode}>Click to create</div>
-        </div>
-      </div>
-    </div>
-  );
-});
 
 const Main = observer(({ treeNode, children }: { treeNode: DescendantTreeNode; children: React.ReactNode }) => {
   const [updatingRelationType, setUpdatingRelationType] = useState(false);

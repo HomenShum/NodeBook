@@ -1,5 +1,5 @@
 "use client";
-import { Globe, HomeIcon, Plus } from "lucide-react";
+import { Globe, HomeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useRef } from "react";
 import { Options, useHotkeys } from "react-hotkeys-hook";
@@ -7,8 +7,6 @@ import { Options, useHotkeys } from "react-hotkeys-hook";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
-import { ClickToCreateNode } from "@/app/components/RelatedObject/RelatedObjectView";
-import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -17,9 +15,10 @@ import { TreeContext } from "@/app/tree/TreeContext";
 import { useSetCurrentNodeAsRoot } from "@/app/tree/utils";
 import { cn } from "@/lib/utils";
 import { useViewStore } from "@/app/view/useViewStore";
+import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
+import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 
-import menuStyles from "./RelatedObject/NodeHeaderSettingsMenu.module.css";
-import { RelatedObjectChildren } from "./RelatedObject/RelatedObjectChildren";
+import { ChildGroups } from "./RelatedObject/ChildGroups";
 
 import s from "./OutlineView.module.css";
 
@@ -60,26 +59,6 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
     };
   }, [tree]);
 
-  // const handleShiftClickToSelectMultipleNodes = useCallback(
-  //   (e: React.MouseEvent) => {
-  //     const nodeElement = (e.target as HTMLElement).closest("[data-nodeid]");
-  //     if (!nodeElement) return;
-
-  //     const pathToClickedNode = nodeElement.getAttribute("data-editor-path");
-  //     if (!pathToClickedNode) return;
-
-  //     e.preventDefault();
-  //     e.stopPropagation();
-  //     if (e.shiftKey) {
-  //       tree.selectBetweenShiftClick(pathToClickedNode, EditorSelectionAction.ClickedOnTextEditor);
-  //     } else {
-  //       console.log("handleShiftClickToSelectMultipleNodes", pathToClickedNode);
-  //       tree.setFocusedNode(pathToClickedNode, undefined, EditorSelectionAction.ClickedOnTextEditor);
-  //     }
-  //   },
-  //   [tree],
-  // );
-
   return (
     <TreeContext.Provider value={tree}>
       <div
@@ -94,11 +73,7 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
         <div className={s.OutlineContent}>
           <div className={s.HeadingContainer}>
             <div className={s.TitleContainer}>
-              <div className={menuStyles.MenuTrigger}>
-                <div className={menuStyles.MenuIcon}>
-                  <NodeHeaderSettingsMenu treeNode={treeNode} />
-                </div>
-              </div>
+              <NodeHeaderSettingsMenu treeNode={treeNode} />
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -125,27 +100,14 @@ export const OutlineView = observer(({ tree }: { tree: Tree }) => {
             <CreateNewButton tree={tree} />
           </div>
           <div className={s.Nodes}>
-            <ClickToCreateNode treeNode={treeNode} />
-            <RelatedObjectChildren treeNode={treeNode} />
+            <ClickToCreateNodeButton treeNode={treeNode} />
+            <ChildGroups treeNode={treeNode} />
           </div>
         </div>
       </div>
     </TreeContext.Provider>
   );
 });
-function CreateNewButton({ tree }: { tree: Tree }) {
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={async () => {
-        await tree.createChildOfRootAndFocus();
-      }}
-    >
-      <Plus size={16}></Plus>
-    </Button>
-  );
-}
 
 function useOutlineHotkeys({ tree, hasFocus }: { tree: Tree; hasFocus: () => boolean }) {
   const defaults: Options = { enableOnContentEditable: true, preventDefault: true, enableOnFormTags: ["INPUT"] };

@@ -227,3 +227,20 @@ export const useIsMobile = (breakpoint: number = 480): boolean => {
 
   return isMobile;
 };
+
+export const downloadSubtree = (store: GraphStore, object: GraphObject): void => {
+  const subtreeData = JSON.stringify(store.serializeSubtree(object));
+  const blob = new Blob([subtreeData], { type: "application/json" });
+
+  // Create a temporary URL for the Blob
+  const url = URL.createObjectURL(blob);
+
+  // Create a link element and trigger the download
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "data.json";
+  link.click();
+
+  // Clean up the temporary URL
+  URL.revokeObjectURL(url);
+};

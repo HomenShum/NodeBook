@@ -28,8 +28,7 @@ import { useTree } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import { useTreeNode } from "./RelatedObjectContext";
-
-import styles from "./RelatedObjectMenu.module.css";
+import styles from "./styles/RelatedObjectMenu.module.css";
 
 export const RelatedObjectMenu = observer(
   ({ setUpdatingRelationType, isHovered }: { setUpdatingRelationType: (v: boolean) => void; isHovered: boolean }) => {

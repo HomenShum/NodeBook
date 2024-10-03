@@ -12,7 +12,7 @@ import { DescendantTreeNode, PointerTreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
-import styles from "./RelationCombobox.module.css";
+import styles from "./styles/RelationCombobox.module.css";
 
 const relToKey = (relationType: GraphRelationType, isForward: boolean) =>
   `${relationType.id}-${isForward ? "forward" : "reverse"}`;

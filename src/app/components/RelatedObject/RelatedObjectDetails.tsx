@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
-import styles from "@/app/components/RelatedObject/RelatedObjectDetails.module.css";
+import styles from "@/app/components/RelatedObject/styles/RelatedObjectDetails.module.css";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";

@@ -5,7 +5,7 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 
-import styles from "./ReplaceRelatedNodeView.module.css";
+import styles from "./styles/ReplaceRelatedNodeView.module.css";
 
 export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeNode }) => {
   const currentObject = treeNode.object;
