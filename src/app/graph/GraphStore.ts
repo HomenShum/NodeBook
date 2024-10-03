@@ -2,7 +2,7 @@ import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { defaultRelationTypes, MAX_PREFIX_LENGTH } from "@/app/graph/constants";
-import { GraphUpdate } from "@/app/graph/GraphUpdate";
+import { GraphUpdate, PartialUpdateRelationList } from "@/app/graph/GraphUpdate";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { GraphRelationType } from "@/app/graph/types";
 import { UpdateManager } from "@/app/graph/UpdateManager";
@@ -1000,7 +1000,10 @@ export class GraphStore {
       const fromId = relation.from.id;
       const partialFromUpdates = relation.from.allRelationsList.add(relation);
       const toId = relation.to.id;
-      const partialToUpdates = relation.to.allRelationsList.add(relation);
+      let partialToUpdates: PartialUpdateRelationList[] = [];
+      if (fromId !== toId) {
+        partialToUpdates = relation.to.allRelationsList.add(relation);
+      }
 
       updates = [
         {
