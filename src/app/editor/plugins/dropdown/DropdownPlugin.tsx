@@ -53,6 +53,7 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
 
   const getMatches = useCallback(
     (text: string, types?: ("node" | "relation" | "relationType")[]): Match[] => {
+      text = text.toLocaleLowerCase().trim();
       let results = graphStore.search({ text, filters: { types }, sort: { by: "score" } });
       return [
         ...results.nodes
@@ -137,7 +138,7 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
       // Open mention dropdown after @ match
       const match = checkForMentionMatch(textBeforeCursor);
       if (match) {
-        const queryString = match.matchingString.toLocaleLowerCase().trim();
+        const queryString = match.matchingString;
         if (queryString.length === 0) {
           setDropdown({
             type: "mention",
