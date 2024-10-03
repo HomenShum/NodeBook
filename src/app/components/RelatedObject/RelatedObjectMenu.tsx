@@ -26,7 +26,6 @@ import {
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
-import { cn } from "@/lib/utils";
 
 import { useTreeNode } from "./RelatedObjectContext";
 
@@ -42,16 +41,20 @@ export const RelatedObjectMenu = observer(
     const parent = treeNode.parent.object;
     const relation = treeNode.relationWithParent;
 
+    const [menuOpen, setMenuOpen] = useState(false);
     const [publicDialogOpen, setPublicDialogOpen] = useState(false);
 
     if (viewStore.flattenSublists) {
       return null;
     }
 
+    if (!isHovered && !menuOpen) {
+      return <Ellipsis size={16} className={styles.Transparent} />;
+    }
     return (
-      <DropdownMenu>
+      <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger className={styles.TrailMenuTrigger}>
-          <Ellipsis size={16} className={cn(isHovered ? styles.TrailMenuIcon : styles.Transparent)} />
+          <Ellipsis size={16} className={styles.TrailMenuIcon} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" alignOffset={-5} onCloseAutoFocus={(e) => e.preventDefault()}>
           {parent.isRelationPinned(relation) ? (

@@ -35,6 +35,7 @@ export const RelationCombobox = observer(
 
     const viewStore = useViewStore();
     const isForward = relation.to.id === object.id;
+    const [isHovered, setIsHovered] = React.useState(false);
 
     if (viewStore.flattenSublists && treeNode instanceof PointerTreeNode) {
       return null;
@@ -47,6 +48,23 @@ export const RelationCombobox = observer(
     };
 
     const label = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
+    const button = (
+      <Button
+        variant="ghost"
+        size="sm"
+        role="combobox"
+        aria-expanded={isOpen}
+        className={styles.RelationComboboxLabel}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {label}:
+      </Button>
+    );
+
+    if (!isHovered && !isOpen) {
+      return button;
+    }
     return (
       <Popover
         open={isOpen}
@@ -58,18 +76,8 @@ export const RelationCombobox = observer(
           }
         }}
       >
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            role="combobox"
-            aria-expanded={isOpen}
-            className={styles.RelationComboboxLabel}
-          >
-            {label}:
-          </Button>
-        </PopoverTrigger>
-        {isOpen && <RelationTypeSelector treeNode={treeNode} />}
+        <PopoverTrigger asChild>{button}</PopoverTrigger>
+        <RelationTypeSelector treeNode={treeNode} />
       </Popover>
     );
   },
