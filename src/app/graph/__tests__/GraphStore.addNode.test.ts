@@ -1,5 +1,7 @@
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
+import { UNLOGGED_USER } from "@/app/auth/MewUser";
+import { SettingsStore } from "@/app/graph/SettingsStore";
 
 import { MIN_NUM_NODES } from "./helpers";
 
@@ -9,7 +11,7 @@ describe("GraphStore.addNode", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore();
+    graphStore = new GraphStore(UNLOGGED_USER, new SettingsStore());
     graphStore.updateManager.cleanup();
   });
 
@@ -34,5 +36,16 @@ describe("GraphStore.addNode", () => {
 
     expect(graphStore.getNode(node.id)).toBeUndefined();
     expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES);
+  });
+  it("should create a public node in public mode and vice versa", async () => {
+    graphStore.settings?.setPublicMode(true);
+    const publicNode = await graphStore.addNode({});
+    expect(graphStore.getNode(publicNode.id)).toBeDefined();
+    expect(publicNode.isPublic).toBe(true);
+
+    graphStore.settings?.setPublicMode(false);
+    const privateNode = await graphStore.addNode({});
+    expect(graphStore.getNode(privateNode.id)).toBeDefined();
+    expect(privateNode.isPublic).toBe(false);
   });
 });
