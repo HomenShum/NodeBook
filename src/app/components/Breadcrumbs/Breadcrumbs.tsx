@@ -28,7 +28,7 @@ export const Breadcrumbs = observer(({ treeNode }: { treeNode: TreeNode }) => {
   const graphStore = useGraphStore();
   const router = useRouter();
   const isMobile = useIsMobile();
-  const ancestors = getAncestorsAsArray(treeNode);
+  const ancestors = treeNode.id ? getAncestorsAsArray(treeNode) : [];
 
   const handleNavigation = (index: number) => {
     if (index > ancestors.length) return;

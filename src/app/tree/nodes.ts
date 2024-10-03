@@ -244,7 +244,7 @@ export class DescendantTreeNode extends BaseTreeNode {
     this.position = position;
   }
 
-  hydrate(visitedMap: {} = {}, isConnectedSublist: boolean = false) {
+  hydrate() {
     this.childrenGroups.forEach((group) => group.hydrate());
   }
 
