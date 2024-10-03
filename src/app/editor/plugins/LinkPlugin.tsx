@@ -3,7 +3,6 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { $getChips } from "@/app/editor/utils";
 import { Chip } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import logger from "@/lib/logger";
 
 type Match = {
   index: number;
@@ -102,11 +101,12 @@ export const LinkPlugin = ({ nodeId }: { nodeId: string }) => {
 
   return (
     <OnChangePlugin
+      ignoreHistoryMergeTagChange={true}
+      ignoreSelectionChange={true}
       onChange={(editorState) => {
         editorState.read(async () => {
           const chips = $getChips();
           let currentString = "";
-          let hasChanged = false;
 
           const newChips = chips.reduce((acc: Chip[], chip, index) => {
             const isTextOrLink = chip.type === "text" || chip.type === "link";
@@ -124,15 +124,9 @@ export const LinkPlugin = ({ nodeId }: { nodeId: string }) => {
                   // If there are matches, generate the link and text chips
                   const chips = generateLinkAndTextChips(currentString, matches);
                   acc.push(...chips);
-                  hasChanged = true;
                 } else {
                   // Otherwise, add the current string as a text chip
                   acc.push({ type: "text", value: currentString });
-                  if (chip.value !== currentString) {
-                    // Normally, this shouldn't happen (adjacent text chips should be merged)
-                    logger.warn("LinkPlugin: Consecutive text chips were separate for some reason");
-                    hasChanged = true;
-                  }
                 }
                 currentString = "";
               }
@@ -145,6 +139,10 @@ export const LinkPlugin = ({ nodeId }: { nodeId: string }) => {
 
             return acc;
           }, []);
+
+          const hasChanged =
+            chips.length !== newChips.length ||
+            chips.some((chip, index) => chip.type !== newChips[index].type || chip.value !== newChips[index].value);
 
           if (hasChanged) {
             await graphStore.updateNode({ nodeId, nodeProps: { content: newChips } });
