@@ -596,7 +596,7 @@ export class GraphStore {
       // we don't want "is X of of"
       reverseLabel = label;
       label = label.replace(/^(is\s+)?(.+?)\s+of$/i, "$2");
-    } else if (!reverseLabel) {
+    } else if (reverseLabel === undefined) {
       reverseLabel = `is ${label} of`;
     }
 
