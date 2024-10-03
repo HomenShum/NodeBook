@@ -303,7 +303,7 @@ export class GraphStore {
         content: props.content,
         isBundle: props.isBundle ?? false,
         isZone: props.isZone ?? false,
-        isPublic: props.isPublic ?? this.settings?.publicMode ?? false,
+        isPublic: !!(props.isPublic || (this.settings && this.settings.publicMode)),
         isNewRelatedObjectsPublic: !!props.isNewRelatedObjectsPublic,
       });
 
