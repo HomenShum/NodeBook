@@ -348,6 +348,10 @@ export class PointerTreeNode extends DescendantTreeNode {
     });
   }
 
+  get showRelation(): boolean {
+    return this.sourceNode.parent instanceof RootTreeNode;
+  }
+
   get siblingAbove(): DescendantTreeNode | null {
     //Flat List
     const nodeIndex = this.parentGroup.nodes.map((n) => n.id).indexOf(this.id);

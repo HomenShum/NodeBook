@@ -38,7 +38,7 @@ export const RelationCombobox = observer(function RelationCombobox({
   const isForward = relation.to.id === object.id;
   const [isHovered, setIsHovered] = React.useState(false);
 
-  if (viewStore.flattenSublists && treeNode instanceof PointerTreeNode) {
+  if (viewStore.flattenSublists && treeNode instanceof PointerTreeNode && !treeNode.showRelation) {
     return null;
   }
 
@@ -78,16 +78,17 @@ export const RelationCombobox = observer(function RelationCombobox({
       }}
     >
       <PopoverTrigger asChild>{button}</PopoverTrigger>
-      <RelationTypeSelector treeNode={treeNode} />
+      <RelationTypeSelector treeNode={treeNode} close={close} />
     </Popover>
   );
 });
 
 interface SelectorProps {
   treeNode: DescendantTreeNode;
+  close: () => void;
 }
 
-function RelationTypeSelector({ treeNode }: SelectorProps) {
+function RelationTypeSelector({ treeNode, close }: SelectorProps) {
   const parent = treeNode.parent.object;
   const relation = treeNode.relationWithParent;
   const isForward = relation.to.id === treeNode.object.id;
