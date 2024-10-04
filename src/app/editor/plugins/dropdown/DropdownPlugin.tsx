@@ -216,10 +216,10 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
         KEY_DOWN_COMMAND,
         (event) => {
           if (
-            dropdown === null &&
             event.key === ";" &&
             // at start of line (a.k.a. text before selection is empty)
-            $getText({ to: getSelectionPositions(editor)[0] }) === ""
+            $getText({ to: getSelectionPositions(editor)[0] }) === "" &&
+            (treeNode.object.text === "" || dropdown === null)
           ) {
             event.preventDefault();
             setDropdown({
