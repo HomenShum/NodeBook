@@ -4,6 +4,7 @@ import { DELETED_NODE_TEXT } from "@/app/graph/constants";
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { ObjectPath, Position, uuid } from "@/app/util";
+import logger from "@/lib/logger";
 
 import { BaseGraphObject, GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
@@ -181,11 +182,34 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     let current: GraphObject | undefined = this;
 
     for (let i = 0; i < limit && current && current !== this.store.globalRoot; i++) {
-      const nextRelations: GraphRelation[] = current.relations
+      const nextRelationOptions: GraphRelation[] = current.relations
         .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
         .filter((r) => r.to.id === current?.id);
-      const nextRelation =
-        nextRelations.find((r) => r.relationType.id === "child" || r.relationType.id === "sublist") || nextRelations[0];
+      let nextRelation: GraphRelation | null = null;
+      // If we're at the user root, default to the usersToUserRelation
+      if (current.id === this.store.userRoot.id) {
+        try {
+          if (
+            (this.store.usersToUserRelation && this.store.usersToUserRelation.to.id === this.store.userRoot.id) ||
+            this.store.usersToUserRelation.from.id === this.store.globalRoot.id
+          ) {
+            nextRelation = this.store.usersToUserRelation;
+          } else {
+            logger.error("Valid usersToUserRelation not found", {
+              current: current.id,
+              usersToUserRelationFromId: this.store.usersToUserRelation.from.id,
+              usersToUserRelationToId: this.store.usersToUserRelation.to.id,
+            });
+          }
+        } catch (error) {
+          logger.error("Error accessing usersToUserRelation:", error);
+        }
+      }
+      if (!nextRelation) {
+        nextRelation =
+          nextRelationOptions.find((r) => r.relationType.id === "child" || r.relationType.id === "sublist") ||
+          nextRelationOptions[0];
+      }
       if (!nextRelation || relations.some((p) => p.id === nextRelation.id)) {
         return { relations, object: this };
       }

@@ -5,25 +5,25 @@ import { useEffect } from "react";
 
 import { MainView } from "@/app/components/MainView";
 import { useGraphStore } from "@/app/graph/useGraphStore";
-import { createRouteUrl, parsePathString } from "@/app/util";
+import { createRouteUrl, parsePathArray } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 
-function Page({ params: { path } }: { params: { path: string[] | undefined } }) {
+function Page({ params: { path: pathArray } }: { params: { path: string[] | undefined } }) {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
 
   useEffect(() => {
-    const relationPath = parsePathString(path ?? [], graphStore);
+    const path = parsePathArray(pathArray ?? [], graphStore);
 
-    if (relationPath) {
-      return viewStore.setRoot(relationPath, "/" + (path ? path.join("/") : ""));
+    if (path) {
+      return viewStore.setRoot(path.objectPath, path.stringPath);
     }
 
-    const object = path ? graphStore.getNode(path[path.length - 1]) : false;
+    const object = pathArray ? graphStore.getNode(pathArray[pathArray.length - 1]) : false;
 
     if (!object) {
-      logger.debug("Could not find object, redirecting to home", path);
+      logger.debug("Could not find object, redirecting to home", pathArray);
       return redirect(createRouteUrl("home"));
     }
 

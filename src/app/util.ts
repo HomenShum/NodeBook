@@ -131,7 +131,10 @@ export function createRouteUrl(path?: ObjectPath | GraphRelation[] | string | ty
   return "/g" + pathSuffix;
 }
 
-export function parsePathString(path: string[], graphStore: GraphStore): ObjectPath | null {
+export function parsePathArray(
+  path: string[],
+  graphStore: GraphStore,
+): { objectPath: ObjectPath; stringPath: string } | null {
   if (path.length === 0) return null;
   let relations = [];
   // Some object ids include user subs with pipes or colons that would have been url encoded.
@@ -147,7 +150,8 @@ export function parsePathString(path: string[], graphStore: GraphStore): ObjectP
   }
   const lastId = path[path.length - 1];
   if (lastId === home) {
-    return graphStore.getDefaultRootForUser();
+    const objectPath = graphStore.getDefaultRootForUser();
+    return { objectPath, stringPath: createRouteUrl(objectPath) };
   } else {
     const object = graphStore.getObject(lastId);
     if (!object) {
@@ -159,7 +163,7 @@ export function parsePathString(path: string[], graphStore: GraphStore): ObjectP
       logger.debug("Path is not continuous", objectPath);
       return null;
     }
-    return objectPath;
+    return { objectPath, stringPath: createRouteUrl(objectPath) };
   }
 }
 
