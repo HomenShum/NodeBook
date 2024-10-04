@@ -1,5 +1,5 @@
 import * as Dialog from "@radix-ui/react-dialog";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { Path } from "@/app/components/Path";
@@ -30,10 +30,11 @@ type Command =
 const CommandBar = () => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const close = () => {
+  const close = useCallback(() => {
     setOpen(false);
     setSearch("");
-  };
+  }, [setOpen, setSearch]);
+
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const graphStore = useGraphStore();
@@ -76,31 +77,34 @@ const CommandBar = () => {
         },
       },
     ];
-  }, [graphStore, setRoot, search]);
+  }, [graphStore, setRoot, search, close]);
 
   useEffect(() => {
     setSelectedIndex(0);
   }, [search]);
 
   // Keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setSelectedIndex((prevIndex) => Math.min(prevIndex + 1, filteredCommands.length - 1));
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setSelectedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
-        break;
-      case "Enter":
-        e.preventDefault();
-        if (filteredCommands[selectedIndex]) {
-          filteredCommands[selectedIndex].perform();
-        }
-        break;
-    }
-  };
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          setSelectedIndex((prevIndex) => Math.min(prevIndex + 1, filteredCommands.length - 1));
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setSelectedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+          break;
+        case "Enter":
+          e.preventDefault();
+          if (filteredCommands[selectedIndex]) {
+            filteredCommands[selectedIndex].perform();
+          }
+          break;
+      }
+    },
+    [filteredCommands, selectedIndex],
+  );
 
   // Scroll to selected element
   useEffect(() => {
@@ -126,8 +130,8 @@ const CommandBar = () => {
           <div className={styles.List} ref={listRef}>
             {filteredCommands.map((command, index) => (
               <div
-                className={cn(styles.Item, selectedIndex === index && styles.Selected)}
                 key={command.id}
+                className={cn(styles.Item, selectedIndex === index && styles.Selected)}
                 onClick={() => command.perform()}
               >
                 <span>{command.name}</span>

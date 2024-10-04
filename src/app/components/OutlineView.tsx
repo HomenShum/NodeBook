@@ -1,7 +1,7 @@
 "use client";
 import { Globe, HomeIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { Options, useHotkeys } from "react-hotkeys-hook";
 
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
@@ -28,22 +28,24 @@ interface Props {
 
 export const OutlineView = observer(function OutlineView({ tree }: Props) {
   const graphStore = useGraphStore();
-  const treeRef = useRef<HTMLDivElement>(null);
-  const hasFocus = useCallback(() => !!treeRef.current?.contains(document.activeElement), [treeRef]);
-  useOutlineHotkeys({ tree, hasFocus });
-  const treeNode = tree.state.root;
   const viewStore = useViewStore();
+  useOutlineHotkeys({ tree });
 
+  const treeNode = tree.state.root;
   const userId = graphStore.user?.id;
   const isGlobalRoot = treeNode.object.id === graphStore.globalRoot.id;
 
-  const tooltipContent = !isGlobalRoot && (
-    <>
-      <div className={s.TooltipContent}>
-        Object author: {treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}
-      </div>
-      <div className={s.TooltipContent}>Created: {new Date(treeNode.object.createdAt).toLocaleDateString()}</div>
-    </>
+  const tooltipContent = useMemo(
+    () =>
+      isGlobalRoot ? null : (
+        <>
+          <div className={s.TooltipContent}>
+            Object author: {treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}
+          </div>
+          <div className={s.TooltipContent}>Created: {new Date(treeNode.object.createdAt).toLocaleDateString()}</div>
+        </>
+      ),
+    [isGlobalRoot, treeNode.object.authorId, treeNode.object.createdAt, userId],
   );
 
   // Set the tree selection to null when the user clicks outside an editor
@@ -113,7 +115,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
   );
 });
 
-function useOutlineHotkeys({ tree, hasFocus }: { tree: Tree; hasFocus: () => boolean }) {
+function useOutlineHotkeys({ tree }: { tree: Tree }) {
   const defaults: Options = { enableOnContentEditable: true, preventDefault: true, enableOnFormTags: ["INPUT"] };
   useHotkeys("mod+shift+ArrowUp", () => tree.moveSelectedNodesUp(), defaults, [tree]);
   useHotkeys("mod+shift+ArrowDown", () => tree.moveSelectedNodesDown(), defaults, [tree]);
@@ -128,6 +130,7 @@ function useOutlineHotkeys({ tree, hasFocus }: { tree: Tree; hasFocus: () => boo
   useHotkeys("tab", () => tree.indentSelection(), defaults, [tree]);
   useHotkeys("shift+tab", () => tree.dedentSelection(), defaults, [tree]);
   useHotkeys("esc", () => tree.escapeSelection(), defaults, [tree]);
+
   const setRoot = useSetRoot();
   const setCurrentNodeAsRoot = useCallback(() => {
     if (tree.selectionWithNodes?.type === "editor") {

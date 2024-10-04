@@ -7,3 +7,25 @@
   font-size: var(--font-size-sm);
   color: var(--gray-9);
 }
+
+.PathItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.Wrap {
+  flex-wrap: wrap;
+}
+
+.NoWrap {
+  flex-wrap: nowrap;
+}
+
+.MWFull {
+  max-width: 100%;
+}
+
+.MWAuto {
+  max-width: auto;
+}
