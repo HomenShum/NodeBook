@@ -1,6 +1,6 @@
 {
-  "id": "ba09cc7d-f8df-48b0-ac39-915aff1f25ca",
-  "prevId": "04440084-18de-45f7-a9fe-d29df1ac9e9b",
+  "id": "4a678453-1c6b-46cf-bc7c-c734f24b7073",
+  "prevId": "68d07c4f-e5ab-4b75-adce-357ad6468219",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -101,8 +101,11 @@
       "uniqueConstraints": {
         "graph_node_id_author_id_unique": {
           "name": "graph_node_id_author_id_unique",
-          "nullsNotDistinct": false,
-          "columns": ["id", "author_id"]
+          "columns": [
+            "id",
+            "author_id"
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
@@ -174,8 +177,11 @@
       "uniqueConstraints": {
         "graph_relation_id_author_id_unique": {
           "name": "graph_relation_id_author_id_unique",
-          "nullsNotDistinct": false,
-          "columns": ["id", "author_id"]
+          "columns": [
+            "id",
+            "author_id"
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
@@ -240,8 +246,12 @@
       "uniqueConstraints": {
         "relation_lists_node_id_relation_id_pinned_unique": {
           "name": "relation_lists_node_id_relation_id_pinned_unique",
-          "nullsNotDistinct": false,
-          "columns": ["node_id", "relation_id", "pinned"]
+          "columns": [
+            "node_id",
+            "relation_id",
+            "pinned"
+          ],
+          "nullsNotDistinct": false
         }
       }
     },
@@ -281,8 +291,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "reverseLabel": {
-          "name": "reverseLabel",
+        "reverse_label": {
+          "name": "reverse_label",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -301,8 +311,11 @@
       "uniqueConstraints": {
         "relation_type_id_author_id_unique": {
           "name": "relation_type_id_author_id_unique",
-          "nullsNotDistinct": false,
-          "columns": ["id", "author_id"]
+          "columns": [
+            "id",
+            "author_id"
+          ],
+          "nullsNotDistinct": false
         }
       }
     },

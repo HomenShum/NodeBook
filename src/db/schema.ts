@@ -97,7 +97,7 @@ export const relationTypeTable = pgTable(
     authorId: text("author_id").notNull(),
     version: integer("version").notNull().default(1),
     label: text("label"),
-    reverseLabel: text("reverseLabel"),
+    reverseLabel: text("reverse_label"),
     isPublic: boolean("is_public").default(false),
   },
   (t) => ({

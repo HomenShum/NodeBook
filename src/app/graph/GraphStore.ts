@@ -18,8 +18,10 @@ import { ObjectPath, Position, uuid } from "@/app/util";
 import {
   GLOBAL_ADMIN_USER_ID,
   GLOBAL_ROOT_ID,
-  GLOBAL_TO_USER_RELATION_ID_PREFIX,
+  GLOBAL_USERS_NODE_ID,
+  GLOBAL_USERS_RELATION_ID,
   USER_ROOT_ID_PREFIX,
+  USERS_TO_USER_RELATION_ID_PREFIX,
 } from "@/lib/constants";
 import logger from "@/lib/logger";
 import { CappedKeywordIndex } from "@/lib/trie";
@@ -130,12 +132,28 @@ export class GraphStore {
     return node;
   }
 
-  get globalToUserRelationId(): string {
-    return GLOBAL_TO_USER_RELATION_ID_PREFIX + this.user.id;
+  get usersNode(): GraphNode {
+    const node = this.nodesById.get(GLOBAL_USERS_NODE_ID);
+    if (!node) {
+      throw new Error("Users node not found");
+    }
+    return node;
   }
 
-  get globalToUserRelation(): GraphRelation {
-    const relation = this.relationsById.get(this.globalToUserRelationId);
+  get globalToUsersRelation(): GraphRelation {
+    const relation = this.relationsById.get(GLOBAL_USERS_RELATION_ID);
+    if (!relation) {
+      throw new Error("Global to users relation not found");
+    }
+    return relation;
+  }
+
+  get usersToUserRelationId(): string {
+    return USERS_TO_USER_RELATION_ID_PREFIX + this.user.id;
+  }
+
+  get usersToUserRelation(): GraphRelation {
+    const relation = this.relationsById.get(this.usersToUserRelationId);
     if (!relation) {
       throw new Error("Global to user relation not found");
     }
@@ -146,7 +164,7 @@ export class GraphStore {
    * The default place to put a user in the graph.
    */
   getDefaultRootForUser(): ObjectPath {
-    return { object: this.userRoot, relations: [this.globalToUserRelation] };
+    return { object: this.userRoot, relations: [this.globalToUsersRelation, this.usersToUserRelation] };
   }
 
   applyUpdates(updates: GraphUpdate[]) {
@@ -1082,8 +1100,8 @@ export class GraphStore {
     if (!relation) {
       throw new Error("Relation does not exist");
     }
-    if (relation.id.startsWith(GLOBAL_TO_USER_RELATION_ID_PREFIX)) {
-      throw new Error("Cannot delete relation from global to user");
+    if (relation.id.startsWith(USERS_TO_USER_RELATION_ID_PREFIX)) {
+      throw new Error("Cannot delete relation from users to user");
     }
 
     const deleted: DeletedRelationData = {
@@ -1217,8 +1235,8 @@ export class GraphStore {
     if (!relation) {
       throw new Error(`Relation with id ${tx.relationId} does not exist`);
     }
-    if (relation.id.startsWith(GLOBAL_TO_USER_RELATION_ID_PREFIX)) {
-      throw new Error("Cannot replace relation from global to user");
+    if (relation.id.startsWith(USERS_TO_USER_RELATION_ID_PREFIX)) {
+      throw new Error("Cannot replace relation from users to user");
     }
 
     const updates: GraphUpdate[] = [];
@@ -1567,16 +1585,7 @@ export class GraphStore {
       }
     }
 
-    let userRoot = this.nodesById.get(this.userRootId);
-    if (!userRoot) {
-      const { node, updates: userRootUpdates } = this._addNode({
-        id: this.userRootId,
-        content: [{ type: "text", value: this.user.name || this.user.id || "Untitled User" }],
-      });
-      userRoot = node;
-      updates.push(...userRootUpdates);
-    }
-
+    // Global root node
     let globalRoot = this.nodesById.get(GLOBAL_ROOT_ID);
     if (!globalRoot) {
       const { node } = this._addNode({
@@ -1590,16 +1599,58 @@ export class GraphStore {
       // Don't push the change. The global root already exists on the server.
     }
 
-    let globalToUserRelation = this.relationsById.get(this.globalToUserRelationId);
-    if (!globalToUserRelation) {
-      const { relation, updates: globalToUserRelationUpdates } = this.createRelation({
-        id: this.globalToUserRelationId,
+    // Global users node
+    let usersNode = this.nodesById.get(GLOBAL_USERS_NODE_ID);
+    if (!usersNode) {
+      const { node } = this._addNode({
+        id: GLOBAL_USERS_NODE_ID,
+        content: [{ type: "text", value: "Users" }],
+        isPublic: true,
+        authorId: GLOBAL_ADMIN_USER_ID,
+        createdAt: new Date(0),
+      });
+      usersNode = node;
+      // Don't push the change. The users node already exists on the server.
+    }
+
+    // Global-[sublist]->Users
+    let globalToUsersRelation = this.relationsById.get(GLOBAL_USERS_RELATION_ID);
+    if (!globalToUsersRelation) {
+      const { relation } = this.createRelation({
+        id: GLOBAL_USERS_RELATION_ID,
         from: globalRoot,
+        to: usersNode,
+        relationType: defaultRelationTypes.sublist,
+        isPublic: true,
+        authorId: this.user.id,
+      });
+      globalToUsersRelation = relation;
+      // Don't push the change. The global to users relation already exists on the server.
+    }
+
+    // User node
+    let userRoot = this.nodesById.get(this.userRootId);
+    if (!userRoot) {
+      const { node, updates: userRootUpdates } = this._addNode({
+        id: this.userRootId,
+        content: [{ type: "text", value: this.user.name || this.user.id || "Untitled User" }],
+        authorId: this.user.id,
+      });
+      userRoot = node;
+      updates.push(...userRootUpdates);
+    }
+
+    // Users-[sublist]->User
+    let usersToUserRelation = this.relationsById.get(this.usersToUserRelationId);
+    if (!usersToUserRelation) {
+      const { relation, updates: usersToUserRelationUpdates } = this.createRelation({
+        id: this.usersToUserRelationId,
+        from: usersNode,
         to: userRoot,
         relationType: defaultRelationTypes.sublist,
       });
-      globalToUserRelation = relation;
-      updates.push(...globalToUserRelationUpdates);
+      usersToUserRelation = relation;
+      updates.push(...usersToUserRelationUpdates);
     }
 
     this.updateManager.queueUpdates(updates);

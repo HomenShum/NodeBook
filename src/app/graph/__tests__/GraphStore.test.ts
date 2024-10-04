@@ -2,7 +2,7 @@ import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { defaultRelationTypes } from "@/app/graph/constants";
 
-import { MIN_NUM_CREATED_NODES, MIN_NUM_RELATIONS } from "./helpers";
+import { MIN_NUM_CREATED_NODES, MIN_NUM_CREATED_RELATIONS } from "./helpers";
 
 describe("GraphStore initialization", () => {
   it("should initialize with default objects", () => {
@@ -31,7 +31,7 @@ describe("GraphStore initialization", () => {
     }
 
     expect(addRelationTypeUpdates).toBe(Object.keys(defaultRelationTypes).length);
-    expect(addRelationUpdates).toBe(MIN_NUM_RELATIONS);
+    expect(addRelationUpdates).toBe(MIN_NUM_CREATED_RELATIONS);
     expect(addNodeUpdates).toBe(MIN_NUM_CREATED_NODES);
   });
 });

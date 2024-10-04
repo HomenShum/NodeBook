@@ -1,6 +1,6 @@
 {
-  "id": "ba09cc7d-f8df-48b0-ac39-915aff1f25ca",
-  "prevId": "04440084-18de-45f7-a9fe-d29df1ac9e9b",
+  "id": "68d07c4f-e5ab-4b75-adce-357ad6468219",
+  "prevId": "ba09cc7d-f8df-48b0-ac39-915aff1f25ca",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -102,7 +102,10 @@
         "graph_node_id_author_id_unique": {
           "name": "graph_node_id_author_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["id", "author_id"]
+          "columns": [
+            "id",
+            "author_id"
+          ]
         }
       }
     },
@@ -175,7 +178,10 @@
         "graph_relation_id_author_id_unique": {
           "name": "graph_relation_id_author_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["id", "author_id"]
+          "columns": [
+            "id",
+            "author_id"
+          ]
         }
       }
     },
@@ -241,7 +247,11 @@
         "relation_lists_node_id_relation_id_pinned_unique": {
           "name": "relation_lists_node_id_relation_id_pinned_unique",
           "nullsNotDistinct": false,
-          "columns": ["node_id", "relation_id", "pinned"]
+          "columns": [
+            "node_id",
+            "relation_id",
+            "pinned"
+          ]
         }
       }
     },
@@ -281,8 +291,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "reverseLabel": {
-          "name": "reverseLabel",
+        "reverse_label": {
+          "name": "reverse_label",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -302,7 +312,10 @@
         "relation_type_id_author_id_unique": {
           "name": "relation_type_id_author_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["id", "author_id"]
+          "columns": [
+            "id",
+            "author_id"
+          ]
         }
       }
     },

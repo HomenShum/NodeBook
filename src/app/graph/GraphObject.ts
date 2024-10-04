@@ -42,7 +42,13 @@ export abstract class BaseGraphObject {
   }
 
   get isRoot() {
-    return this.id === this.store.userRoot.id || this.id === this.store.globalRoot.id;
+    return (
+      this.id === this.store.userRoot.id ||
+      this.id === this.store.globalRoot.id ||
+      this.id === this.store.usersToUserRelationId ||
+      this.id === this.store.globalToUsersRelation.id ||
+      this.id === this.store.usersNode.id
+    );
   }
 
   get relationsWithPositions(): PositionedRelation[] {

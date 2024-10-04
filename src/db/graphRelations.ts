@@ -4,7 +4,7 @@ import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { graphRelationTable, relationListsTable } from "@/db/schema";
 import { SyncError } from "@/db/SyncError";
 import { MewDbTransaction } from "@/db/types";
-import { GLOBAL_TO_USER_RELATION_ID_PREFIX } from "@/lib/constants";
+import { USERS_TO_USER_RELATION_ID_PREFIX } from "@/lib/constants";
 
 export const createRelations = async (tx: MewDbTransaction, relations: SerializedRelation[]) => {
   const newRelations = await tx
@@ -67,7 +67,7 @@ export const updateRelation = async (
 };
 
 export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
-  if (relation.id.startsWith(GLOBAL_TO_USER_RELATION_ID_PREFIX)) {
+  if (relation.id.startsWith(USERS_TO_USER_RELATION_ID_PREFIX)) {
     throw new SyncError("Cannot delete relation from global to user", {
       actionName: "deleteRelation",
       data: { relation },

@@ -147,7 +147,7 @@ export function parsePathString(path: string[], graphStore: GraphStore): ObjectP
   }
   const lastId = path[path.length - 1];
   if (lastId === home) {
-    return { object: graphStore.userRoot, relations: [graphStore.globalToUserRelation] };
+    return graphStore.getDefaultRootForUser();
   } else {
     const object = graphStore.getObject(lastId);
     if (!object) {
