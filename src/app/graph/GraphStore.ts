@@ -1,3 +1,4 @@
+import { captureMessage } from "@sentry/nextjs";
 import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
@@ -1788,7 +1789,9 @@ export class GraphStore {
           throw new Error(`Relation with id ${obj.id} does not exist`);
         }
       } else if (obj instanceof PlaceholderGraphObject) {
-        logger.warn(`Placeholder object with id ${obj.id} is being used`);
+        const message = "Placeholder object is being used";
+        logger.debug(message, { objectId: obj.id });
+        captureMessage(message, { extra: { objectId: obj.id }, level: "info" });
       } else {
         throw new Error("Invalid object type");
       }

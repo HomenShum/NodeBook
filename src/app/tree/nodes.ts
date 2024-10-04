@@ -1,10 +1,12 @@
+import { captureMessage } from "@sentry/nextjs";
+
 import { env } from "@/app/envFrontend";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
-import { getOtherObjectOrThrow } from "@/app/graph/utils";
+import { getOtherObject, getOtherObjectOrThrow } from "@/app/graph/utils";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Tree } from "@/app/tree/Tree";
 import { comparePositions, createRouteUrl, Position } from "@/app/util";
@@ -396,22 +398,31 @@ export abstract class BaseGroup {
   hydrate() {
     const nodes = [];
     for (const { relation, position } of this.relationsWithPositions) {
-      try {
-        const node = new DescendantTreeNode({
-          object: getOtherObjectOrThrow(relation, this.parent.object.id),
-          position,
-          relationWithParent: relation,
-          group: this,
-        });
-        // Only hydrate children if the parent is expanded. This is important to avoid
-        // infinite recursion since we allow circular references in the graph.
-        if (this.parent.isExpanded && this.isExpanded) {
-          node.hydrate();
-        }
-        nodes.push(node);
-      } catch (e) {
-        logger.error("Error hydrating node", e);
+      const object = getOtherObject(relation, this.parent.object.id);
+      if (!object) {
+        const message = "Object not found for relation during hydration";
+        const data = {
+          relationId: relation.id,
+          fromId: relation.from.id,
+          toId: relation.to.id,
+          parentId: this.parent.object.id,
+        };
+        logger.debug(message, data);
+        captureMessage(message, { extra: data, level: "info" });
+        continue;
       }
+      const node = new DescendantTreeNode({
+        object,
+        position,
+        relationWithParent: relation,
+        group: this,
+      });
+      // Only hydrate children if the parent is expanded. This is important to avoid
+      // infinite recursion since we allow circular references in the graph.
+      if (this.parent.isExpanded && this.isExpanded) {
+        node.hydrate();
+      }
+      nodes.push(node);
     }
     this.nodes = nodes;
   }
