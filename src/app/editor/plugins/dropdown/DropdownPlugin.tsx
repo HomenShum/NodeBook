@@ -57,14 +57,14 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
       let results = graphStore.search({ text, filters: { types }, sort: { by: "score" } });
       return [
         ...results.nodes
-          .filter(({ node }) => node.id !== treeNode.object.id && node.text.includes(text))
+          .filter(({ node }) => node.id !== treeNode.object.id)
           .map(({ node, score }) => ({ key: node.id, type: "node" as const, object: node, score })),
         ...results.relations
           .filter(
             ({ relation }) =>
+              relation.id !== treeNode.object.id &&
               relation.to.id !== treeNode.object.id &&
-              relation.from.id !== treeNode.object.id &&
-              relation.text.includes(text),
+              relation.from.id !== treeNode.object.id,
           )
           .map(({ relation, score }) => ({ key: relation.id, type: "relation" as const, object: relation, score })),
         ...results.relationTypes.flatMap(({ relationType, score }) => {
@@ -72,7 +72,9 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
             return [];
           }
           const res: Match[] = [];
-          if (relationType.label.includes(text)) {
+          const label = relationType.label.toLocaleLowerCase();
+          const reverseLabel = relationType.reverseLabel.toLocaleLowerCase();
+          if (label.includes(text)) {
             res.push({
               key: relationType.id,
               type: "relationType" as const,
@@ -81,7 +83,7 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
               isForward: true,
             });
           }
-          if (relationType.label !== relationType.reverseLabel && relationType.reverseLabel.includes(text)) {
+          if (label !== reverseLabel && reverseLabel.includes(text)) {
             res.push({
               key: relationType.id + "-rev",
               type: "relationType" as const,
