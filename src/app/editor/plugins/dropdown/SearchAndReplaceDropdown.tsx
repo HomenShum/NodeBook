@@ -46,6 +46,10 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   const graphStore = useGraphStore();
+  // We only want to highlight where the mouse is when the user intentionally puts it there.
+  // If the dropdown opens overtop of where the mouse was, we don't want to highlight that option.
+  const mouseMoveSinceStateChange = useRef(false);
+  const listRef = useRef<HTMLUListElement>(null);
 
   // Reset highlighted index when options change (but only once they've been set)
   useEffect(() => {
@@ -54,6 +58,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
     } else {
       setHighlightedIndex(null);
     }
+    mouseMoveSinceStateChange.current = false;
   }, [state]);
 
   const selectMatch = useCallback(
@@ -79,6 +84,14 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   useEffect(() => {
     if (!state) return;
     const nodes = state.matches;
+
+    function scrollToElement(index: number) {
+      const highlightedElement = listRef.current?.children[index] as HTMLElement;
+      if (highlightedElement) {
+        highlightedElement.scrollIntoView({ block: "nearest" });
+      }
+    }
+
     return mergeRegister(
       // Set current node to highlighted object on enter
       editor.registerCommand(
@@ -123,6 +136,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
             event.stopPropagation();
           }
           closeDropdown();
+          setHighlightedIndex(null);
           return true;
         },
         COMMAND_PRIORITY_HIGH,
@@ -133,9 +147,10 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
           if (nodes.length === 0) return false;
           event.preventDefault();
           event.stopPropagation();
-          setHighlightedIndex((prevIndex) =>
-            prevIndex === null || prevIndex === nodes.length - 1 ? 0 : prevIndex + 1,
-          );
+          const nextIndex =
+            highlightedIndex === null || highlightedIndex === nodes.length - 1 ? 0 : highlightedIndex + 1;
+          setHighlightedIndex(nextIndex);
+          scrollToElement(nextIndex);
           return true;
         },
         COMMAND_PRIORITY_NORMAL,
@@ -146,9 +161,10 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
           if (nodes.length === 0) return false;
           event.preventDefault();
           event.stopPropagation();
-          setHighlightedIndex((prevIndex) =>
-            prevIndex === null || prevIndex === 0 ? nodes.length - 1 : prevIndex - 1,
-          );
+          const nextIndex =
+            highlightedIndex === null || highlightedIndex === 0 ? nodes.length - 1 : highlightedIndex - 1;
+          setHighlightedIndex(nextIndex);
+          scrollToElement(nextIndex);
           return true;
         },
         COMMAND_PRIORITY_NORMAL,
@@ -158,11 +174,21 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
           const target = event.target as Node;
           if (ref.current && !ref.current.contains(target)) {
             closeDropdown();
+            setHighlightedIndex(null);
           }
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => {
           document.removeEventListener("mousedown", handleClickOutside);
+        };
+      },
+      () => {
+        const handleMouseMove = () => {
+          mouseMoveSinceStateChange.current = true;
+        };
+        document.addEventListener("mousemove", handleMouseMove);
+        return () => {
+          document.removeEventListener("mousemove", handleMouseMove);
         };
       },
     );
@@ -173,12 +199,12 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   }
   return (
     <div ref={ref} className={cn(styles.Dropdown, styles.SearchAndReplace)}>
-      <ul>
+      <ul ref={listRef}>
         {state.matches.map((match, index) => (
           <li
             key={match.key}
             className={highlightedIndex === index ? styles.Selected : ""}
-            onMouseEnter={() => setHighlightedIndex(index)}
+            onMouseEnter={() => mouseMoveSinceStateChange.current && setHighlightedIndex(index)}
             onClick={() => selectMatch(match)}
           >
             <div className={styles.DropdownItem}>

@@ -110,6 +110,20 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
       .map((node) => ({ key: node.id, type: "node" as const, object: node, score: 0 }));
   }, [graphStore, treeNode]);
 
+  const clearDropdown = useCallback(() => {
+    setDropdown((dropdown) => {
+      if (dropdown?.type === "searchAndReplace" && dropdown.initiatedManually) {
+        // The dropdown was initiated manually and then the user deleted the text.
+        // In this case we want to hide the dropdown but we also want it to open up
+        // again when the user starts typing again. We can achieve this by keeping
+        // the dropdown type the same but clearing the search and matches.
+        return { ...dropdown, search: "", matches: [] };
+      } else {
+        return null;
+      }
+    });
+  }, []);
+
   /**
    * Handles the main dropdown state updates. It's registered by the
    * LexicalTypeaheadMenuPlugin and called on every editor update.
@@ -179,10 +193,19 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
       }
 
       // Clear
-      setDropdown(null);
+      clearDropdown();
       return null;
     },
-    [dropdown?.type, editor, getMatches, getRecentNodes, passiveAutocompleteActive, textChanged, labelledRelation],
+    [
+      dropdown?.type,
+      editor,
+      getMatches,
+      getRecentNodes,
+      passiveAutocompleteActive,
+      textChanged,
+      labelledRelation,
+      clearDropdown,
+    ],
   );
 
   // Handle state transitions which {@link triggerFn} can't handle
@@ -215,11 +238,11 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
       editor.registerTextContentListener((text) => {
         textChanged.current = true;
         if (text === "") {
-          setDropdown(null);
+          clearDropdown();
         }
       }),
     );
-  }, [editor, setDropdown, dropdown, treeNode, getMatches, getRecentNodes]);
+  }, [editor, setDropdown, dropdown, treeNode, getMatches, getRecentNodes, clearDropdown]);
 
   return (
     <>
