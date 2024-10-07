@@ -216,10 +216,16 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
         KEY_DOWN_COMMAND,
         (event) => {
           if (
-            event.key === ";" &&
-            // at start of line (a.k.a. text before selection is empty)
-            $getText({ to: getSelectionPositions(editor)[0] }) === "" &&
-            (treeNode.object.text === "" || dropdown === null)
+            // On mod-semi-colon hotkey
+            ((event.key === ";" && (event.metaKey || event.ctrlKey) && dropdown === null) ||
+              // or just semi-colon if at start of line
+              (event.key === ";" && $getText({ to: getSelectionPositions(editor)[0] }) === "")) &&
+            // Usually this command is used when no dropdown is active and we're
+            // triggering it open but there's also a case where passive
+            // autocomplete is active, it's just not showing anything cause the
+            // text is empty. In this case, we want to open the dropdown with
+            // recent nodes.
+            (dropdown === null || treeNode.object.text === "")
           ) {
             event.preventDefault();
             setDropdown({
