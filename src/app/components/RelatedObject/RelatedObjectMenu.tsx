@@ -3,6 +3,7 @@ import {
   Download,
   Edit,
   Ellipsis,
+  Expand,
   GitCompare,
   Globe,
   Lock,
@@ -13,7 +14,7 @@ import {
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { SetPublicDialog } from "@/app/components/SetPublicDialog/SetPublicDialog";
 import {
@@ -25,6 +26,7 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
+import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { downloadSubtree } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -44,6 +46,14 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
   const object = treeNode.object;
   const parent = treeNode.parent.object;
   const relation = treeNode.relationWithParent;
+
+  const setRoot = useSetRoot();
+  const handleZoom = useCallback(() => {
+    setRoot({
+      object: treeNode.object,
+      relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
+    });
+  }, [treeNode, setRoot]);
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);
@@ -72,6 +82,14 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
             Pin
           </DropdownMenuItem>
         )}
+         <DropdownMenuItem onSelect={() => setPublicDialogOpen(true)}>
+          {object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
+          {object.isPublic ? "Make private" : "Make public"}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleZoom}>
+          <Expand size={14} />
+          Zoom to node
+        </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={action(async () => {
             await graphStore.addChildNode({ parentId: object.id });
@@ -100,10 +118,6 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
         <DropdownMenuItem onSelect={() => setViewType("replace")}>
           <GitCompare size={14} />
           Replace related object
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setPublicDialogOpen(true)}>
-          {object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
-          {object.isPublic ? "Make private" : "Make public"}
         </DropdownMenuItem>
         {viewType !== "edit" && (
           <DropdownMenuItem
