@@ -26,7 +26,7 @@ export const ConfirmReplace = observer(function ConfirmReplace({ onConfirm, disa
         disabled={disabled}
         variant="destructive"
         size="sm"
-        style={{ maxWidth: "fit-content" }}
+        className={styles.Button}
         onClick={() => setIsOpen(true)}
       >
         Replace existing data

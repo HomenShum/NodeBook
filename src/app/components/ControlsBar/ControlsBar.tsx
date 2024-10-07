@@ -27,6 +27,25 @@ const filterIcons: { [key: string]: React.ReactNode } = {
   Places: <MapPin size={14} />,
 };
 
+const FilterPill = ({ filter, onRemove }: { filter: string; onRemove: (filter: string) => void }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <Button
+      size="sm"
+      variant="active"
+      className={styles.Button}
+      onClick={() => onRemove(filter)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {!isHovered && filterIcons[filter]}
+      {isHovered && <X size={14} />}
+      <span>{filter}</span>
+    </Button>
+  );
+};
+
 interface Props {
   tree: Tree;
 }
@@ -34,47 +53,30 @@ interface Props {
 export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
+
   const [isPinnedHovered, setIsPinnedHovered] = useState(false);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+
   const showPinnedSection = !tree.filter.hidePinnedSection;
+
   const togglePinnedSection = useCallback(() => {
     tree.updateFilter((prev) => ({ ...prev, hidePinnedSection: !prev.hidePinnedSection }));
   }, [tree]);
 
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-
-  const FilterPill: React.FC<{ filter: string; onRemove: (filter: string) => void }> = ({ filter, onRemove }) => {
-    const [isHovered, setIsHovered] = useState(false);
-
-    return (
-      <Button
-        size="sm"
-        variant="active"
-        onClick={() => onRemove(filter)}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        style={{ display: "flex", alignItems: "center", gap: "8px" }}
-      >
-        {!isHovered && filterIcons[filter]}
-        {isHovered && <X size={14} />}
-        <span>{filter}</span>
-      </Button>
-    );
-  };
-
-  const toggleFilter = (filter: string) => {
+  const toggleFilter = useCallback((filter: string) => {
     setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
-  };
+  }, []);
 
   return (
     <div className={s.ControlsBar}>
-      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+      <div className={styles.ControlsBarWrapper}>
         <Button
           size="sm"
+          className={styles.Button}
           variant={showPinnedSection ? "active" : "default"}
           onClick={togglePinnedSection}
           onMouseEnter={() => setIsPinnedHovered(true)}
           onMouseLeave={() => setIsPinnedHovered(false)}
-          style={{ display: "flex", alignItems: "center", gap: "8px" }}
         >
           {showPinnedSection && isPinnedHovered ? <X size={14} /> : <PinIconMew size={14} strokeWidth={0.17} />}
           <span>Pinned</span>
@@ -128,7 +130,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           </div>
         )}
       </div>
-      <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+      <div className={styles.PopoverWrapper}>
         <Popover>
           <PopoverTrigger asChild>
             <Button size="sm">
@@ -137,28 +139,21 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end">
-            <div
-              style={{
-                width: "100%",
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 4,
-              }}
-            >
+            <div className={styles.PopoverButtonsContainer}>
               <Button
                 size="sm"
+                className={styles.PopoverButton}
                 variant={viewStore.viewType === ViewType.Outline ? "active" : "default"}
                 onClick={() => viewStore.setViewType(ViewType.Outline)}
-                style={{ width: "100%", height: 36, flex: "grow", display: "flex" }}
               >
                 <ListIcon />
                 Outline
               </Button>
               <Button
                 size="sm"
+                className={styles.PopoverButton}
                 variant={viewStore.viewType === ViewType.Note ? "active" : "default"}
                 onClick={() => viewStore.setViewType(ViewType.Note)}
-                style={{ width: "100%", flex: "grow", height: 36, display: "flex" }}
               >
                 <StreamIcon />
                 Note

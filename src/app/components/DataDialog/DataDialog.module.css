@@ -1,3 +1,11 @@
+.Button {
+  max-width: fit-content;
+}
+
+.InvisibleInput {
+  display: none;
+}
+
 .DialogOverlay {
   position: fixed;
   inset: 0;

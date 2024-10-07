@@ -57,7 +57,7 @@ export const ImportDialog = observer(function ImportDialog() {
       <fieldset className={styles.FileFieldset}>
         <Button
           size="sm"
-          style={{ maxWidth: "fit-content" }}
+          className={styles.Button}
           variant={file ? "outline" : "default"}
           onClick={() => fileInputRef.current?.click()}
         >
@@ -67,7 +67,7 @@ export const ImportDialog = observer(function ImportDialog() {
           type="file"
           accept=".json"
           ref={fileInputRef}
-          style={{ display: "none" }}
+          className={styles.InvisibleInput}
           onChange={(event) => {
             const selectedFile = event.target.files?.[0] ?? null;
             setFile(selectedFile);
@@ -93,10 +93,10 @@ export const ImportDialog = observer(function ImportDialog() {
         <ConfirmReplace disabled={!file || isLoading} onConfirm={onReplaceConfirm} />
         <Button
           disabled={!file || isLoading}
-          onClick={onAddToGraphClick}
           variant="default"
           size="sm"
-          style={{ maxWidth: "fit-content" }}
+          className={styles.Button}
+          onClick={onAddToGraphClick}
         >
           {isLoading ? "Loading..." : "Add to graph"}
         </Button>

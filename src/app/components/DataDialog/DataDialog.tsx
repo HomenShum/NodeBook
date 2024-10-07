@@ -1,7 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowLeft, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { ReactNode } from "react";
+import { ReactNode, useCallback } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -27,17 +27,17 @@ export const DataDialog = observer(function DataDialog({
 }: Props) {
   const viewStore = useViewStore();
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     viewStore.setActiveModal(null);
-  };
+  }, [viewStore]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     if (onBack) {
       onBack();
     } else {
       viewStore.setActiveModal("devTools");
     }
-  };
+  }, [onBack, viewStore]);
 
   return (
     <Dialog.Root open={viewStore.activeModal === modalType} onOpenChange={handleClose}>

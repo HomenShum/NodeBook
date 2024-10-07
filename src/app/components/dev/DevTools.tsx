@@ -1,4 +1,5 @@
 import { observer } from "mobx-react-lite";
+import { useCallback } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
@@ -46,13 +47,33 @@ export const DevTools = observer(function DevTools() {
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     viewStore.setActiveModal(null);
-  };
+  }, [viewStore]);
 
-  const handleOpenImportData = () => {
+  const handleLogout = useCallback(() => {
+    if (!auth) return;
+    handleClose();
+    auth.logout({ logoutParams: { returnTo: window.location.origin } });
+  }, [auth, handleClose]);
+
+  const handleOpenImportData = useCallback(() => {
     viewStore.setActiveModal("importData");
-  };
+  }, [viewStore]);
+
+  const handleExportAsJson = useCallback(() => {
+    // Export as JSON logic
+    const blob = new Blob([JSON.stringify(graphStore.serialize())], { type: "application/json" });
+    // Create a temporary URL for the Blob
+    const url = URL.createObjectURL(blob);
+    // Create a link element and trigger the download
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "data.json";
+    link.click();
+    // Clean up the temporary URL
+    URL.revokeObjectURL(url);
+  }, [graphStore]);
 
   return (
     <DataDialog title="" description="" modalType="devTools">
@@ -132,28 +153,12 @@ export const DevTools = observer(function DevTools() {
             </Button>
           </>
         )}
-        <hr style={{ border: ".5px solid var(--gray-6)" }} />
-        <div style={{ display: "flex", gap: 12 }}>
+        <hr className={styles.Divider} />
+        <div className={styles.ButtonContainer}>
           <Button size="default" variant="default" onClick={handleOpenImportData}>
             Import Data
           </Button>
-          <Button
-            size="default"
-            variant="accent"
-            onClick={() => {
-              // Export as JSON logic
-              const blob = new Blob([JSON.stringify(graphStore.serialize())], { type: "application/json" });
-              // Create a temporary URL for the Blob
-              const url = URL.createObjectURL(blob);
-              // Create a link element and trigger the download
-              const link = document.createElement("a");
-              link.href = url;
-              link.download = "data.json";
-              link.click();
-              // Clean up the temporary URL
-              URL.revokeObjectURL(url);
-            }}
-          >
+          <Button size="default" variant="accent" onClick={handleExportAsJson}>
             Export as JSON
           </Button>
           {env.env !== "production" && (
@@ -163,7 +168,7 @@ export const DevTools = observer(function DevTools() {
           )}
         </div>
 
-        <hr style={{ border: ".5px solid var(--gray-6)" }} />
+        <hr className={styles.Divider} />
         <p>
           <span>Email:</span> {user.email}
         </p>
@@ -175,24 +180,11 @@ export const DevTools = observer(function DevTools() {
             <span>Git commit SHA:</span> {env.gitCommitSha}
           </p>
         )}
-        <Button
-          size="default"
-          variant="default"
-          onClick={() => {
-            settingsStore.resetToDefaults();
-          }}
-        >
+        <Button size="default" variant="default" onClick={() => settingsStore.resetToDefaults()}>
           Reset user settings to default
         </Button>
         {auth && (
-          <Button
-            size="default"
-            variant="default"
-            onClick={() => {
-              handleClose();
-              auth.logout({ logoutParams: { returnTo: window.location.origin } });
-            }}
-          >
+          <Button size="default" variant="default" onClick={handleLogout}>
             Log out
           </Button>
         )}
