@@ -40,7 +40,7 @@ const COMMON_TLDS = [
 const HIGH_CONFIDENCE_URL_REGEX = `https?:\\/\\/((([a-z0-9\\p{Emoji}-]+\\.)+([a-z0-9-]{2,24}))|localhost)`;
 // Low confidence links (without the schema) are likely typed by the user directly. We only allow the most popular TLDs.
 // Otherwise similar to highConfidenceLink.
-const LOW_CONFIDENCE_URL_REGEX = `((([a-z0-9\\p{Emoji}-]+\\.)+(${COMMON_TLDS}))|localhost)`;
+const LOW_CONFIDENCE_URL_REGEX = `(^|\\b)((([a-z0-9\\p{Emoji}-]+\\.)+(${COMMON_TLDS}))|localhost)`;
 // (:[\p{N}]+) optional port number
 // ([?/](([^\s])*([^.\s,])+)?)? optional path matching after tld/port.
 //    - [?/] Must start with a slash or question mark
@@ -49,7 +49,7 @@ const LOW_CONFIDENCE_URL_REGEX = `((([a-z0-9\\p{Emoji}-]+\\.)+(${COMMON_TLDS}))|
 //                              with period or dot or whitespace
 const END = `(:[\\p{N}]+)?([?/](([^\\s])*([^.\\s,])+)?)?`;
 
-const URL_REGEX = new RegExp(`(^|\\b)(${HIGH_CONFIDENCE_URL_REGEX + END})|(${LOW_CONFIDENCE_URL_REGEX + END})`, "giu");
+const URL_REGEX = new RegExp(`(${HIGH_CONFIDENCE_URL_REGEX + END})|(${LOW_CONFIDENCE_URL_REGEX + END})`, "giu");
 
 /** Find all the URL matches in the text */
 const findMatches = (text: string): Match[] => {
@@ -142,7 +142,15 @@ export const LinkPlugin = ({ nodeId }: { nodeId: string }) => {
 
           const hasChanged =
             chips.length !== newChips.length ||
-            chips.some((chip, index) => chip.type !== newChips[index].type || chip.value !== newChips[index].value);
+            chips.some((chip, index) => {
+              return (
+                chip.type !== newChips[index].type ||
+                chip.value !== newChips[index].value ||
+                // For some reason, the value for both old and new chips is the same, but the URL is different
+                // Probably it is changed in some other plugin before this one?
+                (chip.type === "link" && newChips[index].type === "link" && chip.url !== newChips[index].url)
+              );
+            });
 
           if (hasChanged) {
             await graphStore.updateNode({ nodeId, nodeProps: { content: newChips } });
