@@ -4,6 +4,7 @@ import React, { useCallback, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
+import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
@@ -131,10 +132,9 @@ const Content = observer(function Content() {
               <PinCustomIcon />
             </button>
           )}
-        {treeNode.object.relations.length > 1 && (
-          <div title="Direct relations" className={styles.RelationCounter}>
-            {treeNode.object.relations.length - 1}
-          </div>
+        {/* I think not showing this in replace mode is a good option but feel free to change */}
+        {viewType !== "replace" && (
+          <RelationCounter object={treeNode.object} onClick={() => tree.togglePathExpanded(treeNode.path)} showTooltip={true} />
         )}
       </div>
     </>

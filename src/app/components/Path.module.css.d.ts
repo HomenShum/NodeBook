@@ -1,9 +1,10 @@
 declare const styles: {
-  readonly Path: string;
-  readonly PathItem: string;
-  readonly Wrap: string;
-  readonly NoWrap: string;
-  readonly MWFull: string;
-  readonly MWAuto: string;
+  readonly "MWAuto": string;
+  readonly "MWFull": string;
+  readonly "NoWrap": string;
+  readonly "Path": string;
+  readonly "PathItem": string;
+  readonly "Wrap": string;
 };
 export = styles;
+

@@ -52,3 +52,36 @@
   padding-bottom: 4px;
   flex-direction: column;
 }
+
+.DropdownItemContent {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 4px;
+  padding-bottom: 4px;
+}
+
+.DropdownItemHelper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.DropdownHelper {
+  font-size: 12px;
+  white-space: nowrap;
+  color: var(--gray-11);
+  margin-left: 8px;
+  background: var(--gray-3);
+  display: flex;
+  padding: 0 6px;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  border-radius: 4px;
+}
+

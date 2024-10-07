@@ -11,13 +11,16 @@
 }
 
 .ReplaceRelatedInput {
-  padding: 8px;
+  padding: 8px 0;
   height: 24px;
   outline: none;
   background-color: var(--gray-1);
   border-radius: 4px;
-  border: solid 0.5px var(--teal-5);
   color: var(--teal-9);
+}
+
+.ReplaceRelatedInput::placeholder {
+  color: var(--gray-7);
 }
 
 .ReplaceRelatedContent {
@@ -25,7 +28,7 @@
   top: 23px;
   left: 0;
   padding: 8px 4px 4px 4px;
-  width: 100%;
+  width: fit;
   max-width: 380px;
   background-color: var(--gray-1);
   border: solid 0.5px var(--teal-5);
@@ -48,8 +51,22 @@
   padding: 4px 8px;
   border-radius: 4px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
 }
 
 .ReplaceRelatedItemSelected {
   background-color: var(--gray-3);
+}
+
+.NoResults {
+  padding: 0px 8px 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
 }

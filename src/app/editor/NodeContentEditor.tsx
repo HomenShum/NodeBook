@@ -24,7 +24,6 @@ import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { useSetRoot } from "@/app/tree/utils";
-import { cn } from "@/lib/utils";
 
 import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 
@@ -57,7 +56,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
   );
 
   return (
-    <div className={cn(styles.EditorWrapper, styles.showAtSignPrefix)}>
+    <div className={styles.EditorWrapper}>
       <LexicalComposer
         initialConfig={createConfig({ namespace: "descendant-editor", treeNode, editable: isEditorEditable })}
       >

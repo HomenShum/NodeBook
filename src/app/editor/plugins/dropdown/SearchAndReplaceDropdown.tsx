@@ -13,6 +13,7 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Path } from "@/app/components/Path";
+import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
@@ -212,7 +213,15 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
                 <div>{match.isForward ? match.object.label : match.object.reverseLabel}:</div>
               ) : (
                 <>
-                  <div>{match.object.text}</div>
+                  <div className={styles.DropdownItemContent}>
+                    <div>{match.object.text}</div>
+                    <div className={styles.DropdownItemHelper}>
+                      {index === 0 && highlightedIndex === null && (
+                        <div className={styles.DropdownHelper}>Tab to select </div>
+                      )}
+                      {match.type === "node" ? <RelationCounter object={match.object} showTooltip={false} /> : null}
+                    </div>
+                  </div>
                   {match.type === "node" ? <Path path={match.object.getPath()} /> : null}
                 </>
               )}

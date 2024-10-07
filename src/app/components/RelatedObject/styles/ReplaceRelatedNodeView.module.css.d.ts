@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "NoResults": string;
   readonly "ReplaceRelatedContent": string;
   readonly "ReplaceRelatedDropdown": string;
   readonly "ReplaceRelatedDropdownContainer": string;

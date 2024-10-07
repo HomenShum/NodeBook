@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
@@ -118,28 +119,35 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
         />
-        <div className={styles.ReplaceRelatedContent}>
-          {optionsGrouped.map((group) => (
-            <div key={group.type}>
-              <div className={styles.ReplaceRelatedLabel}>{group.type}</div>
-              {group.options.map(
-                ({ index, object, text }) =>
-                  text && ( // avoiding empty nodes being rendered into the search results
-                    <div
-                      key={object.id}
-                      onClick={() => onSelect(object)}
-                      onMouseEnter={() => setSelected(index)}
-                      className={`${styles.ReplaceRelatedItem} ${
-                        selected === index && styles.ReplaceRelatedItemSelected
-                      } `}
-                    >
-                      {text}
-                    </div>
-                  ),
-              )}
-            </div>
-          ))}
-        </div>
+        {filter && ( // only show the search results if there is a filter
+          <div className={styles.ReplaceRelatedContent}>
+            {optionsGrouped.length > 0 ? (
+              optionsGrouped.map((group) => (
+                <div key={group.type}>
+                  <div className={styles.ReplaceRelatedLabel}>{group.type}</div>
+                  {group.options.map(
+                    ({ index, object, text }) =>
+                      text && ( // avoiding empty nodes being rendered into the search results
+                        <div
+                          key={object.id}
+                          onClick={() => onSelect(object)}
+                          onMouseEnter={() => setSelected(index)}
+                          className={`${styles.ReplaceRelatedItem} ${
+                            selected === index && styles.ReplaceRelatedItemSelected
+                          } `}
+                        >
+                          {text}
+                          {group.type === "nodes" && <RelationCounter object={object} showTooltip={false} />}
+                        </div>
+                      ),
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className={styles.NoResults}>No matching results</div> // Display message when no matches
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
