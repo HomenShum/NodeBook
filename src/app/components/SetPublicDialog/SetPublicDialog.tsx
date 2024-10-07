@@ -50,7 +50,16 @@ export const SetPublicDialog = observer(function SetPublicDialog({ isOpen, setOp
     <Dialog.Root open={isOpen} onOpenChange={setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className={styles.DialogOverlay} />
-        <Dialog.Content className={styles.DialogContent}>
+        <Dialog.Content
+          className={styles.DialogContent}
+          onKeyDown={(e) => {
+            if (e.code === "Enter" || e.key === "Enter") {
+              e.preventDefault();
+              e.stopPropagation();
+              onConfirm();
+            }
+          }}
+        >
           <div className={styles.DialogHeader}>
             <Dialog.Title className={styles.DialogTitle}>
               {isSwitchingToPublic ? "Make Public" : "Make Private"}
