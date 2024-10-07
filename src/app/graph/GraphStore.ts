@@ -1837,36 +1837,52 @@ export class GraphStore {
   load(data: SerializedGraphStore) {
     // Nodes
     for (const props of Object.values(data.nodesById)) {
-      this.loadSerializedNode(props);
+      try {
+        this.loadSerializedNode(props);
+      } catch (error) {
+        logger.error(`Error loading serialized node`, error);
+      }
     }
 
     // Relation Types
     for (const props of Object.values(data.relationTypesById)) {
-      this._addRelationType(props);
+      try {
+        this._addRelationType(props);
+      } catch (error) {
+        logger.error(`Error adding relation type`, error);
+      }
     }
 
     // Relations
     const loadedWithPlaceholders: GraphRelation[] = [];
     for (const props of Object.values(data.relationsById)) {
-      const rel = this.loadSerializedRelation(props);
-      if (rel.from instanceof PlaceholderGraphObject || rel.to instanceof PlaceholderGraphObject) {
-        loadedWithPlaceholders.push(rel);
+      try {
+        const rel = this.loadSerializedRelation(props);
+        if (rel.from instanceof PlaceholderGraphObject || rel.to instanceof PlaceholderGraphObject) {
+          loadedWithPlaceholders.push(rel);
+        }
+      } catch (error) {
+        logger.error(`Error loading serialized relation`, error);
       }
     }
     // It's possible some of these relations were loaded with placeholders because their to or from objects
     // were other relations in this same batch of data. We try to resolve those now.
     for (const rel of loadedWithPlaceholders) {
-      if (rel.from instanceof PlaceholderGraphObject) {
-        const from = this.getObject(rel.from.id);
-        if (from) {
-          rel.setFrom(from);
+      try {
+        if (rel.from instanceof PlaceholderGraphObject) {
+          const from = this.getObject(rel.from.id);
+          if (from) {
+            rel.setFrom(from);
+          }
         }
-      }
-      if (rel.to instanceof PlaceholderGraphObject) {
-        const to = this.getObject(rel.to.id);
-        if (to) {
-          rel.setTo(to);
+        if (rel.to instanceof PlaceholderGraphObject) {
+          const to = this.getObject(rel.to.id);
+          if (to) {
+            rel.setTo(to);
+          }
         }
+      } catch (error) {
+        logger.error(`Error resolving placeholder`, error);
       }
       // Note: we might still have unresolved placeholders at this point for valid reasons, like if
       // a relation is pointing to a node that was shared by someone else at the time but was
@@ -1875,10 +1891,18 @@ export class GraphStore {
 
     // Relation positions
     for (const [nodeId, positionsByRelationId] of Object.entries(data.relationsByNodeId)) {
-      this.loadSerializedAllRelationList(nodeId, positionsByRelationId);
+      try {
+        this.loadSerializedAllRelationList(nodeId, positionsByRelationId);
+      } catch (error) {
+        logger.error(`Error loading serialized all relation list`, error);
+      }
     }
     for (const [nodeId, positionsByRelationId] of Object.entries(data.pinnedRelationsByNodeId)) {
-      this.loadSerializedPinnedRelationList(nodeId, positionsByRelationId);
+      try {
+        this.loadSerializedPinnedRelationList(nodeId, positionsByRelationId);
+      } catch (error) {
+        logger.error(`Error loading serialized pinned relation list`, error);
+      }
     }
 
     // Bundles

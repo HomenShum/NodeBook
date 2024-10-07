@@ -86,7 +86,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
           logger.error("Failed to save user settings", e);
         }
       });
-      const graph = new GraphStore(newUser, settings, authedFetch);
+      let graph = new GraphStore(newUser, settings, authedFetch);
       const view = new ViewStore(settings, graph);
 
       // load and start sync
@@ -98,6 +98,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
         }
       } catch (e) {
         toast("Failed to load data from server. Starting with an empty graph.");
+        graph = new GraphStore(newUser, settings, authedFetch);
         logger.error("Failed sync setup", e);
       }
 
