@@ -9,11 +9,6 @@ import { DescendantTreeNode } from "./nodes";
  * all it's descendants. So when a node is in the selection, all it's
  * descendants are also considered selected.
  *
- * The `anchor` and `head` must not be descendants of each other. This is
- * important to contraint to make maintaining the tree across moves easier. See
- * `Tree.moveNodesIntoGroup` and
- * `Tree.updateSubtreeExpansionAndSelectionPathState` for more details.
- *
  * The entire selection must be within the same parent group. Allowing selections
  * that e.g. span the pinned and all groups is tricky to implement and can lead
  * to some unintuitive behaviours even when done right. So for now, we're keeping

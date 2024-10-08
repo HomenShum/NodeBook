@@ -73,37 +73,82 @@ describe("Tree", () => {
         { rid: "2", isAnchor: true },
       ]);
     });
-    it("should move anchor up with head when anchor is descendant of head", async () => {
-      // prettier-ignore
-      const tree = await createTestTreeFromTemplate([
-        { rid: "1", children: [
-          { rid: "2", children: [
-            { rid: "3", isHead: true, isAnchor: true },
-          ]},
-        ]}
-      ]);
-      tree.moveNodeSelectionHeadUp();
-      // prettier-ignore
-      expectTreeToMatchTemplate(tree, [
-        { rid: "1", children: [
-          { rid: "2", isHead: true, isAnchor: true, children: [
-            { rid: "3" },
-          ]},
-        ]}
-      ]);
+    describe("anchor should become last head when moving up", () => {
+      it("for single child", async () => {
+        // prettier-ignore
+        const tree = await createTestTreeFromTemplate([
+          { rid: "1", children: [
+              { rid: "2", children: [
+                  { rid: "3", isHead: true, isAnchor: true },
+                ]},
+            ]}
+        ]);
+        tree.moveNodeSelectionHeadUp();
+        // prettier-ignore
+        expectTreeToMatchTemplate(tree, [
+          { rid: "1", children: [
+              { rid: "2", isHead: true, children: [
+                  { rid: "3", isAnchor: true },
+                ]},
+            ]}
+        ]);
+        tree.moveNodeSelectionHeadUp();
+        expectTreeToMatchTemplate(tree, [
+          { rid: "1", isHead: true, children: [{ rid: "2", isAnchor: true, children: [{ rid: "3" }] }] },
+        ]);
+      });
+      it("for multiple children", async () => {
+        // prettier-ignore
+        const tree = await createTestTreeFromTemplate([
+          { rid: "1", children: [
+              { rid: "2", children: [
+                  { rid: "3" },
+                  { rid: "4", isHead: true, isAnchor: true },
+                ]},
+            ]}
+        ]);
+        tree.moveNodeSelectionHeadUp();
+        tree.moveNodeSelectionHeadUp();
+        // prettier-ignore
+        expectTreeToMatchTemplate(tree, [
+          { rid: "1", children: [
+              { rid: "2", isHead: true, children: [
+                  { rid: "3", isAnchor: true },
+                  { rid: "4" },
+                ]},
+            ]}
+        ]);
+        tree.moveNodeSelectionHeadUp();
+        expectTreeToMatchTemplate(tree, [
+          { rid: "1", isHead: true, children: [{ rid: "2", isAnchor: true, children: [{ rid: "3" }, { rid: "4" }] }] },
+        ]);
+      });
     });
-    it("should move head up to lowest descendant of sibling above", async () => {
-      const tree = await createTestTreeFromTemplate([
+    it("should move head up to lowest descendant of sibling above only if it was anchor", async () => {
+      let tree = await createTestTreeFromTemplate([
         // prettier-ignore
         { rid: "1", children: [
-          { rid: "2" }]},
-        { rid: "3", isHead: true, isAnchor: true },
+          { rid: "2", isAnchor: true }]},
+        { rid: "3", isHead: true },
       ]);
       tree.moveNodeSelectionHeadUp();
       expectTreeToMatchTemplate(tree, [
         // prettier-ignore
         { rid: "1", children: [
-          { rid: "2", isHead: true }]},
+          { rid: "2", isAnchor: true, isHead: true }]},
+        { rid: "3" },
+      ]);
+      tree = await createTestTreeFromTemplate([
+        // prettier-ignore
+        { rid: "1", children: [
+            { rid: "2" }]},
+        { rid: "3", isAnchor: true, isHead: true },
+      ]);
+      tree.moveNodeSelectionHeadUp();
+      expectTreeToMatchTemplate(tree, [
+        // prettier-ignore
+        { rid: "1", isHead: true, children: [
+            { rid: "2" }]},
         { rid: "3", isAnchor: true },
       ]);
     });
@@ -174,6 +219,37 @@ describe("Tree", () => {
           }
         });
       });
+    });
+    it("should be able to move subtree with multiple children", async () => {
+      const tree = await createTestTreeFromTemplate([
+        { rid: "1" },
+        { rid: "2" },
+        { rid: "3", children: [{ rid: "4" }, { rid: "5", isAnchor: true, isHead: true }] },
+        { rid: "6" },
+      ]);
+      tree.moveNodeSelectionHeadUp();
+      tree.moveNodeSelectionHeadUp();
+      expectTreeToMatchTemplate(tree, [
+        { rid: "1" },
+        { rid: "2" },
+        { rid: "3", isHead: true, children: [{ rid: "4", isAnchor: true }, { rid: "5" }] },
+        { rid: "6" },
+      ]);
+      await tree.moveSelectedNodesUp();
+      await tree.moveSelectedNodesUp();
+      expectTreeToMatchTemplate(tree, [
+        { rid: "3", isHead: true, children: [{ rid: "4", isAnchor: true }, { rid: "5" }] },
+        { rid: "1" },
+        { rid: "2" },
+        { rid: "6" },
+      ]);
+      await tree.moveSelectedNodesDown();
+      expectTreeToMatchTemplate(tree, [
+        { rid: "1" },
+        { rid: "3", isHead: true, children: [{ rid: "4", isAnchor: true }, { rid: "5" }] },
+        { rid: "2" },
+        { rid: "6" },
+      ]);
     });
     it("should handle multiple selected nodes", async () => {
       // prettier-ignore

@@ -342,6 +342,8 @@ export class Tree {
    * Sets the focused node in the editor.
    * @param treeNodeId - ID of the node to focus, or null to maintain current selection.
    * @param position - Position of the cursor in the editor.
+   * @param selectionAction
+   * @param editMode
    */
   setFocusedNode(
     treeNodeId: string | null,
@@ -875,22 +877,31 @@ export class Tree {
    */
   async moveSelectedNodesUp(): Promise<boolean> {
     if (!this.selectionWithNodes) return false;
-    const { top, subtreeRoots } = this.selectionWithNodes;
-    // don't allow moving nodes that belong to different groups
-    if (subtreeRoots.some((n) => n.parentGroup !== top.parentGroup || n instanceof PointerTreeNode)) {
+    const { subtreeRoots: nodes } = this.selectionWithNodes;
+    // Moves noes only when they belong to same parent and same group.
+    const shouldMove = nodes.every(
+      (n) =>
+        n.parentGroup.id === nodes[0].parentGroup.id &&
+        n.parent.id === nodes[0].parent.id &&
+        !(n instanceof PointerTreeNode),
+    );
+
+    if (!shouldMove) {
       return false;
     }
 
-    const siblingAbove = top.siblingAbove;
-    const siblingAboveParent = top.parent instanceof DescendantTreeNode && top.parent.siblingAbove;
+    const first = nodes[0];
+
+    const siblingAbove = first.siblingAbove;
+    const siblingAboveParent = first.parent instanceof DescendantTreeNode && first.parent.siblingAbove;
     if (siblingAbove) {
       // swap with sibling above in same group
-      if (siblingAbove.parentGroup !== top.parentGroup) return false;
+      if (siblingAbove.parentGroup !== first.parentGroup) return false;
       const siblingTwoAbove = siblingAbove.siblingAboveInSameGroup ?? undefined;
       await this.graphStore.updateRelationPositionsList({
-        containingNodeId: top.parent.object.id,
-        groupId: extractGroupId(top.parentGroup),
-        objectAndRelationIds: subtreeRoots.map((root) => ({
+        containingNodeId: first.parent.object.id,
+        groupId: first.parentGroup.id,
+        objectAndRelationIds: nodes.map((root) => ({
           objectId: extractPointedAtObjectId(root),
           relationId: root.relationWithParent.id,
         })),
@@ -899,7 +910,7 @@ export class Tree {
       return true;
     } else if (siblingAboveParent) {
       // we're at the top - move underneath the next parent above
-      await siblingAboveParent.addChildren(subtreeRoots, -1);
+      await siblingAboveParent.addChildren(nodes, -1);
       return true;
     }
     return false;
@@ -909,21 +920,32 @@ export class Tree {
    * Moves the selected or focused nodes down one step.
    */
   async moveSelectedNodesDown(): Promise<boolean> {
+    //Todo: This is pretty similar to moveSelectedNodesUp. Can unify them?
     if (!this.selectionWithNodes) return false;
-    const { bottom, subtreeRoots } = this.selectionWithNodes;
-    // don't allow moving nodes that belong to different groups
-    if (subtreeRoots.some((n) => n.parentGroup !== bottom.parentGroup || n instanceof PointerTreeNode)) {
+    const { subtreeRoots: nodes } = this.selectionWithNodes;
+    // Moves noes only when they belong to same parent and same group.
+    const shouldMove = nodes.every(
+      (n) =>
+        n.parentGroup.id === nodes[0].parentGroup.id &&
+        n.parent.id === nodes[0].parent.id &&
+        !(n instanceof PointerTreeNode),
+    );
+
+    if (!shouldMove) {
       return false;
     }
-    const siblingBelow = bottom.siblingBelow;
-    const siblingBelowParent = bottom.parent instanceof DescendantTreeNode && bottom.parent.siblingBelow;
+
+    const last = nodes[nodes.length - 1];
+
+    const siblingBelow = last.siblingBelow;
+    const siblingBelowParent = last.parent instanceof DescendantTreeNode && last.parent.siblingBelow;
     if (siblingBelow) {
       // swap with sibling below (if in same group)
-      if (siblingBelow.parentGroup !== bottom.parentGroup) return false;
+      if (siblingBelow.parentGroup !== last.parentGroup) return false;
       await this.graphStore.updateRelationPositionsList({
-        containingNodeId: bottom.parent.object.id,
-        groupId: extractGroupId(bottom.parentGroup),
-        objectAndRelationIds: subtreeRoots.map((root) => ({
+        containingNodeId: last.parent.object.id,
+        groupId: extractGroupId(last.parentGroup),
+        objectAndRelationIds: nodes.map((root) => ({
           objectId: extractPointedAtObjectId(root),
           relationId: root.relationWithParent.id,
         })),
@@ -932,7 +954,7 @@ export class Tree {
       return true;
     } else if (siblingBelowParent) {
       // we're at the bottom - move underneath next node
-      await siblingBelowParent.addChildren(subtreeRoots, 0);
+      await siblingBelowParent.addChildren(nodes, 0);
       return true;
     }
     return false;
@@ -954,51 +976,70 @@ export class Tree {
     return this.moveNodeSelectionHead("down");
   }
 
-  // TODO: feels like this could be simplified
   private moveNodeSelectionHead(dir: "up" | "down"): boolean {
     const selection = this.selectionWithNodes;
-    if (!selection) return false;
-    if (selection.type === "editor") {
-      // convert editor selection to node selection
-      this.selection = { type: "node", anchorNodeId: selection.treeNode.id, headNodeId: selection.treeNode.id };
-      return true;
-    } else if (selection.type === "node") {
-      if (selection.type !== this.selection?.type) {
-        // This should never happen. The selection and computed selection types should always match.
-        logger.warn("Selection type mismatch", { selection, current: this.selection });
-        return false;
-      }
-      const { anchor, head, bottom } = selection;
-      if (dir === "up") {
-        const nextNode = getNextAbove(head) ?? null;
-        if (!nextNode || nextNode.parentGroup.id !== head.parentGroup.id) return false;
-        if (head === anchor) {
-          // Selection is collapsed on single node. If the selection is moving up a subtree, move the anchor with it.
-          this.selection = { ...this.selection, headNodeId: nextNode.path };
-          if (nextNode.isAncestorOf(anchor)) {
-            this.selection = { ...this.selection, anchorNodeId: nextNode.path };
-          }
-        } else if (head === bottom) {
-          // Head is at the bottom end of selection range. Move to next node above, unless that's
-          // within the anchors subtree, in which case bring the head up to the anchor.
-          this.selection = {
-            ...this.selection,
-            headNodeId: nextNode.isDescendantOf(anchor) ? anchor.path : nextNode.path,
-          };
-        } else {
-          // Head is at the top end of selection range. Move to next node above.
-          this.selection = { ...this.selection, headNodeId: nextNode.path };
+    if (!selection || !(selection.type === "editor" || selection.type === "node")) return false;
+    switch (selection.type) {
+      case "editor":
+        this.selection = { type: "node", anchorNodeId: selection.treeNode.id, headNodeId: selection.treeNode.id };
+        return true;
+      case "node":
+        const { anchor, head } = selection;
+        if (!this.selection || this.selection.type === "editor") {
+          // This should never happen. The selection and computed selection types should always match.
+          logger.warn("Selection type mismatch", { selection, current: this.selection, extra: "cat" });
+          return false;
         }
-      } else {
-        const nextNode = getNextSubtreeBelow(head) ?? null;
-        if (!nextNode || nextNode.parentGroup.id !== head.parentGroup.id) return false;
-        this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextNode.path };
-      }
-      return true;
-    } else {
-      return selection satisfies never;
+        switch (dir) {
+          case "up":
+            const nodeAbove = getNextAbove(head);
+            if (!nodeAbove) {
+              return false;
+            }
+            //Set anchor is last head when moving up,
+            //so while moving down we can go down by one depth.
+            if (nodeAbove.isAncestorOf(head)) {
+              this.selection.anchorNodeId = this.selection.headNodeId;
+              this.selection.headNodeId = head.parent.path;
+              return true;
+            }
+            // Nothing above on same level, we checked for parent previously.
+            // So nothing to move up to.
+            if (!head.siblingAbove) {
+              return false;
+            }
+            //If anchor belongs to descendant of the sibling above,
+            //do not go to sibling, go towards the anchor instead.
+            //Example: 1            Output:  1
+            //           2 <-A                 2 <-A,H
+            //         3 <-H                 3
+            if (head.siblingAbove.isAncestorOf(anchor)) {
+              this.selection.headNodeId = nodeAbove.path;
+              return true;
+            }
+            //Go to sibling above.
+            this.selection.headNodeId = head.siblingAbove.path;
+            return true;
+          case "down":
+            //If anchor is a descendant of head, move selection towards anchor instead of subtree.
+            //Example: 1 <-H        Output: 1
+            //           2 <-A                2 <-A,H
+            //         3                    3
+            //Example: 1 <-H,A        Output: 1 <-A
+            //           2                      2
+            //         3                      3 <-H
+            const nextNode = head.isAncestorOf(anchor) ? getNextBelow(head) : getNextSubtreeBelow(head) ?? null;
+            if (!nextNode || nextNode.parentGroup.id !== head.parentGroup.id) return false;
+            this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextNode.path };
+            return true;
+          default:
+            return dir satisfies never;
+        }
+      default:
+        return selection satisfies never;
     }
   }
+
 
   /**
    * Move selection from the current node to the next one up.

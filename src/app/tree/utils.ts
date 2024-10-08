@@ -129,7 +129,7 @@ export function groupSiblings(treeNodes: DescendantTreeNode[]): DescendantTreeNo
 
 /**
  * Get the next subtree below. Like {@link getNextBelow} but it skips
- * the given nodes descendants.
+ * the given nodes descendants..
  */
 export function getNextSubtreeBelow(treeNode: DescendantTreeNode): DescendantTreeNode | null {
   let next = getNextBelow(treeNode);
@@ -143,12 +143,19 @@ export function getNextSubtreeBelow(treeNode: DescendantTreeNode): DescendantTre
  * Walks the tree from top to bottom, returning the nodes in order
  * excluding their descendants.
  */
+
 export function getSubtreesBetween(top: DescendantTreeNode, bottom: DescendantTreeNode) {
+  if (top.parentGroup.id !== bottom.parentGroup.id) return [];
+
   const subtrees: DescendantTreeNode[] = [];
+  if (top.isAncestorOf(bottom)) {
+    return [top];
+  }
+
   let next: DescendantTreeNode | null = top;
   while (next && next !== bottom) {
     subtrees.push(next);
-    next = getNextSubtreeBelow(next);
+    next = next.siblingBelowInSameGroup || getNextSubtreeBelow(next);
   }
   subtrees.push(bottom);
   return subtrees;
