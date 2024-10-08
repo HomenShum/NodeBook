@@ -1,9 +1,10 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { COMMAND_PRIORITY_LOW, PASTE_COMMAND } from "lexical";
+import { $getSelection, COMMAND_PRIORITY_LOW, PASTE_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { GraphNode } from "@/app/graph/GraphNode";
+import { $getChipsAroundSelection } from "@/app/editor/utils";
+import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
@@ -28,10 +29,20 @@ export const PastePlugin = () => {
         if (lines.length > 1) {
           const txs: TxCombined = [];
 
-          // if the current node is empty, set the first line as its content
-          if (object.text === "") {
-            const line = lines.shift() ?? "";
-            txs.push({ type: "updateNode", transaction: { nodeId: object.id, nodeProps: { content: line } } });
+          // Insert the first line into the current node
+          const firstLine = lines.shift();
+          if (firstLine) {
+            let newContent: Chip[] = [];
+            const selection = $getSelection();
+            if (selection) {
+              const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
+              newContent = [...chipsBefore, { type: "text", value: firstLine }, ...chipsAfter];
+            } else {
+              // There *should* be a selection in the case where we're handling a paste, but if somehow
+              // there isn't, we'll just append the first line to the current content.
+              newContent = [...object.content, { type: "text", value: firstLine }];
+            }
+            txs.push({ type: "updateNode", transaction: { nodeId: object.id, nodeProps: { content: newContent } } });
           }
 
           // then for the remaining lines, create children positioned after the parent

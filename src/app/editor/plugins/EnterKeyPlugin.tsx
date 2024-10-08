@@ -1,70 +1,13 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getSelection, BaseSelection, COMMAND_PRIORITY_NORMAL, KEY_ENTER_COMMAND, LexicalNode } from "lexical";
+import { $getSelection, COMMAND_PRIORITY_NORMAL, KEY_ENTER_COMMAND } from "lexical";
 import { action } from "mobx";
 import { useEffect } from "react";
 
-import { nodeToChip } from "@/app/editor/utils";
-import { Chip, GraphNode } from "@/app/graph/GraphNode";
+import { $getChipsAroundSelection } from "@/app/editor/utils";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-
-function getChipsAroundSelection(selection: BaseSelection) {
-  // Get selection start and end points
-  let start = { index: 0, offset: 0 };
-  let end = { index: 0, offset: 0 };
-  let nodes: LexicalNode[] = [];
-  const nonEmptyEditor = selection.getNodes()[0]?.getParents()[0]?.getTextContent() !== "";
-  if (nonEmptyEditor) {
-    const points = selection?.getStartEndPoints();
-    if (!points) {
-      throw new Error("No selection points");
-    }
-
-    const selectionNodes = selection.getNodes();
-    const firstNode = selectionNodes[0];
-    const lastNode = selectionNodes[selectionNodes.length - 1];
-
-    const paragraphNode = firstNode.getParentOrThrow();
-    nodes = paragraphNode.getChildren();
-
-    const firstNodeIndexInParagraph = nodes.findIndex((node) => node === firstNode);
-    const lastNodeIndexInParagraph = nodes.findIndex((node) => node === lastNode);
-
-    const selectionEnds = [
-      { index: firstNodeIndexInParagraph, offset: points[0].offset },
-      { index: lastNodeIndexInParagraph, offset: points[1].offset },
-    ];
-    start = selection.isBackward() ? selectionEnds[1] : selectionEnds[0];
-    end = selection.isBackward() ? selectionEnds[0] : selectionEnds[1];
-  }
-
-  let chipsBefore: Chip[] = [];
-  // Collect nodes before the selection
-  chipsBefore.push(...nodes.slice(0, start.index).map(nodeToChip));
-  // and the first part of the node the selection start
-  if (nodes[start.index]) {
-    if (start.offset < nodes[start.index].getTextContent().length) {
-      chipsBefore.push({ type: "text", value: nodes[start.index].getTextContent().substring(0, start.offset) });
-    } else {
-      chipsBefore.push(nodeToChip(nodes[start.index]));
-    }
-  }
-
-  let chipsAfter: Chip[] = [];
-  // Collect the last part of the node after the selection end
-  if (nodes[end.index] && end.offset < nodes[end.index].getTextContent().length) {
-    chipsAfter.push({ type: "text", value: nodes[end.index].getTextContent().substring(end.offset) });
-  }
-  // and all the nodes after that
-  chipsAfter.push(...nodes.slice(end.index + 1).map(nodeToChip));
-
-  // remove any empty text chips
-  chipsBefore = chipsBefore.filter((chip) => chip.type !== "text" || chip.value !== "");
-  chipsAfter = chipsAfter.filter((chip) => chip.type !== "text" || chip.value !== "");
-
-  return { chipsBefore, chipsAfter };
-}
 
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.
@@ -94,7 +37,7 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: DescendantTreeNode }) =
         }
         event.preventDefault();
         event.stopPropagation();
-        const { chipsBefore, chipsAfter } = getChipsAroundSelection(selection);
+        const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
         tree.split(treeNode, { before: chipsBefore, after: chipsAfter });
         return true;
       }),
