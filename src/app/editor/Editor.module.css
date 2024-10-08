@@ -35,3 +35,16 @@
 .LinkNode:hover {
   text-decoration: underline;
 }
+
+.Placeholder {
+  color: var(--gray-8);
+  overflow: hidden;
+  position: absolute;
+  text-overflow: ellipsis;
+  top: 0;
+  transform: translate(0, 100%);
+  user-select: none;
+  white-space: nowrap;
+  display: inline-block;
+  pointer-events: none;
+}

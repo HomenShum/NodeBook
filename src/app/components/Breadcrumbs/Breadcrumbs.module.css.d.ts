@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "BlankContent": string;
   readonly "Breadcrumb": string;
   readonly "BreadcrumbContainer": string;
   readonly "BreadcrumbWrapper": string;

@@ -41,7 +41,9 @@ export const BreadcrumbItem = observer(function BreadcrumbItem({
             <Home size={14} strokeWidth={1.5} />
           </span>
         ) : null}
-        <span>{truncateText(isRoot ? object.text : object.text, isMobile ? 15 : 32)}</span>
+        <span className={cn({ [s.BlankContent]: !object.text })}>
+            {truncateText(object.text || "(blank)", isMobile ? 15 : 32)}
+          </span>
         {isRoot && object.id !== graphStore.globalRoot.id && object.id !== graphStore.userRoot.id && (
           <span>
             {object.isPublic ? (

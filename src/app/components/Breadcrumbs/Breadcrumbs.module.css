@@ -92,3 +92,11 @@
 .Breadcrumb:hover .PinButton {
   visibility: visible;
 }
+
+.BlankContent {
+  color: var(--gray-8);
+}
+
+.Breadcrumb:hover .BlankContent {
+  color: var(--teal-8);
+}
