@@ -79,6 +79,12 @@ export const SearchBar = observer(function SearchBar() {
         onKeyDown={action((e) => {
           if (e.key === "Escape") {
             viewStore.setSearchQuery("");
+          } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            viewStore.mainView.createChildOfRootAndFocus({
+              nodeProps: { content: [{ type: "text", value: viewStore.searchQuery }] },
+            });
+            viewStore.setSearchQuery("");
           }
         })}
       />

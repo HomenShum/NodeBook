@@ -558,8 +558,8 @@ export class Tree {
     walk(treeNode);
   }
 
-  async createChildOfRootAndFocus() {
-    const { node, relation } = await this.createChildNode({ parent: this.root });
+  async createChildOfRootAndFocus({ nodeProps }: { nodeProps?: GraphNodeProps } = {}) {
+    const { node, relation } = await this.createChildNode({ parent: this.root, nodeProps });
     const path = this.root.childrenGroupsById.all.createChildPath(relation);
     this.setFocusedNode(path);
     return { node, relation, path };
