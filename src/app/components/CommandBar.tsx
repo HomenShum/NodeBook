@@ -95,6 +95,7 @@ const CommandBar = () => {
           e.preventDefault();
           setSelectedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
           break;
+        case "Tab":
         case "Enter":
           e.preventDefault();
           if (filteredCommands[selectedIndex]) {
