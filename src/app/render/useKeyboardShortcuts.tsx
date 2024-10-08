@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect } from "react";
 
-import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { useViewStore } from "@/app/view/useViewStore";
 
 export const useKeyboardShortcuts = () => {
+  const user = useUser();
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const handleKeyDown = useCallback(
@@ -28,9 +30,11 @@ export const useKeyboardShortcuts = () => {
     [viewStore, graphStore],
   );
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyDown);
+    if (!user.isAnonymous) {
+      document.addEventListener("keydown", handleKeyDown);
+    }
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleKeyDown]);
+  }, [user, handleKeyDown]);
 };

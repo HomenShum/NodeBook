@@ -4,7 +4,7 @@ import { useCallback, useRef, useState } from "react";
 
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { Button } from "@/app/components/UIPrimitives/Button";
-import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import { ConfirmReplace } from "./ConfirmReplace";

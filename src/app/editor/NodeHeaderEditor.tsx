@@ -5,6 +5,7 @@ import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 
+import { useUser } from "@/app/contexts/UserContext";
 import { createConfig } from "@/app/editor/createConfig";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { SyncWithGraphPlugin } from "@/app/editor/plugins/SyncWithGraphPlugin";
@@ -18,13 +19,17 @@ interface Props {
 }
 
 export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode }: Props) {
+  const user = useUser();
+
+  const editable = !user.isAnonymous && treeNode.object instanceof GraphNode;
+
   return (
     <div>
       <LexicalComposer
         initialConfig={createConfig({
           namespace: "header-editor",
           treeNode,
-          editable: treeNode.object instanceof GraphNode,
+          editable,
         })}
       >
         <PlainTextPlugin

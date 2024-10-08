@@ -17,7 +17,7 @@ export class MewUser {
     this.settings = u.settings ?? {};
   }
 
-  get isUnlogged() {
+  get isAnonymous() {
     return this.id === UNLOGGED_USER_ID;
   }
 }

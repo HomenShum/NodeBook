@@ -1,8 +1,8 @@
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $getChips } from "@/app/editor/utils";
 import { Chip } from "@/app/graph/GraphNode";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 
 type Match = {
   index: number;

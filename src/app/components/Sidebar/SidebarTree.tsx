@@ -2,8 +2,8 @@ import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { cn } from "@/lib/utils";
 
 import styles from "./SidebarTree.module.css";
@@ -36,7 +36,7 @@ export default observer(function SidebarTree() {
   const graphStore = useGraphStore();
   return (
     <div className={styles.SidebarTreeContainer}>
-      <TreeElement object={graphStore.userRoot}></TreeElement>
+      <TreeElement object={graphStore.homeRoot}></TreeElement>
     </div>
   );
 });

@@ -3,13 +3,13 @@ import { mergeRegister } from "@lexical/utils";
 import { $getRoot, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
 import { $getText, getSelectionPositions } from "@/app/editor/utils";
 import { defaultRelationTypes } from "@/app/graph/constants";
-import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
 import { checkForMentionMatch } from "@/lib/utils";
 

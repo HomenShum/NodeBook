@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
-import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { TreeNode } from "@/app/tree/nodes";
 import { Ancestor, getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";

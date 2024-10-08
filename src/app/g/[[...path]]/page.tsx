@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { useEffect } from "react";
 
 import { MainView } from "@/app/components/MainView";
-import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { createRouteUrl, parsePathArray } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";

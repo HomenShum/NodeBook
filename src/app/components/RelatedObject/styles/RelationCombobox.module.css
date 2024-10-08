@@ -8,6 +8,10 @@
   color: var(--gray-9);
 }
 
+.RelationComboboxLabel.RelationComboboxLabel:disabled {
+  opacity: 1;
+}
+
 .RelationComboboxInput {
   display: flex;
   align-items: center;
@@ -41,8 +45,10 @@
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .RelationComboboxGroup {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .RelationComboboxItem {

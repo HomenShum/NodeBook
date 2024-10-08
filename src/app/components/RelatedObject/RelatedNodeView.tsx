@@ -4,6 +4,7 @@ import { useRef } from "react";
 
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { useUser } from "@/app/contexts/UserContext";
 import { NodeEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
@@ -17,16 +18,19 @@ interface Props {
 }
 
 export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: Props) {
+  const user = useUser();
   const tree = useTree();
   const ref = useRef<HTMLDivElement>(null);
 
   const isLocal = treeNode.object.isLocal;
+  const isGlobal = treeNode.object.isGlobal;
   const isExpanded = tree.isPathExpanded(treeNode.path);
 
   const isEditMode =
     tree.selection?.type === "editor" ? tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode : false;
-  const isReadOnlyReference = treeNode.object.isGlobal && !isEditMode;
-  const editableEditor = treeNode.object instanceof GraphNode ? treeNode.object.isLocal || isEditMode : false;
+  const isReadOnlyReference = isGlobal && !isEditMode;
+  const objectIsGraphNode = treeNode.object instanceof GraphNode;
+  const editableEditor = !user.isAnonymous && objectIsGraphNode && (isLocal || isEditMode);
 
   const cnOuterContainer = cn(
     isLocal && styles.ColumnContainer,
@@ -49,7 +53,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
           }}
         >
           <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} boundaryRef={ref} />
-          {isReadOnlyReference && (
+          {isReadOnlyReference && !user.isAnonymous && (
             <Button
               variant="ghost"
               size="icon"
@@ -63,7 +67,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
             </Button>
           )}
         </div>
-        {treeNode.object.isGlobal && <TreeNodeInputSuffix treeNode={treeNode} isEditorEditable={editableEditor} />}
+        {isGlobal && !user.isAnonymous && <TreeNodeInputSuffix treeNode={treeNode} isEditorEditable={editableEditor} />}
       </div>
     </div>
   );

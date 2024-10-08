@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { broadcastSyncSuccess } from "@/app/api/sync/pusher";
+import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { AddNode, AddRelation, AddRelationType } from "@/app/graph/GraphUpdate";
 import { ImportChunkDataSchema } from "@/app/graph/SyncData";
 import { getDb } from "@/db";
@@ -12,6 +13,13 @@ import { createRelationTypes } from "@/db/relationTypes";
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
   const userId = req.userId;
+  if (userId === UNLOGGED_USER.id) {
+    return NextResponse.json(
+      { status: "error", message: "Cannot update data as unauthenticated user" },
+      { status: 401 },
+    );
+  }
+
   const parsedData = ImportChunkDataSchema.safeParse(await req.json());
 
   if (!parsedData.success) {

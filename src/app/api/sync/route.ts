@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { createSnapshotFromDb } from "@/app/api/sync/createSnapshot";
 import { broadcastSyncSuccess } from "@/app/api/sync/pusher";
+import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { SyncDataSchema } from "@/app/graph/SyncData";
 import { getDb } from "@/db";
 import { createNodes, deleteNode, updateNode } from "@/db/graphNodes";
@@ -22,6 +23,13 @@ async function getHandler(req: NextAuthenticatedRequest) {
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
   const userId = req.userId;
+  if (userId === UNLOGGED_USER.id) {
+    return NextResponse.json(
+      { status: "error", message: "Cannot update data as unauthenticated user" },
+      { status: 401 },
+    );
+  }
+
   console.log("Sync data request for user", userId);
 
   const parsedData = SyncDataSchema.safeParse(await req.json());

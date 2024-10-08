@@ -3,10 +3,10 @@ import { $getSelection, COMMAND_PRIORITY_LOW, PASTE_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $getChipsAroundSelection } from "@/app/editor/utils";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 
 /**

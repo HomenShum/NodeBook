@@ -3,9 +3,9 @@ import { $getSelection, COMMAND_PRIORITY_NORMAL, KEY_ENTER_COMMAND } from "lexic
 import { action } from "mobx";
 import { useEffect } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $getChipsAroundSelection } from "@/app/editor/utils";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 

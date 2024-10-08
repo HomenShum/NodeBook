@@ -20,10 +20,10 @@ const localLocalData = (graphStore: GraphStore) => {
   logger.debug(`Successfully loaded data from ${env.persistTo}`);
 };
 
-const loadRemoteData = async (graphStore: GraphStore, authFetch: typeof fetch) => {
+const loadRemoteData = async (graphStore: GraphStore, userFetch: typeof fetch) => {
   logger.debug("Loading data from server");
 
-  const syncData = await authFetch("/api/sync").then((res) => res.json());
+  const syncData = await userFetch("/api/sync").then((res) => res.json());
   const parsed = SerializedGraphStoreSchema.safeParse(syncData.data);
   if (parsed.success) {
     graphStore.resetAndLoad(parsed.data);
@@ -33,16 +33,16 @@ const loadRemoteData = async (graphStore: GraphStore, authFetch: typeof fetch) =
   }
 };
 
-export async function loadGraphData(graphStore: GraphStore, authFetch: typeof fetch) {
+export async function loadGraphData(graphStore: GraphStore, userFetch: typeof fetch) {
   if (env.persistTo === "local") {
     localLocalData(graphStore);
   } else if (env.persistTo === "server") {
-    await loadRemoteData(graphStore, authFetch);
+    await loadRemoteData(graphStore, userFetch);
   }
 }
-export const fetchGetOrCreateUser = async (user: User, authFetch: typeof fetch): Promise<PersistedUser | undefined> => {
+export const fetchGetOrCreateUser = async (user: User, userFetch: typeof fetch): Promise<PersistedUser | undefined> => {
   if (!user?.sub) throw new TypeError("This function must be called with a User that has the `sub` property");
-  const response = await authFetch("/api/user", {
+  const response = await userFetch("/api/user", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

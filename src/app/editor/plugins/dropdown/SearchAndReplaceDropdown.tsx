@@ -14,9 +14,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Path } from "@/app/components/Path";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";

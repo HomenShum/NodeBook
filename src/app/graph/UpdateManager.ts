@@ -215,14 +215,14 @@ export class UpdateManager {
     }
   }
 
-  private async syncLocalUpdates(authFetch: typeof fetch) {
+  private async syncLocalUpdates(userFetch: typeof fetch) {
     const syncDataBatch = condenseSyncDataBatch(this.syncQueue);
     this.syncQueue = [];
     let syncData = syncDataBatch.shift();
     while (syncData) {
       let endpoint = "/api/sync";
 
-      const response = await authFetch(endpoint, {
+      const response = await userFetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

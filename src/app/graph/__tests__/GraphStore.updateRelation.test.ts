@@ -1,3 +1,4 @@
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -18,7 +19,7 @@ describe("GraphStore.updateRelation", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore();
+    graphStore = new GraphStore(MOCK_MEW_USER);
 
     startNode = await graphStore.addNode({
       nodeProps: {
@@ -71,7 +72,10 @@ describe("GraphStore.updateRelation", () => {
     expect(relation.to).toBe(endNode);
     expect(relation.version).toBe(1);
 
-    const newRelationType = defaultRelationTypes.author;
+    const newRelationType = {
+      ...defaultRelationTypes.author,
+      authorId: MOCK_MEW_USER.id,
+    };
     expect(newRelationType).toBeDefined();
     expect(relation.relationType).not.toBe(newRelationType);
 

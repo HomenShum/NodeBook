@@ -1,7 +1,7 @@
 "use client";
 import { observer } from "mobx-react-lite";
 
-import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSetRoot } from "@/app/tree/utils";
 
 import s from "./AllNodesView.module.css";

@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
-import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { downloadSubtree } from "@/app/util";

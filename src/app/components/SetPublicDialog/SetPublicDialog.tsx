@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
-import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { TreeNode } from "@/app/tree/nodes";
 
 import styles from "./SetPublicDialog.module.css";

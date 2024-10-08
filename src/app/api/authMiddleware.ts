@@ -1,6 +1,7 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
 
+import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { env } from "@/envBackend";
 
 const JWT_PUBLIC_KEY = Buffer.from(env.AUTH0_JWT_PUBLIC_KEY, "base64").toString("utf-8").trim();
@@ -34,14 +35,15 @@ export function withAuth(handler: (req: NextAuthenticatedRequest) => Promise<Nex
   return async (req: NextAuthenticatedRequest) => {
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
-      return NextResponse.json({ status: "error", message: "Missing authorization header" }, { status: 401 });
+      req.userId = UNLOGGED_USER.id;
+      return handler(req);
     }
 
     const token = authHeader.split(" ")[1];
     try {
       const payload = await verifyToken(token);
 
-      if(!payload || typeof payload.sub !== "string"){
+      if (!payload || typeof payload.sub !== "string") {
         return NextResponse.json({ status: "error", message: "Invalid user ID" }, { status: 400 });
       }
 

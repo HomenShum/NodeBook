@@ -2,8 +2,8 @@ import { ChevronRight, Globe, Home } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { truncateText, useIsMobile } from "@/app/util";
 import { cn } from "@/lib/utils";
 
@@ -36,15 +36,15 @@ export const BreadcrumbItem = observer(function BreadcrumbItem({
           <span className={s.Icon}>
             <Globe size={14} strokeWidth={1.5} />
           </span>
-        ) : object.id === graphStore.userRoot.id ? (
+        ) : object.id === graphStore.homeRoot.id ? (
           <span className={s.Icon}>
             <Home size={14} strokeWidth={1.5} />
           </span>
         ) : null}
         <span className={cn({ [s.BlankContent]: !object.text })}>
-            {truncateText(object.text || "(blank)", isMobile ? 15 : 32)}
-          </span>
-        {isRoot && object.id !== graphStore.globalRoot.id && object.id !== graphStore.userRoot.id && (
+          {truncateText(object.text || "(blank)", isMobile ? 15 : 32)}
+        </span>
+        {isRoot && object.id !== graphStore.globalRoot.id && object.id !== graphStore.homeRoot.id && (
           <span>
             {object.isPublic ? (
               <div className={cn(s.PublicColor, s.PublishingStatusPill)}>Public</div>

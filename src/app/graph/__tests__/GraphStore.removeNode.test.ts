@@ -1,9 +1,10 @@
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 
-import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
+import { MIN_NUM_NODES_WITH_USER, MIN_NUM_RELATIONS } from "./helpers";
 
 describe("GraphStore.removeNode", () => {
   let graphStore: GraphStore;
@@ -15,13 +16,13 @@ describe("GraphStore.removeNode", () => {
   let relationAB: GraphRelation;
   let relationBC: GraphRelation;
 
-  const NUM_NODES_START = MIN_NUM_NODES + 4;
+  const NUM_NODES_START = MIN_NUM_NODES_WITH_USER + 4;
   const NUM_RELATIONS_START = MIN_NUM_RELATIONS + 2;
 
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore();
+    graphStore = new GraphStore(MOCK_MEW_USER);
 
     orphanNode = await graphStore.addNode({});
     nodeA = await graphStore.addNode({ nodeProps: { id: "a" } });

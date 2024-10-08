@@ -2,9 +2,17 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GLOBAL_ROOT_ID, GLOBAL_USERS_NODE_ID } from "@/lib/constants";
 
 /**
- * The number of nodes that should exist when the store is initialized.
+ * The number of nodes that should exist when the store is initialized with a non-anonymous user.
  */
-export const MIN_NUM_NODES = 3; // global, users, user
+export const MIN_NUM_NODES_WITH_USER = 3; // global, users, user
+
+/**
+ * The number of nodes that should exist when the store is initialized with an anonymous user.
+ *
+ * The big thing here is that we don't create a user root, and instead use the global root.
+ */
+export const MIN_NUM_NODES_WITH_ANONYMOUS_USER = 2; // global, users
+
 /**
  * The number of nodes that should be created when the store is initialized.
  * This doesn't include the global root or users nodes. We instantiate those but

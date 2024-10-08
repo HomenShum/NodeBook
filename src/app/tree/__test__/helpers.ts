@@ -1,3 +1,4 @@
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { TreeNode } from "@/app/tree/nodes";
@@ -27,7 +28,7 @@ import { Tree } from "@/app/tree/Tree";
  *  { rid: "o4", isAnchor: true }
  * ]);
  * // Defaults to the outline root node
- * assert(tree.root.object.id === "user-root-id-SPECIAL::mew|unlogged");
+ * assert(tree.root.object.id === "user-root-id-SPECIAL::mew|0123456789");
  * // The rid property sets the relation id, which in turn sets the path
  * assert(tree.getNode("/all/o2/all/o3"));
  * // The isHead and isAnchor properties above are used to set the selection
@@ -40,7 +41,7 @@ import { Tree } from "@/app/tree/Tree";
  */
 export async function createTestTreeFromTemplate(template: TemplateNode[]) {
   const settingsStore = new SettingsStore();
-  const graphStore = new GraphStore();
+  const graphStore = new GraphStore(MOCK_MEW_USER);
   const tree = new Tree(graphStore, settingsStore, graphStore.userRoot);
   let selectionHeadPath: string | undefined;
   let selectionAnchorPath: string | undefined;

@@ -1,9 +1,10 @@
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 
-import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
+import { MIN_NUM_NODES_WITH_USER, MIN_NUM_RELATIONS } from "./helpers";
 
 describe("GraphStore.removeRelation", () => {
   beforeEach(() => {
@@ -20,7 +21,7 @@ describe("GraphStore.removeRelation", () => {
     const NUM_RELATIONS_START = MIN_NUM_RELATIONS + 1;
 
     beforeEach(async () => {
-      graphStore = new GraphStore();
+      graphStore = new GraphStore(MOCK_MEW_USER);
 
       startNode = await graphStore.addNode({});
       endNode = await graphStore.addNode({});
@@ -50,7 +51,7 @@ describe("GraphStore.removeRelation", () => {
 
       expect(graphStore.getNode(startNode.id)).toBeUndefined();
       expect(graphStore.getNode(endNode.id)).toBeUndefined();
-      expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES);
+      expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES_WITH_USER);
     });
     it("should queue GraphUpdates for deleting the relation and its from and to nodes", async () => {
       expect(graphStore.updateManager.pendingUpdates).toHaveLength(0);
@@ -95,7 +96,7 @@ describe("GraphStore.removeRelation", () => {
 
       expect(graphStore.getNode(startNode.id)).toBe(startNode);
       expect(graphStore.getNode(endNode.id)).toBe(endNode);
-      expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES + 2);
+      expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES_WITH_USER + 2);
 
       // Check queue has only the relation deletion, no node deletions
       const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
@@ -143,11 +144,11 @@ describe("GraphStore.removeRelation", () => {
     let relationAC: GraphRelation;
     let hyperRelation: GraphRelation;
 
-    const NUM_NODES_START = MIN_NUM_NODES + 3;
+    const NUM_NODES_START = MIN_NUM_NODES_WITH_USER + 3;
     const NUM_RELATIONS_START = MIN_NUM_RELATIONS + 4;
 
     beforeEach(async () => {
-      graphStore = new GraphStore();
+      graphStore = new GraphStore(MOCK_MEW_USER);
 
       nodeA = await graphStore.addNode({ nodeProps: { id: "a" } });
       nodeB = await graphStore.addNode({ nodeProps: { id: "b" } });

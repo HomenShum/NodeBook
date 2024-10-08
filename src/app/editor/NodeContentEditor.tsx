@@ -7,6 +7,7 @@ import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
 import { RefObject, useCallback } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { BindFocusToTreePlugin } from "@/app/editor/plugins/BindFocusToTreePlugin";
@@ -20,7 +21,6 @@ import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin"
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { useSetRoot } from "@/app/tree/utils";

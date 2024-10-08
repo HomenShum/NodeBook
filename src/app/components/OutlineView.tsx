@@ -10,8 +10,9 @@ import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export const OutlineView = observer(function OutlineView({ tree }: Props) {
+  const user = useUser();
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
   useOutlineHotkeys({ tree });
@@ -84,7 +86,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className={s.IconAndTitle}>
-                      {treeNode.object.id === graphStore.userRoot.id ? (
+                      {treeNode.object.id === graphStore.homeRoot.id ? (
                         <HomeIcon size={20} />
                       ) : isGlobalRoot ? (
                         <Globe size={20} />
@@ -103,10 +105,10 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
               </TooltipProvider>
             </div>
 
-            <CreateNewButton tree={tree} />
+            {!user.isAnonymous && <CreateNewButton tree={tree} />}
           </div>
           <div className={s.Nodes}>
-            <ClickToCreateNodeButton treeNode={treeNode} />
+            {!user.isAnonymous && <ClickToCreateNodeButton treeNode={treeNode} />}
             <ChildGroups treeNode={treeNode} />
           </div>
         </div>

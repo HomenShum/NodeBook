@@ -3,16 +3,14 @@ import * as Sentry from "@sentry/nextjs";
 import { observer } from "mobx-react-lite";
 import React, { useEffect, useState } from "react";
 
-import { LoginScreen } from "@/app/auth/LoginScreen";
 import { useAuth } from "@/app/auth/useAuth";
 import { SidebarIcon } from "@/app/components/CustomIcons";
 import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import Loader from "@/app/components/UIPrimitives/Loader";
+import { useLoading } from "@/app/contexts/LoadingContext";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
-
-import { useLoading } from "./StoresProvider";
 
 import styles from "./app.module.css";
 
@@ -63,8 +61,6 @@ export default observer(function App({ children }: Props) {
         </button>
       </div>
     );
-  } else if (auth && !auth.isAuthenticated) {
-    return <LoginScreen />;
   } else if (isLoading) {
     return <Loader />;
   } else {

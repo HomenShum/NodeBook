@@ -1,9 +1,9 @@
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
-import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 
-import { MIN_NUM_NODES } from "./helpers";
+import { MIN_NUM_NODES_WITH_USER } from "./helpers";
 
 describe("GraphStore.addNode", () => {
   let graphStore: GraphStore;
@@ -11,7 +11,7 @@ describe("GraphStore.addNode", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore(UNLOGGED_USER, new SettingsStore());
+    graphStore = new GraphStore(MOCK_MEW_USER, new SettingsStore());
     graphStore.updateManager.cleanup();
   });
 
@@ -20,7 +20,7 @@ describe("GraphStore.addNode", () => {
 
     expect(node).toBeDefined();
     expect(graphStore.getNode(node.id)).toBe(node);
-    expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES + 1);
+    expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES_WITH_USER + 1);
   });
   it("should queue a GraphUpdate for creating a node", async () => {
     const node = await graphStore.addNode({});
@@ -35,7 +35,7 @@ describe("GraphStore.addNode", () => {
     graphStore.updateManager.revertAllPending();
 
     expect(graphStore.getNode(node.id)).toBeUndefined();
-    expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES);
+    expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES_WITH_USER);
   });
   it("should create a public node in public mode and vice versa", async () => {
     graphStore.settings?.setPublicMode(true);

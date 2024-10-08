@@ -4,7 +4,14 @@ import appLogger from "@/lib/logger";
 
 const logger = appLogger.child({ service: "trie" });
 
-export class CappedKeywordIndex {
+export interface CappedKeywordIndex {
+  add(id: string, getText: () => string): void;
+  delete(id: string): void;
+  getIds(text: string): string[];
+  clear(): void;
+}
+
+export class KeywordTrieIndex implements CappedKeywordIndex {
   root: TrieNode = new TrieNode();
   maxPrefixLength: number;
   reactionDisposersById: Map<string, Set<() => void>> = new Map();
@@ -126,4 +133,20 @@ class TrieNode {
   constructor(char: string = "") {
     this.char = char;
   }
+}
+
+/**
+ * A no-op implementation used when the index is not needed to avoid the overhead of maintaining it.
+ *
+ * Specifically useful for anonymous access mode where the user cannot enter any of the edit
+ * flows where the index is used. Avoiding constructing/updating the index saves significant
+ * start-up time.
+ */
+export class NoopKeywordIndex implements CappedKeywordIndex {
+  add() {}
+  delete() {}
+  getIds() {
+    return [];
+  }
+  clear() {}
 }

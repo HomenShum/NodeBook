@@ -5,11 +5,11 @@ import { ReactPortal, useCallback } from "react";
 import * as ReactDOM from "react-dom";
 
 import { Path } from "@/app/components/Path";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { Dropdown } from "@/app/editor/plugins/dropdown/types";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { TreeNode } from "@/app/tree/nodes";
 import { uuid } from "@/app/util";
 import { MenuTextMatch, cn } from "@/lib/utils";

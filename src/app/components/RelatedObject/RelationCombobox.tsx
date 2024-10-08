@@ -6,8 +6,9 @@ import * as React from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { GraphRelationType } from "@/app/graph/types";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { DescendantTreeNode, PointerTreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -30,6 +31,8 @@ export const RelationCombobox = observer(function RelationCombobox({
   isOpen,
   setIsOpen,
 }: Props) {
+  const user = useUser();
+
   const object = treeNode.object;
 
   const relation = treeNode.relationWithParent;
@@ -49,6 +52,14 @@ export const RelationCombobox = observer(function RelationCombobox({
   };
 
   const label = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
+  if (user.isAnonymous) {
+    return (
+      <Button variant="ghost" size="sm" className={styles.RelationComboboxLabel} disabled>
+        {label}:
+      </Button>
+    );
+  }
+
   const button = (
     <Button
       variant="ghost"

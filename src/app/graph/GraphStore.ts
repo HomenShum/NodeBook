@@ -25,7 +25,7 @@ import {
   USERS_TO_USER_RELATION_ID_PREFIX,
 } from "@/lib/constants";
 import logger from "@/lib/logger";
-import { CappedKeywordIndex } from "@/lib/trie";
+import { CappedKeywordIndex, KeywordTrieIndex, NoopKeywordIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
@@ -58,7 +58,6 @@ import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
  */
 export class GraphStore {
   settings: SettingsStore | undefined;
-  cappedKeywordIndex = new CappedKeywordIndex(MAX_PREFIX_LENGTH);
 
   user: MewUser;
   updateManager: UpdateManager;
@@ -67,6 +66,8 @@ export class GraphStore {
   relationsById: Map<string, GraphRelation> = new Map();
   relationToBundles: Map<string, GraphNode[]> = new Map(); // Relation id to list of bundle-nodes that contain it
   relationTypesById: Record<string, GraphRelationType> = {};
+
+  cappedKeywordIndex: CappedKeywordIndex;
 
   constructor(user: MewUser = UNLOGGED_USER, settings?: SettingsStore, authedFetch?: typeof fetch) {
     this.user = user;
@@ -77,6 +78,7 @@ export class GraphStore {
       (updates) => this.applyUpdates(updates),
       authedFetch,
     );
+    this.cappedKeywordIndex = user.isAnonymous ? new NoopKeywordIndex() : new KeywordTrieIndex(MAX_PREFIX_LENGTH);
     this.ensureDefaultObjectsCreated();
     this.makeObservable();
   }
@@ -133,6 +135,10 @@ export class GraphStore {
     return node;
   }
 
+  get homeRoot(): GraphNode {
+    return this.user.isAnonymous ? this.globalRoot : this.userRoot;
+  }
+
   get usersNode(): GraphNode {
     const node = this.nodesById.get(GLOBAL_USERS_NODE_ID);
     if (!node) {
@@ -165,6 +171,10 @@ export class GraphStore {
    * The default place to put a user in the graph.
    */
   getDefaultRootForUser(): ObjectPath {
+    if (this.user.isAnonymous) {
+      // Send anonymous users to the global root
+      return { object: this.globalRoot, relations: [] };
+    }
     return { object: this.userRoot, relations: [this.globalToUsersRelation, this.usersToUserRelation] };
   }
 
@@ -1632,7 +1642,7 @@ export class GraphStore {
 
     // User node
     let userRoot = this.nodesById.get(this.userRootId);
-    if (!userRoot) {
+    if (!userRoot && !this.user.isAnonymous) {
       const { node, updates: userRootUpdates } = this._addNode({
         id: this.userRootId,
         content: [{ type: "text", value: this.user.name || this.user.id || "Untitled User" }],
@@ -1644,7 +1654,7 @@ export class GraphStore {
 
     // Users-[sublist]->User
     let usersToUserRelation = this.relationsById.get(this.usersToUserRelationId);
-    if (!usersToUserRelation) {
+    if (!usersToUserRelation && userRoot) {
       const { relation, updates: usersToUserRelationUpdates } = this.createRelation({
         id: this.usersToUserRelationId,
         from: usersNode,
@@ -1655,7 +1665,9 @@ export class GraphStore {
       updates.push(...usersToUserRelationUpdates);
     }
 
-    this.updateManager.queueUpdates(updates);
+    if (!this.user.isAnonymous && updates.length > 0) {
+      this.updateManager.queueUpdates(updates);
+    }
   }
 
   addToBundle(relation: GraphRelation, bundle: GraphNode) {

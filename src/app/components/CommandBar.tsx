@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { Path } from "@/app/components/Path";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useSetRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
 import { cn } from "@/lib/utils";

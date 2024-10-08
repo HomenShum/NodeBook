@@ -1,16 +1,18 @@
 "use client";
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import Pusher from "pusher-js";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { useAuth } from "@/app/auth/useAuth";
+import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
+import { LoadingContext } from "@/app/contexts/LoadingContext";
+import { SettingsStoreContext } from "@/app/contexts/SettingsStoreContext";
+import { UserContext } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SyncDataSchema } from "@/app/graph/SyncData";
-import { GraphStoreProvider } from "@/app/graph/useGraphStore";
-import { SettingsStoreProvider } from "@/app/graph/useSettingsStore";
 import { fetchGetOrCreateUser, loadGraphData } from "@/app/persistence/loadGraphData";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
@@ -47,33 +49,38 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
     let ignore = false;
     async function setupStores() {
       if (!auth) return logger.debug("Skip store setup while auth is disabled");
-      if (!auth.user) return logger.debug("Skip store setup while not authenticated");
       if (auth.isLoading) return logger.debug("Skip loading stores while auth is loading");
 
       logger.debug("Starting to setup stores", auth);
       setIsLoading(true);
 
-      const authedFetch: typeof fetch = async (input, init) => {
-        const token = await auth.getAccessTokenSilently();
-        return fetch(input, { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } });
-      };
+      const authedFetch: typeof fetch = auth.user
+        ? async (input, init) => {
+            const token = await auth.getAccessTokenSilently();
+            return fetch(input, { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } });
+          }
+        : fetch;
 
       // load user
       logger.debug("Loading user");
-      let newUser: MewUser;
+      let user: MewUser;
       try {
-        const data = await fetchGetOrCreateUser(auth.user, authedFetch);
-        if (!data) throw new Error("fetchGetOrCreateUser returned null");
-        newUser = new MewUser({ ...data });
+        if (auth.user) {
+          const data = await fetchGetOrCreateUser(auth.user, authedFetch);
+          if (!data) throw new Error("fetchGetOrCreateUser returned null");
+          user = new MewUser({ ...data });
+        } else {
+          user = UNLOGGED_USER;
+        }
       } catch (e) {
         logger.error("Failed to get or create user, using unlogged user", e);
-        newUser = UNLOGGED_USER;
+        user = UNLOGGED_USER;
       }
 
       // create new stores (shorter names to distinguish from the state variables)
-      const settings = new SettingsStore(newUser.settings, async (newSettings) => {
-        if (newUser.isUnlogged) return;
-        const userData = { ...newUser, settings: newSettings };
+      const settings = new SettingsStore(user.settings, async (newSettings) => {
+        if (user.isAnonymous) return;
+        const userData = { ...user, settings: newSettings };
         try {
           await authedFetch("/api/user/settings", {
             method: "POST",
@@ -86,19 +93,19 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
           logger.error("Failed to save user settings", e);
         }
       });
-      let graph = new GraphStore(newUser, settings, authedFetch);
+      let graph = new GraphStore(user, settings, authedFetch);
       const view = new ViewStore(settings, graph);
 
       // load and start sync
       let syncCleanup = () => {};
       try {
-        if (env.isPersistenceEnabled && !newUser.isUnlogged) {
-          logger.debug("Loading data", newUser.id);
+        if (env.isPersistenceEnabled) {
+          logger.debug("Loading data", user.id);
           await loadGraphData(graph, authedFetch);
         }
       } catch (e) {
         toast("Failed to load data from server. Starting with an empty graph.");
-        graph = new GraphStore(newUser, settings, authedFetch);
+        graph = new GraphStore(user, settings, authedFetch);
         logger.error("Failed sync setup", e);
       }
 
@@ -106,7 +113,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       if (ignore) return;
       logger.debug("Starting sync");
       syncCleanup = startSync({ graphStore: graph });
-      setUser(newUser);
+      setUser(user);
       setGraphStore(graph);
       setSettingsStore(settings);
       setViewStore(view);
@@ -130,11 +137,11 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
   return (
     <LoadingContext.Provider value={isLoading}>
       <UserContext.Provider value={user}>
-        <SettingsStoreProvider value={settingsStore}>
+        <SettingsStoreContext.Provider value={settingsStore}>
           <GraphStoreProvider value={graphStore}>
             <ViewStoreProvider value={viewStore}>{children}</ViewStoreProvider>
           </GraphStoreProvider>
-        </SettingsStoreProvider>
+        </SettingsStoreContext.Provider>
       </UserContext.Provider>
     </LoadingContext.Provider>
   );
@@ -162,14 +169,3 @@ function startSync({ graphStore }: { graphStore: GraphStore }) {
     stopSyncing();
   };
 }
-
-const LoadingContext = createContext(false);
-const UserContext = createContext<MewUser>(UNLOGGED_USER);
-
-export const useLoading = () => {
-  return useContext(LoadingContext);
-};
-
-export const useUser = () => {
-  return useContext(UserContext);
-};

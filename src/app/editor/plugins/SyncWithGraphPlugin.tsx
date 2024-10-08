@@ -3,9 +3,9 @@ import { $getRoot, $setSelection, EditorState, ParagraphNode } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $getChips, createParagraphMatchingGraphNode, graphNodeMatchesParagraph } from "@/app/editor/utils";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 
 interface Props {
   node: GraphNode;

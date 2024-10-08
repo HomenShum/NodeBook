@@ -24,7 +24,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
-import { useGraphStore } from "@/app/graph/useGraphStore";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { useTree } from "@/app/tree/TreeContext";
 import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { downloadSubtree } from "@/app/util";
@@ -39,6 +40,7 @@ interface Props {
 }
 
 export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdatingRelationType, isHovered }: Props) {
+  const user = useUser();
   const graphStore = useGraphStore();
   const tree = useTree();
   const viewStore = useViewStore();
@@ -65,79 +67,92 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
   if (!isHovered && !menuOpen) {
     return <Ellipsis size={16} className={styles.Transparent} />;
   }
+
+  const dropdownMenuItems = user.isAnonymous ? (
+    <>
+      <DropdownMenuItem onClick={handleZoom}>
+        <Expand size={14} />
+        Zoom to node
+      </DropdownMenuItem>
+    </>
+  ) : (
+    <>
+      {parent.isRelationPinned(relation) ? (
+        <DropdownMenuItem onSelect={() => parent.unpinChildRelation(relation)}>
+          <PinOff size={14} />
+          Unpin
+        </DropdownMenuItem>
+      ) : (
+        <DropdownMenuItem onSelect={() => parent.pinChildRelation(relation)}>
+          <Pin size={14} />
+          Pin
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuItem onSelect={() => setPublicDialogOpen(true)}>
+        {object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
+        {object.isPublic ? "Make private" : "Make public"}
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={handleZoom}>
+        <Expand size={14} />
+        Zoom to node
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        onSelect={action(async () => {
+          await graphStore.addChildNode({ parentId: object.id });
+          tree.setPathExpanded(treeNode.path, true);
+        })}
+      >
+        <Plus size={14} />
+        Add child
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        onSelect={action(async () => {
+          try {
+            await graphStore.removeRelation({ relationId: relation.id });
+            if (treeNode.siblingAbove) {
+              tree.setFocusedNode(treeNode.siblingAbove.path);
+            }
+          } catch (e) {
+            alert(e instanceof Error ? e.message : "Failed to delete relation");
+          }
+        })}
+      >
+        <Delete size={14} />
+        Delete relation
+      </DropdownMenuItem>
+      <DropdownMenuItem onSelect={() => setViewType("replace")}>
+        <GitCompare size={14} />
+        Replace related object
+      </DropdownMenuItem>
+      {viewType !== "edit" && (
+        <DropdownMenuItem
+          onSelect={() => {
+            setViewType("edit");
+          }}
+        >
+          <Edit size={14} />
+          Set to edit view
+        </DropdownMenuItem>
+      )}
+      <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>
+        <RefreshCcwDot size={14} />
+        Change relation type
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem onSelect={() => downloadSubtree(graphStore, object)}>
+        <Download size={14} />
+        Export subtree
+      </DropdownMenuItem>
+    </>
+  );
+
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
       <DropdownMenuTrigger className={styles.TrailMenuTrigger}>
         <Ellipsis size={16} className={styles.TrailMenuIcon} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" alignOffset={-5} onCloseAutoFocus={(e) => e.preventDefault()}>
-        {parent.isRelationPinned(relation) ? (
-          <DropdownMenuItem onSelect={() => parent.unpinChildRelation(relation)}>
-            <PinOff size={14} />
-            Unpin
-          </DropdownMenuItem>
-        ) : (
-          <DropdownMenuItem onSelect={() => parent.pinChildRelation(relation)}>
-            <Pin size={14} />
-            Pin
-          </DropdownMenuItem>
-        )}
-         <DropdownMenuItem onSelect={() => setPublicDialogOpen(true)}>
-          {object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
-          {object.isPublic ? "Make private" : "Make public"}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleZoom}>
-          <Expand size={14} />
-          Zoom to node
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={action(async () => {
-            await graphStore.addChildNode({ parentId: object.id });
-            tree.setPathExpanded(treeNode.path, true);
-          })}
-        >
-          <Plus size={14} />
-          Add child
-          {/* <DropdownMenuShortcut>⌘K</DropdownMenuShortcut> */}
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={action(async () => {
-            try {
-              await graphStore.removeRelation({ relationId: relation.id });
-              if (treeNode.siblingAbove) {
-                tree.setFocusedNode(treeNode.siblingAbove.path);
-              }
-            } catch (e) {
-              alert(e instanceof Error ? e.message : "Failed to delete relation");
-            }
-          })}
-        >
-          <Delete size={14} />
-          Delete relation
-        </DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => setViewType("replace")}>
-          <GitCompare size={14} />
-          Replace related object
-        </DropdownMenuItem>
-        {viewType !== "edit" && (
-          <DropdownMenuItem
-            onSelect={() => {
-              setViewType("edit");
-            }}
-          >
-            <Edit size={14} />
-            Set to edit view
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>
-          <RefreshCcwDot size={14} />
-          Change relation type
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => downloadSubtree(graphStore, object)}>
-          <Download size={14} />
-          Export subtree
-        </DropdownMenuItem>
+        {dropdownMenuItems}
       </DropdownMenuContent>
       <SetPublicDialog isOpen={publicDialogOpen} setOpen={setPublicDialogOpen} treeNode={treeNode} />
     </DropdownMenu>

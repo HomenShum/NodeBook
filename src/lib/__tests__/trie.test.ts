@@ -1,12 +1,12 @@
 import { observable, runInAction } from "mobx";
 
-import { CappedKeywordIndex } from "@/lib/trie";
+import { CappedKeywordIndex, KeywordTrieIndex } from "@/lib/trie";
 
-describe("CappedKeywordIndex", () => {
+describe("KeywordTrieIndex", () => {
   let index: CappedKeywordIndex;
 
   beforeEach(() => {
-    index = new CappedKeywordIndex(3); // maxPrefixLength of 3
+    index = new KeywordTrieIndex(3); // maxPrefixLength of 3
   });
 
   afterEach(() => {
@@ -47,7 +47,7 @@ describe("CappedKeywordIndex", () => {
   });
 
   test("remove id from deep branch", () => {
-    const index = new CappedKeywordIndex(5);
+    const index = new KeywordTrieIndex(5);
     const obj1 = observable({ text: "abcde fghij" });
     const obj2 = observable({ text: "abcde klmno" });
     index.add("1", () => obj1.text);
@@ -109,7 +109,7 @@ describe("CappedKeywordIndex", () => {
   });
 
   test("maxPrefixLength respect", () => {
-    const index = new CappedKeywordIndex(2);
+    const index = new KeywordTrieIndex(2);
     const obj = observable({ text: "hello world" });
     index.add("1", () => obj.text);
 

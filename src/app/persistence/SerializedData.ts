@@ -86,6 +86,7 @@ type SerializedRelationsByNodeId = {
 };
 
 export type SerializedGraphStore = {
+  userId?: string;
   nodesById: Record<string, SerializedNode>;
   relationTypesById: Record<string, GraphRelationType>;
   relationsById: Record<string, SerializedRelation>;

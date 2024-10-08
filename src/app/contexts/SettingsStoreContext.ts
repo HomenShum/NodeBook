@@ -1,11 +1,9 @@
 "use client";
 import { createContext, useContext } from "react";
 
-import { SettingsStore } from "./SettingsStore";
+import { SettingsStore } from "@/app/graph/SettingsStore";
 
-const SettingsStoreContext = createContext<SettingsStore | null>(null);
-
-export const SettingsStoreProvider = SettingsStoreContext.Provider;
+export const SettingsStoreContext = createContext<SettingsStore | null>(null);
 
 export const useSettingsStore = () => {
   const store = useContext(SettingsStoreContext);

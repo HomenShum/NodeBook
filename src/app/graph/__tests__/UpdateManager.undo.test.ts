@@ -1,20 +1,21 @@
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 
-import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
+import { MIN_NUM_NODES_WITH_USER, MIN_NUM_RELATIONS } from "./helpers";
 
 describe("UpdateManaager.undo", () => {
   let graphStore: GraphStore;
 
   let node: GraphNode;
 
-  const NUM_NODES_START = MIN_NUM_NODES + 1;
+  const NUM_NODES_START = MIN_NUM_NODES_WITH_USER + 1;
   const NUM_RELATIONS_START = MIN_NUM_RELATIONS;
 
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore();
+    graphStore = new GraphStore(MOCK_MEW_USER);
     node = await graphStore.addNode({
       nodeProps: {
         id: "a",

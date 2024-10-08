@@ -3,10 +3,10 @@ import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_NORMAL, KEY_BACKSPAC
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { defaultRelationTypes } from "@/app/graph/constants";
-import { useGraphStore } from "@/app/graph/useGraphStore";
 import { useTree } from "@/app/tree/TreeContext";
 import { PointerTreeNode } from "@/app/tree/nodes";
 

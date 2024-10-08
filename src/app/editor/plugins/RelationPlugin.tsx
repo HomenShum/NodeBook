@@ -13,12 +13,12 @@ import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { $getChips, $getText, getSelectionPositions, matchDefaultRelationType } from "@/app/editor/utils";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
-import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useSettingsStore } from "@/app/graph/useSettingsStore";
 import { useTree } from "@/app/tree/TreeContext";
 
 export const RelationPlugin = observer(function RelationPlugin() {

@@ -1,3 +1,4 @@
+import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -19,7 +20,7 @@ describe("GraphStore.setIsPublic", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore();
+    graphStore = new GraphStore(MOCK_MEW_USER);
 
     ancestorNode = await graphStore.addNode({
       nodeProps: {

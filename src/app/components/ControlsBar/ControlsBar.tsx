@@ -13,7 +13,7 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { Switch } from "@/app/components/UIPrimitives/Switch";
-import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { Tree } from "@/app/tree/Tree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";

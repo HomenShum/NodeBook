@@ -43,7 +43,7 @@ export abstract class BaseGraphObject {
 
   get isRoot() {
     return (
-      this.id === this.store.userRoot.id ||
+      this.id === this.store.userRootId ||
       this.id === this.store.globalRoot.id ||
       this.id === this.store.usersToUserRelationId ||
       this.id === this.store.globalToUsersRelation.id ||
@@ -80,7 +80,7 @@ export abstract class BaseGraphObject {
    * or number) or as a reference (like a link or a mention).
    */
   get locality(): "local" | "global" {
-    if (this.id === this.store.userRoot.id || this.id === this.store.globalRoot.id) {
+    if (this.id === this.store.userRootId || this.id === this.store.globalRoot.id) {
       return "global";
     }
 

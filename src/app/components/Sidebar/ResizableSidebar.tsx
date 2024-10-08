@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import { useUser } from "@/app/StoresProvider";
+import { useAuth } from "@/app/auth/useAuth";
 import CommandBar from "@/app/components/CommandBar";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
@@ -12,8 +12,9 @@ import SidebarTree from "@/app/components/Sidebar/SidebarTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { DevTools } from "@/app/components/dev/DevTools";
-import { useGraphStore } from "@/app/graph/useGraphStore";
-import { useSettingsStore } from "@/app/graph/useSettingsStore";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { useSetRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -34,6 +35,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   className,
   onResizeStateChange,
 }: Props) {
+  const auth = useAuth();
   const user = useUser();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
@@ -140,19 +142,21 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 </span>
                 <span>{graphStore.globalRoot.text}</span>
               </Button>
-              <Button
-                style={{ width: "100%" }}
-                variant="ghost"
-                className={styles.Button}
-                onClick={() => {
-                  setRoot(graphStore.getDefaultRootForUser());
-                }}
-              >
-                <span>
-                  <Home size={16} strokeWidth={1.5} />
-                </span>
-                <span className={styles.ButtonText}>{graphStore.userRoot.text}</span>
-              </Button>
+              {!user.isAnonymous && (
+                <Button
+                  style={{ width: "100%" }}
+                  variant="ghost"
+                  className={styles.Button}
+                  onClick={() => {
+                    setRoot(graphStore.getDefaultRootForUser());
+                  }}
+                >
+                  <span>
+                    <Home size={16} strokeWidth={1.5} />
+                  </span>
+                  <span className={styles.ButtonText}>{graphStore.homeRoot.text}</span>
+                </Button>
+              )}
               {showAllNodesOption && (
                 <Button
                   style={{ width: "100%" }}
@@ -172,8 +176,16 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <SidebarTree />
               </div>
             </div>
-            <CommandBar />
+            {!user.isAnonymous && <CommandBar />}
           </div>
+
+          {user.isAnonymous && (
+            <div className={styles.LoginButtonWrapper}>
+              <Button variant="accent" onClick={() => auth?.loginWithRedirect()}>
+                Log in
+              </Button>
+            </div>
+          )}
 
           <div className={styles.BottomNav}>
             <Button
@@ -208,7 +220,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
       </aside>
       <DevTools />
       <ImportDialog />
-      {user.isUnlogged && (
+      {user.isAnonymous && (
         <ClearData
           onConfirm={() => {
             graphStore.cleanup();
