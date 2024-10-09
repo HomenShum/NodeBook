@@ -1,4 +1,5 @@
 import {
+  ClipboardCopy,
   Delete,
   Download,
   Edit,
@@ -28,7 +29,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { useTree } from "@/app/tree/TreeContext";
 import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
-import { downloadSubtree } from "@/app/util";
+import { createRouteUrl, downloadSubtree } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import { useTreeNode } from "./RelatedObjectContext";
@@ -104,6 +105,17 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
       >
         <Plus size={14} />
         Add child
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        onSelect={action(async () => {
+          const domain = `${window.location.protocol}//${window.location.host}`;
+          const path = createRouteUrl(`${treeNode.path}/${treeNode.object.id}`);
+          await navigator.clipboard.writeText(
+            `${domain}${path}`
+          )
+        })}>
+        <ClipboardCopy size={14} />
+        Copy URL
       </DropdownMenuItem>
       <DropdownMenuItem
         onSelect={action(async () => {
