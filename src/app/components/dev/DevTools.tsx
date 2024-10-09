@@ -106,14 +106,6 @@ export const DevTools = observer(function DevTools() {
         <label className={styles.LabelSetting}>
           <input
             type="checkbox"
-            checked={settingsStore.showAllNodesOption}
-            onChange={(e) => settingsStore.setShowAllNodesOption(e.target.checked)}
-          />
-          Show All Nodes Tab in Sidebar
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
             checked={settingsStore.triggerRelationOnSingleColon}
             onChange={(e) => settingsStore.setTriggerRelationOnSingleColon(e.target.checked)}
           />

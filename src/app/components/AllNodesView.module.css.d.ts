@@ -1,7 +1,10 @@
 declare const styles: {
   readonly "AllNodesContent": string;
   readonly "AllNodesView": string;
-  readonly "AllNodesViewContainer": string;
+  readonly "AuthorFilter": string;
+  readonly "AuthorFilterContainer": string;
+  readonly "DirectNodesCheckbox": string;
+  readonly "FilterLabel": string;
   readonly "HeadingContainer": string;
   readonly "NodeDate": string;
   readonly "NodeHeader": string;
@@ -13,7 +16,6 @@ declare const styles: {
   readonly "Nodes": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
-  readonly "WindowNav": string;
 };
 export = styles;
 

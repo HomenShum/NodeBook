@@ -29,7 +29,6 @@ const SerializedUserSettingsSchema = z.object({
   allowShiftTabAboveViewRoot: z.boolean().optional(),
   hidePinnedItems: z.boolean().optional(),
   publicMode: z.boolean().optional(),
-  showAllNodesOption: z.boolean().optional(),
   triggerRelationOnSingleColon: z.boolean().optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;

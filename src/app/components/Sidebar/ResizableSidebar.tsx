@@ -13,7 +13,6 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { useSetRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -89,8 +88,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
     [isResizing, minWidth, maxWidth, viewStore],
   );
 
-  const { showAllNodesOption } = useSettingsStore();
-
   useEffect(() => {
     const handlePointerMove = (e: PointerEvent) => {
       if (isResizing) {
@@ -157,7 +154,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   <span className={styles.ButtonText}>{graphStore.homeRoot.text}</span>
                 </Button>
               )}
-              {showAllNodesOption && (
+              {
                 <Button
                   style={{ width: "100%" }}
                   variant="ghost"
@@ -171,7 +168,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   </span>
                   <span>All Nodes</span>
                 </Button>
-              )}
+              }
               <div style={{ marginTop: "16px" }}>
                 <SidebarTree />
               </div>

@@ -1,6 +1,7 @@
-import { Download, Ellipsis, Globe, Lock, Plus } from "lucide-react";
+import { Download, Ellipsis, Globe, List, Lock, Plus } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { SetPublicDialog } from "@/app/components/SetPublicDialog/SetPublicDialog";
@@ -25,6 +26,7 @@ interface Props {
 export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({ treeNode }: Props) {
   const graphStore = useGraphStore();
   const tree = useTree();
+  const router = useRouter();
 
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);
 
@@ -50,6 +52,12 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
               {treeNode.object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
               {treeNode.object.isPublic ? "Make private" : "Make public"}
             </DropdownMenuItem>
+            {treeNode.object.isUserNode && (
+              <DropdownMenuItem onSelect={() => router.push(`/all-nodes?authorId=${treeNode.object.authorId}`)}>
+                <List size={14} />
+                See all nodes
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={() => downloadSubtree(graphStore, treeNode.object)}>
               <Download size={14} />

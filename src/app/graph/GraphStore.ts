@@ -167,6 +167,16 @@ export class GraphStore {
     return relation;
   }
 
+  getAllUserNodes() {
+    const nodes: GraphNode[] = [];
+    for (const node of this.nodesById.values()) {
+      if (node.isUserNode) {
+        nodes.push(node);
+      }
+    }
+    return nodes;
+  }
+
   /**
    * The default place to put a user in the graph.
    */
@@ -334,6 +344,7 @@ export class GraphStore {
         isZone: props.isZone ?? false,
         isPublic: !!(props.isPublic || (this.settings && this.settings.publicMode)),
         isNewRelatedObjectsPublic: !!props.isNewRelatedObjectsPublic,
+        createdAt: props.createdAt ?? new Date(),
       });
 
       this.nodesById.set(node.id, node);

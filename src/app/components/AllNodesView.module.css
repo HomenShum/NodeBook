@@ -1,6 +1,8 @@
 .AllNodesView {
   position: relative;
   width: 100%;
+  margin: 0 8px;
+  border-radius: 6px;
   height: 100vh;
   background-color: var(--gray-2);
   overflow: hidden;
@@ -11,70 +13,76 @@
   display: flex;
   flex-direction: column;
   background-color: var(--gray-1);
-  height: 100%;
-  width: 100%;
+  height: calc(100vh - 88px); /* Adjust based on the header height */
+  padding-bottom: 16px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border: 0.5px solid var(--gray-6);
+  border-top: none;
   overflow-y: auto;
-}
-
-.WindowNav {
-  position: sticky;
-  border-radius: 8px;
-  padding-top: 8px;
-  height: 88px;
-  top: 0;
-  z-index: 20;
-  background-color: var(--gray-2);
-  overscroll-behavior: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-6) var(--gray-2);
 }
 
 .HeadingContainer {
   display: flex;
   flex-direction: column;
-  align-items: start;
-  padding: 24px 32px 16px;
+  align-items: flex-start;
+  padding: 24px 32px 8px 32px;
   color: var(--gray-12);
-  position: sticky;
-  top: 0;
-  background-color: var(--gray-1);
-  z-index: 10;
-  border-bottom: 1px solid var(--gray-6); /* Add underline to the entire container */
+  position: relative;
+  gap: 12px;
+  border-bottom: 1px solid var(--gray-6);
 }
 
 .TitleContainer {
   display: flex;
   align-items: center;
   width: 100%;
+  gap: 8px;
 }
 
 .TitleText {
   font-size: var(--font-size-h2);
   font-weight: 400;
   user-select: none;
-  width: 100%;
   letter-spacing: -0.02em;
-  padding-left: 3px; /* Replace margin with padding */
 }
 
-.AllNodesViewContainer {
+.AuthorFilterContainer {
   display: flex;
-  flex-direction: column;
-  background-color: var(--gray-1);
-  height: 100vh;
-  width: 100%;
-  overflow: hidden;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.FilterLabel {
+  margin-right: 8px;
+  font-size: 14px;
+  color: var(--gray-11);
+}
+
+.AuthorFilter {
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid var(--gray-6);
+  font-size: 12px;
+  background-color: var(--gray-2);
+  color: var(--gray-12);
+  cursor: pointer;
+}
+
+.AuthorFilter:focus {
+  outline: none;
+  border-color: var(--blue-7);
 }
 
 .Nodes {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  overflow: hidden;
+  padding: 0 32px; /* Spacing for the node items */
 }
 
 .NodeList {
   overflow-y: auto;
   flex-grow: 1;
-  /* padding: 0 32px 32px; */
 }
 
 .NodeItem {
@@ -82,7 +90,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 32px;
-  border-bottom: 1px solid var(--gray-4);
+  border-bottom: 1px solid var(--gray-4); /* Node item divider */
   transition: background-color 0.2s ease;
   cursor: pointer;
 }
@@ -100,7 +108,7 @@
 .NodeDate {
   font-size: 12px;
   color: var(--gray-9);
-  width: 150px; /* Should match NodeHeaderDate width */
+  width: 150px;
   text-align: right;
 }
 
@@ -109,7 +117,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 32px;
-  border-bottom: 2px solid var(--gray-6);
+  border-bottom: 1px solid var(--gray-6);
   font-weight: bold;
   background-color: var(--gray-1);
   position: sticky;
@@ -126,6 +134,21 @@
 .NodeHeaderDate {
   font-size: 14px;
   color: var(--gray-11);
-  width: 150px; /* Adjust this value based on your date column width */
+  width: 150px;
   text-align: right;
+}
+
+.AuthorFilterContainer {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.DirectNodesCheckbox {
+  margin-left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--gray-11);
 }

@@ -6,6 +6,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { comparePositions } from "@/app/util";
+import { USER_ROOT_ID_PREFIX } from "@/lib/constants";
 
 export type GraphObject = GraphNode | GraphRelation | PlaceholderGraphObject;
 
@@ -49,6 +50,10 @@ export abstract class BaseGraphObject {
       this.id === this.store.globalToUsersRelation.id ||
       this.id === this.store.usersNode.id
     );
+  }
+
+  get isUserNode() {
+    return this.id.startsWith(USER_ROOT_ID_PREFIX);
   }
 
   get relationsWithPositions(): PositionedRelation[] {

@@ -29,7 +29,6 @@ export class SettingsStore {
   public allowShiftTabAboveViewRoot = false;
   public hidePinnedItems = false;
   public publicMode = true;
-  public showAllNodesOption = false;
   public isFlattenSublistsEnabled = false;
   public triggerRelationOnSingleColon = false;
   private stopAutosave: () => void;
@@ -68,7 +67,6 @@ export class SettingsStore {
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
     this.hidePinnedItems = false;
-    this.showAllNodesOption = false;
     this.triggerRelationOnSingleColon = false;
   }
 
@@ -191,10 +189,6 @@ export class SettingsStore {
 
   setHidePinnedItems(value: boolean) {
     this.hidePinnedItems = value;
-  }
-
-  setShowAllNodesOption(value: boolean) {
-    this.showAllNodesOption = value;
   }
 
   setIsFlattenSublistsEnabled(value: boolean) {
