@@ -12,6 +12,9 @@ declare const styles: {
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
   readonly "PinIcon": string;
+  readonly "PinToggle": string;
+  readonly "Pinned": string;
+  readonly "Placeholder": string;
   readonly "RelatedObjectActions": string;
   readonly "RelatedObjectBulletContainer": string;
   readonly "RelatedObjectContainer": string;
@@ -25,7 +28,7 @@ declare const styles: {
   readonly "RelationCounter": string;
   readonly "RelationHoverCard": string;
   readonly "Selected": string;
-  readonly "TooltipContent": string;
+  readonly "Unpinned": string;
 };
 export = styles;
 

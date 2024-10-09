@@ -84,3 +84,7 @@
   border: none;
   width: 0;
 }
+
+.Placeholder {
+  color: var(--gray-8);
+}

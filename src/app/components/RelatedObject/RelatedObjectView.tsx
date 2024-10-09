@@ -165,8 +165,14 @@ const Bullet = observer(function Bullet() {
     `Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}`,
   ].join("\n");
 
+  const isEmpty = !treeNode.object.text.trim();
+  const hasChildren = treeNode.childCount > 0;
+
   return (
-    <div className={cn(styles.RelatedObjectBulletContainer)} title={tooltipContent}>
+    <div
+      className={cn(styles.RelatedObjectBulletContainer, isEmpty && !hasChildren && styles.Hidden)}
+      data-tooltip={tooltipContent}
+    >
       {treeNode.instanceCountInPath <= 1 ? (
         // Default solid bullet
         <>
@@ -179,7 +185,7 @@ const Bullet = observer(function Bullet() {
             })}
             onClick={handleBulletClick}
           />
-          {treeNode.childCount > 0 && !treeNode.isExpanded && (
+          {hasChildren && !treeNode.isExpanded && (
             // with a shadow around it if it has children
             <Dot
               height={16}

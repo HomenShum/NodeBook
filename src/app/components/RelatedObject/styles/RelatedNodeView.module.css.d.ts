@@ -7,6 +7,7 @@ declare const styles: {
   readonly "FlexContainer": string;
   readonly "Pill": string;
   readonly "PillContainer": string;
+  readonly "Placeholder": string;
   readonly "TextContent": string;
   readonly "TreeNodeReference": string;
 };

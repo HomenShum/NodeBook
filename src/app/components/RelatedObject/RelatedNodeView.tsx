@@ -37,7 +37,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
     !isLocal && styles.TreeNodeReference,
     isReadOnlyReference && styles.PillContainer,
   );
-
+  
   const cnInnerContainer = cn(
     styles.FlexContainer,
     isLocal ? "" : isEditMode ? cn(styles.Pill, styles.Editor) : cn(isExpanded && styles.Expanded, styles.Pill),
