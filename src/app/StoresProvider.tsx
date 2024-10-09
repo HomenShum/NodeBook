@@ -3,7 +3,7 @@ import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import Pusher from "pusher-js";
 import React, { useEffect, useState } from "react";
 
-import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
+import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { useAuth } from "@/app/auth/useAuth";
 import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
 import { LoadingContext } from "@/app/contexts/LoadingContext";
@@ -48,13 +48,13 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
   useEffect(() => {
     let ignore = false;
     async function setupStores() {
-      if (!auth) return logger.debug("Skip store setup while auth is disabled");
-      if (auth.isLoading) return logger.debug("Skip loading stores while auth is loading");
+      if (!auth && env.env !== "development") return logger.debug("Skip loading stores while auth is not enabled");
+      if (auth?.isLoading) return logger.debug("Skip loading stores while auth is loading");
 
       logger.debug("Starting to setup stores", auth);
       setIsLoading(true);
 
-      const authedFetch: typeof fetch = auth.user
+      const authedFetch: typeof fetch = auth?.user
         ? async (input, init) => {
             const token = await auth.getAccessTokenSilently();
             return fetch(input, { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } });
@@ -65,7 +65,9 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       logger.debug("Loading user");
       let user: MewUser;
       try {
-        if (auth.user) {
+        if (!auth && env.env === "development") {
+          user = MOCK_MEW_USER;
+        } else if (auth?.user) {
           const data = await fetchGetOrCreateUser(auth.user, authedFetch);
           if (!data) throw new Error("fetchGetOrCreateUser returned null");
           user = new MewUser({ ...data });
@@ -79,7 +81,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
 
       // create new stores (shorter names to distinguish from the state variables)
       const settings = new SettingsStore(user.settings, async (newSettings) => {
-        if (user.isAnonymous) return;
+        if (user.isAnonymous || !env.isPersistenceEnabled) return;
         const userData = { ...user, settings: newSettings };
         try {
           await authedFetch("/api/user/settings", {
@@ -148,6 +150,8 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
 }
 
 function startSync({ graphStore }: { graphStore: GraphStore }) {
+  if (!env.isPersistenceEnabled) return () => {};
+
   const pusher = new Pusher(env.pusherKey, {
     cluster: env.pusherCluster,
   });
@@ -159,11 +163,14 @@ function startSync({ graphStore }: { graphStore: GraphStore }) {
     }
     await graphStore.updateManager.handleSyncData(parsedSyncData.data, resetIfApplyFails);
   };
+
   const userChannel = pusher.subscribe(userIdToPusherChannel(graphStore.user.id));
   userChannel.bind("transaction-accepted", (data: any) => handlePusherMessage(data, true));
   const globalChannel = pusher.subscribe(GLOBAL_GRAPH_CHANNEL);
   globalChannel.bind("transaction-accepted", (data: any) => handlePusherMessage(data, false));
+
   const stopSyncing = graphStore.updateManager.startSync();
+
   return () => {
     pusher.disconnect();
     stopSyncing();
