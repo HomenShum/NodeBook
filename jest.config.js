@@ -20,8 +20,8 @@ module.exports = {
     "node_modules/(?!(fractional-indexing)/)"
   ],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
     '\\.css$': 'identity-obj-proxy',
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
   testEnvironment: 'jsdom',
   testMatch: [

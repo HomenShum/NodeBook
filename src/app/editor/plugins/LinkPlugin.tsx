@@ -35,24 +35,26 @@ const COMMON_TLDS = [
 ].join("|");
 
 // High confidence links start with the http:// or https:// schemas. We allow any TLD for the high confidence links
-// ([a-z0-9\p{Emoji}-]+\.)+ matches subdomains and domain
+// ([a-z0-9\-]+\.)+ matches subdomains and domain
 // ([a-z0-9]{2,24}) matches TLD
-const HIGH_CONFIDENCE_URL_REGEX = `https?:\\/\\/((([a-z0-9\\p{Emoji}-]+\\.)+([a-z0-9-]{2,24}))|localhost)`;
+const HIGH_CONFIDENCE_URL_REGEX = `https?:\\/\\/((([a-z0-9-]+\\.)+([a-z0-9-]{2,24}))|localhost)`;
+
 // Low confidence links (without the schema) are likely typed by the user directly. We only allow the most popular TLDs.
 // Otherwise similar to highConfidenceLink.
-const LOW_CONFIDENCE_URL_REGEX = `(^|\\b)((([a-z0-9\\p{Emoji}-]+\\.)+(${COMMON_TLDS}))|localhost)`;
-// (:[\p{N}]+) optional port number
+const LOW_CONFIDENCE_URL_REGEX = `((([a-z0-9-]+\\.)+(?:${COMMON_TLDS}))|localhost)`;
+
+// (:[0-9]+) optional port number
 // ([?/](([^\s])*([^.\s,])+)?)? optional path matching after tld/port.
 //    - [?/] Must start with a slash or question mark
-//    - (([^\s])*([^.\s,])+)? - Anything after slash is optional, but if not
+//    - (([^\s])*([^\.\s,])+)? - Anything after slash is optional, but if not
 //                              match all non whitespace characters, do not end
 //                              with period or dot or whitespace
-const END = `(:[\\p{N}]+)?([?/](([^\\s])*([^.\\s,])+)?)?`;
+const END = `(:[0-9]+)?([?/](([^\\s])*([^.\\s,])+)?)?`;
 
 const URL_REGEX = new RegExp(`(${HIGH_CONFIDENCE_URL_REGEX + END})|(${LOW_CONFIDENCE_URL_REGEX + END})`, "giu");
 
 /** Find all the URL matches in the text */
-const findMatches = (text: string): Match[] => {
+export const findUrlMatches = (text: string): Match[] => {
   const matches = [];
   let currentMatch = URL_REGEX.exec(text);
 
@@ -119,7 +121,7 @@ export const LinkPlugin = ({ nodeId }: { nodeId: string }) => {
             // Once hit a different chip type or the last chip, parse for URLs
             if (!isTextOrLink || index === chips.length - 1) {
               if (currentString) {
-                const matches = findMatches(currentString);
+                const matches = findUrlMatches(currentString);
                 if (matches.length) {
                   // If there are matches, generate the link and text chips
                   const chips = generateLinkAndTextChips(currentString, matches);
