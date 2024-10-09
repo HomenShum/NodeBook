@@ -12,6 +12,7 @@ declare const styles: {
   readonly "size-icon": string;
   readonly "size-lg": string;
   readonly "size-sm": string;
+  readonly "size-state": string;
 };
 export = styles;
 

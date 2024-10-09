@@ -27,6 +27,10 @@ type RenderBreadcrumbsProps = {
   handleNavigation: (index: number) => void;
 };
 
+const RenderMenuItemContent = (text: string) => (
+  <span className={cn({ [s.BlankContent]: !text })}>{truncateText(text || "(blank)", 32)}</span>
+);
+
 const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: RenderBreadcrumbsProps) => {
   const isMobile = useIsMobile();
   const totalItems = ancestors.length;
@@ -65,7 +69,7 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
                         key={`${ancestor.path}-${ancestor.object.text}`}
                         onSelect={() => handleNavigation(index + 1)}
                       >
-                        {renderMenuItemContent(ancestor.object.text)}
+                        {RenderMenuItemContent(ancestor.object.text)}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -132,7 +136,7 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
                     key={`${ancestor.path}-${ancestor.object.text}`}
                     onSelect={() => handleNavigation(index + 1)}
                   >
-                    {renderMenuItemContent(ancestor.object.text)}
+                    {RenderMenuItemContent(ancestor.object.text)}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>

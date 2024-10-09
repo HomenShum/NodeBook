@@ -5,6 +5,7 @@ import React, { useCallback, useState } from "react";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
+import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useTree } from "@/app/tree/TreeContext";
@@ -122,16 +123,32 @@ const Content = observer(function Content() {
         )}
       </div>
       <div className={styles.RelatedObjectRightArea}>
-        {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
-        {treeNode.parentGroup.id !== "pinned" &&
-          treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) && (
-            <button
-              className={styles.PinIcon}
-              onClick={() => treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent)}
-            >
-              <PinCustomIcon />
-            </button>
-          )}
+       {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
+      <Button
+        size="state"
+        variant="ghost"
+        data-tooltip={treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? "Unpin node" : "Pin node"}
+        className={cn(
+          styles.PinToggle,
+          treeNode.parentGroup.id === "pinned" && styles.Hidden,
+          treeNode.parent.object.isRelationPinned(treeNode.relationWithParent)
+            ? styles.Pinned
+            : styles.Unpinned
+        )}
+        onClick={() => {
+          const isPinned = treeNode.parent.object.isRelationPinned(treeNode.relationWithParent);
+          if (isPinned) {
+            treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent);
+          } else {
+            treeNode.parent.object.pinChildRelation(treeNode.relationWithParent);
+          }
+        }}
+          >
+          <div className={styles.PinIcon}>
+            <PinCustomIcon />
+          </div>
+        </Button>
+            
         {/* I think not showing this in replace mode is a good option but feel free to change */}
         {viewType !== "replace" && (
           <RelationCounter
@@ -157,13 +174,10 @@ const Bullet = observer(function Bullet() {
     });
   }, [treeNode, setRoot]);
 
-  const tooltipContent = [
-    `Object author: ${treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}`,
-    `Relation author: ${
-      treeNode.relationWithParent.authorId === userId ? "You" : treeNode.relationWithParent.authorId
-    }`,
-    `Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}`,
-  ].join("\n");
+  const tooltipContent = `Object author: ${treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}
+    Relation author: ${treeNode.relationWithParent.authorId === userId ? "You" : treeNode.relationWithParent.authorId}
+    Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}
+  `;
 
   const isEmpty = !treeNode.object.text.trim();
   const hasChildren = treeNode.childCount > 0;

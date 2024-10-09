@@ -9,7 +9,13 @@ import styles from "./Tooltip.module.css";
 
 const TooltipProvider = TooltipPrimitive.Provider;
 
-const Tooltip = TooltipPrimitive.Root;
+const Tooltip = React.forwardRef<
+  React.ElementRef<typeof TooltipPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Root> & { delayDuration?: number }
+>(({ delayDuration = 300, ...props }, ref) => (
+  <TooltipPrimitive.Root {...props} delayDuration={delayDuration} />
+));
+Tooltip.displayName = TooltipPrimitive.Root.displayName;
 
 const TooltipTrigger = TooltipPrimitive.Trigger;
 

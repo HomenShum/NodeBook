@@ -112,8 +112,14 @@
 }
 
 .size-icon {
-  min-height: 24px;
-  min-width: 24px;
+  aspect-ratio: 1 / 1;
+  width: 24px;
+}
+
+.size-state {
+  width: 24px;
+  height: 24px;
+  background-color: var(--gray-2);
 }
 
 .Button:disabled {

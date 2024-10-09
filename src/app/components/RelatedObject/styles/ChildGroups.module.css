@@ -10,6 +10,7 @@
 .PinnedToggleButton {
   display: flex;
   align-items: center;
+  height: 24px;
   gap: 2px;
   position: relative;
   top: 0;

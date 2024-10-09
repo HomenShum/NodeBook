@@ -172,10 +172,6 @@ Node
   transition: background-color 0.05s ease-in-out;
 }
 
-.RelatedObjectNode:not(.Selected):not(:focus-within):hover {
-  background-color: var(--gray-2);
-}
-
 .RelatedObjectNode.Selected {
   background-color: var(--teal-a3);
 }
@@ -208,7 +204,7 @@ Node
   background-color: var(--gray-1);
   padding: 4px 12px;
   border: 0.5px solid var(--gray-3);
-  box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
+  box-shadow: var(--shadow-lg);
   border-radius: 4px;
   z-index: 50;
 }
@@ -216,20 +212,16 @@ Node
 /* 
 Right Area 
 */
-
 .RelatedObjectRightArea {
   position: relative;
   display: flex;
   gap: 8px;
   align-items: center;
-  top: 3px;
 }
 
 /* Pin Icon of each bullet */
 .PinToggle {
-  transition: color, opacity 0.12s ease-in-out;
-  opacity: 0;
-  cursor: pointer;
+  cursor: default;
   position: relative;
 }
 
@@ -275,8 +267,68 @@ Right Area
   color: var(--gray-8);
 }
 
-.PinIcon:hover {
-  color: var(--tomato-6);
+.PinToggle.Hidden {
+  transition: opacity 0.1s ease-in-out;
+  
+  opacity: 0;
+}
+
+.RelatedObjectContent:hover .PinToggle.Hidden {
+  opacity: 1;
+}
+
+.PinToggle::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--gray-1);
+  color: var(--gray-10);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-mini);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s, visibility 0.5s;
+  z-index: 1;
+  box-shadow: var(--shadow-sm);
+  border: 0.5px solid var(--gray-6);
+}
+
+.PinToggle:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+.PinIcon {
+  /* TODO: Fix adress sizing from the SVG side */
+  transform: scaleX(-1) scale(0.8) translate(-1px, 1px);
+}
+
+.RelatedObjectContent:hover .PinToggle {
+  opacity: 1;
+}
+
+.PinToggle.Pinned {
+  color: var(--gray-8);
+}
+
+.PinToggle.Unpinned {
+  color: var(--gray-8);
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.PinToggle.Pinned:hover {
+  color: var(--tomato-9);
+  background-color: var(--tomato-2);
+}
+
+.PinToggle.Unpinned:hover {
+  color: var(--teal-9);
+  background-color: var(--teal-2);
 }
 
 .RelatedObjectPublic {
