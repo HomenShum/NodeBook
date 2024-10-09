@@ -177,6 +177,10 @@ export class GraphStore {
     return nodes;
   }
 
+  getUserNodeByAuthorId(authorId: string) {
+    return this.nodesById.get(USER_ROOT_ID_PREFIX + authorId);
+  }
+
   /**
    * The default place to put a user in the graph.
    */

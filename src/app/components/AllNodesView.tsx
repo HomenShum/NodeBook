@@ -4,8 +4,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { getOtherObject } from "@/app/graph/utils";
 import { useSetRoot } from "@/app/tree/utils";
+import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 
 import s from "./AllNodesView.module.css";
 
@@ -16,32 +18,41 @@ export const AllNodesView = observer(function AllNodesView() {
   const setRoot = useSetRoot();
 
   const selectedAuthorId = searchParams.get("authorId") || "all";
-  const [showDirectNodes, setShowDirectNodes] = useState(false);
+  const [hideHomepageNodes, setHideHomepageNodes] = useState(false);
 
-  const authorOptions = useMemo(() => {
-    const userNodes = graphStore.getAllUserNodes();
-    return userNodes.map((userNode) => ({
-      value: userNode.authorId,
-      label: `${userNode.text} (${userNode.authorId})`,
-    }));
-  }, [graphStore]);
-
-  const filteredNodes = useMemo(() => {
+  const { nodes, users } = useMemo(() => {
+    let nodes: GraphNode[] = [];
+    const authorIds = new Set<string>();
     const nodeIdsOnHomePage = new Set(
       Array.from(graphStore.getRelationList(graphStore.userRoot).values())
         .map(({ item }) => getOtherObject(item, graphStore.userRoot.id)?.id ?? "")
         .filter((id) => id !== ""),
     );
-    return Array.from(graphStore.nodesById.values())
-      .filter((node) => selectedAuthorId === "all" || node.authorId === selectedAuthorId)
-      .filter((node) => {
-        if (showDirectNodes && selectedAuthorId !== "all") {
-          return !nodeIdsOnHomePage.has(node.id) && !node.isUserNode;
-        }
-        return true;
-      })
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }, [graphStore, selectedAuthorId, showDirectNodes]);
+
+    for (const node of graphStore.nodesById.values()) {
+      authorIds.add(node.authorId);
+      // Skip nodes authored by other users
+      if (selectedAuthorId !== "all" && node.authorId !== selectedAuthorId) {
+        continue;
+      }
+      if (hideHomepageNodes && selectedAuthorId !== "all" && (nodeIdsOnHomePage.has(node.id) || node.isUserNode)) {
+        continue;
+      }
+      nodes.push(node);
+    }
+    nodes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    const authorOptions = Array.from(authorIds).map((authorId) => {
+      const user = graphStore.getUserNodeByAuthorId(authorId);
+      const username = user ? user.text : authorId === GLOBAL_ADMIN_USER_ID ? "System" : "Unknown user name";
+      return {
+        value: authorId,
+        label: `${username} (${authorId})`,
+      };
+    });
+
+    return { nodes, users: authorOptions };
+  }, [graphStore, selectedAuthorId, hideHomepageNodes]);
 
   return (
     <div className={s.AllNodesView}>
@@ -60,7 +71,7 @@ export const AllNodesView = observer(function AllNodesView() {
               }}
             >
               <option value="all">All Users</option>
-              {authorOptions.map((option) => (
+              {users.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -70,9 +81,9 @@ export const AllNodesView = observer(function AllNodesView() {
               <label className={s.DirectNodesCheckbox}>
                 <input
                   type="checkbox"
-                  checked={showDirectNodes}
+                  checked={hideHomepageNodes}
                   onChange={() => {
-                    setShowDirectNodes((v) => !v);
+                    setHideHomepageNodes((v) => !v);
                   }}
                 />
                 Hide Home Page Nodes
@@ -86,7 +97,7 @@ export const AllNodesView = observer(function AllNodesView() {
             <span className={s.NodeHeaderDate}>Date Created</span>
           </div>
           <div className={s.NodeList}>
-            {filteredNodes.map((node) => (
+            {nodes.map((node) => (
               <div key={node.id} className={s.NodeItem} onClick={() => setRoot(node.getPath())}>
                 <span className={s.NodeText}>{node.text}</span>
                 <span className={s.NodeDate}>{new Date(node.createdAt).toLocaleString()}</span>
