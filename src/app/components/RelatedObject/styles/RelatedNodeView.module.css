@@ -27,6 +27,7 @@
 .TreeNodeReference {
   width: 100%;
   display: flex;
+  align-items: flex-start;
 }
 
 .TreeNodeReference .PillContainer {
@@ -37,19 +38,17 @@
 
 .TreeNodeReference .Pill {
   position: relative;
-  border-radius: 4px;
   padding: 0 4px;
   height: calc(100% - 2px);
   max-width: calc(100% - 24px);
   border: 0.5px solid var(--teal-7);
+  border-radius: 4px;
   color: var(--gray-12);
   cursor: pointer;
-  margin: 0;
 }
 
 .TreeNodeReference .Pill.Expanded {
   border: 0.5px solid var(--teal-9);
-  background-color: var(--teal-2);
 }
 
 .TreeNodeReference .EditButton {

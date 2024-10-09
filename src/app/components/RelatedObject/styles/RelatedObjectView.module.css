@@ -6,9 +6,10 @@
 
 .RelatedObjectContent {
   display: flex;
-  align-items: center;
+  align-items: start;
   position: relative;
   min-height: 32px;
+  padding-top: 3px;
 }
 
 /* 
@@ -30,6 +31,7 @@ Left Area
   align-items: center;
   position: absolute;
   right: 100%;
+  height: 24px;
 }
 
 .RelatedObjectActions {
@@ -46,8 +48,9 @@ Bullet
   position: relative;
   display: flex;
   justify-content: center;
+  align-items: center;
   width: 16px;
-  height: 16px;
+  height: 24px;
   transition: opacity 0.15s;
   animation: cubic-bezier(0.075, 0.82, 0.165, 1);
   opacity: 1; 
@@ -106,8 +109,6 @@ Bullet
   position: absolute;
   width: 16px;
   height: 16px;
-  top: 0;
-  left: 0;
   z-index: 10;
 }
 
@@ -116,8 +117,6 @@ Bullet
   position: absolute;
   width: 16px;
   height: 16px;
-  top: 0;
-  left: 0;
   z-index: 0;
 }
 
@@ -161,7 +160,7 @@ Node
   display: flex;
   flex-direction: column;
   flex: 1 1 0%;
-  padding: 0.5px 0 0 4px;
+  padding: 0.5px 0 4px 4px;
   margin-right: 4px;
   align-items: flex-start;
   background-color: transparent;
@@ -170,6 +169,18 @@ Node
   color: var(--gray-12);
   border-radius: 4px;
   transition: background-color 0.05s ease-in-out;
+}
+
+.RelatedObjectNode::after {
+  content: "";
+  position: absolute;
+  top: 32px;
+  left: -8.5px;
+  width: 1px;
+  height: calc(100% - 32px);
+  border: 1px solid transparent; 
+  border-image: linear-gradient(to top, var(--gray-6) 90%, var(--gray-1) 100%) 1; 
+  border-image-width: 0 0 0 1px;
 }
 
 .RelatedObjectNode.Selected {
