@@ -96,7 +96,17 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
           return res;
         }),
       ]
-        .sort((a, b) => b.score - a.score)
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          // node before relation before relationType
+          if (a.type === "node" && b.type !== "node") return -1;
+          if (b.type === "node" && a.type !== "node") return 1;
+          if (a.type === "relation" && b.type === "relationType") return -1;
+          if (b.type === "relation" && a.type === "relationType") return 1;
+          if (a.type === "relationType" || b.type === "relationType") return -1;
+          // then by creation date
+          return b.object.createdAt.getTime() - a.object.createdAt.getTime();
+        })
         .slice(0, MAX_DROPDOWN_RESULTS);
     },
     [treeNode, graphStore],
