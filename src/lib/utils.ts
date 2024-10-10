@@ -20,7 +20,6 @@ export function scoreMatch(text: string, query: string) {
   const normalizedQuery = query.toLowerCase().trim();
 
   if (normalizedText === normalizedQuery) return 1; // Exact match
-  if (normalizedText.startsWith(normalizedQuery)) return 0.95; // Exact prefix match
 
   const queryWords = normalizedQuery.split(/\s+/);
   const wordScores = queryWords.map((word) => {
