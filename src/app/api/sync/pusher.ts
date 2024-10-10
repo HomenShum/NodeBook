@@ -5,14 +5,6 @@ import { SyncData } from "@/app/graph/SyncData";
 import { env } from "@/envBackend";
 import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
 
-const pusher = new Pusher({
-  appId: env.PUSHER_APP_ID ?? "",
-  key: env.PUSHER_KEY ?? "",
-  secret: env.PUSHER_SECRET ?? "",
-  cluster: env.PUSHER_CLUSTER ?? "",
-  useTLS: true,
-});
-
 // Pusher has a 10KB limit on message size, so we need to chunk updates into smaller pieces
 // https://pusher.com/docs/channels/library_auth_reference/rest-api/#post-event-trigger-an-event
 const MAX_SIZE_PADDING = 250;
@@ -66,7 +58,7 @@ const updateIsPublic = (update: GraphUpdate): boolean => {
   return false; // unreachable but needed to satisfy TypeScript
 };
 
-const broadcastUpdateChunk = async (channel: string, msgData: SyncData) => {
+const broadcastUpdateChunk = async (pusher: Pusher, channel: string, msgData: SyncData) => {
   let attempts = 0;
   while (attempts < 3) {
     try {
@@ -83,17 +75,25 @@ const broadcastUpdateChunk = async (channel: string, msgData: SyncData) => {
 };
 
 export const broadcastSyncSuccess = async ({ clientId, userId, transactionId, updates }: SyncData) => {
+  const pusher = new Pusher({
+    appId: env.PUSHER_APP_ID ?? "",
+    key: env.PUSHER_KEY ?? "",
+    secret: env.PUSHER_SECRET ?? "",
+    cluster: env.PUSHER_CLUSTER ?? "",
+    useTLS: true,
+    timeout: 5000, // 5 seconds
+  });
   const userChannel = userIdToPusherChannel(userId);
   const updateChunks = updatesToSize(updates);
   for (const chunk of updateChunks) {
     console.log(`[sync][${userId}] Broadcasting  ${chunk.length} updates through Pusher...`);
     // Broadcast the chunk to the user's channel
-    broadcastUpdateChunk(userChannel, { clientId, userId, transactionId, updates: chunk });
+    broadcastUpdateChunk(pusher, userChannel, { clientId, userId, transactionId, updates: chunk });
 
     // Broadcast the public updates to the global channel
     const publicUpdates = chunk.filter(updateIsPublic);
     if (publicUpdates.length > 0) {
-      broadcastUpdateChunk(GLOBAL_GRAPH_CHANNEL, { clientId, userId, transactionId, updates: publicUpdates });
+      broadcastUpdateChunk(pusher, GLOBAL_GRAPH_CHANNEL, { clientId, userId, transactionId, updates: publicUpdates });
     }
   }
 };
