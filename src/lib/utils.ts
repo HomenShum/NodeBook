@@ -7,24 +7,44 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
-// Calculate a similarity score between two strings
+/**
+ * Calculates a similarity score (0-1) between a text and a query string.
+ *
+ * The score should roughly rank the following cases in this order:
+ * - Exact match
+ * - Exact prefix match
+ * - Keyword coverage
+ */
 export function scoreMatch(text: string, query: string) {
   const normalizedText = text.toLowerCase().trim();
   const normalizedQuery = query.toLowerCase().trim();
 
   if (normalizedText === normalizedQuery) return 1; // Exact match
+  if (normalizedText.startsWith(normalizedQuery)) return 0.95; // Exact prefix match
 
-  const matchIndex = normalizedText.indexOf(normalizedQuery);
-  if (matchIndex === -1) return 0; // No match
+  const queryWords = normalizedQuery.split(/\s+/);
+  const wordScores = queryWords.map((word) => {
+    const wordIndex = normalizedText.indexOf(word);
+    if (wordIndex === -1) return 0;
+    return 1 - wordIndex / normalizedText.length;
+  });
 
-  // Score based on match position (earlier is better)
-  const positionScore = 1 - matchIndex / normalizedText.length;
+  if (wordScores.every((score) => score === 0)) return 0; // No match for any word
+
+  // Calculate average position score
+  const avgPositionScore = wordScores.reduce((sum, score) => sum + score, 0) / queryWords.length;
+
+  // Score based on how many query words are found
+  const coverageScore = wordScores.filter((score) => score > 0).length / queryWords.length;
 
   // Score based on length similarity (closer lengths are better)
   const lengthScore = normalizedQuery.length / normalizedText.length;
 
-  // Combine scores, favoring position over length
-  return 0.8 * positionScore + 0.2 * lengthScore;
+  // Combine scores, favoring position and coverage over length
+  const finalScore = 0.5 * avgPositionScore + 0.3 * coverageScore + 0.2 * lengthScore;
+
+  // Ensure the score is between 0 and 1
+  return Math.min(Math.max(finalScore, 0), 1);
 }
 
 // Common constants for text matching
@@ -53,20 +73,29 @@ interface CheckForMatchParams {
 }
 
 // Create a regex for matching based on triggers and length limits
-function createMatchRegex({ triggers, maxLength = REGEX_CONSTANTS.MAX_LENGTH, matchOnlyStart = false }: CheckForMatchParams): RegExp {
-  if (triggers === '') {
-    return new RegExp(`${matchOnlyStart ? '^' : '(^|\\s)'}(${REGEX_CONSTANTS.VALID_CHARS}{1,${maxLength}})$`);
+function createMatchRegex({
+  triggers,
+  maxLength = REGEX_CONSTANTS.MAX_LENGTH,
+  matchOnlyStart = false,
+}: CheckForMatchParams): RegExp {
+  if (triggers === "") {
+    return new RegExp(`${matchOnlyStart ? "^" : "(^|\\s)"}(${REGEX_CONSTANTS.VALID_CHARS}{1,${maxLength}})$`);
   }
 
   return new RegExp(
-    triggers === ';'
+    triggers === ";"
       ? `^(;(${REGEX_CONSTANTS.VALID_CHARS}{0,${maxLength}}))$`
-      : `${matchOnlyStart ? '^' : '(^|\\s|\\()'}([${triggers}](${REGEX_CONSTANTS.VALID_CHARS}{0,${maxLength}}))$`
+      : `${matchOnlyStart ? "^" : "(^|\\s|\\()"}([${triggers}](${REGEX_CONSTANTS.VALID_CHARS}{0,${maxLength}}))$`,
   );
 }
 
 // Check for a match in the text based on triggers and matching rules
-function checkForMatch({ text, triggers, matchOnlyStart = false, maxLength = REGEX_CONSTANTS.MAX_LENGTH }: CheckForMatchParams): MenuTextMatch | null {
+function checkForMatch({
+  text,
+  triggers,
+  matchOnlyStart = false,
+  maxLength = REGEX_CONSTANTS.MAX_LENGTH,
+}: CheckForMatchParams): MenuTextMatch | null {
   const regex = createMatchRegex({ text, triggers, maxLength, matchOnlyStart });
   const match = regex.exec(text);
 
@@ -74,13 +103,13 @@ function checkForMatch({ text, triggers, matchOnlyStart = false, maxLength = REG
     return {
       leadOffset: 0,
       matchingString: text,
-      replaceableString: text
+      replaceableString: text,
     };
   }
 
   if (match !== null) {
-    const leadingWhitespace = matchOnlyStart ? '' : (match[1] || '');
-    const matchingString = triggers === '' ? match[2] : match[matchOnlyStart ? 2 : 3];
+    const leadingWhitespace = matchOnlyStart ? "" : match[1] || "";
+    const matchingString = triggers === "" ? match[2] : match[matchOnlyStart ? 2 : 3];
     return {
       leadOffset: match.index + leadingWhitespace.length,
       matchingString,
@@ -92,23 +121,23 @@ function checkForMatch({ text, triggers, matchOnlyStart = false, maxLength = REG
 
 // Check for a search and replace match when text starts with a semicolon
 function checkForSearchAndReplaceOnSemiColonAtStart(text: string): MenuTextMatch | null {
-  return checkForMatch({ text, triggers: ';', matchOnlyStart: true });
+  return checkForMatch({ text, triggers: ";", matchOnlyStart: true });
 }
 
 // Check for any search and replace match in the text
 function checkForSearchAndReplaceMatchAny(text: string): MenuTextMatch | null {
-  return checkForMatch({ text, triggers: '' });
+  return checkForMatch({ text, triggers: "" });
 }
 
 // Check for a mention match in the text (starting with '@')
 const VALID_MENTION_CHARS = `[^${REGEX_CONSTANTS.MENTION_TRIGGER}${REGEX_CONSTANTS.PUNCTUATION}\\s]`;
 
 const mentionRegex = new RegExp(
-  `(^|\\s|\\()([${REGEX_CONSTANTS.MENTION_TRIGGER}]((?:${VALID_MENTION_CHARS}${REGEX_CONSTANTS.VALID_JOINS}){0,${REGEX_CONSTANTS.MAX_LENGTH}}))$`
+  `(^|\\s|\\()([${REGEX_CONSTANTS.MENTION_TRIGGER}]((?:${VALID_MENTION_CHARS}${REGEX_CONSTANTS.VALID_JOINS}){0,${REGEX_CONSTANTS.MAX_LENGTH}}))$`,
 );
 
 const aliasRegex = new RegExp(
-  `(^|\\s|\\()([${REGEX_CONSTANTS.MENTION_TRIGGER}]((?:${VALID_MENTION_CHARS}){0,${REGEX_CONSTANTS.MAX_ALIAS_LENGTH}}))$`
+  `(^|\\s|\\()([${REGEX_CONSTANTS.MENTION_TRIGGER}]((?:${VALID_MENTION_CHARS}){0,${REGEX_CONSTANTS.MAX_ALIAS_LENGTH}}))$`,
 );
 export function checkForMentionMatch(text: string): MenuTextMatch | null {
   let match = mentionRegex.exec(text) || aliasRegex.exec(text);
@@ -126,7 +155,7 @@ export function checkForMentionMatch(text: string): MenuTextMatch | null {
 export function checkForSearchAndReplaceMatch(
   text: string,
   isLabellingRelation: boolean,
-  config: SearchAndReplaceDropdownOption
+  config: SearchAndReplaceDropdownOption,
 ): MenuTextMatch | null {
   switch (config) {
     case SearchAndReplaceDropdownOptionEnum.enum.Always:
