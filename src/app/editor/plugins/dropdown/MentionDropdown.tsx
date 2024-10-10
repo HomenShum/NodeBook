@@ -51,6 +51,7 @@ export function MentionDropdown({
       editor.update(async () => {
         const mentionNode = $createMentionNode(graphNodeId, text);
         nodeToReplace.replace(mentionNode);
+        mentionNode.selectEnd();
         if (opt.value.type === "new") {
           await graphStore.addChildNode({
             parentId: graphStore.userRoot.id,
@@ -87,7 +88,7 @@ export function MentionDropdown({
   );
 }
 
-class MentionTypeaheadOption extends MenuOption {
+export class MentionTypeaheadOption extends MenuOption {
   value: { type: "existing"; object: GraphNode } | { type: "new"; text: string };
   constructor(value: GraphNode | string) {
     super(typeof value === "string" ? value : value.id);
@@ -101,90 +102,48 @@ class MentionTypeaheadOption extends MenuOption {
   }
 }
 
-export function checkForMentionMatch(text: string): MenuTextMatch | null {
-  const PUNC = "\\.,\\+\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;";
-  const TRIGGERS = "@";
-
-  // Chars we expect to see in a mention (non-space, non-punctuation).
-  const VALID_CHARS = "[^" + TRIGGERS + PUNC + "\\s]";
-
-  // Non-standard series of chars. Each series must be preceded and followed by
-  // a valid char.
-  const VALID_JOINS =
-    "(?:" +
-    "\\.[ |$]|" + // E.g. "r. " in "Mr. Smith"
-    " |" + // E.g. " " in "Josh Duck"
-    "[" +
-    PUNC +
-    "]|" + // E.g. "-' in "Salier-Hellendag"
-    ")";
-  const LENGTH_LIMIT = 75;
-  const AtSignMentionsRegex = new RegExp(
-    "(^|\\s|\\()(" + "[" + TRIGGERS + "]" + "((?:" + VALID_CHARS + VALID_JOINS + "){0," + LENGTH_LIMIT + "})" + ")$",
-  );
-
-  // 50 is the longest alias length limit.
-  const ALIAS_LENGTH_LIMIT = 50;
-
-  // Regex used to match alias.
-  const AtSignMentionsRegexAliasRegex = new RegExp(
-    "(^|\\s|\\()(" + "[" + TRIGGERS + "]" + "((?:" + VALID_CHARS + "){0," + ALIAS_LENGTH_LIMIT + "})" + ")$",
-  );
-
-  let match = AtSignMentionsRegex.exec(text);
-  if (match === null) {
-    match = AtSignMentionsRegexAliasRegex.exec(text);
-  }
-  if (match !== null) {
-    // The strategy ignores leading whitespace but we need to know it's
-    // length to add it to the leadOffset
-    const maybeLeadingWhitespace = match[1];
-    const matchingString = match[3];
-    return {
-      leadOffset: match.index + maybeLeadingWhitespace.length,
-      matchingString,
-      replaceableString: match[2],
-    };
-  }
-  return null;
-}
-
-function getMenuRenderFn(options: MentionTypeaheadOption[]): MenuRenderFn<MentionTypeaheadOption> {
-  return (
+export function getMenuRenderFn(
+  options: MentionTypeaheadOption[],
+  forCommandBar = false,
+): MenuRenderFn<MentionTypeaheadOption> {
+  return function MenuRenderFn(
     anchorElementRef,
     { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
-  ): ReactPortal | JSX.Element | null => {
-    return anchorElementRef.current && options.length
-      ? ReactDOM.createPortal(
-          <div className={cn(styles.Dropdown, styles.TypeaheadPopover)}>
-            <ul>
-              {options.map((option, i: number) => (
-                <li
-                  key={option.key}
-                  tabIndex={-1}
-                  className={selectedIndex === i ? styles.Selected : ""}
-                  ref={option.setRefElement}
-                  role="option"
-                  aria-selected={selectedIndex === i}
-                  id={"typeahead-item-" + i}
-                  onMouseEnter={() => {
-                    setHighlightedIndex(i);
-                  }}
-                  onClick={() => {
-                    setHighlightedIndex(i);
-                    selectOptionAndCleanUp(option);
-                  }}
-                >
-                  <div className={styles.DropdownItem}>
-                    <div>{option.name}</div>
-                    {option.value.type === "existing" && <Path path={option.value.object.getPath()} />}
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>,
-          anchorElementRef.current,
-        )
-      : null;
+  ): ReactPortal | JSX.Element | null {
+    const Menu = (
+      <div className={cn(styles.Dropdown, styles.TypeaheadPopover, forCommandBar && styles.ForCommandBar)}>
+        <ul>
+          {options.map((option, i: number) => (
+            <li
+              key={option.key}
+              tabIndex={-1}
+              className={selectedIndex === i ? styles.Selected : ""}
+              ref={option.setRefElement}
+              role="option"
+              aria-selected={selectedIndex === i}
+              id={"typeahead-item-" + i}
+              onMouseEnter={() => {
+                setHighlightedIndex(i);
+              }}
+              onClick={() => {
+                setHighlightedIndex(i);
+                selectOptionAndCleanUp(option);
+              }}
+            >
+              <div className={styles.DropdownItem}>
+                <div>{option.name}</div>
+                {option.value.type === "existing" && <Path path={option.value.object.getPath()} />}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+
+    if (!anchorElementRef.current || !options.length) {
+      return null;
+    }
+
+    return ReactDOM.createPortal(Menu, anchorElementRef.current);
   };
 }

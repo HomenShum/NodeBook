@@ -3,11 +3,11 @@ import { mergeRegister } from "@lexical/utils";
 import { $getRoot, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
-import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
+import { Dropdown } from "@/app/editor/plugins/dropdown/types";
+import { useGetMatches, useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
 import { $getText } from "@/app/editor/utils/content";
 import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
@@ -40,8 +40,13 @@ const MAX_DROPDOWN_RESULTS = 20;
 export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Element | null {
   const [dropdown, setDropdown] = useState<Dropdown>(null);
   const [editor] = useLexicalComposerContext();
-  const graphStore = useGraphStore();
   const settingsStore = useSettingsStore();
+  const getMatches = useGetMatches(MAX_DROPDOWN_RESULTS, {
+    nodeId: treeNode.object.id,
+    relationTypeId: treeNode.relationWithParent?.relationType.id,
+  });
+  const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, treeNode.object.id);
+
   const textChanged = useRef(false);
   const isChild =
     treeNode.relationWithParent &&
@@ -51,75 +56,6 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
   const passiveAutocompleteActive =
     settingsStore.searchAndReplaceDropdown === "Always" ||
     (settingsStore.searchAndReplaceDropdown === "LabelledOnly" && labelledRelation);
-
-  const getMatches = useCallback(
-    (text: string, types?: ("node" | "relation" | "relationType")[]): Match[] => {
-      text = text.toLocaleLowerCase().trim();
-      let results = graphStore.search({ text, filters: { types }, sort: { by: "score" } });
-      return [
-        ...results.nodes
-          .filter(({ node }) => node.id !== treeNode.object.id)
-          .map(({ node, score }) => ({ key: node.id, type: "node" as const, object: node, score })),
-        ...results.relations
-          .filter(
-            ({ relation }) =>
-              relation.id !== treeNode.object.id &&
-              relation.to.id !== treeNode.object.id &&
-              relation.from.id !== treeNode.object.id,
-          )
-          .map(({ relation, score }) => ({ key: relation.id, type: "relation" as const, object: relation, score })),
-        ...results.relationTypes.flatMap(({ relationType, score }) => {
-          if (relationType.id === treeNode.relationWithParent?.relationType.id) {
-            return [];
-          }
-          const res: Match[] = [];
-          const label = relationType.label.toLocaleLowerCase();
-          const reverseLabel = relationType.reverseLabel.toLocaleLowerCase();
-          if (label.includes(text)) {
-            res.push({
-              key: relationType.id,
-              type: "relationType" as const,
-              object: relationType,
-              score,
-              isForward: true,
-            });
-          }
-          if (label !== reverseLabel && reverseLabel.includes(text)) {
-            res.push({
-              key: relationType.id + "-rev",
-              type: "relationType" as const,
-              object: relationType,
-              score,
-              isForward: false,
-            });
-          }
-          return res;
-        }),
-      ]
-        .sort((a, b) => {
-          if (b.score !== a.score) return b.score - a.score;
-          // node before relation before relationType
-          if (a.type === "node" && b.type !== "node") return -1;
-          if (b.type === "node" && a.type !== "node") return 1;
-          if (a.type === "relation" && b.type === "relationType") return -1;
-          if (b.type === "relation" && a.type === "relationType") return 1;
-          if (a.type === "relationType" || b.type === "relationType") return -1;
-          // then by creation date
-          return b.object.createdAt.getTime() - a.object.createdAt.getTime();
-        })
-        .slice(0, MAX_DROPDOWN_RESULTS);
-    },
-    [treeNode, graphStore],
-  );
-
-  const getRecentNodes = useCallback((): Match[] => {
-    return Array.from(graphStore.nodesById.values())
-      .filter((node) => treeNode.object.id !== node.id)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .filter((node) => node.id !== treeNode.object.id && node.text.length > 0)
-      .slice(0, MAX_DROPDOWN_RESULTS)
-      .map((node) => ({ key: node.id, type: "node" as const, object: node, score: 0 }));
-  }, [graphStore, treeNode]);
 
   const clearDropdown = useCallback(() => {
     setDropdown((dropdown) => {

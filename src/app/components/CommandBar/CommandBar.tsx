@@ -2,8 +2,10 @@ import * as Dialog from "@radix-ui/react-dialog";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
+import { CmdEditor } from "@/app/components/CommandBar/CmdEditor";
 import { Path } from "@/app/components/Path";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { Chip } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useSetRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
@@ -11,12 +13,14 @@ import { cn } from "@/lib/utils";
 
 import styles from "./CommandBar.module.css";
 
+export type Search = { text: string; chips: Chip[] };
+
 type Command =
   | {
       type: "create";
       id: string;
       name: string;
-      perform: () => void;
+      perform: (isCmdPressed: boolean) => void;
     }
   | {
       type: "navigate";
@@ -24,19 +28,20 @@ type Command =
       name: string;
       object: GraphObject;
       path: ObjectPath;
-      perform: () => void;
+      perform: (isCmdPressed: boolean) => void;
     };
 
 const CommandBar = () => {
   const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState<Search>({ text: "", chips: [] });
   const close = useCallback(() => {
     setOpen(false);
-    setSearch("");
+    setSearch({ text: "", chips: [] });
   }, [setOpen, setSearch]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
+  const dropdownContainerRef = useRef<HTMLDivElement>(null);
   const graphStore = useGraphStore();
   const setRoot = useSetRoot();
 
@@ -44,10 +49,10 @@ const CommandBar = () => {
 
   const filteredCommands = useMemo<Command[]>(() => {
     return [
-      ...(search === ""
+      ...(search.text === ""
         ? []
         : graphStore
-            .search({ text: search, filters: { types: ["node"] }, sort: { by: "score" } })
+            .search({ text: search.text, filters: { types: ["node"] }, sort: { by: "score" } })
             .nodes.slice(0, 30)
             .map(({ node }) => {
               const path = node.getPath();
@@ -66,14 +71,25 @@ const CommandBar = () => {
       {
         type: "create" as const,
         id: "create",
-        name: search === "" ? "Create blank node" : `Create new node: "${search}"`,
-        perform: async () => {
+        name: search.text === "" ? "Create blank node" : `Create new node: "${search.text}"`,
+        perform: async (isCmdPressed: boolean) => {
           const { node } = await graphStore.addChildNode({
             parentId: graphStore.userRoot.id,
-            nodeProps: { content: search },
+            nodeProps: { content: search.chips },
           });
+
+          const newMentionChips = search.chips.filter((chip) => chip.type === "mention");
+          for (const mentionChip of newMentionChips) {
+            await graphStore.addRelation({
+              fromId: node.id,
+              toId: mentionChip.value,
+            });
+          }
+
           close();
-          setRoot(node.getPath());
+          if (isCmdPressed) {
+            setRoot(node.getPath());
+          }
         },
       },
     ];
@@ -99,7 +115,7 @@ const CommandBar = () => {
         case "Enter":
           e.preventDefault();
           if (filteredCommands[selectedIndex]) {
-            filteredCommands[selectedIndex].perform();
+            filteredCommands[selectedIndex].perform(e.metaKey);
           }
           break;
       }
@@ -120,27 +136,24 @@ const CommandBar = () => {
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
-        <Dialog.Overlay className={styles.Overlay} />
-        <Dialog.Content className={styles.Content} onKeyDown={handleKeyDown} onEscapeKeyDown={close}>
-          <input
-            className={styles.Input}
-            placeholder="Search nodes..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <div className={styles.List} ref={listRef}>
-            {filteredCommands.map((command, index) => (
-              <div
-                key={command.id}
-                className={cn(styles.Item, selectedIndex === index && styles.Selected)}
-                onClick={() => command.perform()}
-              >
-                <span>{command.name}</span>
-                {command.type !== "create" && <Path path={command.path} />}
-              </div>
-            ))}
-          </div>
-        </Dialog.Content>
+        <Dialog.Overlay className={styles.Overlay}>
+          <div ref={dropdownContainerRef} className={styles.DropdownContainer} />
+          <Dialog.Content className={styles.Content} onKeyDown={handleKeyDown} onEscapeKeyDown={close}>
+            <CmdEditor dropdownContainerRef={dropdownContainerRef} onChange={setSearch} />
+            <div className={styles.List} ref={listRef}>
+              {filteredCommands.map((command, index) => (
+                <div
+                  key={command.id}
+                  className={cn(styles.Item, selectedIndex === index && styles.Selected)}
+                  onClick={(e) => command.perform(e.metaKey)}
+                >
+                  <span>{command.name}</span>
+                  {command.type !== "create" && <Path path={command.path} />}
+                </div>
+              ))}
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
       </Dialog.Portal>
     </Dialog.Root>
   );

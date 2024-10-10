@@ -2,6 +2,7 @@ import { captureMessage } from "@sentry/nextjs";
 import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
+import { NodeType } from "@/app/editor/plugins/dropdown/utils";
 import { defaultRelationTypes, MAX_PREFIX_LENGTH } from "@/app/graph/constants";
 import { GraphUpdate, PartialUpdateRelationList } from "@/app/graph/GraphUpdate";
 import { SettingsStore } from "@/app/graph/SettingsStore";
@@ -2168,7 +2169,7 @@ export class GraphStore {
 type Query = {
   text: string;
   filters?: {
-    types?: ("node" | "relation" | "relationType")[];
+    types?: NodeType[];
   };
   sort?: {
     by?: "score";

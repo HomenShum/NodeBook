@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
-import CommandBar from "@/app/components/CommandBar";
+import CommandBar from "@/app/components/CommandBar/CommandBar";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import SidebarTree from "@/app/components/Sidebar/SidebarTree";
