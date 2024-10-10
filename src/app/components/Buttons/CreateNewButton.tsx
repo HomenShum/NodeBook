@@ -1,14 +1,15 @@
 import { Plus } from "lucide-react";
 
-import { Tree } from "@/app/tree/Tree";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tree } from "@/app/tree/Tree";
 
 export function CreateNewButton({ tree }: { tree: Tree }) {
   return (
     <Button
       variant="ghost"
       size="icon"
-      onClick={async () => {
+      onClick={async (e) => {
+        e.stopPropagation();
         await tree.createChildOfRootAndFocus();
       }}
     >
