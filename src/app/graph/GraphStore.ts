@@ -854,38 +854,6 @@ export class GraphStore {
 
     const isReversal = oldFrom && oldTo && newFrom && newTo && oldFrom.id === newTo.id && oldTo.id === newFrom.id;
 
-    if (isReversal) {
-      if (!oldFrom || !oldTo || !newFrom || !newTo) throw new Error("oldFrom, oldTo, newFrom, newTo should be defined");
-      if (!oldFromPositionBefore || !oldToPositionBefore) throw new Error("Both old positions should be defined");
-
-      const newFromPosition = this.getRelationList(newFrom).get(relation.id)?.position;
-      const newToPosition = this.getRelationList(newTo).get(relation.id)?.position;
-      if (!newFromPosition || !newToPosition) throw new Error("Both new positions should be defined");
-
-      updates.push({
-        operation: "updateRelationList",
-        authorId: this.user.id,
-        nodeId: oldFrom.id,
-        pinned: false,
-        relationId: relation.id,
-        oldPosition: oldFromPositionBefore,
-        newPosition: newToPosition,
-        oldIsPublic: oldProps.isPublic,
-        newIsPublic: newProps.isPublic,
-      });
-      updates.push({
-        operation: "updateRelationList",
-        authorId: this.user.id,
-        nodeId: oldTo.id,
-        pinned: false,
-        relationId: relation.id,
-        oldPosition: oldToPositionBefore,
-        newPosition: newFromPosition,
-        oldIsPublic: oldProps.isPublic,
-        newIsPublic: newProps.isPublic,
-      });
-    }
-
     if (newFrom && !isReversal) {
       if (!oldFrom || !oldFromPositionBefore) throw new Error("oldFrom should be defined if newFrom is defined");
 
@@ -1832,14 +1800,20 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.allRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.pinnedRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.allRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.pinnedRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 

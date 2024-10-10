@@ -135,9 +135,6 @@ describe("GraphStore.updateRelation", () => {
 
   it("should queue appropriate GraphUpdates when reversing a relation", async () => {
     const relationAtStart = relation.serialize();
-    const startNodeRelationPositionAtStart = graphStore.getRelationList(startNode).get(relation.id)?.position;
-    const endNodeRelationPositionAtStart = graphStore.getRelationList(endNode).get(relation.id)?.position;
-
     await graphStore.updateRelation({
       relationId: relation.id,
       relationProps: {
@@ -148,31 +145,7 @@ describe("GraphStore.updateRelation", () => {
 
     const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
-      [
-        { operation: "updateRelation", oldProps: relationAtStart, newProps: relation.serialize() },
-        {
-          operation: "updateRelationList",
-          nodeId: startNode.id,
-          authorId: startNode.authorId,
-          pinned: false,
-          relationId: relation.id,
-          oldPosition: startNodeRelationPositionAtStart,
-          newPosition: graphStore.getRelationList(startNode).get(relation.id)?.position,
-          oldIsPublic: false,
-          newIsPublic: true,
-        },
-        {
-          operation: "updateRelationList",
-          nodeId: endNode.id,
-          authorId: endNode.authorId,
-          pinned: false,
-          relationId: relation.id,
-          oldPosition: endNodeRelationPositionAtStart,
-          newPosition: graphStore.getRelationList(endNode).get(relation.id)?.position,
-          oldIsPublic: false,
-          newIsPublic: true,
-        },
-      ],
+      [{ operation: "updateRelation", oldProps: relationAtStart, newProps: relation.serialize() }],
     ]);
   });
 

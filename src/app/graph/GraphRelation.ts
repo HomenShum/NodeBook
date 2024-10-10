@@ -90,16 +90,15 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       this.version++;
     }
     if (props.from && props.to && this.from.id === props.to.id && this.to.id === props.from.id) {
-      const newFromPosition = this.to.relationsSortedByPosition.findIndex((r) => r.id === this.id);
-      const newToPosition = this.from.relationsSortedByPosition.findIndex((r) => r.id === this.id) - 1;
-      this.setFrom(props.from, newFromPosition);
-      this.setTo(props.to, newToPosition);
-    }
-    if (props.from && props.from !== this.from) {
-      this.setFrom(props.from);
-    }
-    if (props.to && props.to !== this.to) {
-      this.setTo(props.to);
+      this.from = props.from;
+      this.to = props.to;
+    } else {
+      if (props.from && props.from !== this.from) {
+        this.setFrom(props.from);
+      }
+      if (props.to && props.to !== this.to) {
+        this.setTo(props.to);
+      }
     }
     if (props.relationType && props.relationType !== this.relationType) {
       this.setType(props.relationType);
