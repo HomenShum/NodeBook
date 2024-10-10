@@ -841,10 +841,7 @@ export class Tree {
       treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id &&
       treeNode.relationWithParent.to.id === treeNode.object.id &&
       atStartOfLine &&
-      (chips?.before ?? [])
-        .map((c) => c.value)
-        .join()
-        .trim().length > 0;
+      treeNode.object.text.length > 0;
     let changes: { txs: TxCombined; newNodePath: string; expansions?: Record<string, boolean> };
     if (isExpandedWithChildren) {
       if (atStartOfChildWithContent) {
