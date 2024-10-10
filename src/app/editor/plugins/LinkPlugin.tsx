@@ -1,7 +1,7 @@
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { $getChips } from "@/app/editor/utils";
+import { $getChips } from "@/app/editor/utils/content";
 import { Chip } from "@/app/graph/GraphNode";
 
 type Match = {

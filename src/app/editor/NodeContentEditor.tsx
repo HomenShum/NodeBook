@@ -10,13 +10,13 @@ import { RefObject, useCallback } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
-import { BindFocusToTreePlugin } from "@/app/editor/plugins/BindFocusToTreePlugin";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowAtEndsPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { PastePlugin } from "@/app/editor/plugins/pastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
+import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -24,8 +24,6 @@ import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { useSetRoot } from "@/app/tree/utils";
-
-import { SyncWithGraphPlugin } from "./plugins/SyncWithGraphPlugin";
 
 import styles from "./Editor.module.css";
 
@@ -72,7 +70,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
           placeholder={null}
         />
         <LinkPlugin nodeId={treeNode.object.id} />
-        <SyncWithGraphPlugin node={treeNode.object} />
+        <SyncWithModelsPlugin node={treeNode.object} treeNodeId={treeNode.id} />
         {isEditorEditable && <ClearEditorPlugin />}
         {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
@@ -82,7 +80,6 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <RelationPlugin />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
-        {isEditorEditable && <BindFocusToTreePlugin />}
         <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
       </LexicalComposer>
     </div>

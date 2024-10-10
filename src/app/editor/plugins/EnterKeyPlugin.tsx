@@ -4,7 +4,7 @@ import { action } from "mobx";
 import { useEffect } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { $getChipsAroundSelection } from "@/app/editor/utils";
+import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";

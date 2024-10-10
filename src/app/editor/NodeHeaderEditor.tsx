@@ -8,7 +8,7 @@ import { observer } from "mobx-react-lite";
 import { useUser } from "@/app/contexts/UserContext";
 import { createConfig } from "@/app/editor/createConfig";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
-import { SyncWithGraphPlugin } from "@/app/editor/plugins/SyncWithGraphPlugin";
+import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { RootTreeNode } from "@/app/tree/nodes";
 
@@ -39,7 +39,9 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode }:
         />
         <DropdownPlugin treeNode={treeNode} />
         <ClearEditorPlugin />
-        {treeNode.object instanceof GraphNode && <SyncWithGraphPlugin node={treeNode.object} />}
+        {treeNode.object instanceof GraphNode && (
+          <SyncWithModelsPlugin node={treeNode.object} treeNodeId={treeNode.id} />
+        )}
       </LexicalComposer>
     </div>
   );

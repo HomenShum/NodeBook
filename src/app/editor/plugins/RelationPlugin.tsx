@@ -15,7 +15,8 @@ import { useEffect } from "react";
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
-import { $getChips, $getText, getSelectionPositions, matchDefaultRelationType } from "@/app/editor/utils";
+import { $getChips, $getText, matchDefaultRelationType } from "@/app/editor/utils/content";
+import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
@@ -44,7 +45,7 @@ export const RelationPlugin = observer(function RelationPlugin() {
           if (relation.relationType.id !== defaultRelationTypes.child.id || relation.to.id !== object.id) {
             return false;
           }
-          const [selectionLeft, selectionRight] = getSelectionPositions(editor);
+          const [selectionLeft, selectionRight] = getLexicalSelectionPosition(editor);
           let textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft });
           if (!settingsStore.triggerRelationOnSingleColon && !textBefore.endsWith(":")) {
             return false;
@@ -88,7 +89,9 @@ export const RelationPlugin = observer(function RelationPlugin() {
             },
           });
 
-          graphStore.applyCombinedTransaction(graphStoreTransaction);
+          graphStore.applyCombinedTransaction(graphStoreTransaction).then(() => {
+            tree.setFocusedNode(treeNode.id, { anchorOffset: 0, focusOffset: 0 });
+          });
           return true;
         },
         COMMAND_PRIORITY_NORMAL,
@@ -136,24 +139,27 @@ export const RelationPlugin = observer(function RelationPlugin() {
 
           const oldContent = graphStore.getNode(object.id)?.content ?? [];
 
-          graphStore.applyCombinedTransaction([
-            {
-              type: "updateRelation",
-              transaction: {
-                relationId: relation.id,
-                relationProps: { relationType: defaultRelationTypes.child },
-                reverse: !isForward,
+          graphStore
+            .applyCombinedTransaction([
+              {
+                type: "updateRelation",
+                transaction: {
+                  relationId: relation.id,
+                  relationProps: { relationType: defaultRelationTypes.child },
+                  reverse: !isForward,
+                },
               },
-            },
-            {
-              type: "updateNode",
-              transaction: {
-                nodeId: object.id,
-                nodeProps: { content: [{ type: "text", value: labelText }, ...oldContent] },
+              {
+                type: "updateNode",
+                transaction: {
+                  nodeId: object.id,
+                  nodeProps: { content: [{ type: "text", value: labelText }, ...oldContent] },
+                },
               },
-            },
-          ]);
-          tree.setFocusedNode(treeNode.id, { anchorOffset: labelText.length, focusOffset: labelText.length });
+            ])
+            .then(() => {
+              tree.setFocusedNode(treeNode.id, { anchorOffset: labelText.length, focusOffset: labelText.length });
+            });
           return true;
         },
         COMMAND_PRIORITY_NORMAL,

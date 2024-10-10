@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { $getChipsAroundSelection } from "@/app/editor/utils";
+import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useTree } from "@/app/tree/TreeContext";

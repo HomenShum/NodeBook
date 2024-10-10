@@ -16,7 +16,12 @@ import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, PointerTreeNode, RootTreeNode, TreeNode } from "./nodes";
-import { EditorSelectionAction, EditorSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
+import {
+  EditorSelectionAction,
+  TreeNodeContentSelectionPosition,
+  TreeSelection,
+  TreeSelectionWithNodes,
+} from "./selection";
 import {
   createDescendantTreeNodesById,
   getAncestorsAsArray,
@@ -340,7 +345,7 @@ export class Tree {
    */
   setFocusedNode(
     treeNodeId: string | null,
-    position?: EditorSelectionPosition,
+    position: TreeNodeContentSelectionPosition = "end",
     selectionAction?: EditorSelectionAction,
     editMode?: boolean,
   ) {
@@ -972,17 +977,20 @@ export class Tree {
         if (!nextNode || nextNode.parentGroup.id !== head.parentGroup.id) return false;
         if (head === anchor) {
           // Selection is collapsed on single node. If the selection is moving up a subtree, move the anchor with it.
-          this.selection.headNodeId = nextNode.path;
+          this.selection = { ...this.selection, headNodeId: nextNode.path };
           if (nextNode.isAncestorOf(anchor)) {
-            this.selection.anchorNodeId = nextNode.path;
+            this.selection = { ...this.selection, anchorNodeId: nextNode.path };
           }
         } else if (head === bottom) {
           // Head is at the bottom end of selection range. Move to next node above, unless that's
           // within the anchors subtree, in which case bring the head up to the anchor.
-          this.selection.headNodeId = nextNode.isDescendantOf(anchor) ? anchor.path : nextNode.path;
+          this.selection = {
+            ...this.selection,
+            headNodeId: nextNode.isDescendantOf(anchor) ? anchor.path : nextNode.path,
+          };
         } else {
           // Head is at the top end of selection range. Move to next node above.
-          this.selection.headNodeId = nextNode.path;
+          this.selection = { ...this.selection, headNodeId: nextNode.path };
         }
       } else {
         const nextNode = getNextSubtreeBelow(head) ?? null;
@@ -998,7 +1006,7 @@ export class Tree {
   /**
    * Move selection from the current node to the next one up.
    */
-  moveEditorSelectionUp(position: EditorSelectionPosition = "end"): boolean {
+  moveEditorSelectionUp(position: TreeNodeContentSelectionPosition = "end"): boolean {
     const selection = this.selectionWithNodes;
     if (!selection) return false;
     const treeNode = selection.type === "editor" ? selection.treeNode : selection.top;
@@ -1011,7 +1019,7 @@ export class Tree {
   /**
    * Move selection from the current node to the next one down.
    */
-  moveEditorSelectionDown(position: EditorSelectionPosition = "end"): boolean {
+  moveEditorSelectionDown(position: TreeNodeContentSelectionPosition = "end"): boolean {
     const selection = this.selectionWithNodes;
     if (!selection) return false;
     const next = selection.type === "editor" ? getNextBelow(selection.treeNode) : getNextSubtreeBelow(selection.bottom);
@@ -1060,13 +1068,13 @@ export class Tree {
     }
     if (this.selection?.type === "node") {
       if (this.selection.anchorNodeId === path) {
-        this.selection.anchorNodeId = newPath;
+        this.selection = { ...this.selection, anchorNodeId: newPath };
       }
       if (this.selection.headNodeId === path) {
-        this.selection.headNodeId = newPath;
+        this.selection = { ...this.selection, headNodeId: newPath };
       }
     } else if (this.selection?.type === "editor" && this.selection.treeNodeId === path) {
-      this.selection.treeNodeId = newPath;
+      this.selection = { ...this.selection, treeNodeId: newPath };
     }
   }
 

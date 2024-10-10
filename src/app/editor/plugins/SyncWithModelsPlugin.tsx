@@ -1,0 +1,133 @@
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { $getRoot, $setSelection, ParagraphNode } from "lexical";
+import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
+
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { $getChips, createParagraphMatchingGraphNode, graphNodeMatchesParagraph } from "@/app/editor/utils/content";
+import { $getSelectionPosition, $setSelectionFromTree, sameSelectionPositions } from "@/app/editor/utils/selection";
+import { GraphNode } from "@/app/graph/GraphNode";
+import { useTree } from "@/app/tree/TreeContext";
+
+interface Props {
+  node: GraphNode;
+  treeNodeId: string;
+}
+
+/**
+ * Sync the editor content and selection with the graph node content and selection.
+ */
+export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node, treeNodeId }: Props) {
+  const [editor] = useLexicalComposerContext();
+  const graphStore = useGraphStore();
+  const tree = useTree();
+
+  // Editor -> App state: update the app state to match the editor content
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      // We assume that if the editor is focused, the change is due to the user
+      // input. If it's not, we ignore the pushing the update to the app state.
+      if (!editor.getRootElement()?.contains(document.activeElement)) return;
+      // Set the tree selection to the editor selection
+      const editorSelectionPosition = editorState.read($getSelectionPosition);
+      const match =
+        tree.selection?.type === "editor" &&
+        tree.selection.treeNodeId === treeNodeId &&
+        sameSelectionPositions(editorSelectionPosition, tree.selection.position);
+      if (!match) {
+        tree.setFocusedNode(treeNodeId, editorSelectionPosition, undefined, true);
+      }
+
+      // Update the graph if the editor content has changed
+      const noChange = editorState.read(() => {
+        const paragraph = $getRoot().getChildren()[0] as ParagraphNode;
+        return graphNodeMatchesParagraph(node, paragraph, graphStore);
+      });
+      if (noChange) return;
+      const chips = editorState.read($getChips);
+      graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
+    });
+  }, [editor, graphStore, node, tree, treeNodeId]);
+
+  // App state -> Editor: update the editor content to match the graph node
+  useEffect(() => {
+    editor.update(() => {
+      const currentParagraph = $getRoot().getChildren()[0] as ParagraphNode;
+      if (graphNodeMatchesParagraph(node, currentParagraph, graphStore)) {
+        return;
+      }
+      const newParagraph = createParagraphMatchingGraphNode(node, graphStore);
+      currentParagraph.replace(newParagraph);
+      /**
+       * Setting the selection is required to prevent the error below.
+       * Based on https://stackoverflow.com/a/72197580, it seems that when we're
+       * updating the editor state on a non-focused editor, a new selection is
+       * automatically set in the new editor state, and then the editor takes
+       * the dom selection away from the user, leading to other downstream issues.
+       *
+       * ```
+       * Error: updateEditor: selection has been lost because the previously
+       * selected nodes have been removed and selection wasn't moved to
+       * another node. Ensure selection changes after removing/replacing a
+       * selected node.
+       * ```
+       */
+      if (tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNodeId) {
+        $setSelectionFromTree(tree.selection);
+        editor.focus();
+      } else {
+        $setSelection(null);
+      }
+    });
+  }, [editor, graphStore, node, node.content, tree.selection, treeNodeId]);
+
+  // App state -> Editor: update the editor selection/focus to match the tree selection
+  useEffect(() => {
+    const $applyTreeSelectionToEditor = () => {
+      const isFocused = editor.getRootElement()?.contains(document.activeElement);
+      switch (tree.selection?.type) {
+        case undefined: {
+          if (isFocused) {
+            editor.blur();
+          }
+          break;
+        }
+        case "node": {
+          if (isFocused) {
+            // When the selection switches to node type, blur all editors
+            editor.blur();
+          }
+          break;
+        }
+        case "editor": {
+          if (tree.selection.treeNodeId === treeNodeId) {
+            if (!isFocused) {
+              editor.focus();
+            }
+            const editorSelectionPosition = editor.getEditorState().read($getSelectionPosition);
+            if (!sameSelectionPositions(editorSelectionPosition, tree.selection.position)) {
+              $setSelectionFromTree(tree.selection);
+            }
+          } else if (isFocused && tree.selection.treeNodeId !== treeNodeId) {
+            // Editor is focused but shouldn't be -> blur it
+            editor.blur();
+          }
+          break;
+        }
+        default: {
+          return tree.selection satisfies never;
+        }
+      }
+    };
+
+    // Apply when tree selection changes or when the editor is made editable
+    editor.update($applyTreeSelectionToEditor);
+    return editor.registerEditableListener((currentIsEditable) => {
+      if (currentIsEditable) {
+        editor.update($applyTreeSelectionToEditor);
+      }
+    });
+  }, [editor, tree, treeNodeId, tree.selection]);
+
+  return null;
+});

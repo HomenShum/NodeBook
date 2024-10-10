@@ -8,7 +8,8 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
-import { $getText, getSelectionPositions } from "@/app/editor/utils";
+import { $getText } from "@/app/editor/utils/content";
+import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
 import { checkForMentionMatch } from "@/lib/utils";
@@ -219,7 +220,7 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
             // On mod-semi-colon hotkey
             ((event.key === ";" && (event.metaKey || event.ctrlKey) && dropdown === null) ||
               // or just semi-colon if at start of line
-              (event.key === ";" && $getText({ to: getSelectionPositions(editor)[0] }) === "")) &&
+              (event.key === ";" && $getText({ to: getLexicalSelectionPosition(editor)[0] }) === "")) &&
             // Usually this command is used when no dropdown is active and we're
             // triggering it open but there's also a case where passive
             // autocomplete is active, it's just not showing anything cause the

@@ -2,54 +2,21 @@ import {
   $createParagraphNode,
   $createTextNode,
   $getRoot,
-  $getSelection,
   $isParagraphNode,
   $isTextNode,
-  BaseSelection,
-  LexicalEditor,
   LexicalNode,
   LineBreakNode,
   ParagraphNode,
   TextNode,
 } from "lexical";
 
+import { LexicalEditorPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes, DELETED_NODE_TEXT } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { $createLinkNode, $isLinkNode, LinkNode } from "@/app/graph/LinkNode";
 import { $createMentionNode, $isMentionNode, MentionNode } from "@/app/graph/MentionNode";
 import { GraphRelationType } from "@/app/graph/types";
-
-type LexicalEditorPosition = { index: number; offset: number };
-
-/**
- * Returns the selection as a pair of positions in the editor.
- * The first position is the selection anchor and the second is the focus.
- */
-export function getSelectionPositions(editor: LexicalEditor): [LexicalEditorPosition, LexicalEditorPosition] {
-  return editor.getEditorState().read(() => {
-    const selection = $getSelection();
-    if (!selection) {
-      throw new Error("No selection found");
-    }
-    const points = selection.getStartEndPoints();
-    if (!points) {
-      throw new Error("Selection points not found");
-    }
-    const nodes: LexicalNode[] = selection.getNodes()[0].getParent()?.getChildren() || [];
-    const selectionStartIndex = nodes.findIndex((n) => n.getKey() === points[0].key);
-    const selectionEndIndex = nodes.findIndex((n) => n.getKey() === points[1].key);
-    if (selectionStartIndex === -1 || selectionEndIndex === -1) {
-      throw new Error("Selection points don't match any nodes");
-    }
-    const positions = [
-      { index: selectionStartIndex, offset: points[0].offset },
-      { index: selectionEndIndex, offset: points[1].offset },
-    ].sort((a, b) => (a.index === b.index ? a.offset - b.offset : a.index - b.index));
-    // Need to do typecast here because sort breaks the type inference
-    return positions as [LexicalEditorPosition, LexicalEditorPosition];
-  });
-}
 
 /**
  * The content of graph nodes is a flat list of text and mention nodes.
@@ -255,61 +222,4 @@ export function matchDefaultRelationType(text: string): GraphRelationType | unde
       return type;
     }
   }
-}
-
-export function $getChipsAroundSelection(selection: BaseSelection) {
-  // Get selection start and end points
-  let start = { index: 0, offset: 0 };
-  let end = { index: 0, offset: 0 };
-  let nodes: LexicalNode[] = [];
-  const nonEmptyEditor = selection.getNodes()[0]?.getParents()[0]?.getTextContent() !== "";
-  if (nonEmptyEditor) {
-    const points = selection?.getStartEndPoints();
-    if (!points) {
-      throw new Error("No selection points");
-    }
-
-    const selectionNodes = selection.getNodes();
-    const firstNode = selectionNodes[0];
-    const lastNode = selectionNodes[selectionNodes.length - 1];
-
-    const paragraphNode = firstNode.getParentOrThrow();
-    nodes = paragraphNode.getChildren();
-
-    const firstNodeIndexInParagraph = nodes.findIndex((node) => node === firstNode);
-    const lastNodeIndexInParagraph = nodes.findIndex((node) => node === lastNode);
-
-    const selectionEnds = [
-      { index: firstNodeIndexInParagraph, offset: points[0].offset },
-      { index: lastNodeIndexInParagraph, offset: points[1].offset },
-    ];
-    start = selection.isBackward() ? selectionEnds[1] : selectionEnds[0];
-    end = selection.isBackward() ? selectionEnds[0] : selectionEnds[1];
-  }
-
-  let chipsBefore: Chip[] = [];
-  // Collect nodes before the selection
-  chipsBefore.push(...nodes.slice(0, start.index).map(nodeToChip));
-  // and the first part of the node the selection start
-  if (nodes[start.index]) {
-    if (start.offset < nodes[start.index].getTextContent().length) {
-      chipsBefore.push({ type: "text", value: nodes[start.index].getTextContent().substring(0, start.offset) });
-    } else {
-      chipsBefore.push(nodeToChip(nodes[start.index]));
-    }
-  }
-
-  let chipsAfter: Chip[] = [];
-  // Collect the last part of the node after the selection end
-  if (nodes[end.index] && end.offset < nodes[end.index].getTextContent().length) {
-    chipsAfter.push({ type: "text", value: nodes[end.index].getTextContent().substring(end.offset) });
-  }
-  // and all the nodes after that
-  chipsAfter.push(...nodes.slice(end.index + 1).map(nodeToChip));
-
-  // remove any empty text chips
-  chipsBefore = chipsBefore.filter((chip) => chip.type !== "text" || chip.value !== "");
-  chipsAfter = chipsAfter.filter((chip) => chip.type !== "text" || chip.value !== "");
-
-  return { chipsBefore, chipsAfter };
 }

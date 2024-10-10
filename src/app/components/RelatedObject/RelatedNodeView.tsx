@@ -60,7 +60,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
               className={styles.EditButton}
               onClick={(e) => {
                 e.stopPropagation(); // Prevent the node from expanding/collapsing
-                tree.setFocusedNode(treeNode.id, undefined, undefined, true);
+                tree.setFocusedNode(treeNode.id, "end", undefined, true);
               }}
             >
               <Edit2 size={14} />

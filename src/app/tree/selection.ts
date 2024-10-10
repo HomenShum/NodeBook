@@ -19,14 +19,14 @@ import { DescendantTreeNode } from "./nodes";
  * to some unintuitive behaviours even when done right. So for now, we're keeping
  * it simple.
  */
-export type TreeSelection = EditorSelection | NodeSelection;
+export type TreeSelection = TreeNodeContentSelection | TreeNodeSelection;
 
 /**
  * Tree selection with nodes resolved. See {@link TreeSelection} for more
  * details.
  */
 export type TreeSelectionWithNodes =
-  | (NodeSelection & {
+  | (TreeNodeSelection & {
       /** The subtree where the selection starts. */
       anchor: DescendantTreeNode;
       /** The subtree where the selection ends */
@@ -40,27 +40,28 @@ export type TreeSelectionWithNodes =
       /** All the subtrees in the selection */
       subtreeRoots: DescendantTreeNode[];
     })
-  | (EditorSelection & {
+  | (TreeNodeContentSelection & {
       treeNode: DescendantTreeNode;
       subtreeRoots: DescendantTreeNode[];
       top: DescendantTreeNode;
       bottom: DescendantTreeNode;
     });
 
-export type EditorSelectionPosition = "start" | "end" | { anchorOffset: number; focusOffset: number };
+export type TreeNodeContentSelectionPosition = "start" | "end" | { anchorOffset: number; focusOffset: number };
+// TODO remove
 export enum EditorSelectionAction {
   ClickedOnTextEditor = "clicked-on-text-editor",
   ClickedOnSuffixInput = "clicked-on-suffix-input",
   FocusingCreatedNode = "focusing-created-node",
 }
-export type EditorSelection = {
+export type TreeNodeContentSelection = {
   type: "editor";
   treeNodeId: string;
-  position?: EditorSelectionPosition;
+  position: TreeNodeContentSelectionPosition;
   editMode?: boolean;
 };
 
-export type NodeSelection = {
+export type TreeNodeSelection = {
   type: "node";
   anchorNodeId: string;
   headNodeId: string;
