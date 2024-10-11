@@ -71,7 +71,7 @@ export class ViewStore {
         setViewType: action,
         setSearchQuery: action,
         setFlattenSublists: action,
-        toggleCommandBar: action,
+        setCommandBarOpen: action,
       });
     }
   }
@@ -134,7 +134,7 @@ export class ViewStore {
     this.sidebarWidth = width;
   }
 
-  toggleCommandBar = () => {
-    this.isCommandBarOpen = !this.isCommandBarOpen;
+  setCommandBarOpen(open: boolean) {
+    this.isCommandBarOpen = open;
   }
 }

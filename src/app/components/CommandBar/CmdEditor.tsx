@@ -3,7 +3,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
+import { $createParagraphNode, $createTextNode, $getRoot, COMMAND_PRIORITY_LOW, KEY_ENTER_COMMAND } from "lexical";
 import { useEffect } from "react";
 
 import { Search } from "@/app/components/CommandBar/CommandBar";
@@ -26,6 +26,22 @@ function OnChangePlugin({ onChange }: { onChange: (search: Search) => void }) {
       });
     });
   }, [editor, onChange]);
+  return null;
+}
+
+function PreventEnterPlugin() {
+  const [editor] = useLexicalComposerContext();
+  useEffect(() => {
+    editor.registerCommand(
+      KEY_ENTER_COMMAND,
+      (e) => {
+        e?.preventDefault();
+        return true;
+      },
+      // Low priority so it doesn't prevent the mention dropdown enter handling
+      COMMAND_PRIORITY_LOW,
+    );
+  }, [editor]);
   return null;
 }
 
@@ -58,6 +74,7 @@ export const CmdEditor = ({ dropdownContainerRef, onChange }: Props) => {
       />
       <OnChangePlugin onChange={onChange} />
       <CommandBarMentionDropdown dropdownContainerRef={dropdownContainerRef} />
+      <PreventEnterPlugin />
     </LexicalComposer>
   );
 };

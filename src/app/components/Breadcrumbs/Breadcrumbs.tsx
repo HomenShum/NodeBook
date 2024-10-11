@@ -190,11 +190,11 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   return (
     <>
       <nav className={s.BreadcrumbContainer} aria-label="breadcrumb">
-        <Button 
-          variant="default" 
-          size="icon" 
-          className={cn(s.ShowTooltip, s.BottomAlign)} 
-          data-tooltip="Home" 
+        <Button
+          variant="default"
+          size="icon"
+          className={cn(s.ShowTooltip, s.BottomAlign)}
+          data-tooltip="Home"
           onClick={() => setRoot(graphStore.getDefaultRootForUser())}
         >
           <Home size={14} strokeWidth={1.5} />
@@ -203,12 +203,12 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
           <RenderBreadcrumbs treeNode={treeNode} ancestors={ancestors} handleNavigation={handleNavigation} />
         </div>
         <div className={s.BreadcrumbRightArea}>
-          <Button 
-            variant="default" 
+          <Button
+            variant="default"
             className={cn(s.ShowTooltip, s.BottomAlign)}
             data-tooltip="Command bar"
-            size="icon" 
-            onClick={viewStore.toggleCommandBar}
+            size="icon"
+            onClick={() => viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen)}
           >
             <Command size={14} strokeWidth={1.5} />
           </Button>

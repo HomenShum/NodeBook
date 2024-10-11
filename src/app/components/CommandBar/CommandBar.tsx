@@ -1,6 +1,6 @@
-'use client'
+"use client";
 import * as Dialog from "@radix-ui/react-dialog";
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -39,24 +39,29 @@ type Command =
 const CommandBar = observer(() => {
   const user = useUser();
   const viewStore = useViewStore();
-  
+
   const [search, setSearch] = useState<Search>({ text: "", chips: [] });
-  
+
   const close = useCallback(() => {
     setSearch({ text: "", chips: [] });
-    viewStore.toggleCommandBar();
+    viewStore.setCommandBarOpen(false);
   }, [viewStore]);
 
-  useHotkeys("mod+shift+k", (event) => {
-    event.preventDefault();
-    if (viewStore) {
-      if (viewStore.isCommandBarOpen) {
-        close();
-      } else {
-        viewStore.toggleCommandBar();
+  useHotkeys(
+    "mod+shift+k",
+    (event) => {
+      event.preventDefault();
+      if (viewStore) {
+        if (viewStore.isCommandBarOpen) {
+          close();
+        } else {
+          viewStore.setCommandBarOpen(true);
+        }
       }
-    }
-  }, { enableOnContentEditable: true }, [viewStore]);
+    },
+    { enableOnContentEditable: true },
+    [viewStore],
+  );
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -122,15 +127,18 @@ const CommandBar = observer(() => {
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
+          e.stopPropagation();
           setSelectedIndex((prevIndex) => Math.min(prevIndex + 1, filteredCommands.length - 1));
           break;
         case "ArrowUp":
           e.preventDefault();
+          e.stopPropagation();
           setSelectedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
           break;
         case "Tab":
         case "Enter":
           e.preventDefault();
+          e.stopPropagation();
           if (filteredCommands[selectedIndex]) {
             filteredCommands[selectedIndex].perform(e.metaKey);
           }
@@ -150,37 +158,39 @@ const CommandBar = observer(() => {
     }
   }, [selectedIndex]);
 
-  return !user.isAnonymous && (
-    <Dialog.Root open={viewStore.isCommandBarOpen} onOpenChange={viewStore.toggleCommandBar}>
-      <Dialog.Portal>
-        <Dialog.Overlay className={styles.Overlay}>
-          <div ref={dropdownContainerRef} className={styles.DropdownContainer} />
-          <Dialog.Content className={styles.Content} onKeyDown={handleKeyDown} onEscapeKeyDown={close}>
-            <VisuallyHidden asChild>
-              <Dialog.DialogTitle>Command Bar</Dialog.DialogTitle>
-            </VisuallyHidden>
-            <VisuallyHidden asChild>
-              <Dialog.DialogDescription>
-                Search for nodes or create a new one. Use arrow keys to navigate and Enter to select.
-              </Dialog.DialogDescription>
-            </VisuallyHidden>
-            <CmdEditor dropdownContainerRef={dropdownContainerRef} onChange={setSearch} />
-            <div className={styles.List} ref={listRef}>
-              {filteredCommands.map((command, index) => (
-                <div
-                  key={command.id}
-                  className={cn(styles.Item, selectedIndex === index && styles.Selected)}
-                  onClick={(e) => command.perform(e.metaKey)}
-                >
-                  <span>{command.name}</span>
-                  {command.type !== "create" && <Path path={command.path} />}
-                </div>
-              ))}
-            </div>
-          </Dialog.Content>
-        </Dialog.Overlay>
-      </Dialog.Portal>
-    </Dialog.Root>
+  return (
+    !user.isAnonymous && (
+      <Dialog.Root open={viewStore.isCommandBarOpen} onOpenChange={viewStore.setCommandBarOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className={styles.Overlay}>
+            <div ref={dropdownContainerRef} className={styles.DropdownContainer} />
+            <Dialog.Content className={styles.Content} onKeyDown={handleKeyDown} onEscapeKeyDown={close}>
+              <VisuallyHidden asChild>
+                <Dialog.DialogTitle>Command Bar</Dialog.DialogTitle>
+              </VisuallyHidden>
+              <VisuallyHidden asChild>
+                <Dialog.DialogDescription>
+                  Search for nodes or create a new one. Use arrow keys to navigate and Enter to select.
+                </Dialog.DialogDescription>
+              </VisuallyHidden>
+              <CmdEditor dropdownContainerRef={dropdownContainerRef} onChange={setSearch} />
+              <div className={styles.List} ref={listRef}>
+                {filteredCommands.map((command, index) => (
+                  <div
+                    key={command.id}
+                    className={cn(styles.Item, selectedIndex === index && styles.Selected)}
+                    onClick={(e) => command.perform(e.metaKey)}
+                  >
+                    <span>{command.name}</span>
+                    {command.type !== "create" && <Path path={command.path} />}
+                  </div>
+                ))}
+              </div>
+            </Dialog.Content>
+          </Dialog.Overlay>
+        </Dialog.Portal>
+      </Dialog.Root>
+    )
   );
 });
 
