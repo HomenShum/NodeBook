@@ -33,7 +33,6 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       isPublic: !!row.isPublic,
       isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
     };
-    console.log("Loading node", node);
     snapshot.nodesById[node.id] = node;
   }
 
