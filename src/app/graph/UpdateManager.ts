@@ -1,10 +1,13 @@
 import { captureException } from "@sentry/nextjs";
+import Pusher from "pusher-js";
 
+import { env } from "@/app/envFrontend";
 import { generateInverseUpdates, GraphUpdate } from "@/app/graph/GraphUpdate";
-import { condenseSyncDataBatch, SyncData } from "@/app/graph/SyncData";
+import { condenseSyncDataBatch, SyncData, SyncDataSchema } from "@/app/graph/SyncData";
 import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
 import { uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
+import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
 
 const logger = appLogger.child({ service: "UpdateManager" });
 
@@ -39,9 +42,47 @@ export class UpdateManager {
 
   // TODO not sure about these
   startSync() {
+    if (!env.isPersistenceEnabled) return () => {};
     this.isSyncing = true;
+
+    // Subscribe to changes from other clients
+    const pusher = new Pusher(env.pusherKey, { cluster: env.pusherCluster });
+    const userChannel = pusher.subscribe(userIdToPusherChannel(this.userId));
+    userChannel.bind("transaction-accepted", (data: any) => {
+      const parsedSyncData = SyncDataSchema.safeParse(data);
+      if (!parsedSyncData.success) {
+        console.error("Invalid sync data received", data);
+        return;
+      }
+      if (parsedSyncData.data.clientId === this.clientId) {
+        logger.debug("ignoring sync data from this client");
+        return;
+      }
+
+      this.handleSyncData(parsedSyncData.data, true);
+    });
+    const globalChannel = pusher.subscribe(GLOBAL_GRAPH_CHANNEL);
+    globalChannel.bind("transaction-accepted", (data: any) => {
+      const parsedSyncData = SyncDataSchema.safeParse(data);
+      if (!parsedSyncData.success) {
+        console.error("Invalid sync data received", data);
+        return;
+      }
+      if (parsedSyncData.data.userId === this.userId) {
+        // We ignore because the same data will be received on the user's channel
+        logger.debug("ignoring sync data from this user but different client.");
+        return;
+      }
+      this.handleSyncData(parsedSyncData.data, false);
+    });
+
+    // Periodically send local updates to the server
     this.syncLoop();
-    return () => this.stopSync();
+
+    return () => {
+      this.stopSync();
+      pusher.disconnect();
+    };
   }
 
   private syncLoop() {
@@ -75,10 +116,6 @@ export class UpdateManager {
   }
 
   async handleSyncData(data: SyncData, resetIfApplyFails: boolean) {
-    if (this.isLocalUpdate(data)) {
-      return;
-    }
-
     try {
       this.applyGraphUpdates(data.updates);
     } catch (e) {
@@ -142,10 +179,6 @@ export class UpdateManager {
       updates,
     };
     this.syncQueue.push(dataForSync);
-  }
-
-  private isLocalUpdate(syncData: SyncData) {
-    return syncData.clientId === this.clientId;
   }
 
   private async sendChunkedSyncData(syncData: SyncData) {
@@ -220,6 +253,7 @@ export class UpdateManager {
     this.syncQueue = [];
     let syncData = syncDataBatch.shift();
     while (syncData) {
+      logger.debug("sending sync data", syncData);
       let endpoint = "/api/sync";
 
       const response = await userFetch(endpoint, {

@@ -1,6 +1,5 @@
 "use client";
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
-import Pusher from "pusher-js";
 import React, { useEffect, useState } from "react";
 
 import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
@@ -12,13 +11,11 @@ import { UserContext } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { SyncDataSchema } from "@/app/graph/SyncData";
 import { fetchGetOrCreateUser, loadGraphData } from "@/app/persistence/loadGraphData";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
 import rootLogger from "@/lib/logger";
-import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
 
 export const logger = rootLogger.child({ service: "store-provider" });
 
@@ -114,7 +111,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       // Set up stores. (unless we are unmounting, in which case ignore the result)
       if (ignore) return;
       logger.debug("Starting sync");
-      syncCleanup = startSync({ graphStore: graph });
+      syncCleanup = graph.updateManager.startSync();
       setUser(user);
       setGraphStore(graph);
       setSettingsStore(settings);
@@ -147,32 +144,4 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       </UserContext.Provider>
     </LoadingContext.Provider>
   );
-}
-
-function startSync({ graphStore }: { graphStore: GraphStore }) {
-  if (!env.isPersistenceEnabled) return () => {};
-
-  const pusher = new Pusher(env.pusherKey, {
-    cluster: env.pusherCluster,
-  });
-  const handlePusherMessage = async (data: any, resetIfApplyFails: boolean) => {
-    const parsedSyncData = SyncDataSchema.safeParse(data);
-    if (!parsedSyncData.success) {
-      console.error("Invalid sync data received", data);
-      return;
-    }
-    await graphStore.updateManager.handleSyncData(parsedSyncData.data, resetIfApplyFails);
-  };
-
-  const userChannel = pusher.subscribe(userIdToPusherChannel(graphStore.user.id));
-  userChannel.bind("transaction-accepted", (data: any) => handlePusherMessage(data, true));
-  const globalChannel = pusher.subscribe(GLOBAL_GRAPH_CHANNEL);
-  globalChannel.bind("transaction-accepted", (data: any) => handlePusherMessage(data, false));
-
-  const stopSyncing = graphStore.updateManager.startSync();
-
-  return () => {
-    pusher.disconnect();
-    stopSyncing();
-  };
 }
