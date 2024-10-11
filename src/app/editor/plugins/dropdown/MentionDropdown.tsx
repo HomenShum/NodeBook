@@ -11,6 +11,7 @@ import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { TreeNode } from "@/app/tree/nodes";
+import { useTree } from "@/app/tree/TreeContext";
 import { uuid } from "@/app/util";
 import { MenuTextMatch, cn } from "@/lib/utils";
 
@@ -31,6 +32,8 @@ export function MentionDropdown({
 }) {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
+  const tree = useTree();
+
   const options =
     dropdown?.type === "mention"
       ? [
@@ -52,6 +55,7 @@ export function MentionDropdown({
         const mentionNode = $createMentionNode(graphNodeId, text);
         nodeToReplace.replace(mentionNode);
         mentionNode.selectEnd();
+
         if (opt.value.type === "new") {
           await graphStore.addChildNode({
             parentId: graphStore.userRoot.id,
@@ -70,9 +74,11 @@ export function MentionDropdown({
             toId: treeNode.object.id,
           });
         }
+
+        tree.setFocusedNode(treeNode.path, "end", undefined, true);
       });
     },
-    [editor, treeNode, graphStore],
+    [editor, tree, treeNode, graphStore],
   );
 
   return (
@@ -125,7 +131,8 @@ export function getMenuRenderFn(
               onMouseEnter={() => {
                 setHighlightedIndex(i);
               }}
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 setHighlightedIndex(i);
                 selectOptionAndCleanUp(option);
               }}

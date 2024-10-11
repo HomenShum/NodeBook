@@ -75,7 +75,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
         e.stopPropagation();
         if (e.shiftKey) {
           tree.selectBetweenShiftClick(treeNode.path, EditorSelectionAction.ClickedOnSuffixInput);
-        } else {
+        } else if (!tree.isNodeFocused(treeNode.id)) {
           tree.setFocusedNode(treeNode.path);
         }
       }}
