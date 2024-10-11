@@ -14,6 +14,7 @@ const processEnvSchema = z.object({
   NEXT_PUBLIC_BUILD_ID: z.string().optional(),
   NEXT_PUBLIC_LOG_SERVICE_INCLUDE: z.string().optional(),
   NEXT_PUBLIC_LOG_SERVICE_EXCLUDE: z.string().optional(),
+  NEXT_PUBLIC_LOG_SERVICE_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
   ENV: z.union([z.literal("development"), z.literal("production")]).optional(),
 });
 processEnvSchema.parse(process.env);
@@ -35,6 +36,7 @@ export const env: {
   buildId: string | undefined;
   logServiceInclude: string[];
   logServiceExclude: string[];
+  logServiceLevel: "debug" | "info" | "warn" | "error";
   isFrontend: boolean;
   pusherKey: string;
   pusherCluster: string;
@@ -52,6 +54,7 @@ export const env: {
   isFrontend: typeof window !== "undefined",
   logServiceInclude: process.env.NEXT_PUBLIC_LOG_SERVICE_INCLUDE?.split(",") || [],
   logServiceExclude: process.env.NEXT_PUBLIC_LOG_SERVICE_EXCLUDE?.split(",") || [],
+  logServiceLevel: process.env.NEXT_PUBLIC_LOG_SERVICE_LEVEL || "debug",
   pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY || "",
   pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
   env: process.env.ENV || "development",

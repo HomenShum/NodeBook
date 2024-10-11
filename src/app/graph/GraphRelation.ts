@@ -1,6 +1,5 @@
 import { action, computed, isObservable, makeObservable, observable } from "mobx";
 
-import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
@@ -79,9 +78,6 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       to: observable.ref,
       text: computed,
       update: action,
-      setType: action,
-      setFrom: action,
-      setTo: action,
       incrementVersion: action,
     });
   }
@@ -102,14 +98,14 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       this.to = props.to;
     } else {
       if (props.from && props.from !== this.from) {
-        this.setFrom(props.from);
+        this.from = props.from;
       }
       if (props.to && props.to !== this.to) {
-        this.setTo(props.to);
+        this.to = props.to;
       }
     }
     if (props.relationType && props.relationType !== this.relationType) {
-      this.setType(props.relationType);
+      this.relationTypeId = props.relationType.id;
     }
     if (props.isPublic !== undefined && props.isPublic !== this.isPublic) {
       this.isPublic = props.isPublic;
@@ -144,34 +140,6 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
 
   get relationType(): GraphRelationType {
     return this.store.relationTypesById[this.relationTypeId];
-  }
-
-  setType(type: GraphRelationType) {
-    this.relationTypeId = type.id;
-  }
-
-  setFrom(node: GraphObject, after?: Positioner<GraphRelation>) {
-    // remove this relation from the current "from" node's relation list, unless it's a circular relation
-    if (this.to.id != this.from.id) {
-      this.from.allRelationsList.delete(this.id);
-      this.from.pinnedRelationsList.delete(this.id);
-    }
-    // set the new "from" node
-    this.from = node;
-    // add this relation to the new "from" node
-    this.from.allRelationsList.add(this, after);
-  }
-
-  setTo(node: GraphObject, after?: Positioner<GraphRelation>) {
-    // remove this relation from the current "to" node's relation list, unless it's a circular relation
-    if (this.to.id != this.from.id) {
-      this.to.allRelationsList.delete(this.id);
-      this.to.pinnedRelationsList.delete(this.id);
-    }
-    // set the new "to" node
-    this.to = node;
-    // add this relation to the new "to" node
-    this.to.allRelationsList.add(this, after);
   }
 
   incrementVersion() {

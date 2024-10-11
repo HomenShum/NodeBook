@@ -167,6 +167,7 @@ class Logger {
 const logger = new Logger();
 
 logger.setGlobalConsoleFilter({
+  level: env.logServiceLevel,
   service: {
     exclude: env.logServiceExclude,
     include: env.logServiceInclude,

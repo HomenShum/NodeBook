@@ -1319,14 +1319,22 @@ export class GraphStore {
     newFrom: GraphObject,
     after?: Positioner<GraphRelation>,
   ): GraphUpdate[] {
+    if (relation.from === newFrom) {
+      return [];
+    }
     const updates: GraphUpdate[] = [];
     try {
       const oldRelation = relation.serialize();
       const oldFrom = relation.from;
       const oldFromPosition = this.getRelationList(oldFrom).get(relation.id)?.position ?? null;
 
-      relation.setFrom(newFrom, after);
-      relation.incrementVersion();
+      // remove this relation from the current "from" node's relation list, unless it's a circular relation
+      if (relation.to.id != relation.from.id) {
+        relation.from.allRelationsList.delete(relation.id);
+        relation.from.pinnedRelationsList.delete(relation.id);
+      }
+      relation.update({ from: newFrom });
+      relation.from.allRelationsList.add(relation, after);
 
       updates.push({
         operation: "updateRelation",
@@ -1370,14 +1378,25 @@ export class GraphStore {
    * to reflect the changes.
    */
   private setRelationTo(relation: GraphRelation, newTo: GraphObject, after?: Positioner<GraphRelation>): GraphUpdate[] {
+    if (relation.to === newTo) {
+      return [];
+    }
     const updates: GraphUpdate[] = [];
     try {
       const oldRelation = relation.serialize();
       const oldTo = relation.to;
       const oldToPosition = this.getRelationList(oldTo).get(relation.id)?.position ?? null;
 
-      relation.setTo(newTo, after);
-      relation.incrementVersion();
+      // remove this relation from the current "to" node's relation list, unless it's a circular relation
+      if (relation.from.id != relation.to.id) {
+        relation.to.allRelationsList.delete(relation.id);
+        relation.to.pinnedRelationsList.delete(relation.id);
+      }
+      // set the new "to" node
+      relation.to = newTo;
+      // add this relation to the new "to" node
+      relation.to.allRelationsList.add(relation, after);
+
       updates.push({
         operation: "updateRelation",
         oldProps: oldRelation,
@@ -1418,8 +1437,7 @@ export class GraphStore {
 
   private setRelationType(relation: GraphRelation, newType: GraphRelationType): GraphUpdate[] {
     const oldRelation = relation.serialize();
-    relation.setType(newType);
-    relation.incrementVersion();
+    relation.update({ relationType: newType });
     const updates: GraphUpdate[] = [
       {
         operation: "updateRelation",
@@ -1438,8 +1456,11 @@ export class GraphStore {
     if (object.relations.length === 0) {
       if (object instanceof GraphNode) {
         return this.deleteNode(object);
-      } else {
-        logger.warn("Attempt to delete a GraphObject that is not a GraphNode", object);
+      } else if (object instanceof GraphRelation) {
+        const { updates } = this._removeRelation({ relationId: object.id });
+        return updates;
+      } else if (object instanceof PlaceholderGraphObject) {
+        return [];
       }
     }
     return [];
@@ -1865,13 +1886,13 @@ export class GraphStore {
         if (rel.from instanceof PlaceholderGraphObject) {
           const from = this.getObject(rel.from.id);
           if (from) {
-            rel.setFrom(from);
+            this.setRelationFrom(rel, from);
           }
         }
         if (rel.to instanceof PlaceholderGraphObject) {
           const to = this.getObject(rel.to.id);
           if (to) {
-            rel.setTo(to);
+            this.setRelationTo(rel, to);
           }
         }
       } catch (error) {
