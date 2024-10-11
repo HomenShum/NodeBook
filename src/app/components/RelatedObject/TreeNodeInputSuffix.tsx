@@ -2,7 +2,6 @@ import { observer } from "mobx-react-lite";
 import { useEffect, useRef } from "react";
 
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { EditorSelectionAction } from "@/app/tree/selection";
 import { useTree } from "@/app/tree/TreeContext";
 
 type Props = {
@@ -71,11 +70,9 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
         }
       }}
       onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.shiftKey) {
-          tree.selectBetweenShiftClick(treeNode.path, EditorSelectionAction.ClickedOnSuffixInput);
-        } else if (!tree.isNodeFocused(treeNode.id)) {
+        if (!tree.isNodeFocused(treeNode.id)) {
+          e.preventDefault();
+          e.stopPropagation();
           tree.setFocusedNode(treeNode.path);
         }
       }}

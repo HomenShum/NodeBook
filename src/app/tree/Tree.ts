@@ -16,12 +16,7 @@ import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, PointerTreeNode, RootTreeNode, TreeNode } from "./nodes";
-import {
-  EditorSelectionAction,
-  TreeNodeContentSelectionPosition,
-  TreeSelection,
-  TreeSelectionWithNodes,
-} from "./selection";
+import { TreeNodeContentSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
   getAncestorsAsArray,
@@ -92,7 +87,7 @@ export class Tree {
     this.path = path;
     this.makeObservable();
     autorun(() => {
-      logger.debug("Selection", toJS(this.selection));
+      logger.debug("Selection", toJS({ selection: this.selection, selectionWithNodes: this.selectionWithNodes }));
     });
   }
 
@@ -115,7 +110,6 @@ export class Tree {
       selectionWithNodes: computed,
       setFocusedNode: action,
       selectBetween: action,
-      selectBetweenShiftClick: action,
       setRoot: action,
       setPathExpanded: action,
       togglePathExpanded: action,
@@ -168,10 +162,6 @@ export class Tree {
   public search: string = "";
 
   protected partialFilter: Partial<Filter> = {};
-
-  // For Shift Click Selection
-  protected prevFocusedNodeId: string | null = null;
-  protected prevFocusedNodeAction: EditorSelectionAction | null = null;
 
   /** Helper class to read and sync expansion state with local storage */
   protected expansionLocalStorageCache: ExpansionLocalStorageCache;
@@ -250,6 +240,7 @@ export class Tree {
    * Returns selection with referenced nodes resolved.
    */
   get selectionWithNodes(): TreeSelectionWithNodes | null {
+    console.log("selectionWithNodes", toJS({ selection: this.selection }));
     if (!this.selection) return null;
 
     const { descendantTreeNodesById } = this.state;
@@ -340,26 +331,8 @@ export class Tree {
 
   /**
    * Sets the focused node in the editor.
-   * @param treeNodeId - ID of the node to focus, or null to maintain current selection.
-   * @param position - Position of the cursor in the editor.
-   * @param selectionAction
-   * @param editMode
    */
-  setFocusedNode(
-    treeNodeId: string | null,
-    position: TreeNodeContentSelectionPosition = "end",
-    selectionAction?: EditorSelectionAction,
-    editMode?: boolean,
-  ) {
-    switch (this.selection?.type) {
-      case "editor":
-        this.prevFocusedNodeId = this.selection.treeNodeId;
-        break;
-      case "node":
-        this.prevFocusedNodeId = this.selection.headNodeId;
-        break;
-    }
-    if (selectionAction) this.prevFocusedNodeAction = selectionAction;
+  setFocusedNode(treeNodeId: string | null, position: TreeNodeContentSelectionPosition = "end", editMode?: boolean) {
     this.selection = treeNodeId ? { type: "editor", treeNodeId, position, editMode } : null;
   }
 
@@ -376,41 +349,6 @@ export class Tree {
 
   selectBetween(anchorNodeId: string, headNodeId: string) {
     this.selection = { type: "node", anchorNodeId, headNodeId };
-  }
-
-  /**
-   * Handles shift-click selection between two nodes.
-   */
-  selectBetweenShiftClick(clickedNodePath: string, headNodeType: EditorSelectionAction) {
-    // the focus on non-editbale suffix inputs is handled inside the suffix input component so don't set the focus here
-    if (headNodeType !== EditorSelectionAction.ClickedOnSuffixInput) {
-      this.setFocusedNode(clickedNodePath);
-    }
-
-    const currentSelection = this.selectionWithNodes;
-    if (!currentSelection) return false;
-
-    switch (currentSelection.type) {
-      case "editor":
-        this.selection = {
-          type: "node",
-          anchorNodeId: this.prevFocusedNodeId || clickedNodePath,
-          headNodeId: clickedNodePath,
-        };
-        this.prevFocusedNodeId = null;
-        return true;
-
-      case "node":
-        if (currentSelection.type !== this.selection?.type) {
-          // This should never happen. The selection and computed selection types should always match.
-          logger.warn("Selection type mismatch", { currentSelection, activeSelection: this.selection });
-          return false;
-        }
-        return true;
-
-      default:
-        return currentSelection satisfies never;
-    }
   }
 
   /**
@@ -568,7 +506,7 @@ export class Tree {
   async createChildOfRootAndFocus({ nodeProps }: { nodeProps?: GraphNodeProps } = {}) {
     const { node, relation } = await this.createChildNode({ parent: this.root, nodeProps });
     const path = this.root.childrenGroupsById.all.createChildPath(relation);
-    this.setFocusedNode(path, "end", undefined, true);
+    this.setFocusedNode(path, "end", true);
     return { node, relation, path };
   }
 
@@ -868,7 +806,7 @@ export class Tree {
       }
     }
     if (changes.newNodePath) {
-      this.setFocusedNode(changes.newNodePath, "start", undefined, true);
+      this.setFocusedNode(changes.newNodePath, "start", true);
     }
   }
 
@@ -1049,7 +987,7 @@ export class Tree {
     const treeNode = selection.type === "editor" ? selection.treeNode : selection.top;
     const next = getNextAbove(treeNode);
     if (!next) return false;
-    this.setFocusedNode(next.path, position, undefined, false);
+    this.setFocusedNode(next.path, position, false);
     return true;
   }
 
@@ -1057,11 +995,12 @@ export class Tree {
    * Move selection from the current node to the next one down.
    */
   moveEditorSelectionDown(position: TreeNodeContentSelectionPosition = "end"): boolean {
+    console.log("moveEditorSelectionDown", toJS({ selection: this.selection }));
     const selection = this.selectionWithNodes;
     if (!selection) return false;
     const next = selection.type === "editor" ? getNextBelow(selection.treeNode) : getNextSubtreeBelow(selection.bottom);
     if (!next) return false;
-    this.setFocusedNode(next.path, position, undefined, false);
+    this.setFocusedNode(next.path, position, false);
     return true;
   }
 

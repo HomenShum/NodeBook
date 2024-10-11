@@ -22,7 +22,7 @@ export const ToggleEditablePlugin = ({ treeNode, editable }: { treeNode: Descend
         if (tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id && tree.selection.editMode) {
           e.preventDefault();
           e.stopPropagation();
-          tree.setFocusedNode(treeNode.id, "start", undefined, false);
+          tree.setFocusedNode(treeNode.id, "start", false);
           return true;
         }
         return false;

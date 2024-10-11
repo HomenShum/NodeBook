@@ -75,7 +75,7 @@ export function MentionDropdown({
           });
         }
 
-        tree.setFocusedNode(treeNode.path, "end", undefined, true);
+        tree.setFocusedNode(treeNode.path, "end", true);
       });
     },
     [editor, tree, treeNode, graphStore],

@@ -35,7 +35,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
         tree.selection.treeNodeId === treeNodeId &&
         sameSelectionPositions(editorSelectionPosition, tree.selection.position);
       if (!match) {
-        tree.setFocusedNode(treeNodeId, editorSelectionPosition, undefined, true);
+        tree.setFocusedNode(treeNodeId, editorSelectionPosition, true);
       }
 
       // Update the graph if the editor content has changed

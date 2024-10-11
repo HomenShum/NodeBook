@@ -37,7 +37,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
     !isLocal && styles.TreeNodeReference,
     isReadOnlyReference && styles.PillContainer,
   );
-  
+
   const cnInnerContainer = cn(
     styles.FlexContainer,
     isLocal ? "" : isEditMode ? cn(styles.Pill, styles.Editor) : cn(isExpanded && styles.Expanded, styles.Pill),
@@ -60,7 +60,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
               className={styles.EditButton}
               onClick={(e) => {
                 e.stopPropagation(); // Prevent the node from expanding/collapsing
-                tree.setFocusedNode(treeNode.id, "end", undefined, true);
+                tree.setFocusedNode(treeNode.id, "end", true);
               }}
             >
               <Edit2 size={14} />

@@ -53,7 +53,7 @@ export const LeftRightArrowAtEndsPlugin = () => {
           }
           if (editMode) {
             // disable edit mode and move selection outside of editor
-            tree.setFocusedNode(treeNode.id, "end", undefined, false);
+            tree.setFocusedNode(treeNode.id, "end", false);
           } else {
             // move down
             const focusedMoved = tree.moveEditorSelectionDown("start");

@@ -43,12 +43,7 @@ export type TreeSelectionWithNodes =
     });
 
 export type TreeNodeContentSelectionPosition = "start" | "end" | { anchorOffset: number; focusOffset: number };
-// TODO remove
-export enum EditorSelectionAction {
-  ClickedOnTextEditor = "clicked-on-text-editor",
-  ClickedOnSuffixInput = "clicked-on-suffix-input",
-  FocusingCreatedNode = "focusing-created-node",
-}
+
 export type TreeNodeContentSelection = {
   type: "editor";
   treeNodeId: string;

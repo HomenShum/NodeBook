@@ -117,7 +117,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
   );
 });
 
-function useOutlineHotkeys({ tree }: { tree: Tree }) {
+const useOutlineHotkeys = function useOutlineHotkeys({ tree }: { tree: Tree }) {
   const defaults: Options = { enableOnContentEditable: true, preventDefault: true, enableOnFormTags: ["INPUT"] };
   useHotkeys("mod+shift+ArrowUp", () => tree.moveSelectedNodesUp(), defaults, [tree]);
   useHotkeys("mod+shift+ArrowDown", () => tree.moveSelectedNodesDown(), defaults, [tree]);
@@ -144,4 +144,4 @@ function useOutlineHotkeys({ tree }: { tree: Tree }) {
     }
   }, [tree, setRoot]);
   useHotkeys("mod+.", setCurrentNodeAsRoot, defaults, [tree]);
-}
+};
