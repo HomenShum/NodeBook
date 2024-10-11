@@ -116,7 +116,7 @@ export const relationListsTable = pgTable(
     nodeId: text("node_id"),
     relationId: text("relation_id"),
     pinned: boolean("pinned"),
-    positionInt: bigint("bigint", { mode: "number" }),
+    positionInt: bigint("position_int", { mode: "number" }),
     positionFrac: text("position_frac"),
     isPublic: boolean("is_public").default(false),
   },
