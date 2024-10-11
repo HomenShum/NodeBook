@@ -70,9 +70,9 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
         }
       }}
       onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!tree.isNodeFocused(treeNode.id)) {
-          e.preventDefault();
-          e.stopPropagation();
           tree.setFocusedNode(treeNode.path);
         }
       }}

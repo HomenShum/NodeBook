@@ -87,7 +87,7 @@ export class Tree {
     this.path = path;
     this.makeObservable();
     autorun(() => {
-      logger.debug("Selection", toJS({ selection: this.selection, selectionWithNodes: this.selectionWithNodes }));
+      logger.debug("Selection", this.selection);
     });
   }
 
