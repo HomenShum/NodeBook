@@ -81,7 +81,6 @@ export const broadcastSyncSuccess = async ({ clientId, userId, transactionId, up
     secret: env.PUSHER_SECRET ?? "",
     cluster: env.PUSHER_CLUSTER ?? "",
     useTLS: true,
-    timeout: 5000, // 5 seconds
   });
   const userChannel = userIdToPusherChannel(userId);
   const updateChunks = updatesToSize(updates);
