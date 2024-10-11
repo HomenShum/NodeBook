@@ -568,7 +568,7 @@ export class Tree {
   async createChildOfRootAndFocus({ nodeProps }: { nodeProps?: GraphNodeProps } = {}) {
     const { node, relation } = await this.createChildNode({ parent: this.root, nodeProps });
     const path = this.root.childrenGroupsById.all.createChildPath(relation);
-    this.setFocusedNode(path);
+    this.setFocusedNode(path, "end", undefined, true);
     return { node, relation, path };
   }
 
@@ -1040,7 +1040,6 @@ export class Tree {
     }
   }
 
-
   /**
    * Move selection from the current node to the next one up.
    */
@@ -1050,7 +1049,7 @@ export class Tree {
     const treeNode = selection.type === "editor" ? selection.treeNode : selection.top;
     const next = getNextAbove(treeNode);
     if (!next) return false;
-    this.setFocusedNode(next.path, position);
+    this.setFocusedNode(next.path, position, undefined, false);
     return true;
   }
 
@@ -1062,7 +1061,7 @@ export class Tree {
     if (!selection) return false;
     const next = selection.type === "editor" ? getNextBelow(selection.treeNode) : getNextSubtreeBelow(selection.bottom);
     if (!next) return false;
-    this.setFocusedNode(next.path, position);
+    this.setFocusedNode(next.path, position, undefined, false);
     return true;
   }
 
