@@ -19,6 +19,7 @@ export abstract class BaseGraphObject {
   abstract id: string;
   abstract authorId: string;
   abstract createdAt: Date;
+  abstract updatedAt: Date;
   abstract text: string;
   abstract searchText: string;
   abstract isPublic: boolean;

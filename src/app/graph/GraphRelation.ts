@@ -22,6 +22,7 @@ export type GraphRelationProps = {
   to: GraphObject;
   relationType?: GraphRelationType;
   isPublic?: boolean;
+  updatedAt?: Date;
 };
 
 export type GraphRelationPropsWithoutTargets = {
@@ -36,6 +37,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
   authorId: string;
   version: number;
   createdAt: Date = new Date();
+  updatedAt: Date = new Date(this.createdAt.getTime());
   isPublic: boolean = false;
   relationTypeId: string;
   from: GraphObject;
@@ -69,6 +71,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     if (isObservable(this)) return;
     makeObservable(this, {
       createdAt: observable,
+      updatedAt: observable,
       isPublic: observable,
       relationTypeId: observable,
       relationType: computed,
@@ -88,6 +91,11 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       this.version = props.version;
     } else {
       this.version++;
+    }
+    if (props.updatedAt) {
+      this.updatedAt = props.updatedAt;
+    } else {
+      this.updatedAt = new Date();
     }
     if (props.from && props.to && this.from.id === props.to.id && this.to.id === props.from.id) {
       this.from = props.from;
@@ -180,6 +188,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       id: this.id,
       authorId: this.authorId,
       createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
       fromId: this.from.id,
       toId: this.to.id,
       relationTypeId: this.relationTypeId,

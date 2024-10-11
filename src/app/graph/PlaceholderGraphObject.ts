@@ -12,12 +12,14 @@ export class PlaceholderGraphObject extends BaseGraphObject {
   id: string;
   authorId: string;
   createdAt: Date;
+  updatedAt: Date;
   public isPublic: boolean = false;
   constructor(store: GraphStore, id: string, authorId: string) {
     super(store);
     this.id = id;
     this.authorId = authorId;
     this.createdAt = new Date();
+    this.updatedAt = new Date(this.createdAt.getTime());
   }
   text = "PLACEHOLDER";
   searchText = "PLACEHOLDER";

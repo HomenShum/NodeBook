@@ -27,6 +27,7 @@ export type GraphNodeProps = {
   authorId?: string;
   content?: Chip[] | string;
   createdAt?: Date;
+  updatedAt?: Date;
   isBundle?: boolean;
   isZone?: boolean;
   isPublic?: boolean;
@@ -45,6 +46,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   authorId: string;
   content: Chip[] = [];
   createdAt: Date;
+  updatedAt: Date;
   isBundle: boolean;
   isZone: boolean;
   isPublic: boolean = true;
@@ -58,6 +60,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       id = uuid(),
       content = [],
       createdAt = new Date(),
+      updatedAt = new Date(createdAt.getTime()),
       isBundle = false,
       isZone = false,
       isPublic = false,
@@ -74,6 +77,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
         ? content
         : [{ type: "text", value: typeof content === "string" ? content : "" }];
     this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
     this.isBundle = isBundle;
     this.isZone = isZone;
     this.isPublic = isPublic;
@@ -86,6 +90,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     makeObservable(this, {
       version: observable,
       createdAt: observable,
+      updatedAt: observable,
       isBundle: observable,
       isZone: observable,
       isPublic: observable,
@@ -126,6 +131,12 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       this.version = newProps.version;
     } else {
       this.version++;
+    }
+    oldValues.updatedAt = this.updatedAt;
+    if (newProps.updatedAt !== undefined) {
+      this.updatedAt = newProps.updatedAt;
+    } else {
+      this.updatedAt = new Date();
     }
 
     return oldValues;
@@ -225,6 +236,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       id: this.id,
       authorId: this.authorId,
       createdAt: this.createdAt,
+      updatedAt: this.updatedAt,
       content: toJS(this.content),
       isBundle: this.isBundle,
       isZone: this.isZone,

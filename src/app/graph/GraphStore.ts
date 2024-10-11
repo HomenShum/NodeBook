@@ -350,6 +350,7 @@ export class GraphStore {
         isPublic: !!(props.isPublic || (this.settings && this.settings.publicMode)),
         isNewRelatedObjectsPublic: !!props.isNewRelatedObjectsPublic,
         createdAt: props.createdAt ?? new Date(),
+        updatedAt: props.updatedAt ?? new Date(),
       });
 
       this.nodesById.set(node.id, node);
@@ -1590,6 +1591,7 @@ export class GraphStore {
         isPublic: true,
         authorId: GLOBAL_ADMIN_USER_ID,
         createdAt: new Date(0),
+        updatedAt: new Date(0),
       });
       globalRoot = node;
       // Don't push the change. The global root already exists on the server.
@@ -1800,20 +1802,14 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.allRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.pinnedRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.allRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.pinnedRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 

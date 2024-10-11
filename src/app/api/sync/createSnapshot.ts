@@ -26,12 +26,14 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       id: row.id,
       authorId: row.authorId ?? UNLOGGED_USER.id,
       createdAt: row.createdAt!,
+      updatedAt: row.updatedAt ?? row.createdAt!,
       content: JSON.parse(row.content ?? ""),
       isBundle: !!row.isBundle,
       isZone: !!row.isZone,
       isPublic: !!row.isPublic,
       isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
     };
+    console.log("Loading node", node);
     snapshot.nodesById[node.id] = node;
   }
 
@@ -74,6 +76,7 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       id: row.id,
       authorId: row.authorId ?? UNLOGGED_USER.id,
       createdAt: row.createdAt ?? new Date(),
+      updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
       fromId: row.fromId ?? "",
       toId: row.toId ?? "",
       relationTypeId: row.relationTypeId ?? "",

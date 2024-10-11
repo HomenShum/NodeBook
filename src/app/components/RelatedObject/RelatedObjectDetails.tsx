@@ -50,6 +50,7 @@ export const RelatedObjectDetails = observer(function RelatedObjectDetails({ pos
         </span>
       )}
       <span>createdAt: {object.createdAt.toISOString()}</span>
+      <span>updatedAt: {object.updatedAt.toISOString()}</span>
       {object instanceof GraphNode && object.isBundle && <span>#BUNDLE</span>}
       {object instanceof GraphNode && object.isZone && <span>#ZONE</span>}
       {bundles && <span>part of bundle: {bundles.map((b) => b.id).join(", ")}</span>}

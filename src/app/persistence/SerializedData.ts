@@ -20,11 +20,14 @@ export const SerializedNodeSchema = z.object({
   id: z.string(),
   authorId: z.string(),
   createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   content: z.array(SerializedChipSchema),
   isBundle: z.boolean(),
   isZone: z.boolean(),
   isPublic: z.boolean(),
   isNewRelatedObjectsPublic: z.boolean(),
+  // sortOption: z.enum(["createdAt", "updatedAt", "alphabetical"]),
+  // sortDirection: z.enum(["asc", "desc"]),
 });
 export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
 
@@ -48,6 +51,7 @@ export const SerializedRelationSchema = z.object({
   id: z.string(),
   authorId: z.string(),
   createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
   fromId: z.string(),
   toId: z.string(),
   relationTypeId: z.string(),
