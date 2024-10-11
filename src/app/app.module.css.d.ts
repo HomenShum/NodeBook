@@ -6,7 +6,6 @@ declare const styles: {
   readonly "Main": string;
   readonly "MainContainer": string;
   readonly "MainDragging": string;
-  readonly "RightSidebarToggle": string;
   readonly "ShiftMain": string;
   readonly "SidebarToggle": string;
 };

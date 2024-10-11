@@ -1,13 +1,13 @@
-import { action, autorun, isObservable, makeAutoObservable } from "mobx";
 import { LexicalEditor } from "lexical";
+import { action, autorun, isObservable, makeAutoObservable } from "mobx";
 
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Path, Root, Tree } from "@/app/tree/Tree";
-import { ViewType } from "@/app/view/types";
 import { makeAutoSaving } from "@/app/util";
+import { ViewType } from "@/app/view/types";
 
 export class ViewStore {
   private readonly settingsStore: SettingsStore;
@@ -28,8 +28,10 @@ export class ViewStore {
   public isDarkMode = false;
   public sidebarWidth = 268;
   public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | null = null;
+  public isCommandBarOpen: boolean = false;
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
+    this.isCommandBarOpen = false;
     this.makeObservable();
     makeAutoSaving(this, {
       leftSidebarOpen: true,
@@ -69,6 +71,7 @@ export class ViewStore {
         setViewType: action,
         setSearchQuery: action,
         setFlattenSublists: action,
+        toggleCommandBar: action,
       });
     }
   }
@@ -129,5 +132,9 @@ export class ViewStore {
 
   setSidebarWidth(width: number) {
     this.sidebarWidth = width;
+  }
+
+  toggleCommandBar = () => {
+    this.isCommandBarOpen = !this.isCommandBarOpen;
   }
 }

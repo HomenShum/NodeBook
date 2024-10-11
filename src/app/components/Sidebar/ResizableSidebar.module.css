@@ -36,25 +36,15 @@
   z-index: 29;
 }
 
-.BackNavigation {
-  align-self: flex-start;
-  margin-left: 32px;
-  color: var(--gray-9);
-}
-
 @media (max-width: 600px) {
   .Backdrop {
     display: block;
-  }
-
-  .BackNavigation {
-    margin-left: 48px;
   }
 }
 
 .SidebarContent {
   display: flex;
-  padding: 16px 13px 13px 13px;
+  padding: 30px 12px 12px 12px;
   height: 100%;
   flex-direction: column;
   justify-content: space-between;
@@ -118,15 +108,10 @@
 .Button {
   text-align: left;
   padding: 8px 8px;
-  display: inline-flex;
   justify-content: left;
   align-items: center;
   gap: 8px;
-  height: 28px;
-  border-radius: 6px;
-  cursor: pointer;
-  color: var(--gray-12);
-  font-size: var(--font-size-sm);
+  color: var(--gray-11);
   font-style: normal;
   font-weight: 400;
   line-height: var(--font-size-mini);

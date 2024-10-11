@@ -24,10 +24,13 @@
   left: 50%;
   transform: translateX(-50%);
   background-color: var(--gray-1);
-  color: var(--gray-10);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: var(--font-size-mini);
+  color: var(--gray-11);
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  user-select: none;
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;

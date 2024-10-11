@@ -1,11 +1,10 @@
-import { ArrowLeft, FileSpreadsheet, Globe, Home, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
+import { FileSpreadsheet, Globe, Home, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
-import CommandBar from "@/app/components/CommandBar/CommandBar";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import SidebarTree from "@/app/components/Sidebar/SidebarTree";
@@ -40,6 +39,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const resizerRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
   const [activePointerId, setActivePointerId] = useState<number | null>(null);
+  const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
 
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
@@ -122,9 +122,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
       >
         <div className={`${styles.SidebarContent} ${isResizing ? styles.Resizing : ""}`}>
           <div className={styles.TopContent}>
-            <Button className={styles.BackNavigation} variant="ghost" size="icon" onClick={() => router.back()}>
-              <ArrowLeft size={16} />
-            </Button>
             <div style={{ display: "flex", flexDirection: "column", marginTop: "24px" }}>
               <Button
                 style={{ width: "100%" }}
@@ -173,7 +170,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <SidebarTree />
               </div>
             </div>
-            {!user.isAnonymous && <CommandBar />}
           </div>
 
           {user.isAnonymous && (

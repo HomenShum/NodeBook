@@ -4,6 +4,7 @@ import { observer } from "mobx-react-lite";
 import React, { useEffect, useState } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
+import CommandBar from "@/app/components/CommandBar/CommandBar";
 import { SidebarIcon } from "@/app/components/CustomIcons";
 import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -15,6 +16,7 @@ import { useViewStore } from "@/app/view/useViewStore";
 import styles from "./app.module.css";
 
 import "./global.css";
+
 
 interface Props {
   children: React.ReactNode;
@@ -68,10 +70,12 @@ export default observer(function App({ children }: Props) {
       <div className={styles.App}>
         <div className={styles.AppContainer}>
           <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
+          <CommandBar />
           <div className={styles.Container}>
             <Button
+              data-tooltip="Toggle sidebar"
               className={styles.SidebarToggle}
-              variant="ghost"
+              variant="default"
               size="icon"
               onClick={() => viewStore.toggleLeftSidebar()}
             >

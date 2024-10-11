@@ -65,7 +65,7 @@ export const SearchBar = observer(function SearchBar() {
       onClick={handleContainerClick}
     >
       <div className={styles.SearchIconWrapper} onClick={handleIconClick}>
-        <Search className={styles.SearchIcon} size={14} strokeWidth={2.5} />
+        <Search className={styles.SearchIcon} size={14} strokeWidth={1.5} />
       </div>
       <input
         ref={inputRef}

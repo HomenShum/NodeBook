@@ -89,7 +89,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                       {treeNode.object.id === graphStore.homeRoot.id ? (
                         <HomeIcon size={20} />
                       ) : isGlobalRoot ? (
-                        <Globe size={20} />
+                        <Globe size={20} strokeWidth={1.8} />
                       ) : null}
                       <h1 className={s.TitleText}>
                         <NodeHeaderEditor key={treeNode.object.id} treeNode={treeNode} />

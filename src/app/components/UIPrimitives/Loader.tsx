@@ -11,7 +11,7 @@ const Loader = () => {
   return (
     <div className={styles.LoaderContainer}>
       <div className={styles.Logo}>
-        <Image src="/logo.svg" alt="Logo" fill sizes="100%" />
+        <Image src="/logo.svg" alt="Logo" fill sizes="100%" priority />
       </div>
       {newBuild ? "Loading new version" : " "}
       <div className={styles.Beta}>BETA</div>

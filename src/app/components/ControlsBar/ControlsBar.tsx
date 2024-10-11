@@ -78,7 +78,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           onMouseEnter={() => setIsPinnedHovered(true)}
           onMouseLeave={() => setIsPinnedHovered(false)}
         >
-          {showPinnedSection && isPinnedHovered ? <X size={14} /> : <PinIconMew size={14} strokeWidth={0.17} />}
+          {showPinnedSection && isPinnedHovered ? <X size={14} /> : <PinIconMew size={14} strokeWidth={0.5} />}
           <span>Pinned</span>
         </Button>
 
@@ -95,25 +95,25 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" disabled>
-                <ListFilter size={16} strokeWidth={2} />
+                <ListFilter size={14} strokeWidth={1.5} />
                 <span>Filters</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem onSelect={() => toggleFilter("Public")}>
-                <Globe size={14} />
+                <Globe size={14} strokeWidth={1.5} />
                 Public
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => toggleFilter("Shared")}>
-                <Link2 size={14} />
+                <Link2 size={14} strokeWidth={1.5} />
                 Shared
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => toggleFilter("Maps")}>
-                <Map size={14} />
+                <Map size={14} strokeWidth={1.5} />
                 Maps
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => toggleFilter("Places")}>
-                <MapPin size={14} />
+                <MapPin size={14} strokeWidth={1.5} />
                 Places
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -134,7 +134,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
         <Popover>
           <PopoverTrigger asChild>
             <Button size="sm">
-              <ViewsIconMew size={16} fill="none" strokeWidth={1.5} />
+              <ViewsIconMew size={16} fill="none" strokeWidth={1.2} />
               <span>View</span>
             </Button>
           </PopoverTrigger>
@@ -164,7 +164,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
         <Popover>
           <PopoverTrigger asChild>
             <Button size="sm">
-              <Sliders size={14} strokeWidth={2} />
+              <Sliders size={14} strokeWidth={1.5} />
               <span>Display</span>
             </Button>
           </PopoverTrigger>

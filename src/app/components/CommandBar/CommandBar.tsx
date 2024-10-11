@@ -1,14 +1,19 @@
+'use client'
 import * as Dialog from "@radix-ui/react-dialog";
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { CmdEditor } from "@/app/components/CommandBar/CmdEditor";
 import { Path } from "@/app/components/Path";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { Chip } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useSetRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
 import styles from "./CommandBar.module.css";
@@ -31,21 +36,33 @@ type Command =
       perform: (isCmdPressed: boolean) => void;
     };
 
-const CommandBar = () => {
-  const [open, setOpen] = useState(false);
+const CommandBar = observer(() => {
+  const user = useUser();
+  const viewStore = useViewStore();
+  
   const [search, setSearch] = useState<Search>({ text: "", chips: [] });
+  
   const close = useCallback(() => {
-    setOpen(false);
     setSearch({ text: "", chips: [] });
-  }, [setOpen, setSearch]);
+    viewStore.toggleCommandBar();
+  }, [viewStore]);
+
+  useHotkeys("mod+shift+k", (event) => {
+    event.preventDefault();
+    if (viewStore) {
+      if (viewStore.isCommandBarOpen) {
+        close();
+      } else {
+        viewStore.toggleCommandBar();
+      }
+    }
+  }, { enableOnContentEditable: true }, [viewStore]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
   const dropdownContainerRef = useRef<HTMLDivElement>(null);
   const graphStore = useGraphStore();
   const setRoot = useSetRoot();
-
-  useHotkeys("mod+shift+k", () => setOpen(true), { enableOnContentEditable: true });
 
   const filteredCommands = useMemo<Command[]>(() => {
     return [
@@ -133,12 +150,20 @@ const CommandBar = () => {
     }
   }, [selectedIndex]);
 
-  return (
-    <Dialog.Root open={open} onOpenChange={setOpen}>
+  return !user.isAnonymous && (
+    <Dialog.Root open={viewStore.isCommandBarOpen} onOpenChange={viewStore.toggleCommandBar}>
       <Dialog.Portal>
         <Dialog.Overlay className={styles.Overlay}>
           <div ref={dropdownContainerRef} className={styles.DropdownContainer} />
           <Dialog.Content className={styles.Content} onKeyDown={handleKeyDown} onEscapeKeyDown={close}>
+            <VisuallyHidden asChild>
+              <Dialog.DialogTitle>Command Bar</Dialog.DialogTitle>
+            </VisuallyHidden>
+            <VisuallyHidden asChild>
+              <Dialog.DialogDescription>
+                Search for nodes or create a new one. Use arrow keys to navigate and Enter to select.
+              </Dialog.DialogDescription>
+            </VisuallyHidden>
             <CmdEditor dropdownContainerRef={dropdownContainerRef} onChange={setSearch} />
             <div className={styles.List} ref={listRef}>
               {filteredCommands.map((command, index) => (
@@ -157,6 +182,6 @@ const CommandBar = () => {
       </Dialog.Portal>
     </Dialog.Root>
   );
-};
+});
 
 export default CommandBar;
