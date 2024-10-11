@@ -90,6 +90,9 @@ const Content = observer(function Content() {
   } = useTreeNode();
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
 
+  const nodeSelectionAnchorId = tree.selection && tree.selection.type === "node" ? tree.selection.anchorNodeId : null;
+  const nodeSelectionHeadId = tree.selection && tree.selection.type === "node" ? tree.selection.headNodeId : null;
+
   return (
     <>
       <div className={cn(styles.RelatedObjectNode, tree.isNodeSelected(treeNode.id) && styles.Selected)}>
@@ -156,6 +159,16 @@ const Content = observer(function Content() {
             onClick={() => tree.togglePathExpanded(treeNode.path)}
             showTooltip={true}
           />
+        )}
+        {treeNode.id === nodeSelectionAnchorId && (
+          <div title="Anchor" className={styles.RelationCounter}>
+            A
+          </div>
+        )}
+        {treeNode.id === nodeSelectionHeadId && (
+          <div title="Head" className={styles.RelationCounter}>
+            H
+          </div>
         )}
       </div>
     </>
