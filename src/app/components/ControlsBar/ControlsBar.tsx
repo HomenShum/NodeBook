@@ -1,4 +1,4 @@
-import { Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
@@ -8,13 +8,12 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { Switch } from "@/app/components/UIPrimitives/Switch";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
-import { Tree } from "@/app/tree/Tree";
+import { SortOption, Tree } from "@/app/tree/Tree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -67,6 +66,14 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
   }, []);
 
+  const updateSortOption =
+    (partialSortOption: Partial<SortOption>) => {
+      const newSortOption: SortOption = {
+        ...tree.sortOption,
+        ...partialSortOption,
+      };
+      tree.updateSortByOption(newSortOption);
+    }
   return (
     <div className={s.ControlsBar}>
       <div className={styles.ControlsBarWrapper}>
@@ -116,6 +123,93 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 <MapPin size={14} strokeWidth={1.5} />
                 Places
               </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+        <div className={styles.SortOptionDropdown}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="default">
+                {tree.sortOption.mode !== "manual" ? (
+                  tree.sortOption.direction === "asc" ? (
+                    <ArrowUp size={14} />
+                  ) : (
+                    <ArrowDown size={14} />
+                  )
+                ) : (
+                  <ArrowUpDown size={14} />
+                )}
+                Sort By
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild>
+                <Button
+                  size="sm"
+                  variant={tree.sortOption.mode === "createdAt" ? "active" : "ghost"}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    updateSortOption({ mode: "createdAt" });
+                  }}
+                >
+                  Creation Date
+                </Button>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Button
+                  size="sm"
+                  variant={tree.sortOption.mode === "updatedAt" ? "active" : "ghost"}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    updateSortOption({ mode: "updatedAt" });
+                  }}
+                >
+                  Update Date
+                </Button>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Button
+                  size="sm"
+                  variant={tree.sortOption.mode === "manual" ? "active" : "ghost"}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    updateSortOption({ mode: "manual" });
+                  }}
+                >
+                  Manual
+                </Button>
+              </DropdownMenuItem>
+              {tree.sortOption.mode !== "manual" && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Button
+                      size="sm"
+                      variant={tree.sortOption.direction === "asc" ? "active" : "ghost"}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        updateSortOption({ direction: "asc" });
+                      }}
+                    >
+                      <ArrowUp size={14} />
+                      Oldest
+                    </Button>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Button
+                      size="sm"
+                      variant={tree.sortOption.direction === "desc" ? "active" : "ghost"}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        updateSortOption({ direction: "desc" });
+                      }}
+                    >
+                      <ArrowDown size={14} />
+                      Newest
+                    </Button>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

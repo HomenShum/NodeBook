@@ -12,7 +12,8 @@ import { SettingsStore } from "@/app/graph/SettingsStore";
 import { extractGroupId, extractPointedAtObjectId, getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
-import { comparePositions, ObjectPath, uuid } from "@/app/util";
+import { SortOptionLocalStorageCache } from "@/app/tree/SortOptionLocalStorageCache";
+import { comparePositions, compareTimestamps, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, PointerTreeNode, RootTreeNode, TreeNode } from "./nodes";
@@ -42,6 +43,11 @@ export type Path = string;
 
 export type Root = DescendantTreeNode | ObjectPath | GraphObject;
 
+export type SortOption = {
+  mode: "createdAt" | "updatedAt" | "manual";
+  direction: "asc" | "desc";
+};
+
 const logger = appLogger.child({ service: "tree" });
 
 /**
@@ -63,6 +69,10 @@ export class Tree {
       filter = {},
       expansions = new Map(),
       selection = null,
+      sortOption = {
+        mode: "manual",
+        direction: "desc",
+      },
       path = "",
     }: {
       id?: string;
@@ -70,6 +80,7 @@ export class Tree {
       filter?: Partial<Filter>;
       expansions?: Map<string, boolean>;
       selection?: TreeSelection | null;
+      sortOption?: SortOption;
       path?: string;
     } = {},
   ) {
@@ -81,6 +92,8 @@ export class Tree {
     this.pathToRootIds = pathToRootIds;
     this.search = search;
     this.partialFilter = filter;
+    this.sortOptionLocalStorageCache = new SortOptionLocalStorageCache();
+    this.sortOption = this.sortOptionLocalStorageCache.load() ?? sortOption;
     this.expansionLocalStorageCache = new ExpansionLocalStorageCache();
     this.expansionsByPath = expansions.size === 0 ? this.expansionLocalStorageCache.load() : expansions;
     this.selection = selection;
@@ -93,13 +106,14 @@ export class Tree {
 
   makeObservable() {
     if (isObservable(this)) return;
-    makeObservable<this, "partialFilter">(this, {
+    makeObservable<this, "partialFilter" | "sortOption">(this, {
       selection: observable,
       rootObjectId: observable,
       rootObject: computed,
       pathToRootIds: observable.shallow,
       pathToRoot: computed,
       search: observable,
+      sortOption: observable,
       expansionsByPath: observable,
       partialFilter: observable,
       path: observable,
@@ -132,6 +146,7 @@ export class Tree {
       updateSubtreeExpansionAndSelectionPathState: action,
       clear: action,
       deserializeInPlace: action,
+      updateSortByOption: action,
     });
   }
 
@@ -162,6 +177,14 @@ export class Tree {
   public search: string = "";
 
   protected partialFilter: Partial<Filter> = {};
+
+  public sortOption: SortOption = {
+    mode: "manual",
+    direction: "desc",
+  };
+
+  /** Helper class to read and sync sort option with local storage */
+  protected sortOptionLocalStorageCache: SortOptionLocalStorageCache;
 
   /** Helper class to read and sync expansion state with local storage */
   protected expansionLocalStorageCache: ExpansionLocalStorageCache;
@@ -493,13 +516,27 @@ export class Tree {
     walk(treeNode);
   }
 
+  updateSortByOption(sortOption: SortOption) {
+    this.sortOption = sortOption;
+    this.sortOptionLocalStorageCache.save(this.sortOption);
+  }
+
   protected applySort(treeNode: TreeNode) {
-    function walk(treeNode: TreeNode) {
-      treeNode.childrenGroups.forEach((group) => {
-        group.nodes.sort((a, b) => comparePositions(a.position, b.position));
-        group.nodes.forEach((child) => walk(child));
+    const { mode, direction } = this.sortOption;
+    const negation = direction === "asc" ? -1 : 1;
+
+    const sortFn = (a: DescendantTreeNode, b: DescendantTreeNode) =>
+      mode === "manual"
+        ? comparePositions(a.position, b.position)
+        : compareTimestamps(a.object[mode], b.object[mode], a.position, b.position) * negation;
+
+    const walk = (node: TreeNode) => {
+      node.childrenGroups.forEach((group) => {
+        group.nodes.sort(sortFn);
+        group.nodes.forEach(walk);
       });
-    }
+    };
+
     walk(treeNode);
   }
 
@@ -815,6 +852,7 @@ export class Tree {
    */
   async moveSelectedNodesUp(): Promise<boolean> {
     if (!this.selectionWithNodes) return false;
+    if (this.sortOption.mode !== "manual") return false;
     const { subtreeRoots: nodes } = this.selectionWithNodes;
     // Moves noes only when they belong to same parent and same group.
     const shouldMove = nodes.every(
@@ -860,6 +898,7 @@ export class Tree {
   async moveSelectedNodesDown(): Promise<boolean> {
     //Todo: This is pretty similar to moveSelectedNodesUp. Can unify them?
     if (!this.selectionWithNodes) return false;
+    if (this.sortOption.mode !== "manual") return false;
     const { subtreeRoots: nodes } = this.selectionWithNodes;
     // Moves noes only when they belong to same parent and same group.
     const shouldMove = nodes.every(
@@ -1073,6 +1112,7 @@ export class Tree {
     // this.textsCache.clear();
     this.textsByObjectId.clear();
     this.expansionLocalStorageCache.clear();
+    this.sortOptionLocalStorageCache.clear();
   }
 
   serialize(): SerializedTree {

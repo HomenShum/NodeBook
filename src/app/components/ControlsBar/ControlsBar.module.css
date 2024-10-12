@@ -21,6 +21,10 @@
   height: 24px;
 }
 
+.SortOptionDropdown {
+  height: 24px;
+}
+
 .ControlsBarWrapper {
   display: flex;
   align-items: center;
