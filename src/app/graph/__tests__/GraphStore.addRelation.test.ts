@@ -2,6 +2,7 @@ import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
+import { SettingsStore } from "@/app/graph/SettingsStore";
 
 import { MIN_NUM_RELATIONS } from "./helpers";
 
@@ -13,7 +14,7 @@ describe("GraphStore.addRelation", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore(MOCK_MEW_USER);
+    graphStore = new GraphStore(MOCK_MEW_USER, new SettingsStore({ publicMode: false }));
 
     startNode = await graphStore.addNode({
       nodeProps: {
@@ -132,5 +133,51 @@ describe("GraphStore.addRelation", () => {
     expect(startNode.isNewRelatedObjectsPublic).toBeTruthy();
     expect(endNode.isPublic).toBeTruthy();
     expect(endNode.isNewRelatedObjectsPublic).toBeTruthy();
+  });
+  it("relation list item should be public if relation is public", async () => {
+    await graphStore.settings?.setPublicMode(true);
+
+    const relation = await graphStore.addRelation({
+      id: "relation",
+      fromId: startNode.id,
+      toId: endNode.id,
+    });
+
+    // Get pendingUpdates without the transactionId for comparison
+    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
+    expect(pendingUpdateSets).toEqual([
+      [
+        {
+          operation: "addRelation",
+          relation: relation.serialize(),
+          fromPos: relation.fromPosition,
+          toPos: relation.toPosition,
+        },
+        {
+          operation: "updateRelationList",
+          nodeId: startNode.id,
+          authorId: startNode.authorId,
+          pinned: false,
+          relationId: relation.id,
+          oldPosition: null,
+          newPosition: relation.fromPosition,
+          oldIsPublic: false,
+          newIsPublic: true,
+        },
+        {
+          operation: "updateRelationList",
+          nodeId: endNode.id,
+          authorId: endNode.authorId,
+          pinned: false,
+          relationId: relation.id,
+          oldPosition: null,
+          newPosition: relation.toPosition,
+          oldIsPublic: false,
+          newIsPublic: true,
+        },
+      ],
+    ]);
+
+    expect(graphStore.getRelation(relation.id)).toBeDefined();
   });
 });

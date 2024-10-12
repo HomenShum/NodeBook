@@ -378,7 +378,6 @@ export class GraphStore {
    */
   async addChildNode(tx: TxAddChildNode): Promise<{ node: GraphNode; relation: GraphRelation }> {
     const { node, relation, updates } = this._addChildNode(tx);
-
     this.updateManager.queueUpdates(updates);
     return { node, relation };
   }
@@ -915,6 +914,33 @@ export class GraphStore {
       });
     }
 
+    if (!isReversal && newProps.isPublic !== oldProps.isPublic) {
+      const fromPos = this.getRelationList(relation.from.id).get(relation.id)?.position;
+      const toPos = this.getRelationList(relation.to.id).get(relation.id)?.position;
+      updates.push({
+        operation: "updateRelationList",
+        authorId: this.user.id,
+        nodeId: relation.from.id,
+        pinned: false,
+        relationId: relation.id,
+        oldPosition: fromPos ?? null,
+        newPosition: fromPos ?? null,
+        oldIsPublic: oldProps.isPublic,
+        newIsPublic: newProps.isPublic,
+      });
+      updates.push({
+        operation: "updateRelationList",
+        authorId: this.user.id,
+        nodeId: relation.to.id,
+        pinned: false,
+        relationId: relation.id,
+        oldPosition: toPos ?? null,
+        newPosition: toPos ?? null,
+        oldIsPublic: oldProps.isPublic,
+        newIsPublic: newProps.isPublic,
+      });
+    }
+
     return updates;
   }
 
@@ -1030,13 +1056,17 @@ export class GraphStore {
 
       relation = new GraphRelation(this, {
         ...relationProps,
-        isPublic: relationProps.isPublic ?? this.settings?.publicMode ?? false,
+        isPublic: !!(relationProps.isPublic || this.settings?.publicMode),
         authorId,
       });
       this.relationsById.set(relation.id, relation);
       this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
-
-      const commonUpdatePart = { authorId, pinned: false, oldIsPublic: false, newIsPublic: !!relationProps.isPublic };
+      const commonUpdatePart = {
+        authorId,
+        pinned: false,
+        oldIsPublic: false,
+        newIsPublic: !!relationProps.isPublic || relation.isPublic,
+      };
       const fromId = relation.from.id;
       const partialFromUpdates = relation.from.allRelationsList.add(relation);
       const toId = relation.to.id;
@@ -1823,14 +1853,20 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.allRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.pinnedRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.allRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.pinnedRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 

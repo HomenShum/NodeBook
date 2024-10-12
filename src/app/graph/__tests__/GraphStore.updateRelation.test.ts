@@ -117,20 +117,48 @@ describe("GraphStore.updateRelation", () => {
     expect(relation.version).toBe(1);
   });
 
-  it("should queue a GraphUpdate for updating a relation", async () => {
-    const relationAtStart = relation.serialize();
+  describe("should queue appropriate GraphUpdates for updating a relation", () => {
+    it("should queue updateRelationList updates when switching visibility", async () => {
+      const relationAtStart = relation.serialize();
 
-    await graphStore.updateRelation({
-      relationId: relation.id,
-      relationProps: {
-        isPublic: true,
-      },
+      await graphStore.updateRelation({
+        relationId: relation.id,
+        relationProps: {
+          isPublic: true,
+        },
+      });
+
+      const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
+        (update) => update.updates,
+      );
+      expect(pendingUpdateSets).toEqual([
+        [
+          { operation: "updateRelation", oldProps: relationAtStart, newProps: relation.serialize() },
+          {
+            operation: "updateRelationList",
+            nodeId: startNode.id,
+            authorId: startNode.authorId,
+            pinned: false,
+            relationId: relation.id,
+            oldPosition: relation.fromPosition,
+            newPosition: relation.fromPosition,
+            oldIsPublic: false,
+            newIsPublic: true,
+          },
+          {
+            operation: "updateRelationList",
+            nodeId: endNode.id,
+            authorId: endNode.authorId,
+            pinned: false,
+            relationId: relation.id,
+            oldPosition: relation.toPosition,
+            newPosition: relation.toPosition,
+            oldIsPublic: false,
+            newIsPublic: true,
+          },
+        ],
+      ]);
     });
-
-    const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
-    expect(pendingUpdateSets).toEqual([
-      [{ operation: "updateRelation", oldProps: relationAtStart, newProps: relation.serialize() }],
-    ]);
   });
 
   it("should queue appropriate GraphUpdates when reversing a relation", async () => {
