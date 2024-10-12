@@ -25,22 +25,6 @@ export function comparePositions(a: Position | null, b: Position | null) {
   }
 }
 
-export function compareTimestamps(
-  a: Date | null,
-  b: Date | null,
-  aPosition: Position | null = null,
-  bPosition: Position | null = null,
-) {
-  if (a === null) return -1;
-  if (b === null) return 1;
-  if (a.getTime() === b.getTime()) {
-    // tie breaker
-    return comparePositions(aPosition, bPosition);
-  } else {
-    return a.getTime() > b.getTime() ? -1 : 1;
-  }
-}
-
 export function generateDefaultPosition(createdAt: Date) {
   return { int: createdAt.getTime(), frac: generateKeyBetween(null, null) };
 }
