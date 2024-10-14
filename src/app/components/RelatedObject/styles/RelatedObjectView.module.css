@@ -232,7 +232,7 @@ Right Area
 
 /* Pin Icon of each bullet */
 .PinToggle {
-  cursor: default;
+  cursor: pointer;
   position: relative;
 }
 
@@ -363,6 +363,6 @@ Right Area
   border-radius: 2px;
   padding-left: 4px;
   padding-right: 4px;
-  cursor: default;
+  cursor: pointer;
 }
 
