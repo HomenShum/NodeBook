@@ -142,11 +142,18 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     return oldValues;
   }
 
-  // Todo: Since text is a getter property, we cannot pass
-  // parameters to it. For now text property acts as a proxy
-  // to _dfsText. Need to come up with a cleaner solution
-  // without breaking things.
-  _dfsText(visitedMap: Record<string, boolean> = {}): string {
+  /**
+   * Recursively traverses the node and its descendants to build a string
+   * representation of the node's content.
+   *
+   * If `markupMentions` is true, mentions are wrapped in `@[...]`
+   *
+   * Todo: Since text is a getter property, we cannot pass
+   * parameters to it. For now text property acts as a proxy
+   * to _dfsText. Need to come up with a cleaner solution
+   * without breaking things.
+   */
+  _dfsText(visitedMap: Record<string, boolean> = {}, markupMentions = true): string {
     visitedMap[this.id] = true;
     return this.content
       .map((chip) => {
@@ -157,9 +164,14 @@ export class GraphNode extends BaseGraphObject implements Serializable {
             return chip.value;
           case "mention":
             const referencedNode = this.store.getNode(chip.value);
-            if (!referencedNode) return `@[${DELETED_NODE_TEXT}]`;
+            if (!referencedNode) return markupMentions ? `@[${DELETED_NODE_TEXT}]` : DELETED_NODE_TEXT;
             try {
-              return visitedMap[referencedNode.id] ? "" : `@[${referencedNode._dfsText(visitedMap)}]`;
+              if (visitedMap[referencedNode.id]) {
+                return "";
+              } else {
+                const text = referencedNode._dfsText(visitedMap, markupMentions);
+                return markupMentions ? `@[${text}]` : text;
+              }
             } catch (error) {
               console.error("Error accessing referencedNode.text:", error);
               return "@[Error]";
@@ -176,7 +188,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   }
 
   get searchText(): string {
-    return this.text;
+    return this._dfsText({}, false);
   }
 
   toString() {
