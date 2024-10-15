@@ -1,5 +1,5 @@
 import { createTestTreeFromTemplate, TemplateNode } from "@/app/tree/__test__/helpers";
-import { getSubtreesBetween } from "@/app/tree/utils";
+import { getSubtreesBetween, SelectionStack } from "@/app/tree/utils";
 import appLogger from "@/lib/logger";
 
 describe("Tree utils", () => {
@@ -55,6 +55,52 @@ describe("Tree utils", () => {
         { rid: "cats are cool" },
       ];
       await subtreesMatchWithSelection(template, ["2", "5"]);
+    });
+  });
+  describe("SelectionStack", () => {
+    test("should push items to the stack", () => {
+      const stack = new SelectionStack();
+      stack.push("up", "h1");
+      stack.push("down", "h2");
+      expect(stack.toArray()).toEqual([
+        { dir: "up", headId: "h1" },
+        { dir: "down", headId: "h2" },
+      ]);
+    });
+
+    test("should pop the last item by direction", () => {
+      const stack = new SelectionStack();
+      stack.push("up", "h1");
+      stack.push("down", "h2");
+      const popped = stack.popBy("down");
+      expect(popped).toEqual({ dir: "down", headId: "h2" });
+      expect(stack.toArray()).toEqual([{ dir: "up", headId: "h1" }]);
+    });
+
+    test("should return null if the last direction does not match to top", () => {
+      const stack = new SelectionStack();
+      stack.push("up", "h1");
+      stack.push("down", "h2");
+      const popped = stack.popBy("up");
+      expect(popped).toBeNull();
+      expect((stack as any).stack).toEqual([
+        { dir: "up", headId: "h1" },
+        { dir: "down", headId: "h2" },
+      ]);
+    });
+
+    test("should return null if popping from an empty stack", () => {
+      const stack = new SelectionStack();
+      const popped = stack.popBy("up");
+      expect(popped).toBeNull();
+    });
+
+    test("should reset the stack", () => {
+      const stack = new SelectionStack();
+      stack.push("up", "h1");
+      stack.push("down", "h2");
+      stack.reset();
+      expect(stack.toArray()).toEqual([]);
     });
   });
 });
