@@ -1,5 +1,4 @@
 declare const styles: {
-  readonly "AllNodesContent": string;
   readonly "AllNodesView": string;
   readonly "AuthorFilter": string;
   readonly "AuthorFilterContainer": string;
@@ -13,7 +12,8 @@ declare const styles: {
   readonly "NodeItem": string;
   readonly "NodeList": string;
   readonly "NodeText": string;
-  readonly "Nodes": string;
+  readonly "NodeTextContainer": string;
+  readonly "NodesTable": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
 };

@@ -1,7 +1,10 @@
 "use client";
+
 import { observer } from "mobx-react-lite";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
+import AutoSizer from "react-virtualized-auto-sizer";
+import { FixedSizeList as List } from "react-window";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -54,56 +57,72 @@ export const AllNodesView = observer(function AllNodesView() {
     return { nodes, users: authorOptions };
   }, [graphStore, selectedAuthorId, hideHomepageNodes]);
 
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+    const node = nodes[index];
+    return (
+      <div key={node.id} className={s.NodeItem} onClick={() => setRoot(node.getPath())} style={style}>
+        <div className={s.NodeTextContainer}>
+          <span className={s.NodeText}>{node.text}</span>
+        </div>
+        <span className={s.NodeDate}>{new Date(node.createdAt).toLocaleString()}</span>
+      </div>
+    );
+  };
+
   return (
     <div className={s.AllNodesView}>
-      <div className={s.AllNodesContent}>
-        <div className={s.HeadingContainer}>
-          <div className={s.TitleContainer}>
-            <h1 className={s.TitleText}>All Nodes</h1>
-          </div>
-          <div className={s.AuthorFilterContainer}>
-            <span className={s.FilterLabel}>Filters</span>
-            <select
-              className={s.AuthorFilter}
-              value={selectedAuthorId}
-              onChange={(e) => {
-                router.push(`/all-nodes?authorId=${e.target.value}`);
-              }}
-            >
-              <option value="all">All Users</option>
-              {users.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            {selectedAuthorId !== "all" && (
-              <label className={s.DirectNodesCheckbox}>
-                <input
-                  type="checkbox"
-                  checked={hideHomepageNodes}
-                  onChange={() => {
-                    setHideHomepageNodes((v) => !v);
-                  }}
-                />
-                Hide Home Page Nodes
-              </label>
-            )}
-          </div>
+      <div className={s.HeadingContainer}>
+        <div className={s.TitleContainer}>
+          <h1 className={s.TitleText}>All Nodes</h1>
         </div>
-        <div className={s.Nodes}>
-          <div className={s.NodeHeader}>
-            <span className={s.NodeHeaderText}>Node Content</span>
-            <span className={s.NodeHeaderDate}>Date Created</span>
-          </div>
-          <div className={s.NodeList}>
-            {nodes.map((node) => (
-              <div key={node.id} className={s.NodeItem} onClick={() => setRoot(node.getPath())}>
-                <span className={s.NodeText}>{node.text}</span>
-                <span className={s.NodeDate}>{new Date(node.createdAt).toLocaleString()}</span>
-              </div>
+        <div className={s.AuthorFilterContainer}>
+          <span className={s.FilterLabel}>Filters</span>
+          <select
+            className={s.AuthorFilter}
+            value={selectedAuthorId}
+            onChange={(e) => {
+              router.push(`/all-nodes?authorId=${e.target.value}`);
+            }}
+          >
+            <option value="all">All Users</option>
+            {users.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
             ))}
-          </div>
+          </select>
+          {selectedAuthorId !== "all" && (
+            <label className={s.DirectNodesCheckbox}>
+              <input
+                type="checkbox"
+                checked={hideHomepageNodes}
+                onChange={() => {
+                  setHideHomepageNodes((v) => !v);
+                }}
+              />
+              Hide Home Page Nodes
+            </label>
+          )}
+        </div>
+      </div>
+      <div className={s.NodesTable}>
+        <div className={s.NodeHeader}>
+          <span className={s.NodeHeaderText}>Node Content</span>
+          <span className={s.NodeHeaderDate}>Date Created</span>
+        </div>
+        <div className={s.NodeList}>
+          <AutoSizer>
+            {({ height, width }) => (
+              <List
+                height={height}
+                itemCount={nodes.length}
+                itemSize={60} // Increased from 50 to give more space
+                width={width}
+              >
+                {Row}
+              </List>
+            )}
+          </AutoSizer>
         </div>
       </div>
     </div>
