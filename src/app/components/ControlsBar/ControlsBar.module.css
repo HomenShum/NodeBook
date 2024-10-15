@@ -1,8 +1,4 @@
-.Button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+
 
 .ControlsBar {
   padding: 0 8px 0 40px;
@@ -27,10 +23,51 @@
   gap: 6px;
 }
 
-.PopoverWrapper {
+
+.Icon {
+  color: var(--gray-10);
+  transform: scale(0.8);
+}
+
+.RightWrapper {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.ShowTooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  background-color: var(--gray-1);
+  border: solid 0.5px var(--gray-6);
+  z-index: 999;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: var(--font-size-mini);
+  color: var(--gray-11);
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  box-shadow: var(--shadow-sm);
+  user-select: none;
+}
+
+.ShowTooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.ShowTooltip.BottomAlign::after {
+  bottom: 6px;
+  transform: translateY(calc(100% + 2px));
 }
 
 .PopoverHeader {

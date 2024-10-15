@@ -2,7 +2,7 @@ import { Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react"
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
-import { ListIcon, PinIconMew, StreamIcon, ViewsIconMew } from "@/app/components/CustomIcons";
+import { ListIcon, PinIconMew, StreamIcon } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -17,6 +17,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { Tree } from "@/app/tree/Tree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import { default as s, default as styles } from "./ControlsBar.module.css";
 
@@ -34,7 +35,6 @@ const FilterPill = ({ filter, onRemove }: { filter: string; onRemove: (filter: s
     <Button
       size="sm"
       variant="active"
-      className={styles.Button}
       onClick={() => onRemove(filter)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -67,12 +67,18 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
   }, []);
 
+  const toggleViewType = useCallback(() => {
+    viewStore.setViewType(
+      viewStore.viewType === ViewType.Outline ? ViewType.Note : ViewType.Outline
+    );
+  }, [viewStore]);
+
   return (
     <div className={s.ControlsBar}>
       <div className={styles.ControlsBarWrapper}>
         <Button
           size="sm"
-          className={styles.Button}
+          disabled
           variant={showPinnedSection ? "active" : "default"}
           onClick={togglePinnedSection}
           onMouseEnter={() => setIsPinnedHovered(true)}
@@ -130,37 +136,25 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           </div>
         )}
       </div>
-      <div className={styles.PopoverWrapper}>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button size="sm">
-              <ViewsIconMew size={16} fill="none" strokeWidth={1.2} />
-              <span>View</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="end">
-            <div className={styles.PopoverButtonsContainer}>
-              <Button
-                size="sm"
-                className={styles.PopoverButton}
-                variant={viewStore.viewType === ViewType.Outline ? "active" : "default"}
-                onClick={() => viewStore.setViewType(ViewType.Outline)}
-              >
-                <ListIcon />
-                Outline
-              </Button>
-              <Button
-                size="sm"
-                className={styles.PopoverButton}
-                variant={viewStore.viewType === ViewType.Note ? "active" : "default"}
-                onClick={() => viewStore.setViewType(ViewType.Note)}
-              >
-                <StreamIcon />
-                Note
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+      <div className={styles.RightWrapper}>
+        <Button
+          size="sm"
+          onClick={toggleViewType}
+          className={cn(s.ShowTooltip, s.BottomAlign)}
+          data-tooltip={'Switch view'}
+        >
+          {viewStore.viewType === ViewType.Outline ? (
+            <>
+              <ListIcon className={styles.Icon} />
+              <span>Lists</span>
+            </>
+          ) : (
+            <>
+              <StreamIcon className={styles.Icon} />
+              <span>Notes</span>
+            </>
+          )}
+        </Button>
         <Popover>
           <PopoverTrigger asChild>
             <Button size="sm">

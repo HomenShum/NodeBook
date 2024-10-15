@@ -4,12 +4,15 @@ import { useCallback, useEffect } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { useSetRoot } from "@/app/tree/utils";
+import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 
 export const useKeyboardShortcuts = () => {
   const user = useUser();
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
+  const setRoot = useSetRoot();
   const handleKeyDown = useCallback(
     async (e: KeyboardEvent) => {
       const metaOrCtrl = e.metaKey || e.ctrlKey; // Command key on Mac, Ctrl key on Windows
@@ -26,8 +29,17 @@ export const useKeyboardShortcuts = () => {
           graphStore.updateManager.undo();
         }
       }
+      if (metaOrCtrl && e.shiftKey && e.key === "b") {
+        e.preventDefault();
+        viewStore.toggleLeftSidebar();
+      }
+      if (metaOrCtrl && e.shiftKey && e.key.toLowerCase() === "h") {
+        e.preventDefault();
+        setRoot(graphStore.getDefaultRootForUser());
+        viewStore.setViewType(ViewType.Note);
+      }
     },
-    [viewStore, graphStore],
+    [viewStore, graphStore, setRoot],
   );
   useEffect(() => {
     if (!user.isAnonymous) {

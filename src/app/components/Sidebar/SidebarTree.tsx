@@ -17,8 +17,18 @@ const TreeElement = observer(function TreeElement({ object }: Props) {
   return (
     <>
       <div className={styles.SidebarTreeBlock}>
-        <div onClick={() => setIsExpanded(!isExpanded)} className={styles.IconBox}>
-          <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+        <div 
+          className={styles.IconBox} 
+          onClick={() => object.children.length > 0 && setIsExpanded(!isExpanded)}
+        >
+          <Play
+            size={7}
+            fill="currentColor"
+            className={cn(
+              object.children.length === 0 && styles.IconInactive,
+              isExpanded && styles.IconExpanded
+            )}
+          />
         </div>
 
         <div className={styles.SidebarTreeContent}>

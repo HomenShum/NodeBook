@@ -44,10 +44,10 @@
 
 .SidebarContent {
   display: flex;
-  padding: 30px 12px 12px 12px;
+  padding: 16px 12px 12px 12px;
   height: 100%;
   flex-direction: column;
-  justify-content: space-between;
+  flex-grow: 1;
 }
 
 .SidebarContent.Resizing {
@@ -55,30 +55,51 @@
   user-select: none;
 }
 
+.SidebarSectionHeader {
+  font-size: var(--font-size-xs);
+  margin-top: 16px;
+  margin-left: 8px;
+  color: var(--gray-10);
+  position: relative;
+}
+
 .Resizer {
   position: absolute;
   top: 8px;
-  right: 0;
+  right: -8px;
   padding: 8px 2px;
-  width: 2px;
+  width: 16px;
   height: calc(100vh - 16px);
-  border-radius: 12px;
   cursor: col-resize;
   touch-action: none;
+}
+
+.ResizerHandle {
+  width: 4px;
+  height: 100%;
+  border-radius: 2px;
   transition: background-color 0.2s ease;
 }
 
-.Resizer:hover {
-  background-color: var(--gray-a4);
+.Resizer:hover .ResizerHandle {
+  background-color: var(--gray-a3);
 }
 
-.Resizer:active {
+.Resizer:active .ResizerHandle {
   background-color: var(--teal-a4);
+}
+
+.Nav {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
 }
 
 .TopContent {
   display: flex;
   gap: 2px;
+  padding: 13px 0;
   flex-direction: column;
 }
 
@@ -89,9 +110,33 @@
   width: 100%;
 }
 
+.LogOutButton {
+  color: var(--tomato-10);
+}
+
+.LogOutButton:hover {
+  color: var(--tomato-9);
+  background-color: var(--tomato-2);
+}
+
+.LogInButton {
+  color: var(--teal-12);
+}
+
+.LogInButton:hover {
+  color: var(--teal-9);
+  background-color: var(--teal-2);
+}
+
+.UserInfo {
+  display: flex;
+  flex-direction: column;
+}
+
 .BottomNav {
   display: flex;
   align-items: center;
+  margin-top: auto;
   width: 100%;
   justify-content: space-between;
 }
@@ -106,12 +151,13 @@
 }
 
 .Button {
+  width: 100%;
   text-align: left;
   padding: 8px 8px;
   justify-content: left;
   align-items: center;
   gap: 8px;
-  color: var(--gray-11);
+  color: var(--gray-12);
   font-style: normal;
   font-weight: 400;
   line-height: var(--font-size-mini);
@@ -140,6 +186,52 @@
   line-height: 16px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.ShowTooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  background-color: var(--gray-1);
+  border: solid 0.5px var(--gray-6);
+  z-index: 999;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: var(--font-size-mini);
+  color: var(--gray-11);
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  box-shadow: var(--shadow-sm);
+  user-select: none;
+}
+
+.ShowTooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.ShowTooltip.BottomAlign::after {
+  transform: translateY(calc(100% + 2px));
+}
+
+.ShowTooltip.TopAlign::after {
+  left: 8px;
+  transform: translateY(-100%);
+  height: 28px;
+}
+
+.ShowTooltip.RightAlign::after {
+  right: 8px;
+  transform: translateX(100%);
+  height: 28px;
 }
 
 @media (max-width: 960px) {

@@ -63,6 +63,8 @@
 }
 .DropdownMenuItem[data-disabled] {
   opacity: 50%;
+  cursor: default;
+  background-color: transparent;
 }
 .DropdownMenuItem[data-highlighted] {
   color: var(--teal-11);

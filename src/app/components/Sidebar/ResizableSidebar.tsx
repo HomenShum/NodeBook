@@ -1,4 +1,4 @@
-import { FileSpreadsheet, Globe, Home, MoonIcon, SettingsIcon, SunIcon } from "lucide-react";
+import { FileSpreadsheet, Globe, Home, Key, LogIn, LogOut, Mail, MoonIcon, NotebookText, SettingsIcon, SunIcon, User } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
@@ -9,12 +9,21 @@ import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import SidebarTree from "@/app/components/Sidebar/SidebarTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/app/components/UIPrimitives/DropdownMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { useSetRoot } from "@/app/tree/utils";
+import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -39,7 +48,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const resizerRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
   const [activePointerId, setActivePointerId] = useState<number | null>(null);
-  const [isCommandBarOpen, setIsCommandBarOpen] = useState(false);
 
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
@@ -49,6 +57,11 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const handleOpenDevTools = () => {
     viewStore.setActiveModal("devTools");
   };
+
+  const handleLogout = useCallback(() => {
+    if (!auth) return;
+    auth.logout({ logoutParams: { returnTo: window.location.origin } });
+  }, [auth]);
 
   const startResizing = useCallback(
     (e: React.PointerEvent) => {
@@ -121,12 +134,48 @@ export const ResizableSidebar = observer(function ResizableSidebar({
         }}
       >
         <div className={`${styles.SidebarContent} ${isResizing ? styles.Resizing : ""}`}>
+          <div className={styles.Nav}>
+            <Button variant="ghost" size="icon" onClick={handleOpenDevTools} className={cn(styles.ShowTooltip, styles.BottomAlign)} data-tooltip="Settings">
+              <SettingsIcon size={16} strokeWidth={1.5} />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className={cn(styles.ShowTooltip, styles.BottomAlign)} data-tooltip="Account">
+                  <User size={16} strokeWidth={1.5}  />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {user.isAnonymous && (
+                  <DropdownMenuItem className={styles.LogInButton} onSelect={() => auth?.loginWithRedirect()}>
+                      <LogIn size={16} strokeWidth={1.5} />
+                      <span>Log in</span>
+                  </DropdownMenuItem>
+                )}
+                {!user.isAnonymous && auth && (
+                    <>
+                    <DropdownMenuItem onSelect={handleLogout} className={styles.LogOutButton}>
+                      <LogOut size={16} strokeWidth={1.5} />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem disabled>
+                      <Mail size={16} strokeWidth={1.5} />
+                      {user.email}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled>
+                      <Key size={16} strokeWidth={1.5} />
+                      {user.id}
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <div className={styles.TopContent}>
-            <div style={{ display: "flex", flexDirection: "column", marginTop: "24px" }}>
               <Button
-                style={{ width: "100%" }}
+                
                 variant="ghost"
-                className={styles.Button}
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to Global Root"
                 onClick={() => {
                   setRoot({ object: graphStore.globalRoot });
                 }}
@@ -138,9 +187,8 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </Button>
               {!user.isAnonymous && (
                 <Button
-                  style={{ width: "100%" }}
                   variant="ghost"
-                  className={styles.Button}
+                  className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to your root"
                   onClick={() => {
                     setRoot(graphStore.getDefaultRootForUser());
                   }}
@@ -148,14 +196,27 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   <span>
                     <Home size={16} strokeWidth={1.5} />
                   </span>
-                  <span className={styles.ButtonText}>{graphStore.homeRoot.text}</span>
+                  <span className={styles.ButtonText}>Your Root ({graphStore.homeRoot.text})</span>
                 </Button>
               )}
-              {
-                <Button
-                  style={{ width: "100%" }}
+              {!user.isAnonymous && (
+                <>
+                  <div className={styles.SidebarSectionHeader}>Workspaces</div>
+                  <Button  variant="ghost" className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Your Home as Notes · ⌘⇧H" 
+                 onClick={() => {
+                  setRoot(graphStore.getDefaultRootForUser());
+                  viewStore.setViewType(ViewType.Note);
+                }}>
+                  <span>
+                    <NotebookText size={16} strokeWidth={1.5} />
+                  </span>
+                  <span>Home&apos;s Notes</span>
+                </Button>
+                </>
+              )}
+              {!user.isAnonymous && <Button
                   variant="ghost"
-                  className={styles.Button}
+                  className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to All Nodes"
                   onClick={() => {
                     router.push("/all-nodes");
                   }}
@@ -164,22 +225,10 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                     <FileSpreadsheet size={16} strokeWidth={1.5} />
                   </span>
                   <span>All Nodes</span>
-                </Button>
-              }
-              <div style={{ marginTop: "16px" }}>
+                </Button>}
+              <div className={styles.SidebarSectionHeader}>Your Tree</div>
                 <SidebarTree />
-              </div>
-            </div>
           </div>
-
-          {user.isAnonymous && (
-            <div className={styles.LoginButtonWrapper}>
-              <Button variant="accent" onClick={() => auth?.loginWithRedirect()}>
-                Log in
-              </Button>
-            </div>
-          )}
-
           <div className={styles.BottomNav}>
             <Button
               variant="ghost"
@@ -187,6 +236,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               onClick={action(() => {
                 viewStore.isDarkMode = !viewStore.isDarkMode;
               })}
+              className={cn(styles.ShowTooltip, styles.TopAlign)} data-tooltip="Switch Theme"
             >
               {viewStore.isDarkMode ? (
                 <SunIcon size={16} strokeWidth={1.5} />
@@ -204,12 +254,11 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <Button variant="ghost" size="icon" onClick={handleOpenDevTools}>
-              <SettingsIcon size={16} strokeWidth={1.5} />
-            </Button>
           </div>
         </div>
-        <div ref={resizerRef} className={styles.Resizer} onPointerDown={startResizing} />
+        <div ref={resizerRef} className={styles.Resizer} onPointerDown={startResizing}>
+          <div className={styles.ResizerHandle} />
+        </div>
       </aside>
       <DevTools />
       <ImportDialog />

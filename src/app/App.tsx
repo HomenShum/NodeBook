@@ -73,7 +73,7 @@ export default observer(function App({ children }: Props) {
           <CommandBar />
           <div className={styles.Container}>
             <Button
-              data-tooltip="Toggle sidebar"
+              data-tooltip="Toggle sidebar · ⌘⇧B"
               className={styles.SidebarToggle}
               variant="default"
               size="icon"

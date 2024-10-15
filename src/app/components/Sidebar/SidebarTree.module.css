@@ -56,3 +56,7 @@
 .IconExpanded {
   transform: rotate(90deg);
 }
+
+.IconInactive {
+  color: var(--gray-8);
+}
