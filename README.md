@@ -46,6 +46,7 @@ yarn dev
 
 - Update the schema in `src/db/schema.ts`
 - Run `yarn db:generate-migration` to create a new migration file
+  - If there are no schema changes, run `drizzle-kit generate:pg --custom` to create an empty migration file that you can put your SQL into. 
 - Apply the migration with `yarn db:migrate` (to the database specified in your .env file)
 - Commit and push the schema change and the migration file
 

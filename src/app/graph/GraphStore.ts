@@ -1065,7 +1065,7 @@ export class GraphStore {
         authorId,
         pinned: false,
         oldIsPublic: false,
-        newIsPublic: !!relationProps.isPublic || relation.isPublic,
+        newIsPublic: relation.isPublic,
       };
       const fromId = relation.from.id;
       const partialFromUpdates = relation.from.allRelationsList.add(relation);
