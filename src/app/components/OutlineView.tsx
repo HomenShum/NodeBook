@@ -118,6 +118,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
 });
 
 const useOutlineHotkeys = function useOutlineHotkeys({ tree }: { tree: Tree }) {
+  const setRoot = useSetRoot();
   const defaults: Options = { enableOnContentEditable: true, preventDefault: true, enableOnFormTags: ["INPUT"] };
   useHotkeys("mod+shift+ArrowUp", () => tree.moveSelectedNodesUp(), defaults, [tree]);
   useHotkeys("mod+shift+ArrowDown", () => tree.moveSelectedNodesDown(), defaults, [tree]);
@@ -132,8 +133,7 @@ const useOutlineHotkeys = function useOutlineHotkeys({ tree }: { tree: Tree }) {
   useHotkeys("tab", () => tree.indentSelection(), defaults, [tree]);
   useHotkeys("shift+tab", () => tree.dedentSelection(), defaults, [tree]);
   useHotkeys("esc", () => tree.escapeSelection(), defaults, [tree]);
-
-  const setRoot = useSetRoot();
+  // Zoom in on cmd+.
   const setCurrentNodeAsRoot = useCallback(() => {
     if (tree.selectionWithNodes?.type === "editor") {
       const node = tree.selectionWithNodes.treeNode;
@@ -144,4 +144,21 @@ const useOutlineHotkeys = function useOutlineHotkeys({ tree }: { tree: Tree }) {
     }
   }, [tree, setRoot]);
   useHotkeys("mod+.", setCurrentNodeAsRoot, defaults, [tree]);
+  // Zoom out on `mod+,`. For some reason this wasn't working with useHotkeys, so we're using a useEffect.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "," && tree.root.parent) {
+        setRoot({
+          object: tree.root.parent.object,
+          relations: getAncestorsAsArray(tree.root)
+            .slice(0, -1)
+            .map((node) => node.relationToChild),
+        });
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [tree, setRoot]);
 };
