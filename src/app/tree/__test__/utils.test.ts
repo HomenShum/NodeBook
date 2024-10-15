@@ -46,5 +46,15 @@ describe("Tree utils", () => {
       ];
       await subtreesMatchWithSelection(template, ["3", "4", "5", "7"]);
     });
+    it("anchor is a descendant of a sibling of head", async () => {
+      const template = [
+        { rid: "1" },
+        { rid: "2", isHead: true, children: [{ rid: "3" }] },
+        { rid: "5", children: [{ rid: "6", isAnchor: true }] },
+        { rid: "7" },
+        { rid: "cats are cool" },
+      ];
+      await subtreesMatchWithSelection(template, ["2", "5"]);
+    });
   });
 });

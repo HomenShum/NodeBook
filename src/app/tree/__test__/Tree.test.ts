@@ -8,6 +8,9 @@ import { Tree } from "@/app/tree/Tree";
 import appLogger from "@/lib/logger";
 import { testAllExamplesInFileExecute } from "@/lib/testAllExamplesInFileExecute";
 
+// Note: If writing tests for selection in future,
+// make sure for the initial state, the anchor and head belong
+// to same node since we use a stack to undo the head move.
 describe("Tree", () => {
   beforeAll(() => {
     appLogger.setGlobalConsoleFilter({ level: "info" });
@@ -73,7 +76,7 @@ describe("Tree", () => {
         { rid: "2", isAnchor: true },
       ]);
     });
-    describe("anchor should become last head when moving up", () => {
+    describe("anchor should not change when moving up", () => {
       it("for single child", async () => {
         // prettier-ignore
         const tree = await createTestTreeFromTemplate([
@@ -94,7 +97,7 @@ describe("Tree", () => {
         ]);
         tree.moveNodeSelectionHeadUp();
         expectTreeToMatchTemplate(tree, [
-          { rid: "1", isHead: true, children: [{ rid: "2", isAnchor: true, children: [{ rid: "3" }] }] },
+          { rid: "1", isHead: true, children: [{ rid: "2", children: [{ rid: "3", isAnchor: true }] }] },
         ]);
       });
       it("for multiple children", async () => {
@@ -113,14 +116,14 @@ describe("Tree", () => {
         expectTreeToMatchTemplate(tree, [
           { rid: "1", children: [
               { rid: "2", isHead: true, children: [
-                  { rid: "3", isAnchor: true },
-                  { rid: "4" },
+                  { rid: "3" },
+                  { rid: "4", isAnchor: true },
                 ]},
             ]}
         ]);
         tree.moveNodeSelectionHeadUp();
         expectTreeToMatchTemplate(tree, [
-          { rid: "1", isHead: true, children: [{ rid: "2", isAnchor: true, children: [{ rid: "3" }, { rid: "4" }] }] },
+          { rid: "1", isHead: true, children: [{ rid: "2", children: [{ rid: "3" }, { rid: "4", isAnchor: true }] }] },
         ]);
       });
     });
@@ -128,9 +131,10 @@ describe("Tree", () => {
       let tree = await createTestTreeFromTemplate([
         // prettier-ignore
         { rid: "1", children: [
-          { rid: "2", isAnchor: true }]},
-        { rid: "3", isHead: true },
+          { rid: "2", isAnchor: true, isHead: true }]},
+        { rid: "3" },
       ]);
+      tree.moveNodeSelectionHeadDown();
       tree.moveNodeSelectionHeadUp();
       expectTreeToMatchTemplate(tree, [
         // prettier-ignore
@@ -232,13 +236,13 @@ describe("Tree", () => {
       expectTreeToMatchTemplate(tree, [
         { rid: "1" },
         { rid: "2" },
-        { rid: "3", isHead: true, children: [{ rid: "4", isAnchor: true }, { rid: "5" }] },
+        { rid: "3", isHead: true, children: [{ rid: "4" }, { rid: "5", isAnchor: true }] },
         { rid: "6" },
       ]);
       await tree.moveSelectedNodesUp();
       await tree.moveSelectedNodesUp();
       expectTreeToMatchTemplate(tree, [
-        { rid: "3", isHead: true, children: [{ rid: "4", isAnchor: true }, { rid: "5" }] },
+        { rid: "3", isHead: true, children: [{ rid: "4" }, { rid: "5", isAnchor: true }] },
         { rid: "1" },
         { rid: "2" },
         { rid: "6" },
@@ -246,7 +250,7 @@ describe("Tree", () => {
       await tree.moveSelectedNodesDown();
       expectTreeToMatchTemplate(tree, [
         { rid: "1" },
-        { rid: "3", isHead: true, children: [{ rid: "4", isAnchor: true }, { rid: "5" }] },
+        { rid: "3", isHead: true, children: [{ rid: "4" }, { rid: "5", isAnchor: true }] },
         { rid: "2" },
         { rid: "6" },
       ]);
@@ -295,6 +299,42 @@ describe("Tree", () => {
             { rid: "6" },
           ]},
         ]);
+    });
+    describe("should not lose focus", () => {
+      it("when moving a subtree while anchor is a child of head", async () => {
+        //Source: https://github.com/IdeaFlowCo/mew/pull/519#pullrequestreview-2360873800
+        const tree = await createTestTreeFromTemplate([
+          { rid: "1" },
+          {
+            rid: "2",
+            children: [
+              {
+                rid: "3",
+                children: [{ rid: "4", isAnchor: true, isHead: true }],
+              },
+            ],
+          },
+          { rid: "5" },
+        ]);
+        tree.moveNodeSelectionHeadUp();
+        await tree.moveSelectedNodesUp();
+        expectTreeToMatchTemplate(tree, [
+          {
+            rid: "1",
+            children: [
+              {
+                rid: "3",
+                isHead: true,
+                children: [{ rid: "4", isAnchor: true }],
+              },
+            ],
+          },
+          {
+            rid: "2",
+          },
+          { rid: "5" },
+        ]);
+      });
     });
   });
   describe("helper examples should run", () => {

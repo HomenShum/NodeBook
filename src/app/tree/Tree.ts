@@ -1,4 +1,4 @@
-import { action, autorun, computed, isObservable, makeObservable, observable, toJS } from "mobx";
+import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 import { SetStateAction } from "react";
 
 import { defaultRelationTypes } from "@/app/graph/constants";
@@ -25,6 +25,7 @@ import {
   getNextSubtreeBelow,
   getSubtreesBetween,
   groupSiblings,
+  SelectionStack,
   walkTree,
 } from "./utils";
 
@@ -85,10 +86,8 @@ export class Tree {
     this.expansionsByPath = expansions.size === 0 ? this.expansionLocalStorageCache.load() : expansions;
     this.selection = selection;
     this.path = path;
+    this.selectionStack = new SelectionStack();
     this.makeObservable();
-    autorun(() => {
-      logger.debug("Selection", this.selection);
-    });
   }
 
   makeObservable() {
@@ -172,6 +171,7 @@ export class Tree {
   /** Connected path of relations and groups leading to the root object. */
   public path: string;
 
+  private selectionStack: SelectionStack;
   /**
    * Cache of object texts for tree search filtering.
    *
@@ -240,7 +240,6 @@ export class Tree {
    * Returns selection with referenced nodes resolved.
    */
   get selectionWithNodes(): TreeSelectionWithNodes | null {
-    console.log("selectionWithNodes", toJS({ selection: this.selection }));
     if (!this.selection) return null;
 
     const { descendantTreeNodesById } = this.state;
@@ -919,6 +918,7 @@ export class Tree {
     if (!selection || !(selection.type === "editor" || selection.type === "node")) return false;
     switch (selection.type) {
       case "editor":
+        this.selectionStack.reset();
         this.selection = { type: "node", anchorNodeId: selection.treeNode.id, headNodeId: selection.treeNode.id };
         return true;
       case "node":
@@ -930,45 +930,35 @@ export class Tree {
         }
         switch (dir) {
           case "up":
-            const nodeAbove = getNextAbove(head);
-            if (!nodeAbove) {
-              return false;
-            }
-            //Set anchor is last head when moving up,
-            //so while moving down we can go down by one depth.
-            if (nodeAbove.isAncestorOf(head)) {
-              this.selection.anchorNodeId = this.selection.headNodeId;
-              this.selection.headNodeId = head.parent.path;
+            const latestDown = this.selectionStack.popBy("down");
+            if (latestDown) {
+              this.selection.headNodeId = latestDown.headId;
               return true;
             }
-            // Nothing above on same level, we checked for parent previously.
-            // So nothing to move up to.
-            if (!head.siblingAbove) {
+            const nextUp = head.siblingAboveInSameGroup || head.parent;
+            if (!nextUp || !(nextUp instanceof DescendantTreeNode)) {
               return false;
             }
-            //If anchor belongs to descendant of the sibling above,
-            //do not go to sibling, go towards the anchor instead.
-            //Example: 1            Output:  1
-            //           2 <-A                 2 <-A,H
-            //         3 <-H                 3
-            if (head.siblingAbove.isAncestorOf(anchor)) {
-              this.selection.headNodeId = nodeAbove.path;
-              return true;
-            }
-            //Go to sibling above.
-            this.selection.headNodeId = head.siblingAbove.path;
+            this.selectionStack.push(dir, this.selection.headNodeId);
+            this.selection.headNodeId = nextUp.path;
             return true;
           case "down":
-            //If anchor is a descendant of head, move selection towards anchor instead of subtree.
+            const latestUp = this.selectionStack.popBy("up");
+            if (latestUp) {
+              this.selection.headNodeId = latestUp.headId;
+              return true;
+            }
+            //If anchor is a descendant of head, move head towards anchor instead of subtree.
             //Example: 1 <-H        Output: 1
             //           2 <-A                2 <-A,H
             //         3                    3
             //Example: 1 <-H,A        Output: 1 <-A
             //           2                      2
             //         3                      3 <-H
-            const nextNode = head.isAncestorOf(anchor) ? getNextBelow(head) : getNextSubtreeBelow(head) ?? null;
-            if (!nextNode || nextNode.parentGroup.id !== head.parentGroup.id) return false;
-            this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextNode.path };
+            const nextDown = head.isAncestorOf(anchor) ? getNextBelow(head) : getNextSubtreeBelow(head) ?? null;
+            if (!nextDown || nextDown.parentGroup.id !== head.parentGroup.id) return false;
+            this.selectionStack.push(dir, this.selection.headNodeId);
+            this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextDown.path };
             return true;
           default:
             return dir satisfies never;
@@ -1043,11 +1033,11 @@ export class Tree {
       }
     }
     if (this.selection?.type === "node") {
-      if (this.selection.anchorNodeId === path) {
-        this.selection = { ...this.selection, anchorNodeId: newPath };
+      if (this.selection.anchorNodeId.includes(path)) {
+        this.selection = { ...this.selection, anchorNodeId: this.selection.anchorNodeId.replace(path, newPath) };
       }
-      if (this.selection.headNodeId === path) {
-        this.selection = { ...this.selection, headNodeId: newPath };
+      if (this.selection.headNodeId.includes(path)) {
+        this.selection = { ...this.selection, headNodeId: this.selection.headNodeId.replace(path, newPath) };
       }
     } else if (this.selection?.type === "editor" && this.selection.treeNodeId === path) {
       this.selection = { ...this.selection, treeNodeId: newPath };

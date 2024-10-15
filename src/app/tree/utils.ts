@@ -1,5 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
+import StackUtils from "stack-utils";
 
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
@@ -152,10 +153,13 @@ export function getSubtreesBetween(top: DescendantTreeNode, bottom: DescendantTr
     return [top];
   }
 
-  let next: DescendantTreeNode | null = top;
-  while (next && next !== bottom) {
-    subtrees.push(next);
-    next = next.siblingBelowInSameGroup || getNextSubtreeBelow(next);
+  let current: DescendantTreeNode | null = top;
+  while (current && current !== bottom) {
+    subtrees.push(current);
+    if (current.isAncestorOf(bottom)) {
+      return subtrees;
+    }
+    current = current.siblingBelowInSameGroup || getNextSubtreeBelow(current);
   }
   subtrees.push(bottom);
   return subtrees;
@@ -182,4 +186,24 @@ export function useSetRoot() {
     },
     [viewStore, router],
   );
+}
+
+export class SelectionStack {
+  private static stack: { dir: string; headId: string }[] = [];
+  constructor() {
+    SelectionStack.stack = [];
+  }
+  public push(dir: string, headId: string) {
+    SelectionStack.stack.push({ dir, headId });
+  }
+  public popBy(dir: string): { dir: string; headId: string } | null {
+    if (SelectionStack.stack.length <= 0) return null;
+    if (SelectionStack.stack[SelectionStack.stack.length - 1].dir === dir) {
+      return SelectionStack.stack.pop() || null;
+    }
+    return null;
+  }
+  public reset(): void {
+    SelectionStack.stack = [];
+  }
 }
