@@ -1,8 +1,9 @@
-import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { mergeRegister } from "@lexical/utils";
+import { $createRangeSelection, $getSelection, $isRangeSelection, $setSelection, LexicalNode, TextNode } from "lexical";
+import { useEffect } from "react";
 
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { $getChips } from "@/app/editor/utils/content";
-import { Chip } from "@/app/graph/GraphNode";
+import { $createLinkNode, $isLinkNode, LinkNode } from "@/app/graph/LinkNode";
 
 type Match = {
   index: number;
@@ -73,92 +74,153 @@ export const findUrlMatches = (text: string): Match[] => {
   return matches;
 };
 
-/** Generate the "link" and "text" chips */
-const generateLinkAndTextChips = (text: string, matches: Match[]): Chip[] => {
-  const chips: Chip[] = [];
-  let currentStart = 0;
+/** Convert matches to new Lexical nodes */
+const matchesToNodes = (text: string, matches: Match[]): LexicalNode[] => {
+  if (!matches.length) return [];
 
-  matches.forEach((match, index) => {
-    // Add the text before the match if there is any
-    if (currentStart < match.index) {
-      chips.push({ type: "text", value: text.slice(currentStart, match.index) });
+  let currentOffset = 0;
+  const nodes = matches.reduce((acc, match) => {
+    if (match.index > currentOffset) {
+      acc.push(new TextNode(text.slice(currentOffset, match.index)));
     }
 
-    // Add the link chip for the current match
-    chips.push({ type: "link", url: match.url, value: match.text });
+    const url = match.text;
+    const linkNode = $createLinkNode(url.startsWith("http") ? url : `https://${url}`, url);
+    acc.push(linkNode);
 
-    // Add the text after the match if it's the last match and there is text
-    if (index === matches.length - 1 && match.index + match.length < text.length) {
-      chips.push({ type: "text", value: text.slice(match.index + match.length) });
-    }
+    currentOffset = match.index + match.length;
+    return acc;
+  }, [] as LexicalNode[]);
 
-    currentStart = match.index + match.length;
-  });
+  if (currentOffset < text.length) {
+    nodes.push(new TextNode(text.slice(currentOffset)));
+  }
 
-  return chips;
+  return nodes;
 };
 
-export const LinkPlugin = ({ nodeId }: { nodeId: string }) => {
-  const graphStore = useGraphStore();
+/** Iterate over the old nodes, accumulate their length, and add the offset of the selected node */
+const saveSelectionOffset = (nodes: LexicalNode[]): number | null => {
+  const lexicalSelection = $getSelection();
+  if (!lexicalSelection || !$isRangeSelection(lexicalSelection)) return null;
 
-  return (
-    <OnChangePlugin
-      ignoreHistoryMergeTagChange={true}
-      ignoreSelectionChange={true}
-      onChange={(editorState) => {
-        editorState.read(async () => {
-          const chips = $getChips();
-          let currentString = "";
+  let cumulativeOffset = 0;
+  for (const node of nodes) {
+    if (node.isSelected()) {
+      return cumulativeOffset + lexicalSelection.anchor.offset;
+    } else {
+      cumulativeOffset += node.getTextContent().length;
+    }
+  }
 
-          const newChips = chips.reduce((acc: Chip[], chip, index) => {
-            const isTextOrLink = chip.type === "text" || chip.type === "link";
+  return null;
+};
 
-            // Concat all consecutive text & link chips' values
-            if (isTextOrLink) {
-              currentString += chip.value;
-            }
+/** Iterate over the new nodes, reduce the offset until it's smaller than a node's length, and set the selection */
+const restoreSelection = (newNodes: LexicalNode[], offset: number | null) => {
+  if (offset !== null) {
+    for (let i = 0; i < newNodes.length; i++) {
+      const newNode = newNodes[i];
+      const nodeLength = newNode.getTextContent().length;
 
-            // Once hit a different chip type or the last chip, parse for URLs
-            if (!isTextOrLink || index === chips.length - 1) {
-              if (currentString) {
-                const matches = findUrlMatches(currentString);
-                if (matches.length) {
-                  // If there are matches, generate the link and text chips
-                  const chips = generateLinkAndTextChips(currentString, matches);
-                  acc.push(...chips);
-                } else {
-                  // Otherwise, add the current string as a text chip
-                  acc.push({ type: "text", value: currentString });
-                }
-                currentString = "";
-              }
+      if (offset <= nodeLength) {
+        const newSelection = $createRangeSelection();
+        const key = newNode.getKey();
+        newSelection.anchor.set(key, offset, "text");
+        newSelection.focus.set(key, offset, "text");
+        $setSelection(newSelection);
+        return;
+      }
 
-              if (!isTextOrLink) {
-                // Don't forget to add the current chip
-                acc.push(chip);
-              }
-            }
+      offset -= nodeLength;
+    }
+  }
 
-            return acc;
-          }, []);
+  // As the fallback, set the selection to the end of the last node
+  newNodes[newNodes.length - 1].selectEnd();
+};
 
-          const hasChanged =
-            chips.length !== newChips.length ||
-            chips.some((chip, index) => {
-              return (
-                chip.type !== newChips[index].type ||
-                chip.value !== newChips[index].value ||
-                // For some reason, the value for both old and new chips is the same, but the URL is different
-                // Probably it is changed in some other plugin before this one?
-                (chip.type === "link" && newChips[index].type === "link" && chip.url !== newChips[index].url)
-              );
-            });
+/** Replace the old nodes with the new nodes */
+const replaceNodes = (oldNodes: LexicalNode[], newNodes: LexicalNode[]) => {
+  if (!oldNodes.length || !newNodes.length) return;
+  const savedOffset = saveSelectionOffset(oldNodes);
 
-          if (hasChanged) {
-            await graphStore.updateNode({ nodeId, nodeProps: { content: newChips } });
-          }
-        });
-      }}
-    />
-  );
+  while (oldNodes.length > 1) {
+    oldNodes.pop()?.remove();
+  }
+
+  // Replacing the node right away breaks inserting, so we need to insert the new nodes first
+  // Inserting in the reverse order doesn't work, hence `nextNode`
+  let nextNewNode = oldNodes[0];
+  for (let i = 1; i < newNodes.length; i++) {
+    nextNewNode.insertAfter(newNodes[i]);
+    nextNewNode = newNodes[i];
+  }
+
+  oldNodes[0].replace(newNodes[0]);
+  restoreSelection(newNodes, savedOffset);
+};
+
+/** Check if the URLs of the matches and the nodes differ */
+const doUrlsDiffer = (matches: Match[], nodes: LexicalNode[]): boolean => {
+  const linkNodes = nodes.filter($isLinkNode);
+  if (matches.length !== linkNodes.length) return true;
+
+  for (let i = 0; i < linkNodes.length; i++) {
+    if (linkNodes[i].url !== matches[i].url) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+export const LinkPlugin = () => {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return mergeRegister(
+      // When a text node is changed, check if it contains a URL and replace it with a LinkNode
+      // When a text node adjacent to a LinkNode is changed, check if both of them together form a larger URL and merge them if they do
+      editor.registerNodeTransform(TextNode, (textNode) => {
+        const nodesToReplace = [textNode];
+        const textNodeText = textNode.getTextContent();
+
+        const prevNode = textNode.getPreviousSibling();
+        if ($isLinkNode(prevNode)) {
+          nodesToReplace.unshift(prevNode);
+        }
+
+        const nextNode = textNode.getNextSibling();
+        if ($isLinkNode(nextNode)) {
+          nodesToReplace.push(nextNode);
+        }
+
+        const text = nodesToReplace.map((node) => node.getTextContent()).join("");
+        const matches = findUrlMatches(text);
+        const newNodes = matchesToNodes(text, matches);
+
+        // If there's at least one link node, and the URLs differ for the possible existing nodes, replace them
+        if (newNodes.filter($isLinkNode).length && doUrlsDiffer(matches, nodesToReplace)) {
+          replaceNodes(nodesToReplace, newNodes);
+        }
+      }),
+
+      // When a LinkNode is changed, check if it contains a URL and either update the node or change it to a TextNode if it doesn't
+      editor.registerNodeTransform(LinkNode, (linkNode) => {
+        const text = linkNode.getTextContent();
+        const newNodes = matchesToNodes(text, findUrlMatches(text));
+
+        if (newNodes.length === 1 && newNodes[0] instanceof LinkNode && newNodes[0].url === linkNode.url) {
+          return; // Ignore if there is no actual change
+        } else if (newNodes.length) {
+          replaceNodes([linkNode], newNodes);
+        } else {
+          replaceNodes([linkNode], [new TextNode(text)]);
+        }
+      }),
+    );
+  }, [editor]);
+
+  return null;
 };

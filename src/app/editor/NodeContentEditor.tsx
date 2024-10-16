@@ -69,7 +69,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
           }
           placeholder={<span className={styles.PlaceholderNode}>Start writing...</span>}
         />
-        <LinkPlugin nodeId={treeNode.object.id} />
+        <LinkPlugin />
         <SyncWithModelsPlugin node={treeNode.object} treeNodeId={treeNode.id} />
         {isEditorEditable && <ClearEditorPlugin />}
         {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
