@@ -6,7 +6,6 @@ import { Options, useHotkeys } from "react-hotkeys-hook";
 
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
-import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
@@ -104,12 +103,10 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                 </Tooltip>
               </TooltipProvider>
             </div>
-
-            {!user.isAnonymous && <CreateNewButton tree={tree} />}
           </div>
           <div className={s.Nodes}>
-            {!user.isAnonymous && <ClickToCreateNodeButton treeNode={treeNode} />}
             <ChildGroups treeNode={treeNode} />
+            {!user.isAnonymous && <ClickToCreateNodeButton treeNode={treeNode} />}
           </div>
         </div>
       </div>

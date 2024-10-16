@@ -1,7 +1,10 @@
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
+import { AddPinButton } from "@/app/components/Buttons/AddPinButton";
+import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
+import { Button } from "@/app/components/UIPrimitives/Button";
+import { useUser } from "@/app/contexts/UserContext";
 import { AllGroup, ChildrenGroups, PinnedGroup, PointerGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { ViewType } from "@/app/view/types";
@@ -40,35 +43,46 @@ interface PinnedSectionProps {
 
 const PinnedSection = observer(function PinnedSection({ parentNode, group }: PinnedSectionProps) {
   const viewStore = useViewStore();
-  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
   const tree = useTree();
-  if (group.nodes.length === 0) {
+  const user = useUser();
+  const isRoot = parentNode instanceof RootTreeNode;
+  const isEmpty = group.nodes.length === 0;
+  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
+
+  if (isEmpty && !group.isExpanded && !isRoot) {
     return null;
   }
-  return (
+
+  return ( 
     <>
-      <button
-        onClick={() => tree.toggleGroupExpanded(group.path)}
-        className={`${styles.PinnedToggleButton}  ${
-          tree.isGroupExpanded(group.id)
-            ? styles.PinnedToggleButton_PinnedVisible
-            : styles.PinnedToggleButton_PinnedHidden
-        }`}
-      >
-        <span
-          className={`${styles.PinIcon} ${
-            group.isExpanded ? styles.PinIcon_PinnedVisible : styles.PinIcon_PinnedHidden
-          }`}
-        >
-          <PinCustomIcon />
-        </span>
-        {group.isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-      </button>
-      <div className={styles.PinSection}>
-        {group.isExpanded && (
-          <>
-            {group.nodes.map((treeNode, i) => (
-              <div key={treeNode.path}>
+      <div className={cn(styles.TopHeader, isRoot && styles.TopHeaderRoot)}>
+        {isRoot && !user.isAnonymous && <CreateNewButton tree={tree} />}
+        {!isEmpty && (
+          <div className={styles.PinnedHeader}>
+            <Button
+              variant={group.isExpanded ? "ghostActive" : "ghostSmooth"}
+              size="xs"
+              onClick={() => tree.toggleGroupExpanded(group.path)}
+            >
+          <span
+            className={`${styles.PinIcon} ${
+              group.isExpanded && styles.PinIcon_PinnedVisible
+            }`}
+          >
+            <PinCustomIcon />
+          </span>
+          Pinned  
+          <span className={styles.PinnedCount}>{group.nodes.length}</span>
+          </Button> 
+          <AddPinButton parentNode={parentNode} group={group} />
+          </div>
+        )}
+       </div>
+   
+      {group.isExpanded && !isEmpty && (
+        <>
+          {group.nodes.map((treeNode, i) => (
+            <div key={treeNode.path}>
                 {noteView && <Separator i={i} />}
                 <RelatedObjectView treeNode={treeNode} showBullet={!noteView} />
               </div>
@@ -80,10 +94,10 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
             />
           </>
         )}
-      </div>
-    </>
-  );
-});
+      </>
+    );
+  }
+);
 
 interface AllSectionProps {
   parentNode: TreeNode;
@@ -113,7 +127,7 @@ interface PointerSectionProps {
   group: PointerGroup;
 }
 
-const PointerSection = observer(function PointerSection({ parentNode, group }: PointerSectionProps) {
+const PointerSection = observer(function PointerSection({ group }: PointerSectionProps) {
   const viewStore = useViewStore();
 
   if (!viewStore.flattenSublists) {
@@ -124,7 +138,7 @@ const PointerSection = observer(function PointerSection({ parentNode, group }: P
     <div>
       {group.nodes.map((childTreeNode, i) => {
         return (
-          <div key={childTreeNode.path}>
+          <div  key={childTreeNode.path}>
             <RelatedObjectView treeNode={childTreeNode} showBullet={true} />
           </div>
         );

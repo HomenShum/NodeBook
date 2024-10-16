@@ -74,7 +74,23 @@
 }
 
 .ghost:hover {
-  color: var(--teal-10);
+  color: var(--teal-11);
+}
+
+.ghostSmooth {
+  color: var(--gray-8);
+}
+
+.ghostSmooth:hover {
+  color: var(--gray-11);
+}
+
+.ghostActive {
+  color: var(--teal-8);
+}
+
+.ghostActive:hover {
+  color: var(--teal-9);
 }
 
 .link {
@@ -92,6 +108,17 @@
   height: 28px;
   padding: 0 8px;
   font-size: var(--font-size-sm);
+}
+
+.size-xs {
+  gap: 6px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: var(--font-size-mini);
+}
+
+.size-xs span {
+  padding-top: 1px;
 }
 
 .size-sm {

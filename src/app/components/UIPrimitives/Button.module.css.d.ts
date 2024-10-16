@@ -6,6 +6,8 @@ declare const styles: {
   readonly "default": string;
   readonly "destructive": string;
   readonly "ghost": string;
+  readonly "ghostActive": string;
+  readonly "ghostSmooth": string;
   readonly "link": string;
   readonly "outline": string;
   readonly "size-default": string;
@@ -13,6 +15,7 @@ declare const styles: {
   readonly "size-lg": string;
   readonly "size-sm": string;
   readonly "size-state": string;
+  readonly "size-xs": string;
 };
 export = styles;
 

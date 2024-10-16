@@ -6,7 +6,6 @@ import styles from "@/app/components/RelatedObject/styles/RelatedObjectView.modu
 import { RootTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
-
 interface Props {
   treeNode: RootTreeNode;
 }
@@ -31,7 +30,7 @@ export const ClickToCreateNodeButton = observer(function ClickToCreateNodeButton
           <Dot strokeWidth={5} height={16} className={cn(styles.Bullet, styles.DotInsideClickToCreateNode)} />
         </div>
         <div className={cn(styles.RelatedObjectNode)}>
-          <div className={styles.ClickToCreateNode}>Click to create</div>
+          <div className={styles.ClickToCreateNode}>Start Writing...</div>
         </div>
       </div>
     </div>

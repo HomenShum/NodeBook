@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "AddPinButton": string;
   readonly "BundleSeparator": string;
   readonly "DateLabel": string;
   readonly "DateLabelContent": string;
@@ -9,15 +10,14 @@ declare const styles: {
   readonly "FirstBundle_WithDate": string;
   readonly "NodeIndentation": string;
   readonly "PinIcon": string;
-  readonly "PinIcon_PinnedHidden": string;
   readonly "PinIcon_PinnedVisible": string;
-  readonly "PinSection": string;
   readonly "PinSectionSeparator": string;
-  readonly "PinnedToggleButton": string;
-  readonly "PinnedToggleButton_PinnedHidden": string;
-  readonly "PinnedToggleButton_PinnedVisible": string;
+  readonly "PinnedCount": string;
+  readonly "PinnedHeader": string;
   readonly "ShowAll": string;
   readonly "StreamSpacing": string;
+  readonly "TopHeader": string;
+  readonly "TopHeaderRoot": string;
 };
 export = styles;
 

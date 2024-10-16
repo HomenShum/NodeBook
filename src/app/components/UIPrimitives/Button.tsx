@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import styles from "./Button.module.css";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "destructive" | "outline" | "accent" | "active" | "ghost" | "link";
-  size?: "default" | "sm" | "lg" | "icon" | "state";
+  variant?: "default" | "destructive" | "outline" | "accent" | "active" | "ghost" | "ghostSmooth" | "ghostActive" | "link";
+  size?: "default" | "sm" | "lg" | "icon" | "state" | "xs";
   asChild?: boolean;
 }
 
@@ -19,7 +19,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(
           styles.Button,
-          styles[variant],
+          styles[`${variant}` as keyof typeof styles],
           styles[`size-${size}` as keyof typeof styles],
           props.disabled && styles.Disabled,
           className,

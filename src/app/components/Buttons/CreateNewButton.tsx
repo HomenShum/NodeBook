@@ -2,18 +2,23 @@ import { Plus } from "lucide-react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tree } from "@/app/tree/Tree";
+import { cn } from "@/lib/utils";
+
+import styles from "./CreateNewButton.module.css";
 
 export function CreateNewButton({ tree }: { tree: Tree }) {
   return (
     <Button
-      variant="ghost"
-      size="icon"
+      className={cn(styles.ShowTooltip, styles.ToLeftAlign)}
+      data-tooltip="Add node"
+      variant="ghostSmooth"
+      size="xs"
       onClick={async (e) => {
         e.stopPropagation();
         await tree.createChildOfRootAndFocus();
       }}
     >
-      <Plus size={16}></Plus>
+      <Plus size={14}></Plus>
     </Button>
   );
 }

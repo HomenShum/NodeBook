@@ -3,7 +3,8 @@ declare const styles: {
   readonly "EditorWrapper": string;
   readonly "LinkNode": string;
   readonly "MentionNode": string;
-  readonly "Placeholder": string;
+  readonly "PlaceholderNode": string;
+  readonly "PlaceholderTitle": string;
 };
 export = styles;
 

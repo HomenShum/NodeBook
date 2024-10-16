@@ -35,7 +35,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode }:
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
           contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
-          placeholder={<div className={styles.Placeholder}>Add title</div>}
+          placeholder={<span className={styles.PlaceholderTitle}>Add title</span>}
         />
         <DropdownPlugin treeNode={treeNode} />
         <ClearEditorPlugin />

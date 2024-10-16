@@ -173,7 +173,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
           </div>
           <div className={styles.TopContent}>
               <Button
-                
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to Global Root"
                 onClick={() => {

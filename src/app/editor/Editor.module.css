@@ -36,15 +36,34 @@
   text-decoration: underline;
 }
 
-.Placeholder {
+.PlaceholderTitle {
   color: var(--gray-8);
   overflow: hidden;
   position: absolute;
   text-overflow: ellipsis;
   top: 0;
-  transform: translate(0, 100%);
+  transform: translateY(100%);
   user-select: none;
   white-space: nowrap;
   display: inline-block;
   pointer-events: none;
+}
+
+.PlaceholderNode {
+  position: absolute;
+  opacity: 0;
+  overflow: hidden;
+  user-select: none;
+  white-space: nowrap;
+  display: inline-block;
+  pointer-events: none;
+  text-overflow: ellipsis;  
+  top: 0;
+  color: var(--gray-8);
+  transition: opacity .1s ease-in-out 0s;
+}
+  
+.EditorWrapper:focus-within .PlaceholderNode {
+  opacity: 1;
+  transition: opacity 1s ease-in-out 2s;
 }

@@ -51,8 +51,7 @@ Bullet
   align-items: center;
   width: 16px;
   height: 24px;
-  transition: opacity 0.15s;
-  animation: cubic-bezier(0.075, 0.82, 0.165, 1);
+  transition: opacity 0.2s ease-in-out;
   opacity: 1; 
   cursor: pointer;
 }
@@ -139,7 +138,7 @@ Bullet
 }
 
 .DotInsideClickToCreateNode {
-  stroke: var(--gray-8);
+  stroke: var(--gray-7);
 }
 
 .Circle {
@@ -205,6 +204,7 @@ Node
   cursor: pointer;
   color: var(--gray-8);
   user-select: none;
+  cursor: text;
 }
 
 .HoverCardTrigger {

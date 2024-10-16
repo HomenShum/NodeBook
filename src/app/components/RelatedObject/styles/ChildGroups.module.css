@@ -6,61 +6,55 @@
 }
 
 /* Pinned Toggle */
-
-.PinnedToggleButton {
+.TopHeader {
+  position: relative;
+  left: -5px;
   display: flex;
   align-items: center;
-  height: 24px;
-  gap: 2px;
+}
+
+.TopHeaderRoot {
+  padding: 4px 0;
+}
+
+.PinnedHeader {
   position: relative;
-  top: 0;
-  left: -4px;
-  width: fit-content;
-  padding: 4px;
-  border-radius: 6px;
-  color: var(--gray-9);
-  z-index: 10;
+  left: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.PinnedToggleButton_PinnedVisible {
-  margin-bottom: 0;
+.AddPinButton {
+  visibility: hidden;
+  transition: visibility 0.2s ease-in-out;
 }
 
-.PinnedToggleButton_PinnedVisible:hover {
-  background-color: var(--gray-2);
-}
-
-.PinnedToggleButton_PinnedHidden {
-  margin-bottom: 0;
-}
-
-.PinnedToggleButton_PinnedHidden:hover {
-  background-color: var(--gray-2);
+.TopHeader:hover .AddPinButton {
+  visibility: visible;
 }
 
 .PinIcon {
-  transform: scale(0.8);
-  transition: all 0.3s ease;
+  transform: scale(0.7) translateY(1px);
+  transition: transform 0.3s ease;
 }
 
 .PinIcon_PinnedVisible {
-  transform: scale(0.8) rotate(45deg);
-  color: var(--teal-9);
+  transform: scale(0.7) rotate(45deg);
 }
 
-.PinIcon_PinnedHidden {
-  color: var(--gray-9);
+.PinnedCount {
+  width: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-micro);
 }
 
 /* Pin Section */
-
-.PinSection {
-  padding-top: 0px;
-  margin: 0 0 6px 0;
-}
-
 .PinSectionSeparator {
   border-bottom: 0.5px solid var(--teal-7);
+  margin-bottom: 6px;
 }
 
 .StreamSpacing {
@@ -75,7 +69,6 @@
 }
 
 /* Stream Bundle */
-
 .BundleSeparator {
   border-top: 1px dashed var(--gray-5);
 }

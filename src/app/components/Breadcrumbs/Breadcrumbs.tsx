@@ -3,6 +3,7 @@ import { ChevronRight, Command, Ellipsis, Home, Lock, Unlock } from "lucide-reac
 import { observer } from "mobx-react-lite";
 import { useCallback, useMemo } from "react";
 
+import { useAuth } from "@/app/auth/useAuth";
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { TreeNode } from "@/app/tree/nodes";
 import { Ancestor, getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
@@ -172,7 +174,8 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   const setRoot = useSetRoot();
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
-
+  const user = useUser();
+  const auth = useAuth();
   // Only update when the node really changes (i.e. it has a different ID)
   const ancestors = useMemo(() => (treeNode.id ? getAncestorsAsArray(treeNode) : []), [treeNode.id]);
 
@@ -202,8 +205,9 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
         <div className={s.BreadcrumbWrapper}>
           <RenderBreadcrumbs treeNode={treeNode} ancestors={ancestors} handleNavigation={handleNavigation} />
         </div>
-        <div className={s.BreadcrumbRightArea}>
-          <Button
+        {!user.isAnonymous ? (
+          <div className={s.BreadcrumbRightArea}>
+            <Button
             variant="default"
             className={cn(s.ShowTooltip, s.BottomAlign)}
             data-tooltip="Command bar"
@@ -220,8 +224,17 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
             onClick={() => settingsStore.setPublicMode(!settingsStore.publicMode)}
           >
             {settingsStore.publicMode ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
+            </Button>
+          </div>
+        ) : (
+          <Button
+            variant="active"
+            size="sm"
+            onClick={() => auth?.loginWithRedirect()}
+          > 
+          Sign in
           </Button>
-        </div>
+        )}
       </nav>
     </>
   );
