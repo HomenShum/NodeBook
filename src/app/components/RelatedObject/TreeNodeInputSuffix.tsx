@@ -36,7 +36,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
 
   return (
     <input
-      style={{ display: "flex", background: "none", border: "none", outline: "none" }}
+   
       onFocus={() => {
         if (!tree.isNodeFocused(treeNode.id)) {
           tree.setFocusedNode(treeNode.path);
