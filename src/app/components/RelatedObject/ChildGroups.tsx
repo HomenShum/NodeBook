@@ -53,7 +53,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
     return null;
   }
 
-  return ( 
+  return (
     <>
       <div className={cn(styles.TopHeader, isRoot && styles.TopHeaderRoot)}>
         {isRoot && !user.isAnonymous && <CreateNewButton tree={tree} />}
@@ -64,40 +64,35 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
               size="xs"
               onClick={() => tree.toggleGroupExpanded(group.path)}
             >
-          <span
-            className={`${styles.PinIcon} ${
-              group.isExpanded && styles.PinIcon_PinnedVisible
-            }`}
-          >
-            <PinCustomIcon />
-          </span>
-          Pinned  
-          <span className={styles.PinnedCount}>{group.nodes.length}</span>
-          </Button> 
-          <AddPinButton parentNode={parentNode} group={group} />
+              <span className={`${styles.PinIcon} ${group.isExpanded && styles.PinIcon_PinnedVisible}`}>
+                <PinCustomIcon />
+              </span>
+              Pinned
+              <span className={styles.PinnedCount}>{group.nodes.length}</span>
+            </Button>
+            {!user.isAnonymous && <AddPinButton parentNode={parentNode} group={group} />}
           </div>
         )}
-       </div>
-   
+      </div>
+
       {group.isExpanded && !isEmpty && (
         <>
           {group.nodes.map((treeNode, i) => (
             <div key={treeNode.path}>
-                {noteView && <Separator i={i} />}
-                <RelatedObjectView treeNode={treeNode} showBullet={!noteView} />
-              </div>
-            ))}
-            <div
-              className={`${styles.PinSectionSeparator} ${
-                viewStore.viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
-              }`}
-            />
-          </>
-        )}
-      </>
-    );
-  }
-);
+              {noteView && <Separator i={i} />}
+              <RelatedObjectView treeNode={treeNode} showBullet={!noteView} />
+            </div>
+          ))}
+          <div
+            className={`${styles.PinSectionSeparator} ${
+              viewStore.viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
+            }`}
+          />
+        </>
+      )}
+    </>
+  );
+});
 
 interface AllSectionProps {
   parentNode: TreeNode;
@@ -138,7 +133,7 @@ const PointerSection = observer(function PointerSection({ group }: PointerSectio
     <div>
       {group.nodes.map((childTreeNode, i) => {
         return (
-          <div  key={childTreeNode.path}>
+          <div key={childTreeNode.path}>
             <RelatedObjectView treeNode={childTreeNode} showBullet={true} />
           </div>
         );
