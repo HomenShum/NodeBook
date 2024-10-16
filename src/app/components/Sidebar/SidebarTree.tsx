@@ -8,26 +8,22 @@ import { cn } from "@/lib/utils";
 
 import styles from "./SidebarTree.module.css";
 
-interface Props {
+interface TreeElementProps {
   object: GraphObject;
 }
 
-const TreeElement = observer(function TreeElement({ object }: Props) {
+const TreeElement = observer(function TreeElement({ object }: TreeElementProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const uniqueChildren = [...new Set(object.children)];
+
   return (
     <>
       <div className={styles.SidebarTreeBlock}>
-        <div 
-          className={styles.IconBox} 
-          onClick={() => object.children.length > 0 && setIsExpanded(!isExpanded)}
-        >
+        <div className={styles.IconBox} onClick={() => uniqueChildren.length > 0 && setIsExpanded(!isExpanded)}>
           <Play
             size={7}
             fill="currentColor"
-            className={cn(
-              object.children.length === 0 && styles.IconInactive,
-              isExpanded && styles.IconExpanded
-            )}
+            className={cn(uniqueChildren.length === 0 && styles.IconInactive, isExpanded && styles.IconExpanded)}
           />
         </div>
 
@@ -36,7 +32,7 @@ const TreeElement = observer(function TreeElement({ object }: Props) {
         </div>
       </div>
       <div className={styles.SidebarTreeChildren}>
-        {isExpanded && object.children.map((o) => <TreeElement object={o} key={o.id}></TreeElement>)}
+        {isExpanded && uniqueChildren.map((o) => <TreeElement object={o} key={o.id}></TreeElement>)}
       </div>
     </>
   );
