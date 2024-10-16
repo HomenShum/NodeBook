@@ -14,6 +14,7 @@ import { SerializedTree } from "@/app/persistence/SerializedData";
 import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
+import { SelectionStack } from "@/app/tree/SelectionStack";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, PointerTreeNode, RootTreeNode, TreeNode } from "./nodes";
 import { TreeNodeContentSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
@@ -25,7 +26,6 @@ import {
   getNextSubtreeBelow,
   getSubtreesBetween,
   groupSiblings,
-  SelectionStack,
   walkTree,
 } from "./utils";
 

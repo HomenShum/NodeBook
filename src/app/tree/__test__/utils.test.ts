@@ -1,6 +1,7 @@
 import { createTestTreeFromTemplate, TemplateNode } from "@/app/tree/__test__/helpers";
-import { getSubtreesBetween, SelectionStack } from "@/app/tree/utils";
+import { getSubtreesBetween } from "@/app/tree/utils";
 import appLogger from "@/lib/logger";
+import { SelectionStack } from "@/app/tree/SelectionStack";
 
 describe("Tree utils", () => {
   beforeAll(() => {
