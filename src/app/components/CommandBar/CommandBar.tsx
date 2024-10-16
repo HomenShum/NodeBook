@@ -164,7 +164,12 @@ const CommandBar = observer(() => {
         <Dialog.Portal>
           <Dialog.Overlay className={styles.Overlay}>
             <div ref={dropdownContainerRef} className={styles.DropdownContainer} />
-            <Dialog.Content className={styles.Content} onKeyDown={handleKeyDown} onEscapeKeyDown={close}>
+            <Dialog.Content 
+              className={styles.Content} 
+              onKeyDown={handleKeyDown} 
+              onEscapeKeyDown={close}
+              onInteractOutside={close}
+            >
               <VisuallyHidden asChild>
                 <Dialog.DialogTitle>Command Bar</Dialog.DialogTitle>
               </VisuallyHidden>
