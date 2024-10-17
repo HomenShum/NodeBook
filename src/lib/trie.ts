@@ -4,6 +4,8 @@ import appLogger from "@/lib/logger";
 
 const logger = appLogger.child({ service: "trie" });
 
+const SEP = /[\s/]+/;
+
 export interface CappedKeywordIndex {
   add(id: string, getText: () => string): void;
   delete(id: string): void;
@@ -61,7 +63,7 @@ export class KeywordTrieIndex implements CappedKeywordIndex {
   getIds(text: string): string[] {
     const keywords = text
       .toLocaleLowerCase()
-      .split(/\s+/)
+      .split(SEP)
       .filter((word) => word.length > 0);
     let ids: Set<string> | null = null;
     for (let word of keywords) {
@@ -86,7 +88,7 @@ export class KeywordTrieIndex implements CappedKeywordIndex {
   }
 
   private addIdToTrie(id: string, content: string) {
-    const words = content.toLocaleLowerCase().split(/\s+/);
+    const words = content.toLocaleLowerCase().split(SEP);
     for (const word of words) {
       let node = this.root;
       for (let i = 0; i < Math.min(word.length, this.maxPrefixLength); i++) {
