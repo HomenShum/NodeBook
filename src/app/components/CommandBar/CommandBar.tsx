@@ -103,8 +103,8 @@ const CommandBar = observer(() => {
           const newMentionChips = search.chips.filter((chip) => chip.type === "mention");
           for (const mentionChip of newMentionChips) {
             await graphStore.addRelation({
-              fromId: node.id,
-              toId: mentionChip.value,
+              fromId: mentionChip.value,
+              toId: node.id,
             });
           }
 
@@ -164,9 +164,9 @@ const CommandBar = observer(() => {
         <Dialog.Portal>
           <Dialog.Overlay className={styles.Overlay}>
             <div ref={dropdownContainerRef} className={styles.DropdownContainer} />
-            <Dialog.Content 
-              className={styles.Content} 
-              onKeyDown={handleKeyDown} 
+            <Dialog.Content
+              className={styles.Content}
+              onKeyDown={handleKeyDown}
               onEscapeKeyDown={close}
               onInteractOutside={close}
             >
