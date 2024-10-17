@@ -105,7 +105,7 @@ function RelationTypeSelector({ treeNode, close }: SelectorProps) {
   const isForward = relation.to.id === treeNode.object.id;
   const graphStore = useGraphStore();
   const [search, setSearch] = React.useState(relation.relationType.label);
-  const [selected, setSelected] = React.useState(`${relation.relationType.id}-${isForward ? "forward" : "reverse"}`);
+  const [highlightedIndex, setHighlightedIndex] = React.useState(0);
   const items = graphStore
     .search({
       text: search,
@@ -190,15 +190,13 @@ function RelationTypeSelector({ treeNode, close }: SelectorProps) {
         if (e.key === "ArrowDown") {
           e.preventDefault();
           e.stopPropagation();
-          const index = items.findIndex(({ key }) => key === selected);
-          setSelected(items[(index + 1) % items.length].key);
+          setHighlightedIndex((highlightedIndex + 1) % items.length);
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
           e.stopPropagation();
-          const index = items.findIndex(({ key }) => key === selected);
-          setSelected(items[(index - 1 + items.length) % items.length].key);
+          setHighlightedIndex((highlightedIndex - 1 + items.length) % items.length);
         } else if (e.key === "Enter") {
-          const item = items.find(({ key }) => key === selected);
+          const item = items[highlightedIndex];
           if (item) {
             e.preventDefault();
             e.stopPropagation();
@@ -208,8 +206,7 @@ function RelationTypeSelector({ treeNode, close }: SelectorProps) {
         } else if (e.key === "Backspace" && search === "") {
           e.preventDefault();
           e.stopPropagation();
-          const targetKey = isForward ? "child" : "parent";
-          const item = items.find(({ label }) => label === targetKey);
+          const item = items[highlightedIndex];
           if (item) {
             item.onSelect();
             close();
@@ -227,11 +224,11 @@ function RelationTypeSelector({ treeNode, close }: SelectorProps) {
         />
       </div>
       <div className={styles.RelationComboboxGroup}>
-        {items.map(({ key, label, onSelect }) => (
+        {items.map(({ key, label, onSelect }, index) => (
           <div
             key={key}
-            className={cn(styles.RelationComboboxItem, selected === key && styles.Selected)}
-            onMouseEnter={() => setSelected(key)}
+            className={cn(styles.RelationComboboxItem, highlightedIndex === index && styles.Selected)}
+            onMouseEnter={() => setHighlightedIndex(index)}
             onClick={() => {
               onSelect();
               close();
