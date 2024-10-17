@@ -17,6 +17,7 @@ const COMMON_TLDS = [
   "org",
   "gov",
   "edu",
+  "network",
   "net",
   "info",
   "ca",
@@ -32,7 +33,6 @@ const COMMON_TLDS = [
   "dev",
   "xyz",
   "asia",
-  "network",
 ].join("|");
 
 // High confidence links start with the http:// or https:// schemas. We allow any TLD for the high confidence links
