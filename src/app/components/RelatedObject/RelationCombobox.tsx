@@ -4,6 +4,7 @@ import { Check, Search } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import * as React from "react";
 
+import { SublistIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -70,7 +71,7 @@ export const RelationCombobox = observer(function RelationCombobox({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {label}:
+      {relation.relationType.id === "sublist" && <SublistIcon  />}{label}:
     </Button>
   );
 

@@ -1,3 +1,7 @@
+export const SublistIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="10" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.667 1.5h7.58M.751 1.5h.006M6.582 5h4.664M3.661 5h.006m2.915 3.5h4.664m-7.585 0h.006"/></svg>
+);
+
 export const PinIconMew = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
