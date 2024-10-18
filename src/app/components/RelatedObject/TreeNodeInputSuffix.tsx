@@ -20,6 +20,9 @@ type Props = {
  *
  * When isEditorEditable is false, it becomes responsible for grabbing the
  * selection in response to tree selection changes.
+ *
+ * Todo: This is pretty similar to TreeNodeInputPrefix.
+ * Maybe make a input sandwich wrapper and pass NodeEditor as child?
  */
 export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeNode, isEditorEditable }: Props) {
   const tree = useTree();
@@ -69,7 +72,10 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
             break;
           case "ArrowLeft":
             e.preventDefault();
-            tree.moveEditorSelectionUp("end");
+            const inputPrefix = inputRef.current?.previousElementSibling?.previousElementSibling;
+            if (inputPrefix) {
+              (inputPrefix as HTMLElement).focus();
+            }
             break;
         }
       }}
