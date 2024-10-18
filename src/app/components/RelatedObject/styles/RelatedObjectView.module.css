@@ -151,6 +151,33 @@ Bullet
   stroke: var(--gray-10);
 }
 
+.DotInsidePrivate:hover  {
+  stroke: var(--gray-9);
+}
+
+.DotInsidePublic:hover {
+  stroke: var(--teal-8);
+}
+
+.Bullet:active {
+  animation: bulletClick 0.3s ease-in-out;
+}
+
+@keyframes bulletClick {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* 
 Node
 */
@@ -365,4 +392,3 @@ Right Area
   padding-right: 4px;
   cursor: pointer;
 }
-
