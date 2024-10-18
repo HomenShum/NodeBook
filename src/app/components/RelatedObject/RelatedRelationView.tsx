@@ -2,6 +2,7 @@ import { observer } from "mobx-react-lite";
 
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
 import { DescendantTreeNode } from "@/app/tree/nodes";
+import { TreeNodeInputPrefix } from "@/app/components/RelatedObject/TreeNodeInputPrefix";
 
 interface Props {
   treeNode: DescendantTreeNode;
@@ -10,6 +11,7 @@ interface Props {
 export const RelatedRelationView = observer(function RelatedRelationView({ treeNode }: Props) {
   return (
     <div style={{ display: "flex", width: "100%" }}>
+      <TreeNodeInputPrefix treeNode={treeNode} isEditorEditable={false} />
       <span style={{ fontStyle: "italic" }}>{treeNode.object.text}</span>
       <TreeNodeInputSuffix treeNode={treeNode} isEditorEditable={false} />
     </div>

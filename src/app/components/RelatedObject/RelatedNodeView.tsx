@@ -10,6 +10,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
+import { TreeNodeInputPrefix } from "@/app/components/RelatedObject/TreeNodeInputPrefix";
 
 import styles from "./styles/RelatedNodeView.module.css";
 
@@ -46,6 +47,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   return (
     <div ref={ref} className={styles.Container}>
       <div className={cnOuterContainer}>
+        {isGlobal && !user.isAnonymous && <TreeNodeInputPrefix treeNode={treeNode} isEditorEditable={editableEditor} />}
         <div
           className={cnInnerContainer}
           onClick={() => {
