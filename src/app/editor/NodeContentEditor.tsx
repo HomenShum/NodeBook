@@ -5,9 +5,8 @@ import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { observer } from "mobx-react-lite";
-import { RefObject, useCallback } from "react";
+import { RefObject } from "react";
 
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
@@ -19,11 +18,11 @@ import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
+import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
-import { useSetRoot } from "@/app/tree/utils";
 
 import styles from "./Editor.module.css";
 
@@ -37,21 +36,9 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
-  const graphStore = useGraphStore();
-  const setRoot = useSetRoot();
-  const tree = useTree();
 
-  const handleMentionNodeClick = useCallback(
-    (e: Event) => {
-      const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
-      e.stopPropagation();
-      const node = graphStore.getNode(nodeId);
-      if (node) {
-        setRoot(node.getPath());
-      }
-    },
-    [graphStore, setRoot],
-  );
+  const tree = useTree();
+  const handleMentionNodeClick = useClickableMention(treeNode);
 
   return (
     <div className={styles.EditorWrapper}>

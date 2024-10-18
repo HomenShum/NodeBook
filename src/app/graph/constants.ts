@@ -2,7 +2,10 @@ import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { GraphRelationType } from "@/app/graph/types";
 
 const TEMP_USER_ID = UNLOGGED_USER.id; // TODO: This is simply to satisfy the type checker, we should change this
-export const defaultRelationTypes: Record<string, GraphRelationType> = {
+
+type DefaultRelationType = "child" | "relatedTo" | "author" | "sublist" | "empty";
+
+export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType> = {
   child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent", isPublic: false },
   relatedTo: {
     version: 1,
