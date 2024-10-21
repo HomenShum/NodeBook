@@ -19,7 +19,7 @@ import { RelatedNodeView } from "./RelatedNodeView";
 import { RelatedObjectViewType, TreeNodeProvider, useTreeNode } from "./RelatedObjectContext";
 import { RelatedObjectDetails } from "./RelatedObjectDetails";
 import { RelatedObjectMenu } from "./RelatedObjectMenu";
-import { RelationCombobox } from "./RelationCombobox";
+import { RelationCombobox } from "./RelationCombobox/RelationCombobox";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
 import Toggle from "./Toggle";
 import styles from "./styles/RelatedObjectView.module.css";
