@@ -65,7 +65,7 @@
   visibility: visible;
 }
 
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 450px) {
   .SidebarToggle {
     left: 16px;
   }
@@ -94,13 +94,13 @@
   transition: none;
 }
 
-@media (min-width: 601px) {
+@media (min-width: 451px) {
   .ShiftMain {
     margin-left: var(--sidebar-width);
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 450px) {
   .Main {
     margin-left: 0 !important;
   }

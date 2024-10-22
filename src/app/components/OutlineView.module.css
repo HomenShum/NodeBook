@@ -121,7 +121,7 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 450px) {
   .OutlineContent {
     height: calc(100dvh - 130px);
   }

@@ -14,7 +14,7 @@
   transform: translateX(0);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 450px) {
   .Sidebar {
     width: 80% !important;
     max-width: 300px;
@@ -36,7 +36,7 @@
   z-index: 29;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 450px) {
   .Backdrop {
     display: block;
   }
@@ -240,7 +240,7 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 450px) {
   .Sidebar {
     width: 100% !important;
   }

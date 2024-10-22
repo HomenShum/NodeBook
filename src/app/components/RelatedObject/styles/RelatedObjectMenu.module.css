@@ -22,7 +22,7 @@
   color: transparent;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 450px) {
   .Transparent {
     color: var(--gray-8);
   }

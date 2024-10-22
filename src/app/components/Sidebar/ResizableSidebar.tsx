@@ -123,6 +123,13 @@ export const ResizableSidebar = observer(function ResizableSidebar({
     };
   }, [isResizing, resize, stopResizing]);
 
+  const handleNavigation = useCallback((action: () => void) => {
+    action();
+    if (window.innerWidth <= 450) { 
+      viewStore.toggleLeftSidebar();
+    }
+  }, [viewStore]);
+
   return (
     <>
       {isOpen && <div className={styles.Backdrop} onClick={() => viewStore.toggleLeftSidebar()} />}
@@ -176,7 +183,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to Global Root"
                 onClick={() => {
-                  setRoot({ object: graphStore.globalRoot });
+                  handleNavigation(() => setRoot({ object: graphStore.globalRoot }));
                 }}
               >
                 <span>
@@ -189,7 +196,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   variant="ghost"
                   className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to your root"
                   onClick={() => {
-                    setRoot(graphStore.getDefaultRootForUser());
+                    handleNavigation(() => setRoot(graphStore.getDefaultRootForUser()));
                   }}
                 >
                   <span>
@@ -203,8 +210,10 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   <div className={styles.SidebarSectionHeader}>Workspaces</div>
                   <Button  variant="ghost" className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Your Home as Notes · ⌘⇧H" 
                  onClick={() => {
-                  setRoot(graphStore.getDefaultRootForUser());
-                  viewStore.setViewType(ViewType.Note);
+                  handleNavigation(() => {
+                    setRoot(graphStore.getDefaultRootForUser());
+                    viewStore.setViewType(ViewType.Note);
+                  });
                 }}>
                   <span>
                     <NotebookText size={16} strokeWidth={1.5} />
@@ -217,7 +226,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   variant="ghost"
                   className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to All Nodes"
                   onClick={() => {
-                    router.push("/all-nodes");
+                    handleNavigation(() => router.push("/all-nodes"));
                   }}
                 >
                   <span>

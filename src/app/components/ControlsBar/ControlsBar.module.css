@@ -109,7 +109,7 @@
   cursor: pointer;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 450px) {
   .ControlsBar {
     padding: 8px 8px;
     height: fit-content;

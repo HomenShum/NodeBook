@@ -49,6 +49,12 @@
   pointer-events: none;
 }
 
+@media (max-width: 450px) {
+  .PlaceholderTitle {
+    top: -12px;
+  }
+}
+
 .PlaceholderNode {
   position: absolute;
   opacity: 0;
