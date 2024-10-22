@@ -6,6 +6,7 @@ import SelectionItem from "@/app/components/RelatedObject/RelationCombobox/Selec
 import styles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
 import { PopoverContent } from "@/app/components/UIPrimitives/Popover";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 
@@ -87,9 +88,15 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
 
     tmpItems.push({
       key: "delete",
-      label: "Delete relation",
+      label: "Delete relation label",
       onSelect: async () => {
-        await graphStore.removeRelation({ relationId: relation.id });
+        await graphStore.updateRelation({
+          relationId: relation.id,
+          relationProps: {
+            relationType: defaultRelationTypes.child,
+          },
+          reverse: !isForward,
+        });
       },
     });
 
