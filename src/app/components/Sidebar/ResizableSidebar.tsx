@@ -1,4 +1,4 @@
-import { FileSpreadsheet, Globe, Home, Key, LogIn, LogOut, Mail, MoonIcon, NotebookText, SettingsIcon, SunIcon, User } from "lucide-react";
+import { FileSpreadsheet, Globe, Home, Key, LogIn, LogOut, Mail, MoonIcon, Newspaper, NotebookText, SettingsIcon, SunIcon, User } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
@@ -220,6 +220,19 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   </span>
                   <span>Home&apos;s Notes</span>
                 </Button>
+                <Button
+                variant="ghost"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to global sublists"
+                onClick={() => {
+                  handleNavigation(() => setRoot({ object: graphStore.globalRoot }));
+                  viewStore.setFlattenSublists(true);
+                }}
+              >
+                <span>
+                  <Newspaper size={16} strokeWidth={1.5} />
+                </span>
+                <span>News Feed</span>
+              </Button>
                 </>
               )}
               {!user.isAnonymous && <Button
