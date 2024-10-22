@@ -158,18 +158,34 @@ const CommandBar = observer(() => {
     }
   }, [selectedIndex]);
 
+  // When the mention dropdown is open (see `CmdEditor`), pressing escape should
+  // close it, not the command bar. Previously we used the `Dialog.Content`'s
+  // `onEscapeKeyDown` prop to handle closing the command bar on escape, but
+  // that was resulting in the command bar closing when the user pressed escape
+  // while the mention dropdown was open. That's because the handler passed to
+  // `Dialog.Content` runs before the typeahead plugin's escape handler, so the
+  // plugin doesn't get a chance to handle and stop propagation. By handling in
+  // an effect here, the plugin handles the event first and can stop
+  // propagation.
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        close();
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [viewStore.isCommandBarOpen, close]);
+
   return (
     !user.isAnonymous && (
       <Dialog.Root open={viewStore.isCommandBarOpen} onOpenChange={viewStore.setCommandBarOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className={styles.Overlay}>
             <div ref={dropdownContainerRef} className={styles.DropdownContainer} />
-            <Dialog.Content
-              className={styles.Content}
-              onKeyDown={handleKeyDown}
-              onEscapeKeyDown={close}
-              onInteractOutside={close}
-            >
+            <Dialog.Content className={styles.Content} onKeyDown={handleKeyDown} onInteractOutside={close}>
               <VisuallyHidden asChild>
                 <Dialog.DialogTitle>Command Bar</Dialog.DialogTitle>
               </VisuallyHidden>
