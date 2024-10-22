@@ -68,9 +68,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   }, []);
 
   const toggleViewType = useCallback(() => {
-    viewStore.setViewType(
-      viewStore.viewType === ViewType.Outline ? ViewType.Note : ViewType.Outline
-    );
+    viewStore.setViewType(viewStore.viewType === ViewType.Outline ? ViewType.Note : ViewType.Outline);
   }, [viewStore]);
 
   return (
@@ -125,23 +123,21 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        {settingsStore.isFlattenSublistsEnabled && (
-          <div className={s.SwitchItem}>
-            <Switch
-              id="show-node-details"
-              checked={viewStore.flattenSublists}
-              onCheckedChange={(checked: boolean) => viewStore.setFlattenSublists(checked)}
-            />
-            <label htmlFor="show-node-details">Flatten sublists</label>
-          </div>
-        )}
+        <div className={s.SwitchItem}>
+          <Switch
+            id="show-node-details"
+            checked={viewStore.flattenSublists}
+            onCheckedChange={(checked: boolean) => viewStore.setFlattenSublists(checked)}
+          />
+          <label htmlFor="show-node-details">Flatten sublists</label>
+        </div>
       </div>
       <div className={styles.RightWrapper}>
         <Button
           size="sm"
           onClick={toggleViewType}
           className={cn(s.ShowTooltip, s.BottomAlign)}
-          data-tooltip={'Switch view'}
+          data-tooltip={"Switch view"}
         >
           {viewStore.viewType === ViewType.Outline ? (
             <>

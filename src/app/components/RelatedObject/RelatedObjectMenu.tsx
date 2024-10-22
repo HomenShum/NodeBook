@@ -61,10 +61,6 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
   const [menuOpen, setMenuOpen] = useState(false);
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);
 
-  if (viewStore.flattenSublists) {
-    return null;
-  }
-
   if (!isHovered && !menuOpen) {
     return <Ellipsis size={16} className={styles.Transparent} />;
   }
@@ -110,10 +106,9 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
         onSelect={action(async () => {
           const domain = `${window.location.protocol}//${window.location.host}`;
           const path = createRouteUrl(`${treeNode.path}/${treeNode.object.id}`);
-          await navigator.clipboard.writeText(
-            `${domain}${path}`
-          )
-        })}>
+          await navigator.clipboard.writeText(`${domain}${path}`);
+        })}
+      >
         <ClipboardCopy size={14} />
         Copy URL
       </DropdownMenuItem>

@@ -29,7 +29,6 @@ export class SettingsStore {
   public allowShiftTabAboveViewRoot = false;
   public hidePinnedItems = false;
   public publicMode = true;
-  public isFlattenSublistsEnabled = false;
   public triggerRelationOnSingleColon = false;
   private stopAutosave: () => void;
 
@@ -189,10 +188,6 @@ export class SettingsStore {
 
   setHidePinnedItems(value: boolean) {
     this.hidePinnedItems = value;
-  }
-
-  setIsFlattenSublistsEnabled(value: boolean) {
-    this.isFlattenSublistsEnabled = value;
   }
 
   setTriggerRelationOnSingleColon(value: boolean): void {

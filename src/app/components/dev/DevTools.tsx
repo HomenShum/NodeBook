@@ -115,15 +115,6 @@ export const DevTools = observer(function DevTools() {
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />
         </div>
-        <h2>Experimental features</h2>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
-            checked={settingsStore.isFlattenSublistsEnabled}
-            onChange={(e) => settingsStore.setIsFlattenSublistsEnabled(e.target.checked)}
-          />
-          Enable flatten sublists feature
-        </label>
         {env.env !== "production" && (
           <>
             <h2>Dev tools</h2>

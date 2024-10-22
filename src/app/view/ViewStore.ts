@@ -1,5 +1,5 @@
 import { LexicalEditor } from "lexical";
-import { action, autorun, isObservable, makeAutoObservable } from "mobx";
+import { action, isObservable, makeAutoObservable } from "mobx";
 
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
@@ -44,11 +44,6 @@ export class ViewStore {
     this.graphStore = graphStore;
     this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.sublistView = new SublistTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
-    autorun(() => {
-      if (!this.settingsStore.isFlattenSublistsEnabled) {
-        this.setFlattenSublists(false);
-      }
-    });
   }
 
   /**
