@@ -35,8 +35,18 @@ function PreventEnterPlugin() {
     editor.registerCommand(
       KEY_ENTER_COMMAND,
       (e) => {
-        e?.preventDefault();
-        return true;
+        if (!e) return false;
+        if (e.shiftKey) {
+          // On shift+enter, allow the editor to handle it and create a new line,
+          // and prevent the command bar from selecting an option.
+          e.stopPropagation();
+          return false;
+        } else {
+          // But on normal enter, prevent default so the editor *doesn't* handle
+          // it (which would prevent the command bar from handling it).
+          e?.preventDefault();
+          return true;
+        }
       },
       // Low priority so it doesn't prevent the mention dropdown enter handling
       COMMAND_PRIORITY_LOW,
