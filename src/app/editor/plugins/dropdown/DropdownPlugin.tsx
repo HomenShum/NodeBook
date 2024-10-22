@@ -115,7 +115,10 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
             matches: getMatches(queryString, ["node"]),
           });
         }
-        return match;
+        // ENT-4247: If leadOffset is 0 (for example, when typing @ directly after another
+        // mention), lexical fails to position the dropdown correctly (not sure why).
+        // To get around this, we ensure the leadOffset is at least 1.
+        return { ...match, leadOffset: Math.max(1, match.leadOffset) };
       }
 
       // Open or update search-and-replace dropdown
