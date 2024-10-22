@@ -654,8 +654,7 @@ export class GraphStore {
       isPublic: false,
     };
     this.relationTypesById[id] = newRelationType;
-    this.cappedKeywordIndex.add(newRelationType.id, () => newRelationType.label);
-    this.cappedKeywordIndex.add(newRelationType.id, () => newRelationType.reverseLabel);
+    this.cappedKeywordIndex.add(newRelationType.id, () => newRelationType.label + " " + newRelationType.reverseLabel);
     const updates: GraphUpdate[] = [
       {
         operation: "addRelationType",
@@ -675,8 +674,7 @@ export class GraphStore {
     const oldProps = { ...this.relationTypesById[id] };
     const newProps = { ...oldProps, ...props, version: oldProps.version + 1 };
     this.relationTypesById[id] = newProps;
-    this.cappedKeywordIndex.add(newProps.id, () => newProps.label);
-    this.cappedKeywordIndex.add(newProps.id, () => newProps.reverseLabel);
+    this.cappedKeywordIndex.add(newProps.id, () => newProps.label + " " + newProps.reverseLabel);
     const updates: GraphUpdate[] = [
       {
         operation: "updateRelationType",
@@ -1853,20 +1851,14 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.allRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.pinnedRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.allRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.pinnedRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
 
     const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
 
