@@ -9,7 +9,7 @@ interface Props {
 
 export const RelatedRelationView = observer(function RelatedRelationView({ treeNode }: Props) {
   return (
-    <div style={{ display: "flex" }}>
+    <div style={{ display: "flex", width: "100%" }}>
       <span style={{ fontStyle: "italic" }}>{treeNode.object.text}</span>
       <TreeNodeInputSuffix treeNode={treeNode} isEditorEditable={false} />
     </div>

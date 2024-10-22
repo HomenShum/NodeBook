@@ -6,6 +6,8 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 
+import styles from "./styles/RelatedObjectView.module.css";
+
 type Props = {
   treeNode: DescendantTreeNode;
   isEditorEditable: boolean;
@@ -38,6 +40,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
 
   return (
     <input
+      className={styles.RelatedObjectInputSuffix}
       onFocus={() => {
         if (!tree.isNodeFocused(treeNode.id)) {
           tree.setFocusedNode(treeNode.path);

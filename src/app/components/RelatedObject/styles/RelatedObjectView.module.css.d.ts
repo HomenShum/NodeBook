@@ -19,6 +19,7 @@ declare const styles: {
   readonly "RelatedObjectBulletContainer": string;
   readonly "RelatedObjectContainer": string;
   readonly "RelatedObjectContent": string;
+  readonly "RelatedObjectInputSuffix": string;
   readonly "RelatedObjectLeftArea": string;
   readonly "RelatedObjectLeftHandler": string;
   readonly "RelatedObjectNode": string;
@@ -29,6 +30,7 @@ declare const styles: {
   readonly "RelationHoverCard": string;
   readonly "Selected": string;
   readonly "Unpinned": string;
+  readonly "bulletClick": string;
 };
 export = styles;
 
