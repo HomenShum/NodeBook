@@ -9,6 +9,7 @@ import { observer } from "mobx-react-lite";
 import { useUser } from "@/app/contexts/UserContext";
 import { createConfig } from "@/app/editor/createConfig";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
+import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -42,6 +43,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode }:
           placeholder={<span className={styles.PlaceholderTitle}>Add title</span>}
         />
         <DropdownPlugin treeNode={treeNode} />
+        <EnterKeyPlugin treeNode={treeNode} />
         <ClearEditorPlugin />
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         {treeNode.object instanceof GraphNode && (

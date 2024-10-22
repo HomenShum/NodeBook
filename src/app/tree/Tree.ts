@@ -12,9 +12,9 @@ import { SettingsStore } from "@/app/graph/SettingsStore";
 import { extractGroupId, extractPointedAtObjectId, getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
+import { SelectionStack } from "@/app/tree/SelectionStack";
 import { comparePositions, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
-import { SelectionStack } from "@/app/tree/SelectionStack";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, PointerTreeNode, RootTreeNode, TreeNode } from "./nodes";
 import { TreeNodeContentSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
@@ -653,7 +653,7 @@ export class Tree {
    * and split the node, you expect the mention text to get split accordingly.
    * So we let the editor determine the split content and pass it to this method.
    */
-  async split(treeNode: DescendantTreeNode | PointerTreeNode, chips?: { before: Chip[]; after: Chip[] }) {
+  async split(treeNode: TreeNode, chips?: { before: Chip[]; after: Chip[] }) {
     if (!(treeNode.object instanceof GraphNode) && chips !== undefined) {
       logger.warn("Chips are ignored when splitting non-node objects", { chips });
       chips = undefined;
@@ -665,7 +665,7 @@ export class Tree {
 
     // Split strategies
 
-    function splitToChild() {
+    function splitToChild(treeNode: TreeNode) {
       const relationId = uuid();
       const txs: TxCombined = [];
       if (chips) {
@@ -685,7 +685,7 @@ export class Tree {
       return { txs, newNodePath: treeNode.childrenGroupsById.all.path + "/" + relationId };
     }
 
-    function splitToSiblingBelow() {
+    function splitToSiblingBelow(treeNode: DescendantTreeNode) {
       const relationId = uuid();
       const txs: TxCombined = [];
 
@@ -720,7 +720,7 @@ export class Tree {
       return { txs, newNodePath: treeNode.parentGroup.path + "/" + relationId };
     }
 
-    function moveToNewRelationBelow() {
+    function moveToNewRelationBelow(treeNode: DescendantTreeNode) {
       const txs: TxCombined = [];
 
       // create new relation below pointing to existing node
@@ -770,30 +770,34 @@ export class Tree {
 
     // Choose split strategy based on cursor position and node expansion
 
-    const isExpandedWithChildren = treeNode.isExpanded && treeNode.childCount > 0;
-    const atStartOfLine =
-      chips?.before
-        .map((c) => c.value)
-        .join()
-        .trim() === "";
-    const atStartOfChildWithContent =
-      treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id &&
-      treeNode.relationWithParent.to.id === treeNode.object.id &&
-      atStartOfLine &&
-      treeNode.object.text.length > 0;
     let changes: { txs: TxCombined; newNodePath: string; expansions?: Record<string, boolean> };
-    if (isExpandedWithChildren) {
-      if (atStartOfChildWithContent) {
-        changes = moveToNewRelationBelow();
+    if (treeNode instanceof DescendantTreeNode) {
+      const isExpandedWithChildren = treeNode.isExpanded && treeNode.childCount > 0;
+      const atStartOfLine =
+        chips?.before
+          .map((c) => c.value)
+          .join()
+          .trim() === "";
+      const atStartOfChildWithContent =
+        treeNode.relationWithParent?.relationType.id === defaultRelationTypes.child.id &&
+        treeNode.relationWithParent?.to.id === treeNode.object.id &&
+        atStartOfLine &&
+        treeNode.object.text.length > 0;
+      if (isExpandedWithChildren) {
+        if (atStartOfChildWithContent) {
+          changes = moveToNewRelationBelow(treeNode);
+        } else {
+          changes = splitToChild(treeNode);
+        }
       } else {
-        changes = splitToChild();
+        if (atStartOfLine) {
+          changes = moveToNewRelationBelow(treeNode);
+        } else {
+          changes = splitToSiblingBelow(treeNode);
+        }
       }
     } else {
-      if (atStartOfLine) {
-        changes = moveToNewRelationBelow();
-      } else {
-        changes = splitToSiblingBelow();
-      }
+      changes = splitToChild(treeNode);
     }
 
     // Execute split

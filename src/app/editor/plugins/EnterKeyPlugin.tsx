@@ -7,20 +7,18 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useTree } from "@/app/tree/TreeContext";
-import { DescendantTreeNode } from "@/app/tree/nodes";
+import { TreeNode } from "@/app/tree/nodes";
 
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.
  */
-export const EnterKeyPlugin = ({ treeNode }: { treeNode: DescendantTreeNode }) => {
+export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   const object = treeNode.object;
-  const parent = treeNode.parent.object;
   const relation = treeNode.relationWithParent;
   const pathToNodeStr = treeNode.path;
-  const pathToParentNodes = treeNode.parent.path;
   useEffect(() => {
     return editor.registerCommand(
       KEY_ENTER_COMMAND,
@@ -43,7 +41,7 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: DescendantTreeNode }) =
       }),
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, graphStore, tree, object, parent, pathToNodeStr, pathToParentNodes, relation, treeNode]);
+  }, [editor, graphStore, tree, object, pathToNodeStr, relation, treeNode]);
 
   return null;
 };
