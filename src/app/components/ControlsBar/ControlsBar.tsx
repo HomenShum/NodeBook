@@ -2,22 +2,24 @@ import { Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react"
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
+import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { ListIcon, PinIconMew, StreamIcon } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuItem, DropdownMenuTrigger
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { Switch } from "@/app/components/UIPrimitives/Switch";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
-import { Tree } from "@/app/tree/Tree";
+import { SortOption, Tree } from "@/app/tree/Tree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+
+
 
 import { default as s, default as styles } from "./ControlsBar.module.css";
 
@@ -66,6 +68,15 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const toggleFilter = useCallback((filter: string) => {
     setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
   }, []);
+
+  const updateSortOption =
+    (partialSortOption: Partial<SortOption>) => {
+      const newSortOption: SortOption = {
+        ...tree.sortOption,
+        ...partialSortOption,
+      };
+      tree.updateSortByOption(newSortOption);
+    }
 
   const toggleViewType = useCallback(() => {
     viewStore.setViewType(viewStore.viewType === ViewType.Outline ? ViewType.Note : ViewType.Outline);
@@ -123,6 +134,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        <SortOptionDropdown
+          sortOption={tree.sortOption}
+          updateSortOption={updateSortOption}
+        />
         <div className={s.SwitchItem}>
           <Switch
             id="show-node-details"
