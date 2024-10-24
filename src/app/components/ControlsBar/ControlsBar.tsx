@@ -2,8 +2,8 @@ import { Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react"
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
+import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
-import { ListIcon, PinIconMew, StreamIcon } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -85,18 +85,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   return (
     <div className={s.ControlsBar}>
       <div className={styles.ControlsBarWrapper}>
-        <Button
-          size="sm"
-          disabled
-          variant={showPinnedSection ? "active" : "default"}
-          onClick={togglePinnedSection}
-          onMouseEnter={() => setIsPinnedHovered(true)}
-          onMouseLeave={() => setIsPinnedHovered(false)}
-        >
-          {showPinnedSection && isPinnedHovered ? <X size={14} /> : <PinIconMew size={14} strokeWidth={0.5} />}
-          <span>Pinned</span>
-        </Button>
-
+        
         <SearchBar />
 
         {selectedFilters.map((filter) => (
@@ -148,22 +137,36 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
         </div>
       </div>
       <div className={styles.RightWrapper}>
+      <Button
+        size="sm"
+        variant={viewStore.flattenSublists ? "active" : "default"}
+        onClick={() => viewStore.setFlattenSublists(!viewStore.flattenSublists)}
+        className={cn(s.ShowTooltip, s.BottomAlign)}
+        data-tooltip={viewStore.flattenSublists ? "Expand Sublists" : "Flatten Sublists"}
+      >
+        {viewStore.flattenSublists ? (
+            <FlattenIcon />
+        ) : (
+            <NestedIcon />
+            
+        )}<span>Sublists</span>
+      </Button>
         <Button
           size="sm"
           onClick={toggleViewType}
           className={cn(s.ShowTooltip, s.BottomAlign)}
-          data-tooltip={"Switch view"}
+          data-tooltip={viewStore.viewType === ViewType.Outline ? "Switch to Notes" : "Switch to Outline"}
         >
-          {viewStore.viewType === ViewType.Outline ? (
-            <>
-              <ListIcon className={styles.Icon} />
+          {viewStore.viewType === ViewType.Outline ? ( 
+              <>
+              <NestedIcon />
               <span>Lists</span>
-            </>
+              </>
           ) : (
-            <>
-              <StreamIcon className={styles.Icon} />
+              <>
+              <NotesIcon />
               <span>Notes</span>
-            </>
+              </>
           )}
         </Button>
         <Popover>

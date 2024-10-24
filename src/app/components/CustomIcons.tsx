@@ -11,6 +11,18 @@ export const UnlabeledRelationIcon = ({ empty = false }) => (
     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M1.006 7.5V9H2.5V7.5H1.006ZM1 1.5V3h1.5V1.5H1Z"/></svg>
 );
 
+export const FlattenIcon = () => (
+<svg xmlns="http://www.w3.org/2000/svg" width="13" height="9" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.915 1h7.58M1 1h.006m2.909 3.5h7.58M3.914 8h7.58M1 4.5h.006M1 8h.006"/></svg>
+);
+
+export const NestedIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="9" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.667 1h7.58M.751 1h.006m5.824 3.5h4.664m-7.585 0h.006M9 8h2.246M6.582 8h.008"/></svg>
+);
+
+export const NotesIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="9" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M.99 1h10.494m0 3.5H.996M8.5 8H.99"/></svg>
+);
+
 export const PinIconMew = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
