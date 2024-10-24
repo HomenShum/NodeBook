@@ -3,7 +3,7 @@
 import { observer } from "mobx-react-lite";
 import * as React from "react";
 
-import { SublistIcon } from "@/app/components/CustomIcons";
+import { ParentRelationIcon, SublistIcon, UnlabeledRelationIcon } from "@/app/components/CustomIcons";
 import { RelationTypeSelector } from "@/app/components/RelatedObject/RelationCombobox/RelationTypeSelector";
 import styles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -56,16 +56,20 @@ export const RelationCombobox = observer(function RelationCombobox({
 
   const button = (
     <Button
-      variant="ghost"
-      size="sm"
+      variant="default"
+      size="xs"
       role="combobox"
       aria-expanded={isOpen}
       className={styles.RelationComboboxLabel}
-      onMouseEnter={() => setIsHovered(true)}
+      onMouseEnter={() => {
+        setIsHovered(true);
+        console.log(relation.relationType.id);
+      }}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {relation.relationType.id === "sublist" && <SublistIcon />}
-      {label}:
+        {relation.relationType.id === "sublist" && <SublistIcon />}
+        {relation.relationType.id === "child" && relation.from === treeNode.object && <ParentRelationIcon />}
+      {label}{!relation.relationType.label ? <UnlabeledRelationIcon empty={!relation.relationType.label} /> : ":"}
     </Button>
   );
 

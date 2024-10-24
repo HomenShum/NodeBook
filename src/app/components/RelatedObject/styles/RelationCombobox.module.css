@@ -4,18 +4,22 @@
   z-index: 10;
   font-size: 16px;
   gap: 2px;
-  padding: 0;
+  padding: 4px;
   margin: 0;
   color: var(--gray-9);
+  align-self: center;
+  background-color: var(--gray-2);
 }
 
 .RelationComboboxLabel.RelationComboboxLabel:disabled {
-  opacity: 1;
+  opacity: .3;
 }
 
 .RelationComboboxLabel.RelationComboboxLabel svg {
-  transform: translateY(1px) scale(0.9);
+  transform: translateY(2px) scale(0.9);
 }
+
+
 
 .RelationComboboxInput {
   display: flex;

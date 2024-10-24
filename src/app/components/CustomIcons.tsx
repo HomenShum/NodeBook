@@ -1,5 +1,14 @@
 export const SublistIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="10" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.667 1.5h7.58M.751 1.5h.006M6.582 5h4.664M3.661 5h.006m2.915 3.5h4.664m-7.585 0h.006"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.667 1.5h7.58M.751 1.5h.006M6.582 5h4.664M3.661 5h.006m2.915 3.5h4.664m-7.585 0h.006"/></svg>
+);
+
+export const ParentRelationIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="10" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.25 8.496h-1.125M3.75 1.5v6.993h1.375M3.75 1.5 6.5 4.752M3.75 1.5 1 4.752m6.6 3.744h-.1"/></svg>
+);
+
+export const UnlabeledRelationIcon = ({ empty = false }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="3" height={empty ? 12 : 10} fill="none">
+    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M1.006 7.5V9H2.5V7.5H1.006ZM1 1.5V3h1.5V1.5H1Z"/></svg>
 );
 
 export const PinIconMew = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
