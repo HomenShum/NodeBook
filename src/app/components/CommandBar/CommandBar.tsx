@@ -11,6 +11,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { Chip } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
+import { useToast } from "@/app/hooks/useToast";
 import { useSetRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -36,10 +37,21 @@ type Command =
       perform: (isCmdPressed: boolean) => void;
     };
 
+type ToastProps = {
+  title: string;
+  description: string;
+  duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+};
+
 const CommandBar = observer(() => {
   const user = useUser();
   const viewStore = useViewStore();
-
+  const { addToast } = useToast();
+  
   const [search, setSearch] = useState<Search>({ text: "", chips: [] });
 
   const close = useCallback(() => {
@@ -68,6 +80,15 @@ const CommandBar = observer(() => {
   const dropdownContainerRef = useRef<HTMLDivElement>(null);
   const graphStore = useGraphStore();
   const setRoot = useSetRoot();
+
+
+  const handleZoomToNode = useCallback((object: GraphObject) => {
+    if ('getPath' in object) {
+      const path = object.getPath();
+      setRoot(path);
+      close();
+    }
+  }, [setRoot, close]);
 
   const filteredCommands = useMemo<Command[]>(() => {
     return [
@@ -112,10 +133,23 @@ const CommandBar = observer(() => {
           if (isCmdPressed) {
             setRoot(node.getPath());
           }
+
+          // Toast on new node creation
+          addToast({
+            title: "New node created at your root",
+            description: node.text || "Empty node",
+            duration: 5000,
+            action: {
+              label: "Zoom into node",
+              onClick: () => handleZoomToNode(node),
+            },
+          });
+
+          return node.id;
         },
       },
     ];
-  }, [graphStore, setRoot, search, close]);
+  }, [graphStore, setRoot, search, close, addToast, handleZoomToNode]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -216,3 +250,4 @@ const CommandBar = observer(() => {
 });
 
 export default CommandBar;
+

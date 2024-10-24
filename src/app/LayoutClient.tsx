@@ -2,7 +2,8 @@
 import dynamic from "next/dynamic";
 
 import { AuthProvider } from "@/app/auth/AuthProvider";
-
+import { ToastContextProvider } from "@/app/hooks/useToast";
+  
 import { StoresProvider } from "./StoresProvider";
 
 const App = dynamic(() => import("./App"), {
@@ -15,10 +16,12 @@ export default function LayoutClient({
   children: React.ReactNode;
 }>) {
   return (
-    <AuthProvider>
-      <StoresProvider>
-        <App>{children}</App>
-      </StoresProvider>
-    </AuthProvider>
+    <ToastContextProvider>
+      <AuthProvider>
+        <StoresProvider>
+          <App>{children}</App>
+        </StoresProvider>
+      </AuthProvider>
+    </ToastContextProvider>
   );
 }
