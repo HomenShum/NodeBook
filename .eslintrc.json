@@ -5,7 +5,7 @@
     "no-warning-comments": [
       "warn",
       {
-        "terms": ["todo", "fixme"],
+        "terms": ["fixme"],
         "location": "start"
       }
     ],
