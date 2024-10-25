@@ -1,13 +1,15 @@
+
 import { X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
+import { ConfirmReplace } from "@/app/components/DataDialog/ConfirmReplace";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
+import { ImportReviewList } from "@/app/components/DataDialog/ImportReviewList";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import { useViewStore } from "@/app/view/useViewStore";
-
-import { ConfirmReplace } from "./ConfirmReplace";
 
 import styles from "./DataDialog.module.css";
 
@@ -19,32 +21,34 @@ export const ImportDialog = observer(function ImportDialog() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [serializedGraphStore, setSerializedGraphStore] = useState<SerializedGraphStore | null>(null);
 
-  const onReplaceConfirm = useCallback(() => {
-    if (!file) return;
-
+  const onSelectFile = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files) return;
+    const selectedFile = event.target.files?.[0] ?? null;
+    setFile(selectedFile);
     const reader = new FileReader();
     reader.onload = async (event) => {
       const fileContent = event.target!.result;
-      graphStore.resetAndLoad(JSON.parse(fileContent as string));
-      viewStore.setActiveModal(null); // Close the ImportDialog after replacing data
-    };
-    reader.readAsText(file);
-  }, [graphStore, file, viewStore]);
+      setSerializedGraphStore(JSON.parse(fileContent as string));
+    }
+    reader.readAsText(selectedFile);
+  }, []);
+
+  const onReplaceConfirm = useCallback(() => {
+    if (!serializedGraphStore) return;
+    graphStore.resetAndLoad(serializedGraphStore);
+    viewStore.setActiveModal(null);
+  }, [graphStore, viewStore, serializedGraphStore]);
 
   const onAddToGraphClick = useCallback(() => {
-    if (!file) return;
+    if (!serializedGraphStore) return;
     setIsLoading(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const fileContent = event.target!.result;
-      graphStore.importData(JSON.parse(fileContent as string)).finally(() => {
-        viewStore.setActiveModal(null);
-        setIsLoading(false);
-      });
-    };
-    reader.readAsText(file);
-  }, [file, graphStore, viewStore, setIsLoading]);
+    graphStore.importData(serializedGraphStore).finally(() => {
+      viewStore.setActiveModal(null);
+      setIsLoading(false);
+    });
+  }, [graphStore, viewStore, setIsLoading, serializedGraphStore]);
 
   return (
     <DataDialog
@@ -68,10 +72,7 @@ export const ImportDialog = observer(function ImportDialog() {
           accept=".json"
           ref={fileInputRef}
           className={styles.InvisibleInput}
-          onChange={(event) => {
-            const selectedFile = event.target.files?.[0] ?? null;
-            setFile(selectedFile);
-          }}
+          onChange={onSelectFile}
         />
         {file && (
           <p className={styles.SelectedFileLabel}>
@@ -82,6 +83,7 @@ export const ImportDialog = observer(function ImportDialog() {
                 if (fileInputRef.current) {
                   fileInputRef.current.value = "";
                 }
+                setSerializedGraphStore(null);
               }}
             >
               <X size={12} />
@@ -89,10 +91,26 @@ export const ImportDialog = observer(function ImportDialog() {
           </p>
         )}
       </fieldset>
+      {serializedGraphStore &&
+        (Object.keys(serializedGraphStore.nodesById).length > 0 ||
+          Object.keys(serializedGraphStore.relationsById).length > 0 ||
+          Object.keys(serializedGraphStore.relationTypesById).length > 0) ? (
+        <ImportReviewList
+          existingData={graphStore.serialize()}
+          newData={serializedGraphStore}
+        />
+      ) : (
+        <p>No new objects to import.</p>
+      )}
       <div className={styles.DialogActions}>
         <ConfirmReplace disabled={!file || isLoading} onConfirm={onReplaceConfirm} />
         <Button
-          disabled={!file || isLoading}
+          disabled={
+            !serializedGraphStore ||
+            (Object.keys(serializedGraphStore.nodesById).length === 0 &&
+              Object.keys(serializedGraphStore.relationsById).length === 0 &&
+              Object.keys(serializedGraphStore.relationTypesById).length === 0)
+          }
           variant="default"
           size="sm"
           className={styles.Button}
