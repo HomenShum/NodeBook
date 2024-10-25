@@ -57,7 +57,7 @@ export const BackspaceMergeNodesPlugin = () => {
         ) {
           if (treeNode.parentGroup.nodes.length === 1 && treeNode.object.text.length === 0) {
             // Inside last child of the note and it's empty.
-            handled = mergeNodes(treeNode, treeNode.parent);
+            handled = mergeNodes(treeNode, treeNode.parent, treeNode.parent.id);
           } else if (treeNode.parent.siblingAbove && treeNode.parent.siblingAbove.object instanceof GraphNode) {
             // TODO: we should really be looking at the next visible node above, and conditioning on that
             if (treeNode.parent.siblingAbove.childrenGroupsById.noteContent.nodes.length > 0) {
@@ -101,7 +101,7 @@ function useMergers() {
    * the source node is converted to a regular node.
    */
   const mergeNodes = useCallback(
-    (source: DescendantTreeNode, target: TreeNode) => {
+    (source: DescendantTreeNode, target: TreeNode, focusPath?: string) => {
       if (!(target.object instanceof GraphNode && source.object instanceof GraphNode)) {
         return false;
       }
@@ -154,23 +154,24 @@ function useMergers() {
         { type: "removeRelation", transaction: { relationId: source.relationWithParent.id } },
       ];
 
-      let focusPath: string;
-      if (target.object.noteContentRelationsList.size > 0) {
+      // Use the focus path if provided. Otherwise, focus the last node in the
+      // note content list if it exists, otherwise focus the target node itself
+      if (!focusPath) {
         focusPath =
-          target.childrenGroupsById.noteContent.nodes[target.childrenGroupsById.noteContent.nodes.length - 1].path;
-      } else {
-        focusPath = target.path;
+          target.object.noteContentRelationsList.size > 0
+            ? target.childrenGroupsById.noteContent.nodes[target.childrenGroupsById.noteContent.nodes.length - 1].path
+            : target.path;
       }
-
+      const targetTextLength = target.object.text.length;
       const sourceWasExpanded = source.isExpanded;
-      const targetNodeTextLength = target.object.text.length;
       graphStore.applyCombinedTransaction(txs).finally(() => {
+        // If the source was expanded, expand the target
         if (sourceWasExpanded) {
           tree.setPathExpanded(target.path, true);
         }
         tree.setFocusedNode(focusPath, {
-          anchorOffset: targetNodeTextLength,
-          focusOffset: targetNodeTextLength,
+          anchorOffset: targetTextLength,
+          focusOffset: targetTextLength,
         });
       });
       return true;
