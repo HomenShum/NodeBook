@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_NORMAL, KEY_BACKSPACE_COMMAND } from "lexical";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -8,7 +8,7 @@ import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { useTree } from "@/app/tree/TreeContext";
-import { PointerTreeNode } from "@/app/tree/nodes";
+import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
 
 /**
  * Concat two arrays of Chips into one.
@@ -32,137 +32,201 @@ const concatChips = (targetNodeChips: Chip[], sourceNodeChips: Chip[]): Chip[] =
  * Plugin to merge nodes when backspace is pressed at the start of a node.
  */
 export const BackspaceMergeNodesPlugin = () => {
-  const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
-  const tree = useTree();
-  const { treeNode, setRelationComboboxIsOpen } = useTreeNode();
+  const { treeNode } = useTreeNode();
+  const { mergeNodes, addSiblingAboveIntoNote } = useMergers();
 
-  const object = treeNode.object;
-  const parent = treeNode.parent.object;
-  const relation = treeNode.relationWithParent;
   useEffect(() => {
     return editor.registerCommand(
       KEY_BACKSPACE_COMMAND,
       (event) => {
-        // It only should happen for the child relation since there is different
-        // logic at work for the other relation types in RelationPlugin
-        if (!graphStore || relation.relationType.id !== defaultRelationTypes.child.id) return false;
-        event.preventDefault();
-
+        // Only merge at the start of a non-child node
+        if (treeNode.relationWithParent.relationType.id !== defaultRelationTypes.child.id || !$atEditorStart()) {
+          return false;
+        }
         if (treeNode instanceof PointerTreeNode) {
           return false;
         }
 
-        //We want to merge nodes if the cursor is before the first
-        //character and backspace is pressed.
-
-        //This also implies that we need to reassign all the
-        //children of the old node to the new node.
-
-        const selection = $getSelection();
-        if (!$isRangeSelection(selection)) return false;
-
-        const startEnd = selection.getStartEndPoints();
-        if (!startEnd) return false;
-        const [selectionStart, selectionEnd] = startEnd;
-
-        // Offset is 0 when at start of text
-        if (selectionStart.offset !== 0 || selectionEnd.offset !== 0) return false;
-
-        if (relation.relationType.id !== defaultRelationTypes.child.id) {
-          setRelationComboboxIsOpen(true);
+        let handled = false;
+        if (
+          // We're at the start of the first child of a note
+          treeNode.parentGroup.id === "noteContent" &&
+          treeNode.parentGroup.nodes[0] === treeNode &&
+          treeNode.parent instanceof DescendantTreeNode
+        ) {
+          if (treeNode.parentGroup.nodes.length === 1 && treeNode.object.text.length === 0) {
+            // Inside last child of the note and it's empty.
+            handled = mergeNodes(treeNode, treeNode.parent);
+          } else if (treeNode.parent.siblingAbove && treeNode.parent.siblingAbove.object instanceof GraphNode) {
+            // TODO: we should really be looking at the next visible node above, and conditioning on that
+            if (treeNode.parent.siblingAbove.childrenGroupsById.noteContent.nodes.length > 0) {
+              // Merge note into note above
+              handled = mergeNodes(treeNode.parent, treeNode.parent.siblingAbove);
+            } else {
+              // Merge note into bullet above
+              handled = addSiblingAboveIntoNote(treeNode.parent);
+            }
+          }
+        } else if (treeNode.siblingAbove) {
+          // Merge into sibling above's last child, or sibling above if it has no children
+          const lastChild = treeNode.siblingAbove.visibleChildren.slice(-1)[0];
+          handled = mergeNodes(treeNode, lastChild || treeNode.siblingAbove);
+        } else if (treeNode.parent.parent) {
+          // Merge into parent
+          handled = mergeNodes(treeNode, treeNode.parent);
+        }
+        if (handled) {
+          event.preventDefault();
           return true;
         }
+        return false;
+      },
+      COMMAND_PRIORITY_NORMAL,
+    );
+  }, [editor, mergeNodes, addSiblingAboveIntoNote, treeNode]);
 
-        let targetTreeNode = null;
-        let targetNode = null;
-        let targetPath = null;
-        if (treeNode.siblingAbove) {
-          if (treeNode.siblingAbove.object instanceof GraphNode) {
-            targetTreeNode = treeNode.siblingAbove;
-            targetNode = treeNode.siblingAbove.object;
-            targetPath = treeNode.siblingAbove.path;
-          }
-        } else {
-          if (treeNode.parent.parent && treeNode.parent.object instanceof GraphNode) {
-            targetTreeNode = treeNode.parent;
-            targetNode = treeNode.parent.object;
-            targetPath = treeNode.parent.path;
-          }
-        }
+  return null;
+};
 
-        if (!targetNode) {
-          return false;
-        }
+/**
+ * Hook returns helper functions for merging tree nodes.
+ */
+function useMergers() {
+  const tree = useTree();
+  const graphStore = useGraphStore();
 
-        //Update all child nodes to point to the targetNode. We want to delete the
-        //edge/relation between the "node to be deleted" and it's parent so ignore and do
-        //not update that relation.
-        const updateRelationTxs: TxCombinedPart[] = object.relations
-          .filter((r) => r.id != relation.id)
+  /**
+   * Merges a source node into a target node. If the target node is a note,
+   * the source node is converted to a regular node.
+   */
+  const mergeNodes = useCallback(
+    (source: DescendantTreeNode, target: TreeNode) => {
+      if (!(target.object instanceof GraphNode && source.object instanceof GraphNode)) {
+        return false;
+      }
+
+      const txs: TxCombinedPart[] = [
+        // Update all relations to point to the target node
+        ...source.object.relations
+          .filter((r) => r.id != source.relationWithParent.id)
           .map((r) => {
             return {
               type: "replaceRelationLink",
               transaction: {
                 relationId: r.id,
-                direction: r.from.id === object.id ? "from" : "to",
-                replaceWith: { type: "existing-object", id: targetNode.id },
+                direction: r.from.id === source.object.id ? "from" : "to",
+                replaceWith: { type: "existing-object", id: target.object.id },
               },
-            };
-          });
+            } satisfies TxCombinedPart;
+          }),
+        // Add all pinned relations to the target node
+        {
+          type: "addRelationToList",
+          transaction: {
+            objectId: target.object.id,
+            relationId: source.object.pinnedRelationsList.keys,
+            listType: "pinned",
+            after: -1,
+          },
+        },
+        // Add all note content relations to the target node
+        // TODO handle undo of this
+        {
+          type: "addRelationToList",
+          transaction: {
+            objectId: target.object.id,
+            relationId: source.object.noteContentRelationsList.keys,
+            listType: "noteContent",
+            after: -1,
+          },
+        },
+        // Merge the nodes together
+        {
+          type: "updateNode",
+          transaction: {
+            nodeId: target.object.id,
+            nodeProps: {
+              content: concatChips(target.object.content, source.object.content),
+            },
+          },
+        },
+        { type: "removeRelation", transaction: { relationId: source.relationWithParent.id } },
+      ];
 
-        if (targetNode && object instanceof GraphNode) {
-          const targetNodeTextLength = targetNode.text.length;
-          graphStore
-            .applyCombinedTransaction([
-              ...updateRelationTxs,
-              {
-                type: "updateNode",
-                transaction: {
-                  nodeId: targetNode.id,
-                  nodeProps: { content: concatChips(targetNode.content, object.content) },
-                },
-              },
-              { type: "removeRelation", transaction: { relationId: relation.id } },
-            ])
-            .catch(() => {}) // TODO: investigate missing relation error
-            .finally(() => {
-              if (targetPath) {
-                if (treeNode.isExpanded) {
-                  tree.setPathExpanded(targetPath, treeNode.isExpanded);
-                }
-                tree.setFocusedNode(targetPath);
-              }
-              if (targetTreeNode) {
-                tree.setFocusedNode(targetTreeNode.id, {
-                  anchorOffset: targetNodeTextLength,
-                  focusOffset: targetNodeTextLength,
-                });
-              }
-            });
-          return true;
+      let focusPath: string;
+      if (target.object.noteContentRelationsList.size > 0) {
+        focusPath =
+          target.childrenGroupsById.noteContent.nodes[target.childrenGroupsById.noteContent.nodes.length - 1].path;
+      } else {
+        focusPath = target.path;
+      }
+
+      const sourceWasExpanded = source.isExpanded;
+      const targetNodeTextLength = target.object.text.length;
+      graphStore.applyCombinedTransaction(txs).finally(() => {
+        if (sourceWasExpanded) {
+          tree.setPathExpanded(target.path, true);
         }
+        tree.setFocusedNode(focusPath, {
+          anchorOffset: targetNodeTextLength,
+          focusOffset: targetNodeTextLength,
+        });
+      });
+      return true;
+    },
+    [graphStore, tree],
+  );
 
-        return false;
-      },
-      COMMAND_PRIORITY_NORMAL,
-    );
-  }, [
-    editor,
-    graphStore,
-    object,
-    parent,
-    relation,
-    tree.pathToRoot,
-    treeNode,
-    treeNode.siblingAbove,
-    treeNode.relationWithParent,
-    treeNode.parent.path,
-    treeNode.parent.parent,
-    treeNode.parent.object,
-    setRelationComboboxIsOpen,
-    tree,
-  ]);
+  const addSiblingAboveIntoNote = useCallback(
+    (note: DescendantTreeNode) => {
+      if (!note.siblingAbove) return false;
+      const txs: TxCombinedPart[] = [
+        {
+          type: "replaceRelationLink",
+          transaction: {
+            relationId: note.siblingAbove.relationWithParent.id,
+            direction: note.siblingAbove.relationWithParent.to.id === note.siblingAbove.object.id ? "from" : "to",
+            replaceWith: {
+              type: "existing-object",
+              id: note.object.id,
+            },
+          },
+        },
+        {
+          type: "addRelationToList",
+          transaction: {
+            objectId: note.object.id,
+            relationId: note.siblingAbove.relationWithParent.id,
+            listType: "noteContent",
+          },
+        },
+      ];
+      const siblingAboveExpanded = note.siblingAbove.isExpanded;
+      const path = note.childrenGroupsById.noteContent.createChildPath(note.siblingAbove.relationWithParent);
+      graphStore.applyCombinedTransaction(txs).finally(() => {
+        if (siblingAboveExpanded) {
+          tree.setPathExpanded(path, true);
+        }
+        tree.setFocusedNode(path);
+      });
 
-  return null;
-};
+      return true;
+    },
+    [graphStore, tree],
+  );
+
+  return { mergeNodes, addSiblingAboveIntoNote };
+}
+
+function $atEditorStart() {
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) return false;
+
+  const startEnd = selection.getStartEndPoints();
+  if (!startEnd) return false;
+  const [selectionStart, selectionEnd] = startEnd;
+
+  // Offset is 0 when at start of text
+  return selectionStart.offset === 0 && selectionEnd.offset === 0;
+}

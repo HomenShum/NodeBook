@@ -1,9 +1,10 @@
 import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { DELETED_NODE_TEXT } from "@/app/graph/constants";
+import { getOtherObject } from "@/app/graph/utils";
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
-import { ObjectPath, Position, uuid } from "@/app/util";
+import { comparePositions, ObjectPath, Position, uuid } from "@/app/util";
 import logger from "@/lib/logger";
 
 import { BaseGraphObject, GraphObject } from "./GraphObject";
@@ -28,8 +29,6 @@ export type GraphNodeProps = {
   content?: Chip[] | string;
   createdAt?: Date;
   updatedAt?: Date;
-  isBundle?: boolean;
-  isZone?: boolean;
   isPublic?: boolean;
   isNewRelatedObjectsPublic?: boolean;
 };
@@ -47,8 +46,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   content: Chip[] = [];
   createdAt: Date;
   updatedAt: Date;
-  isBundle: boolean;
-  isZone: boolean;
   isPublic: boolean = true;
   isNewRelatedObjectsPublic: boolean;
 
@@ -61,8 +58,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       content = [],
       createdAt = new Date(),
       updatedAt = new Date(createdAt.getTime()),
-      isBundle = false,
-      isZone = false,
       isPublic = false,
       isNewRelatedObjectsPublic = false,
     }: GraphNodeProps & { authorId: string },
@@ -78,8 +73,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
         : [{ type: "text", value: typeof content === "string" ? content : "" }];
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
-    this.isBundle = isBundle;
-    this.isZone = isZone;
     this.isPublic = isPublic;
     this.isNewRelatedObjectsPublic = isNewRelatedObjectsPublic;
     this.makeObservable();
@@ -91,8 +84,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       version: observable,
       createdAt: observable,
       updatedAt: observable,
-      isBundle: observable,
-      isZone: observable,
       isPublic: observable,
       isNewRelatedObjectsPublic: observable,
       content: observable.shallow,
@@ -109,14 +100,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       oldValues.content = this.content;
       this.content =
         typeof newProps.content === "string" ? [{ type: "text", value: newProps.content }] : newProps.content;
-    }
-    if (newProps.isBundle !== undefined) {
-      oldValues.isBundle = this.isBundle;
-      this.isBundle = newProps.isBundle;
-    }
-    if (newProps.isZone !== undefined) {
-      oldValues.isZone = this.isZone;
-      this.isZone = newProps.isZone;
     }
     if (newProps.isPublic !== undefined) {
       oldValues.isPublic = this.isPublic;
@@ -184,11 +167,32 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   }
 
   get text(): string {
-    return this._dfsText();
+    const text = this._dfsText({}, true);
+    if (this.noteContentRelationsList.size > 0) {
+      return [
+        text ? text + " - " : "",
+        ...this.noteContentRelationsList
+          .values()
+          .sort((a, b) => comparePositions(a.position, b.position))
+          .map(({ item }) => getOtherObject(item, this.id)?.text ?? ""),
+      ].join(" ");
+    } else {
+      return text;
+    }
   }
 
   get searchText(): string {
-    return this._dfsText({}, false);
+    if (this.noteContentRelationsList.size > 0) {
+      return [
+        this._dfsText({}, false),
+        ...this.noteContentRelationsList
+          .values()
+          .sort((a, b) => comparePositions(a.position, b.position))
+          .map(({ item }) => getOtherObject(item, this.id)?.searchText ?? ""),
+      ].join(" ");
+    } else {
+      return this._dfsText({}, false);
+    }
   }
 
   toString() {
@@ -250,8 +254,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
       content: toJS(this.content),
-      isBundle: this.isBundle,
-      isZone: this.isZone,
       isPublic: this.isPublic,
       isNewRelatedObjectsPublic: this.isNewRelatedObjectsPublic,
     };

@@ -1,4 +1,4 @@
-import { Circle, Dot } from "lucide-react";
+import { Circle, Dot, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
@@ -9,12 +9,13 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useTree } from "@/app/tree/TreeContext";
-import { DescendantTreeNode } from "@/app/tree/nodes";
-import { getAncestorsAsArray, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
+import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
+import { getAncestorsAsArray, isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
+import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
-import { ChildGroups } from "./ChildGroups";
+import { ChildGroups, NoteContentSection } from "./ChildGroups";
 import { RelatedNodeView } from "./RelatedNodeView";
 import { RelatedObjectViewType, TreeNodeProvider, useTreeNode } from "./RelatedObjectContext";
 import { RelatedObjectDetails } from "./RelatedObjectDetails";
@@ -23,24 +24,55 @@ import { RelationCombobox } from "./RelationCombobox/RelationCombobox";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
 import Toggle from "./Toggle";
 import styles from "./styles/RelatedObjectView.module.css";
+import stylesToggle from "./styles/Toggle.module.css";
 
 interface Props {
   treeNode: DescendantTreeNode;
-  showBullet?: boolean;
 }
 
-export const RelatedObjectView = observer(function RelatedObjectView({ treeNode, showBullet = true }: Props) {
+export const RelatedObjectView = observer(function RelatedObjectView({ treeNode }: Props) {
+  const viewStore = useViewStore();
+  const hideBullet =
+    viewStore.viewType === "note" &&
+    // node is a direct child of the root
+    (treeNode.parent instanceof RootTreeNode ||
+      // or node is content of a note which is a direct child of the root
+      (isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode));
+
   return (
     <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
       <Main treeNode={treeNode}>
         <Controls />
-        {showBullet && <Bullet />}
+        {!hideBullet && <Bullet />}
         <Content />
       </Main>
+      {viewStore.viewType === "note" && treeNode.parent instanceof RootTreeNode && treeNode.childCount > 0 && (
+        <RelationsToggle treeNode={treeNode} />
+      )}
       {treeNode.isExpanded && <ChildGroups treeNode={treeNode} />}
     </div>
   );
 });
+
+function RelationsToggle({ treeNode }: { treeNode: DescendantTreeNode }) {
+  const tree = useTree();
+  return (
+    <button
+      className={cn(
+        styles.RelatedObjectRelationsToggle,
+        treeNode.isExpanded && styles.RelatedObjectRelationsToggleExpanded,
+      )}
+      onClick={() => {
+        tree.setPathExpanded(treeNode.id, !treeNode.isExpanded);
+      }}
+    >
+      <Play size={7} className={`${stylesToggle.Icon} ${treeNode.isExpanded ? stylesToggle.ToggleExpanded : ""}`} />
+      <span>
+        {treeNode.childCount} relation{treeNode.childCount === 1 ? "" : "s"}
+      </span>
+    </button>
+  );
+}
 
 interface MainProps {
   treeNode: DescendantTreeNode;
@@ -88,6 +120,7 @@ const Content = observer(function Content() {
     setUpdatingRelationType,
     viewType,
   } = useTreeNode();
+  const viewStore = useViewStore();
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
 
   const nodeSelectionAnchorId = tree.selection && tree.selection.type === "node" ? tree.selection.anchorNodeId : null;
@@ -105,7 +138,18 @@ const Content = observer(function Content() {
               setIsOpen={setRelationComboboxIsOpen}
             />
           )}
-          {viewType === "replace" ? (
+          {treeNode.object.noteContentRelationsList.size > 0 ? (
+            <div
+              className={cn(
+                styles.NoteContentSection,
+                treeNode.parent instanceof RootTreeNode &&
+                  viewStore.viewType === "note" &&
+                  styles.ChildOfRootInNoteView,
+              )}
+            >
+              <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
+            </div>
+          ) : viewType === "replace" ? (
             <ReplaceRelatedNodeView treeNode={treeNode} />
           ) : treeNode.object.objectType === "node" ? (
             <RelatedNodeView treeNode={treeNode} />
@@ -126,32 +170,32 @@ const Content = observer(function Content() {
         )}
       </div>
       <div className={styles.RelatedObjectRightArea}>
-       {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
-      <Button
-        size="state"
-        variant="ghost"
-        data-tooltip={treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? "Unpin node" : "Pin node"}
-        className={cn(
-          styles.PinToggle,
-          treeNode.parentGroup.id === "pinned" && styles.Hidden,
-          treeNode.parent.object.isRelationPinned(treeNode.relationWithParent)
-            ? styles.Pinned
-            : styles.Unpinned
-        )}
-        onClick={() => {
-          const isPinned = treeNode.parent.object.isRelationPinned(treeNode.relationWithParent);
-          if (isPinned) {
-            treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent);
-          } else {
-            treeNode.parent.object.pinChildRelation(treeNode.relationWithParent);
+        {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
+        <Button
+          size="state"
+          variant="ghost"
+          data-tooltip={
+            treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? "Unpin node" : "Pin node"
           }
-        }}
-          >
+          className={cn(
+            styles.PinToggle,
+            treeNode.parentGroup.id === "pinned" && styles.Hidden,
+            treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? styles.Pinned : styles.Unpinned,
+          )}
+          onClick={() => {
+            const isPinned = treeNode.parent.object.isRelationPinned(treeNode.relationWithParent);
+            if (isPinned) {
+              treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent);
+            } else {
+              treeNode.parent.object.pinChildRelation(treeNode.relationWithParent);
+            }
+          }}
+        >
           <div className={styles.PinIcon}>
             <PinCustomIcon />
           </div>
         </Button>
-            
+
         {/* I think not showing this in replace mode is a good option but feel free to change */}
         {viewType !== "replace" && (
           <RelationCounter
@@ -241,15 +285,10 @@ const Controls = observer(function Controls() {
   const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
   return (
     <>
-      <div className={styles.RelatedObjectLeftArea} />
-      {/* toggle, bullet, menu */}
       <div className={styles.RelatedObjectLeftHandler}>
         <div className={styles.RelatedObjectActions}>
           <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
-          {treeNode.childCount > 0 && (
-            // (treeNode.instanceCountInPath === 1 || !settingsStore.disableCycles) &&
-            <Toggle treeNode={treeNode} isHovered={isHovered} />
-          )}
+          {treeNode.childCount > 0 && <Toggle treeNode={treeNode} isHovered={isHovered} />}
         </div>
       </div>
     </>

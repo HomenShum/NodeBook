@@ -2,6 +2,7 @@ declare const styles: {
   readonly "HeadingContainer": string;
   readonly "IconAndTitle": string;
   readonly "Nodes": string;
+  readonly "NoteContentSection": string;
   readonly "OutlineContent": string;
   readonly "OutlineView": string;
   readonly "OutlineViewFull": string;

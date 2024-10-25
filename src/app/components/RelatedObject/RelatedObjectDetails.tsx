@@ -2,30 +2,9 @@ import { observer } from "mobx-react-lite";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import styles from "@/app/components/RelatedObject/styles/RelatedObjectDetails.module.css";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { defaultRelationTypes } from "@/app/graph/constants";
-import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { Position } from "@/app/util";
-
-function getParentZones(relation: GraphRelation) {
-  return Array.from(
-    new Set(
-      relation.relations
-        .filter(
-          (r) =>
-            // is parent relation
-            r.relationType.id === defaultRelationTypes.child.id &&
-            r.to.id === relation.id &&
-            // and parent is a zone
-            r.from instanceof GraphNode &&
-            r.from.isZone,
-        )
-        .map((r) => r.from),
-    ),
-  );
-}
 
 interface Props {
   position: Position;
@@ -34,11 +13,7 @@ interface Props {
 }
 
 export const RelatedObjectDetails = observer(function RelatedObjectDetails({ position, object, relation }: Props) {
-  const graphStore = useGraphStore();
   const { treeNode } = useTreeNode();
-  const bundles = graphStore.getBundleRelation(relation.id);
-  const parentZones = getParentZones(relation);
-
   return (
     <div className={styles.DetailsContainer}>
       <span className={styles.PathEllipsis}>path: {treeNode.path} </span>
@@ -51,10 +26,6 @@ export const RelatedObjectDetails = observer(function RelatedObjectDetails({ pos
       )}
       <span>createdAt: {object.createdAt.toISOString()}</span>
       <span>updatedAt: {object.updatedAt.toISOString()}</span>
-      {object instanceof GraphNode && object.isBundle && <span>#BUNDLE</span>}
-      {object instanceof GraphNode && object.isZone && <span>#ZONE</span>}
-      {bundles && <span>part of bundle: {bundles.map((b) => b.id).join(", ")}</span>}
-      {parentZones.length > 0 && <span>zones: {parentZones.map((z) => `${z.id}:"${z.text}"`).join(", ")}</span>}
     </div>
   );
 });

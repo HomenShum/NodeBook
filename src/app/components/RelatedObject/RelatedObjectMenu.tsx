@@ -8,6 +8,7 @@ import {
   GitCompare,
   Globe,
   Lock,
+  Notebook,
   Pin,
   PinOff,
   Plus,
@@ -27,6 +28,7 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { useTree } from "@/app/tree/TreeContext";
 import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { createRouteUrl, downloadSubtree } from "@/app/util";
@@ -74,6 +76,44 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
     </>
   ) : (
     <>
+      {object instanceof GraphNode &&
+        (treeNode.parentGroup.id === "noteContent" ? (
+          <DropdownMenuItem
+            onSelect={() => {
+              graphStore.applyCombinedTransaction([
+                {
+                  type: "removeRelationFromList",
+                  transaction: {
+                    objectId: treeNode.parent.object.id,
+                    relationId: treeNode.relationWithParent.id,
+                    listType: "noteContent",
+                  },
+                },
+              ]);
+            }}
+          >
+            <Notebook size={14} />
+            <span>Remove from note</span>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem
+            onSelect={() => {
+              graphStore.applyCombinedTransaction([
+                {
+                  type: "addRelationToList",
+                  transaction: {
+                    objectId: treeNode.parent.object.id,
+                    relationId: treeNode.relationWithParent.id,
+                    listType: "noteContent",
+                  },
+                },
+              ]);
+            }}
+          >
+            <Notebook size={14} />
+            <span>Add to note</span>
+          </DropdownMenuItem>
+        ))}
       {parent.isRelationPinned(relation) ? (
         <DropdownMenuItem onSelect={() => parent.unpinChildRelation(relation)}>
           <PinOff size={14} />

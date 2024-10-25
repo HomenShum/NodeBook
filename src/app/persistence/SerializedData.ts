@@ -22,8 +22,6 @@ export const SerializedNodeSchema = z.object({
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
   content: z.array(SerializedChipSchema),
-  isBundle: z.boolean(),
-  isZone: z.boolean(),
   isPublic: z.boolean(),
   isNewRelatedObjectsPublic: z.boolean(),
   // sortOption: z.enum(["createdAt", "updatedAt", "alphabetical"]),
@@ -66,10 +64,11 @@ export type DeletedRelationData = {
   relation: SerializedRelation;
   fromPos?: Position;
   fromPinnedPos?: Position;
+  fromNoteContentPos?: Position;
   toPos?: Position;
   toPinnedPos?: Position;
+  toNoteContentPos?: Position;
   relationsList: DeletedRelationData[];
-  bundles: SerializedNode[];
 };
 // Have to use z.ZodType and z.lazy because of recursive typing
 // https://zod.dev/?id=recursive-types
@@ -77,10 +76,11 @@ export const DeletedRelationDataSchema: z.ZodType<DeletedRelationData> = z.objec
   relation: SerializedRelationSchema,
   fromPos: PositionSchema,
   fromPinnedPos: PositionSchema.optional(),
+  fromNoteContentPos: PositionSchema.optional(),
   toPos: PositionSchema,
   toPinnedPos: PositionSchema.optional(),
+  toNoteContentPos: PositionSchema.optional(),
   relationsList: z.lazy(() => DeletedRelationDataSchema.array()),
-  bundles: z.array(SerializedNodeSchema),
 });
 
 type SerializedRelationsByNodeId = {
@@ -96,7 +96,7 @@ export type SerializedGraphStore = {
   relationsById: Record<string, SerializedRelation>;
   relationsByNodeId: SerializedRelationsByNodeId;
   pinnedRelationsByNodeId: SerializedRelationsByNodeId;
-  relationToBundles?: Record<string, SerializedNode[]>;
+  noteContentRelationsByNodeId: SerializedRelationsByNodeId;
 };
 export const SerializedGraphStoreSchema = z.object({
   nodesById: z.record(SerializedNodeSchema),
@@ -104,7 +104,7 @@ export const SerializedGraphStoreSchema = z.object({
   relationsById: z.record(SerializedRelationSchema),
   relationsByNodeId: z.record(z.record(PositionSchema)),
   pinnedRelationsByNodeId: z.record(z.record(PositionSchema)),
-  relationToBundles: z.record(z.array(SerializedNodeSchema)).optional(),
+  noteContentRelationsByNodeId: z.record(z.record(PositionSchema)),
 });
 
 export type SerializedTree = {

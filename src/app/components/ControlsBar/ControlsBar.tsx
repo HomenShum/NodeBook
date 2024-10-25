@@ -9,7 +9,8 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuTrigger
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { Switch } from "@/app/components/UIPrimitives/Switch";
@@ -18,8 +19,6 @@ import { SortOption, Tree } from "@/app/tree/Tree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-
-
 
 import { default as s, default as styles } from "./ControlsBar.module.css";
 
@@ -66,14 +65,13 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
   }, []);
 
-  const updateSortOption =
-    (partialSortOption: Partial<SortOption>) => {
-      const newSortOption: SortOption = {
-        ...tree.sortOption,
-        ...partialSortOption,
-      };
-      tree.updateSortByOption(newSortOption);
-    }
+  const updateSortOption = (partialSortOption: Partial<SortOption>) => {
+    const newSortOption: SortOption = {
+      ...tree.sortOption,
+      ...partialSortOption,
+    };
+    tree.updateSortByOption(newSortOption);
+  };
 
   const toggleViewType = useCallback(() => {
     viewStore.setViewType(viewStore.viewType === ViewType.Outline ? ViewType.Note : ViewType.Outline);
@@ -118,41 +116,35 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <SortOptionDropdown
-          sortOption={tree.sortOption}
-          updateSortOption={updateSortOption}
-        />
+        <SortOptionDropdown sortOption={tree.sortOption} updateSortOption={updateSortOption} />
       </div>
       <div className={styles.RightWrapper}>
-      <Button
-        size="sm"
-        variant={viewStore.flattenSublists ? "active" : "default"}
-        onClick={() => viewStore.setFlattenSublists(!viewStore.flattenSublists)}
-        className={cn(s.ShowTooltip, s.BottomAlign)}
-        data-tooltip={viewStore.flattenSublists ? "Expand Sublists" : "Flatten Sublists"}
-      >
-        {viewStore.flattenSublists ? (
-            <FlattenIcon />
-        ) : (
-            <NestedIcon />
-        )}<span>Sublists</span>
-      </Button>
+        <Button
+          size="sm"
+          variant={viewStore.flattenSublists ? "active" : "default"}
+          onClick={() => viewStore.setFlattenSublists(!viewStore.flattenSublists)}
+          className={cn(s.ShowTooltip, s.BottomAlign)}
+          data-tooltip={viewStore.flattenSublists ? "Expand Sublists" : "Flatten Sublists"}
+        >
+          {viewStore.flattenSublists ? <FlattenIcon /> : <NestedIcon />}
+          <span>Sublists</span>
+        </Button>
         <Button
           size="sm"
           onClick={toggleViewType}
           className={cn(s.ShowTooltip, s.BottomAlign)}
           data-tooltip={viewStore.viewType === ViewType.Outline ? "Switch to Notes" : "Switch to Outline"}
         >
-          {viewStore.viewType === ViewType.Outline ? ( 
-              <>
+          {viewStore.viewType === ViewType.Outline ? (
+            <>
               <NestedIcon />
               <span>Lists</span>
-              </>
+            </>
           ) : (
-              <>
+            <>
               <NotesIcon />
               <span>Notes</span>
-              </>
+            </>
           )}
         </Button>
         <Popover>
@@ -203,22 +195,6 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                   id="hide-backrelations"
                   checked={settingsStore.hideBackrelations}
                   onCheckedChange={(checked: boolean) => settingsStore.setHideBackrelations(checked)}
-                />
-              </div>
-              <div className={s.SwitchItem}>
-                <label htmlFor="hide-bundles">Hide bundles</label>
-                <Switch
-                  id="hide-bundles"
-                  checked={settingsStore.hideBundles}
-                  onCheckedChange={(checked: boolean) => settingsStore.setHideBundles(checked)}
-                />
-              </div>
-              <div className={s.SwitchItem}>
-                <label htmlFor="hide-zones">Hide zones</label>
-                <Switch
-                  id="hide-zones"
-                  checked={settingsStore.hideZones}
-                  onCheckedChange={(checked: boolean) => settingsStore.setHideZones(checked)}
                 />
               </div>
               <div className={s.SwitchItem}>

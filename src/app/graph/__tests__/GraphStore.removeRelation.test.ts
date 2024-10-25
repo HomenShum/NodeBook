@@ -71,7 +71,6 @@ describe("GraphStore.removeRelation", () => {
             operation: "deleteRelation",
             deleted: {
               relation: serializedRelation,
-              bundles: [],
               relationsList: [],
               fromPos,
               toPos,
@@ -108,7 +107,6 @@ describe("GraphStore.removeRelation", () => {
             operation: "deleteRelation",
             deleted: {
               relation: serializedRelation,
-              bundles: [],
               relationsList: [],
               fromPos,
               toPos,
@@ -190,7 +188,6 @@ describe("GraphStore.removeRelation", () => {
             operation: "deleteRelation",
             deleted: {
               relation: serializedHyperRelation,
-              bundles: [],
               relationsList: [],
               fromPos,
               toPos,
@@ -241,11 +238,9 @@ describe("GraphStore.removeRelation", () => {
             operation: "deleteRelation",
             deleted: {
               relation: serializedAB,
-              bundles: [],
               relationsList: [
                 {
                   relation: serializedHyperRelation,
-                  bundles: [],
                   relationsList: [],
                   fromPos: hyperFromPos,
                   toPos: hyperToPos,

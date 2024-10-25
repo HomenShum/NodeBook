@@ -71,7 +71,12 @@ export abstract class BaseTreeNode {
   }
 
   get childrenGroupsById() {
-    return { pinned: this.childrenGroups[0], all: this.childrenGroups[1], pointer: this.childrenGroups[2] };
+    return {
+      noteContent: this.childrenGroups[0],
+      pinned: this.childrenGroups[1],
+      all: this.childrenGroups[2],
+      pointer: this.childrenGroups[3],
+    };
   }
 
   createChildPath(child: DescendantTreeNode | GraphRelation, groupId: GroupId = "all"): string {
@@ -83,7 +88,7 @@ export abstract class BaseTreeNode {
    * node is collapsed. To get the count of visible children, use `visibleChildren`.
    */
   get childCount(): number {
-    return this.childrenGroups.reduce((acc, group) => acc + group.nodes.length, 0);
+    return this.childrenGroups.reduce((acc, group) => (group.id !== "noteContent" ? acc + group.nodes.length : acc), 0);
   }
 
   /**
@@ -91,9 +96,15 @@ export abstract class BaseTreeNode {
    * return an empty list.
    */
   get visibleChildren(): DescendantTreeNode[] {
-    return this.isExpanded
-      ? this.childrenGroups.reduce((acc, group) => acc.concat(group.nodes), [] as DescendantTreeNode[])
-      : [];
+    const children: DescendantTreeNode[] = [];
+    for (const group of this.childrenGroups) {
+      if (group.id === "noteContent") {
+        children.push(...group.nodes);
+      } else if (this.isExpanded && group.isExpanded) {
+        children.push(...group.nodes);
+      }
+    }
+    return children;
   }
 
   get isExpanded() {
@@ -123,6 +134,7 @@ export class RootTreeNode extends BaseTreeNode {
   constructor({ tree }: { tree: Tree }) {
     super({ tree, object: tree.rootObject });
     this.childrenGroups = [
+      new NoteContentGroup({ tree, parent: this }),
       new PinnedGroup({ tree, parent: this }),
       new AllGroup({ tree, parent: this }),
       new PointerGroup({ tree, parent: this }),
@@ -235,6 +247,7 @@ export class DescendantTreeNode extends BaseTreeNode {
     this.id = this.path;
     this.depth = group.parent.depth + 1;
     this.childrenGroups = [
+      new NoteContentGroup({ tree: group.tree, parent: this }),
       new PinnedGroup({ tree: group.tree, parent: this }),
       new AllGroup({ tree: group.tree, parent: this }),
       new PointerGroup({ tree: group.tree, parent: this }),
@@ -276,9 +289,12 @@ export class DescendantTreeNode extends BaseTreeNode {
       throw new Error("Node not found in group");
     } else if (nodeIndex === 0) {
       // get last node in previous group
-      const prevGroupIdx = this.parent.childrenGroups.indexOf(this.parentGroup) - 1;
-      const prevGroup = this.parent.childrenGroups[prevGroupIdx];
-      if (!prevGroup?.isExpanded) return null; // TODO sketch that we need to do this
+      let prevGroupIdx = this.parent.childrenGroups.indexOf(this.parentGroup) - 1;
+      let prevGroup: BaseGroup | undefined = this.parent.childrenGroups[prevGroupIdx];
+      while (!(prevGroup && prevGroup.isExpanded && prevGroup.nodes.length > 0) && prevGroupIdx >= 0) {
+        prevGroupIdx--;
+        prevGroup = this.parent.childrenGroups[prevGroupIdx];
+      }
       return prevGroup?.nodes[prevGroup.nodes.length - 1] || null;
     } else {
       return this.parentGroup.nodes[nodeIndex - 1] || null;
@@ -296,9 +312,15 @@ export class DescendantTreeNode extends BaseTreeNode {
       throw new Error("Node not found in group");
     } else if (nodeIndex === this.parentGroup.nodes.length - 1) {
       // get first node in next group
-      const nextGroupIndex = this.parent.childrenGroups.indexOf(this.parentGroup) + 1;
-      const nextGroup = this.parent.childrenGroups[nextGroupIndex];
-      if (!nextGroup?.isExpanded) return null; // TODO sketch that we need to do this
+      let nextGroupIndex = this.parent.childrenGroups.indexOf(this.parentGroup) + 1;
+      let nextGroup = this.parent.childrenGroups[nextGroupIndex];
+      while (
+        !(nextGroup && nextGroup.isExpanded && nextGroup.nodes.length > 0) &&
+        nextGroupIndex < this.parent.childrenGroups.length
+      ) {
+        nextGroupIndex++;
+        nextGroup = this.parent.childrenGroups[nextGroupIndex];
+      }
       return nextGroup?.nodes[0] || null;
     } else {
       return this.parentGroup.nodes[nodeIndex + 1] || null;
@@ -312,7 +334,7 @@ export class DescendantTreeNode extends BaseTreeNode {
 
   async setParent(parent: BaseTreeNode, after?: Positioner<DescendantTreeNode>) {
     if (this.parent.object === parent.object) return;
-    await this.tree.setParentOfNode(this.id, parent, after);
+    await this.tree.setParentOfNode(this.id, parent.object.id, after);
   }
 
   /**
@@ -381,7 +403,7 @@ export type TreeNode = PointerTreeNode | RootTreeNode | DescendantTreeNode;
  * groupby operations like "by type" or "by relation" (similar to Linear).
  */
 export abstract class BaseGroup {
-  abstract id: "all" | "pinned" | "pointer";
+  abstract id: "all" | "pinned" | "pointer" | "noteContent";
   tree: Tree;
   parent: TreeNode;
   nodes: DescendantTreeNode[];
@@ -411,15 +433,27 @@ export abstract class BaseGroup {
         captureMessage(message, { extra: data, level: "info" });
         continue;
       }
+
+      // TODO this should be configurable
+      if (this.id !== "noteContent" && this.parent.object.noteContentRelationsList.has(relation.id)) {
+        continue;
+      }
+
       const node = new DescendantTreeNode({
         object,
         position,
         relationWithParent: relation,
         group: this,
       });
-      // Only hydrate children if the parent is expanded. This is important to avoid
-      // infinite recursion since we allow circular references in the graph.
-      if (this.parent.isExpanded && this.isExpanded) {
+
+      if (
+        // Only hydrate children if the parent is expanded. This is important to avoid
+        // infinite recursion since we allow circular references in the graph.
+        (this.parent.isExpanded && this.isExpanded) ||
+        // Except the note content group. In this case, we always hydrate the children, because this group
+        // is visible even if the node is not expanded.
+        this.id === "noteContent"
+      ) {
         node.hydrate();
       }
       nodes.push(node);
@@ -490,6 +524,38 @@ export class AllGroup extends BaseGroup {
   async add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
     for (const node of nodes) {
       await node.setParent(this.parent, after);
+      this.tree.updateSubtreeExpansionAndSelectionPathState(node.path, this.createChildPath(node));
+      after = node;
+    }
+    this.tree.setPathExpanded(this.parent.path, true);
+  }
+}
+
+export class NoteContentGroup extends BaseGroup {
+  id = "noteContent" as const;
+  constructor(props: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
+    super(props);
+  }
+
+  get path() {
+    return this.parent.path + "/noteContent";
+  }
+
+  get relationsWithPositions() {
+    return this.parent.object.noteContentRelationsWithPositions;
+  }
+
+  /**
+   * Moves the nodes into the given group while maintaining any expanded or
+   * selected states.
+   */
+  async add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
+    for (const node of nodes) {
+      await node.setParent(this.parent, after);
+      this.parent.object.addRelationToNoteContent(
+        node.relationWithParent,
+        after instanceof DescendantTreeNode ? after.relationWithParent : after,
+      );
       this.tree.updateSubtreeExpansionAndSelectionPathState(node.path, this.createChildPath(node));
       after = node;
     }
@@ -578,5 +644,5 @@ export class PointerGroup extends BaseGroup {
     this.tree.setPathExpanded(this.parent.path, true);
   }
 }
-export type ChildrenGroups = [PinnedGroup, AllGroup, PointerGroup];
+export type ChildrenGroups = [NoteContentGroup, PinnedGroup, AllGroup, PointerGroup];
 export type GroupId = BaseGroup["id"];

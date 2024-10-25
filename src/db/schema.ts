@@ -1,4 +1,4 @@
-import { bigint, boolean, integer, pgTable, serial, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, integer, pgEnum, pgTable, serial, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -19,8 +19,6 @@ const SerializedUserSettingsSchema = z.object({
   hideAllRootParents: z.boolean().optional(),
   hideAllParents: z.boolean().optional(),
   hideBackrelations: z.boolean().optional(),
-  hideBundles: z.boolean().optional(),
-  hideZones: z.boolean().optional(),
   hideThoughtstreamBullets: z.boolean().optional(),
   hideBulletBackgroundIfParentsOnly: z.boolean().optional(),
   searchAndReplaceEnabled: z.boolean().optional(),
@@ -57,8 +55,6 @@ export const graphNodeTable = pgTable(
     createdAt: timestamp("created_at"),
     updatedAt: timestamp("updated_at"),
     content: text("content"),
-    isBundle: boolean("is_bundle"),
-    isZone: boolean("is_zone"),
     isPublic: boolean("is_public").default(false),
     isNewRelatedObjectsPublic: boolean("is_new_related_objects_public").default(false),
   },
@@ -108,6 +104,8 @@ export const relationTypeTable = pgTable(
 export const RelationTypeSchema = createSelectSchema(relationTypeTable);
 export type PersistedRelationType = z.infer<typeof RelationTypeSchema>;
 
+const relationListsTypeEnum = pgEnum("relation_lists_type", ["pinned", "noteContent", "all"]);
+
 export const relationListsTable = pgTable(
   "relation_lists",
   {
@@ -115,13 +113,13 @@ export const relationListsTable = pgTable(
     authorId: text("author_id").notNull(),
     nodeId: text("node_id"),
     relationId: text("relation_id"),
-    pinned: boolean("pinned"),
+    type: relationListsTypeEnum("type").notNull(),
     positionInt: bigint("position_int", { mode: "number" }),
     positionFrac: text("position_frac"),
     isPublic: boolean("is_public").default(false),
   },
   (t) => ({
-    unique: unique().on(t.nodeId, t.relationId, t.pinned),
+    unique: unique().on(t.nodeId, t.relationId, t.type),
   }),
 );
 export const RelationListsSchema = createSelectSchema(relationListsTable);

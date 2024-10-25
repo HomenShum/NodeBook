@@ -8,7 +8,7 @@ export const upsertRelationList = async (
   tx: MewDbTransaction,
   nodeId: string,
   authorId: string,
-  pinned: boolean,
+  type: "pinned" | "noteContent" | "all",
   relationId: string,
   position: SerializedPosition | null,
   isPublic: boolean,
@@ -20,7 +20,7 @@ export const upsertRelationList = async (
         and(
           eq(relationListsTable.nodeId, nodeId),
           eq(relationListsTable.relationId, relationId),
-          eq(relationListsTable.pinned, pinned),
+          eq(relationListsTable.type, type),
         ),
       );
   } else {
@@ -30,13 +30,13 @@ export const upsertRelationList = async (
         authorId: authorId,
         nodeId: nodeId,
         relationId: relationId,
-        pinned: pinned,
+        type: type,
         positionInt: position.int,
         positionFrac: position.frac,
         isPublic: isPublic,
       })
       .onConflictDoUpdate({
-        target: [relationListsTable.nodeId, relationListsTable.relationId, relationListsTable.pinned],
+        target: [relationListsTable.nodeId, relationListsTable.relationId, relationListsTable.type],
         set: {
           positionInt: position.int,
           positionFrac: position.frac,

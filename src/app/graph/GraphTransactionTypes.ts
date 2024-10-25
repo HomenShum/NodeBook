@@ -94,6 +94,19 @@ export type TxUnpinRelation = {
   relationId: string;
 };
 
+export type TxAddRelationToList = {
+  objectId: string;
+  relationId: string | string[];
+  listType: "pinned" | "noteContent" | "all";
+  after?: Positioner<GraphRelation>;
+};
+
+export type TxRemoveRelationFromList = {
+  objectId: string;
+  relationId: string;
+  listType: "pinned" | "noteContent" | "all";
+};
+
 // TODO: probably can be done with less boilerplate code?
 // TODO: probably can be done with less boilerplate code?
 export type TxCombinedPart =
@@ -148,7 +161,16 @@ export type TxCombinedPart =
   | {
       type: "unpinRelation";
       transaction: TxUnpinRelation;
+    }
+  | {
+      type: "addRelationToList";
+      transaction: TxAddRelationToList;
+    }
+  | {
+      type: "removeRelationFromList";
+      transaction: TxRemoveRelationFromList;
     };
+
 /**
  * The field `type` in each element refers to a method on GraphStore.
  * The field `transaction` refers to the transaction type.

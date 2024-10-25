@@ -1,14 +1,12 @@
 declare const styles: {
   readonly "AddPinButton": string;
-  readonly "BundleSeparator": string;
   readonly "DateLabel": string;
   readonly "DateLabelContent": string;
-  readonly "DefaultBundle": string;
+  readonly "DefaultNote": string;
   readonly "DefaultSpacing": string;
-  readonly "FirstBundle": string;
-  readonly "FirstBundle_NoDate": string;
-  readonly "FirstBundle_WithDate": string;
+  readonly "FirstNote": string;
   readonly "NodeIndentation": string;
+  readonly "NoteSeparator": string;
   readonly "PinIcon": string;
   readonly "PinIcon_PinnedVisible": string;
   readonly "PinSectionSeparator": string;

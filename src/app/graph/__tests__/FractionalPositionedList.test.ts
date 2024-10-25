@@ -72,7 +72,6 @@ describe("insertPositions", () => {
 
   it("should throw an error for non-positive number of positions", () => {
     const items = [{ id: "1", position: { int: 1000, frac: "a0" } }];
-    expect(() => generatePositionsForInsert(items, 0, 0)).toThrow();
     expect(() => generatePositionsForInsert(items, 0, -1)).toThrow();
   });
 });

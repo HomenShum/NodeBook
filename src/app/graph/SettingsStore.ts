@@ -17,8 +17,6 @@ export class SettingsStore {
   public hideAllRootParents = true;
   public hideAllParents = false;
   public hideBackrelations = false;
-  public hideBundles = true;
-  public hideZones = false;
   public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
   public searchAndReplaceEnabled = true;
@@ -56,8 +54,6 @@ export class SettingsStore {
     this.hideAllRootParents = true;
     this.hideAllParents = false;
     this.hideBackrelations = false;
-    this.hideBundles = true;
-    this.hideZones = false;
     this.hideThoughtstreamBullets = true;
     this.hideBulletBackgroundIfParentsOnly = true;
     this.searchAndReplaceEnabled = false;
@@ -87,8 +83,6 @@ export class SettingsStore {
       hideAllRootParents: this.hideAllRootParents,
       hideAllParents: this.hideAllParents,
       hideBackrelations: this.hideBackrelations,
-      hideBundles: this.hideBundles,
-      hideZones: this.hideZones,
       hideThoughtstreamBullets: this.hideThoughtstreamBullets,
       hideBulletBackgroundIfParentsOnly: this.hideBulletBackgroundIfParentsOnly,
       searchAndReplaceEnabled: this.searchAndReplaceEnabled,
@@ -109,8 +103,6 @@ export class SettingsStore {
     this.hideAllRootParents = data.hideAllRootParents ?? this.hideAllRootParents;
     this.hideAllParents = data.hideAllParents ?? this.hideAllParents;
     this.hideBackrelations = data.hideBackrelations ?? this.hideBackrelations;
-    this.hideBundles = data.hideBundles ?? this.hideBundles;
-    this.hideZones = data.hideZones ?? this.hideZones;
     this.hideThoughtstreamBullets = data.hideThoughtstreamBullets ?? this.hideThoughtstreamBullets;
     this.hideBulletBackgroundIfParentsOnly =
       data.hideBulletBackgroundIfParentsOnly ?? this.hideBulletBackgroundIfParentsOnly;
@@ -149,14 +141,6 @@ export class SettingsStore {
 
   setHideBackrelations(value: boolean) {
     this.hideBackrelations = value;
-  }
-
-  setHideBundles(value: boolean) {
-    this.hideBundles = value;
-  }
-
-  setHideZones(value: boolean) {
-    this.hideZones = value;
   }
 
   setHideThoughtstreamBullets(value: boolean) {

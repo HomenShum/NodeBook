@@ -8,7 +8,7 @@ import { GraphUpdate, PartialUpdateRelationList } from "@/app/graph/GraphUpdate"
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { GraphRelationType } from "@/app/graph/types";
 import { UpdateManager } from "@/app/graph/UpdateManager";
-import { serializeMap, serializeMapWithArrayValues } from "@/app/persistence/serialization";
+import { serializeMap } from "@/app/persistence/serialization";
 import {
   DeletedRelationData,
   SerializedGraphStore,
@@ -38,10 +38,12 @@ import {
   TxAddChildNode,
   TxAddNode,
   TxAddRelation,
+  TxAddRelationToList,
   TxAddRelationType,
   TxCombined,
   TxRemoveNode,
   TxRemoveRelation,
+  TxRemoveRelationFromList,
   TxReplaceRelationLink,
   TxSetIsPublic,
   TxUpdateNode,
@@ -65,7 +67,6 @@ export class GraphStore {
 
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
-  relationToBundles: Map<string, GraphNode[]> = new Map(); // Relation id to list of bundle-nodes that contain it
   relationTypesById: Record<string, GraphRelationType> = {};
 
   cappedKeywordIndex: CappedKeywordIndex;
@@ -91,7 +92,6 @@ export class GraphStore {
         nodesById: observable.shallow,
         relationsById: observable.shallow,
         relationTypesById: observable.shallow,
-        relationToBundles: observable.shallow,
         // TODO: does the fact these are async mess up the action?
         // node
         addNode: action,
@@ -106,8 +106,6 @@ export class GraphStore {
         // misc
         setIsPublic: action,
         addChildNode: action,
-        addToBundle: action,
-        removeFromBundle: action,
         applyUpdates: action,
         load: action,
         cleanup: action,
@@ -225,7 +223,7 @@ export class GraphStore {
           this.deleteRelation(update.deleted.relation.id);
           break;
         case "updateRelationList":
-          this._updateRelationList(update.nodeId, update.pinned, update.relationId, update.newPosition);
+          this._updateRelationList(update.nodeId, update.type, update.relationId, update.newPosition);
           break;
         default:
           update satisfies never;
@@ -320,6 +318,16 @@ export class GraphStore {
           updatesArray.push(...updates);
           break;
         }
+        case "addRelationToList": {
+          const { updates } = this._addRelationToList(tx.transaction);
+          updatesArray.push(...updates);
+          break;
+        }
+        case "removeRelationFromList": {
+          const { updates } = this._removeRelationFromList(tx.transaction);
+          updatesArray.push(...updates);
+          break;
+        }
         default:
           tx satisfies never;
       }
@@ -345,8 +353,6 @@ export class GraphStore {
         id: props.id ?? uuid(),
         authorId: props.authorId ?? this.user.id,
         content: props.content,
-        isBundle: props.isBundle ?? false,
-        isZone: props.isZone ?? false,
         isPublic: !!(props.isPublic || (this.settings && this.settings.publicMode)),
         isNewRelatedObjectsPublic: !!props.isNewRelatedObjectsPublic,
         createdAt: props.createdAt ?? new Date(),
@@ -862,7 +868,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: oldFrom.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: oldFromPositionBefore,
         newPosition: null,
@@ -873,7 +879,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: newFrom.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: newFromPositionBefore ?? null,
         newPosition: newFromPosition,
@@ -892,7 +898,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: oldTo.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: oldToPositionBefore,
         newPosition: null,
@@ -903,7 +909,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: newTo.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: newToPositionBefore ?? null,
         newPosition: newToPosition,
@@ -919,7 +925,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: relation.from.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: fromPos ?? null,
         newPosition: fromPos ?? null,
@@ -930,7 +936,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: relation.to.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: toPos ?? null,
         newPosition: toPos ?? null,
@@ -976,7 +982,7 @@ export class GraphStore {
 
   private _updateRelationList(
     objectId: string,
-    pinned: boolean,
+    relationListType: "pinned" | "noteContent" | "all",
     relationId: string,
     newPosition: Position | null,
   ): void {
@@ -985,7 +991,7 @@ export class GraphStore {
     const relation = this.getRelation(relationId);
     if (!relation) throw new Error(`Relation with id ${relationId} does not exist`);
 
-    const list = pinned ? object.pinnedRelationsList : object.allRelationsList;
+    const list = this.getRelationList(object, relationListType);
     if (newPosition === null) {
       list.delete(relationId);
     } else {
@@ -1061,7 +1067,7 @@ export class GraphStore {
       this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
       const commonUpdatePart = {
         authorId,
-        pinned: false,
+        type: "all" as const,
         oldIsPublic: false,
         newIsPublic: relation.isPublic,
       };
@@ -1133,9 +1139,10 @@ export class GraphStore {
       relation: relation.serialize(),
       fromPos: relation.fromPosition,
       fromPinnedPos: relation.fromPinnedPosition,
+      fromNoteContentPos: relation.fromNoteContentPosition,
       toPos: relation.toPosition,
       toPinnedPos: relation.toPinnedPosition,
-      bundles: this.relationToBundles.get(relation.id) || [],
+      toNoteContentPos: relation.toNoteContentPosition,
       relationsList: [],
     };
     try {
@@ -1152,12 +1159,8 @@ export class GraphStore {
       this.getRelationList(toNode).delete(relation.id);
       this.getPinnedRelationList(fromNode).delete(relation.id);
       this.getPinnedRelationList(toNode).delete(relation.id);
-
-      // Remove relation from all bundles
-      const bundles = this.relationToBundles.get(relation.id) || [];
-      bundles.forEach((bundle) => {
-        this.removeFromBundle(relation, bundle);
-      });
+      this.getRelationList(fromNode, "noteContent").delete(relation.id);
+      this.getRelationList(toNode, "noteContent").delete(relation.id);
 
       // Delete the relation itself
       this.relationsById.delete(relation.id);
@@ -1171,13 +1174,6 @@ export class GraphStore {
       deleted.relationsList.forEach((relData) => {
         this.restoreRelation(relData);
       });
-      const nodeBundles = this.relationToBundles.get(relation.id) || [];
-      deleted.bundles.forEach((serializedBundle) => {
-        const bundle = this.nodesById.get(serializedBundle.id);
-        if (bundle && !nodeBundles.includes(bundle)) {
-          this.addToBundle(relation, bundle);
-        }
-      });
       throw e;
     }
     return deleted;
@@ -1187,24 +1183,26 @@ export class GraphStore {
     relation: serializedRelation,
     fromPos,
     fromPinnedPos,
+    fromNoteContentPos,
     toPos,
     toPinnedPos,
+    toNoteContentPos,
     relationsList,
-    bundles,
   }: DeletedRelationData) {
     const relation = this.loadSerializedRelation(serializedRelation);
     this.relationsById.set(relation.id, relation);
     this.cappedKeywordIndex.add(relation.id, () => relation.searchText);
-    this.setRelationPositions(relation, { fromPos, fromPinnedPos, toPos, toPinnedPos });
+    this.setRelationPositions(relation, {
+      fromPos,
+      fromPinnedPos,
+      fromNoteContentPos,
+      toPos,
+      toPinnedPos,
+      toNoteContentPos,
+    });
     for (const rel of relationsList) {
       this.restoreRelation(rel);
     }
-    bundles.forEach((serializedBundle) => {
-      const bundle = this.nodesById.get(serializedBundle.id);
-      if (bundle) {
-        this.addToBundle(relation, bundle);
-      }
-    });
   }
 
   private setRelationPositions(
@@ -1212,11 +1210,13 @@ export class GraphStore {
     positions: {
       fromPos?: Position;
       fromPinnedPos?: Position;
+      fromNoteContentPos?: Position;
       toPos?: Position;
       toPinnedPos?: Position;
+      toNoteContentPos?: Position;
     },
   ) {
-    const { fromPos, fromPinnedPos, toPos, toPinnedPos } = positions;
+    const { fromPos, fromPinnedPos, fromNoteContentPos, toPos, toPinnedPos, toNoteContentPos } = positions;
     if (fromPos) {
       this.getRelationList(relation.from).undoDelete({
         item: relation,
@@ -1229,6 +1229,12 @@ export class GraphStore {
         position: fromPinnedPos,
       });
     }
+    if (fromNoteContentPos) {
+      this.getRelationList(relation.from, "noteContent").undoDelete({
+        item: relation,
+        position: fromNoteContentPos,
+      });
+    }
     if (toPos) {
       this.getRelationList(relation.to).undoDelete({
         item: relation,
@@ -1239,6 +1245,12 @@ export class GraphStore {
       this.getPinnedRelationList(relation.to).undoDelete({
         item: relation,
         position: toPinnedPos,
+      });
+    }
+    if (toNoteContentPos) {
+      this.getRelationList(relation.to, "noteContent").undoDelete({
+        item: relation,
+        position: toNoteContentPos,
       });
     }
   }
@@ -1313,7 +1325,20 @@ export class GraphStore {
       return this.getRelationList(object).get(relationWithParent.id)?.position;
     });
 
-    const relationsList = tx.groupId === "pinned" ? withinNode.pinnedRelationsList : withinNode.allRelationsList;
+    let relationsList: FractionalPositionedList<GraphRelation> = withinNode.allRelationsList;
+    switch (tx.groupId) {
+      case "pinned":
+        relationsList = withinNode.pinnedRelationsList;
+        break;
+      case "noteContent":
+        relationsList = withinNode.noteContentRelationsList;
+        break;
+      case "all":
+      case "pointer":
+        break;
+      default:
+        tx.groupId satisfies never;
+    }
     relationsList.move(
       objectRelationPairs.map(({ relationWithParent }) => relationWithParent),
       after,
@@ -1326,7 +1351,7 @@ export class GraphStore {
           operation: "updateRelationList",
           authorId: this.user.id,
           nodeId: withinNode.id,
-          pinned: tx.groupId === "pinned",
+          type: tx.groupId === "pinned" ? "pinned" : tx.groupId === "noteContent" ? "noteContent" : "all",
           relationId: relationWithParent.id,
           newPosition: relationsList.get(relationWithParent.id)?.position ?? null,
           oldPosition: oldPositions[i] ?? null,
@@ -1360,6 +1385,7 @@ export class GraphStore {
       if (relation.to.id != relation.from.id) {
         relation.from.allRelationsList.delete(relation.id);
         relation.from.pinnedRelationsList.delete(relation.id);
+        relation.from.noteContentRelationsList.delete(relation.id);
       }
       relation.update({ from: newFrom });
       relation.from.allRelationsList.add(relation, after);
@@ -1373,7 +1399,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: oldFrom.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: oldFromPosition,
         newPosition: null,
@@ -1384,7 +1410,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: newFrom.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: null,
         newPosition: this.getRelationList(newFrom).get(relation.id)?.position ?? null,
@@ -1419,6 +1445,7 @@ export class GraphStore {
       if (relation.from.id != relation.to.id) {
         relation.to.allRelationsList.delete(relation.id);
         relation.to.pinnedRelationsList.delete(relation.id);
+        relation.to.noteContentRelationsList.delete(relation.id);
       }
       // set the new "to" node
       relation.to = newTo;
@@ -1435,7 +1462,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: oldTo.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: oldToPosition,
         newPosition: null,
@@ -1446,7 +1473,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: newTo.id,
-        pinned: false,
+        type: "all",
         relationId: relation.id,
         oldPosition: null,
         newPosition: this.getRelationList(newTo).get(relation.id)?.position ?? null,
@@ -1494,23 +1521,59 @@ export class GraphStore {
     return [];
   }
 
-  // TODO: move to the graph utils library
-  private doAllRelationsPointTo(object: GraphObject, pointTo: GraphObject): boolean {
-    return object.relations.every((r) => {
-      const other = r.from.id === object.id ? r.to : r.from;
-      return other.id === pointTo.id;
-    });
-  }
-
-  // TODO: this is creating an observable, which might cause issues
-  getRelationList(nodeOrId: GraphObject | string): FractionalPositionedList<GraphRelation> {
+  getRelationList(
+    nodeOrId: GraphObject | string,
+    relationListType: "pinned" | "noteContent" | "all" = "all",
+  ): FractionalPositionedList<GraphRelation> {
     const node = typeof nodeOrId === "string" ? this.getNodeOrThrow(nodeOrId) : nodeOrId;
-    return node.allRelationsList;
+    switch (relationListType) {
+      case "pinned":
+        return node.pinnedRelationsList;
+      case "noteContent":
+        return node.noteContentRelationsList;
+      case "all":
+        return node.allRelationsList;
+      default:
+        return relationListType satisfies never;
+    }
   }
 
   getPinnedRelationList(nodeOrId: GraphObject | string): FractionalPositionedList<GraphRelation> {
     const node = typeof nodeOrId === "string" ? this.getNodeOrThrow(nodeOrId) : nodeOrId;
     return node.pinnedRelationsList;
+  }
+
+  private _addRelationToList(tx: TxAddRelationToList): { updates: GraphUpdate[] } {
+    const list = this.getRelationList(tx.objectId, tx.listType);
+    const relations = (Array.isArray(tx.relationId) ? tx.relationId : [tx.relationId]).map((id) =>
+      this.getRelationOrThrow(id),
+    );
+    const partialUpdates = list.add(relations, tx.after);
+    return {
+      updates: partialUpdates.map((update) => ({
+        ...update,
+        authorId: this.user.id,
+        nodeId: tx.objectId,
+        type: tx.listType,
+        oldIsPublic: this.relationsById.get(update.relationId)?.isPublic ?? false,
+        newIsPublic: this.relationsById.get(update.relationId)?.isPublic ?? false,
+      })),
+    };
+  }
+
+  private _removeRelationFromList(tx: TxRemoveRelationFromList): { updates: GraphUpdate[] } {
+    const list = this.getRelationList(tx.objectId, tx.listType);
+    const partialUpdates = list.delete(tx.relationId);
+    return {
+      updates: partialUpdates.map((update) => ({
+        ...update,
+        authorId: this.user.id,
+        nodeId: tx.objectId,
+        type: tx.listType,
+        oldIsPublic: this.relationsById.get(tx.relationId)?.isPublic ?? false,
+        newIsPublic: this.relationsById.get(tx.relationId)?.isPublic ?? false,
+      })),
+    };
   }
 
   pinRelations(objectId: string, relationIds: string[], after?: Positioner<GraphRelation>) {
@@ -1538,7 +1601,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: objectId,
-        pinned: true,
+        type: "pinned",
         relationId,
         oldPosition: null, // TODO: should we preserve the old position from allRelationsList?
         newPosition: this.getPinnedRelationList(objectId).get(relationId)?.position ?? null,
@@ -1565,7 +1628,7 @@ export class GraphStore {
         operation: "updateRelationList",
         authorId: this.user.id,
         nodeId: objectId,
-        pinned: true,
+        type: "pinned",
         relationId,
         oldPosition: oldPositions[relationIds.indexOf(relationId)] ?? null,
         newPosition: null, // TODO: should we preserve the old position from pinnedRelationsList?
@@ -1578,7 +1641,6 @@ export class GraphStore {
   cleanup() {
     this.nodesById.clear();
     this.relationsById.clear();
-    this.relationToBundles.clear();
     Object.keys(this.relationTypesById).forEach((key) => {
       delete this.relationTypesById[key];
     });
@@ -1598,7 +1660,6 @@ export class GraphStore {
     // Clear all local data
     this.nodesById.clear();
     this.relationsById.clear();
-    this.relationToBundles.clear();
     Object.keys(this.relationTypesById).forEach((key) => {
       delete this.relationTypesById[key];
     });
@@ -1705,42 +1766,6 @@ export class GraphStore {
     }
   }
 
-  addToBundle(relation: GraphRelation, bundle: GraphNode) {
-    if (!bundle.isBundle) {
-      throw new Error("Node must be a bundle");
-    }
-    const relationToBundle = this.createRelation({ from: bundle, to: relation });
-    const bundles = this.relationToBundles.get(relation.id) || [];
-    this.relationToBundles.set(relation.id, [...bundles, bundle]);
-    return relationToBundle;
-  }
-
-  removeFromBundle(relation: GraphRelation, bundle: GraphNode) {
-    if (!bundle.isBundle) {
-      throw new Error("Node must be a bundle");
-    }
-
-    // Delete relation from bundle to relation
-    const relationFromRelationToBundle = this.getRelationList(bundle)
-      .values()
-      .map((v) => v.item)
-      .find((r) => r.to.id === relation.id);
-    if (relationFromRelationToBundle) {
-      this.deleteRelation(relationFromRelationToBundle);
-    }
-
-    // If bundle is empty after removing relation, delete it
-    // (Bundle is empty if it only has relation to Thoughtstream)
-    if (this.getRelationList(bundle).values().length === 1) {
-      this.deleteNode(bundle);
-    }
-
-    // Update relation to bundles map
-    const bundles = this.relationToBundles.get(relation.id) || [];
-    const newBundles = bundles.filter((b) => b.id !== bundle.id);
-    this.relationToBundles.set(relation.id, newBundles);
-  }
-
   getNodes() {
     return this.nodesById.values();
   }
@@ -1775,10 +1800,6 @@ export class GraphStore {
 
   getRelation(id: string): GraphRelation | undefined {
     return this.relationsById.get(id);
-  }
-
-  getBundleRelation(id: string) {
-    return this.relationToBundles.get(id);
   }
 
   getObject(id: string): GraphNode | GraphRelation | undefined {
@@ -1859,8 +1880,10 @@ export class GraphStore {
       acc[node.id] = node.pinnedRelationsList.serialize();
       return acc;
     }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-
-    const relationToBundles = serializeMapWithArrayValues(this.relationToBundles);
+    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.noteContentRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
 
     return {
       nodesById,
@@ -1868,7 +1891,7 @@ export class GraphStore {
       relationTypesById,
       relationsByNodeId,
       pinnedRelationsByNodeId,
-      relationToBundles,
+      noteContentRelationsByNodeId,
     };
   }
 
@@ -1946,11 +1969,12 @@ export class GraphStore {
         logger.error(`Error loading serialized pinned relation list`, error);
       }
     }
-
-    // Bundles
-    if (data.relationToBundles) {
-      // TODO: Implement this
-      logger.error("relationToBundles not implemented");
+    for (const [nodeId, positionsByRelationId] of Object.entries(data.noteContentRelationsByNodeId)) {
+      try {
+        this.loadSerializedNoteContentRelationList(nodeId, positionsByRelationId);
+      } catch (error) {
+        logger.error(`Error loading serialized note content relation list`, error);
+      }
     }
   }
 
@@ -2079,6 +2103,14 @@ export class GraphStore {
     object.pinnedRelationsList.load(relationsWithPositions);
   }
 
+  private loadSerializedNoteContentRelationList(
+    objectId: string,
+    positionsByRelationId: SerializedPositionList<GraphRelation>,
+  ) {
+    const { object, relationsWithPositions } = this.resolveRelationListReferences(objectId, positionsByRelationId);
+    object.noteContentRelationsList.load(relationsWithPositions);
+  }
+
   private gatherSubtree(root: GraphObject): GraphObject[] {
     const visited = new Set();
     const result: GraphObject[] = [];
@@ -2110,7 +2142,7 @@ export class GraphStore {
     const relationsById = new Map<string, GraphRelation>();
     const relationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
     const pinnedRelationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
-    const relationToBundles = new Map<string, GraphNode[]>();
+    const noteContentRelationsByNodeId = new Map<string, FractionalPositionedList<GraphRelation>>();
 
     const subtreeObjects = this.gatherSubtree(root);
 
@@ -2122,7 +2154,6 @@ export class GraphStore {
       } else if (obj instanceof GraphRelation) {
         relationTypesById[obj.relationType.id] = obj.relationType;
         relationsById.set(obj.id, obj);
-        relationToBundles.set(obj.id, this.relationToBundles.get(obj.id) || []);
       }
     }
 
@@ -2132,7 +2163,7 @@ export class GraphStore {
       relationsById: serializeMap(relationsById),
       relationsByNodeId: serializeMap(relationsByNodeId),
       pinnedRelationsByNodeId: serializeMap(pinnedRelationsByNodeId),
-      relationToBundles: serializeMapWithArrayValues(relationToBundles),
+      noteContentRelationsByNodeId: serializeMap(noteContentRelationsByNodeId),
     };
   }
 

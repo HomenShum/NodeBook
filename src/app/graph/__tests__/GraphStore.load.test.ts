@@ -32,8 +32,6 @@ describe("GraphStore.load", () => {
           updatedAt: new Date(),
           content: [{ type: "text", value: "Node a content" }],
           isPublic: false,
-          isBundle: false,
-          isZone: false,
           isNewRelatedObjectsPublic: false,
         },
         b: {
@@ -44,8 +42,6 @@ describe("GraphStore.load", () => {
           updatedAt: new Date(),
           content: [{ type: "text", value: "Node b content" }],
           isPublic: false,
-          isBundle: false,
-          isZone: false,
           isNewRelatedObjectsPublic: false,
         },
       },
@@ -81,6 +77,11 @@ describe("GraphStore.load", () => {
         },
       },
       pinnedRelationsByNodeId: {},
+      noteContentRelationsByNodeId: {
+        a: {
+          "a-test-rt-b": { int: 0, frac: "0" },
+        },
+      },
     };
 
     graphStore.load(testData);
@@ -93,6 +94,7 @@ describe("GraphStore.load", () => {
     expect(loadedRelation?.from.id).toEqual("a");
     expect(loadedRelation?.to.id).toEqual("b");
     expect(loadedRelation?.relationType.id).toEqual("test-rt");
+    expect(new Set(graphStore.getNode("a")?.noteContentRelationsList.keys)).toEqual(new Set(["a-test-rt-b"]));
   });
 
   it("should be able to handle a cycle of hyper-relations without placeholders", () => {
@@ -160,6 +162,7 @@ describe("GraphStore.load", () => {
         },
       },
       pinnedRelationsByNodeId: {},
+      noteContentRelationsByNodeId: {},
     };
 
     graphStore.load(testData);

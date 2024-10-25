@@ -1,6 +1,6 @@
 {
-  "id": "ae9e7ee2-e912-4b56-aa62-2294cfb17400",
-  "prevId": "c199680e-b05b-42cc-b5ff-888cfee1adbd",
+  "id": "8ddb497b-4198-4071-a641-ca63cbc23cff",
+  "prevId": "80e67a67-a4e7-4bed-992e-d83b5fa45239",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -74,17 +74,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "is_bundle": {
-          "name": "is_bundle",
+        "is_note": {
+          "name": "is_note",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": false
-        },
-        "is_zone": {
-          "name": "is_zone",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": false
         },
         "is_public": {
           "name": "is_public",
@@ -107,8 +102,11 @@
       "uniqueConstraints": {
         "graph_node_id_author_id_unique": {
           "name": "graph_node_id_author_id_unique",
-          "columns": ["id", "author_id"],
-          "nullsNotDistinct": false
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "author_id"
+          ]
         }
       }
     },
@@ -172,6 +170,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "is_note": {
+          "name": "is_note",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
         "is_public": {
           "name": "is_public",
           "type": "boolean",
@@ -186,8 +191,11 @@
       "uniqueConstraints": {
         "graph_relation_id_author_id_unique": {
           "name": "graph_relation_id_author_id_unique",
-          "columns": ["id", "author_id"],
-          "nullsNotDistinct": false
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "author_id"
+          ]
         }
       }
     },
@@ -220,11 +228,11 @@
           "primaryKey": false,
           "notNull": false
         },
-        "pinned": {
-          "name": "pinned",
-          "type": "boolean",
+        "type": {
+          "name": "type",
+          "type": "relation_lists_type",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "position_int": {
           "name": "position_int",
@@ -250,10 +258,14 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "relation_lists_node_id_relation_id_pinned_unique": {
-          "name": "relation_lists_node_id_relation_id_pinned_unique",
-          "columns": ["node_id", "relation_id", "pinned"],
-          "nullsNotDistinct": false
+        "relation_lists_node_id_relation_id_type_unique": {
+          "name": "relation_lists_node_id_relation_id_type_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "node_id",
+            "relation_id",
+            "type"
+          ]
         }
       }
     },
@@ -313,8 +325,11 @@
       "uniqueConstraints": {
         "relation_type_id_author_id_unique": {
           "name": "relation_type_id_author_id_unique",
-          "columns": ["id", "author_id"],
-          "nullsNotDistinct": false
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "author_id"
+          ]
         }
       }
     },

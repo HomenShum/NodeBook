@@ -138,6 +138,14 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     return this.to.pinnedRelationsList.get(this.id)?.position;
   }
 
+  get toNoteContentPosition(): Position | undefined {
+    return this.to.noteContentRelationsList.get(this.id)?.position;
+  }
+
+  get fromNoteContentPosition(): Position | undefined {
+    return this.from.noteContentRelationsList.get(this.id)?.position;
+  }
+
   get relationType(): GraphRelationType {
     return this.store.relationTypesById[this.relationTypeId];
   }

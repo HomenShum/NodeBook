@@ -27,6 +27,7 @@ import {
   getNextSubtreeBelow,
   getSubtreesBetween,
   groupSiblings,
+  isNoteContent,
   walkTree,
 } from "./utils";
 
@@ -217,7 +218,6 @@ export class Tree {
   get filter(): Filter {
     return {
       hideBackrelations: this.settingsStore.hideBackrelations,
-      hideBundles: this.settingsStore.hideBundles,
       hideAllParents: this.settingsStore.hideAllParents,
       hideAllRootParents: this.settingsStore.hideAllRootParents,
       hideDirectParent: this.settingsStore.hideDirectParent,
@@ -467,9 +467,6 @@ export class Tree {
       if (filter.hideBackrelations && treeNode.isBackrelation) {
         return false;
       }
-      if (filter.hideBundles && treeNode.object instanceof GraphNode && treeNode.object.isBundle) {
-        return false;
-      }
       /** Parent from the perspective of the graph, not the current tree */
       const isParentRelation =
         treeNode.isBackrelation &&
@@ -483,7 +480,12 @@ export class Tree {
         return false;
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
         return false;
-      } else if (filter.hideDirectParent && isSameRelationAsParentToGrandparent && grandparentNotInBreadcrumb) {
+      } else if (
+        filter.hideDirectParent &&
+        !isNoteContent(treeNode) && // TODO: is this right?
+        isSameRelationAsParentToGrandparent &&
+        grandparentNotInBreadcrumb
+      ) {
         return false;
       }
       return true;
@@ -578,14 +580,19 @@ export class Tree {
    * to the new parent. If `after` is provided, the node will be positioned
    * after the given node in the new parent's children.
    */
-  async setParentOfNode(treeNodeId: string, newParent: BaseTreeNode, after?: Positioner<DescendantTreeNode>) {
+  async setParentOfNode(treeNodeId: string, newParentObjectId: string, after?: Positioner<DescendantTreeNode>) {
     const treeNode = this.getNodeOrThrow(treeNodeId);
-    await this.graphStore.replaceRelationLink({
-      direction: getSideOrThrow(treeNode.relationWithParent, treeNode.parent.object.id),
-      relationId: treeNode.relationWithParent.id,
-      replaceWith: { type: "existing-object", id: newParent.object.id },
-      after: after instanceof DescendantTreeNode ? after.relationWithParent : after,
+    const txs: TxCombined = [];
+    txs.push({
+      type: "replaceRelationLink",
+      transaction: {
+        direction: getSideOrThrow(treeNode.relationWithParent, treeNode.parent.object.id),
+        relationId: treeNode.relationWithParent.id,
+        replaceWith: { type: "existing-object", id: newParentObjectId },
+        after: after instanceof DescendantTreeNode ? after.relationWithParent : after,
+      },
     });
+    await this.graphStore.applyCombinedTransaction(txs);
   }
 
   async setObjectOnNode(treeNodeId: string, object: GraphObject, after?: Positioner<DescendantTreeNode>) {
@@ -752,8 +759,17 @@ export class Tree {
           type: "pinRelation",
           transaction: { objectId: treeNode.parent.object.id, relationId, after: treeNode.relationWithParent },
         });
+      } else if (treeNode.parentGroup.id === "noteContent") {
+        txs.push({
+          type: "addRelationToList",
+          transaction: {
+            objectId: treeNode.parent.object.id,
+            relationId,
+            listType: "noteContent",
+            after: treeNode.relationWithParent,
+          },
+        });
       }
-
       return { txs, newNodePath: treeNode.parentGroup.path + "/" + relationId };
     }
 
@@ -840,6 +856,7 @@ export class Tree {
     // Execute split
 
     await this.graphStore.applyCombinedTransaction(changes.txs);
+
     if (changes.expansions) {
       for (const [path, expanded] of Object.entries(changes.expansions)) {
         this.setPathExpanded(path, expanded);
@@ -847,6 +864,124 @@ export class Tree {
     }
     if (changes.newNodePath) {
       this.setFocusedNode(changes.newNodePath, "start", true);
+    }
+  }
+
+  async splitNote(treeNode: DescendantTreeNode, chips?: { before: Chip[]; after: Chip[] }) {
+    const noteNode = treeNode.parent;
+    if (!isNoteContent(treeNode)) {
+      logger.warn("Attempted to split non-note content");
+      return;
+    }
+    if (!(noteNode instanceof DescendantTreeNode)) {
+      logger.debug("Ignoring split in non-DescendantTreeNode");
+      return;
+    }
+    const noteParent = noteNode.parent;
+    if (!noteParent) {
+      logger.warn("Can't split note in context where it has no parent");
+      return;
+    }
+    // Create a new node as a sibling of the current note
+
+    const txs: TxCombined = [];
+
+    // Update the content of the original node
+    if (chips?.before) {
+      txs.push({
+        type: "updateNode",
+        transaction: { nodeId: treeNode.object.id, nodeProps: { content: chips.before } },
+      });
+    }
+
+    // Create new note below
+    const newNoteId = uuid();
+    const newRelationId = uuid();
+    txs.push({
+      type: "addChildNode",
+      transaction: {
+        parentId: noteParent.object.id,
+        nodeProps: { id: newNoteId, content: [] },
+        relationProps: { id: newRelationId },
+        after: noteNode.relationWithParent ?? undefined,
+      },
+    });
+
+    // Add a child to the new note with the content after the split
+    const relationIdsInNewNote: string[] = [];
+    if (chips?.after && chips.after.length > 0) {
+      const newNoteContentRelationId = uuid();
+      txs.push({
+        type: "addChildNode",
+        transaction: {
+          parentId: newNoteId,
+          nodeProps: { content: chips.after },
+          relationProps: { id: newNoteContentRelationId },
+        },
+      });
+      relationIdsInNewNote.push(newNoteContentRelationId);
+    }
+
+    // Move content of current note below to new note
+    const treeNodeIndex = noteNode.childrenGroupsById.noteContent.nodes.indexOf(treeNode);
+    if (treeNodeIndex !== -1) {
+      for (const node of noteNode.childrenGroupsById.noteContent.nodes.slice(treeNodeIndex + 1)) {
+        const relationId = node.relationWithParent.id;
+        txs.push({
+          type: "replaceRelationLink",
+          transaction: {
+            direction: getSideOrThrow(node.relationWithParent, node.parent.object.id),
+            relationId,
+            replaceWith: { type: "existing-object", id: newNoteId },
+          },
+        });
+        relationIdsInNewNote.push(relationId);
+      }
+    } else {
+      logger.warn("No note content nodes to move");
+    }
+
+    // If there's no content, add an empty node
+    if (relationIdsInNewNote.length === 0) {
+      const relationId = uuid();
+      txs.push({
+        type: "addChildNode",
+        transaction: {
+          parentId: newNoteId,
+          relationProps: { id: relationId },
+        },
+      });
+      relationIdsInNewNote.push(relationId);
+    }
+
+    // Add relations to the note content list
+    relationIdsInNewNote.forEach((relationId, index) => {
+      // TODO this part isn't undoable
+      txs.push({
+        type: "addRelationToList",
+        transaction: {
+          objectId: newNoteId,
+          relationId,
+          listType: "noteContent",
+          after: index === 0 ? undefined : relationIdsInNewNote[index - 1],
+        },
+      });
+    });
+
+    // Apply the transactions
+    await this.graphStore.applyCombinedTransaction(txs);
+
+    // Focus first child of new note
+    if (relationIdsInNewNote[0]) {
+      const relationToNewNote = this.graphStore.getRelation(newRelationId);
+      if (relationToNewNote) {
+        const path =
+          noteNode.parentGroup.createChildPath(relationToNewNote) +
+          "/noteContent/" + // TODO don't hardcode noteContent
+          relationIdsInNewNote[0];
+        console.log("path", path);
+        this.setFocusedNode(path);
+      }
     }
   }
 
@@ -1033,8 +1168,19 @@ export class Tree {
     if (!selection) return false;
     const next = selection.type === "editor" ? getNextBelow(selection.treeNode) : getNextSubtreeBelow(selection.bottom);
     if (!next) return false;
-    this.setFocusedNode(next.path, position, false);
-    return true;
+    if (next.object.noteContentRelationsList.size > 0) {
+      const firstChild = next.childrenGroupsById.noteContent.nodes[0];
+      if (firstChild) {
+        this.setFocusedNode(firstChild.path, position, false);
+        return true;
+      } else {
+        // TODO handle case. create?
+        return false;
+      }
+    } else {
+      this.setFocusedNode(next.path, position, false);
+      return true;
+    }
   }
 
   /**
@@ -1150,7 +1296,6 @@ export class Tree {
 
 type Filter = {
   hideBackrelations: boolean;
-  hideBundles: boolean;
   hideAllParents: boolean;
   hideAllRootParents: boolean;
   hideDirectParent: boolean;

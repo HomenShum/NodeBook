@@ -82,7 +82,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
               tx,
               update.nodeId,
               update.authorId,
-              update.pinned,
+              update.type,
               update.relationId,
               update.newPosition,
               update.newIsPublic,

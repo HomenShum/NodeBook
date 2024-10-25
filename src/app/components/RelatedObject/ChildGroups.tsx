@@ -5,7 +5,15 @@ import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useUser } from "@/app/contexts/UserContext";
-import { AllGroup, ChildrenGroups, PinnedGroup, PointerGroup, RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import {
+  AllGroup,
+  ChildrenGroups,
+  NoteContentGroup,
+  PinnedGroup,
+  PointerGroup,
+  RootTreeNode,
+  TreeNode,
+} from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -28,9 +36,31 @@ export const ChildGroups = observer(function ChildGroups({ treeNode }: ChildGrou
           return <PointerSection key={group.path} parentNode={treeNode} group={group} />;
         } else if (group instanceof PinnedGroup) {
           return <PinnedSection key={group.path} parentNode={treeNode} group={group} />;
-        } else {
+        } else if (group instanceof AllGroup) {
           return <AllSection key={group.path} parentNode={treeNode} group={group} />;
         }
+      })}
+    </div>
+  );
+});
+
+interface NoteContentSectionProps {
+  parentNode: TreeNode;
+  group: NoteContentGroup;
+}
+
+export const NoteContentSection = observer(function NoteContentSection({ parentNode, group }: NoteContentSectionProps) {
+  if (group.nodes.length === 0) {
+    return null;
+  }
+  return (
+    <div>
+      {group.nodes.map((treeNode, i) => {
+        return (
+          <div key={treeNode.path}>
+            <RelatedObjectView treeNode={treeNode} />
+          </div>
+        );
       })}
     </div>
   );
@@ -80,7 +110,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
           {group.nodes.map((treeNode, i) => (
             <div key={treeNode.path}>
               {noteView && <Separator i={i} />}
-              <RelatedObjectView treeNode={treeNode} showBullet={!noteView} />
+              <RelatedObjectView treeNode={treeNode} />
             </div>
           ))}
           <div
@@ -109,7 +139,7 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
         return (
           <div key={childTreeNode.path}>
             {noteView && <Separator i={i} />}
-            <RelatedObjectView treeNode={childTreeNode} showBullet={!noteView} />
+            <RelatedObjectView treeNode={childTreeNode} />
           </div>
         );
       })}
@@ -134,7 +164,7 @@ const PointerSection = observer(function PointerSection({ group }: PointerSectio
       {group.nodes.map((childTreeNode, i) => {
         return (
           <div key={childTreeNode.path}>
-            <RelatedObjectView treeNode={childTreeNode} showBullet={true} />
+            <RelatedObjectView treeNode={childTreeNode} />
           </div>
         );
       })}
@@ -143,5 +173,5 @@ const PointerSection = observer(function PointerSection({ group }: PointerSectio
 });
 
 function Separator({ i }: { i: number }) {
-  return <div className={cn(styles.BundleSeparator, i === 0 ? styles.FirstBundle : styles.DefaultBundle)} />;
+  return <div className={cn(styles.NoteSeparator, i === 0 ? styles.FirstNote : styles.DefaultNote)} />;
 }

@@ -218,6 +218,10 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
   clear() {
     this.map.clear();
   }
+
+  get size() {
+    return this.map.size;
+  }
 }
 
 /**
@@ -231,7 +235,7 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
  * @throws Error if index is out of bounds or n is not positive
  */
 export function generatePositionsForInsert(items: { position: Position; id: string }[], i: number, n: number) {
-  if (n <= 0) {
+  if (n < 0) {
     throw new Error("Number of positions to insert must be positive");
   }
 

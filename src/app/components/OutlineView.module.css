@@ -142,3 +142,9 @@
 .TitleContainer:hover .Transparent {
   opacity: 1;
 }
+
+.NoteContentSection {
+  flex: 1;
+  width: 100%;
+  border: 1px solid #ccc;
+}

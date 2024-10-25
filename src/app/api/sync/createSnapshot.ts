@@ -12,6 +12,7 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
     relationsById: {},
     relationsByNodeId: {},
     pinnedRelationsByNodeId: {},
+    noteContentRelationsByNodeId: {},
   };
 
   const db = getDb();
@@ -28,8 +29,6 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       createdAt: row.createdAt!,
       updatedAt: row.updatedAt ?? row.createdAt!,
       content: JSON.parse(row.content ?? ""),
-      isBundle: !!row.isBundle,
-      isZone: !!row.isZone,
       isPublic: !!row.isPublic,
       isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
     };
@@ -91,11 +90,19 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
     const { nodeId, relationId } = row;
     if (!nodeId || !relationId) continue;
     if (!snapshot.relationsById[relationId]) continue;
-    if (row.pinned) {
+    if (row.type === "pinned") {
       if (!snapshot.pinnedRelationsByNodeId[nodeId]) {
         snapshot.pinnedRelationsByNodeId[nodeId] = {};
       }
       snapshot.pinnedRelationsByNodeId[nodeId][relationId] = {
+        int: row.positionInt ?? 0,
+        frac: row.positionFrac ?? "",
+      };
+    } else if (row.type === "noteContent") {
+      if (!snapshot.noteContentRelationsByNodeId[nodeId]) {
+        snapshot.noteContentRelationsByNodeId[nodeId] = {};
+      }
+      snapshot.noteContentRelationsByNodeId[nodeId][relationId] = {
         int: row.positionInt ?? 0,
         frac: row.positionFrac ?? "",
       };

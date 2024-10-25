@@ -1,30 +1,16 @@
 import { Dot } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback } from "react";
+import React from "react";
 
 import styles from "@/app/components/RelatedObject/styles/RelatedObjectView.module.css";
-import { RootTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
 interface Props {
-  treeNode: RootTreeNode;
+  onClick: (e: React.MouseEvent) => void;
 }
 
-export const ClickToCreateNodeButton = observer(function ClickToCreateNodeButton({ treeNode }: Props) {
-  const tree = useTree();
-  const handleCreateAndFocusNode = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      tree.createChildOfRootAndFocus();
-    },
-    [tree],
-  );
-
-  if (treeNode.childCount !== 0) return null;
-
+export const ClickToCreateNodeButton = observer(function ClickToCreateNodeButton({ onClick }: Props) {
   return (
-    <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)} onClick={handleCreateAndFocusNode}>
+    <div className={cn(styles.RelatedObjectContainer)} onClick={onClick}>
       <div className={styles.RelatedObjectContent}>
         <div className={cn(styles.RelatedObjectBulletContainer)}>
           <Dot strokeWidth={5} height={16} className={cn(styles.Bullet, styles.DotInsideClickToCreateNode)} />

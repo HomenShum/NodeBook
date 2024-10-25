@@ -1,6 +1,7 @@
 declare const styles: {
   readonly "Bullet": string;
   readonly "BulletShadow": string;
+  readonly "ChildOfRootInNoteView": string;
   readonly "Circle": string;
   readonly "CirclePrivate": string;
   readonly "ClickToCreateNode": string;
@@ -11,6 +12,7 @@ declare const styles: {
   readonly "DotOutsidePublic": string;
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
+  readonly "NoteContentSection": string;
   readonly "PinIcon": string;
   readonly "PinToggle": string;
   readonly "Pinned": string;
@@ -25,6 +27,8 @@ declare const styles: {
   readonly "RelatedObjectNode": string;
   readonly "RelatedObjectNodeContent": string;
   readonly "RelatedObjectPublic": string;
+  readonly "RelatedObjectRelationsToggle": string;
+  readonly "RelatedObjectRelationsToggleExpanded": string;
   readonly "RelatedObjectRightArea": string;
   readonly "RelationCounter": string;
   readonly "RelationHoverCard": string;

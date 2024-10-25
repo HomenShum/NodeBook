@@ -6,8 +6,15 @@ import { useEffect } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useTree } from "@/app/tree/TreeContext";
-import { TreeNode } from "@/app/tree/nodes";
+import { DescendantTreeNode, RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import { isNoteContent } from "@/app/tree/utils";
+import { uuid } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
+import appLogger from "@/lib/logger";
+
+const logger = appLogger.child({ service: "EnterKeyPlugin" });
 
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.
@@ -16,32 +23,119 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
-  const object = treeNode.object;
-  const relation = treeNode.relationWithParent;
-  const pathToNodeStr = treeNode.path;
+  const viewStore = useViewStore();
+
+  const viewType = viewStore.viewType;
   useEffect(() => {
+    function handleSplit(event: KeyboardEvent) {
+      const selection = $getSelection();
+      if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
+      if (!(treeNode.object instanceof GraphNode)) {
+        // For now, we don't support splitting relations. In ENT-3653, we'll
+        // decide if and how to support this.
+        logger.warn("Splitting relations is not supported yet.");
+        return false;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
+      tree.split(treeNode, { before: chipsBefore, after: chipsAfter });
+      return true;
+    }
+
+    function handleConvertToNote(event: KeyboardEvent) {
+      if (!(treeNode.object instanceof GraphNode)) {
+        // TODO handle this case
+        logger.warn("Only nodes can be converted to note right now");
+        return false;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      const txs: TxCombined = [];
+
+      // Add two children to the current node
+      const firstRelationId = uuid();
+      txs.push({
+        type: "addChildNode",
+        transaction: {
+          parentId: treeNode.object.id,
+          nodeProps: { content: treeNode.object.content },
+          relationProps: { id: firstRelationId },
+        },
+      });
+
+      const secondRelationId = uuid();
+      txs.push({
+        type: "addChildNode",
+        transaction: {
+          parentId: treeNode.object.id,
+          nodeProps: { content: "" },
+          relationProps: { id: secondRelationId },
+        },
+      });
+
+      // Clear the content of the current node
+      txs.push({
+        type: "updateNode",
+        transaction: {
+          nodeId: treeNode.object.id,
+          nodeProps: { content: "" },
+        },
+      });
+
+      // Add relation to note content list
+      txs.push({
+        type: "addRelationToList",
+        transaction: {
+          objectId: treeNode.object.id,
+          relationId: [firstRelationId, secondRelationId],
+          listType: "noteContent",
+        },
+      });
+
+      graphStore.applyCombinedTransaction(txs).then(() => {
+        const secondRelation = graphStore.getRelation(secondRelationId);
+        if (secondRelation) {
+          const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
+          tree.setFocusedNode(path);
+        }
+      });
+      return false;
+    }
+
+    function handleSplitNote(event: KeyboardEvent) {
+      const selection = $getSelection();
+      if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
+      if (!(treeNode instanceof DescendantTreeNode)) return false;
+      event.preventDefault();
+      event.stopPropagation();
+      const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
+      tree.splitNote(treeNode, { before: chipsBefore, after: chipsAfter });
+      return true;
+    }
+
+    const childOfTreeRoot = treeNode.parent instanceof RootTreeNode;
+
     return editor.registerCommand(
       KEY_ENTER_COMMAND,
       action((event) => {
         if (!event || !graphStore) return false;
-        if (event.shiftKey) return false;
-        const selection = $getSelection();
-        if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
-        if (!(object instanceof GraphNode)) {
-          // For now, we don't support splitting relations. In ENT-3653, we'll
-          // decide if and how to support this.
-          console.log("Splitting relations is not supported yet.");
-          return false;
+        if (event.metaKey || event.ctrlKey) {
+          if (isNoteContent(treeNode)) {
+            return handleSplitNote(event);
+          } else {
+            return handleSplit(event);
+          }
         }
-        event.preventDefault();
-        event.stopPropagation();
-        const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
-        tree.split(treeNode, { before: chipsBefore, after: chipsAfter });
-        return true;
+        if (!isNoteContent(treeNode) && ((viewType === "note" && childOfTreeRoot) || event.shiftKey)) {
+          return handleConvertToNote(event);
+        } else {
+          return handleSplit(event);
+        }
       }),
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, graphStore, tree, object, pathToNodeStr, relation, treeNode]);
+  }, [editor, graphStore, tree, treeNode, viewType]);
 
   return null;
 };

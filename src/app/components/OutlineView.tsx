@@ -18,7 +18,7 @@ import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
-import { ChildGroups } from "./RelatedObject/ChildGroups";
+import { ChildGroups, NoteContentSection } from "./RelatedObject/ChildGroups";
 
 import s from "./OutlineView.module.css";
 
@@ -103,10 +103,23 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                 </Tooltip>
               </TooltipProvider>
             </div>
+            {treeNode.object.noteContentRelationsList.size > 0 && (
+              <div className={s.NoteContentSection}>
+                <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
+              </div>
+            )}
           </div>
           <div className={s.Nodes}>
+            {!user.isAnonymous && treeNode.childCount === 0 && (
+              <ClickToCreateNodeButton
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  tree.createChildOfRootAndFocus();
+                }}
+              />
+            )}
             <ChildGroups treeNode={treeNode} />
-            {!user.isAnonymous && <ClickToCreateNodeButton treeNode={treeNode} />}
           </div>
         </div>
       </div>

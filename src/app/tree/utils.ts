@@ -1,6 +1,5 @@
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
-import StackUtils from "stack-utils";
 
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
@@ -49,26 +48,38 @@ export const isUnlabelledChild = (node: DescendantTreeNode) => {
   return node.relationWithParent.relationType.id === "child" && !node.isBackrelation;
 };
 
+function getLastDescendant(treeNode: DescendantTreeNode): DescendantTreeNode {
+  let current = treeNode;
+  let next = current;
+  while (next) {
+    current = next;
+    const children = current.visibleChildren;
+    next = children[children.length - 1];
+  }
+  return current;
+}
+
 /**
  * When the tree is rendered as an outline, this function returns the node
  * rendered directly above the given node.
+ *
+ * TODO should be shared with treeNode.siblingAbove?
  */
 export function getNextAbove(treeNode: TreeNode): DescendantTreeNode | undefined {
   if (treeNode instanceof RootTreeNode) {
     return;
   }
   if (treeNode.siblingAbove) {
-    // get last descendant of sibling above
-    let current = treeNode.siblingAbove;
-    let next = current;
-    while (next) {
-      current = next;
-      const children = current.visibleChildren;
-      next = children[children.length - 1];
-    }
-    return current;
+    return getLastDescendant(treeNode.siblingAbove);
   } else if (treeNode.parent instanceof DescendantTreeNode) {
-    return treeNode.parent;
+    if (isNoteContent(treeNode)) {
+      // At top of a note. While a node has note content, we render that in place
+      // of the GraphNode.content prop. So in this case treeNode.parent isn't rendered,
+      // so we step up to the next above that.
+      return getNextAbove(treeNode.parent);
+    } else {
+      return treeNode.parent;
+    }
   }
 }
 
@@ -187,3 +198,6 @@ export function useSetRoot() {
     [viewStore, router],
   );
 }
+
+export const isNoteContent = (treeNode: TreeNode) =>
+  treeNode instanceof DescendantTreeNode && treeNode.parentGroup.id === "noteContent";

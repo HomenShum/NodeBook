@@ -27,12 +27,14 @@ export abstract class BaseGraphObject {
   allRelationsList: FractionalPositionedList<GraphRelation>;
   pinnedRelationsList: FractionalPositionedList<GraphRelation>;
   pointerRelationsList: FractionalPositionedList<GraphRelation>;
+  noteContentRelationsList: FractionalPositionedList<GraphRelation>;
 
   protected constructor(store: GraphStore) {
     this.store = store;
     this.allRelationsList = new FractionalPositionedList();
     this.pinnedRelationsList = new FractionalPositionedList();
     this.pointerRelationsList = new FractionalPositionedList();
+    this.noteContentRelationsList = new FractionalPositionedList();
   }
 
   get children(): GraphObject[] {
@@ -77,6 +79,10 @@ export abstract class BaseGraphObject {
 
   get pointerRelationsWithPositions(): PositionedRelation[] {
     return this.pointerRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
+  }
+
+  get noteContentRelationsWithPositions(): PositionedRelation[] {
+    return this.noteContentRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
   }
 
   /**
@@ -126,5 +132,13 @@ export abstract class BaseGraphObject {
 
   isRelationPinned(childRelation: GraphRelation) {
     return this.pinnedRelationsList.has(childRelation.id);
+  }
+
+  addRelationToNoteContent(childRelation: GraphRelation, after?: Positioner<GraphRelation>) {
+    this.noteContentRelationsList.add(childRelation, after);
+  }
+
+  removeRelationFromNoteContent(childRelation: GraphRelation) {
+    this.noteContentRelationsList.delete(childRelation.id);
   }
 }

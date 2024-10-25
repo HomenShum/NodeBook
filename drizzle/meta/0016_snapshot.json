@@ -1,6 +1,6 @@
 {
-  "id": "ae9e7ee2-e912-4b56-aa62-2294cfb17400",
-  "prevId": "c199680e-b05b-42cc-b5ff-888cfee1adbd",
+  "id": "80e67a67-a4e7-4bed-992e-d83b5fa45239",
+  "prevId": "ae9e7ee2-e912-4b56-aa62-2294cfb17400",
   "version": "5",
   "dialect": "pg",
   "tables": {
@@ -107,8 +107,11 @@
       "uniqueConstraints": {
         "graph_node_id_author_id_unique": {
           "name": "graph_node_id_author_id_unique",
-          "columns": ["id", "author_id"],
-          "nullsNotDistinct": false
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "author_id"
+          ]
         }
       }
     },
@@ -186,8 +189,11 @@
       "uniqueConstraints": {
         "graph_relation_id_author_id_unique": {
           "name": "graph_relation_id_author_id_unique",
-          "columns": ["id", "author_id"],
-          "nullsNotDistinct": false
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "author_id"
+          ]
         }
       }
     },
@@ -220,11 +226,11 @@
           "primaryKey": false,
           "notNull": false
         },
-        "pinned": {
-          "name": "pinned",
-          "type": "boolean",
+        "type": {
+          "name": "type",
+          "type": "relation_lists_type",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "position_int": {
           "name": "position_int",
@@ -250,10 +256,14 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "relation_lists_node_id_relation_id_pinned_unique": {
-          "name": "relation_lists_node_id_relation_id_pinned_unique",
-          "columns": ["node_id", "relation_id", "pinned"],
-          "nullsNotDistinct": false
+        "relation_lists_node_id_relation_id_type_unique": {
+          "name": "relation_lists_node_id_relation_id_type_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "node_id",
+            "relation_id",
+            "type"
+          ]
         }
       }
     },
@@ -313,8 +323,11 @@
       "uniqueConstraints": {
         "relation_type_id_author_id_unique": {
           "name": "relation_type_id_author_id_unique",
-          "columns": ["id", "author_id"],
-          "nullsNotDistinct": false
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "author_id"
+          ]
         }
       }
     },
