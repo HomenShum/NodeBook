@@ -2,8 +2,8 @@ import { Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react"
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
-import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
+import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -56,10 +56,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
 
-  const [isPinnedHovered, setIsPinnedHovered] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-
-  const showPinnedSection = !tree.filter.hidePinnedSection;
 
   const togglePinnedSection = useCallback(() => {
     tree.updateFilter((prev) => ({ ...prev, hidePinnedSection: !prev.hidePinnedSection }));
@@ -85,9 +82,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   return (
     <div className={s.ControlsBar}>
       <div className={styles.ControlsBarWrapper}>
-        
         <SearchBar />
-
         {selectedFilters.map((filter) => (
           <FilterPill
             key={filter}
@@ -127,14 +122,6 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           sortOption={tree.sortOption}
           updateSortOption={updateSortOption}
         />
-        <div className={s.SwitchItem}>
-          <Switch
-            id="show-node-details"
-            checked={viewStore.flattenSublists}
-            onCheckedChange={(checked: boolean) => viewStore.setFlattenSublists(checked)}
-          />
-          <label htmlFor="show-node-details">Flatten sublists</label>
-        </div>
       </div>
       <div className={styles.RightWrapper}>
       <Button
@@ -148,7 +135,6 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             <FlattenIcon />
         ) : (
             <NestedIcon />
-            
         )}<span>Sublists</span>
       </Button>
         <Button
