@@ -4,11 +4,29 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { GraphNode } from "@/app/graph/GraphNode";
+import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { useTree } from "@/app/tree/TreeContext";
 import { PointerTreeNode } from "@/app/tree/nodes";
+
+/**
+ * Concat two arrays of Chips into one.
+ * Merges the chip at the end of the first array with the chip at the start of the second array.
+ */
+const concatChips = (targetNodeChips: Chip[], sourceNodeChips: Chip[]): Chip[] => {
+  const lastChip = targetNodeChips[targetNodeChips.length - 1];
+  const firstChip = sourceNodeChips[0];
+  if (lastChip?.type === "text" && firstChip?.type === "text") {
+    return [
+      ...targetNodeChips.slice(0, targetNodeChips.length - 1),
+      { type: "text", value: lastChip.value + firstChip.value },
+      ...sourceNodeChips.slice(1),
+    ];
+  } else {
+    return [...targetNodeChips, ...sourceNodeChips];
+  }
+};
 
 /**
  * Plugin to merge nodes when backspace is pressed at the start of a node.
@@ -56,15 +74,18 @@ export const BackspaceMergeNodesPlugin = () => {
           return true;
         }
 
+        let targetTreeNode = null;
         let targetNode = null;
         let targetPath = null;
         if (treeNode.siblingAbove) {
           if (treeNode.siblingAbove.object instanceof GraphNode) {
+            targetTreeNode = treeNode.siblingAbove;
             targetNode = treeNode.siblingAbove.object;
             targetPath = treeNode.siblingAbove.path;
           }
         } else {
           if (treeNode.parent.parent && treeNode.parent.object instanceof GraphNode) {
+            targetTreeNode = treeNode.parent;
             targetNode = treeNode.parent.object;
             targetPath = treeNode.parent.path;
           }
@@ -91,6 +112,7 @@ export const BackspaceMergeNodesPlugin = () => {
           });
 
         if (targetNode && object instanceof GraphNode) {
+          const targetNodeTextLength = targetNode.text.length;
           graphStore
             .applyCombinedTransaction([
               ...updateRelationTxs,
@@ -98,7 +120,7 @@ export const BackspaceMergeNodesPlugin = () => {
                 type: "updateNode",
                 transaction: {
                   nodeId: targetNode.id,
-                  nodeProps: { content: targetNode.content.concat(object.content) },
+                  nodeProps: { content: concatChips(targetNode.content, object.content) },
                 },
               },
               { type: "removeRelation", transaction: { relationId: relation.id } },
@@ -110,6 +132,12 @@ export const BackspaceMergeNodesPlugin = () => {
                   tree.setPathExpanded(targetPath, treeNode.isExpanded);
                 }
                 tree.setFocusedNode(targetPath);
+              }
+              if (targetTreeNode) {
+                tree.setFocusedNode(targetTreeNode.id, {
+                  anchorOffset: targetNodeTextLength,
+                  focusOffset: targetNodeTextLength,
+                });
               }
             });
           return true;
