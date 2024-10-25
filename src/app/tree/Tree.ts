@@ -806,10 +806,15 @@ export class Tree {
         },
       });
 
-      if (treeNode.parentGroup.id === "pinned") {
+      if (treeNode.parentGroup.id === "pinned" || treeNode.parentGroup.id === "noteContent") {
         txs.push({
-          type: "pinRelation",
-          transaction: { objectId: treeNode.parent.object.id, relationId, after: treeNode.relationWithParent },
+          type: "addRelationToList",
+          transaction: {
+            objectId: treeNode.parent.object.id,
+            relationId,
+            listType: treeNode.parentGroup.id,
+            after: treeNode.relationWithParent,
+          },
         });
       }
 
