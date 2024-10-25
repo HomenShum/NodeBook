@@ -6,7 +6,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { createRouteUrl, ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 
-import { DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
+import { DescendantTreeNode, GroupId, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 
 export type Ancestor = {
   object: GraphObject;
@@ -62,8 +62,6 @@ function getLastDescendant(treeNode: DescendantTreeNode): DescendantTreeNode {
 /**
  * When the tree is rendered as an outline, this function returns the node
  * rendered directly above the given node.
- *
- * TODO should be shared with treeNode.siblingAbove?
  */
 export function getNextAbove(treeNode: TreeNode): DescendantTreeNode | undefined {
   if (treeNode instanceof RootTreeNode) {
@@ -201,3 +199,7 @@ export function useSetRoot() {
 
 export const isNoteContent = (treeNode: TreeNode) =>
   treeNode instanceof DescendantTreeNode && treeNode.parentGroup.id === "noteContent";
+
+export const createPath = (path: string, groupId: GroupId, relationId: string) => {
+  return `${path}/${groupId}/${relationId}`;
+};

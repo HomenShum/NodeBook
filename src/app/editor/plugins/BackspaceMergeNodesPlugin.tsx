@@ -59,7 +59,6 @@ export const BackspaceMergeNodesPlugin = () => {
             // Inside last child of the note and it's empty.
             handled = mergeNodes(treeNode, treeNode.parent, treeNode.parent.id);
           } else if (treeNode.parent.siblingAbove && treeNode.parent.siblingAbove.object instanceof GraphNode) {
-            // TODO: we should really be looking at the next visible node above, and conditioning on that
             if (treeNode.parent.siblingAbove.childrenGroupsById.noteContent.nodes.length > 0) {
               // Merge note into note above
               handled = mergeNodes(treeNode.parent, treeNode.parent.siblingAbove);
@@ -131,7 +130,6 @@ function useMergers() {
           },
         },
         // Add all note content relations to the target node
-        // TODO handle undo of this
         {
           type: "addRelationToList",
           transaction: {

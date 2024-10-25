@@ -45,7 +45,6 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
 
     function handleConvertToNote(event: KeyboardEvent) {
       if (!(treeNode.object instanceof GraphNode)) {
-        // TODO handle this case
         logger.warn("Only nodes can be converted to note right now");
         return false;
       }

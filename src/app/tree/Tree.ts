@@ -21,6 +21,7 @@ import { BaseTreeNode, DescendantTreeNode, PathToRootNode, PointerTreeNode, Root
 import { TreeNodeContentSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
 import {
   createDescendantTreeNodesById,
+  createPath,
   getAncestorsAsArray,
   getNextAbove,
   getNextBelow,
@@ -480,12 +481,7 @@ export class Tree {
         return false;
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
         return false;
-      } else if (
-        filter.hideDirectParent &&
-        !isNoteContent(treeNode) && // TODO: is this right?
-        isSameRelationAsParentToGrandparent &&
-        grandparentNotInBreadcrumb
-      ) {
+      } else if (filter.hideDirectParent && isSameRelationAsParentToGrandparent && grandparentNotInBreadcrumb) {
         return false;
       }
       return true;
@@ -960,17 +956,13 @@ export class Tree {
     }
 
     // Add relations to the note content list
-    relationIdsInNewNote.forEach((relationId, index) => {
-      // TODO this part isn't undoable
-      txs.push({
-        type: "addRelationToList",
-        transaction: {
-          objectId: newNoteId,
-          relationId,
-          listType: "noteContent",
-          after: index === 0 ? undefined : relationIdsInNewNote[index - 1],
-        },
-      });
+    txs.push({
+      type: "addRelationToList",
+      transaction: {
+        objectId: newNoteId,
+        relationId: relationIdsInNewNote,
+        listType: "noteContent",
+      },
     });
 
     // Apply the transactions
@@ -980,12 +972,8 @@ export class Tree {
     if (relationIdsInNewNote[0]) {
       const relationToNewNote = this.graphStore.getRelation(newRelationId);
       if (relationToNewNote) {
-        const path =
-          noteNode.parentGroup.createChildPath(relationToNewNote) +
-          "/noteContent/" + // TODO don't hardcode noteContent
-          relationIdsInNewNote[0];
-        console.log("path", path);
-        this.setFocusedNode(path);
+        const pathToNewNote = noteNode.parentGroup.createChildPath(relationToNewNote);
+        this.setFocusedNode(createPath(pathToNewNote, "noteContent", relationIdsInNewNote[0]));
       }
     }
   }
@@ -1173,15 +1161,10 @@ export class Tree {
     if (!selection) return false;
     const next = selection.type === "editor" ? getNextBelow(selection.treeNode) : getNextSubtreeBelow(selection.bottom);
     if (!next) return false;
-    if (next.object.noteContentRelationsList.size > 0) {
-      const firstChild = next.childrenGroupsById.noteContent.nodes[0];
-      if (firstChild) {
-        this.setFocusedNode(firstChild.path, position, false);
-        return true;
-      } else {
-        // TODO handle case. create?
-        return false;
-      }
+    const firstChild = next.visibleChildren[0];
+    if (firstChild && isNoteContent(firstChild)) {
+      this.setFocusedNode(firstChild.path, position, false);
+      return true;
     } else {
       this.setFocusedNode(next.path, position, false);
       return true;

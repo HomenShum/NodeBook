@@ -396,6 +396,10 @@ export class PointerTreeNode extends DescendantTreeNode {
 }
 export type TreeNode = PointerTreeNode | RootTreeNode | DescendantTreeNode;
 
+export const groupIds = ["all", "pinned", "pointer", "noteContent"] as const;
+
+export type GroupId = (typeof groupIds)[number];
+
 /**
  * When you expand a node in the tree, it's children are shown in distinct
  * groups. For now, that's just "pinned" and "all", but you can imagine later
@@ -403,7 +407,7 @@ export type TreeNode = PointerTreeNode | RootTreeNode | DescendantTreeNode;
  * groupby operations like "by type" or "by relation" (similar to Linear).
  */
 export abstract class BaseGroup {
-  abstract id: "all" | "pinned" | "pointer" | "noteContent";
+  abstract id: GroupId;
   tree: Tree;
   parent: TreeNode;
   nodes: DescendantTreeNode[];
@@ -434,7 +438,8 @@ export abstract class BaseGroup {
         continue;
       }
 
-      // TODO this should be configurable
+      // This hides bullets which are part of the noteContent list. That way you don't see them inside
+      // the note content *and* the children below the note.
       if (this.id !== "noteContent" && this.parent.object.noteContentRelationsList.has(relation.id)) {
         continue;
       }
@@ -473,7 +478,7 @@ export abstract class BaseGroup {
 // TODO Can define a type for this?
 
 export class PinnedGroup extends BaseGroup {
-  id = "pinned" as const; // TODO shouldn't be necessary
+  id = "pinned" as const;
   constructor(props: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
     super(props);
   }
@@ -504,7 +509,7 @@ export class PinnedGroup extends BaseGroup {
 }
 
 export class AllGroup extends BaseGroup {
-  id = "all" as const; // TODO shouldn't be necessary
+  id = "all" as const;
   constructor(props: { tree: Tree; parent: TreeNode; nodes?: DescendantTreeNode[] }) {
     super(props);
   }
@@ -645,4 +650,3 @@ export class PointerGroup extends BaseGroup {
   }
 }
 export type ChildrenGroups = [NoteContentGroup, PinnedGroup, AllGroup, PointerGroup];
-export type GroupId = BaseGroup["id"];
