@@ -37,25 +37,15 @@ type Command =
       perform: (isCmdPressed: boolean) => void;
     };
 
-type ToastProps = {
-  title: string;
-  description: string;
-  duration?: number;
-  action?: {
-    label: string;
-    onClick: () => void;
-  };
-};
-
 const CommandBar = observer(() => {
   const user = useUser();
   const viewStore = useViewStore();
   const { addToast } = useToast();
-  
+
   const [search, setSearch] = useState<Search>({ text: "", chips: [] });
+  const resetSearch = () => setSearch({ text: "", chips: [] });
 
   const close = useCallback(() => {
-    setSearch({ text: "", chips: [] });
     viewStore.setCommandBarOpen(false);
   }, [viewStore]);
 
@@ -81,14 +71,16 @@ const CommandBar = observer(() => {
   const graphStore = useGraphStore();
   const setRoot = useSetRoot();
 
-
-  const handleZoomToNode = useCallback((object: GraphObject) => {
-    if ('getPath' in object) {
-      const path = object.getPath();
-      setRoot(path);
-      close();
-    }
-  }, [setRoot, close]);
+  const handleZoomToNode = useCallback(
+    (object: GraphObject) => {
+      if ("getPath" in object) {
+        const path = object.getPath();
+        setRoot(path);
+        close();
+      }
+    },
+    [setRoot, close],
+  );
 
   const filteredCommands = useMemo<Command[]>(() => {
     return [
@@ -107,6 +99,7 @@ const CommandBar = observer(() => {
                 path,
                 perform: () => {
                   close();
+                  resetSearch();
                   setRoot(path);
                 },
               };
@@ -130,6 +123,7 @@ const CommandBar = observer(() => {
           }
 
           close();
+          resetSearch();
           if (isCmdPressed) {
             setRoot(node.getPath());
           }
@@ -228,7 +222,7 @@ const CommandBar = observer(() => {
                   Search for nodes or create a new one. Use arrow keys to navigate and Enter to select.
                 </Dialog.DialogDescription>
               </VisuallyHidden>
-              <CmdEditor dropdownContainerRef={dropdownContainerRef} onChange={setSearch} />
+              <CmdEditor dropdownContainerRef={dropdownContainerRef} onChange={setSearch} initialValue={search} />
               <div className={styles.List} ref={listRef}>
                 {filteredCommands.map((command, index) => (
                   <div
@@ -250,4 +244,3 @@ const CommandBar = observer(() => {
 });
 
 export default CommandBar;
-

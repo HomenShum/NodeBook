@@ -3,12 +3,22 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { $createParagraphNode, $createTextNode, $getRoot, COMMAND_PRIORITY_LOW, KEY_ENTER_COMMAND } from "lexical";
+import {
+  $createParagraphNode,
+  $createRangeSelection,
+  $createTextNode,
+  $getRoot,
+  $setSelection,
+  COMMAND_PRIORITY_LOW,
+  KEY_ENTER_COMMAND,
+  TextNode,
+} from "lexical";
 import { useEffect } from "react";
 
 import { Search } from "@/app/components/CommandBar/CommandBar";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { CommandBarMentionDropdown } from "@/app/editor/plugins/dropdown/CommandBarMentionDropdown";
-import { nodeToChip } from "@/app/editor/utils/content";
+import { getChipToNodeFn, nodeToChip } from "@/app/editor/utils/content";
 import { MentionNode } from "@/app/graph/MentionNode";
 
 import styles from "./CommandBar.module.css";
@@ -58,9 +68,13 @@ function PreventEnterPlugin() {
 interface Props {
   dropdownContainerRef: React.RefObject<HTMLDivElement>;
   onChange: (search: Search) => void;
+  initialValue?: Search;
 }
 
-export const CmdEditor = ({ dropdownContainerRef, onChange }: Props) => {
+export const CmdEditor = ({ dropdownContainerRef, onChange, initialValue }: Props) => {
+  const graphStore = useGraphStore();
+  const chipToNode = getChipToNodeFn(graphStore);
+
   return (
     <LexicalComposer
       initialConfig={{
@@ -70,8 +84,23 @@ export const CmdEditor = ({ dropdownContainerRef, onChange }: Props) => {
         nodes: [MentionNode],
         editorState: (editor) => {
           const paragraph = $createParagraphNode();
-          const text = $createTextNode();
-          paragraph.append(text);
+          if (initialValue && initialValue.chips.length > 0) {
+            initialValue.chips.forEach((chip) => {
+              const node = chipToNode(chip);
+              paragraph.append(node);
+            });
+
+            // Select the entire contents
+            const fullSelection = $createRangeSelection();
+            const firstChild = paragraph.getFirstChild() as TextNode;
+            const lastChild = paragraph.getLastChild() as TextNode;
+            fullSelection.anchor.set(firstChild.getKey(), 0, "text");
+            fullSelection.focus.set(lastChild.getKey(), lastChild.getTextContent().length, "text");
+            $setSelection(fullSelection);
+          } else {
+            const text = $createTextNode();
+            paragraph.append(text);
+          }
           $getRoot().append(paragraph);
           setTimeout(() => editor?.focus(), 0);
         },

@@ -1,7 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { LexicalTypeaheadMenuPlugin } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { MentionTypeaheadOption, getMenuRenderFn } from "@/app/editor/plugins/dropdown/MentionDropdown";
@@ -24,6 +24,7 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
   const getMatches = useGetMatches(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
   const getRecentNodes = useGetRecentNodes(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
   const [dropdown, setDropdown] = useState<MentionDropdown | null>(null);
+  const textChanged = useRef(false);
 
   const options = dropdown
     ? [
@@ -37,6 +38,11 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
 
   const triggerFn = useCallback(
     (textBeforeCursor: string) => {
+      // Don't open any dropdowns until the text has changed after focus
+      if (!textChanged.current) {
+        return null;
+      }
+
       // Open mention dropdown after @ match
       const match = checkForMentionMatch(textBeforeCursor);
       if (match) {
@@ -59,7 +65,7 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
 
       return null;
     },
-    [getMatches, getRecentNodes],
+    [getMatches, getRecentNodes, textChanged],
   );
 
   const onSelectOption = useCallback(
@@ -83,6 +89,16 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
     },
     [editor, graphStore],
   );
+
+  // Handle state transitions which {@link triggerFn} can't handle
+  useEffect(() => {
+    return editor.registerTextContentListener((text) => {
+      textChanged.current = true;
+      if (text === "") {
+        setDropdown(null);
+      }
+    });
+  }, [editor]);
 
   return (
     <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>

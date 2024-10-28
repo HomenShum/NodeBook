@@ -186,18 +186,23 @@ export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphN
   return match;
 };
 
+export const getChipToNodeFn = (graphStore: GraphStore) => {
+  return (chip: Chip): LexicalNode => {
+    if (chip.type === "mention") {
+      const mentionNodeText = graphStore.getNode(chip.value)?.text ?? `[${DELETED_NODE_TEXT}]`;
+      return $createMentionNode(chip.value, mentionNodeText);
+    } else if (chip.type === "link") {
+      return $createLinkNode(chip.url, chip.value);
+    } else {
+      return $createTextNode(chip.value);
+    }
+  };
+};
+
 export const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: GraphStore): ParagraphNode => {
   const paragraph = $createParagraphNode();
-  node.content.forEach((chip) => {
-    if (chip.type == "mention") {
-      const mentionNodeText = graphStore.getNode(chip.value)?.text ?? `[${DELETED_NODE_TEXT}]`;
-      paragraph.append($createMentionNode(chip.value, mentionNodeText));
-    } else if (chip.type == "link") {
-      paragraph.append($createLinkNode(chip.url, chip.value));
-    } else {
-      paragraph.append($createTextNode(chip.value));
-    }
-  });
+  const chipToNode = getChipToNodeFn(graphStore);
+  node.content.forEach(chipToNode);
   return paragraph;
 };
 
