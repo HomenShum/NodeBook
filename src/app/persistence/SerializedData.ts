@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { GraphRelationType } from "@/app/graph/types";
 import { Position } from "@/app/util";
 
 const SerializedChipSchema = z.discriminatedUnion("type", [
@@ -89,16 +88,8 @@ type SerializedRelationsByNodeId = {
   };
 };
 
-export type SerializedGraphStore = {
-  userId?: string;
-  nodesById: Record<string, SerializedNode>;
-  relationTypesById: Record<string, GraphRelationType>;
-  relationsById: Record<string, SerializedRelation>;
-  relationsByNodeId: SerializedRelationsByNodeId;
-  pinnedRelationsByNodeId: SerializedRelationsByNodeId;
-  noteContentRelationsByNodeId: SerializedRelationsByNodeId;
-};
 export const SerializedGraphStoreSchema = z.object({
+  userId: z.string().optional(),
   nodesById: z.record(SerializedNodeSchema),
   relationTypesById: z.record(SerializedRelationTypeSchema),
   relationsById: z.record(SerializedRelationSchema),
@@ -106,6 +97,7 @@ export const SerializedGraphStoreSchema = z.object({
   pinnedRelationsByNodeId: z.record(z.record(PositionSchema)),
   noteContentRelationsByNodeId: z.record(z.record(PositionSchema)),
 });
+export type SerializedGraphStore = z.infer<typeof SerializedGraphStoreSchema>;
 
 export type SerializedTree = {
   id: string;

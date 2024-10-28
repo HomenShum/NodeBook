@@ -1,4 +1,3 @@
-
 import { X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
@@ -8,10 +7,13 @@ import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { ImportReviewList } from "@/app/components/DataDialog/ImportReviewList";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { SerializedGraphStore } from "@/app/persistence/SerializedData";
+import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
 import { useViewStore } from "@/app/view/useViewStore";
+import appLogger from "@/lib/logger";
 
 import styles from "./DataDialog.module.css";
+
+const logger = appLogger.child({ service: "ImportDialog" });
 
 export const ImportDialog = observer(function ImportDialog() {
   const viewStore = useViewStore();
@@ -29,9 +31,24 @@ export const ImportDialog = observer(function ImportDialog() {
     setFile(selectedFile);
     const reader = new FileReader();
     reader.onload = async (event) => {
-      const fileContent = event.target!.result;
-      setSerializedGraphStore(JSON.parse(fileContent as string));
-    }
+      try {
+        const fileContent = event.target?.result;
+        if (typeof fileContent !== "string") {
+          throw new Error("Unexpected file content type");
+        }
+        const serializedGraphStore = SerializedGraphStoreSchema.parse(JSON.parse(fileContent));
+        setSerializedGraphStore(serializedGraphStore);
+        logger.info("Successfully parsed serialized graph store");
+      } catch (error) {
+        logger.error("Failed to parse serialized graph store", { error });
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        setFile(null);
+        setSerializedGraphStore(null);
+        alert("Invalid file format.");
+      }
+    };
     reader.readAsText(selectedFile);
   }, []);
 
@@ -92,13 +109,10 @@ export const ImportDialog = observer(function ImportDialog() {
         )}
       </fieldset>
       {serializedGraphStore &&
-        (Object.keys(serializedGraphStore.nodesById).length > 0 ||
-          Object.keys(serializedGraphStore.relationsById).length > 0 ||
-          Object.keys(serializedGraphStore.relationTypesById).length > 0) ? (
-        <ImportReviewList
-          existingData={graphStore.serialize()}
-          newData={serializedGraphStore}
-        />
+      (Object.keys(serializedGraphStore.nodesById).length > 0 ||
+        Object.keys(serializedGraphStore.relationsById).length > 0 ||
+        Object.keys(serializedGraphStore.relationTypesById).length > 0) ? (
+        <ImportReviewList existingData={graphStore.serialize()} newData={serializedGraphStore} />
       ) : (
         <p>No new objects to import.</p>
       )}
