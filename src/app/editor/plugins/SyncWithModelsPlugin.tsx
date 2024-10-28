@@ -4,7 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { $getChips, createParagraphMatchingGraphNode, graphNodeMatchesParagraph } from "@/app/editor/utils/content";
+import { $createParagraphMatchingGraphNode, $getChips, graphNodeMatchesParagraph } from "@/app/editor/utils/content";
 import { $getSelectionPosition, $setSelectionFromTree, sameSelectionPositions } from "@/app/editor/utils/selection";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useTree } from "@/app/tree/TreeContext";
@@ -56,7 +56,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
       if (graphNodeMatchesParagraph(node, currentParagraph, graphStore)) {
         return;
       }
-      const newParagraph = createParagraphMatchingGraphNode(node, graphStore);
+      const newParagraph = $createParagraphMatchingGraphNode(node, graphStore);
       currentParagraph.replace(newParagraph);
       /**
        * Setting the selection is required to prevent the error below.

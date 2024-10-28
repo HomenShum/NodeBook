@@ -199,10 +199,10 @@ export const getChipToNodeFn = (graphStore: GraphStore) => {
   };
 };
 
-export const createParagraphMatchingGraphNode = (node: GraphNode, graphStore: GraphStore): ParagraphNode => {
+export const $createParagraphMatchingGraphNode = (node: GraphNode, graphStore: GraphStore): ParagraphNode => {
   const paragraph = $createParagraphNode();
   const chipToNode = getChipToNodeFn(graphStore);
-  node.content.forEach(chipToNode);
+  paragraph.append(...node.content.map(chipToNode));
   return paragraph;
 };
 
