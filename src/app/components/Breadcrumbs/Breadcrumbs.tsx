@@ -1,7 +1,7 @@
 "use client";
 import { ChevronRight, Command, Ellipsis, Home, Lock, Unlock } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
@@ -176,8 +176,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   const graphStore = useGraphStore();
   const user = useUser();
   const auth = useAuth();
-  // Only update when the node really changes (i.e. it has a different ID)
-  const ancestors = useMemo(() => (treeNode.id ? getAncestorsAsArray(treeNode) : []), [treeNode.id]);
+  const ancestors = getAncestorsAsArray(treeNode);
 
   const handleNavigation = useCallback(
     (index: number) => {
@@ -208,31 +207,27 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
         {!user.isAnonymous ? (
           <div className={s.BreadcrumbRightArea}>
             <Button
-            variant="default"
-            className={cn(s.ShowTooltip, s.BottomAlign)}
-            data-tooltip="Command bar"
-            size="icon"
-            onClick={() => viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen)}
-          >
-            <Command size={14} strokeWidth={1.5} />
-          </Button>
-          <Button
-            className={cn(s.ShowTooltip, s.RightAlign)}
-            data-tooltip={settingsStore.publicMode ? "Public mode" : "Private mode"}
-            variant={settingsStore.publicMode ? "active" : "default"}
-            size="icon"
-            onClick={() => settingsStore.setPublicMode(!settingsStore.publicMode)}
-          >
-            {settingsStore.publicMode ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
+              variant="default"
+              className={cn(s.ShowTooltip, s.BottomAlign)}
+              data-tooltip="Command bar"
+              size="icon"
+              onClick={() => viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen)}
+            >
+              <Command size={14} strokeWidth={1.5} />
+            </Button>
+            <Button
+              className={cn(s.ShowTooltip, s.RightAlign)}
+              data-tooltip={settingsStore.publicMode ? "Public mode" : "Private mode"}
+              variant={settingsStore.publicMode ? "active" : "default"}
+              size="icon"
+              onClick={() => settingsStore.setPublicMode(!settingsStore.publicMode)}
+            >
+              {settingsStore.publicMode ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
             </Button>
           </div>
         ) : (
-          <Button
-            variant="active"
-            size="sm"
-            onClick={() => auth?.loginWithRedirect()}
-          > 
-          Sign in
+          <Button variant="active" size="sm" onClick={() => auth?.loginWithRedirect()}>
+            Sign in
           </Button>
         )}
       </nav>

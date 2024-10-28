@@ -166,8 +166,14 @@ export class RootTreeNode extends BaseTreeNode {
       if (!relation) {
         break;
       }
+      const parentObject = getOtherObject(relation, currentNode.object.id);
+      if (!parentObject) {
+        logger.warn("Could not find parent object for relation during hydration", relation);
+        currentNode.parent = null;
+        return;
+      }
       const parentNode: PathToRootNode = new PathToRootNode({
-        object: getOtherObjectOrThrow(relation, currentNode.object.id),
+        object: parentObject,
         relationToChild: relation,
         child: currentNode,
       });

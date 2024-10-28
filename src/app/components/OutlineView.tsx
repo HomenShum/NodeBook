@@ -32,21 +32,21 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
   const viewStore = useViewStore();
   useOutlineHotkeys({ tree });
 
-  const treeNode = tree.state.root;
+  const treeRoot = tree.state.root;
   const userId = graphStore.user?.id;
-  const isGlobalRoot = treeNode.object.id === graphStore.globalRoot.id;
+  const isGlobalRoot = treeRoot.object.id === graphStore.globalRoot.id;
 
   const tooltipContent = useMemo(
     () =>
       isGlobalRoot ? null : (
         <>
           <div className={s.TooltipContent}>
-            Object author: {treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}
+            Object author: {treeRoot.object.authorId === userId ? "You" : treeRoot.object.authorId}
           </div>
-          <div className={s.TooltipContent}>Created: {new Date(treeNode.object.createdAt).toLocaleDateString()}</div>
+          <div className={s.TooltipContent}>Created: {new Date(treeRoot.object.createdAt).toLocaleDateString()}</div>
         </>
       ),
-    [isGlobalRoot, treeNode.object.authorId, treeNode.object.createdAt, userId],
+    [isGlobalRoot, treeRoot.object.authorId, treeRoot.object.createdAt, userId],
   );
 
   // Set the tree selection to null when the user clicks outside an editor
@@ -74,24 +74,24 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
         })}
       >
         <div className={s.WindowNav}>
-          <Breadcrumbs treeNode={treeNode} />
+          <Breadcrumbs treeNode={treeRoot} />
           <ControlsBar tree={tree} />
         </div>
         <div className={s.OutlineContent}>
           <div className={s.HeadingContainer}>
             <div className={s.TitleContainer}>
-              <NodeHeaderSettingsMenu treeNode={treeNode} />
+              <NodeHeaderSettingsMenu treeNode={treeRoot} />
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div className={s.IconAndTitle}>
-                      {treeNode.object.id === graphStore.homeRoot.id ? (
+                      {treeRoot.object.id === graphStore.homeRoot.id ? (
                         <HomeIcon size={20} />
                       ) : isGlobalRoot ? (
                         <Globe size={20} strokeWidth={1.8} />
                       ) : null}
                       <h1 className={s.TitleText}>
-                        <NodeHeaderEditor key={treeNode.object.id} treeNode={treeNode} />
+                        <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
                       </h1>
                     </div>
                   </TooltipTrigger>
@@ -103,14 +103,14 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                 </Tooltip>
               </TooltipProvider>
             </div>
-            {treeNode.object.noteContentRelationsList.size > 0 && (
+            {treeRoot.object.noteContentRelationsList.size > 0 && (
               <div className={s.NoteContentSection}>
-                <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
+                <NoteContentSection parentNode={treeRoot} group={treeRoot.childrenGroupsById.noteContent} />
               </div>
             )}
           </div>
           <div className={s.Nodes}>
-            {!user.isAnonymous && treeNode.childCount === 0 && (
+            {!user.isAnonymous && treeRoot.childCount === 0 && (
               <ClickToCreateNodeButton
                 onClick={(e) => {
                   e.preventDefault();
@@ -119,7 +119,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                 }}
               />
             )}
-            <ChildGroups treeNode={treeNode} />
+            <ChildGroups treeNode={treeRoot} />
           </div>
         </div>
       </div>

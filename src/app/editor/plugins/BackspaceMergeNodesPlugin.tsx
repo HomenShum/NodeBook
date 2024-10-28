@@ -104,6 +104,11 @@ function useMergers() {
       if (!(target.object instanceof GraphNode && source.object instanceof GraphNode)) {
         return false;
       }
+      // Prevent deletion of the last relation of the current root node
+      // Otherwise the node gets deleted too in the recurrent process, after deleting the last relation
+      if (target === tree.root && target.object.allRelationsList.size === 1) {
+        return false;
+      }
 
       const txs: TxCombinedPart[] = [
         // Update all relations to point to the target node
