@@ -33,6 +33,7 @@ export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema
 
 export const userTable = pgTable("mew_user", {
   id: text("id").primaryKey(),
+  username: text("username").default("").notNull(),
   email: text("email"),
   name: text("name"),
   picture: text("picture"),

@@ -23,6 +23,7 @@ describe("GraphStore.load", () => {
     expect(graphStore.relationsById.size).toEqual(NUM_START_RELATIONS);
 
     const testData: SerializedGraphStore = {
+      usersById: {},
       nodesById: {
         a: {
           id: "a",
@@ -101,6 +102,7 @@ describe("GraphStore.load", () => {
     expect(graphStore.relationsById.size).toEqual(NUM_START_RELATIONS);
 
     const testData: SerializedGraphStore = {
+      usersById: {},
       nodesById: {},
       relationTypesById: {
         "test-rt": {

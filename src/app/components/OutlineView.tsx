@@ -36,17 +36,21 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
   const userId = graphStore.user?.id;
   const isGlobalRoot = treeRoot.object.id === graphStore.globalRoot.id;
 
+  const getAuthorName = (authorId: string) => {
+    return graphStore.usersById.get(authorId)?.username || authorId;
+  };
+
   const tooltipContent = useMemo(
     () =>
       isGlobalRoot ? null : (
         <>
           <div className={s.TooltipContent}>
-            Object author: {treeRoot.object.authorId === userId ? "You" : treeRoot.object.authorId}
+            Node's author: {treeRoot.object.authorId === userId ? "You" : getAuthorName(treeRoot.object.authorId)}
           </div>
           <div className={s.TooltipContent}>Created: {new Date(treeRoot.object.createdAt).toLocaleDateString()}</div>
         </>
       ),
-    [isGlobalRoot, treeRoot.object.authorId, treeRoot.object.createdAt, userId],
+    [isGlobalRoot, treeRoot.object.authorId, treeRoot.object.createdAt, userId, getAuthorName],
   );
 
   // Set the tree selection to null when the user clicks outside an editor

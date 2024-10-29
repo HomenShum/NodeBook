@@ -11,6 +11,7 @@ import { UpdateManager } from "@/app/graph/UpdateManager";
 import { serializeMap } from "@/app/persistence/serialization";
 import {
   DeletedRelationData,
+  MewUserPublic,
   SerializedGraphStore,
   SerializedNode,
   SerializedPositionList,
@@ -65,6 +66,7 @@ export class GraphStore {
   user: MewUser;
   updateManager: UpdateManager;
 
+  usersById: Map<string, MewUserPublic> = new Map();
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
   relationTypesById: Record<string, GraphRelationType> = {};
@@ -89,6 +91,7 @@ export class GraphStore {
     if (!isObservable(this)) {
       makeObservable(this, {
         user: observable,
+        usersById: observable.shallow,
         nodesById: observable.shallow,
         relationsById: observable.shallow,
         relationTypesById: observable.shallow,
@@ -1658,6 +1661,7 @@ export class GraphStore {
     this.updateManager.stopSync();
 
     // Clear all local data
+    this.usersById.clear();
     this.nodesById.clear();
     this.relationsById.clear();
     Object.keys(this.relationTypesById).forEach((key) => {
@@ -1868,6 +1872,8 @@ export class GraphStore {
   }
 
   serialize(): SerializedGraphStore {
+    const usersById = Object.fromEntries(this.usersById.entries());
+
     const nodesById = serializeMap(this.nodesById);
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
@@ -1886,6 +1892,7 @@ export class GraphStore {
     }, {} as Record<string, SerializedPositionList<GraphRelation>>);
 
     return {
+      usersById,
       nodesById,
       relationsById,
       relationTypesById,
@@ -1900,6 +1907,10 @@ export class GraphStore {
    * are overwritten if they already exist.
    */
   load(data: SerializedGraphStore) {
+    for (const [id, user] of Object.entries(data.usersById)) {
+      this.usersById.set(id, user);
+    }
+
     // Nodes
     for (const props of Object.values(data.nodesById)) {
       try {
@@ -2137,6 +2148,7 @@ export class GraphStore {
   }
 
   serializeSubtree(root: GraphObject): SerializedGraphStore {
+    const usersById = Object.fromEntries(this.usersById.entries());
     const relationTypesById: Record<string, GraphRelationType> = {};
     const nodesById = new Map<string, GraphNode>();
     const relationsById = new Map<string, GraphRelation>();
@@ -2158,6 +2170,7 @@ export class GraphStore {
     }
 
     return {
+      usersById: usersById,
       relationTypesById: toJS(relationTypesById),
       nodesById: serializeMap(nodesById),
       relationsById: serializeMap(relationsById),

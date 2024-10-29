@@ -19,6 +19,7 @@ const createUser = async (tx: MewDbTransaction, user: PersistedUser) => {
     .insert(userTable)
     .values({
       id: user.id,
+      username: user.username,
       email: user.email,
       name: user.name,
       picture: user.picture,
@@ -31,5 +32,8 @@ const createUser = async (tx: MewDbTransaction, user: PersistedUser) => {
 };
 
 export const updateUserSettings = async (db: MewDatabase, user: PersistedUser) => {
-  await db.update(userTable).set({ settings: JSON.stringify(user.settings) }).where(eq(userTable.id, user.id));
+  await db
+    .update(userTable)
+    .set({ settings: JSON.stringify(user.settings) })
+    .where(eq(userTable.id, user.id));
 };

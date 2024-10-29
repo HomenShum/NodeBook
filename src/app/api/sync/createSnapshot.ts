@@ -1,12 +1,13 @@
 import { eq, or } from "drizzle-orm";
 
 import { UNLOGGED_USER } from "@/app/auth/MewUser";
-import { SerializedGraphStore, SerializedNode } from "@/app/persistence/SerializedData";
+import { MewUserPublic, SerializedGraphStore, SerializedNode } from "@/app/persistence/SerializedData";
 import { getDb } from "@/db";
-import { graphNodeTable, graphRelationTable, relationListsTable, relationTypeTable } from "@/db/schema";
+import { graphNodeTable, graphRelationTable, relationListsTable, relationTypeTable, userTable } from "@/db/schema";
 
 export const createSnapshotFromDb = async (userId: string): Promise<SerializedGraphStore> => {
   const snapshot: SerializedGraphStore = {
+    usersById: {},
     nodesById: {},
     relationTypesById: {},
     relationsById: {},
@@ -17,6 +18,18 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
 
   const db = getDb();
 
+  // Load users from db
+  const userRows = await db.select().from(userTable);
+  for (const row of userRows) {
+    const user: MewUserPublic = {
+      id: row.id,
+      username: row.username || row.email!,
+      email: row.email!,
+    };
+    snapshot.usersById[user.id] = user;
+  }
+
+  // Load nodes from db
   const nodeRows = await db
     .select()
     .from(graphNodeTable)
@@ -64,6 +77,7 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
     };
   }
 
+  // Load relations from db
   const relationRows = await db
     .select()
     .from(graphRelationTable)
@@ -82,6 +96,7 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
     };
   }
 
+  // Load relation lists from db
   const relationListRows = await db
     .select()
     .from(relationListsTable)

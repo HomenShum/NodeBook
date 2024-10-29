@@ -220,7 +220,8 @@ const Content = observer(function Content() {
 });
 
 const Bullet = observer(function Bullet() {
-  const userId = useGraphStore().user?.id;
+  const graphStore = useGraphStore();
+  const userId = graphStore.user?.id;
   const { treeNode } = useTreeNode();
   const setRoot = useSetRoot();
   const handleBulletClick = useCallback(() => {
@@ -231,8 +232,16 @@ const Bullet = observer(function Bullet() {
     });
   }, [treeNode, setRoot]);
 
-  const tooltipContent = `Object author: ${treeNode.object.authorId === userId ? "You" : treeNode.object.authorId}
-    Relation author: ${treeNode.relationWithParent.authorId === userId ? "You" : treeNode.relationWithParent.authorId}
+  const getAuthorName = (authorId: string) => {
+    return graphStore.usersById.get(authorId)?.username || authorId;
+  };
+
+  const tooltipContent = `Node's author: ${
+    treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
+  }
+    Relation author: ${
+      treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
+    }
     Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}
   `;
 

@@ -50,6 +50,7 @@ export const fetchGetOrCreateUser = async (user: User, userFetch: typeof fetch):
     body: JSON.stringify({
       user: {
         id: user.sub,
+        username: user.preferred_username ?? "",
         email: user.email,
         name: user.name ?? user.nickname ?? "The Nameless One",
         picture: user.picture,
