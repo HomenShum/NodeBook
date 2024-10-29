@@ -2206,15 +2206,15 @@ export class GraphStore {
       const object = this.getObjectOrType(id);
       if (include.nodes && object instanceof GraphNode) {
         const node = object;
-        const text = node.text.toLocaleLowerCase();
-        if (keywords.every((kw) => text.includes(kw))) {
-          results.nodes.push({ node: object, score: scoreMatch(text, procText) });
+        const searchText = node.searchText.toLocaleLowerCase();
+        if (keywords.every((kw) => searchText.includes(kw))) {
+          results.nodes.push({ node: object, score: scoreMatch(searchText, procText) });
         }
       } else if (include.relations && object instanceof GraphRelation) {
         const relation = object;
-        const text = relation.text.toLocaleLowerCase();
-        if (keywords.every((kw) => text.includes(kw))) {
-          results.relations.push({ relation, score: scoreMatch(text, procText) });
+        const searchText = relation.searchText.toLocaleLowerCase();
+        if (keywords.every((kw) => searchText.includes(kw))) {
+          results.relations.push({ relation, score: scoreMatch(searchText, procText) });
         }
       } else if (include.relationTypes && isGraphRelationType(object)) {
         const relationType = object;
