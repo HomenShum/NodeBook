@@ -92,13 +92,13 @@ export type MewUserPublic = z.infer<typeof MewUserPublicSchema>;
 
 export const SerializedGraphStoreSchema = z.object({
   userId: z.string().optional(),
-  usersById: z.record(MewUserPublicSchema),
-  nodesById: z.record(SerializedNodeSchema),
-  relationTypesById: z.record(SerializedRelationTypeSchema),
-  relationsById: z.record(SerializedRelationSchema),
-  relationsByNodeId: z.record(z.record(PositionSchema)),
-  pinnedRelationsByNodeId: z.record(z.record(PositionSchema)),
-  noteContentRelationsByNodeId: z.record(z.record(PositionSchema)),
+  usersById: z.record(MewUserPublicSchema).default({}),
+  nodesById: z.record(SerializedNodeSchema).default({}),
+  relationTypesById: z.record(SerializedRelationTypeSchema).default({}),
+  relationsById: z.record(SerializedRelationSchema).default({}),
+  relationsByNodeId: z.record(z.record(PositionSchema)).default({}),
+  pinnedRelationsByNodeId: z.record(z.record(PositionSchema)).default({}),
+  noteContentRelationsByNodeId: z.record(z.record(PositionSchema)).default({}),
 });
 export type SerializedGraphStore = z.infer<typeof SerializedGraphStoreSchema>;
 
