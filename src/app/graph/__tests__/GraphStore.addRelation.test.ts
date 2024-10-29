@@ -129,6 +129,7 @@ describe("GraphStore.addRelation", () => {
     });
 
     expect(graphStore.getRelation(relation.id)).toBeDefined();
+    expect(relation.isPublic).toBeTruthy();
     expect(startNode.isPublic).toBeTruthy();
     expect(startNode.isNewRelatedObjectsPublic).toBeTruthy();
     expect(endNode.isPublic).toBeTruthy();

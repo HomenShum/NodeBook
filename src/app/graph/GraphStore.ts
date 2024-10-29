@@ -1061,9 +1061,15 @@ export class GraphStore {
       }
       this.assertExists(relationProps.from, relationProps.to);
 
+      const isPublic = !!(
+        relationProps.isPublic ||
+        this.settings?.publicMode ||
+        (relationProps.from instanceof GraphNode && relationProps.from.isNewRelatedObjectsPublic) ||
+        (relationProps.to instanceof GraphNode && relationProps.to.isNewRelatedObjectsPublic)
+      );
       relation = new GraphRelation(this, {
         ...relationProps,
-        isPublic: !!(relationProps.isPublic || this.settings?.publicMode),
+        isPublic,
         authorId,
       });
       this.relationsById.set(relation.id, relation);
