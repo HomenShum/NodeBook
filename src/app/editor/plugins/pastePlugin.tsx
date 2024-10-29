@@ -25,7 +25,12 @@ export const PastePlugin = () => {
       PASTE_COMMAND,
       (event) => {
         if (!(object instanceof GraphNode)) return false;
-        const lines = event.clipboardData?.getData("Text")?.split("\n") ?? [];
+        const lines =
+          event.clipboardData
+            ?.getData("Text")
+            ?.split("\n")
+            .filter((l) => l.length > 0) ?? [];
+
         if (lines.length > 1) {
           const txs: TxCombined = [];
 
