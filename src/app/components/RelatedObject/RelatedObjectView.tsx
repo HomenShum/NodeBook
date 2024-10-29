@@ -8,6 +8,7 @@ import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter"
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { env } from "@/app/envFrontend";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
@@ -204,15 +205,19 @@ const Content = observer(function Content() {
             showTooltip={true}
           />
         )}
-        {treeNode.id === nodeSelectionAnchorId && (
-          <div title="Anchor" className={styles.RelationCounter}>
-            A
-          </div>
-        )}
-        {treeNode.id === nodeSelectionHeadId && (
-          <div title="Head" className={styles.RelationCounter}>
-            H
-          </div>
+        {env.env !== "production" && (
+          <>
+            {treeNode.id === nodeSelectionAnchorId && (
+              <div title="Anchor" className={styles.RelationCounter}>
+                A
+              </div>
+            )}
+            {treeNode.id === nodeSelectionHeadId && (
+              <div title="Head" className={styles.RelationCounter}>
+                H
+              </div>
+            )}
+          </>
         )}
       </div>
     </>
