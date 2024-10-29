@@ -8,6 +8,7 @@ import { useUser } from "@/app/contexts/UserContext";
 import {
   AllGroup,
   ChildrenGroups,
+  DescendantTreeNode,
   NoteContentGroup,
   PinnedGroup,
   PointerGroup,
@@ -50,6 +51,9 @@ interface NoteContentSectionProps {
 }
 
 export const NoteContentSection = observer(function NoteContentSection({ parentNode, group }: NoteContentSectionProps) {
+  if (parentNode instanceof DescendantTreeNode && parentNode.instanceCountInPath > 1) {
+    return <div>Circular reference to {`"${parentNode.object.text}"`}</div>;
+  }
   if (group.nodes.length === 0) {
     return null;
   }

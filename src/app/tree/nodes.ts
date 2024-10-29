@@ -463,7 +463,7 @@ export abstract class BaseGroup {
         (this.parent.isExpanded && this.isExpanded) ||
         // Except the note content group. In this case, we always hydrate the children, because this group
         // is visible even if the node is not expanded.
-        (node.instanceCountInPath <= 1 && this.id === "noteContent")
+        (this.id === "noteContent" && node.instanceCountInPath <= 1)
       ) {
         node.hydrate();
       }
