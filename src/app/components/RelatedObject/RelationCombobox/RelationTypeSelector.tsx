@@ -1,6 +1,5 @@
 import { Search } from "lucide-react";
-import * as React from "react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import SelectionItem from "@/app/components/RelatedObject/RelationCombobox/SelectionItem";
 import styles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
@@ -9,6 +8,8 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { DescendantTreeNode } from "@/app/tree/nodes";
+
+const getCreationLabel = (search: string) => `Create "${search}" relation type`;
 
 interface SelectorProps {
   treeNode: DescendantTreeNode;
@@ -20,8 +21,9 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
   const relation = treeNode.relationWithParent;
   const isForward = relation.to.id === treeNode.object.id;
   const graphStore = useGraphStore();
-  const [search, setSearch] = React.useState(relation.relationType.label);
-  const [highlightedIndex, setHighlightedIndex] = React.useState(0);
+  const [search, setSearch] = useState(relation.relationType.label);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
+  const itemWasSelectedRef = useRef(false);
 
   const handleSelect = useCallback(
     async (relationType: GraphRelationType, wantDirection: "forward" | "reverse") => {
@@ -73,7 +75,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     if (search.length > 0 && parent !== null && relation.relationType.label !== search) {
       tmpItems.push({
         key: "new",
-        label: `Create "${search}" relation type`,
+        label: getCreationLabel(search),
         onSelect: async () => {
           const relationType = await graphStore.addRelationType({
             label: search,
@@ -103,9 +105,27 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     return tmpItems;
   }, [graphStore, handleSelect, isForward, parent, relation.id, relation.relationType.label, search]);
 
+  const handleExternalClose = useCallback(() => {
+    if (search === "" || itemWasSelectedRef.current) return;
+
+    const existingRelationType = items.find((item) => item.label === search);
+    if (existingRelationType) {
+      existingRelationType.onSelect();
+      return;
+    }
+
+    const newRelationType = items.find((item) => item.key === "new");
+    if (newRelationType && newRelationType.label === getCreationLabel(search)) {
+      newRelationType.onSelect();
+    }
+  }, [items, search]);
+
   return (
     <PopoverContent
-      onCloseAutoFocus={(e) => e.preventDefault()}
+      onCloseAutoFocus={(e) => {
+        e.preventDefault();
+        handleExternalClose();
+      }}
       onKeyDown={(e) => {
         if (e.key === "ArrowDown") {
           e.preventDefault();
@@ -121,6 +141,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
             e.preventDefault();
             e.stopPropagation();
             item.onSelect();
+            itemWasSelectedRef.current = true;
             close();
           }
         } else if (e.key === "Backspace" && search === "") {
@@ -129,8 +150,13 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
           const item = items[highlightedIndex];
           if (item) {
             item.onSelect();
+            itemWasSelectedRef.current = true;
             close();
           }
+        } else if (e.key === "z" && (e.metaKey || e.ctrlKey)) {
+          // Prevent the nodes content being undone/redone when relation combobox is open
+          e.preventDefault();
+          e.stopPropagation();
         }
       }}
     >
@@ -147,10 +173,15 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
         {items.map(({ key, label, onSelect }, index) => (
           <SelectionItem
             key={key}
+            keyProp={key}
             label={label}
             relation={relation}
             isSelected={highlightedIndex === index}
-            onSelect={onSelect}
+            onSelect={() => {
+              itemWasSelectedRef.current = true;
+              onSelect();
+              close();
+            }}
             setSelected={() => setHighlightedIndex(index)}
             isForward={isForward}
           />

@@ -61,15 +61,13 @@ export const RelationCombobox = observer(function RelationCombobox({
       role="combobox"
       aria-expanded={isOpen}
       className={styles.RelationComboboxLabel}
-      onMouseEnter={() => {
-        setIsHovered(true);
-        console.log(relation.relationType.id);
-      }}
+      onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-        {relation.relationType.id === "sublist" && <SublistIcon />}
-        {relation.relationType.id === "child" && relation.from === treeNode.object && <ParentRelationIcon />}
-      {label}{!relation.relationType.label ? <UnlabeledRelationIcon empty={!relation.relationType.label} /> : ":"}
+      {relation.relationType.id === "sublist" && <SublistIcon />}
+      {relation.relationType.id === "child" && relation.from === treeNode.object && <ParentRelationIcon />}
+      {label}
+      {!relation.relationType.label ? <UnlabeledRelationIcon empty={!relation.relationType.label} /> : ":"}
     </Button>
   );
 

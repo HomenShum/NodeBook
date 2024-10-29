@@ -1,5 +1,5 @@
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { FilterBy, getMatches } from "@/app/editor/plugins/dropdown/utils";
+import { getMatches } from "@/app/editor/plugins/dropdown/utils";
 
 // Mock the GraphStore
 jest.mock("@/app/contexts/GraphStoreContext", () => ({
@@ -45,40 +45,10 @@ describe("getMatches", () => {
     });
 
     // @ts-ignore: Suppress type error for mockGraphStore
-    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, {}, maxResults);
+    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, maxResults);
 
     expect(matches).toHaveLength(7);
     const expectedMatchIds = ["relTypeA", "relTypeA-rev", "relYZ", "nodeB", "nodeC", "nodeA", "relAB"];
-    expect(matches.map((match) => match.key)).toEqual(expectedMatchIds);
-  });
-
-  it("should filter matches out based on toFilterBy function", () => {
-    const maxResults = 10;
-    // filterBy filters /out/ matches
-    const toFilterBy: FilterBy = {
-      nodeId: "nodeA",
-    };
-
-    const mockNodes = [
-      { id: "nodeA", text: `${SEARCH_TERM} node A`, createdAt: new Date(2023, 0, 1) },
-      { id: "nodeB", text: `${SEARCH_TERM} node B`, createdAt: new Date(2023, 0, 2) },
-    ];
-    const mockRelations = [
-      { id: "relAB", from: { id: "nodeA" }, to: { id: "nodeB" }, createdAt: new Date(2023, 0, 3) },
-      { id: "relYZ", from: { id: "nodeY" }, to: { id: "nodeZ" }, createdAt: new Date(2023, 0, 3) },
-    ];
-
-    mockGraphStore.search.mockReturnValue({
-      nodes: mockNodes.map((node) => ({ node, score: 0.5 })),
-      relations: mockRelations.map((relation) => ({ relation, score: 0.6 })),
-      relationTypes: [],
-    });
-
-    // @ts-ignore: Suppress type error for mockGraphStore
-    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, toFilterBy, maxResults);
-
-    expect(matches).toHaveLength(2);
-    const expectedMatchIds = ["relYZ", "nodeB"];
     expect(matches.map((match) => match.key)).toEqual(expectedMatchIds);
   });
 
@@ -98,7 +68,7 @@ describe("getMatches", () => {
     });
 
     // @ts-ignore: Suppress type error for mockGraphStore
-    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, {}, maxResults);
+    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, maxResults);
 
     expect(matches).toHaveLength(2);
   });
@@ -113,7 +83,7 @@ describe("getMatches", () => {
     });
 
     // @ts-ignore: Suppress type error for mockGraphStore
-    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, {}, maxResults);
+    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, maxResults);
 
     expect(matches).toHaveLength(0);
   });

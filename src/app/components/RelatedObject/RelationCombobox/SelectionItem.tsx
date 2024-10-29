@@ -1,13 +1,12 @@
-import React from "react";
 import { Check } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import styles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
-import { GraphRelationType } from "@/app/graph/types";
 import { GraphRelation } from "@/app/graph/GraphRelation";
+import { GraphRelationType } from "@/app/graph/types";
+import { cn } from "@/lib/utils";
 
 interface SelectionItem {
-  key: string;
+  keyProp: string;
   label: string;
   onSelect: () => void;
   isSelected: boolean;
@@ -16,19 +15,18 @@ interface SelectionItem {
   relation: GraphRelation;
 }
 
-function SelectionItem({ key, label, onSelect, isSelected, setSelected, isForward, relation }: SelectionItem) {
+function SelectionItem({ keyProp, label, onSelect, isSelected, setSelected, isForward, relation }: SelectionItem) {
   return (
     <div
       className={cn(styles.RelationComboboxItem, isSelected && styles.Selected)}
-      onMouseEnter={() => setSelected(key)}
-      onClick={() => {
-        onSelect();
-        close();
-      }}
+      onMouseEnter={() => setSelected(keyProp)}
+      onClick={onSelect}
     >
       <Check
         size={14}
-        className={cn(relToKey(relation.relationType, isForward) === key ? styles.SelectedIcon : styles.Transparent)}
+        className={cn(
+          relToKey(relation.relationType, isForward) === keyProp ? styles.SelectedIcon : styles.Transparent,
+        )}
       />
       <div>{label}</div>
     </div>
