@@ -16,6 +16,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { RootTreeNode } from "@/app/tree/nodes";
 
+import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import styles from "./Editor.module.css";
 
 interface Props {
@@ -44,6 +45,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode }:
         />
         <DropdownPlugin treeNode={treeNode} />
         <EnterKeyPlugin treeNode={treeNode} />
+        <IgnoreModShiftAPlugin />
         <ClearEditorPlugin />
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         {treeNode.object instanceof GraphNode && (

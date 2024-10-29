@@ -24,6 +24,7 @@ import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 
+import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import styles from "./Editor.module.css";
 
 interface Props {
@@ -65,6 +66,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <BackspaceMergeNodesPlugin />}
         {isEditorEditable && <PastePlugin />}
         {isEditorEditable && <RelationPlugin />}
+        {isEditorEditable && <IgnoreModShiftAPlugin />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
         <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
