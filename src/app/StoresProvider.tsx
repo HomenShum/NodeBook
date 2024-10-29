@@ -2,7 +2,7 @@
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import React, { useEffect, useState } from "react";
 
-import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
+import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { useAuth } from "@/app/auth/useAuth";
 import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
 import { LoadingContext } from "@/app/contexts/LoadingContext";
@@ -62,7 +62,9 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       logger.debug("Loading user");
       let user: MewUser;
       try {
-        if (auth?.user) {
+        if (!auth && env.env === "development") {
+          user = MOCK_MEW_USER;
+        } else if (auth?.user) {
           const data = await fetchGetOrCreateUser(auth.user, authedFetch);
           if (!data) throw new Error("fetchGetOrCreateUser returned null");
           user = new MewUser({ ...data });
