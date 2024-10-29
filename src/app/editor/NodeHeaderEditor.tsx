@@ -10,13 +10,13 @@ import { useUser } from "@/app/contexts/UserContext";
 import { createConfig } from "@/app/editor/createConfig";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
+import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { RootTreeNode } from "@/app/tree/nodes";
 
-import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import styles from "./Editor.module.css";
 
 interface Props {

@@ -1,5 +1,6 @@
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { getMatches } from "@/app/editor/plugins/dropdown/utils";
+import { GraphStore } from "@/app/graph/GraphStore";
 
 // Mock the GraphStore
 jest.mock("@/app/contexts/GraphStoreContext", () => ({
@@ -44,8 +45,7 @@ describe("getMatches", () => {
       relationTypes: mockRelationTypes.map((relationType) => ({ relationType, score: 0.7 })),
     });
 
-    // @ts-ignore: Suppress type error for mockGraphStore
-    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, maxResults);
+    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, undefined, maxResults);
 
     expect(matches).toHaveLength(7);
     const expectedMatchIds = ["relTypeA", "relTypeA-rev", "relYZ", "nodeB", "nodeC", "nodeA", "relAB"];
@@ -67,8 +67,7 @@ describe("getMatches", () => {
       relationTypes: [],
     });
 
-    // @ts-ignore: Suppress type error for mockGraphStore
-    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, maxResults);
+    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, undefined, maxResults);
 
     expect(matches).toHaveLength(2);
   });
@@ -82,8 +81,7 @@ describe("getMatches", () => {
       relationTypes: [],
     });
 
-    // @ts-ignore: Suppress type error for mockGraphStore
-    const matches = getMatches(mockGraphStore, SEARCH_TERM, undefined, maxResults);
+    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, undefined, maxResults);
 
     expect(matches).toHaveLength(0);
   });

@@ -11,6 +11,7 @@ import { createConfig } from "@/app/editor/createConfig";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
+import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowAtEndsPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { PastePlugin } from "@/app/editor/plugins/pastePlugin";
@@ -24,7 +25,6 @@ import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 
-import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import styles from "./Editor.module.css";
 
 interface Props {
