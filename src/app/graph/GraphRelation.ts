@@ -10,7 +10,12 @@ import { BaseGraphObject, GraphObject } from "./GraphObject";
 import { GraphStore } from "./GraphStore";
 
 export function isGraphRelationType(obj: any): obj is GraphRelationType {
-  return obj && obj.id && obj.label && obj.reverseLabel;
+  return (
+    typeof obj === "object" &&
+    obj.hasOwnProperty("id") &&
+    obj.hasOwnProperty("label") &&
+    obj.hasOwnProperty("reverseLabel")
+  );
 }
 
 export type GraphRelationProps = {

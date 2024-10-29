@@ -643,8 +643,8 @@ export class GraphStore {
       throw new Error(`Relation type with id ${props.id} already exists`);
     }
     const version = props.version ?? 1;
-    let label = props.label;
-    let reverseLabel = props.reverseLabel;
+    let label = props.label.trim().replace(/\s*\n\s*/g, " ");
+    let reverseLabel = props.reverseLabel?.trim().replace(/\s*\n\s*/g, " ");
     if (label.endsWith(" of") && !reverseLabel) {
       // Special case for "is X of" relations because the auto-generated reverse label will be "is X of" and
       // we don't want "is X of of"
