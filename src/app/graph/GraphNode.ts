@@ -192,7 +192,11 @@ export class GraphNode extends BaseGraphObject implements Serializable {
         ...this.noteContentRelationsList
           .values()
           .sort((a, b) => comparePositions(a.position, b.position))
-          .map(({ item }) => getOtherObject(item, this.id)?.searchText ?? ""),
+          .map(({ item }) => {
+            const object = getOtherObject(item, this.id);
+            if (object instanceof GraphNode) return object._dfsText({}, false);
+            return object ? object.searchText : "";
+          }),
       ].join(" ");
     } else {
       return this._dfsText({}, false);
