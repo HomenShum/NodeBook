@@ -101,7 +101,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     });
 
     return tmpItems;
-  }, [graphStore, handleSelect, parent, relation.id, relation.relationType.label, search]);
+  }, [graphStore, handleSelect, isForward, parent, relation.id, relation.relationType.label, search]);
 
   return (
     <PopoverContent

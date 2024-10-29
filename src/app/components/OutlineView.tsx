@@ -45,7 +45,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
       isGlobalRoot ? null : (
         <>
           <div className={s.TooltipContent}>
-            Node's author: {treeRoot.object.authorId === userId ? "You" : getAuthorName(treeRoot.object.authorId)}
+            Node&apos;s author: {treeRoot.object.authorId === userId ? "You" : getAuthorName(treeRoot.object.authorId)}
           </div>
           <div className={s.TooltipContent}>Created: {new Date(treeRoot.object.createdAt).toLocaleDateString()}</div>
         </>

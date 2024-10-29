@@ -116,7 +116,7 @@ export const useGetMatches = (maxResults: number, toFilterBy: FilterBy = {}): Ge
 
   return useCallback(
     (text: string, types?: NodeType[]) => getMatches(graphStore, text, types, toFilterBy, maxResults),
-    [graphStore, maxResults, toFilterBy.nodeId, toFilterBy.relationTypeId],
+    [graphStore, maxResults, toFilterBy],
   );
 };
 
