@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { MentionTypeaheadOption, getMenuRenderFn } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/types";
-import { useGetMatches, useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
+import { useGetMatchesForCommandBar, useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { uuid } from "@/app/util";
 import { checkForMentionMatch } from "@/lib/utils";
@@ -21,7 +21,7 @@ interface Props {
 export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  const getMatches = useGetMatches(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
+  const getMatches = useGetMatchesForCommandBar(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
   const getRecentNodes = useGetRecentNodes(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
   const [dropdown, setDropdown] = useState<MentionDropdown | null>(null);
   const textChanged = useRef(false);

@@ -7,7 +7,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
 import { Dropdown } from "@/app/editor/plugins/dropdown/types";
-import { useGetMatches, useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
+import { useGetMatchesForTreeNode, useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
 import { $getText } from "@/app/editor/utils/content";
 import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
@@ -41,10 +41,7 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
   const [dropdown, setDropdown] = useState<Dropdown>(null);
   const [editor] = useLexicalComposerContext();
   const settingsStore = useSettingsStore();
-  const getMatches = useGetMatches(MAX_DROPDOWN_RESULTS, {
-    nodeId: treeNode.object.id,
-    relationTypeId: treeNode.relationWithParent?.relationType.id,
-  });
+  const getMatches = useGetMatchesForTreeNode(MAX_DROPDOWN_RESULTS, treeNode);
   const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, treeNode.object.id);
 
   const textChanged = useRef(false);

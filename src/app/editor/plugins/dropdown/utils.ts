@@ -6,6 +6,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphRelationType } from "@/app/graph/types";
+import { TreeNode } from "@/app/tree/nodes";
 
 export type NodeType = "node" | "relation" | "relationType";
 
@@ -25,21 +26,10 @@ export function getMatches(
   graphStore: GraphStore,
   text: string,
   types: NodeType[] | undefined,
-  toFilterBy: FilterBy,
   maxResults: number,
 ): Match[] {
   text = text.toLocaleLowerCase().trim();
   const results = graphStore.search({ text, filters: { types } });
-
-  if (toFilterBy.nodeId) {
-    results.nodes = results.nodes.filter(({ node }: { node: GraphNode }) => node.id !== toFilterBy.nodeId);
-    results.relations = results.relations.filter(
-      ({ relation }: { relation: GraphRelation }) =>
-        relation.id !== toFilterBy.nodeId &&
-        relation.to.id !== toFilterBy.nodeId &&
-        relation.from.id !== toFilterBy.nodeId,
-    );
-  }
 
   const nodeScores = new Map<string, number>();
   results.nodes.forEach(({ node, score }) => nodeScores.set(node.id, score));
@@ -57,34 +47,32 @@ export function getMatches(
       object: relation,
       score: Math.min(nodeScores.get(relation.from.id) || score, score),
     })),
-    ...results.relationTypes.flatMap(({ relationType, score }: RelationTypeResult) => {
-      if (relationType.id === toFilterBy.relationTypeId) {
-        return [];
-      }
-
-      const res = [];
-      const label = relationType.label.toLocaleLowerCase();
-      const reverseLabel = relationType.reverseLabel.toLocaleLowerCase();
-      if (label.includes(text)) {
-        res.push({
-          key: relationType.id,
-          type: "relationType" as const,
-          object: relationType,
-          score,
-          isForward: true,
-        });
-      }
-      if (label !== reverseLabel && reverseLabel.includes(text)) {
-        res.push({
-          key: relationType.id + "-rev",
-          type: "relationType" as const,
-          object: relationType,
-          score,
-          isForward: false,
-        });
-      }
-      return res;
-    }),
+    ...results.relationTypes
+      .map(({ relationType, score }: RelationTypeResult) => {
+        const res = [];
+        const label = relationType.label.toLocaleLowerCase();
+        const reverseLabel = relationType.reverseLabel.toLocaleLowerCase();
+        if (label.includes(text)) {
+          res.push({
+            key: relationType.id,
+            type: "relationType" as const,
+            object: relationType,
+            score,
+            isForward: true,
+          });
+        }
+        if (label !== reverseLabel && reverseLabel.includes(text)) {
+          res.push({
+            key: relationType.id + "-rev",
+            type: "relationType" as const,
+            object: relationType,
+            score,
+            isForward: false,
+          });
+        }
+        return res;
+      })
+      .flat(),
   ];
 
   return matches
@@ -111,12 +99,43 @@ export function getMatches(
     .slice(0, maxResults);
 }
 
-export const useGetMatches = (maxResults: number, toFilterBy: FilterBy = {}): GetMatches => {
+export const useGetMatchesForCommandBar = (maxResults: number): GetMatches => {
   const graphStore = useGraphStore();
 
   return useCallback(
-    (text: string, types?: NodeType[]) => getMatches(graphStore, text, types, toFilterBy, maxResults),
-    [graphStore, maxResults, toFilterBy],
+    (text: string, types?: NodeType[]) => getMatches(graphStore, text, types, maxResults),
+    [graphStore, maxResults],
+  );
+};
+
+export const useGetMatchesForTreeNode = (maxResults: number, treeNode: TreeNode): GetMatches => {
+  const graphStore = useGraphStore();
+
+  return useCallback(
+    (text: string, types?: NodeType[]) => {
+      const matches = getMatches(graphStore, text, types, maxResults);
+      return matches.filter((match) => {
+        if (match.type === "node") {
+          return match.object.id !== treeNode.object.id;
+        }
+        if (match.type === "relation") {
+          return (
+            match.object.id !== treeNode.object.id &&
+            match.object.to.id !== treeNode.object.id &&
+            match.object.from.id !== treeNode.object.id
+          );
+        }
+        if (match.type === "relationType") {
+          // Not the same relation type and direction
+          return !(
+            match.object.id === treeNode.relationWithParent?.relationType.id &&
+            match.isForward === !treeNode.isBackrelation
+          );
+        }
+        return true;
+      });
+    },
+    [graphStore, maxResults, treeNode],
   );
 };
 
