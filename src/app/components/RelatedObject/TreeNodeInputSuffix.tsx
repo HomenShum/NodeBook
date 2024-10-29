@@ -28,18 +28,20 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
   const tree = useTree();
   const inputRef = useRef<HTMLInputElement>(null);
   const graphStore = useGraphStore();
+
   // Only grab selection if  tree node
   const treeNodeShouldHaveFocus = tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id;
+  const isEndPosition = tree.selection?.type === "editor" && tree.selection.position === "end";
   useEffect(() => {
     if (!isEditorEditable) {
       const inputFocused = inputRef.current?.contains(document.activeElement);
-      if (!inputFocused && treeNodeShouldHaveFocus) {
+      if (!inputFocused && treeNodeShouldHaveFocus && isEndPosition) {
         inputRef.current?.focus();
       } else if (inputFocused && !treeNodeShouldHaveFocus) {
         inputRef.current?.blur();
       }
     }
-  }, [treeNodeShouldHaveFocus, isEditorEditable]);
+  }, [treeNodeShouldHaveFocus, isEditorEditable, isEndPosition]);
 
   return (
     <input
@@ -72,10 +74,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
             break;
           case "ArrowLeft":
             e.preventDefault();
-            const inputPrefix = inputRef.current?.previousElementSibling?.previousElementSibling;
-            if (inputPrefix) {
-              (inputPrefix as HTMLElement).focus();
-            }
+            tree.setFocusedNode(treeNode.id, "start");
             break;
         }
       }}

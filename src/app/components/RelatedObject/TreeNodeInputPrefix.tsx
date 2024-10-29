@@ -24,22 +24,25 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
 
   // Only grab selection if  tree node
   const treeNodeShouldHaveFocus = tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id;
+  const isStartPosition = tree.selection?.type === "editor" && tree.selection.position === "start";
   useEffect(() => {
     if (!isEditorEditable) {
       const inputFocused = inputRef.current?.contains(document.activeElement);
-      if (!inputFocused && treeNodeShouldHaveFocus) {
+      if (!inputFocused && treeNodeShouldHaveFocus && isStartPosition) {
         inputRef.current?.focus();
       } else if (inputFocused && !treeNodeShouldHaveFocus) {
         inputRef.current?.blur();
       }
     }
-  }, [treeNodeShouldHaveFocus, isEditorEditable]);
+  }, [treeNodeShouldHaveFocus, isEditorEditable, isStartPosition]);
 
   return (
     <input
       style={{
-        maxWidth: 1,
+        maxWidth: 2,
         padding: 0,
+        border: 0,
+        outline: "none",
       }}
       onFocus={() => {
         if (!tree.isNodeFocused(treeNode.id)) {
@@ -68,10 +71,7 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
             break;
           case "ArrowRight":
             e.preventDefault();
-            const inputSuffix = inputRef.current?.nextElementSibling?.nextElementSibling;
-            if (inputSuffix) {
-              (inputSuffix as HTMLElement).focus();
-            }
+            tree.setFocusedNode(treeNode.id, "end");
             break;
           case "ArrowLeft":
             e.preventDefault();
