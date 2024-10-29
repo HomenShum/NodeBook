@@ -2,7 +2,7 @@
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import React, { useEffect, useState } from "react";
 
-import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
+import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { useAuth } from "@/app/auth/useAuth";
 import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
 import { LoadingContext } from "@/app/contexts/LoadingContext";
@@ -11,7 +11,7 @@ import { UserContext } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { fetchGetOrCreateUser, loadGraphData } from "@/app/persistence/loadGraphData";
+import { fetchGetOrCreateUser, fetchGetUser, loadGraphData } from "@/app/persistence/loadGraphData";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
@@ -53,7 +53,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
 
       const authedFetch: typeof fetch = auth?.user
         ? async (input, init) => {
-            const token = await auth.getAccessTokenSilently();
+            const token = await auth?.getAccessTokenSilently();
             return fetch(input, { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } });
           }
         : fetch;
@@ -62,11 +62,13 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       logger.debug("Loading user");
       let user: MewUser;
       try {
-        if (!auth && env.env === "development") {
-          user = MOCK_MEW_USER;
-        } else if (auth?.user) {
+        if (auth?.user) {
           const data = await fetchGetOrCreateUser(auth.user, authedFetch);
           if (!data) throw new Error("fetchGetOrCreateUser returned null");
+          user = new MewUser({ ...data });
+        } else if (env.env !== "production" && env.hardcodedUserId) {
+          const data = await fetchGetUser(authedFetch);
+          if (!data) throw new Error("fetchGetUser returned null");
           user = new MewUser({ ...data });
         } else {
           user = UNLOGGED_USER;

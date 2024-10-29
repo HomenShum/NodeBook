@@ -10,6 +10,7 @@ const processEnvSchema = z
     AUTH0_API_AUDIENCE: z.string().optional(),
     AUTH0_JWT_PUBLIC_KEY: z.string().optional(),
     VERCEL_ENV: z.union([z.literal("development"), z.literal("preview"), z.literal("production")]),
+    NEXT_PUBLIC_HARDCODED_USER_ID: z.string().optional(),
   })
   .refine((data) => data.POSTGRES_CUSTOM_URL || data.POSTGRES_URL, "POSTGRES_URL or POSTGRES_CUSTOM_URL is required");
 processEnvSchema.parse(process.env);
@@ -30,4 +31,5 @@ export const env = Object.freeze({
   PUSHER_KEY: process.env.PUSHER_KEY ?? "",
   PUSHER_SECRET: process.env.PUSHER_SECRET ?? "",
   PUSHER_CLUSTER: process.env.PUSHER_CLUSTER ?? "",
+  NEXT_PUBLIC_HARDCODED_USER_ID: process.env.NEXT_PUBLIC_HARDCODED_USER_ID ?? "",
 });

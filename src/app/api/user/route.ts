@@ -2,10 +2,10 @@ import { captureException } from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
-import { PostUserRequestSchema, PostUserResponse } from "@/app/api/types";
+import { GetUserResponse, PostUserRequestSchema, PostUserResponse } from "@/app/api/types";
 import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { getDb } from "@/db";
-import { getOrCreateUser } from "@/db/users";
+import { getOrCreateUser, getUser } from "@/db/users";
 
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
@@ -40,6 +40,27 @@ async function postHandler(req: NextAuthenticatedRequest) {
     console.error("Error creating user", e);
     captureException(e, { extra: { message: "Error creating user" } });
     return NextResponse.json({ error: true, message: "Error creating user" } satisfies PostUserResponse, {
+      status: 500,
+    });
+  }
+}
+
+export const GET = withAuth(getHandler);
+async function getHandler(req: NextAuthenticatedRequest) {
+  try {
+    const db = getDb();
+    const user = await getUser(db, req.userId);
+    if (!user) {
+      return NextResponse.json({ error: true, message: "User not found" } satisfies GetUserResponse, { status: 404 });
+    }
+    return NextResponse.json({
+      error: false,
+      data: { ...user, settings: JSON.parse(user.settings) },
+    } satisfies GetUserResponse);
+  } catch (e) {
+    console.error("Error getting user", e);
+    captureException(e, { extra: { message: "Error getting user" } });
+    return NextResponse.json({ error: true, message: "Error getting user" } satisfies GetUserResponse, {
       status: 500,
     });
   }

@@ -15,6 +15,7 @@ const processEnvSchema = z.object({
   NEXT_PUBLIC_LOG_SERVICE_INCLUDE: z.string().optional(),
   NEXT_PUBLIC_LOG_SERVICE_EXCLUDE: z.string().optional(),
   NEXT_PUBLIC_LOG_SERVICE_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
+  NEXT_PUBLIC_HARDCODED_USER_ID: z.string().optional(),
   ENV: z.union([z.literal("development"), z.literal("production")]).optional(),
 });
 processEnvSchema.parse(process.env);
@@ -37,6 +38,7 @@ export const env: {
   logServiceInclude: string[];
   logServiceExclude: string[];
   logServiceLevel: "debug" | "info" | "warn" | "error";
+  hardcodedUserId: string | undefined;
   isFrontend: boolean;
   pusherKey: string;
   pusherCluster: string;
@@ -58,4 +60,5 @@ export const env: {
   pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY || "",
   pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
   env: process.env.ENV || "development",
+  hardcodedUserId: process.env.NEXT_PUBLIC_HARDCODED_USER_ID || undefined,
 });

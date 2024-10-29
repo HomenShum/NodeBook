@@ -35,7 +35,11 @@ export function withAuth(handler: (req: NextAuthenticatedRequest) => Promise<Nex
   return async (req: NextAuthenticatedRequest) => {
     const authHeader = req.headers.get("authorization");
     if (!authHeader) {
-      req.userId = UNLOGGED_USER.id;
+      req.userId =
+        env.STAGE !== "production" && env.NEXT_PUBLIC_HARDCODED_USER_ID
+          ? env.NEXT_PUBLIC_HARDCODED_USER_ID
+          : UNLOGGED_USER.id;
+      UNLOGGED_USER.id;
       return handler(req);
     }
 

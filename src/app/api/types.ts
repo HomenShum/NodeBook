@@ -20,3 +20,16 @@ export const PostUserResponseSchema = z.union([
 ]);
 
 export type PostUserResponse = z.infer<typeof PostUserResponseSchema>;
+
+export const GetUserResponseSchema = z.union([
+  z.object({
+    error: z.literal(true),
+    message: z.string(),
+  }),
+  z.object({
+    error: z.literal(false),
+    data: UserSchema,
+  }),
+]);
+
+export type GetUserResponse = z.infer<typeof GetUserResponseSchema>;

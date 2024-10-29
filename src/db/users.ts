@@ -14,6 +14,11 @@ export const getOrCreateUser = async (db: MewDatabase, user: PersistedUser) => {
   }
 };
 
+export const getUser = async (db: MewDatabase, userId: string) => {
+  const result = await db.select().from(userTable).where(eq(userTable.id, userId));
+  return result.length === 1 ? result[0] : null;
+};
+
 const createUser = async (tx: MewDbTransaction, user: PersistedUser) => {
   const result = await tx
     .insert(userTable)

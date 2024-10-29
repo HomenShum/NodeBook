@@ -1,6 +1,6 @@
 import { User } from "@auth0/auth0-react";
 
-import { PostUserResponseSchema } from "@/app/api/types";
+import { GetUserResponseSchema, PostUserResponseSchema } from "@/app/api/types";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SerializedGraphStoreSchema, SerializedStores } from "@/app/persistence/SerializedData";
@@ -50,10 +50,10 @@ export const fetchGetOrCreateUser = async (user: User, userFetch: typeof fetch):
     body: JSON.stringify({
       user: {
         id: user.sub,
+        email: user.email ?? "",
         username: user.preferred_username ?? "",
-        email: user.email,
         name: user.name ?? user.nickname ?? "The Nameless One",
-        picture: user.picture,
+        picture: user.picture ?? "",
         createdAt: user.updated_at ?? new Date().toISOString(),
         settings: {},
       },
@@ -67,6 +67,20 @@ export const fetchGetOrCreateUser = async (user: User, userFetch: typeof fetch):
   if (parsedResponse.data.error) {
     logger.error("Error response", parsedResponse.data.message);
     return undefined;
+  }
+  return parsedResponse.data.data;
+};
+
+export const fetchGetUser = async (userFetch: typeof fetch): Promise<PersistedUser | null> => {
+  const response = await userFetch("/api/user").then((res) => res.json());
+  const parsedResponse = GetUserResponseSchema.safeParse(response);
+  if (!parsedResponse.success) {
+    logger.error("Invalid response", parsedResponse.error);
+    return null;
+  }
+  if (parsedResponse.data.error) {
+    logger.error("Error response", parsedResponse.data.message);
+    return null;
   }
   return parsedResponse.data.data;
 };
