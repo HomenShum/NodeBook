@@ -1,41 +1,74 @@
 export const SublistIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.667 1.5h7.58M.751 1.5h.006M6.582 5h4.664M3.661 5h.006m2.915 3.5h4.664m-7.585 0h.006"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none">
+    <path
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M3.667 1.5h7.58M.751 1.5h.006M6.582 5h4.664M3.661 5h.006m2.915 3.5h4.664m-7.585 0h.006"
+    />
+  </svg>
 );
 
 export const ParentRelationIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="10" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.25 8.496h-1.125M3.75 1.5v6.993h1.375M3.75 1.5 6.5 4.752M3.75 1.5 1 4.752m6.6 3.744h-.1"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="10" fill="none">
+    <path
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M11.25 8.496h-1.125M3.75 1.5v6.993h1.375M3.75 1.5 6.5 4.752M3.75 1.5 1 4.752m6.6 3.744h-.1"
+    />
+  </svg>
 );
 
 export const UnlabeledRelationIcon = ({ empty = false }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="3" height={empty ? 12 : 10} fill="none">
-    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M1.006 7.5V9H2.5V7.5H1.006ZM1 1.5V3h1.5V1.5H1Z"/></svg>
+    <path
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M1.006 7.5V9H2.5V7.5H1.006ZM1 1.5V3h1.5V1.5H1Z"
+    />
+  </svg>
 );
 
 export const FlattenIcon = () => (
-<svg xmlns="http://www.w3.org/2000/svg" width="13" height="9" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.915 1h7.58M1 1h.006m2.909 3.5h7.58M3.914 8h7.58M1 4.5h.006M1 8h.006"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="9" fill="none">
+    <path
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M3.915 1h7.58M1 1h.006m2.909 3.5h7.58M3.914 8h7.58M1 4.5h.006M1 8h.006"
+    />
+  </svg>
 );
 
 export const NestedIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="9" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.667 1h7.58M.751 1h.006m5.824 3.5h4.664m-7.585 0h.006M9 8h2.246M6.582 8h.008"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="9" fill="none">
+    <path
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M3.667 1h7.58M.751 1h.006m5.824 3.5h4.664m-7.585 0h.006M9 8h2.246M6.582 8h.008"
+    />
+  </svg>
 );
 
 export const NotesIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="9" fill="none"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M.99 1h10.494m0 3.5H.996M8.5 8H.99"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="9" fill="none">
+    <path
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.5"
+      d="M.99 1h10.494m0 3.5H.996M8.5 8H.99"
+    />
+  </svg>
 );
-
-export const PinIconMew = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    width={size}
-    height={size}
-    fill={fill}
-    stroke={stroke}
-    strokeWidth={strokeWidth}
-    viewBox="0 0 24 24"
-  >
-   <path fill="#596262" d="m8.617 2.779-.354-.354.354.354Zm6.603 5.665-.325.38.213.183.267-.087-.155-.476Zm5.189.288-.215.451.215-.451Zm.117.055-.215.452h.002l.213-.452Zm.28 2.155-.353-.354.353.354ZM8.787 20.526l.453-.212-.001-.002-.452.214Zm-.055-.117.451-.215-.451.215Zm-.288-5.189.476.155.087-.267-.183-.213-.38.325Zm8.72 1.208a.5.5 0 0 0-.7.714l.7-.714Zm2.996 4.411a.5.5 0 1 0 .707-.707l-.707.707ZM10.984 1.12a.5.5 0 1 0-.707-.707l.707.707ZM.412 10.277a.5.5 0 1 0 .707.707l-.707-.707Zm7.88-7.119 6.603 5.666.65-.759-6.602-5.666-.652.76Zm7.083 5.762c1.595-.52 3.318-.452 4.819.263l.43-.903c-1.75-.834-3.74-.903-5.559-.31l.31.95Zm4.819.263.117.056.43-.903-.118-.056-.429.903Zm.119.057c.226.106.38.319.414.58l.992-.128a1.734 1.734 0 0 0-.98-1.357l-.426.905Zm.414.58a.934.934 0 0 1-.274.768l.707.707a1.933 1.933 0 0 0 .56-1.603l-.993.128ZM10.588 20.453a.928.928 0 0 1-.77.274l-.125.992c.59.075 1.18-.137 1.602-.56l-.707-.706Zm-.77.274a.726.726 0 0 1-.578-.413l-.905.424c.253.541.76.905 1.358.981l.126-.992Zm-.579-.415-.056-.118-.903.43.056.117.903-.43Zm-.056-.118c-.715-1.5-.783-3.224-.263-4.819l-.951-.31c-.592 1.819-.523 3.809.311 5.559l.903-.43Zm-.359-5.3L3.159 8.29l-.759.651 5.665 6.605.759-.651Zm.147-11.762 2.013-2.013-.707-.707-2.014 2.013.708.707Zm1.306-2.72-7.85 7.85.707.707 7.85-7.85-.707-.707ZM1.119 10.984l2.015-2.015-.708-.707-2.014 2.015.707.707Zm19.334-.396-9.865 9.865.707.707 9.865-9.865-.707-.707ZM3.133 8.97l5.838-5.837-.708-.707-5.837 5.837.708.707Zm13.33 8.173c1.244 1.219 2.459 2.458 3.697 3.697l.707-.707c-1.228-1.229-2.455-2.481-3.704-3.704l-.7.714Z"/></svg>
-);
-
 export const UnpinIconMew = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
