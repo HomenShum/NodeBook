@@ -72,7 +72,7 @@
 
 .DropdownMenuSeparator {
   margin: 4px -4px;
-  height: 0.5px;
+  height: 1px;
   background-color: var(--gray-4);
 }
 

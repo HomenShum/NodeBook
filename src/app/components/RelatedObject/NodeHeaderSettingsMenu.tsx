@@ -1,4 +1,4 @@
-import { Download, Ellipsis, Globe, List, Lock, Plus } from "lucide-react";
+import { Download, Ellipsis, Globe, List, Lock, Plus, Trash2 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,7 @@ import {
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
+import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { downloadSubtree } from "@/app/util";
 
 import styles from "./styles/NodeHeaderSettingsMenu.module.css";
@@ -27,6 +28,7 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
   const graphStore = useGraphStore();
   const tree = useTree();
   const router = useRouter();
+  const setRoot = useSetRoot();
 
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);
 
@@ -63,6 +65,32 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
               <Download size={14} />
               Export subtree
             </DropdownMenuItem>
+            {treeNode.object.id !== graphStore.globalRoot.id &&
+              treeNode.object.id !== graphStore.userRoot.id &&
+              treeNode.object.id !== graphStore.homeRoot.id && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={action(async () => {
+                      if (window.confirm("Are you sure you want to delete this node and all its relations?")) {
+                        const ancestors = getAncestorsAsArray(treeNode);
+                        const parentAncestor = ancestors[ancestors.length - 1];
+
+                        await graphStore.removeNode({ nodeId: treeNode.object.id });
+
+                        // navigate to parent, otherwise home
+                        setRoot({
+                          object: parentAncestor?.object || graphStore.homeRoot,
+                          relations: ancestors.slice(0, -1).map(ancestor => ancestor.relationToChild)
+                        });
+                      }
+                    })}
+                  >
+                    <Trash2 size={14} />
+                    Delete node
+                  </DropdownMenuItem>
+                </>
+              )}
           </DropdownMenuContent>
           <SetPublicDialog isOpen={publicDialogOpen} setOpen={setPublicDialogOpen} treeNode={treeNode} />
         </DropdownMenu>
