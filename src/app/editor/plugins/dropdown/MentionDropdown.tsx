@@ -64,15 +64,24 @@ export function MentionDropdown({
         }
         closeMenu();
         // add relation
-        const hasMentionRelation = treeNode.object.relations.some(
+        const hasMentionOrParentRelation = treeNode.object.relations.some(
           (r) =>
-            r.relationType == defaultRelationTypes.relatedTo && r.from == treeNode.object && r.to.id === graphNodeId,
+            (r.relationType == defaultRelationTypes.relatedTo &&
+              r.from == treeNode.object &&
+              r.to.id === graphNodeId) ||
+            (r.relationType.id === defaultRelationTypes.child.id &&
+              r.to.id === treeNode.object.id &&
+              r.from.id === graphNodeId),
         );
-        if (!hasMentionRelation) {
+
+        if (!hasMentionOrParentRelation) {
           await graphStore.addRelation({
             fromId: graphNodeId,
             toId: treeNode.object.id,
           });
+        } else {
+          //NOOP - The mention node isn't rendered without this.
+          await graphStore.applyUpdates([]);
         }
 
         tree.setFocusedNode(treeNode.path, "end", true);
