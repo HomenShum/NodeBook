@@ -118,26 +118,32 @@ const saveSelectionOffset = (nodes: LexicalNode[]): number | null => {
 
 /** Iterate over the new nodes, reduce the offset until it's smaller than a node's length, and set the selection */
 const restoreSelection = (newNodes: LexicalNode[], offset: number | null) => {
+  const newSelection = $createRangeSelection();
   if (offset !== null) {
     for (let i = 0; i < newNodes.length; i++) {
       const newNode = newNodes[i];
       const nodeLength = newNode.getTextContent().length;
 
       if (offset <= nodeLength) {
-        const newSelection = $createRangeSelection();
         const key = newNode.getKey();
         newSelection.anchor.set(key, offset, "text");
         newSelection.focus.set(key, offset, "text");
         $setSelection(newSelection);
         return;
       }
-
       offset -= nodeLength;
     }
+    // As the fallback, set the selection to the end of the last node.
+    // We don't use the `selectEnd` method because that takes focus too,
+    // and this function runs in cases where the current editor doesn't have
+    // focus and so we don't want it to steal it.
+    const lastNode = newNodes[newNodes.length - 1];
+    const key = lastNode.getKey();
+    const length = lastNode.getTextContent().length;
+    newSelection.anchor.set(key, length, "text");
+    newSelection.focus.set(key, length, "text");
+    $setSelection(newSelection);
   }
-
-  // As the fallback, set the selection to the end of the last node
-  newNodes[newNodes.length - 1].selectEnd();
 };
 
 /** Replace the old nodes with the new nodes */
@@ -184,7 +190,6 @@ export const LinkPlugin = () => {
       // When a text node adjacent to a LinkNode is changed, check if both of them together form a larger URL and merge them if they do
       editor.registerNodeTransform(TextNode, (textNode) => {
         const nodesToReplace = [textNode];
-        const textNodeText = textNode.getTextContent();
 
         const prevNode = textNode.getPreviousSibling();
         if ($isLinkNode(prevNode)) {
