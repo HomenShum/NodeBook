@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, COMMAND_PRIORITY_LOW, PASTE_COMMAND } from "lexical";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -19,19 +19,36 @@ export const PastePlugin = () => {
   const { treeNode } = useTreeNode();
   const { object, relationWithParent: relation, path } = treeNode;
   const parent = treeNode.parent.object;
+  const shiftWasPressed = useRef<boolean>(false);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === "v" && event.ctrlKey && event.shiftKey) {
+        shiftWasPressed.current = true;
+      }
+    };
+
+    return editor.registerRootListener((rootElement: HTMLElement | null, prevRootElement: HTMLElement | null) => {
+      prevRootElement && prevRootElement.removeEventListener("keydown", onKeyDown);
+      rootElement && rootElement.addEventListener("keydown", onKeyDown);
+    });
+  }, [editor]);
 
   useEffect(() => {
     return editor.registerCommand<ClipboardEvent>(
       PASTE_COMMAND,
       (event) => {
-        if (!(object instanceof GraphNode)) return false;
-        const lines =
-          event.clipboardData
-            ?.getData("Text")
-            ?.split("\n")
-            .filter((l) => l.length > 0) ?? [];
+        const shiftKey = shiftWasPressed.current;
+        shiftWasPressed.current = false;
+        if (!(object instanceof GraphNode) || !event.clipboardData) return false;
+        const lines = shiftKey
+          ? [event.clipboardData.getData("Text")]
+          : event.clipboardData
+              .getData("Text")
+              .split("\n")
+              .filter((l) => l.length > 0) ?? [];
 
-        if (lines.length > 1) {
+        if (lines.length > 0) {
           const txs: TxCombined = [];
 
           // Insert the first line into the current node
