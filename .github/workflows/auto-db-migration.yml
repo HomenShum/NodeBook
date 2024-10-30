@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  auto_migrate:
     runs-on: ubuntu-latest
     timeout-minutes: 1
     steps:
@@ -24,4 +24,5 @@ jobs:
       - name: Run migration(s)
         env:
           POSTGRES_CUSTOM_URL: ${{ secrets.DATABASE_URL }}
-        run: yarn db:migrate
+          VERCEL_ENV: production
+        run: echo 'y' | yarn db:migrate
