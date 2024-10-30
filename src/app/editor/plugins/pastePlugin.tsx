@@ -1,5 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getSelection, COMMAND_PRIORITY_LOW, PASTE_COMMAND } from "lexical";
+import { $getSelection, COMMAND_PRIORITY_LOW, KEY_DOWN_COMMAND, PASTE_COMMAND } from "lexical";
 import { useEffect, useRef } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
@@ -22,16 +22,16 @@ export const PastePlugin = () => {
   const shiftWasPressed = useRef<boolean>(false);
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === "v" && event.ctrlKey && event.shiftKey) {
-        shiftWasPressed.current = true;
-      }
-    };
-
-    return editor.registerRootListener((rootElement: HTMLElement | null, prevRootElement: HTMLElement | null) => {
-      prevRootElement && prevRootElement.removeEventListener("keydown", onKeyDown);
-      rootElement && rootElement.addEventListener("keydown", onKeyDown);
-    });
+    return editor.registerCommand<KeyboardEvent>(
+      KEY_DOWN_COMMAND,
+      (event) => {
+        if (event.key.toLowerCase() === "v" && (event.ctrlKey || event.metaKey) && event.shiftKey) {
+          shiftWasPressed.current = true;
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
   }, [editor]);
 
   useEffect(() => {
