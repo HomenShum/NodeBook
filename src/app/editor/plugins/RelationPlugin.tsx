@@ -37,6 +37,25 @@ export const RelationPlugin = observer(function RelationPlugin() {
     return mergeRegister(
       editor.registerCommand(
         KEY_DOWN_COMMAND,
+        (event): boolean => {
+          if (event.key === " " && $getRoot().getTextContent() === "-") {
+            event.preventDefault();
+            event.stopPropagation();
+            graphStore.updateNode({
+              nodeId: object.id,
+              nodeProps: {
+                content: "",
+              },
+            });
+            tree.indentSelection();
+            return true;
+          }
+          return false;
+        },
+        COMMAND_PRIORITY_NORMAL,
+      ),
+      editor.registerCommand(
+        KEY_DOWN_COMMAND,
         (event) => {
           // Only trigger after pressing colon, inside a child, next to another colon
           if (event.key !== ":") {
@@ -180,6 +199,18 @@ export const RelationPlugin = observer(function RelationPlugin() {
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [tree, graphStore, settingsStore, settingsStore.triggerRelationOnSingleColon, editor, object, relation, treeNode.path, treeNode.id, treeNode.relationWithParent.relationType.id, treeNode.relationWithParent.to]);
+  }, [
+    tree,
+    graphStore,
+    settingsStore,
+    settingsStore.triggerRelationOnSingleColon,
+    editor,
+    object,
+    relation,
+    treeNode.path,
+    treeNode.id,
+    treeNode.relationWithParent.relationType.id,
+    treeNode.relationWithParent.to,
+  ]);
   return null;
 });
