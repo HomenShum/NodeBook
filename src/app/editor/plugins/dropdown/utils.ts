@@ -88,6 +88,14 @@ export function getMatches(
       if (a.type === "relationType" && b.type === "relationType") {
         return a.isForward ? -1 : 1;
       }
+
+      // if both objects are nodes, favor the one with more relations
+      if (a.type === "node" && b.type === "node") {
+        const aRelations = a.object.relations.length;
+        const bRelations = b.object.relations.length;
+        if (aRelations !== bRelations) return bRelations - aRelations;
+      }
+
       // relationType don't have createdAt
       if (a.type === "relationType" || b.type === "relationType") return a.key.localeCompare(b.key);
 

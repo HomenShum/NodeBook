@@ -17,14 +17,15 @@ describe("getMatches", () => {
   });
 
   const SEARCH_TERM = "test";
+  const SEARCH_TYPES_FILTER = undefined;
 
   it("should return matches sorted correctly", () => {
     const maxResults = 10;
 
     const mockNodes = [
-      { id: "nodeA", text: `${SEARCH_TERM} node A`, createdAt: new Date(2023, 0, 1) },
-      { id: "nodeB", text: `${SEARCH_TERM} node B`, createdAt: new Date(2023, 0, 2) },
-      { id: "nodeC", text: `${SEARCH_TERM} node C`, createdAt: new Date(2023, 0, 2) },
+      { id: "nodeA", text: `${SEARCH_TERM} node A`, createdAt: new Date(2023, 0, 1), relations: [] },
+      { id: "nodeB", text: `${SEARCH_TERM} node B`, createdAt: new Date(2023, 0, 2), relations: [] },
+      { id: "nodeC", text: `${SEARCH_TERM} node C`, createdAt: new Date(2023, 0, 2), relations: [] },
     ];
     const mockRelations = [
       { id: "relAB", from: { id: "nodeA" }, to: { id: "nodeB" }, createdAt: new Date(2023, 0, 3) },
@@ -45,7 +46,7 @@ describe("getMatches", () => {
       relationTypes: mockRelationTypes.map((relationType) => ({ relationType, score: 0.7 })),
     });
 
-    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, undefined, maxResults);
+    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, SEARCH_TYPES_FILTER, maxResults);
 
     expect(matches).toHaveLength(7);
     const expectedMatchIds = ["relTypeA", "relTypeA-rev", "relYZ", "nodeB", "nodeC", "nodeA", "relAB"];
@@ -56,9 +57,9 @@ describe("getMatches", () => {
     const maxResults = 2;
 
     const mockNodes = [
-      { id: "node1", text: `${SEARCH_TERM} node 1`, createdAt: new Date(2023, 0, 1) },
-      { id: "node2", text: `${SEARCH_TERM} node 2`, createdAt: new Date(2023, 0, 2) },
-      { id: "node3", text: `${SEARCH_TERM} node 3`, createdAt: new Date(2023, 0, 3) },
+      { id: "node1", text: `${SEARCH_TERM} node 1`, createdAt: new Date(2023, 0, 1), relations: [] },
+      { id: "node2", text: `${SEARCH_TERM} node 2`, createdAt: new Date(2023, 0, 2), relations: [] },
+      { id: "node3", text: `${SEARCH_TERM} node 3`, createdAt: new Date(2023, 0, 3), relations: [] },
     ];
 
     mockGraphStore.search.mockReturnValue({
@@ -67,7 +68,7 @@ describe("getMatches", () => {
       relationTypes: [],
     });
 
-    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, undefined, maxResults);
+    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, SEARCH_TYPES_FILTER, maxResults);
 
     expect(matches).toHaveLength(2);
   });
@@ -81,8 +82,33 @@ describe("getMatches", () => {
       relationTypes: [],
     });
 
-    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, undefined, maxResults);
+    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, SEARCH_TYPES_FILTER, maxResults);
 
     expect(matches).toHaveLength(0);
+  });
+
+  it("should sort nodes with more relations first", () => {
+    const maxResults = 10;
+
+    const mockNodes = [
+      { id: "node1", text: `${SEARCH_TERM} node 1`, createdAt: new Date(2023, 0, 1), relations: [] },
+      {
+        id: "node2",
+        text: `${SEARCH_TERM} node 2`,
+        createdAt: new Date(2023, 0, 2),
+        relations: [{ id: "rel1" }, { id: "rel2" }],
+      },
+      { id: "node3", text: `${SEARCH_TERM} node 3`, createdAt: new Date(2023, 0, 3), relations: [{ id: "rel2" }] },
+    ];
+
+    mockGraphStore.search.mockReturnValue({
+      nodes: mockNodes.map((node) => ({ node, score: 1 })),
+      relations: [],
+      relationTypes: [],
+    });
+
+    const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, SEARCH_TYPES_FILTER, maxResults);
+
+    expect(matches.map((match) => match.key)).toEqual(["node2", "node3", "node1"]);
   });
 });
