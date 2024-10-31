@@ -1,7 +1,8 @@
 import { Tree } from "@/app/tree/Tree";
-import { RootTreeNode, SublistRootTreeNode } from "@/app/tree/nodes";
+import { DescendantTreeNode, RootTreeNode, SublistRootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { createDescendantTreeNodesById } from "@/app/tree/utils";
 import logger from "@/lib/logger";
+import { comparePositions, compareTimestamps } from "@/app/util";
 
 export class SublistTree extends Tree {
   get state() {
@@ -9,9 +10,7 @@ export class SublistTree extends Tree {
     const rootTreeNode: RootTreeNode = new SublistRootTreeNode({ tree: this }).hydrate();
     this.applyFilter(rootTreeNode);
     this.applySearch(rootTreeNode);
-    if (this.sortOption.mode !== "manual") {
-      this.applySort(rootTreeNode);
-    }
+    this.applySort(rootTreeNode);
     return {
       root: rootTreeNode,
       descendantTreeNodesById: createDescendantTreeNodesById(rootTreeNode),
@@ -23,5 +22,28 @@ export class SublistTree extends Tree {
     const path = this.root.childrenGroupsById.pointer.createChildPath(relation);
     this.setFocusedNode(path);
     return { node, relation, path };
+  }
+
+  protected applySort(treeNode: TreeNode) {
+    const { mode, direction } = this.sortOption;
+    const negation = direction === "asc" ? -1 : 1;
+
+    const sortFn = (a: DescendantTreeNode, b: DescendantTreeNode) =>
+      mode === "manual"
+        ? comparePositions(a.position, b.position)
+        : compareTimestamps(a.object[mode], b.object[mode], a.position, b.position) * negation;
+
+    const walk = (node: TreeNode) => {
+      node.childrenGroups.forEach((group) => {
+        group.nodes.sort(sortFn);
+        group.nodes.forEach(walk);
+      });
+    };
+
+    if (treeNode instanceof RootTreeNode) {
+      treeNode.childrenGroups.forEach((group) => group.nodes.forEach((node) => walk(node)));
+    } else {
+      walk(treeNode);
+    }
   }
 }
