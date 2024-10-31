@@ -11,6 +11,8 @@ import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
 
 const logger = appLogger.child({ service: "UpdateManager" });
 
+const pusher = new Pusher(env.pusherKey, { cluster: env.pusherCluster });
+
 export class UpdateManager {
   private clientId = uuid();
   private userId: string;
@@ -46,7 +48,6 @@ export class UpdateManager {
     this.isSyncing = true;
 
     // Subscribe to changes from other clients
-    const pusher = new Pusher(env.pusherKey, { cluster: env.pusherCluster });
     const userChannel = pusher.subscribe(userIdToPusherChannel(this.userId));
     userChannel.bind("transaction-accepted", (data: any) => {
       const parsedSyncData = SyncDataSchema.safeParse(data);
@@ -81,7 +82,6 @@ export class UpdateManager {
 
     return () => {
       this.stopSync();
-      pusher.disconnect();
     };
   }
 
@@ -96,6 +96,8 @@ export class UpdateManager {
 
   stopSync() {
     clearTimeout(this.nextSyncId);
+    pusher.unsubscribe(userIdToPusherChannel(this.userId));
+    pusher.unsubscribe(GLOBAL_GRAPH_CHANNEL);
     this.isSyncing = false;
   }
 
