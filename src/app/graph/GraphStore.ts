@@ -3,7 +3,7 @@ import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { NodeType } from "@/app/editor/plugins/dropdown/utils";
-import { defaultRelationTypes, MAX_PREFIX_LENGTH } from "@/app/graph/constants";
+import { ALL_LIST_TYPES, defaultRelationTypes, ListType, MAX_PREFIX_LENGTH } from "@/app/graph/constants";
 import { GraphUpdate, PartialUpdateRelationList } from "@/app/graph/GraphUpdate";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { GraphRelationType } from "@/app/graph/types";
@@ -985,7 +985,7 @@ export class GraphStore {
 
   private _updateRelationList(
     objectId: string,
-    relationListType: "pinned" | "noteContent" | "all",
+    relationListType: ListType,
     relationId: string,
     newPosition: Position | null,
   ): void {
@@ -1297,6 +1297,16 @@ export class GraphStore {
       if (!newObject) throw new Error(`Object with id ${tx.replaceWith.id} does not exist`);
     }
 
+    // Remove the relation from all the lists it shouldn't belong to anymore
+    ALL_LIST_TYPES.forEach((listType) => {
+      const { updates: removeListUpdates } = this._removeRelationFromList({
+        objectId: tx.direction === "from" ? relation.from.id : relation.to.id,
+        relationId: relation.id,
+        listType: listType,
+      });
+      updates.push(...removeListUpdates);
+    });
+
     if (tx.direction === "from") {
       updates.push(...this.setRelationFrom(relation, newObject, tx.after));
     } else {
@@ -1532,7 +1542,7 @@ export class GraphStore {
 
   getRelationList(
     nodeOrId: GraphObject | string,
-    relationListType: "pinned" | "noteContent" | "all" = "all",
+    relationListType: ListType = "all",
   ): FractionalPositionedList<GraphRelation> {
     const node = typeof nodeOrId === "string" ? this.getNodeOrThrow(nodeOrId) : nodeOrId;
     switch (relationListType) {

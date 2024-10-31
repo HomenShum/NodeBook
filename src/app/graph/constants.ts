@@ -3,6 +3,8 @@ import { GraphRelationType } from "@/app/graph/types";
 
 const TEMP_USER_ID = UNLOGGED_USER.id; // TODO: This is simply to satisfy the type checker, we should change this
 
+export const ALL_LIST_TYPES = ["pinned", "noteContent", "all"] as const;
+export type ListType = (typeof ALL_LIST_TYPES)[number];
 type DefaultRelationType = "child" | "relatedTo" | "author" | "sublist" | "empty";
 
 export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType> = {

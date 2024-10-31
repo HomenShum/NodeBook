@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 
+import { ListType } from "@/app/graph/constants";
 import { SerializedPosition } from "@/app/persistence/SerializedData";
 import { relationListsTable } from "@/db/schema";
 import { MewDbTransaction } from "@/db/types";
@@ -8,7 +9,7 @@ export const upsertRelationList = async (
   tx: MewDbTransaction,
   nodeId: string,
   authorId: string,
-  type: "pinned" | "noteContent" | "all",
+  type: ListType,
   relationId: string,
   position: SerializedPosition | null,
   isPublic: boolean,

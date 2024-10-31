@@ -1,3 +1,4 @@
+import { ListType } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { GroupId } from "@/app/tree/nodes";
 
@@ -97,14 +98,14 @@ export type TxUnpinRelation = {
 export type TxAddRelationToList = {
   objectId: string;
   relationId: string | string[];
-  listType: "pinned" | "noteContent" | "all";
+  listType: ListType;
   after?: Positioner<GraphRelation>;
 };
 
 export type TxRemoveRelationFromList = {
   objectId: string;
   relationId: string;
-  listType: "pinned" | "noteContent" | "all";
+  listType: ListType;
 };
 
 // TODO: probably can be done with less boilerplate code?

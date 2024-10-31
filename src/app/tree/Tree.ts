@@ -868,7 +868,7 @@ export class Tree {
     }
   }
 
-  async splitNote(treeNode: DescendantTreeNode, chips?: { before: Chip[]; after: Chip[] }) {
+  async splitNote(treeNode: DescendantTreeNode, chips: { before: Chip[]; after: Chip[] }) {
     const noteNode = treeNode.parent;
     if (!isNoteContent(treeNode)) {
       logger.warn("Attempted to split non-note content");
@@ -888,14 +888,14 @@ export class Tree {
     const txs: TxCombined = [];
 
     // Update the content of the original node
-    if (chips?.before) {
+    if (chips.before) {
       txs.push({
         type: "updateNode",
         transaction: { nodeId: treeNode.object.id, nodeProps: { content: chips.before } },
       });
     }
 
-    // Create new note below
+    // Create new note below, under the orignal note's parent
     const newNoteId = uuid();
     const newRelationId = uuid();
     txs.push({
@@ -910,7 +910,7 @@ export class Tree {
 
     // Add a child to the new note with the content after the split
     const relationIdsInNewNote: string[] = [];
-    if (chips?.after && chips.after.length > 0) {
+    if (chips.after.length > 0) {
       const newNoteContentRelationId = uuid();
       txs.push({
         type: "addChildNode",

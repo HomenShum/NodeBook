@@ -81,6 +81,17 @@ describe("GraphStore.replaceRelationLink", () => {
     expect(pendingUpdateSets).toEqual([
       [
         {
+          operation: "updateRelationList",
+          authorId: "SPECIAL::mew|0123456789",
+          newIsPublic: false,
+          newPosition: null,
+          nodeId: "a",
+          oldIsPublic: false,
+          oldPosition: abPosition,
+          relationId: "ab",
+          type: "all",
+        },
+        {
           operation: "updateRelation",
           oldProps: abAtStart,
           newProps: relationAB.serialize(),
@@ -91,7 +102,7 @@ describe("GraphStore.replaceRelationLink", () => {
           authorId: nodeA.authorId,
           type: "all",
           relationId: relationAB.id,
-          oldPosition: abPosition,
+          oldPosition: null,
           newPosition: null,
           oldIsPublic: false,
           newIsPublic: false,
@@ -168,6 +179,17 @@ describe("GraphStore.replaceRelationLink", () => {
       [
         { operation: "addNode", node: serializedNewNode },
         {
+          operation: "updateRelationList",
+          authorId: "SPECIAL::mew|0123456789",
+          newIsPublic: false,
+          newPosition: null,
+          nodeId: "a",
+          oldIsPublic: false,
+          oldPosition: abPosition,
+          relationId: "ab",
+          type: "all",
+        },
+        {
           operation: "updateRelation",
           oldProps: abAtStart,
           newProps: relationAB.serialize(),
@@ -178,7 +200,7 @@ describe("GraphStore.replaceRelationLink", () => {
           authorId: nodeA.authorId,
           type: "all",
           relationId: relationAB.id,
-          oldPosition: abPosition,
+          oldPosition: null,
           newPosition: null,
           oldIsPublic: false,
           newIsPublic: false,
