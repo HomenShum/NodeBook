@@ -15,7 +15,10 @@ import {
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation } from "@/app/graph/GraphRelation";
 import { TreeNode } from "@/app/tree/nodes";
+import { useTree } from "@/app/tree/TreeContext";
 import { Ancestor, getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -176,6 +179,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   const graphStore = useGraphStore();
   const user = useUser();
   const auth = useAuth();
+  const tree = useTree();
   const ancestors = getAncestorsAsArray(treeNode);
 
   const handleNavigation = useCallback(
@@ -188,6 +192,42 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
     },
     [treeNode, ancestors, setRoot],
   );
+
+  const handlePublicModeChange = useCallback(() => {
+    const newIsPublic = !settingsStore.publicMode;
+    settingsStore.setPublicMode(newIsPublic);
+
+    if (tree.selection) {
+      const selection = tree.selectionWithNodes;
+      const candidates: { object: GraphObject; relationWithParent: GraphRelation }[] = [];
+
+      // Resolving the list of graph objects in currently focused tree nodes
+      if (selection?.type === "node") {
+        candidates.push(...selection.nodes.map(({ object, relationWithParent }) => ({ object, relationWithParent })));
+      } else if (selection?.type === "editor") {
+        candidates.push({
+          object: selection.treeNode.object,
+          relationWithParent: selection.treeNode.relationWithParent,
+        });
+      }
+
+      if (candidates.length > 0) {
+        graphStore.applyCombinedTransaction(
+          candidates.map(({ object, relationWithParent }) => ({
+            type: "setIsPublic",
+            transaction: {
+              objectId: object.id,
+              relationId: relationWithParent?.id,
+              isPublic: newIsPublic,
+              alsoSetRelatedObjects: false,
+              alsoSetChildrenAndDescendants: false,
+              isNewRelatedObjectsPublic: false,
+            },
+          })),
+        );
+      }
+    }
+  }, [graphStore, settingsStore, tree.selection, tree.selectionWithNodes]);
 
   return (
     <>
@@ -220,7 +260,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
               data-tooltip={settingsStore.publicMode ? "Public mode" : "Private mode"}
               variant={settingsStore.publicMode ? "active" : "default"}
               size="icon"
-              onClick={() => settingsStore.setPublicMode(!settingsStore.publicMode)}
+              onClick={handlePublicModeChange}
             >
               {settingsStore.publicMode ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
             </Button>

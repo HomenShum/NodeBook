@@ -1156,7 +1156,6 @@ export class Tree {
    * Move selection from the current node to the next one down.
    */
   moveEditorSelectionDown(position: TreeNodeContentSelectionPosition = "end"): boolean {
-    console.log("moveEditorSelectionDown", toJS({ selection: this.selection }));
     const selection = this.selectionWithNodes;
     if (!selection) return false;
     const next = selection.type === "editor" ? getNextBelow(selection.treeNode) : getNextSubtreeBelow(selection.bottom);
