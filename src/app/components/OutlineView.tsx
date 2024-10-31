@@ -108,6 +108,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
             )}
           </div>
           <div className={s.Nodes}>
+            <ChildGroups treeNode={treeRoot} />
             {!user.isAnonymous && treeRoot.childCount === 0 && (
               <ClickToCreateNodeButton
                 onClick={(e) => {
@@ -117,7 +118,6 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                 }}
               />
             )}
-            <ChildGroups treeNode={treeRoot} />
           </div>
         </div>
       </div>

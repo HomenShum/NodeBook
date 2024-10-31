@@ -13,6 +13,7 @@ declare const styles: {
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
   readonly "NoteContentSection": string;
+  readonly "NoteContentSectionHeader": string;
   readonly "PinIcon": string;
   readonly "PinToggle": string;
   readonly "Pinned": string;

@@ -38,14 +38,14 @@
 
 .PlaceholderTitle {
   color: var(--gray-8);
+  
   overflow: hidden;
-  position: absolute;
   text-overflow: ellipsis;
-  top: 0;
-  transform: translateY(100%);
+  transform: translateY(-100%);
   user-select: none;
+  position: absolute;
   white-space: nowrap;
-  display: inline-block;
+  display: flex;
   pointer-events: none;
 }
 
@@ -63,12 +63,12 @@
   white-space: nowrap;
   display: inline-block;
   pointer-events: none;
-  text-overflow: ellipsis;  
+  text-overflow: ellipsis;
   top: 0;
   color: var(--gray-8);
-  transition: opacity .1s ease-in-out 0s;
+  transition: opacity 0.1s ease-in-out 0s;
 }
-  
+
 .EditorWrapper:focus-within .PlaceholderNode {
   opacity: 1;
   transition: opacity 1s ease-in-out 2s;

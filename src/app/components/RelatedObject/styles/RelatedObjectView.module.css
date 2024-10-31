@@ -61,12 +61,36 @@ Bullet
   opacity: 0;
 }
 
-.RelatedObjectContent:hover .RelatedObjectBulletContainer.Hidden,
-.RelatedObjectContent:focus-within .RelatedObjectBulletContainer.Hidden {
+.NoteContentSection .RelatedObjectBulletContainer {
+  opacity: 0;
+}
+
+.NoteContentSection:hover .RelatedObjectBulletContainer {
+  opacity: 0.3;
+}
+
+.RelatedObjectContent:hover .RelatedObjectBulletContainer.Hidden {
   opacity: 0.5;
 }
+
 .RelatedObjectContent:focus-within .RelatedObjectBulletContainer.Hidden {
   opacity: 1;
+}
+
+.NoteContentSection .RelatedObjectContent:hover .RelatedObjectBulletContainer {
+  opacity: 0.5;
+}
+
+.RelatedObjectContent:focus-within,
+.NoteContentSection .RelatedObjectContent:focus-within .RelatedObjectBulletContainer {
+  opacity: 1;
+}
+
+.NoteContentSection:focus-within
+  .NoteContentSection
+  .RelatedObjectContent:focus-within
+  .RelatedObjectBulletContainer.Hidden {
+  opacity: 0;
 }
 
 /* 
@@ -196,18 +220,6 @@ Node
   color: var(--gray-12);
   border-radius: 4px;
   transition: background-color 0.05s ease-in-out;
-}
-
-.RelatedObjectNode::after {
-  content: "";
-  position: absolute;
-  top: 32px;
-  left: -8.5px;
-  width: 1px;
-  height: calc(100% - 32px);
-  border: 1px solid transparent;
-  border-image: linear-gradient(to top, var(--gray-6) 90%, var(--gray-1) 100%) 1;
-  border-image-width: 0 0 0 1px;
 }
 
 .RelatedObjectNode.Selected {
@@ -407,12 +419,50 @@ Right Area
   background-color: var(--gray-2);
 }
 
+.NoteContentSection .PinToggle {
+  visibility: hidden;
+}
+
 .NoteContentSection {
   flex: 1;
-  margin-left: 10px;
-  border: 1px solid #ccc;
+  margin: 12px 0;
+  margin-left: -20px;
+  padding: 12px 0;
+  border: 0.5px solid var(--gray-7);
+  border-right: none;
+  border-left: none;
+}
+
+/* Override for non-hidden bullets outside NoteContentSection */
+.RelatedObjectBulletContainer:not(.Hidden):not(.NoteContentSection .RelatedObjectBulletContainer) {
+  opacity: 1;
+}
+
+.NoteContentSectionHeader {
+  padding: 12px 0px 12px 4px;
+}
+
+.HeaderInListView {
+  padding: 4px 20px;
 }
 
 .NoteContentSection.ChildOfRootInNoteView {
   border: none;
+  margin: 0;
+  padding: 0 0 24px 0;
+  transform: translateX(-4px) translateY(24px);
 }
+
+.NoteContentSection.ChildOfRootInNoteView .RelatedObjectNode {
+  padding-left: 4px;
+}
+
+.RelatedObjectContent:has(> .RelatedObjectNode > .RelatedObjectNodeContent > .NoteContentSection.ChildOfRootInNoteView) > .RelatedObjectLeftHandler {
+  position: absolute;
+  left: -2px;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+
+

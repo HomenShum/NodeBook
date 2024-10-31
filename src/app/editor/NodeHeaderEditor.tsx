@@ -15,15 +15,16 @@ import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin"
 import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
-import { RootTreeNode } from "@/app/tree/nodes";
+import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 
 import styles from "./Editor.module.css";
 
 interface Props {
-  treeNode: RootTreeNode;
+  treeNode: RootTreeNode | DescendantTreeNode;
+  noteTitle?: string;
 }
 
-export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode }: Props) {
+export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, noteTitle }: Props) {
   const user = useUser();
 
   const editable = !user.isAnonymous && treeNode.object instanceof GraphNode;
@@ -41,7 +42,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode }:
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
           contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
-          placeholder={<span className={styles.PlaceholderTitle}>Add title</span>}
+          placeholder={<span className={styles.PlaceholderTitle}>Untitled</span>}
         />
         <DropdownPlugin treeNode={treeNode} />
         <EnterKeyPlugin treeNode={treeNode} />

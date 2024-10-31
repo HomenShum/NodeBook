@@ -6,6 +6,7 @@ declare const styles: {
   readonly "ToastDescription": string;
   readonly "ToastTitle": string;
   readonly "ToastViewport": string;
+  readonly "closing": string;
   readonly "slideIn": string;
   readonly "slideOut": string;
 };
