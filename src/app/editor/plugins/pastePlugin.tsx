@@ -8,6 +8,7 @@ import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useTree } from "@/app/tree/TreeContext";
+import { uuid } from "@/app/util";
 
 /**
  * Plugin that allows pasting multiple lines of text into a node.
@@ -68,12 +69,33 @@ export const PastePlugin = () => {
           }
 
           // then for the remaining lines, create children positioned after the parent
+          const newRelatedIds: string[] = [];
           lines.reverse().forEach((line) => {
+            const relationId = uuid();
+            newRelatedIds.push(relationId);
             txs.push({
               type: "addChildNode",
-              transaction: { parentId: parent.id, nodeProps: { content: line }, after: relation },
+              transaction: {
+                parentId: parent.id,
+                nodeProps: { content: line },
+                relationProps: { id: relationId },
+                after: relation,
+              },
             });
           });
+          // inside the same group
+          const groupId = treeNode.parentGroup.id;
+          if (groupId === "pinned" || groupId === "noteContent") {
+            txs.push({
+              type: "addRelationToList",
+              transaction: {
+                objectId: treeNode.parent.object.id,
+                relationId: newRelatedIds,
+                listType: groupId,
+                after: relation,
+              },
+            });
+          }
 
           graphStore.applyCombinedTransaction(txs).then(() => {
             tree.setFocusedNode(path);
@@ -85,6 +107,6 @@ export const PastePlugin = () => {
       },
       COMMAND_PRIORITY_LOW,
     );
-  }, [object, parent, relation, graphStore, editor, path, tree]);
+  }, [object, parent, relation, graphStore, editor, path, tree, treeNode]);
   return null;
 };
