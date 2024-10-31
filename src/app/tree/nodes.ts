@@ -606,7 +606,7 @@ export class PointerGroup extends BaseGroup {
         comparePositions(a.position, b.position),
       )) {
         //Ignore all incoming relations, ignore parent
-        if (relation.to.id === treeNode.object.id) {
+        if (relation.to.id === treeNode.object.id && relation.relationType.id === defaultRelationTypes.child.id) {
           continue;
         }
 

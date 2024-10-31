@@ -9,7 +9,6 @@ export class SublistTree extends Tree {
     const rootTreeNode: RootTreeNode = new SublistRootTreeNode({ tree: this }).hydrate();
     this.applyFilter(rootTreeNode);
     this.applySearch(rootTreeNode);
-    console.log("sort option", this.sortOption.mode, this.sortOption.direction);
     if (this.sortOption.mode !== "manual") {
       this.applySort(rootTreeNode);
     }
