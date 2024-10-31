@@ -16,7 +16,7 @@ import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { $getChips, $getText, matchDefaultRelationType } from "@/app/editor/utils/content";
-import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
+import { $getTextAroundSelection, getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
@@ -38,13 +38,18 @@ export const RelationPlugin = observer(function RelationPlugin() {
       editor.registerCommand(
         KEY_DOWN_COMMAND,
         (event): boolean => {
-          if (event.key === " " && $getRoot().getTextContent() === "-") {
+          if (event.key !== " ") {
+            return false;
+          }
+
+          const { beforeText, afterText } = $getTextAroundSelection(editor);
+          if (beforeText === "-") {
             event.preventDefault();
             event.stopPropagation();
             graphStore.updateNode({
               nodeId: object.id,
               nodeProps: {
-                content: "",
+                content: afterText,
               },
             });
             tree.indentSelection();
