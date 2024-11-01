@@ -1,5 +1,4 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "@lexical/react/LexicalTypeaheadMenuPlugin";
 import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
 import { ReactPortal, useCallback } from "react";
 import * as ReactDOM from "react-dom";
@@ -14,6 +13,8 @@ import { TreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { uuid } from "@/app/util";
 import { MenuTextMatch, cn } from "@/lib/utils";
+
+import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
 
 import styles from "./DropdownPlugin.module.css";
 
