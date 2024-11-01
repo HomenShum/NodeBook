@@ -9,7 +9,7 @@ import "./global.css";
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "(Beta) Zephyr",
+  title: "Zephyr (Beta)",
   description: "A global graph for human coordination",
 };
 

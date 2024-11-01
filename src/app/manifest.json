@@ -1,4 +1,18 @@
 {
-  "title": "Mew",
-  "description": "For trees and things"
+  "title": "Zephyr (Beta)",
+  "description": "Zephyr (Beta)",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16 256x256",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "icon.png",
+      "type": "image/png"
+    }
+  ]
 }
