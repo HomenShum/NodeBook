@@ -1,9 +1,9 @@
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef } from "react";
 
+import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
-import { GraphNode } from "@/app/graph/GraphNode";
 
 type Props = {
   treeNode: DescendantTreeNode;
@@ -39,10 +39,16 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
   return (
     <input
       style={{
-        maxWidth: 2,
+        maxWidth: 8,
+        backgroundColor: "transparent",
         padding: 0,
         border: 0,
         outline: "none",
+        marginLeft: -2,
+        position: "absolute",
+        zIndex: 1,
+        cursor: "text",
+        pointerEvents: "all"
       }}
       onFocus={() => {
         if (!tree.isNodeFocused(treeNode.id)) {
@@ -91,6 +97,7 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
         if (!tree.isNodeFocused(treeNode.id)) {
           tree.setFocusedNode(treeNode.path);
         }
+        e.currentTarget.focus();
       }}
       ref={inputRef}
       type="text"

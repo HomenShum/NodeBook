@@ -58,7 +58,9 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
 function RelationsToggle({ treeNode }: { treeNode: DescendantTreeNode }) {
   const tree = useTree();
   return (
-    <button
+    <Button
+      size="xs"
+      variant={treeNode.isExpanded ? "default" : "ghostSmooth"}
       className={cn(
         styles.RelatedObjectRelationsToggle,
         treeNode.isExpanded && styles.RelatedObjectRelationsToggleExpanded,
@@ -71,7 +73,7 @@ function RelationsToggle({ treeNode }: { treeNode: DescendantTreeNode }) {
       <span>
         {treeNode.childCount} relation{treeNode.childCount === 1 ? "" : "s"}
       </span>
-    </button>
+    </Button>
   );
 }
 

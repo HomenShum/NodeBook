@@ -8,12 +8,20 @@
   height: var(--switch-height);
   background-color: var(--gray-4);
   border-radius: 12px;
-  cursor: pointer;
+  cursor: default;
   position: relative;
+}
+
+.Switch:hover {
+  background-color: var(--gray-6);
 }
 
 .Switch[data-state="checked"] {
   background-color: var(--teal-9);
+}
+
+.Switch[data-state="checked"]:hover {
+  background-color: var(--teal-10);
 }
 
 .SwitchThumb {

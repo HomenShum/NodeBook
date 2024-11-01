@@ -9,7 +9,7 @@
   color: "#0b0b79";
   text-decoration: underline var(--gray-3);
   color: var(--teal-11);
-  cursor: pointer;
+  cursor: default;  
 }
 
 .MentionNode::before {
@@ -29,7 +29,7 @@
 .LinkNode {
   color: var(--teal-11);
   text-decoration: none;
-  cursor: pointer;
+  cursor: pointer;  
 }
 
 .LinkNode:hover {

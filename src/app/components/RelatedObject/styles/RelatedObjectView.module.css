@@ -51,9 +51,15 @@ Bullet
   align-items: center;
   width: 16px;
   height: 24px;
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity, scale 0.2s ease-in-out;
   opacity: 1;
-  cursor: pointer;
+  cursor: default;
+}
+
+.RelatedObjectBulletContainer:hover .Bullet {
+  color: var(--teal-11);
+  scale: 1.5;
+  opacity: 1;
 }
 
 /* Blank Bullets Logic */
@@ -112,7 +118,7 @@ Tooltip
   white-space: pre-line;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition: opacity 0.2s 0.5s, visibility 0.2s 0.5s;
   z-index: 50;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
@@ -128,7 +134,7 @@ Bullet
 */
 
 .Bullet {
-  cursor: pointer;
+  cursor: default;
   position: absolute;
   width: 16px;
   height: 16px;
@@ -136,7 +142,7 @@ Bullet
 }
 
 .BulletShadow {
-  cursor: pointer;
+  cursor: default;
   position: absolute;
   width: 16px;
   height: 16px;
@@ -166,7 +172,7 @@ Bullet
 }
 
 .Circle {
-  cursor: pointer;
+  cursor: default;
   position: absolute;
   stroke: var(--teal-10);
 }
@@ -273,9 +279,9 @@ Right Area
 
 /* Pin Icon of each bullet */
 .PinToggle {
-  cursor: pointer;
   position: relative;
 }
+
 .PinToggle::before {
   content: attr(data-tooltip);
   position: absolute;
@@ -372,24 +378,6 @@ Right Area
   background-color: var(--gray-1);
 }
 
-.RelationCounter {
-  position: relative;
-  align-self: flex-start;
-  width: 16px;
-  height: 18px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  background-color: var(--gray-3);
-  color: var(--gray-9);
-  font-size: var(--font-size-mini);
-  border-radius: 2px;
-  padding-left: 4px;
-  padding-right: 4px;
-  cursor: pointer;
-}
-
 .RelatedObjectInputSuffix {
   display: flex;
   flex: 1;
@@ -403,20 +391,7 @@ Right Area
 }
 
 .RelatedObjectRelationsToggle {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  border: 0.5px solid var(--gray-5);
-  color: var(--gray-9);
-  width: fit-content;
-  padding: 2px;
-  border-radius: 4px;
-  font-size: var(--font-size-mini);
-}
-
-.RelatedObjectRelationsToggleExpanded {
-  background-color: var(--gray-2);
+  margin: 6px 0 8px -1px;
 }
 
 .NoteContentSection .PinToggle {

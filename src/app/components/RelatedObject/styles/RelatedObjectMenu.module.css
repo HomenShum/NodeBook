@@ -2,7 +2,7 @@
   display: flex;
   align-items: center;
   height: 16px;
-  cursor: pointer;
+  cursor: default;
   margin: 0 4px;
 }
 

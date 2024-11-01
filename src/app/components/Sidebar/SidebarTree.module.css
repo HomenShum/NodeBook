@@ -50,7 +50,7 @@
 
 .IconBox:hover {
   background-color: var(--gray-6);
-  cursor: pointer;
+  cursor: default;
 }
 
 .IconExpanded {

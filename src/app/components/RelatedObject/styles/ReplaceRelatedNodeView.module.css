@@ -50,7 +50,7 @@
 .ReplaceRelatedItem {
   padding: 4px 8px;
   border-radius: 4px;
-  cursor: pointer;
+  cursor: default;
   display: flex;
   align-items: center;
   justify-content: space-between;

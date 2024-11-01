@@ -53,7 +53,7 @@
   font-size: 12px;
   background-color: var(--gray-2);
   color: var(--gray-12);
-  cursor: pointer;
+  cursor: default;
 }
 
 .AuthorFilter:focus {
@@ -79,7 +79,7 @@
   padding: 4px 32px;
   border-bottom: 1px solid var(--gray-4); /* Node item divider */
   transition: background-color 0.2s ease;
-  cursor: pointer;
+  cursor: default;
 }
 
 .NodeItem:hover {

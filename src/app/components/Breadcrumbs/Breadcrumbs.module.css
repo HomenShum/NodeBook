@@ -85,7 +85,6 @@
   display: flex;
   gap: 16px;
   align-items: center;
-  cursor: pointer;
 }
 
 .ShowTooltip::after {

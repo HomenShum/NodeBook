@@ -65,7 +65,7 @@
   padding: 4px;
   height: 32px;
   border-radius: 4px;
-  cursor: pointer;
+  cursor: default;
   color: var(--gray-11);
 }
 

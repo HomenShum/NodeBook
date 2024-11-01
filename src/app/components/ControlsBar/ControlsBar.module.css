@@ -101,13 +101,17 @@
   padding: 8px;
   height: 32px;
   border-radius: 4px;
-  cursor: pointer;
+  cursor: default;
   font-size: var(--font-size-sm);
   color: var(--gray-10);
 }
 
+.SwitchItem:hover {
+  color: var(--teal-10);
+}
+
 .SwitchItem label {
-  cursor: pointer;
+  cursor: default;
 }
 
 @media (max-width: 450px) {
