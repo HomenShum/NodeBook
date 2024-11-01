@@ -42,7 +42,7 @@ export const RelationPlugin = observer(function RelationPlugin() {
             return false;
           }
 
-          const { beforeText, afterText } = $getTextAroundSelection(editor);
+          const { beforeText, afterText } = $getTextAroundSelection();
           if (beforeText === "-") {
             event.preventDefault();
             event.stopPropagation();

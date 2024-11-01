@@ -240,39 +240,36 @@ export function $getChipsAroundSelection(selection: BaseSelection) {
  * Returns the text before the selection, the text inside selection
  * and the text after selection. Very apt description. :)
  */
-export function $getTextAroundSelection(editor: LexicalEditor) {
+export function $getTextAroundSelection() {
   let beforeText = "";
   let selectedText = "";
   let afterText = "";
 
-  editor.getEditorState().read(() => {
-    const selection = $getSelection();
+  const selection = $getSelection();
 
-    if (!$isRangeSelection(selection)) {
-      return {
-        beforeText,
-        selectedText,
-        afterText,
-      };
+  if (!$isRangeSelection(selection)) {
+    return {
+      beforeText,
+      selectedText,
+      afterText,
+    };
+  }
+
+  const start = selection.isBackward() ? selection.focus : selection.anchor;
+  const startNode = start.getNode();
+
+  //Find the text before the selection.
+  for (const node of $getRoot().getAllTextNodes()) {
+    if (node === startNode) {
+      beforeText = beforeText + startNode.__text.slice(0, start.offset);
+      break;
     }
+    beforeText = beforeText + node.__text;
+  }
 
-    const start = selection.isBackward() ? selection.focus : selection.anchor;
-    const startNode = start.getNode();
-
-    //Find the text before the selection.
-    for (const node of $getRoot().getAllTextNodes()) {
-      if (node === startNode) {
-        beforeText = beforeText + startNode.__text.slice(0, start.offset);
-        break;
-      }
-      beforeText = beforeText + node.__text;
-    }
-
-    selectedText = selection.getTextContent();
-    afterText = $getRoot()
-      .getTextContent()
-      .slice(beforeText.length + selectedText.length);
-  });
-
+  selectedText = selection.getTextContent();
+  afterText = $getRoot()
+    .getTextContent()
+    .slice(beforeText.length + selectedText.length);
   return { beforeText, selectedText, afterText };
 }
