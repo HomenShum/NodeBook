@@ -12,12 +12,12 @@ export const SublistIcon = () => (
 
 export const ParentRelationIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="10" fill="none">
-    <path
+    <path 
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth="1.5"
-      d="M11.25 8.496h-1.125M3.75 1.5v6.993h1.375M3.75 1.5 6.5 4.752M3.75 1.5 1 4.752m6.6 3.744h-.1"
+      d="m11.25 8.496-7.5-.003V1.5m0 0L6.5 4.752M3.75 1.5 1 4.752"
     />
   </svg>
 );
