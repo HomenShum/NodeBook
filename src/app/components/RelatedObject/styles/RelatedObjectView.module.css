@@ -331,11 +331,12 @@ Right Area
 
 .PinToggle.Unpinned {
   color: var(--gray-8);
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
 }
 
 .PinToggle.Hidden {
   transition: opacity 0.1s ease-in-out;
-
   opacity: 0;
 }
 
@@ -343,17 +344,8 @@ Right Area
   opacity: 1;
 }
 
-.PinIcon {
-  /* TODO: Fix adress sizing from the SVG side */
-  transform: scaleX(-1) scale(0.8) translate(-1px, 1px);
-}
-
-.RelatedObjectContent:hover .PinToggle {
-  opacity: 1;
-}
-
 .PinToggle.Pinned {
-  color: var(--gray-8);
+  color: var(--teal-8);
 }
 
 .PinToggle.Unpinned {
