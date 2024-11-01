@@ -176,7 +176,8 @@ export class GraphNode extends BaseGraphObject implements Serializable {
           .sort((a, b) => comparePositions(a.position, b.position))
           .map(({ item }) => {
             const object = getOtherObject(item, this.id);
-            if (object instanceof GraphNode) return object._dfsText({}, true);
+            if (object instanceof GraphNode) return object._dfsText({ [this.id]: true }, true);
+            if (object instanceof GraphRelation) return "[Relation]";
             return object ? object.text : "";
           }),
       ].join(" ");
@@ -195,6 +196,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
           .map(({ item }) => {
             const object = getOtherObject(item, this.id);
             if (object instanceof GraphNode) return object._dfsText({}, false);
+            if (object instanceof GraphRelation) return "[Relation]";
             return object ? object.searchText : "";
           }),
       ].join(" ");
