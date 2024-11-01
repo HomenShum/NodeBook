@@ -53,6 +53,7 @@ export const RelationPlugin = observer(function RelationPlugin() {
               },
             });
             tree.indentSelection();
+            tree.setFocusedNode(treeNode.id, { anchorOffset: 0, focusOffset: 0 });
             return true;
           }
           return false;
