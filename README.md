@@ -36,6 +36,8 @@ yarn dev
 
 ## Set up a database for testing
 
+_Note: This is only necessary for changes that modify the existing database schema_
+
 - Go to `mew-postgres` database in vercel: https://vercel.com/ideaflowco/mew/stores/postgres/store_lxFSgFAtApzk0tud/data
 - In the data tab, run `create database <db-name>` to create a new database for your local development
 - Update the `POSTGRES_CUSTOM_URL` in `.env.local` with the new database name. For example, if the current url ends with `/development`, change it to `/<db-name>`
@@ -46,17 +48,31 @@ yarn dev
 
 - Update the schema in `src/db/schema.ts`
 - Run `yarn db:generate-migration` to create a new migration file
-  - If there are no schema changes, run `drizzle-kit generate:pg --custom` to create an empty migration file that you can put your SQL into. 
+  - If there are no schema changes, run `drizzle-kit generate:pg --custom` to create an empty migration file that you can put your SQL into.
 - Apply the migration with `yarn db:migrate` (to the database specified in your .env file)
 - Commit and push the schema change and the migration file
 
 ## Restoring database backups
+
 - Every 12 hours (12AM/12PM UTC) backups are stored in mew-vercel-backup (us-west-1).
 - Download the backup and run `pg_restore -v -d <database-connection-string> <path-to-backup>`
   - Make sure `database-connection-string` ends with a database name.
   - Example: `pg_restore -v -d postgres://user:pass@host:port/db_name /home/username/dump-2024-10-02-18-28.bak`
 - Please make sure your `pg_restore` version is 16 (Vercel currently uses 16).
 - Please do not run `db:reset`, it will run migrations and hydrate the database, causing conflicts
-  with the database. 
+  with the database.
   - Drop the database before running `pg_restore` or run it with `--clean`/`-c` flags.
     - Example: `pg_restore -c -v -d <connectiom-string> <backup-path>`
+
+## VSCode Debugging
+
+Assuming you are using vscode, its debugging feature is a great way to see how things happen under the hood. The `.vscode/launch.json` contains the config for launching google chrome against localhost.
+
+To run the debugger, do the following:
+
+- Install (if not already) Javascript Debugger
+- Ensure that your local host is set to serve at the same host as the one in `.vscode/launch.json`
+- Select your breakpoints
+- Run `yarn dev` or whatever you use to launch the app
+- Go to the “Run and Debug” tab in VSCode (`Ctrl-Shift-D` in Linux)
+- Select the appropriate launch command in the dropdown at the top-left of the screen, and run.
