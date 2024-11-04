@@ -384,14 +384,16 @@ export function LexicalMenu<TOption extends MenuOption>({
       editor.registerCommand(
         KEY_ENTER_COMMAND,
         (event: KeyboardEvent | null) => {
-          if (options === null || selectedIndex === null || options[selectedIndex] == null) {
+          if (options === null || selectedIndex === null || options[selectedIndex] == null || !event) {
             return false;
           }
-          if (event !== null) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          if (event.ctrlKey || event.metaKey) {
+            selectOptionAndCleanUp(options[options.length - 1]);
+          } else {
+            selectOptionAndCleanUp(options[selectedIndex]);
           }
-          selectOptionAndCleanUp(options[selectedIndex]);
           return true;
         },
         commandPriority,
