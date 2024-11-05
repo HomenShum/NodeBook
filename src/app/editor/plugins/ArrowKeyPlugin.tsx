@@ -19,7 +19,7 @@ import { useTree } from "@/app/tree/TreeContext";
  * Plugin to jump focus to other editors using left and right arrow keys
  * when at the start or end of the editor.
  */
-export const LeftRightArrowAtEndsPlugin = () => {
+export const ArrowKeyPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const tree = useTree();
   const { treeNode } = useTreeNode();

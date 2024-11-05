@@ -12,7 +12,7 @@ import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNo
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
-import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowAtEndsPlugin";
+import { ArrowKeyPlugin } from "@/app/editor/plugins/ArrowKeyPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
@@ -64,7 +64,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <ClearEditorPlugin />}
         {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
-        {isEditorEditable && <LeftRightArrowAtEndsPlugin />}
+        {isEditorEditable && <ArrowKeyPlugin />}
         {isEditorEditable && <BackspaceMergeNodesPlugin />}
         {isEditorEditable && <PastePlugin />}
         {isEditorEditable && <RelationPlugin />}
