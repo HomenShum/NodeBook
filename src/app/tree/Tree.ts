@@ -647,6 +647,34 @@ export class Tree {
    */
   async indentSelection(): Promise<boolean> {
     const selection = this.selectionWithNodes;
+    if (!selection) return false;
+
+    // indent multiline note when focused on first line
+    if (selection.type === "editor") {
+      const node = selection.treeNode;
+      if (node instanceof DescendantTreeNode && node.parentGroup.id === "noteContent") {
+        const parent = node.parent;
+        if (parent instanceof DescendantTreeNode) {
+          const noteContentNodes = parent.childrenGroupsById.noteContent.nodes;
+          const isFirstLine = noteContentNodes[0]?.id === node.id;
+          if (isFirstLine && noteContentNodes.length > 1) {
+            const siblingAbove = parent.siblingAbove;
+            if (siblingAbove instanceof DescendantTreeNode) {
+              await siblingAbove.addChildren([parent], -1);
+              // preserve editor focus
+              if (this.selection?.type === "editor") {
+                const newParentPath = siblingAbove.childrenGroupsById.all.createChildPath(parent);
+                const newNotePath = createPath(newParentPath, "noteContent", node.relationWithParent.id);
+                this.setFocusedNode(newNotePath, selection.position, selection.editMode);
+              }
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    // indent regular nodes selection
     if (selection?.subtreeRoots.some((node) => node instanceof PointerTreeNode)) {
       return true;
     }
@@ -664,8 +692,35 @@ export class Tree {
    * parent (while in the pinned section, it positions below the current parent
    * in both sections)
    */
-  dedentSelection(): boolean {
+  async dedentSelection(): Promise<boolean> {
     const selection = this.selectionWithNodes;
+    if (!selection) return false;
+
+    // dedent multiline note when focused on first line
+    if (selection.type === "editor") {
+      const node = selection.treeNode;
+      if (node instanceof DescendantTreeNode && node.parentGroup.id === "noteContent") {
+        const parent = node.parent;
+        if (parent instanceof DescendantTreeNode) {
+          const noteContentNodes = parent.childrenGroupsById.noteContent.nodes;
+          const isFirstLine = noteContentNodes[0]?.id === node.id;
+          if (isFirstLine && noteContentNodes.length > 1) {
+            const grandparent = parent.parent;
+            if (grandparent instanceof RootTreeNode) return false;
+            await grandparent.parentGroup.add([parent], grandparent);
+            // preserve editor focus
+            if (this.selection?.type === "editor") {
+              const newParentPath = grandparent.parentGroup.createChildPath(parent);
+              const newNotePath = createPath(newParentPath, "noteContent", node.relationWithParent.id);
+              this.setFocusedNode(newNotePath, selection.position, selection.editMode);
+            }
+            return true;
+          }
+        }
+      }
+    }
+
+    // dedent regular nodes selection
     if (selection?.subtreeRoots.some((node) => node instanceof PointerTreeNode)) {
       return true;
     }
