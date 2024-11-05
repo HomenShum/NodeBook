@@ -5,8 +5,10 @@ import {
   $getSelection,
   $isRangeSelection,
   COMMAND_PRIORITY_EDITOR,
+  KEY_ARROW_DOWN_COMMAND,
   KEY_ARROW_LEFT_COMMAND,
   KEY_ARROW_RIGHT_COMMAND,
+  KEY_ARROW_UP_COMMAND,
 } from "lexical";
 import { useEffect } from "react";
 
@@ -25,6 +27,36 @@ export const LeftRightArrowAtEndsPlugin = () => {
     tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode;
   useEffect(() => {
     return mergeRegister(
+      editor.registerCommand(
+        KEY_ARROW_UP_COMMAND,
+        (event) => {
+          const element = editor.getRootElement();
+          if (!element) return false;
+          const lineCount = element.offsetHeight / parseInt(getComputedStyle(element).lineHeight, 10);
+          if (lineCount <= 1 || (lineCount > 1 && window.getSelection()?.anchorOffset === 0)) {
+            event.preventDefault();
+            tree.moveEditorSelectionUp("end");
+            return true;
+          }
+          return false;
+        },
+        COMMAND_PRIORITY_EDITOR,
+      ),
+      editor.registerCommand(
+        KEY_ARROW_DOWN_COMMAND,
+        (event) => {
+          const element = editor.getRootElement();
+          if (!element) return false;
+          const lineCount = element.offsetHeight / parseInt(getComputedStyle(element).lineHeight, 10);
+          if (lineCount <= 1 || (lineCount > 1 && window.getSelection()?.anchorOffset === element.innerText.length)) {
+            event.preventDefault();
+            tree.moveEditorSelectionDown("end");
+            return true;
+          }
+          return false;
+        },
+        COMMAND_PRIORITY_EDITOR,
+      ),
       editor.registerCommand(
         KEY_ARROW_LEFT_COMMAND,
         (event) => {

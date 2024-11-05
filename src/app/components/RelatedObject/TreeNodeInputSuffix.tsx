@@ -69,8 +69,13 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
             }
             break;
           case "ArrowRight":
+          case "ArrowDown":
             e.preventDefault();
             tree.moveEditorSelectionDown("start");
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            tree.moveEditorSelectionUp("end");
             break;
           case "ArrowLeft":
             e.preventDefault();

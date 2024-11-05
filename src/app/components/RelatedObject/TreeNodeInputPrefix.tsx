@@ -48,7 +48,7 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
         position: "absolute",
         zIndex: 1,
         cursor: "text",
-        pointerEvents: "all"
+        pointerEvents: "all",
       }}
       onFocus={() => {
         if (!tree.isNodeFocused(treeNode.id)) {
@@ -80,8 +80,13 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
             tree.setFocusedNode(treeNode.id, "end");
             break;
           case "ArrowLeft":
+          case "ArrowUp":
             e.preventDefault();
             tree.moveEditorSelectionUp("end");
+            break;
+          case "ArrowDown":
+            e.preventDefault();
+            tree.moveEditorSelectionDown("end");
             break;
           case "Tab":
             e.preventDefault();
