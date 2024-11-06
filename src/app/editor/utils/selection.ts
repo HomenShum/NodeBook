@@ -292,31 +292,16 @@ export function $getCaretPosition(): null | {
   const inputBoxRect = editorElement.getBoundingClientRect();
   const lineHeight = parseInt(getComputedStyle(editorElement).lineHeight, 10);
   const lineCount = inputBoxRect.height / lineHeight;
+  let lineNumber = 1;
 
-  // We know the top of the caret but it doesn't directly translate
-  // to the top of input box since the height of caret is shorter than line height
-  // and the caret can be on any line.
-
-  // Here we find the difference between line height and caret height. This vertical
-  // difference is distributed evenly around the caret. Let's call this difference
-  // 'X'. We can say: x/2 + caretHeight + x/2 = lineHeight. (E1)
-  // So caretSpaceBetweenTwoLines = X
-  //                              = X/2 space under first caret + X/2 above second caret
-  //                              = lineHeight - caretHeight
-  const caretSpaceBetweenTwoLines = Math.abs(caretRect.height - lineHeight);
-  //Top of first caret (as in on the first line) = inputBoxTop + X/2 spacing
-  const firstCaretTop = inputBoxRect.top + caretSpaceBetweenTwoLines / 2;
-  //Top of second caret = top of first caret + height of caret
-  //                       + X/2 space under first caret + X/2 space above second caret;
-  //                    = top of first caret + line height; (Derived from E1)
-  //Top of third caret  = top of first caret + (2 x line height);
-  //Visualization: https://github.com/IdeaFlowCo/mew/pull/616
-  const lineIndex = (caretRect.top % firstCaretTop) / lineHeight;
+  while (caretRect.top > inputBoxRect.top + lineHeight * lineNumber) {
+    lineNumber++;
+  }
 
   return {
     lineCount,
-    lineNumber: lineIndex + 1,
-    isAtTop: lineIndex === 0,
-    isAtBottom: lineCount === lineIndex + 1,
+    lineNumber,
+    isAtTop: lineNumber === 1,
+    isAtBottom: lineCount === lineNumber,
   };
 }
