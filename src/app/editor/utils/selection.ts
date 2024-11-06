@@ -2,7 +2,6 @@ import {
   $createRangeSelection,
   $getRoot,
   $getSelection,
-  $getTextContent,
   $isElementNode,
   $isRangeSelection,
   $setSelection,

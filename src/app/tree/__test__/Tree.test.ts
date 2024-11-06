@@ -2,8 +2,9 @@ import path from "path";
 
 import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
+import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { createTestTreeFromTemplate, expectTreeToMatchTemplate } from "@/app/tree/__test__/helpers";
+import { createTestTreeFromTemplate, expectTreeToMatchTemplate, getNewNoteTxs } from "@/app/tree/__test__/helpers";
 import { Tree } from "@/app/tree/Tree";
 import appLogger from "@/lib/logger";
 import { testAllExamplesInFileExecute } from "@/lib/testAllExamplesInFileExecute";
@@ -334,6 +335,127 @@ describe("Tree", () => {
           },
           { rid: "5" },
         ]);
+      });
+    });
+    describe("splitting a multiline note", () => {
+      it("in a basic case", async () => {
+        const graphStore = new GraphStore(MOCK_MEW_USER);
+        const root = graphStore.userRoot;
+
+        const { node: n1, relation: r1 } = await graphStore.addChildNode({
+          parentId: root.id,
+          nodeProps: { content: "" },
+          relationProps: { id: "original" },
+        });
+
+        const tree = new Tree(graphStore, new SettingsStore(), root);
+        const treeNode = tree.getNodeOrThrow(tree.root.createChildPath(r1));
+
+        const txs: TxCombined = getNewNoteTxs(tree, treeNode);
+
+        await graphStore.applyCombinedTransaction(txs).then(() => {
+          const secondRelation = graphStore.getRelation("second");
+          if (secondRelation) {
+            const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
+            tree.setFocusedNode(path);
+          }
+        });
+
+        const splitOn = tree.getNodeOrThrow("/all/original/noteContent/first");
+        await tree.splitNote(splitOn, { before: [], after: [] }, "split");
+
+        expectTreeToMatchTemplate(tree, {
+          rid: "",
+          children: [
+            { rid: "original", children: [{ rid: "first" }] },
+            { rid: "split", children: [{ rid: "second", isFocused: true }] },
+          ],
+        });
+      });
+      it("when there are cyclic relations", async () => {
+        const graphStore = new GraphStore(MOCK_MEW_USER);
+        const root = graphStore.userRoot;
+
+        // Make original node
+        const { node: n1, relation: r1 } = await graphStore.addChildNode({
+          parentId: root.id,
+          nodeProps: { content: "" },
+          relationProps: { id: "original" },
+        });
+
+        const tree = new Tree(graphStore, new SettingsStore(), root);
+        const treeNode = tree.getNodeOrThrow(tree.root.createChildPath(r1));
+
+        // Get txs to convert to note
+        const txs: TxCombined = getNewNoteTxs(tree, treeNode);
+
+        // Apply txs
+        await graphStore.applyCombinedTransaction(txs).then(() => {
+          const secondRelation = graphStore.getRelation("second");
+          if (secondRelation) {
+            const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
+            tree.setFocusedNode(path);
+          }
+        });
+
+        // define cycle parent
+        const cycleParent = tree.getNodeOrThrow("/all/original/noteContent/second");
+
+        const thirdRel = "third";
+
+        // create a cycle from a new child "third" to "second"
+        const cycleTxs: TxCombined = [
+          {
+            type: "addChildNode",
+            transaction: {
+              parentId: cycleParent.object.id,
+              nodeProps: { content: "", id: thirdRel },
+              relationProps: { id: thirdRel },
+            },
+          },
+          {
+            type: "addRelationToList",
+            transaction: {
+              objectId: cycleParent.object.id,
+              relationId: [thirdRel],
+              listType: "noteContent",
+            },
+          },
+          {
+            type: "addRelation",
+            transaction: {
+              toId: "second",
+              fromId: thirdRel,
+              id: "cycle",
+            },
+          },
+          {
+            type: "addRelationToList",
+            transaction: {
+              objectId: cycleParent.object.id,
+              relationId: ["cycle"],
+              listType: "noteContent",
+            },
+          },
+        ];
+        await graphStore.applyCombinedTransaction(cycleTxs);
+
+        tree.setPathExpanded("/all/split/noteContent/second/noteContent/third/all/cycle", false);
+
+        const splitOn = tree.getNodeOrThrow("/all/original/noteContent/first");
+
+        await tree.splitNote(splitOn, { before: [], after: [] }, "split");
+
+        expectTreeToMatchTemplate(tree, {
+          rid: "",
+          children: [
+            { rid: "original", children: [{ rid: "first" }] },
+            {
+              rid: "split",
+              children: [{ rid: "second", children: [{ rid: "third" }], isFocused: true }],
+            },
+          ],
+        });
       });
     });
   });

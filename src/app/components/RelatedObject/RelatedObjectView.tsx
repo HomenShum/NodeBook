@@ -150,11 +150,6 @@ const Content = observer(function Content() {
                   styles.ChildOfRootInNoteView,
               )}
             >
-                {/* {treeNode.object.text && (
-                  <div className={cn(viewStore.viewType === "note" ? styles.NoteContentSectionHeader : styles.HeaderInListView)}>
-                    <NodeHeaderEditor treeNode={treeNode} noteTitle={treeNode.object.text} />
-                  </div>
-                )} */}
               <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
             </div>
           ) : viewType === "replace" ? (

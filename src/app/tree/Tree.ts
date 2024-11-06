@@ -734,6 +734,22 @@ export class Tree {
   }
 
   /**
+   * Traverses and yields all node paths and texts along an in-order traversal of
+   * a node's children
+   */
+  *traverseNodePaths(node: TreeNode, seenIDs: Set<string> = new Set<string>()): Generator<string> {
+    for (const child of node.childrenGroupsById.all.nodes) {
+      // make sure the node ID is not seen yet
+      if (seenIDs.has(child.object.id)) {
+        continue;
+      }
+      seenIDs.add(child.object.id);
+      yield child.path;
+      yield* this.traverseNodePaths(child, seenIDs);
+    }
+  }
+
+  /**
    * Splits an object and returns the newly created graph object, relation, and
    * expected path to it in the tree.
    *
@@ -923,7 +939,8 @@ export class Tree {
     }
   }
 
-  async splitNote(treeNode: DescendantTreeNode, chips: { before: Chip[]; after: Chip[] }) {
+  async splitNote(treeNode: DescendantTreeNode, chips: { before: Chip[]; after: Chip[] }, newRid?: string) {
+    // Note: newRid is used to pass the relation id to the new note, mainly for testing purposes
     const noteNode = treeNode.parent;
     if (!isNoteContent(treeNode)) {
       logger.warn("Attempted to split non-note content");
@@ -952,7 +969,7 @@ export class Tree {
 
     // Create new note below, under the orignal note's parent
     const newNoteId = uuid();
-    const newRelationId = uuid();
+    const newRelationId = newRid ? newRid : uuid();
     txs.push({
       type: "addChildNode",
       transaction: {
@@ -978,6 +995,7 @@ export class Tree {
       relationIdsInNewNote.push(newNoteContentRelationId);
     }
 
+    const expansionStateMap = new Map();
     // Move content of current note below to new note
     const treeNodeIndex = noteNode.childrenGroupsById.noteContent.nodes.indexOf(treeNode);
     if (treeNodeIndex !== -1) {
@@ -992,6 +1010,16 @@ export class Tree {
           },
         });
         relationIdsInNewNote.push(relationId);
+        const nodeExpState = this.isPathExpanded(node.path);
+        expansionStateMap.set(relationId, nodeExpState);
+
+        // apply traversal function to the node
+        for (const path of this.traverseNodePaths(node)) {
+          // get the part of the path after 'noteContent'
+          const subPath = path.split("noteContent/")[1];
+          const subNodeExpState = this.isPathExpanded(path);
+          expansionStateMap.set(subPath, subNodeExpState);
+        }
       }
     } else {
       logger.warn("No note content nodes to move");
@@ -1023,12 +1051,21 @@ export class Tree {
     // Apply the transactions
     await this.graphStore.applyCombinedTransaction(txs);
 
-    // Focus first child of new note
+    const relationToNewNote = this.graphStore.getRelation(newRelationId);
+
+    // Focus first child of new note and apply preserved expansion states
     if (relationIdsInNewNote[0]) {
-      const relationToNewNote = this.graphStore.getRelation(newRelationId);
       if (relationToNewNote) {
+        // set focus
         const pathToNewNote = noteNode.parentGroup.createChildPath(relationToNewNote);
-        this.setFocusedNode(createPath(pathToNewNote, "noteContent", relationIdsInNewNote[0]));
+        const newPath = createPath(pathToNewNote, "noteContent", relationIdsInNewNote[0]);
+        this.setFocusedNode(newPath);
+
+        // apply expansion states
+        for (const [suffix, expanded] of expansionStateMap.entries()) {
+          const curNodePath = createPath(pathToNewNote, "noteContent", suffix);
+          this.setPathExpanded(curNodePath, expanded);
+        }
       }
     }
   }

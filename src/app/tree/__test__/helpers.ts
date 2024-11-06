@@ -1,5 +1,6 @@
 import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
+import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
@@ -55,7 +56,9 @@ export async function createTestTreeFromTemplate(template: TemplateNode[]) {
     const { node, getParent } = queue.shift()!;
     const parent = getParent();
     const path = await parent.createChild({ relationProps: { id: node.rid }, after: -1 });
-    tree.setPathExpanded(path, true);
+    if (node.isExpanded !== undefined) {
+      tree.setPathExpanded(path, node.isExpanded);
+    } else tree.setPathExpanded(path, true);
     selectionHeadPath = selectionHeadPath || (node.isHead ? path : undefined);
     selectionAnchorPath = selectionAnchorPath || (node.isAnchor ? path : undefined);
     isFocusedPath = isFocusedPath || (node.isFocused ? path : undefined);
@@ -124,4 +127,53 @@ export type TemplateNode = {
   isHead?: boolean;
   isAnchor?: boolean;
   isFocused?: boolean;
+  isExpanded?: boolean;
 };
+
+export function getNewNoteTxs(tree: Tree, treeNode: TreeNode): TxCombined {
+  const txs: TxCombined = [];
+
+  // convert to Note
+  // Add two children to the current node
+
+  const firstRelationId = "first";
+  txs.push({
+    type: "addChildNode",
+    transaction: {
+      parentId: treeNode.object.id,
+      nodeProps: { content: "" },
+      relationProps: { id: firstRelationId },
+    },
+  });
+
+  const secondRelationId = "second";
+  txs.push({
+    type: "addChildNode",
+    transaction: {
+      parentId: treeNode.object.id,
+      nodeProps: { content: "" },
+      relationProps: { id: secondRelationId },
+    },
+  });
+
+  // Clear the content of the current node
+  txs.push({
+    type: "updateNode",
+    transaction: {
+      nodeId: treeNode.object.id,
+      nodeProps: { content: "" },
+    },
+  });
+
+  // Add relation to note content list
+  txs.push({
+    type: "addRelationToList",
+    transaction: {
+      objectId: treeNode.object.id,
+      relationId: [firstRelationId, secondRelationId],
+      listType: "noteContent",
+    },
+  });
+
+  return txs;
+}
