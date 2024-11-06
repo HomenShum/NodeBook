@@ -14,6 +14,7 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useTree } from "@/app/tree/TreeContext";
+import { $getCaretPosition } from "@/app/editor/utils/selection";
 
 /**
  * Plugin to jump focus to other editors using left and right arrow keys
@@ -32,8 +33,9 @@ export const ArrowKeyPlugin = () => {
         (event) => {
           const element = editor.getRootElement();
           if (!element) return false;
-          const lineCount = element.offsetHeight / parseInt(getComputedStyle(element).lineHeight, 10);
-          if (lineCount <= 1 || (lineCount > 1 && window.getSelection()?.anchorOffset === 0)) {
+          const caretPosition = $getCaretPosition();
+          if (!caretPosition) return false;
+          if (caretPosition.isAtTop) {
             event.preventDefault();
             tree.moveEditorSelectionUp("end");
             return true;
@@ -47,8 +49,10 @@ export const ArrowKeyPlugin = () => {
         (event) => {
           const element = editor.getRootElement();
           if (!element) return false;
-          const lineCount = element.offsetHeight / parseInt(getComputedStyle(element).lineHeight, 10);
-          if (lineCount <= 1 || (lineCount > 1 && window.getSelection()?.anchorOffset === element.innerText.length)) {
+          const caretPosition = $getCaretPosition();
+          if (!caretPosition) return false;
+          if (caretPosition.isAtBottom) {
+            // const x = $isCaretOnFirstLine();
             event.preventDefault();
             tree.moveEditorSelectionDown("end");
             return true;
