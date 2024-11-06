@@ -298,7 +298,7 @@ export function $getCaretPosition(): null | {
   // and the caret can be on any line.
 
   // Here we find the difference between line height and caret height. This vertical
-  // difference is distributed evenly around the caret. Let's call this different
+  // difference is distributed evenly around the caret. Let's call this difference
   // 'X'. We can say: x/2 + caretHeight + x/2 = lineHeight. (E1)
   // So caretSpaceBetweenTwoLines = X
   //                              = X/2 space under first caret + X/2 above second caret
