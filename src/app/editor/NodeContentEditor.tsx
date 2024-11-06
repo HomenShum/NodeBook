@@ -14,7 +14,7 @@ import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowAtEndsPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
-import { PastePlugin } from "@/app/editor/plugins/pastePlugin";
+import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin";
@@ -68,7 +68,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <RelationPlugin />}
         {isEditorEditable && <IgnoreModShiftAPlugin />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
-        <ViewControllerRegistryPlugin pathToNodeStr={treeNode.path} />
+        <ViewControllerRegistryPlugin treeNode={treeNode} />
         <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
       </LexicalComposer>
     </div>

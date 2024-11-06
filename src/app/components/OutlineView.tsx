@@ -128,6 +128,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
 const useOutlineHotkeys = function useOutlineHotkeys({ tree }: { tree: Tree }) {
   const setRoot = useSetRoot();
   const defaults: Options = { enableOnContentEditable: true, preventDefault: true, enableOnFormTags: ["INPUT"] };
+
   useHotkeys("mod+shift+ArrowUp", () => tree.moveSelectedNodesUp(), defaults, [tree]);
   useHotkeys("mod+shift+ArrowDown", () => tree.moveSelectedNodesDown(), defaults, [tree]);
   useHotkeys("mod+ArrowUp", () => tree.collapseAtSelection(), defaults, [tree]);
@@ -141,6 +142,7 @@ const useOutlineHotkeys = function useOutlineHotkeys({ tree }: { tree: Tree }) {
   useHotkeys("tab", () => tree.indentSelection(), defaults, [tree]);
   useHotkeys("shift+tab", () => tree.dedentSelection(), defaults, [tree]);
   useHotkeys("esc", () => tree.escapeSelection(), defaults, [tree]);
+
   // Zoom in on cmd+.
   const setCurrentNodeAsRoot = useCallback(() => {
     if (tree.selectionWithNodes?.type === "editor") {
@@ -152,6 +154,7 @@ const useOutlineHotkeys = function useOutlineHotkeys({ tree }: { tree: Tree }) {
     }
   }, [tree, setRoot]);
   useHotkeys("mod+.", setCurrentNodeAsRoot, defaults, [tree]);
+
   // Zoom out on `mod+,`. For some reason this wasn't working with useHotkeys, so we're using a useEffect.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -169,4 +172,17 @@ const useOutlineHotkeys = function useOutlineHotkeys({ tree }: { tree: Tree }) {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [tree, setRoot]);
+
+  useEffect(() => {
+    const handleClipboardEvent = (e: ClipboardEvent) => {
+      if (e.type === "copy") {
+        const hasCopied = tree.copySelectedNodes(e);
+        if (hasCopied) e.preventDefault();
+      }
+    };
+    document.addEventListener("copy", handleClipboardEvent);
+    return () => {
+      document.removeEventListener("copy", handleClipboardEvent);
+    };
+  });
 };

@@ -11,6 +11,7 @@ import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { extractGroupId, extractPointedAtObjectId, getSideOrThrow } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
+import { copyContentFromLexicalNodes } from "@/app/tree/clipboard";
 import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
 import { SelectionStack } from "@/app/tree/SelectionStack";
 import { SortOptionLocalStorageCache } from "@/app/tree/SortOptionLocalStorageCache";
@@ -1370,6 +1371,11 @@ export class Tree {
     this.rootObjectId = rootObject.id;
     this.expansionsByPath = expansionsByPath;
     return true;
+  }
+
+  copySelectedNodes(event: ClipboardEvent): boolean {
+    if (this.selectionWithNodes?.type !== "node") return false;
+    return copyContentFromLexicalNodes(event, this.selectionWithNodes.nodes);
   }
 }
 

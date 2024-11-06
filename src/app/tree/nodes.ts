@@ -1,4 +1,5 @@
 import { captureMessage } from "@sentry/nextjs";
+import { LexicalEditor } from "lexical";
 
 import { env } from "@/app/envFrontend";
 import { defaultRelationTypes } from "@/app/graph/constants";
@@ -44,9 +45,11 @@ export class PathToRootNode {
 export abstract class BaseTreeNode {
   tree: Tree;
   object: GraphObject;
+  lexicalEditor: LexicalEditor | null = null;
   abstract childrenGroups: ChildrenGroups;
   abstract relationWithParent: GraphRelation | null;
   abstract path: string;
+
   protected constructor({ tree, object }: { tree: Tree; object: GraphObject }) {
     this.tree = tree;
     this.object = object;
@@ -121,6 +124,10 @@ export abstract class BaseTreeNode {
 
   isAncestorOf(node: TreeNode): boolean {
     return node.path.startsWith(this.path) && this.path !== node.path;
+  }
+
+  registerLexicalEditor(editor: LexicalEditor) {
+    this.lexicalEditor = editor;
   }
 }
 

@@ -1,4 +1,4 @@
-import { findUrlMatches } from "@/app/editor/plugins/LinkPlugin";
+import { findUrlMatches } from "@/app/editor/utils/links";
 
 describe("LinkPlugin", () => {
   it("should be able to find URL matches with common TLDs", () => {

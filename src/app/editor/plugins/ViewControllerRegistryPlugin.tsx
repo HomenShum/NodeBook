@@ -1,18 +1,25 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useEffect } from "react";
 
+import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
 
-export const ViewControllerRegistryPlugin = ({ pathToNodeStr }: { pathToNodeStr: string }) => {
+interface Props {
+  treeNode: DescendantTreeNode;
+}
+
+export const ViewControllerRegistryPlugin = ({ treeNode }: Props) => {
   const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
+
   useEffect(() => {
-    viewStore.registerEditor(pathToNodeStr, editor);
-    editor.getRootElement()?.setAttribute("data-editor-path", pathToNodeStr);
+    treeNode.registerLexicalEditor(editor);
+    viewStore.registerEditor(treeNode.path, editor);
+    editor.getRootElement()?.setAttribute("data-editor-path", treeNode.path);
 
     return () => {
-      viewStore.removeEditor(pathToNodeStr);
+      viewStore.removeEditor(treeNode.path);
     };
-  }, [pathToNodeStr, editor, viewStore]);
+  }, [treeNode, editor, viewStore]);
   return null;
 };
