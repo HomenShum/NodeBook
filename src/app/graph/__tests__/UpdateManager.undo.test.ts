@@ -1,6 +1,7 @@
 import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
+import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 
 import { MIN_NUM_NODES_WITH_USER, MIN_NUM_RELATIONS } from "./helpers";
 
@@ -269,5 +270,48 @@ describe("UpdateManaager.undo", () => {
     expect(graphStore.getNode(child.id)).toBeUndefined();
     expect(graphStore.getRelation(relation.id)).toBeUndefined();
     expect(graphStore.updateManager.pendingUpdates.length).toBe(numSyncTasks);
+  });
+  it("should be able to undo multiple links along with a normal node", async () => {
+    // Will do the following:
+    // - add 2 nodes with link content as text and 1 regular text content
+    // - check that there are 3 children of root
+    // - do the undo function, which should undo the link type as well as the text content
+    // - check that the node has no content
+    const txs: TxCombined = [];
+    const newNodes = ["another1", "another2"];
+
+    txs.push({
+      type: "addChildNode",
+      transaction: {
+        parentId: node.id,
+        nodeProps: { id: newNodes[0], content: [{ type: "text", value: "https://google.com" }] },
+      },
+    });
+    txs.push({
+      type: "addChildNode",
+      transaction: {
+        parentId: node.id,
+        nodeProps: { id: newNodes[1], content: [{ type: "text", value: "https://example.com" }] },
+      },
+    });
+    txs.push({
+      type: "addChildNode",
+      transaction: {
+        parentId: node.id,
+        nodeProps: { content: [{ type: "text", value: "Random non-url child." }] },
+      },
+    });
+    await graphStore.applyCombinedTransaction(txs);
+    await graphStore.updateNode({
+      nodeId: newNodes[0],
+      nodeProps: { content: [{ type: "link", url: "https://google.com", value: "https://google.com" }] },
+    });
+    await graphStore.updateNode({
+      nodeId: newNodes[1],
+      nodeProps: { content: [{ type: "link", url: "https://example.com", value: "https://example.com" }] },
+    });
+    expect(node.children.length).toBe(3);
+    graphStore.updateManager.undo();
+    expect(node.children).toEqual([]);
   });
 });
