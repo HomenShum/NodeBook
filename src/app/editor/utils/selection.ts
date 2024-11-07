@@ -288,7 +288,7 @@ export function $getCaretPosition(): null | {
   const editorElement = $getEditor().getRootElement();
   if (!$isRangeSelection(selection) || !nativeSelection || !editorElement) return null;
   const range = nativeSelection.getRangeAt(0);
-  const caretRect = range.getBoundingClientRect();
+  const caretRect = range.getClientRects()[range.getClientRects().length - 1];
   const inputBoxRect = editorElement.getBoundingClientRect();
   const lineHeight = parseInt(getComputedStyle(editorElement).lineHeight, 10);
   const lineCount = inputBoxRect.height / lineHeight;
