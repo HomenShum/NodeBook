@@ -288,14 +288,17 @@ export function $getCaretPosition(): null | {
   const editorElement = $getEditor().getRootElement();
   if (!$isRangeSelection(selection) || !nativeSelection || !editorElement) return null;
   const range = nativeSelection.getRangeAt(0);
-  const caretRect = range.getClientRects()[range.getClientRects().length - 1];
-  const inputBoxRect = editorElement.getBoundingClientRect();
-  const lineHeight = parseInt(getComputedStyle(editorElement).lineHeight, 10);
-  const lineCount = inputBoxRect.height / lineHeight;
   let lineNumber = 1;
-
-  while (caretRect.top > inputBoxRect.top + lineHeight * lineNumber) {
-    lineNumber++;
+  let lineCount = 1;
+  const caretRects = range.getClientRects();
+  if (caretRects.length > 0) {
+    const caretRect = caretRects[caretRects.length - 1];
+    const inputBoxRect = editorElement.getBoundingClientRect();
+    const lineHeight = parseInt(getComputedStyle(editorElement).lineHeight, 10);
+    lineCount = inputBoxRect.height / lineHeight;
+    while (caretRect.top > inputBoxRect.top + lineHeight * lineNumber) {
+      lineNumber++;
+    }
   }
 
   return {
