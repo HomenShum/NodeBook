@@ -28,6 +28,7 @@ const SerializedUserSettingsSchema = z.object({
   hidePinnedItems: z.boolean().optional(),
   publicMode: z.boolean().optional(),
   triggerRelationOnSingleColon: z.boolean().optional(),
+  atHashtagReplacement: z.boolean().optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 

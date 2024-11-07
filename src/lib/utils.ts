@@ -46,6 +46,9 @@ export function scoreMatch(text: string, query: string) {
   return Math.min(Math.max(finalScore, 0), 1);
 }
 
+export const HASHTAG_SYMBOL = "#";
+export const MENTION_SYMBOL = "@";
+
 // Common constants for text matching
 export const REGEX_CONSTANTS = {
   VALID_CHARS: ".",
@@ -53,7 +56,7 @@ export const REGEX_CONSTANTS = {
   MAX_ALIAS_LENGTH: 50,
   PUNCTUATION: "\\.,\\+\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;",
   VALID_JOINS: "(?:\\.[ |$]| |[\\.,\\+\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;]|)",
-  MENTION_TRIGGER: "@",
+  MENTION_TRIGGER: MENTION_SYMBOL,
 };
 
 // Interface for text match results

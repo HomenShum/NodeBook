@@ -16,6 +16,7 @@ import { LeftRightArrowAtEndsPlugin } from "@/app/editor/plugins/LeftRightArrowA
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
+import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
@@ -57,8 +58,9 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
           }
           placeholder={<span className={styles.PlaceholderNode}>Start writing...</span>}
         />
-        <LinkPlugin />
         <SyncWithModelsPlugin node={treeNode.object} treeNodeId={treeNode.id} />
+        {isEditorEditable && <LinkPlugin />}
+        {isEditorEditable && <ReplacementPlugin />}
         {isEditorEditable && <ClearEditorPlugin />}
         {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}

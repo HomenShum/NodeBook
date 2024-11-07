@@ -19,7 +19,6 @@ export class SettingsStore {
   public hideBackrelations = false;
   public hideThoughtstreamBullets = true;
   public hideBulletBackgroundIfParentsOnly = true;
-  public searchAndReplaceEnabled = true;
   public searchAndReplaceDropdown: SearchAndReplaceDropdownOption =
     SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly;
   public disableCycles = true;
@@ -28,6 +27,7 @@ export class SettingsStore {
   public hidePinnedItems = false;
   public publicMode = true;
   public triggerRelationOnSingleColon = false;
+  public atHashtagReplacement = false;
   private stopAutosave: () => void;
 
   constructor(
@@ -56,13 +56,13 @@ export class SettingsStore {
     this.hideBackrelations = false;
     this.hideThoughtstreamBullets = true;
     this.hideBulletBackgroundIfParentsOnly = true;
-    this.searchAndReplaceEnabled = false;
     this.searchAndReplaceDropdown = SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly;
     this.disableCycles = true;
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
     this.hidePinnedItems = false;
     this.triggerRelationOnSingleColon = false;
+    this.atHashtagReplacement = false;
   }
 
   private async syncToServer() {
@@ -85,13 +85,13 @@ export class SettingsStore {
       hideBackrelations: this.hideBackrelations,
       hideThoughtstreamBullets: this.hideThoughtstreamBullets,
       hideBulletBackgroundIfParentsOnly: this.hideBulletBackgroundIfParentsOnly,
-      searchAndReplaceEnabled: this.searchAndReplaceEnabled,
       searchAndReplaceDropdown: this.searchAndReplaceDropdown,
       disableCycles: this.disableCycles,
       allowShiftTabAboveViewRoot: this.allowShiftTabAboveViewRoot,
       hidePinnedItems: this.hidePinnedItems,
       triggerRelationOnSingleColon: this.triggerRelationOnSingleColon,
       publicMode: this.publicMode,
+      atHashtagReplacement: this.atHashtagReplacement,
     };
   }
 
@@ -106,13 +106,13 @@ export class SettingsStore {
     this.hideThoughtstreamBullets = data.hideThoughtstreamBullets ?? this.hideThoughtstreamBullets;
     this.hideBulletBackgroundIfParentsOnly =
       data.hideBulletBackgroundIfParentsOnly ?? this.hideBulletBackgroundIfParentsOnly;
-    this.searchAndReplaceEnabled = data.searchAndReplaceEnabled ?? this.searchAndReplaceEnabled;
     this.searchAndReplaceDropdown = data.searchAndReplaceDropdown ?? this.searchAndReplaceDropdown;
     this.disableCycles = data.disableCycles ?? this.disableCycles;
     this.allowShiftTabAboveViewRoot = data.allowShiftTabAboveViewRoot ?? this.allowShiftTabAboveViewRoot;
     this.hidePinnedItems = data.hidePinnedItems ?? this.hidePinnedItems;
     this.triggerRelationOnSingleColon = data.triggerRelationOnSingleColon ?? this.triggerRelationOnSingleColon;
     this.publicMode = data.publicMode ?? this.publicMode;
+    this.atHashtagReplacement = data.atHashtagReplacement ?? this.atHashtagReplacement;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -151,10 +151,6 @@ export class SettingsStore {
     this.hideBulletBackgroundIfParentsOnly = value;
   }
 
-  setSearchAndReplaceEnabled(value: boolean) {
-    this.searchAndReplaceEnabled = value;
-  }
-
   setSearchAndReplaceDropdown(value: SearchAndReplaceDropdownOption) {
     this.searchAndReplaceDropdown = value;
   }
@@ -176,6 +172,10 @@ export class SettingsStore {
 
   setTriggerRelationOnSingleColon(value: boolean): void {
     this.triggerRelationOnSingleColon = value;
+  }
+
+  setAtHashtagReplacement(value: boolean): void {
+    this.atHashtagReplacement = value;
   }
 
   cleanup() {

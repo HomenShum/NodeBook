@@ -111,6 +111,14 @@ export const DevTools = observer(function DevTools() {
           />
           Use single colon to trigger relation combobox
         </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.atHashtagReplacement}
+            onChange={(e) => settingsStore.setAtHashtagReplacement(e.target.checked)}
+          />
+          Replace # with @# while typing
+        </label>
         <div className={styles.SearchReplaceContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />
