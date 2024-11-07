@@ -86,7 +86,7 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
             break;
           case "ArrowDown":
             e.preventDefault();
-            tree.moveEditorSelectionDown("end");
+            tree.moveEditorSelectionDown("start");
             break;
           case "Tab":
             e.preventDefault();

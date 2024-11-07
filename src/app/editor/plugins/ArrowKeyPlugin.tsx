@@ -52,9 +52,8 @@ export const ArrowKeyPlugin = () => {
           const caretPosition = $getCaretPosition();
           if (!caretPosition) return false;
           if (caretPosition.isAtBottom) {
-            // const x = $isCaretOnFirstLine();
             event.preventDefault();
-            tree.moveEditorSelectionDown("end");
+            tree.moveEditorSelectionDown("start");
             return true;
           }
           return false;
