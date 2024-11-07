@@ -17,7 +17,7 @@ export default observer(function Toggle({ treeNode, isHovered }: Props) {
   return (
     <button
       className={cn(styles.ToggleButton, isHovered && styles.Hovered)}
-      onClick={() => {
+      onPointerDown={() => {
         tree.togglePathExpanded(treeNode.path);
       }}
     >
