@@ -940,7 +940,12 @@ export class Tree {
     }
   }
 
-  async splitNote(treeNode: DescendantTreeNode, chips: { before: Chip[]; after: Chip[] }, newRid?: string) {
+  async splitNote(
+    treeNode: DescendantTreeNode,
+    chips: { before: Chip[]; after: Chip[] },
+    inlineSplit: boolean = false,
+    newRid?: string,
+  ) {
     // Note: newRid is used to pass the relation id to the new note, mainly for testing purposes
     const noteNode = treeNode.parent;
     if (!isNoteContent(treeNode)) {
@@ -1000,7 +1005,16 @@ export class Tree {
     // Move content of current note below to new note
     const treeNodeIndex = noteNode.childrenGroupsById.noteContent.nodes.indexOf(treeNode);
     if (treeNodeIndex !== -1) {
-      for (const node of noteNode.childrenGroupsById.noteContent.nodes.slice(treeNodeIndex + 1)) {
+      let offset = 1;
+      if (inlineSplit) {
+        offset = 0;
+        // delete current treeNode content
+        txs.push({
+          type: "updateNode",
+          transaction: { nodeId: treeNode.object.id, nodeProps: { content: [] } },
+        });
+      }
+      for (const node of noteNode.childrenGroupsById.noteContent.nodes.slice(treeNodeIndex + offset)) {
         const relationId = node.relationWithParent.id;
         txs.push({
           type: "replaceRelationLink",

@@ -362,7 +362,7 @@ describe("Tree", () => {
         });
 
         const splitOn = tree.getNodeOrThrow("/all/original/noteContent/first");
-        await tree.splitNote(splitOn, { before: [], after: [] }, "split");
+        await tree.splitNote(splitOn, { before: [], after: [] }, false, "split");
 
         expectTreeToMatchTemplate(tree, {
           rid: "",
@@ -444,7 +444,7 @@ describe("Tree", () => {
 
         const splitOn = tree.getNodeOrThrow("/all/original/noteContent/first");
 
-        await tree.splitNote(splitOn, { before: [], after: [] }, "split");
+        await tree.splitNote(splitOn, { before: [], after: [] }, false, "split");
 
         expectTreeToMatchTemplate(tree, {
           rid: "",
