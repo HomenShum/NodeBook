@@ -1,5 +1,5 @@
 .DropdownMenuContent {
-  min-width: 200px;
+  min-width: fit-content;
   max-width: 600px;
   background-color: var(--gray-1);
   border: solid 0.5px var(--gray-6);

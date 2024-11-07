@@ -116,7 +116,9 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <SortOptionDropdown sortOption={tree.sortOption} updateSortOption={updateSortOption} />
+        <div className={styles.SortOptionDropdown}>
+          <SortOptionDropdown sortOption={tree.sortOption} updateSortOption={updateSortOption} />
+        </div>
       </div>
       <div className={styles.RightWrapper}>
         <Button
