@@ -45,7 +45,7 @@ export const getAncestorsAsArray = (node: TreeNode): Ancestor[] => {
 };
 
 export const isUnlabelledChild = (node: DescendantTreeNode) => {
-  return node.relationWithParent.relationType.id === "child" && !node.isBackrelation;
+  return node.relationWithParent.relationType.id === "child" && node.relationWithParent.to === node.object;
 };
 
 function getLastDescendant(treeNode: DescendantTreeNode): DescendantTreeNode {
