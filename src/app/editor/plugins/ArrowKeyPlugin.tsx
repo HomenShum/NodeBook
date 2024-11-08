@@ -61,7 +61,6 @@ export const ArrowKeyPlugin = () => {
             logger.info("no caret position");
             return false;
           }
-          logger.info("caret position", { caretPosition });
           if (caretPosition.isAtBottom) {
             event.preventDefault();
             const res = tree.moveEditorSelectionDown("start");

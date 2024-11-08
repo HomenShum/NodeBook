@@ -295,7 +295,7 @@ export function $getCaretPosition(): null | {
     const caretRect = caretRects[caretRects.length - 1];
     const inputBoxRect = editorElement.getBoundingClientRect();
     const lineHeight = parseInt(getComputedStyle(editorElement).lineHeight, 10);
-    lineCount = inputBoxRect.height / lineHeight;
+    lineCount = Math.round(inputBoxRect.height / lineHeight);
     while (caretRect.top > inputBoxRect.top + lineHeight * lineNumber) {
       lineNumber++;
     }
