@@ -1,5 +1,5 @@
 import { LexicalEditor } from "lexical";
-import { action, isObservable, makeAutoObservable } from "mobx";
+import { action, isObservable, makeAutoObservable, observable } from "mobx";
 
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
@@ -20,6 +20,17 @@ export class ViewStore {
   public sublistView: Tree;
 
   public hoveredNode: Path | null = null;
+
+  // Start mouse tracking variables
+
+  private isDown: boolean = false;
+  private isDragging: boolean = false;
+  public isMouseUpAfterDrag: boolean = true;
+  private minDist: number = 10; // Minimum distance to consider dragging
+  private downX: number = 0;
+  private downY: number = 0;
+
+  // End mouse tracking variables
 
   editorsByPath: Map<string, LexicalEditor> = new Map();
 
@@ -67,6 +78,10 @@ export class ViewStore {
         setSearchQuery: action,
         setFlattenSublists: action,
         setCommandBarOpen: action,
+        isMouseUpAfterDrag: observable,
+        handleMouseDown: action,
+        handleMouseMove: action,
+        handleMouseUp: action,
       });
     }
   }
@@ -132,4 +147,45 @@ export class ViewStore {
   setCommandBarOpen(open: boolean) {
     this.isCommandBarOpen = open;
   }
+
+  // Mouse event handlers
+  handleMouseMove = (e: MouseEvent) => {
+    if (this.isDown && !this.isDragging) {
+      // Only register as dragging if the mouse has moved a certain distance
+      if (Math.abs(e.clientX - this.downX) + Math.abs(e.clientY - this.downY) > this.minDist) {
+        this.isDragging = true;
+        this.isMouseUpAfterDrag = false;
+      }
+    }
+  };
+
+  handleMouseDown = (e: MouseEvent) => {
+    this.isDown = true;
+    this.isMouseUpAfterDrag = false;
+    this.downX = e.clientX;
+    this.downY = e.clientY;
+  };
+
+  handleMouseUp = () => {
+    if (this.isDragging) {
+      this.isMouseUpAfterDrag = true;
+    }
+
+    this.isDown = false;
+    this.isDragging = false;
+  };
+
+  startObservingMouse() {
+    window.addEventListener("mousemove", this.handleMouseMove);
+    window.addEventListener("mousedown", this.handleMouseDown);
+    window.addEventListener("mouseup", this.handleMouseUp);
+  }
+
+  stopObservingMouse() {
+    window.removeEventListener("mousemove", this.handleMouseMove);
+    window.removeEventListener("mousedown", this.handleMouseDown);
+    window.removeEventListener("mouseup", this.handleMouseUp);
+  }
+
+  // End mouse event handlers
 }

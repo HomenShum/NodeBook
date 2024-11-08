@@ -137,12 +137,19 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
     };
   }, [auth]);
 
+  useEffect(() => {
+    viewStore.startObservingMouse();
+    return () => {
+      viewStore.stopObservingMouse();
+    };
+  }, []);
+
   return (
     <LoadingContext.Provider value={isLoading}>
       <UserContext.Provider value={user}>
         <SettingsStoreContext.Provider value={settingsStore}>
           <GraphStoreProvider value={graphStore}>
-            <ViewStoreProvider value={viewStore}>{children}</ViewStoreProvider>
+            <ViewStoreProvider value={viewStore}>{children} </ViewStoreProvider>
           </GraphStoreProvider>
         </SettingsStoreContext.Provider>
       </UserContext.Provider>

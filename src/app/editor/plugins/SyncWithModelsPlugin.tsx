@@ -8,6 +8,7 @@ import { $createParagraphMatchingGraphNode, $getChips, graphNodeMatchesParagraph
 import { $getSelectionPosition, $setSelectionFromTree, sameSelectionPositions } from "@/app/editor/utils/selection";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useTree } from "@/app/tree/TreeContext";
+import { useViewStore } from "@/app/view/useViewStore";
 
 interface Props {
   node: GraphNode;
@@ -21,6 +22,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
   const tree = useTree();
+  const viewStore = useViewStore();
 
   // Editor -> App state: update the app state to match the editor content
   useEffect(() => {
@@ -87,7 +89,8 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
       const isFocused = editor.getRootElement()?.contains(document.activeElement);
       switch (tree.selection?.type) {
         case undefined: {
-          if (isFocused) {
+          // If there was a dragging event with mouseup outside the editor, don't blur. Otherwise blur.
+          if (isFocused && !viewStore.isMouseUpAfterDrag) {
             editor.blur();
           }
           break;
