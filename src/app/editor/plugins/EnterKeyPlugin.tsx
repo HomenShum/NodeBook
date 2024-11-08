@@ -125,6 +125,11 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
             return handleSplit(event);
           }
         }
+        if (treeNode.object.text === "" && treeNode.parent instanceof DescendantTreeNode) {
+          event.preventDefault();
+          tree.dedentSelection();
+          return true;
+        }
         if (isNoteContent(treeNode) && treeNode.object.text === "---") {
           return handleSplitNote(event, true);
         }

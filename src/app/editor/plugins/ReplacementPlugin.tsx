@@ -47,7 +47,7 @@ export const ReplacementPlugin = () => {
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor]);
+  }, [editor, settingsStore.atHashtagReplacement]);
 
   return null;
 };

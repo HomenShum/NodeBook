@@ -142,7 +142,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
     return () => {
       viewStore.stopObservingMouse();
     };
-  }, []);
+  }, [viewStore]);
 
   return (
     <LoadingContext.Provider value={isLoading}>

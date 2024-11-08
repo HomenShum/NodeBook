@@ -130,7 +130,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
         editor.update($applyTreeSelectionToEditor);
       }
     });
-  }, [editor, tree, treeNodeId, tree.selection]);
+  }, [editor, tree, treeNodeId, tree.selection, viewStore.isMouseUpAfterDrag]);
 
   return null;
 });
