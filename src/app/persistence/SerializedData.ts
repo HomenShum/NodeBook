@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { Position } from "@/app/util";
+import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 
 const SerializedChipSchema = z.discriminatedUnion("type", [
   z.object({
@@ -15,26 +16,24 @@ const SerializedChipSchema = z.discriminatedUnion("type", [
 ]);
 
 export const SerializedNodeSchema = z.object({
-  version: z.number(),
   id: z.string(),
-  authorId: z.string(),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
-  content: z.array(SerializedChipSchema),
-  isPublic: z.boolean(),
-  isNewRelatedObjectsPublic: z.boolean(),
-  // sortOption: z.enum(["createdAt", "updatedAt", "alphabetical"]),
-  // sortDirection: z.enum(["asc", "desc"]),
+  authorId: z.string().default(GLOBAL_ADMIN_USER_ID),
+  version: z.number().default(1),
+  createdAt: z.coerce.date().default(new Date()),
+  updatedAt: z.coerce.date().default(new Date()),
+  content: z.array(SerializedChipSchema).default([]),
+  isPublic: z.boolean().default(false),
+  isNewRelatedObjectsPublic: z.boolean().default(false),
 });
 export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
 
 export const SerializedRelationTypeSchema = z.object({
   id: z.string(),
-  authorId: z.string(),
-  version: z.number(),
+  authorId: z.string().default(GLOBAL_ADMIN_USER_ID),
+  version: z.number().default(1),
   label: z.string(),
   reverseLabel: z.string(),
-  isPublic: z.boolean(),
+  isPublic: z.boolean().default(false),
 });
 
 export const PositionSchema = z.object({
@@ -44,15 +43,15 @@ export const PositionSchema = z.object({
 export type SerializedPosition = z.infer<typeof PositionSchema>;
 
 export const SerializedRelationSchema = z.object({
-  version: z.number(),
   id: z.string(),
-  authorId: z.string(),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
   fromId: z.string(),
   toId: z.string(),
   relationTypeId: z.string(),
-  isPublic: z.boolean(),
+  version: z.number().default(1),
+  authorId: z.string().default(GLOBAL_ADMIN_USER_ID),
+  createdAt: z.coerce.date().default(new Date()),
+  updatedAt: z.coerce.date().default(new Date()),
+  isPublic: z.boolean().default(false),
 });
 export type SerializedRelation = z.infer<typeof SerializedRelationSchema>;
 
@@ -69,18 +68,31 @@ export type DeletedRelationData = {
   toNoteContentPos?: Position;
   relationsList: DeletedRelationData[];
 };
+
+export type DeletedRelationDataInput = {
+  relation: z.input<typeof SerializedRelationSchema>;
+  fromPos: z.input<typeof PositionSchema>;
+  fromPinnedPos?: z.input<typeof PositionSchema>;
+  fromNoteContentPos?: z.input<typeof PositionSchema>;
+  toPos: z.input<typeof PositionSchema>;
+  toPinnedPos?: z.input<typeof PositionSchema>;
+  toNoteContentPos?: z.input<typeof PositionSchema>;
+  relationsList: DeletedRelationDataInput[];
+};
+
 // Have to use z.ZodType and z.lazy because of recursive typing
 // https://zod.dev/?id=recursive-types
-export const DeletedRelationDataSchema: z.ZodType<DeletedRelationData> = z.object({
-  relation: SerializedRelationSchema,
-  fromPos: PositionSchema,
-  fromPinnedPos: PositionSchema.optional(),
-  fromNoteContentPos: PositionSchema.optional(),
-  toPos: PositionSchema,
-  toPinnedPos: PositionSchema.optional(),
-  toNoteContentPos: PositionSchema.optional(),
-  relationsList: z.lazy(() => DeletedRelationDataSchema.array()),
-});
+export const DeletedRelationDataSchema: z.ZodType<DeletedRelationData, z.ZodTypeDef, DeletedRelationDataInput> =
+  z.object({
+    relation: SerializedRelationSchema,
+    fromPos: PositionSchema,
+    fromPinnedPos: PositionSchema.optional(),
+    fromNoteContentPos: PositionSchema.optional(),
+    toPos: PositionSchema,
+    toPinnedPos: PositionSchema.optional(),
+    toNoteContentPos: PositionSchema.optional(),
+    relationsList: z.lazy(() => DeletedRelationDataSchema.array()),
+  });
 
 export const MewUserPublicSchema = z.object({
   id: z.string(),
