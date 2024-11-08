@@ -18,6 +18,7 @@ import { useEffect } from "react";
 import { Search } from "@/app/components/CommandBar/CommandBar";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { CommandBarMentionDropdown } from "@/app/editor/plugins/dropdown/CommandBarMentionDropdown";
+import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
 import { getChipToNodeFn, nodeToChip } from "@/app/editor/utils/content";
 import { MentionNode } from "@/app/graph/MentionNode";
 
@@ -114,6 +115,7 @@ export const CmdEditor = ({ dropdownContainerRef, onChange, initialValue }: Prop
       <OnChangePlugin onChange={onChange} />
       <CommandBarMentionDropdown dropdownContainerRef={dropdownContainerRef} />
       <PreventEnterPlugin />
+      <ReplacementPlugin />
     </LexicalComposer>
   );
 };

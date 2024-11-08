@@ -8,11 +8,11 @@ import { observer } from "mobx-react-lite";
 import { RefObject } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
+import { ArrowKeyPlugin } from "@/app/editor/plugins/ArrowKeyPlugin";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
-import { ArrowKeyPlugin } from "@/app/editor/plugins/ArrowKeyPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";

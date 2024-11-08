@@ -11,6 +11,7 @@ import { createConfig } from "@/app/editor/createConfig";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
+import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -47,6 +48,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
         <DropdownPlugin treeNode={treeNode} />
         <EnterKeyPlugin treeNode={treeNode} />
         <IgnoreModShiftAPlugin />
+        <ReplacementPlugin />
         <ClearEditorPlugin />
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         {treeNode.object instanceof GraphNode && (
