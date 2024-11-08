@@ -15,13 +15,12 @@ import { useEffect } from "react";
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getCaretPosition } from "@/app/editor/utils/selection";
 import { useTree } from "@/app/tree/TreeContext";
-import appLogger from "@/lib/logger";
-
-const logger = appLogger.child({ service: "ArrowKeyPlugin" });
 
 /**
- * Plugin to jump focus to other editors using left and right arrow keys
- * when at the start or end of the editor.
+ * Plugin to jump focus to other editors using arrow keys
+ * while selection is in the editor.
+ *
+ * Arrow handling while in node selection is handled by useOutlineHotkeys.
  */
 export const ArrowKeyPlugin = () => {
   const [editor] = useLexicalComposerContext();
@@ -34,14 +33,16 @@ export const ArrowKeyPlugin = () => {
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
         (event) => {
-          const element = editor.getRootElement();
-          if (!element) return false;
-          const caretPosition = $getCaretPosition();
-          if (!caretPosition) return false;
-          if (caretPosition.isAtTop) {
-            event.preventDefault();
-            tree.moveEditorSelectionUp("end");
-            return true;
+          if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+            const element = editor.getRootElement();
+            if (!element) return false;
+            const caretPosition = $getCaretPosition();
+            if (!caretPosition) return false;
+            if (caretPosition.isAtTop) {
+              event.preventDefault();
+              tree.moveEditorSelectionUp("end");
+              return true;
+            }
           }
           return false;
         },
@@ -50,24 +51,17 @@ export const ArrowKeyPlugin = () => {
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
-          logger.info("KEY_ARROW_DOWN_COMMAND");
-          const element = editor.getRootElement();
-          if (!element) {
-            logger.info("no element");
-            return false;
+          if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+            const element = editor.getRootElement();
+            if (!element) return false;
+            const caretPosition = $getCaretPosition();
+            if (!caretPosition) return false;
+            if (caretPosition.isAtBottom) {
+              event.preventDefault();
+              tree.moveEditorSelectionDown("start");
+              return true;
+            }
           }
-          const caretPosition = $getCaretPosition();
-          if (!caretPosition) {
-            logger.info("no caret position");
-            return false;
-          }
-          if (caretPosition.isAtBottom) {
-            event.preventDefault();
-            const res = tree.moveEditorSelectionDown("start");
-            logger.info("moveEditorSelectionDown", { res });
-            return true;
-          }
-          logger.info("returning false");
           return false;
         },
         COMMAND_PRIORITY_EDITOR,

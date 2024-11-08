@@ -135,6 +135,25 @@ const useOutlineHotkeys = function useOutlineHotkeys({ tree }: { tree: Tree }) {
   useHotkeys("mod+ArrowDown", () => tree.expandAtSelection(), defaults, [tree]);
   useHotkeys("shift+ArrowUp", () => tree.moveNodeSelectionHeadUp(), defaults, [tree]);
   useHotkeys("shift+ArrowDown", () => tree.moveNodeSelectionHeadDown(), defaults, [tree]);
+  // Note: Arrow key handling while in editor selection is handled by ArrowKeyPlugin.
+  useHotkeys(
+    "ArrowUp",
+    () => {
+      if (tree.selection?.type === "node") {
+        tree.moveEditorSelectionUp();
+      }
+    },
+    [tree],
+  );
+  useHotkeys(
+    "ArrowDown",
+    () => {
+      if (tree.selection?.type === "node") {
+        tree.moveEditorSelectionDown();
+      }
+    },
+    [tree],
+  );
   useHotkeys("delete", () => tree.deleteSelection(), { preventDefault: true }, [tree]);
   useHotkeys("backspace", () => tree.deleteSelection(), { preventDefault: true }, [tree]);
   useHotkeys("tab", () => tree.indentSelection(), defaults, [tree]);
