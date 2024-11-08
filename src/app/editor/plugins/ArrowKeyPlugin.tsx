@@ -13,8 +13,11 @@ import {
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { useTree } from "@/app/tree/TreeContext";
 import { $getCaretPosition } from "@/app/editor/utils/selection";
+import { useTree } from "@/app/tree/TreeContext";
+import appLogger from "@/lib/logger";
+
+const logger = appLogger.child({ service: "ArrowKeyPlugin" });
 
 /**
  * Plugin to jump focus to other editors using left and right arrow keys
@@ -47,15 +50,25 @@ export const ArrowKeyPlugin = () => {
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
+          logger.info("KEY_ARROW_DOWN_COMMAND");
           const element = editor.getRootElement();
-          if (!element) return false;
+          if (!element) {
+            logger.info("no element");
+            return false;
+          }
           const caretPosition = $getCaretPosition();
-          if (!caretPosition) return false;
+          if (!caretPosition) {
+            logger.info("no caret position");
+            return false;
+          }
+          logger.info("caret position", { caretPosition });
           if (caretPosition.isAtBottom) {
             event.preventDefault();
-            tree.moveEditorSelectionDown("start");
+            const res = tree.moveEditorSelectionDown("start");
+            logger.info("moveEditorSelectionDown", { res });
             return true;
           }
+          logger.info("returning false");
           return false;
         },
         COMMAND_PRIORITY_EDITOR,
