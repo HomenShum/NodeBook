@@ -135,7 +135,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           size="sm"
           onClick={toggleViewType}
           className={cn(s.ShowTooltip, s.BottomAlign)}
-          data-tooltip={viewStore.viewType === ViewType.Outline ? "Switch to Notes" : "Switch to Outline"}
+          data-tooltip={viewStore.viewType === ViewType.Outline ? "Switch to Notes" : "Switch to Lists"}
         >
           {viewStore.viewType === ViewType.Outline ? (
             <>
