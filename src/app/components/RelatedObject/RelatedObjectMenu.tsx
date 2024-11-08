@@ -145,7 +145,10 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
       <DropdownMenuItem
         onSelect={action(async () => {
           const domain = `${window.location.protocol}//${window.location.host}`;
-          const path = createRouteUrl(`${treeNode.path}/${treeNode.object.id}`);
+          const path = createRouteUrl({
+            object: treeNode.object,
+            relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
+          });
           await navigator.clipboard.writeText(`${domain}${path}`);
         })}
       >
