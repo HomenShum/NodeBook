@@ -1,6 +1,7 @@
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
@@ -20,6 +21,7 @@ type Props = {
  */
 export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeNode, isEditorEditable }: Props) {
   const tree = useTree();
+  const graphStore = useGraphStore();
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Only grab selection if  tree node
@@ -92,8 +94,6 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
             e.preventDefault();
             tree.indentSelection();
             break;
-          default:
-            e.preventDefault();
         }
       }}
       onClick={(e) => {
@@ -107,7 +107,23 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
       ref={inputRef}
       type="text"
       value=""
-      onChange={() => {}}
+      onChange={async (e) => {
+        // When a user types in the input, apply the content to the end of the
+        // node and then switch back into edit mode.
+        // Requested in https://ideaflowteam.slack.com/archives/C07FU15QKTP/p1729288027846699
+        if (treeNode.object instanceof GraphNode) {
+          e.preventDefault();
+          e.stopPropagation();
+          const content = e.target.value;
+          await graphStore.updateNode({
+            nodeId: treeNode.object.id,
+            nodeProps: {
+              content: [{ type: "text", value: content }, ...treeNode.object.content],
+            },
+          });
+          tree.setFocusedNode(treeNode.path, { anchorOffset: content.length, focusOffset: content.length }, true);
+        }
+      }}
     />
   );
 });
