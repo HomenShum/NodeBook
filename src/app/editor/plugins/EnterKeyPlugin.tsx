@@ -102,14 +102,14 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
       return false;
     }
 
-    function handleSplitNote(event: KeyboardEvent, inlineSplit = false) {
+    function handleSplitNote(event: KeyboardEvent) {
       const selection = $getSelection();
       if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
       if (!(treeNode instanceof DescendantTreeNode)) return false;
       event.preventDefault();
       event.stopPropagation();
       const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
-      tree.splitNote(treeNode, { before: chipsBefore, after: chipsAfter }, inlineSplit);
+      tree.splitNote(treeNode, { before: chipsBefore, after: chipsAfter });
       return true;
     }
 
@@ -124,14 +124,6 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
           } else {
             return handleSplit(event);
           }
-        }
-        if (treeNode.object.text === "" && treeNode.parent instanceof DescendantTreeNode) {
-          event.preventDefault();
-          tree.dedentSelection();
-          return true;
-        }
-        if (isNoteContent(treeNode) && treeNode.object.text === "---") {
-          return handleSplitNote(event, true);
         }
         if (!isNoteContent(treeNode) && ((viewType === "note" && childOfTreeRoot) || event.shiftKey)) {
           return handleConvertToNote(event);

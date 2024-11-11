@@ -14,6 +14,7 @@ import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
+import { MinusKeyPlugin } from "@/app/editor/plugins/MinusKeyPlugin";
 import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
 import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
@@ -63,6 +64,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <ReplacementPlugin />}
         {isEditorEditable && <ClearEditorPlugin />}
         {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
+        {isEditorEditable && <MinusKeyPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
         {isEditorEditable && <ArrowKeyPlugin />}
         {isEditorEditable && <BackspaceMergeNodesPlugin />}
