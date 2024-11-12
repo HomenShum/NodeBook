@@ -299,9 +299,14 @@ const Bullet = observer(function Bullet() {
 
 const Controls = observer(function Controls() {
   const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
+  const isFirstChildOfNoteContent =
+    treeNode.parentGroup.id === "noteContent" && treeNode.parentGroup.nodes[0].id === treeNode.id;
   return (
     <>
-      <div className={styles.RelatedObjectLeftHandler}>
+      <div
+        className={styles.RelatedObjectLeftHandler}
+        style={{ visibility: isFirstChildOfNoteContent ? "hidden" : "visible" }}
+      >
         <div className={styles.RelatedObjectActions}>
           <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
           {treeNode.childCount > 0 && <Toggle treeNode={treeNode} isHovered={isHovered} />}

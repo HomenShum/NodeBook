@@ -51,17 +51,20 @@ interface NoteContentSectionProps {
 }
 
 export const NoteContentSection = observer(function NoteContentSection({ parentNode, group }: NoteContentSectionProps) {
+  const viewStore = useViewStore();
   if (parentNode instanceof DescendantTreeNode && parentNode.instanceCountInPath > 1) {
     return <div>Circular reference to {`"${parentNode.object.text}"`}</div>;
   }
   if (group.nodes.length === 0) {
     return null;
   }
+  const topLevelNote = viewStore.viewType === "note" && parentNode.parent instanceof RootTreeNode;
+  const rootNote = parentNode instanceof RootTreeNode;
   return (
     <div>
       {group.nodes.map((treeNode, i) => {
         return (
-          <div key={treeNode.path}>
+          <div key={treeNode.path} style={{ marginLeft: topLevelNote || rootNote ? "0px" : "-20px" }}>
             <RelatedObjectView treeNode={treeNode} />
           </div>
         );

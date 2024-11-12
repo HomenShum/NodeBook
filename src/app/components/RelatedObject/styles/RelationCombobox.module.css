@@ -5,10 +5,15 @@
   font-size: 16px;
   gap: 2px;
   padding: 4px;
-  margin: 0;
+  margin: 2px 0 0 0;
   color: var(--gray-9);
   align-self: baseline;
   background-color: var(--gray-2);
+}
+
+/* Or try this more specific version */
+button.RelationComboboxLabel.RelationComboboxLabel:has(+ .NoteContentSection) {
+  margin-top: -4px;
 }
 
 .RelationComboboxLabel.RelationComboboxLabel:disabled {
