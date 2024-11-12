@@ -220,9 +220,9 @@ export class SublistRootTreeNode extends RootTreeNode {
   }
 
   protected hydrateChildren() {
-    //In sublist view, we do not want pinned items.
+    //In sublist view, we do not want "all" group items on root child list level.
     this.childrenGroups.forEach((group) => {
-      if (group.id === "pointer") {
+      if (group.id === "pointer" || group.id === "pinned") {
         group.hydrate();
       }
     });
