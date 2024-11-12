@@ -24,6 +24,24 @@ describe("KeywordTrieIndex", () => {
     expect(index.getIds("world")).toEqual([]);
   });
 
+  test("add and getIds with single word in parentheses or quotes", () => {
+    const obj = observable({ text: "({'hello" });
+    index.add("1", () => obj.text);
+
+    expect(index.getIds("hel")).toEqual(["1"]);
+    expect(index.getIds("hello")).toEqual(["1"]);
+    expect(index.getIds("world")).toEqual([]);
+  });
+
+  test("add and getIds with with URL text", () => {
+    const obj = observable({ text: "https://www.developer.mozilla.com" });
+    index.add("1", () => obj.text);
+
+    expect(index.getIds("devel")).toEqual(["1"]);
+    expect(index.getIds("moz")).toEqual(["1"]);
+    expect(index.getIds("google")).toEqual([]);
+  });
+
   test("add and getIds with multiple words", () => {
     const obj = observable({ text: "hello world" });
     index.add("1", () => obj.text);

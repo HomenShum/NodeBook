@@ -5,6 +5,7 @@ import appLogger from "@/lib/logger";
 const logger = appLogger.child({ service: "trie" });
 
 const SEP = /[\s/]+/;
+const PRE = new RegExp(/["'({[]+/, "");
 
 export interface CappedKeywordIndex {
   add(id: string, getText: () => string): void;
@@ -18,6 +19,11 @@ export class KeywordTrieIndex implements CappedKeywordIndex {
   maxPrefixLength: number;
   reactionDisposersById: Map<string, Set<() => void>> = new Map();
   allIds: Set<string> = new Set();
+  urlRegex = new RegExp(
+    /[(http(s)?):\/\/(www\.)?a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/,
+  );
+  urlPrefixRegex = new RegExp(/^(https?:\/\/)?(www\.)?/, "");
+  urlSplitRegex = new RegExp(/[.@]/, "");
 
   constructor(maxPrefixLength: number) {
     this.maxPrefixLength = maxPrefixLength;
@@ -64,6 +70,7 @@ export class KeywordTrieIndex implements CappedKeywordIndex {
     const keywords = text
       .toLocaleLowerCase()
       .split(SEP)
+      .map((word) => word.replace(PRE, ""))
       .filter((word) => word.length > 0);
     let ids: Set<string> | null = null;
     for (let word of keywords) {
@@ -88,7 +95,20 @@ export class KeywordTrieIndex implements CappedKeywordIndex {
   }
 
   private addIdToTrie(id: string, content: string) {
-    const words = content.toLocaleLowerCase().split(SEP);
+    const words = content
+      .toLocaleLowerCase()
+      .split(SEP)
+      .map((word) => word.replace(PRE, ""));
+    // if the content contains a URL, we want to index the distinct parts of the URL as well
+    if (this.urlRegex.test(content)) {
+      const urlKWMatches = content.match(this.urlRegex);
+      if (urlKWMatches) {
+        for (const match of urlKWMatches) {
+          const urlKws = match.replace(this.urlPrefixRegex, "").split(this.urlSplitRegex);
+          words.push(...urlKws);
+        }
+      }
+    }
     for (const word of words) {
       let node = this.root;
       for (let i = 0; i < Math.min(word.length, this.maxPrefixLength); i++) {
