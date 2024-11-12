@@ -1085,6 +1085,63 @@ export class Tree {
     }
   }
 
+  async convertToNote(treeNode: TreeNode) {
+    if (!(treeNode.object instanceof GraphNode)) {
+      logger.warn("Only nodes can be converted to note right now");
+      return false;
+    }
+    const txs: TxCombined = [];
+
+    // Add two children to the current node
+    const firstRelationId = uuid();
+    txs.push({
+      type: "addChildNode",
+      transaction: {
+        parentId: treeNode.object.id,
+        nodeProps: { content: treeNode.object.content },
+        relationProps: { id: firstRelationId },
+      },
+    });
+
+    const secondRelationId = uuid();
+    txs.push({
+      type: "addChildNode",
+      transaction: {
+        parentId: treeNode.object.id,
+        nodeProps: { content: "" },
+        relationProps: { id: secondRelationId },
+      },
+    });
+
+    // Clear the content of the current node
+    txs.push({
+      type: "updateNode",
+      transaction: {
+        nodeId: treeNode.object.id,
+        nodeProps: { content: "" },
+      },
+    });
+
+    // Add relation to note content list
+    txs.push({
+      type: "addRelationToList",
+      transaction: {
+        objectId: treeNode.object.id,
+        relationId: [firstRelationId, secondRelationId],
+        listType: "noteContent",
+      },
+    });
+
+    this.graphStore.applyCombinedTransaction(txs).then(() => {
+      const secondRelation = this.graphStore.getRelation(secondRelationId);
+      if (secondRelation) {
+        const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
+        this.setFocusedNode(path);
+      }
+    });
+    return true;
+  }
+
   /**
    * Moves the selected or focused nodes up one step.
    */

@@ -61,10 +61,14 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
         switch (e.key) {
           case "Enter":
             e.preventDefault();
-            await tree.split(treeNode, {
-              before: [],
-              after: (treeNode.object && treeNode.object instanceof GraphNode && treeNode.object.content) || [],
-            });
+            if (e.shiftKey) {
+              await tree.convertToNote(treeNode);
+            } else {
+              await tree.split(treeNode, {
+                before: [],
+                after: (treeNode.object && treeNode.object instanceof GraphNode && treeNode.object.content) || [],
+              });
+            }
             break;
           case "Backspace":
             if (!treeNode.object.isLocal) {

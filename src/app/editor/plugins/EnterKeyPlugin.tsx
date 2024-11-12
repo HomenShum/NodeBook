@@ -6,11 +6,9 @@ import { useEffect } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { isNoteContent } from "@/app/tree/utils";
-import { uuid } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import appLogger from "@/lib/logger";
 
@@ -50,56 +48,9 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
       }
       event.preventDefault();
       event.stopPropagation();
-      const txs: TxCombined = [];
 
-      // Add two children to the current node
-      const firstRelationId = uuid();
-      txs.push({
-        type: "addChildNode",
-        transaction: {
-          parentId: treeNode.object.id,
-          nodeProps: { content: treeNode.object.content },
-          relationProps: { id: firstRelationId },
-        },
-      });
-
-      const secondRelationId = uuid();
-      txs.push({
-        type: "addChildNode",
-        transaction: {
-          parentId: treeNode.object.id,
-          nodeProps: { content: "" },
-          relationProps: { id: secondRelationId },
-        },
-      });
-
-      // Clear the content of the current node
-      txs.push({
-        type: "updateNode",
-        transaction: {
-          nodeId: treeNode.object.id,
-          nodeProps: { content: "" },
-        },
-      });
-
-      // Add relation to note content list
-      txs.push({
-        type: "addRelationToList",
-        transaction: {
-          objectId: treeNode.object.id,
-          relationId: [firstRelationId, secondRelationId],
-          listType: "noteContent",
-        },
-      });
-
-      graphStore.applyCombinedTransaction(txs).then(() => {
-        const secondRelation = graphStore.getRelation(secondRelationId);
-        if (secondRelation) {
-          const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
-          tree.setFocusedNode(path);
-        }
-      });
-      return false;
+      tree.convertToNote(treeNode);
+      return true;
     }
 
     function handleSplitNote(event: KeyboardEvent) {

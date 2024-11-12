@@ -55,7 +55,11 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
         switch (e.key) {
           case "Enter":
             e.preventDefault();
-            await tree.split(treeNode);
+            if (e.shiftKey) {
+              await tree.convertToNote(treeNode);
+            } else {
+              await tree.split(treeNode);
+            }
             break;
           case "Backspace":
             if (!treeNode.object.isLocal) {
