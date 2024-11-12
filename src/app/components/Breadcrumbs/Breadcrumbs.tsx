@@ -1,7 +1,7 @@
 "use client";
 import { ChevronRight, Command, Ellipsis, Home, Lock, Unlock } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
@@ -193,7 +193,8 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
     [treeNode, ancestors, setRoot],
   );
 
-  const handlePublicModeChange = useCallback(() => {
+  const handlePublicModeChange = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation();
     const newIsPublic = !settingsStore.publicMode;
     settingsStore.setPublicMode(newIsPublic);
 
@@ -226,8 +227,13 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
           })),
         );
       }
+
+      if(selection?.type === "editor"){
+        tree.setFocusedNode(selection.treeNodeId, selection.position, selection.editMode);
+      }
+
     }
-  }, [graphStore, settingsStore, tree.selection, tree.selectionWithNodes]);
+  }, [graphStore, settingsStore, tree]);
 
   return (
     <>
@@ -260,7 +266,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
               data-tooltip={settingsStore.publicMode ? "Public mode" : "Private mode"}
               variant={settingsStore.publicMode ? "active" : "default"}
               size="icon"
-              onClick={handlePublicModeChange}
+              onClick={(event) => handlePublicModeChange(event)}
             >
               {settingsStore.publicMode ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
             </Button>

@@ -113,6 +113,7 @@ export class GraphStore {
         load: action,
         cleanup: action,
         resetAndLoad: action,
+        applyCombinedTransaction: action,
       });
     }
   }
