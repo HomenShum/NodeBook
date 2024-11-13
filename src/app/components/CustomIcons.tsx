@@ -12,7 +12,7 @@ export const SublistIcon = () => (
 
 export const ParentRelationIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="10" fill="none">
-    <path 
+    <path
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -156,5 +156,26 @@ export const SplitIcon = ({ className }: { className?: string }) => (
       strokeWidth="1.2"
       d="M7 1h4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H7M7 1v12M7 1H3a2 2 0 0 0-2 2v8c0 1.1.9 2 2 2h4M4.5 9 3.18 7.4a.54.54 0 0 1 0-.78L4.5 5m5 4 1.34-1.6a.54.54 0 0 0 0-.78L9.5 5"
     />
+  </svg>
+);
+
+export const CyclicIcon = ({ className, onClick }: { className?: string; onClick: () => void }) => (
+  <svg width="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <path
+      d="M50 20 
+   a 30 30 0 1 1 -20 35"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="8"
+      height="8"
+      markerEnd="url(#arrowhead)"
+      transform="rotate(30 50 50)"
+    />
+    <defs>
+      <marker id="arrowhead" markerWidth="6" markerHeight="10" refX="0" refY="2" orient="auto">
+        <polygon points="0 0, 3.5 2, 0 4" fill="currentColor" />
+      </marker>
+    </defs>
+    <rect className="btn" x="0" y="0" width="100%" height="100%" fillOpacity="0" strokeWidth="0" onClick={onClick} />
   </svg>
 );

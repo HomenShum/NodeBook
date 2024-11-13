@@ -1,8 +1,8 @@
-import { Circle, Dot, Play } from "lucide-react";
+import { Dot, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
-import { PinCustomIcon } from "@/app/components/CustomIcons";
+import { CyclicIcon, PinCustomIcon } from "@/app/components/CustomIcons";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -286,9 +286,7 @@ const Bullet = observer(function Bullet() {
         </>
       ) : (
         // Hollow circle if this node has appeared in the path more than once
-        <Circle
-          strokeWidth={6}
-          height={8}
+        <CyclicIcon
           className={cn(styles.Circle, { [styles.CirclePrivate]: !treeNode.object.isPublic })}
           onClick={handleBulletClick}
         />
