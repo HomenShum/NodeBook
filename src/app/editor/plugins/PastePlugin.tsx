@@ -45,9 +45,11 @@ export const PastePlugin = () => {
         if (!(object instanceof GraphNode) || !event.clipboardData) return false;
 
         const mewData = event.clipboardData.getData(MEW_CLIPBOARD_MIMETYPE);
-        const lines = mewData
-          ? getLinesFromMewData(mewData, shiftKey)
-          : getLinesFromPlainText(event.clipboardData.getData("text/plain"), shiftKey);
+        const lines = normalizeDepth(
+          mewData
+            ? getLinesFromMewData(mewData, shiftKey)
+            : getLinesFromPlainText(event.clipboardData.getData("text/plain"), shiftKey),
+        );
 
         if (lines.length > 0) {
           const txs: TxCombined = [];
@@ -72,7 +74,8 @@ export const PastePlugin = () => {
 
           // Add to this arrays as depth increases during iterating over lines, remove as it decreases
           const objectsAtDepth: string[] = [treeNode.parent.object.id, object.id];
-          const relationsAtDepth: string[] = [relationWithParent.id];
+          const relationsAtDepth: string[] = ["UNUSED", relationWithParent.id];
+          let lastDepth = 0;
 
           // Then for the remaining lines, create children positioned after the correct parent
           lines.forEach(({ chips, depth }) => {
@@ -85,7 +88,7 @@ export const PastePlugin = () => {
                 parentId: objectsAtDepth[depth],
                 nodeProps: { id: newNodeId, content: chips },
                 relationProps: { id: relationId },
-                after: relationsAtDepth[depth],
+                after: relationsAtDepth[depth + 1],
               },
             });
 
@@ -95,13 +98,20 @@ export const PastePlugin = () => {
               txs.push({
                 type: "addRelationToList",
                 transaction: {
-                  objectId: treeNode.parent.object.id,
+                  objectId: objectsAtDepth[depth],
                   relationId: relationId,
                   listType: groupId,
-                  after: relationsAtDepth[depth],
+                  after: relationsAtDepth[depth + 1],
                 },
               });
             }
+
+            // When we go a level more shallow, remove the objects and relations up of the current level
+            if (depth < lastDepth) {
+              objectsAtDepth.splice(depth + 1);
+              relationsAtDepth.splice(depth + 1);
+            }
+            lastDepth = depth;
 
             objectsAtDepth[depth + 1] = newNodeId;
             relationsAtDepth[depth + 1] = relationId;
@@ -140,7 +150,7 @@ const getLinesFromMewData = (mewData: string, shiftKey: boolean): ChipsWithConte
     : chipParts; // Or just use the chips for the same number of nodes
 };
 
-const getLinesFromPlainText = (text: string, shiftKey: boolean): ChipsWithContext[] => {
+export const getLinesFromPlainText = (text: string, shiftKey: boolean): ChipsWithContext[] => {
   return shiftKey
     ? [{ chips: transformTextToChips(text), depth: 0 }]
     : text
@@ -153,7 +163,7 @@ const getLinesFromPlainText = (text: string, shiftKey: boolean): ChipsWithContex
 };
 
 /** Add 1 depth for each tab or each 2 spaces at the beginning of the line */
-const getDepthFromTextOffset = (line: string): { depth: number; remainingText: string } => {
+export const getDepthFromTextOffset = (line: string): { depth: number; remainingText: string } => {
   let depth = 0;
 
   for (let i = 0; i < line.length; i++) {
@@ -165,11 +175,34 @@ const getDepthFromTextOffset = (line: string): { depth: number; remainingText: s
         spaces++;
         i++;
       }
-      depth += Math.floor(spaces / 4);
+      depth += Math.floor(spaces / 2);
     } else {
       break;
     }
   }
 
   return { depth, remainingText: line.replace(/^\s+/, "") };
+};
+
+/**
+ * Make sure that any next line is at most 1 level deeper than the current line
+ * That way, all nested nodes will have a parent
+ */
+export const normalizeDepth = (lines: ChipsWithContext[]): ChipsWithContext[] => {
+  const depthsMap = new Map<number, number>();
+  let lastDepth = 0;
+
+  return lines.map(({ chips, depth }) => {
+    let newDepth: number;
+
+    if (depth - lastDepth > 1 && !depthsMap.has(depth)) {
+      newDepth = lastDepth + 1;
+      depthsMap.set(depth, newDepth);
+    } else {
+      newDepth = depthsMap.get(depth) ?? depth;
+    }
+
+    lastDepth = newDepth;
+    return { chips, depth: newDepth };
+  });
 };
