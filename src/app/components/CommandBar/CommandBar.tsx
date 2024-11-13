@@ -156,12 +156,12 @@ const CommandBar = observer(() => {
         case "ArrowDown":
           e.preventDefault();
           e.stopPropagation();
-          setSelectedIndex((prevIndex) => Math.min(prevIndex + 1, filteredCommands.length - 1));
+          setSelectedIndex((prevIndex) => (prevIndex + 1 >= filteredCommands.length ? 0 : prevIndex + 1));
           break;
         case "ArrowUp":
           e.preventDefault();
           e.stopPropagation();
-          setSelectedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+          setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : filteredCommands.length - 1));
           break;
         case "Tab":
         case "Enter":
