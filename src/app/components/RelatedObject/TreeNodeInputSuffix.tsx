@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -51,7 +51,8 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
           tree.setFocusedNode(treeNode.path);
         }
       }}
-      onKeyDown={async (e) => {
+      onKeyDown={async (e: React.KeyboardEvent) => {
+        const isMod = e.metaKey || e.ctrlKey;
         switch (e.key) {
           case "Enter":
             e.preventDefault();
@@ -75,11 +76,24 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
           case "ArrowRight":
           case "ArrowDown":
             e.preventDefault();
-            tree.moveEditorSelectionDown("start");
+            e.stopPropagation();
+            e.nativeEvent.stopImmediatePropagation();
+            if (isMod && e.shiftKey) {
+              tree.moveSelectedNodesDown();
+              break;
+            }
+            isMod ? tree.expandAtSelection() : tree.moveEditorSelectionDown("start");
             break;
           case "ArrowUp":
             e.preventDefault();
-            tree.moveEditorSelectionUp("end");
+            e.stopPropagation();
+            e.nativeEvent.stopImmediatePropagation();
+            if (isMod && e.shiftKey) {
+              console.log("Before moveSelectedNodesUp");
+              tree.moveSelectedNodesUp();
+              break;
+            }
+            e.metaKey || e.ctrlKey ? tree.collapseAtSelection() : tree.moveEditorSelectionUp("start");
             break;
           case "ArrowLeft":
             e.preventDefault();
