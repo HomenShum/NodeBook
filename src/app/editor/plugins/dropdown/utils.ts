@@ -6,7 +6,8 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphRelationType } from "@/app/graph/types";
-import { TreeNode } from "@/app/tree/nodes";
+import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
+import { isNoteContent } from "@/app/tree/utils";
 
 export type NodeType = "node" | "relation" | "relationType";
 
@@ -122,9 +123,18 @@ export const useGetMatchesForTreeNode = (maxResults: number, treeNode: TreeNode)
   return useCallback(
     (text: string, types?: NodeType[]) => {
       const matches = getMatches(graphStore, text, types, maxResults);
+      const isNote = isNoteContent(treeNode);
       return matches.filter((match) => {
         if (match.type === "node") {
-          return match.object.id !== treeNode.object.id;
+          // If it's a note, we must ensure that this match isn't a reference to the note's root node
+          if (match.object.id === treeNode.object.id) {
+            return false; // don't do reflexive relations
+          } else if (isNote && treeNode instanceof DescendantTreeNode) {
+            // Don't allow the note to reference its parent if the parent is a note
+            return match.object.id !== treeNode.parentGroup.parent.object.id;
+          } else {
+            return true;
+          }
         }
         if (match.type === "relation") {
           return (
