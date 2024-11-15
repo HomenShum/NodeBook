@@ -53,7 +53,6 @@ export const PastePlugin = () => {
 
         if (lines.length > 0) {
           const txs: TxCombined = [];
-
           // Insert the first line into the current node
           const firstLine = lines.shift();
           if (firstLine) {
@@ -121,7 +120,6 @@ export const PastePlugin = () => {
             tree.setFocusedNode(path);
             // TODO : expand all newly added nodes
           });
-
           return true;
         }
         return false;

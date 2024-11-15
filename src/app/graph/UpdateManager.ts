@@ -135,26 +135,22 @@ export class UpdateManager {
     this.applyGraphUpdates(inverted);
   }
 
-  private isLinkUpdate(updates: GraphUpdate[]) {
+  private isTextSame(updates: GraphUpdate[]) {
     // Compare oldProps to newProps to see if the update is a link conversion
-    if (
-      updates.length === 0 ||
-      updates[0].operation !== "updateNode" ||
-      !updates[0].newProps.content.some((chip) => chip.type === "link") // make sure the newProps has links in it
-    ) {
+    if (updates.length === 0 || updates[0].operation !== "updateNode") {
       return false;
     }
-    // Now we know that newProps has links in it. We just have to make sure the link is a new link rather than an old link.
-    const oldLinks = updates[0].oldProps.content.filter((chip) => chip.type === "link");
-    const newLinks = updates[0].newProps.content.filter((chip) => chip.type === "link");
-    // If there are more newLinks, then we've added a new link.
-    return newLinks.length > oldLinks.length;
+    // Check if the text content is all the same. If it is, then this is part of the previous update so return true.
+    const oldText = updates[0].oldProps.content.map((chip) => chip.value).join("");
+    const newText = updates[0].newProps.content.map((chip) => chip.value).join("");
+
+    return oldText === newText;
   }
 
   queueUpdates(updates: GraphUpdate[]) {
     // If the update is an updateNode link conversion, add it to the most recent element on the undoStack
     // because if not, then the undo will not work.
-    if (this.isLinkUpdate(updates) && this.undoStack.length > 0) {
+    if (this.undoStack.length > 0 && this.isTextSame(updates)) {
       this.undoStack[this.undoStack.length - 1].push(updates[0]);
     } else {
       this.undoStack.push(updates);
