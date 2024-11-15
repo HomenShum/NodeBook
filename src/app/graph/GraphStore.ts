@@ -2244,6 +2244,49 @@ export class GraphStore {
     }
     return results;
   }
+
+  getRelationsFrom(node: GraphNode): GraphRelation[] {
+    return Array.from(this.relationsById.values()).filter((r) => r.from.id === node.id);
+  }
+
+  getAllPaths(from: GraphNode, to: GraphNode[]): Array<Array<string> | null> {
+    // BFS from the one "from" node to find all shortest paths to the target "to" nodes
+    // Caches current shortest paths so that we can use dynamic programming to find longer paths.
+    // We only implement this for paths from nodes to nodes, so we must check that nextNode is a node.
+    // Pays special attention to cycles and such.
+
+    // NOTE: This is only optimal for unweighted edges. If in the future we want e.g. nonlocal edges
+    //  to "cost" more, we should implement Dijkstra's algorithm instead.
+
+    const paths: Array<Array<string> | null> = to.map(() => null);
+    const queue: Array<[GraphNode, number, Array<string>, Array<string>]> = [[from, 0, [from.id], []]];
+    const visited = new Set<string>();
+
+    while (queue.length > 0) {
+      const [node, depth, path, relationPath] = queue.shift()!;
+
+      // Check if this node is one of our targets
+      const targetIndex = to.findIndex((target) => target.id === node.id);
+      if (targetIndex !== -1 && paths[targetIndex] === null) {
+        paths[targetIndex] = relationPath;
+      }
+
+      // Don't revisit nodes or go too deep
+      if (visited.has(node.id) || depth > 20) continue;
+      visited.add(node.id);
+
+      // Get all relations from this node
+      const relations = this.getRelationsFrom(node);
+      for (const relation of relations) {
+        const nextNode = relation.to;
+        if (nextNode instanceof GraphNode) {
+          queue.push([nextNode, depth + 1, [...path, nextNode.id], [...relationPath, relation.id]]);
+        }
+      }
+    }
+
+    return paths;
+  }
 }
 
 type Query = {

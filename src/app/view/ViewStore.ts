@@ -1,9 +1,10 @@
 import { LexicalEditor } from "lexical";
-import { action, isObservable, makeAutoObservable, observable } from "mobx";
+import { action, computed, isObservable, makeAutoObservable, observable } from "mobx";
 
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
+import { SearchTree } from "@/app/tree/SearchTree";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Path, Root, Tree } from "@/app/tree/Tree";
 import { makeAutoSaving } from "@/app/util";
@@ -18,6 +19,7 @@ export class ViewStore {
   public viewType = ViewType.Outline;
   public treeView: Tree;
   public sublistView: Tree;
+  public searchView: SearchTree;
 
   public hoveredNode: Path | null = null;
 
@@ -40,6 +42,7 @@ export class ViewStore {
   public sidebarWidth = 268;
   public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | null = null;
   public isCommandBarOpen: boolean = false;
+  private deepSearching: boolean = false;
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.isCommandBarOpen = false;
@@ -55,6 +58,7 @@ export class ViewStore {
     this.graphStore = graphStore;
     this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.sublistView = new SublistTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
+    this.searchView = new SearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
   }
 
   /**
@@ -63,12 +67,19 @@ export class ViewStore {
    * This method returns the appropriate tree based on the current view type and flatten sublists setting.
    */
   get mainView() {
-    return this.flattenSublists ? this.sublistView : this.treeView;
+    if (this.deepSearching) {
+      return this.searchView;
+    } else if (this.flattenSublists) {
+      return this.sublistView;
+    } else {
+      return this.treeView;
+    }
   }
 
   setRoot(root: Root, path: Path) {
     this.treeView.setRoot(root, path);
     this.sublistView.setRoot(root, path);
+    this.searchView.setRoot(root, path);
   }
 
   makeObservable() {
@@ -82,8 +93,14 @@ export class ViewStore {
         handleMouseDown: action,
         handleMouseMove: action,
         handleMouseUp: action,
+        setDeepSearching: action,
+        isDeepSearching: computed,
       });
     }
+  }
+
+  setDeepSearching(deepSearching: boolean) {
+    this.deepSearching = deepSearching;
   }
 
   setViewType(viewType: ViewType) {
@@ -95,9 +112,31 @@ export class ViewStore {
   }
 
   setSearchQuery(query: string) {
+    // We redo the search entirely after every modification of the search bar.
+    // This is temporary; can see this being a problem with huge graphs.
+    // The reason this is here for now is because Workflowy does updates to the search
+    //  tree after a delay rel. to the latest update in the search bar, and I'm not sure
+    //  if we want to mimic that exact same thing. We can adjust this relatively simply.
+
+    if (query === "" && this.searchQuery !== "") {
+      this.searchView.clearSearch(this.treeView.root);
+      this.searchQuery = "";
+      return;
+    }
     this.searchQuery = query;
-    this.treeView.setSearch(query);
-    this.sublistView.setSearch(query);
+    this.searchView.clearSearch(this.treeView.root);
+    this.searchView.deepSearch(query);
+  }
+
+  get isDeepSearching() {
+    return this.deepSearching;
+  }
+
+  cancelDeepSearch() {
+    // By setting deepSearching to false, we will exit out of the search tree view.
+    this.setDeepSearching(false);
+    this.setSearchQuery("");
+    this.searchView.clearSearch(this.treeView.root);
   }
 
   cleanup() {

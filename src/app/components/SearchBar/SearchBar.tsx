@@ -19,6 +19,7 @@ export const SearchBar = observer(function SearchBar() {
     (e: React.FocusEvent) => {
       if (!containerRef.current?.contains(e.relatedTarget as Node) && !viewStore.searchQuery) {
         setIsExpanded(false);
+        viewStore.cancelDeepSearch();
       }
     },
     [viewStore],
@@ -27,7 +28,7 @@ export const SearchBar = observer(function SearchBar() {
   const handleCancelClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      viewStore.setSearchQuery("");
+      viewStore.cancelDeepSearch();
       setIsExpanded(false);
       inputRef.current?.blur();
     },
@@ -50,7 +51,6 @@ export const SearchBar = observer(function SearchBar() {
 
   const handleInputChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      console.log("handleInputChange", e.target, e.target.value);
       viewStore.setSearchQuery(e.target.value);
     },
     [viewStore],
@@ -74,11 +74,16 @@ export const SearchBar = observer(function SearchBar() {
         className={styles.SearchContent}
         value={viewStore.searchQuery}
         onChange={handleInputChange}
-        onFocus={() => setIsExpanded(true)}
+        onFocus={() => {
+          setIsExpanded(true);
+          viewStore.setDeepSearching(true);
+        }}
         onBlur={handleBlur}
         onKeyDown={action((e) => {
           if (e.key === "Escape") {
-            viewStore.setSearchQuery("");
+            // NOTE: Vimium will screw this up! It will override custom ESC behavior
+            setIsExpanded(false);
+            viewStore.cancelDeepSearch();
           } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
             viewStore.mainView.createChildOfRootAndFocus({

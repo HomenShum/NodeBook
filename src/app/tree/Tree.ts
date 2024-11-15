@@ -237,14 +237,12 @@ export class Tree {
     logger.debug("Creating tree");
     const rootTreeNode = new RootTreeNode({ tree: this }).hydrate();
     this.applyFilter(rootTreeNode);
-    this.applySearch(rootTreeNode);
     this.applySort(rootTreeNode);
     return {
       root: rootTreeNode,
       descendantTreeNodesById: createDescendantTreeNodesById(rootTreeNode),
     };
   }
-
   get root() {
     return this.state.root;
   }
@@ -1450,7 +1448,7 @@ export class Tree {
   }
 }
 
-type Filter = {
+export type Filter = {
   hideBackrelations: boolean;
   hideAllParents: boolean;
   hideAllRootParents: boolean;

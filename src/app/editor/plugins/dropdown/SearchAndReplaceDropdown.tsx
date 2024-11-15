@@ -131,7 +131,6 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
       editor.registerCommand(
         KEY_ESCAPE_COMMAND,
         (event) => {
-          console.log("escape");
           if (event) {
             event.preventDefault();
             event.stopPropagation();
