@@ -55,6 +55,7 @@ export const PastePlugin = () => {
           const txs: TxCombined = [];
           // Insert the first line into the current node
           const firstLine = lines.shift();
+          const groupId = treeNode.parentGroup.id;
           if (firstLine) {
             const selection = $getSelection();
             let newContent: Chip[];
@@ -69,6 +70,10 @@ export const PastePlugin = () => {
 
             // Depth is ignored for the first line, since we just add it to the current node
             txs.push({ type: "updateNode", transaction: { nodeId: object.id, nodeProps: { content: newContent } } });
+
+            // If there are chips with links, add the links as children nodes of the current node.
+            // The parent of these nodes will be the current node.
+            txs.push(...getLinkAdditionTxs(firstLine.chips, object.id, groupId));
           }
 
           // Add to this arrays as depth increases during iterating over lines, remove as it decreases
@@ -91,8 +96,9 @@ export const PastePlugin = () => {
               },
             });
 
+            txs.push(...getLinkAdditionTxs(chips, newNodeId, groupId));
+
             // Add the newly created relations to the same group as this node's parent
-            const groupId = treeNode.parentGroup.id;
             if (groupId === "pinned" || groupId === "noteContent") {
               txs.push({
                 type: "addRelationToList",
@@ -128,6 +134,35 @@ export const PastePlugin = () => {
     );
   }, [object, relationWithParent, graphStore, editor, path, tree, treeNode]);
   return null;
+};
+
+const getLinkAdditionTxs = (chips: Chip[], parentId: string, groupId: string) => {
+  // If the firstline consists of only a single link chip, return an empty array
+  if (chips.length === 1 && chips[0].type === "link") {
+    return [];
+  }
+  // This is just to get the unique links from the chips. Thank you Brendan Eich.
+  const links = Array.from(new Set(chips.filter((chip) => chip.type === "link").map((chip) => chip.value)))
+    .map((value) => {
+      return chips.find((chip) => chip.type === "link" && chip.value === value);
+    })
+    .filter((chip) => chip !== undefined) as Chip[];
+  const txs: TxCombined = [];
+
+  links.forEach((link) => {
+    const newNodeId = uuid();
+    const relationId = uuid();
+
+    txs.push({
+      type: "addChildNode",
+      transaction: {
+        parentId: parentId,
+        nodeProps: { id: newNodeId, content: [link] },
+        relationProps: { id: relationId },
+      },
+    });
+  });
+  return txs;
 };
 
 const getLinesFromMewData = (mewData: string, shiftKey: boolean): ChipsWithContext[] => {
