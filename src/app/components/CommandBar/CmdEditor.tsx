@@ -115,7 +115,7 @@ export const CmdEditor = ({ dropdownContainerRef, onChange, initialValue }: Prop
       <OnChangePlugin onChange={onChange} />
       <CommandBarMentionDropdown dropdownContainerRef={dropdownContainerRef} />
       <PreventEnterPlugin />
-      <ReplacementPlugin />
+      <ReplacementPlugin treeNode={null} />
     </LexicalComposer>
   );
 };

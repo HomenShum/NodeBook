@@ -48,7 +48,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
         <DropdownPlugin treeNode={treeNode} />
         <EnterKeyPlugin treeNode={treeNode} />
         <IgnoreModShiftAPlugin />
-        <ReplacementPlugin />
+        <ReplacementPlugin treeNode={treeNode} />
         <ClearEditorPlugin />
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         {treeNode.object instanceof GraphNode && (

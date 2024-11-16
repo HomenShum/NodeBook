@@ -61,7 +61,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         />
         <SyncWithModelsPlugin node={treeNode.object} treeNodeId={treeNode.id} />
         {isEditorEditable && <LinkPlugin />}
-        {isEditorEditable && <ReplacementPlugin />}
+        {isEditorEditable && <ReplacementPlugin treeNode={treeNode} />}
         {isEditorEditable && <ClearEditorPlugin />}
         {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
         {isEditorEditable && <MinusKeyPlugin treeNode={treeNode} />}
