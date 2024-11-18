@@ -9,7 +9,7 @@
   color: "#0b0b79";
   text-decoration: underline var(--gray-3);
   color: var(--teal-11);
-  cursor: default;  
+  cursor: default;
 }
 
 .MentionNode::before {
@@ -29,7 +29,7 @@
 .LinkNode {
   color: var(--teal-11);
   text-decoration: none;
-  cursor: pointer;  
+  cursor: pointer;
 }
 
 .LinkNode:hover {
@@ -38,7 +38,8 @@
 
 .PlaceholderTitle {
   color: var(--gray-8);
-  
+  padding: 0 2px;
+
   overflow: hidden;
   text-overflow: ellipsis;
   transform: translateY(-100%);

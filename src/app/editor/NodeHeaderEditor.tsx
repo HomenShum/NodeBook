@@ -30,6 +30,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
 
   const editable = !user.isAnonymous && treeNode.object instanceof GraphNode;
   const handleMentionNodeClick = useClickableMention(treeNode);
+  const isNote = treeNode.object.noteContentRelationsList.size > 0;
 
   return (
     <div>
@@ -43,7 +44,11 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
         <PlainTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
           contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
-          placeholder={<span className={styles.PlaceholderTitle}>Untitled</span>}
+          placeholder={
+            <span className={styles.PlaceholderTitle}>
+              {isNote ? <em style={{ marginRight: 3 }}>Multiline Note - Untitled</em> : "Untitled"}
+            </span>
+          }
         />
         <DropdownPlugin treeNode={treeNode} />
         <EnterKeyPlugin treeNode={treeNode} />
