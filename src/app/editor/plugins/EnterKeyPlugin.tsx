@@ -46,10 +46,12 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
         logger.warn("Only nodes can be converted to note right now");
         return false;
       }
+      const selection = $getSelection();
+      if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
       event.preventDefault();
       event.stopPropagation();
-
-      tree.convertToNote(treeNode);
+      const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
+      tree.splitIntoNote(treeNode, { before: chipsBefore, after: chipsAfter });
       return true;
     }
 

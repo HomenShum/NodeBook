@@ -1088,12 +1088,18 @@ export class Tree {
     }
   }
 
-  async convertToNote(treeNode: TreeNode) {
+  /**
+   * Takes the content of the current node, splits it into two new nodes, and
+   * adds them as note content of the current node.
+   */
+  async splitIntoNote(treeNode: TreeNode, chips?: { before: Chip[]; after: Chip[] }) {
     if (!(treeNode.object instanceof GraphNode)) {
       logger.warn("Only nodes can be converted to note right now");
       return false;
     }
     const txs: TxCombined = [];
+    const chipsBefore = chips ? chips.before : treeNode.object.content;
+    const chipsAfter = chips ? chips.after : [];
 
     // Add two children to the current node
     const firstRelationId = uuid();
@@ -1101,7 +1107,7 @@ export class Tree {
       type: "addChildNode",
       transaction: {
         parentId: treeNode.object.id,
-        nodeProps: { content: treeNode.object.content },
+        nodeProps: { content: chipsBefore },
         relationProps: { id: firstRelationId },
       },
     });
@@ -1111,7 +1117,7 @@ export class Tree {
       type: "addChildNode",
       transaction: {
         parentId: treeNode.object.id,
-        nodeProps: { content: "" },
+        nodeProps: { content: chipsAfter },
         relationProps: { id: secondRelationId },
       },
     });
@@ -1139,7 +1145,7 @@ export class Tree {
       const secondRelation = this.graphStore.getRelation(secondRelationId);
       if (secondRelation) {
         const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
-        this.setFocusedNode(path);
+        this.setFocusedNode(path, "start", true);
       }
     });
     return true;

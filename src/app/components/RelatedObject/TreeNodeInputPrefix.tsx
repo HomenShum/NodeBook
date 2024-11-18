@@ -65,7 +65,7 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
           case "Enter":
             e.preventDefault();
             if (e.shiftKey) {
-              await tree.convertToNote(treeNode);
+              await tree.splitIntoNote(treeNode);
             } else {
               await tree.split(treeNode, {
                 before: [],
