@@ -50,7 +50,7 @@ export const PastePlugin = () => {
             ? getLinesFromMewData(mewData, shiftKey)
             : getLinesFromPlainText(event.clipboardData.getData("text/plain"), shiftKey),
         );
-
+        let allNewRelationIds: string[] = [];
         if (lines.length > 0) {
           const txs: TxCombined = [];
           // Insert the first line into the current node
@@ -85,7 +85,7 @@ export const PastePlugin = () => {
           lines.forEach(({ chips, depth }) => {
             const newNodeId = uuid();
             const relationId = uuid();
-
+            allNewRelationIds.push(relationId);
             txs.push({
               type: "addChildNode",
               transaction: {
@@ -99,7 +99,7 @@ export const PastePlugin = () => {
             txs.push(...getLinkAdditionTxs(chips, newNodeId, groupId));
 
             // Add the newly created relations to the same group as this node's parent
-            if (groupId === "pinned" || groupId === "noteContent") {
+            if (groupId === "pinned") {
               txs.push({
                 type: "addRelationToList",
                 transaction: {
@@ -124,7 +124,14 @@ export const PastePlugin = () => {
 
           graphStore.applyCombinedTransaction(txs).then(() => {
             tree.setFocusedNode(path);
-            // TODO : expand all newly added nodes
+            // Retreive all new node paths from tree.state using the list of all new relations.
+            // We require that treeNode's path is a prefix.
+            const allPaths = tree.state.descendantTreeNodesById.keys();
+            const prefix = treeNode.path;
+            const newPaths = Array.from(allPaths).filter((path) => path.startsWith(prefix));
+            for (const path of newPaths) {
+              tree.setPathExpanded(path, true);
+            }
           });
           return true;
         }
