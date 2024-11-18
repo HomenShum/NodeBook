@@ -47,7 +47,15 @@ export class SearchTree extends Tree {
     for (const path of paths) {
       let curPath = "";
       for (const rel of path) {
-        curPath = createPath(curPath, "all", rel);
+        // if the relation list associated with this relation is of type noteContent, then use 'noteContent' instead of 'all'
+        const fromNodeId = this.graphStore.getRelationOrThrow(rel).from;
+        const noteContent = this.graphStore.getRelationList(fromNodeId, "noteContent");
+        if (noteContent.size > 0) {
+          curPath = createPath(curPath, "noteContent", rel);
+        } else {
+          curPath = createPath(curPath, "all", rel);
+        }
+
         if (!(curPath in this.searchExpansions)) {
           this.setPathExpanded(curPath, true);
           this.searchExpansions.add(rel);
