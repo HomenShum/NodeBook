@@ -7,21 +7,22 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $createParagraphMatchingGraphNode, $getChips, graphNodeMatchesParagraph } from "@/app/editor/utils/content";
 import { $getSelectionPosition, $setSelectionFromTree, sameSelectionPositions } from "@/app/editor/utils/selection";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useTree } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
+import { TreeNode } from "@/app/tree/nodes";
 
 interface Props {
   node: GraphNode;
-  treeNodeId: string;
+  treeNode: TreeNode;
 }
 
 /**
  * Sync the editor content and selection with the graph node content and selection.
  */
-export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node, treeNodeId }: Props) {
+export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node, treeNode }: Props) {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  const tree = useTree();
+  const treeNodeId = treeNode.id;
+  const tree = treeNode.tree;
   const viewStore = useViewStore();
 
   // Editor -> App state: update the app state to match the editor content
@@ -96,9 +97,13 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
           break;
         }
         case "node": {
+          // When the selection switches to node type, blur all editors
           if (isFocused) {
-            // When the selection switches to node type, blur all editors
-            editor.blur();
+            // If focused, remove focus from editor so we do not see the
+            // cursor but keep it in the same pane/div because we listen
+            // for keydown events on its ancestor, OutlineContent.tsx.
+            // editor.blur();
+            document.getElementById(treeNode.tree.id)?.focus();
           }
           break;
         }
@@ -130,7 +135,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
         editor.update($applyTreeSelectionToEditor);
       }
     });
-  }, [editor, tree, treeNodeId, tree.selection, viewStore.isMouseUpAfterDrag]);
+  }, [editor, tree, treeNodeId, tree.selection, viewStore.isMouseUpAfterDrag, treeNode.tree.id]);
 
   return null;
 });

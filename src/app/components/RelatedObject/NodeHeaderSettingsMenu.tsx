@@ -26,7 +26,7 @@ interface Props {
 
 export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({ treeNode }: Props) {
   const graphStore = useGraphStore();
-  const tree = useTree();
+  const tree = treeNode.tree;
   const router = useRouter();
   const setRoot = useSetRoot();
 

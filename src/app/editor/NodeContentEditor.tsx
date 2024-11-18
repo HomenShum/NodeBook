@@ -25,7 +25,6 @@ import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
 
 import styles from "./Editor.module.css";
 
@@ -40,7 +39,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
     throw new Error("Expected object to be a GraphNode");
   }
 
-  const tree = useTree();
+  const tree = treeNode.tree;
   const handleMentionNodeClick = useClickableMention(treeNode);
 
   return (
@@ -59,7 +58,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
           }
           placeholder={<span className={styles.PlaceholderNode}>Start writing...</span>}
         />
-        <SyncWithModelsPlugin node={treeNode.object} treeNodeId={treeNode.id} />
+        <SyncWithModelsPlugin node={treeNode.object} treeNode={treeNode} />
         {isEditorEditable && <LinkPlugin />}
         {isEditorEditable && <ReplacementPlugin treeNode={treeNode} />}
         {isEditorEditable && <ClearEditorPlugin />}

@@ -45,7 +45,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const [editor] = useLexicalComposerContext();
-  const tree = useTree();
+  const tree = treeNode.tree;
   const graphStore = useGraphStore();
   // We only want to highlight where the mouse is when the user intentionally puts it there.
   // If the dropdown opens overtop of where the mouse was, we don't want to highlight that option.

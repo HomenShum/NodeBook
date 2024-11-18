@@ -12,11 +12,11 @@ import Loader from "@/app/components/UIPrimitives/Loader";
 import { useLoading } from "@/app/contexts/LoadingContext";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
+import RightSidebar from "@/app/components/RightSidebar";
 
 import styles from "./app.module.css";
 
 import "./global.css";
-
 
 interface Props {
   children: React.ReactNode;
@@ -91,6 +91,7 @@ export default observer(function App({ children }: Props) {
               </main>
             </div>
           </div>
+          <RightSidebar />
         </div>
       </div>
     );

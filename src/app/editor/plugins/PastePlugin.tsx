@@ -18,8 +18,8 @@ import { uuid } from "@/app/util";
 export const PastePlugin = () => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
-  const tree = useTree();
   const { treeNode } = useTreeNode();
+  const tree = treeNode.tree;
   const { object, relationWithParent, path } = treeNode;
   const shiftWasPressed = useRef<boolean>(false);
 

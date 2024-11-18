@@ -3725,6 +3725,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/is-hotkey@npm:^0":
+  version: 0.1.10
+  resolution: "@types/is-hotkey@npm:0.1.10"
+  checksum: 10c0/8ce7cc70a42e4191ba9871905a68fa6586a9da0bfa9940e20fe67e573b34bc79bfc23158e842c7bd3288ebf9c82ee5cce0c7fa1fe8245f6845c2f9b9f3afc536
+  languageName: node
+  linkType: hard
+
 "@types/istanbul-lib-coverage@npm:*, @types/istanbul-lib-coverage@npm:^2.0.0, @types/istanbul-lib-coverage@npm:^2.0.1":
   version: 2.0.6
   resolution: "@types/istanbul-lib-coverage@npm:2.0.6"
@@ -8386,6 +8393,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"is-hotkey@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "is-hotkey@npm:0.2.0"
+  checksum: 10c0/d6589159b641014e26c0999ad261ca191e4cb7192e7db32dc849e69df416699b5ec78ad2a2192c169e7b3838847e48b0e1fc76f89f61946fad3036b23cfcd9b4
+  languageName: node
+  linkType: hard
+
 "is-iterable@npm:^1.1.0":
   version: 1.1.1
   resolution: "is-iterable@npm:1.1.1"
@@ -9807,6 +9821,7 @@ __metadata:
     "@radix-ui/react-toast": "npm:^1.2.2"
     "@radix-ui/react-tooltip": "npm:^1.1.2"
     "@sentry/nextjs": "npm:^8"
+    "@types/is-hotkey": "npm:^0"
     "@types/jest": "npm:^29.5.12"
     "@types/jsonwebtoken": "npm:^9"
     "@types/node": "npm:^20.14.5"
@@ -9831,6 +9846,7 @@ __metadata:
     fast-fuzzy: "npm:^1.12.0"
     fractional-indexing: "npm:^3.2.0"
     identity-obj-proxy: "npm:^3.0.0"
+    is-hotkey: "npm:^0.2.0"
     jest: "npm:^29.7.0"
     jest-environment-jsdom: "npm:^29.7.0"
     jsonwebtoken: "npm:^9.0.2"

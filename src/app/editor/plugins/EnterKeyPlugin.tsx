@@ -20,7 +20,7 @@ const logger = appLogger.child({ service: "EnterKeyPlugin" });
 export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
-  const tree = useTree();
+  const tree = treeNode.tree;
   const viewStore = useViewStore();
 
   const viewType = viewStore.viewType;

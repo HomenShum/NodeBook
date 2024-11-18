@@ -20,7 +20,7 @@ interface Props {
 
 export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: Props) {
   const user = useUser();
-  const tree = useTree();
+  const tree = treeNode.tree;
   const ref = useRef<HTMLDivElement>(null);
 
   const isLocal = treeNode.object.isLocal;

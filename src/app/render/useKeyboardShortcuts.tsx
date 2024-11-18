@@ -19,7 +19,7 @@ export const useKeyboardShortcuts = () => {
       // Create note shortcut when it's not already handled by an editor
       if (metaOrCtrl && !e.shiftKey && e.key === "k") {
         e.preventDefault();
-        await viewStore.mainView.createChildOfRootAndFocus();
+        await viewStore.activeTree.createChildOfRootAndFocus();
       }
       if (metaOrCtrl && e.key.toLowerCase() === "z") {
         e.preventDefault();

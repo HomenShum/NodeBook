@@ -20,17 +20,16 @@ import { $getTextAroundSelection, getLexicalSelectionPosition } from "@/app/edit
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
-import { useTree } from "@/app/tree/TreeContext";
 
 export const RelationPlugin = observer(function RelationPlugin() {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
-  const tree = useTree();
   const { treeNode } = useTreeNode();
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
+  const tree = treeNode.tree;
   const object = treeNode.object;
   const relation = treeNode.relationWithParent;
   useEffect(() => {

@@ -49,6 +49,7 @@ const CommandBar = observer(() => {
     viewStore.setCommandBarOpen(false);
   }, [viewStore]);
 
+  //Todo: Get rid of useHotkeys? This is the only instance.
   useHotkeys(
     "mod+shift+k",
     (event) => {

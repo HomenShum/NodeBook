@@ -33,7 +33,7 @@ export function MentionDropdown({
 }) {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
-  const tree = useTree();
+  const tree = treeNode.tree;
 
   const options =
     dropdown?.type === "mention"

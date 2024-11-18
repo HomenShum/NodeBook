@@ -56,9 +56,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
         <ReplacementPlugin treeNode={treeNode} />
         <ClearEditorPlugin />
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
-        {treeNode.object instanceof GraphNode && (
-          <SyncWithModelsPlugin node={treeNode.object} treeNodeId={treeNode.id} />
-        )}
+        {treeNode.object instanceof GraphNode && <SyncWithModelsPlugin node={treeNode.object} treeNode={treeNode} />}
       </LexicalComposer>
     </div>
   );

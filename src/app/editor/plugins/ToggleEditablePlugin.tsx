@@ -7,7 +7,7 @@ import { useTree } from "@/app/tree/TreeContext";
 
 export const ToggleEditablePlugin = ({ treeNode, editable }: { treeNode: DescendantTreeNode; editable: boolean }) => {
   const [editor] = useLexicalComposerContext();
-  const tree = useTree();
+  const tree = treeNode.tree;
 
   // toggle editor editable
   useEffect(() => {

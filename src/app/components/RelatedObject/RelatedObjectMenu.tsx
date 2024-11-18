@@ -45,9 +45,8 @@ interface Props {
 export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdatingRelationType, isHovered }: Props) {
   const user = useUser();
   const graphStore = useGraphStore();
-  const tree = useTree();
-  const viewStore = useViewStore();
   const { treeNode, viewType, setViewType } = useTreeNode();
+  const tree = treeNode.tree;
   const object = treeNode.object;
   const parent = treeNode.parent.object;
   const relation = treeNode.relationWithParent;

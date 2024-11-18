@@ -9,6 +9,7 @@ import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
+import { Tree } from "@/app/tree/Tree";
 
 /**
  * Concat two arrays of Chips into one.
@@ -34,7 +35,7 @@ const concatChips = (targetNodeChips: Chip[], sourceNodeChips: Chip[]): Chip[] =
 export const BackspaceMergeNodesPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const { treeNode } = useTreeNode();
-  const { mergeNodes, addSiblingAboveIntoNote } = useMergers();
+  const { mergeNodes, addSiblingAboveIntoNote } = useMergers(treeNode.tree);
 
   useEffect(() => {
     return editor.registerCommand(
@@ -91,8 +92,7 @@ export const BackspaceMergeNodesPlugin = () => {
 /**
  * Hook returns helper functions for merging tree nodes.
  */
-function useMergers() {
-  const tree = useTree();
+function useMergers(tree: Tree) {
   const graphStore = useGraphStore();
 
   /**

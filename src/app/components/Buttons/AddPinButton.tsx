@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 
 import styles from "@/app/components/RelatedObject/styles/ChildGroups.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -13,7 +13,7 @@ interface AddPinButtonProps {
 }
 
 export function AddPinButton({ parentNode, group }: AddPinButtonProps) {
-  const tree = useTree();
+  const tree = parentNode.tree;
   const graphStore = useGraphStore();
 
   const handlePin = useCallback(

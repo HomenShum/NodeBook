@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default observer(function Toggle({ treeNode, isHovered }: Props) {
-  const tree = useTree();
+  const tree = treeNode.tree;
   return (
     <button
       className={cn(styles.ToggleButton, isHovered && styles.Hovered)}

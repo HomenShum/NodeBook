@@ -1,5 +1,5 @@
 "use client";
-import { ChevronRight, Command, Ellipsis, Home, Lock, Unlock } from "lucide-react";
+import { ChevronRight, Command, Ellipsis, Home, Lock, SquareSplitHorizontal, Unlock, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback } from "react";
 
@@ -18,11 +18,12 @@ import { useUser } from "@/app/contexts/UserContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { TreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
 import { Ancestor, getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import QuickCapture from "@/app/components/QuickCapture";
+import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -179,7 +180,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   const graphStore = useGraphStore();
   const user = useUser();
   const auth = useAuth();
-  const tree = useTree();
+  const tree = treeNode.tree;
   const ancestors = getAncestorsAsArray(treeNode);
 
   const handleNavigation = useCallback(
@@ -193,47 +194,49 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
     [treeNode, ancestors, setRoot],
   );
 
-  const handlePublicModeChange = useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    const newIsPublic = !settingsStore.publicMode;
-    settingsStore.setPublicMode(newIsPublic);
+  const handlePublicModeChange = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      const newIsPublic = !settingsStore.publicMode;
+      settingsStore.setPublicMode(newIsPublic);
 
-    if (tree.selection) {
-      const selection = tree.selectionWithNodes;
-      const candidates: { object: GraphObject; relationWithParent: GraphRelation }[] = [];
+      if (tree.selection) {
+        const selection = tree.selectionWithNodes;
+        const candidates: { object: GraphObject; relationWithParent: GraphRelation }[] = [];
 
-      // Resolving the list of graph objects in currently focused tree nodes
-      if (selection?.type === "node") {
-        candidates.push(...selection.nodes.map(({ object, relationWithParent }) => ({ object, relationWithParent })));
-      } else if (selection?.type === "editor") {
-        candidates.push({
-          object: selection.treeNode.object,
-          relationWithParent: selection.treeNode.relationWithParent,
-        });
+        // Resolving the list of graph objects in currently focused tree nodes
+        if (selection?.type === "node") {
+          candidates.push(...selection.nodes.map(({ object, relationWithParent }) => ({ object, relationWithParent })));
+        } else if (selection?.type === "editor") {
+          candidates.push({
+            object: selection.treeNode.object,
+            relationWithParent: selection.treeNode.relationWithParent,
+          });
+        }
+
+        if (candidates.length > 0) {
+          graphStore.applyCombinedTransaction(
+            candidates.map(({ object, relationWithParent }) => ({
+              type: "setIsPublic",
+              transaction: {
+                objectId: object.id,
+                relationId: relationWithParent?.id,
+                isPublic: newIsPublic,
+                alsoSetRelatedObjects: false,
+                alsoSetChildrenAndDescendants: false,
+                isNewRelatedObjectsPublic: false,
+              },
+            })),
+          );
+        }
+
+        if (selection?.type === "editor") {
+          tree.setFocusedNode(selection.treeNodeId, selection.position, selection.editMode);
+        }
       }
-
-      if (candidates.length > 0) {
-        graphStore.applyCombinedTransaction(
-          candidates.map(({ object, relationWithParent }) => ({
-            type: "setIsPublic",
-            transaction: {
-              objectId: object.id,
-              relationId: relationWithParent?.id,
-              isPublic: newIsPublic,
-              alsoSetRelatedObjects: false,
-              alsoSetChildrenAndDescendants: false,
-              isNewRelatedObjectsPublic: false,
-            },
-          })),
-        );
-      }
-
-      if(selection?.type === "editor"){
-        tree.setFocusedNode(selection.treeNodeId, selection.position, selection.editMode);
-      }
-
-    }
-  }, [graphStore, settingsStore, tree]);
+    },
+    [graphStore, settingsStore, tree],
+  );
 
   return (
     <>
@@ -250,6 +253,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
         <div className={s.BreadcrumbWrapper}>
           <RenderBreadcrumbs treeNode={treeNode} ancestors={ancestors} handleNavigation={handleNavigation} />
         </div>
+        {viewStore.quickCaptureTree && <QuickCapture />}
         {!user.isAnonymous ? (
           <div className={s.BreadcrumbRightArea}>
             <Button
@@ -269,6 +273,30 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
               onClick={(event) => handlePublicModeChange(event)}
             >
               {settingsStore.publicMode ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
+            </Button>
+            <Button
+              style={{ position: "relative" }}
+              className={cn(s.ShowTooltip, s.RightAlign)}
+              data-tooltip={viewStore.quickCaptureTree ? "Quick capture opened" : "Quick capture closed"}
+              variant={"default"}
+              size="icon"
+              onClick={() => viewStore.toggleQuickCapture()}
+            >
+              {viewStore.quickCaptureTree ? <X size={14} /> : <QuickCaptureIcon />}
+            </Button>
+            <Button
+              style={{ position: "relative" }}
+              className={cn(s.ShowTooltip, s.RightAlign)}
+              data-tooltip={viewStore.rightSidebarOpen ? "Side trees opened" : "Side trees closed"}
+              variant={viewStore.rightSidebarOpen ? "active" : "default"}
+              size="icon"
+              onClick={() => viewStore.toggleRightSidebar()}
+            >
+              {viewStore.rightSidebarOpen ? (
+                <SquareSplitHorizontal size={14} strokeWidth={1.5} />
+              ) : (
+                <SquareSplitHorizontal strokeWidth={1.5} size={14} />
+              )}
             </Button>
           </div>
         ) : (

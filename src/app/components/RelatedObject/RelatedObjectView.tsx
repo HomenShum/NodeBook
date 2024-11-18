@@ -56,7 +56,7 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
 });
 
 function RelationsToggle({ treeNode }: { treeNode: DescendantTreeNode }) {
-  const tree = useTree();
+  const tree = treeNode.tree;
   return (
     <Button
       size="xs"
@@ -114,7 +114,6 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
 
 const Content = observer(function Content() {
   const settingsStore = useSettingsStore();
-  const tree = useTree();
   const {
     treeNode,
     relationComboboxIsOpen,
@@ -123,6 +122,7 @@ const Content = observer(function Content() {
     setUpdatingRelationType,
     viewType,
   } = useTreeNode();
+  const tree = treeNode.tree;
   const viewStore = useViewStore();
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
 
@@ -231,13 +231,26 @@ const Bullet = observer(function Bullet() {
   const userId = graphStore.user?.id;
   const { treeNode } = useTreeNode();
   const setRoot = useSetRoot();
-  const handleBulletClick = useCallback(() => {
-    logger.debug("Clicked bullet", treeNode.path);
-    setRoot({
-      object: treeNode.object,
-      relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
-    });
-  }, [treeNode, setRoot]);
+  const viewStore = useViewStore();
+  const handleBulletClick = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      event.nativeEvent.stopImmediatePropagation();
+      logger.debug("Clicked bullet", treeNode.path);
+
+      const objectPath = {
+        object: treeNode.object,
+        relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
+      };
+
+      event.shiftKey
+        ? viewStore.createSidebarTree(objectPath)
+        : treeNode.tree.id === viewStore.mainView.id
+        ? setRoot(objectPath)
+        : treeNode.tree.setRoot(treeNode, treeNode.path);
+    },
+    [setRoot, treeNode, viewStore],
+  );
 
   const getAuthorName = (authorId: string) => {
     return graphStore.usersById.get(authorId)?.username || authorId;
@@ -270,7 +283,7 @@ const Bullet = observer(function Bullet() {
               [styles.DotInsidePublic]: treeNode.object.isPublic,
               [styles.DotInsidePrivate]: !treeNode.object.isPublic,
             })}
-            onClick={handleBulletClick}
+            onClick={(event) => handleBulletClick(event)}
           />
           {hasChildren && !treeNode.isExpanded && (
             // with a shadow around it if it has children
@@ -288,7 +301,8 @@ const Bullet = observer(function Bullet() {
         // Hollow circle if this node has appeared in the path more than once
         <CyclicIcon
           className={cn(styles.Circle, { [styles.CirclePrivate]: !treeNode.object.isPublic })}
-          onClick={handleBulletClick}
+          //@ts-ignore
+          onClick={(event) => handleBulletClick(event)}
         />
       )}
     </div>

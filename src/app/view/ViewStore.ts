@@ -7,7 +7,7 @@ import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { SearchTree } from "@/app/tree/SearchTree";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Path, Root, Tree } from "@/app/tree/Tree";
-import { makeAutoSaving } from "@/app/util";
+import { makeAutoSaving, ObjectPath } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 
 export class ViewStore {
@@ -43,6 +43,9 @@ export class ViewStore {
   public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | null = null;
   public isCommandBarOpen: boolean = false;
   private deepSearching: boolean = false;
+  public sidebarTrees: Tree[] = [];
+  public quickCaptureTree: Tree | null = null;
+  public activeTree: Tree;
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.isCommandBarOpen = false;
@@ -53,12 +56,14 @@ export class ViewStore {
       isDarkMode: true,
       sidebarWidth: true,
       activeModal: true,
+      sidebarTrees: false,
     });
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
-    this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
+    this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser(), { isMainTree: true });
     this.sublistView = new SublistTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.searchView = new SearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
+    this.activeTree = this.treeView;
   }
 
   /**
@@ -95,6 +100,11 @@ export class ViewStore {
         handleMouseUp: action,
         setDeepSearching: action,
         isDeepSearching: computed,
+        createSidebarTree: action,
+        deleteSidebarTree: action,
+        toggleQuickCapture: action,
+        setActiveTree: action,
+        toggleRightSidebar: action,
       });
     }
   }
@@ -151,24 +161,12 @@ export class ViewStore {
     };
   }
 
-  deserializeInPlace(data: SerializedViewStore) {
-    this.treeView.deserializeInPlace(data.mainView);
-  }
-
   toggleLeftSidebar() {
     this.leftSidebarOpen = !this.leftSidebarOpen;
   }
 
-  toggleRightSidebar() {
-    this.rightSidebarOpen = !this.rightSidebarOpen;
-  }
-
   setActiveModal(modal: "devTools" | "importData" | "clearData" | "setPublic" | null) {
     this.activeModal = modal;
-  }
-
-  setHoveredNode(path: Path | null) {
-    this.hoveredNode = path;
   }
 
   registerEditor(pathStr: Path, editor: LexicalEditor) {
@@ -185,6 +183,30 @@ export class ViewStore {
 
   setCommandBarOpen(open: boolean) {
     this.isCommandBarOpen = open;
+  }
+
+  createSidebarTree(root: ObjectPath) {
+    this.rightSidebarOpen = true;
+    this.sidebarTrees.unshift(new Tree(this.graphStore, this.settingsStore, root));
+  }
+
+  deleteSidebarTree(treeId: string) {
+    this.sidebarTrees = this.sidebarTrees.filter((tree) => tree.id != treeId);
+  }
+
+  toggleQuickCapture() {
+    this.quickCaptureTree = this.quickCaptureTree
+      ? null
+      : new Tree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser());
+  }
+
+  setActiveTree(tree: Tree) {
+    if (this.activeTree.id === tree.id) return;
+    this.activeTree = tree;
+  }
+
+  toggleRightSidebar() {
+    this.rightSidebarOpen = !this.rightSidebarOpen;
   }
 
   // Mouse event handlers
@@ -225,6 +247,4 @@ export class ViewStore {
     window.removeEventListener("mousedown", this.handleMouseDown);
     window.removeEventListener("mouseup", this.handleMouseUp);
   }
-
-  // End mouse event handlers
 }

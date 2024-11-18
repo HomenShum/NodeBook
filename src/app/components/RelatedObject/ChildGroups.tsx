@@ -80,7 +80,7 @@ interface PinnedSectionProps {
 
 const PinnedSection = observer(function PinnedSection({ parentNode, group }: PinnedSectionProps) {
   const viewStore = useViewStore();
-  const tree = useTree();
+  const tree = parentNode.tree;
   const user = useUser();
   const isRoot = parentNode instanceof RootTreeNode;
   const isEmpty = group.nodes.length === 0;

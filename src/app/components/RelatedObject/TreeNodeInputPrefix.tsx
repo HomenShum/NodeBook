@@ -20,7 +20,7 @@ type Props = {
  * selection in response to tree selection changes.
  */
 export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeNode, isEditorEditable }: Props) {
-  const tree = useTree();
+  const tree = treeNode.tree;
   const graphStore = useGraphStore();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -57,6 +57,8 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
           tree.setFocusedNode(treeNode.path);
         }
       }}
+
+      //Todo: Can this be replaced with hotkeys?
       onKeyDown={async (e: React.KeyboardEvent) => {
         const isMod = e.metaKey || e.ctrlKey;
         switch (e.key) {

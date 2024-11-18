@@ -6,7 +6,7 @@ import { useTree } from "@/app/tree/TreeContext";
 
 export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode) => {
   const graphStore = useGraphStore();
-  const tree = useTree();
+  const tree = treeNode.tree;
 
   return useCallback(
     (e: Event) => {

@@ -14,7 +14,7 @@ import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { $getCaretPosition } from "@/app/editor/utils/selection";
-import { useTree } from "@/app/tree/TreeContext";
+import { isMoveDownHotkey, isMoveUpHotKey } from "@/app/hotkeys";
 
 /**
  * Plugin to jump focus to other editors using arrow keys
@@ -24,8 +24,8 @@ import { useTree } from "@/app/tree/TreeContext";
  */
 export const ArrowKeyPlugin = () => {
   const [editor] = useLexicalComposerContext();
-  const tree = useTree();
   const { treeNode } = useTreeNode();
+  const tree = treeNode.tree;
   const editMode =
     tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode;
   useEffect(() => {
@@ -33,7 +33,7 @@ export const ArrowKeyPlugin = () => {
       editor.registerCommand(
         KEY_ARROW_UP_COMMAND,
         (event) => {
-          if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+          if (isMoveUpHotKey(event)) {
             const element = editor.getRootElement();
             if (!element) return false;
             const caretPosition = $getCaretPosition();
@@ -51,7 +51,7 @@ export const ArrowKeyPlugin = () => {
       editor.registerCommand(
         KEY_ARROW_DOWN_COMMAND,
         (event) => {
-          if (!event.shiftKey && !event.metaKey && !event.ctrlKey) {
+          if (isMoveDownHotkey(event)) {
             const element = editor.getRootElement();
             if (!element) return false;
             const caretPosition = $getCaretPosition();

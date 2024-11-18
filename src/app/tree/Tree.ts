@@ -15,7 +15,7 @@ import { copyContentFromLexicalNodes } from "@/app/tree/clipboard";
 import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
 import { SelectionStack } from "@/app/tree/SelectionStack";
 import { SortOptionLocalStorageCache } from "@/app/tree/SortOptionLocalStorageCache";
-import { comparePositions, compareTimestamps, ObjectPath, uuid } from "@/app/util";
+import { comparePositions, compareTimestamps, createRouteUrl, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 
 import { BaseTreeNode, DescendantTreeNode, PathToRootNode, PointerTreeNode, RootTreeNode, TreeNode } from "./nodes";
@@ -78,6 +78,7 @@ export class Tree {
         direction: "desc",
       },
       path = "",
+      isMainTree = false,
     }: {
       id?: string;
       search?: string;
@@ -86,6 +87,7 @@ export class Tree {
       selection?: TreeSelection | null;
       sortOption?: SortOption;
       path?: string;
+      isMainTree?: boolean;
     } = {},
   ) {
     this.id = id;
@@ -104,6 +106,7 @@ export class Tree {
     this.path = path;
     this.selectionStack = new SelectionStack();
     this.makeObservable();
+    this.isMainTree = isMainTree || false;
   }
 
   makeObservable() {
@@ -152,7 +155,7 @@ export class Tree {
     });
   }
 
-  protected id: string;
+  id: string;
 
   protected graphStore: GraphStore;
 
@@ -212,6 +215,8 @@ export class Tree {
    * text cache for the graph store as well.
    */
   textsByObjectId = new Map<string, string>();
+
+  public readonly isMainTree: boolean = false;
 
   /**
    * @DesignNote The settings store is used as the default filter, and any
@@ -1379,6 +1384,25 @@ export class Tree {
       }
     } else if (this.selection?.type === "editor" && this.selection.treeNodeId === path) {
       this.selection = { ...this.selection, treeNodeId: newPath };
+    }
+  }
+
+  setCurrentNodeAsRoot() {
+    if (this.selectionWithNodes?.type !== "editor") return;
+    const node = this.selectionWithNodes.treeNode;
+    const routingPath = createRouteUrl(node.path);
+    this.setRoot(node, node.path);
+    if (this.isMainTree) {
+      history && history.pushState(null, "", routingPath);
+    }
+  }
+
+  setParentOfRootAsRoot() {
+    if (!this.root.parent) return;
+    const routingPath = createRouteUrl(this.root.parent.path);
+    this.setRoot(this.root.parent, this.root.parent.path);
+    if (this.isMainTree) {
+      history && history.pushState(null, "", routingPath);
     }
   }
 

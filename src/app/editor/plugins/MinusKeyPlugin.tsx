@@ -9,7 +9,7 @@ import { isNoteContent } from "@/app/tree/utils";
 
 export const MinusKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
   const [editor] = useLexicalComposerContext();
-  const tree = useTree();
+  const tree = treeNode.tree;
 
   useEffect(() => {
     function handleInlineSplitNote(event: KeyboardEvent) {

@@ -25,7 +25,7 @@ type Props = {
  * Maybe make a input sandwich wrapper and pass NodeEditor as child?
  */
 export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeNode, isEditorEditable }: Props) {
-  const tree = useTree();
+  const tree = treeNode.tree;
   const inputRef = useRef<HTMLInputElement>(null);
   const graphStore = useGraphStore();
 
