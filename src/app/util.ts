@@ -13,8 +13,6 @@ import logger from "@/lib/logger";
 // TODO: what should we actually use for this?
 export const uuid = () => uuidv4().slice(0, 8);
 
-const home = "home";
-
 export function comparePositions(a: Position | null, b: Position | null) {
   if (a === null) return -1;
   if (b === null) return 1;
@@ -129,22 +127,20 @@ export function objectPathToObjects(path: ObjectPath): GraphObject[] | null {
   return objects;
 }
 
-export function createRouteUrl(path?: ObjectPath | GraphRelation[] | string | typeof home): string {
-  let pathSuffix = "/home";
-
-  if (path && path !== home && typeof path === "string") {
-    pathSuffix = path;
-  }
-
-  if (path && path !== home && typeof path !== "string") {
+export function createRouteUrl(path?: ObjectPath | GraphRelation[] | string): string {
+  const pathPrefix = "/g";
+  if (!path) {
+    return pathPrefix;
+  } else if (typeof path === "string") {
+    return pathPrefix + path;
+  } else {
     const objectPath = Array.isArray(path) ? relationsToObjectPath(path) : path;
     if (objectPath) {
-      pathSuffix = (objectPath.relations || []).map((r) => "/all/" + r.id).join("");
-      pathSuffix += (pathSuffix.length > 0 ? "/" : "/all/") + objectPath.object.id;
+      const pathSuffix = (objectPath.relations || []).map((r) => "/all/" + r.id).join("");
+      return pathPrefix + pathSuffix + "/" + objectPath.object.id;
     }
   }
-
-  return "/g" + pathSuffix;
+  return pathPrefix;
 }
 
 export function parsePathArray(
@@ -165,22 +161,17 @@ export function parsePathArray(
     relations.push(graphRel);
   }
   const lastId = path[path.length - 1];
-  if (lastId === home) {
-    const objectPath = graphStore.getDefaultRootForUser();
-    return { objectPath, stringPath: createRouteUrl(objectPath) };
-  } else {
-    const object = graphStore.getObject(lastId);
-    if (!object) {
-      logger.debug("Could not find object", lastId);
-      return null;
-    }
-    const objectPath = { relations, object };
-    if (!isPathContinuous(objectPath)) {
-      logger.debug("Path is not continuous", objectPath);
-      return null;
-    }
-    return { objectPath, stringPath: createRouteUrl(objectPath) };
+  const object = graphStore.getObject(lastId);
+  if (!object) {
+    logger.debug("Could not find object", lastId);
+    return null;
   }
+  const objectPath = { relations, object };
+  if (!isPathContinuous(objectPath)) {
+    logger.debug("Path is not continuous", objectPath);
+    return null;
+  }
+  return { objectPath, stringPath: createRouteUrl(objectPath) };
 }
 
 export function formatDate(date: Date | undefined): string {
