@@ -19,13 +19,7 @@ export const useKeyboardShortcuts = () => {
       // Create note shortcut when it's not already handled by an editor
       if (metaOrCtrl && !e.shiftKey && e.key === "k") {
         e.preventDefault();
-        const { path } = await viewStore.activeTree.createChildOfRootAndFocus();
-        if (viewStore.viewType === ViewType.Note) {
-          const treeNode = viewStore.activeTree.getNode(path);
-          if (treeNode) {
-            await viewStore.activeTree.splitIntoNote(treeNode);
-          }
-        }
+        await viewStore.activeTree.createChildOfRootAndFocus();
       }
       if (metaOrCtrl && e.key.toLowerCase() === "z") {
         e.preventDefault();
