@@ -7,15 +7,18 @@ import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { ImportReviewList } from "@/app/components/DataDialog/ImportReviewList";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
 import { useViewStore } from "@/app/view/useViewStore";
 import appLogger from "@/lib/logger";
+import { parsePlainTextUpload } from "@/lib/plainTextParse";
 
 import styles from "./DataDialog.module.css";
 
 const logger = appLogger.child({ service: "ImportDialog" });
 
 export const ImportDialog = observer(function ImportDialog() {
+  const user = useUser();
   const viewStore = useViewStore();
 
   const graphStore = useGraphStore();
@@ -36,11 +39,21 @@ export const ImportDialog = observer(function ImportDialog() {
         if (typeof fileContent !== "string") {
           throw new Error("Unexpected file content type");
         }
-        const serializedGraphStore = SerializedGraphStoreSchema.parse(JSON.parse(fileContent));
-        setSerializedGraphStore(serializedGraphStore);
-        logger.info("Successfully parsed serialized graph store");
+        try {
+          // We could attempt some clever stuff here to check if the file is JSON etc but easier to just try and parse it
+          // as a SerializedGraphStore and see if it throws an error.
+          const serializedGraphStore = SerializedGraphStoreSchema.parse(JSON.parse(fileContent));
+          setSerializedGraphStore(serializedGraphStore);
+          logger.info("Successfully parsed serialized graph store");
+        } catch (error) {
+          console.log("here?");
+          // If parsing as a SerializedGraphStore fails, we'll assume it's in the plain text upload format and try to handle that.
+          const parsedGraphStore = parsePlainTextUpload(graphStore, fileContent);
+          setSerializedGraphStore(parsedGraphStore);
+          logger.info("Successfully parsed graph store from plain text upload");
+        }
       } catch (error) {
-        logger.error("Failed to parse serialized graph store", { error });
+        logger.error("Failed to parse file upload store", { error });
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
@@ -86,7 +99,7 @@ export const ImportDialog = observer(function ImportDialog() {
         </Button>
         <input
           type="file"
-          accept=".json"
+          accept=".json,.txt"
           ref={fileInputRef}
           className={styles.InvisibleInput}
           onChange={onSelectFile}

@@ -114,6 +114,7 @@ export class GraphStore {
         cleanup: action,
         resetAndLoad: action,
         applyCombinedTransaction: action,
+        importData: action,
       });
     }
   }
