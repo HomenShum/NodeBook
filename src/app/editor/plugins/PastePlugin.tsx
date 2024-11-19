@@ -9,7 +9,6 @@ import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
-import { useTree } from "@/app/tree/TreeContext";
 import { uuid } from "@/app/util";
 
 /**
@@ -99,7 +98,7 @@ export const PastePlugin = () => {
             txs.push(...getLinkAdditionTxs(chips, newNodeId, groupId));
 
             // Add the newly created relations to the same group as this node's parent
-            if (groupId === "pinned") {
+            if (groupId === "pinned" || (groupId === "noteContent" && depth === 0)) {
               txs.push({
                 type: "addRelationToList",
                 transaction: {
