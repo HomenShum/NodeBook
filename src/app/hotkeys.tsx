@@ -4,6 +4,8 @@ import { Tree } from "@/app/tree/Tree";
 
 export const isMoveUpHotKey = isHotkey("ArrowUp");
 export const isMoveDownHotkey = isHotkey("ArrowDown");
+export const isMoveLeftHotkey = isHotkey("ArrowLeft");
+export const isMoveRightHotKey = isHotkey("ArrowRight");
 export const isMoveSelectionHeadUpHotkey = isHotkey("shift+ArrowUp");
 export const isMoveSelectionHeadDownHotkey = isHotkey("shift+ArrowDown");
 export const isMoveSelectedNodesUpHotkey = isHotkey("mod+shift+ArrowUp");
@@ -30,6 +32,14 @@ export const treeHotkeyMapping: {
     predicate: (event, tree?: Tree) => tree?.selection?.type === "node" && isMoveDownHotkey(event),
     action: (tree: Tree) => tree.moveEditorSelectionDown(),
   },
+  {
+    predicate: (event, tree?: Tree) => tree?.selection?.type === "node" && isMoveLeftHotkey(event),
+    action: (tree: Tree) => tree.setAnchorToEditorSelection("start"),
+  },
+  {
+    predicate: (event, tree?: Tree) => tree?.selection?.type === "node" && isMoveRightHotKey(event),
+    action: (tree: Tree) => tree.setAnchorToEditorSelection("end"),
+  },
   { predicate: isMoveSelectionHeadUpHotkey, action: (tree: Tree) => tree.moveNodeSelectionHeadUp() },
   { predicate: isMoveSelectionHeadDownHotkey, action: (tree: Tree) => tree.moveNodeSelectionHeadDown() },
   { predicate: isMoveSelectedNodesUpHotkey, action: (tree: Tree) => tree.moveSelectedNodesUp() },
@@ -38,8 +48,6 @@ export const treeHotkeyMapping: {
   { predicate: isIndentSelectionHotkey, action: (tree: Tree) => tree.indentSelection() },
   { predicate: isDedentSelectionHotkey, action: (tree: Tree) => tree.dedentSelection() },
   { predicate: isEscapeSelectionHotkey, action: (tree: Tree) => tree.escapeSelection() },
-  { predicate: isZoomInHotkey, action: (tree: Tree) => tree.setCurrentNodeAsRoot() },
-  { predicate: isZoomOutHotkey, action: (tree: Tree) => tree.setParentOfRootAsRoot() },
   { predicate: isExpandAtSelectionHotKey, action: (tree: Tree) => tree.expandAtSelection() },
   { predicate: isCollapseAtSelectionHotKey, action: (tree: Tree) => tree.collapseAtSelection() },
 ];

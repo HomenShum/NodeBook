@@ -1313,13 +1313,24 @@ export class Tree {
   }
 
   /**
+   * When we are in a node selection and handle right/left
+   * arrow keydown, we want to set the anchor node to
+   * the editor selection.
+   */
+  setAnchorToEditorSelection(position: "start" | "end"): void {
+    const selection = this.selectionWithNodes;
+    if (!selection || selection.type === "editor") return;
+    this.setFocusedNode(selection.anchorNodeId, position, false);
+  }
+
+  /**
    * Move selection from the current node to the next one up.
    */
   moveEditorSelectionUp(position: TreeNodeContentSelectionPosition = "end"): boolean {
     const selection = this.selectionWithNodes;
     if (!selection) return false;
     const treeNode = selection.type === "editor" ? selection.treeNode : selection.top;
-    const next = getNextAbove(treeNode);
+    const next = getNextAbove(treeNode) || selection.top;
     if (!next) return false;
     this.setFocusedNode(next.path, position, false);
     return true;
@@ -1331,7 +1342,10 @@ export class Tree {
   moveEditorSelectionDown(position: TreeNodeContentSelectionPosition = "end"): boolean {
     const selection = this.selectionWithNodes;
     if (!selection) return false;
-    const next = selection.type === "editor" ? getNextBelow(selection.treeNode) : getNextSubtreeBelow(selection.bottom);
+    const next =
+      selection.type === "editor"
+        ? getNextBelow(selection.treeNode)
+        : getNextSubtreeBelow(selection.bottom) || selection.bottom;
     if (!next) return false;
     const firstChild = next.visibleChildren[0];
     if (firstChild && isNoteContent(firstChild)) {
