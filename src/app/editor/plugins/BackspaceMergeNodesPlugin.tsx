@@ -4,10 +4,9 @@ import { useCallback, useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
-import { defaultRelationTypes } from "@/app/graph/constants";
-import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
 
@@ -41,8 +40,15 @@ export const BackspaceMergeNodesPlugin = () => {
     return editor.registerCommand(
       KEY_BACKSPACE_COMMAND,
       (event) => {
-        // Only merge at the start of a non-child node
-        if (treeNode.relationWithParent.relationType.id !== defaultRelationTypes.child.id || !$atEditorStart()) {
+        // Skip non-children. That's handled by the RelationPlugin
+        const isChild =
+          treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id &&
+          treeNode.relationWithParent.to === treeNode.object;
+        if (!isChild) {
+          return false;
+        }
+        // Only merge while at the start of the node
+        if (!$atEditorStart()) {
           return false;
         }
         if (treeNode instanceof PointerTreeNode) {
