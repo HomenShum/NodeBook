@@ -44,6 +44,10 @@ export const getAncestorsAsArray = (node: TreeNode): Ancestor[] => {
   return ancestors.reverse();
 };
 
+export const treeNodeToObjectPath = (node: TreeNode): ObjectPath => {
+  return { object: node.object, relations: getAncestorsAsArray(node).map((node) => node.relationToChild) };
+};
+
 export const isUnlabelledChild = (node: DescendantTreeNode) => {
   return node.relationWithParent.relationType.id === "child" && node.relationWithParent.to === node.object;
 };

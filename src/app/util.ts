@@ -143,6 +143,15 @@ export function createRouteUrl(path?: ObjectPath | GraphRelation[] | string): st
   return pathPrefix;
 }
 
+/**
+ * Copies the object path to the clipboard as a URL.
+ */
+export async function copyObjectUrlToClipboard(objectPath: ObjectPath) {
+  const domain = `${window.location.protocol}//${window.location.host}`;
+  const path = createRouteUrl(objectPath);
+  return navigator.clipboard.writeText(`${domain}${path}`);
+}
+
 export function parsePathArray(
   path: string[],
   graphStore: GraphStore,

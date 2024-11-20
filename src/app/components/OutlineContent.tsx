@@ -1,29 +1,27 @@
-import React, { useEffect, useMemo, useRef } from "react";
-import { Globe, HomeIcon, X } from "lucide-react";
+import { Globe, HomeIcon, Link, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import isHotkey from "is-hotkey";
+import { useEffect, useMemo, useRef } from "react";
 
-import { Tree } from "@/app/tree/Tree";
-import s from "@/app/components/OutlineView.module.css";
-import s1 from "@/app/components/RightSidebar.module.css";
-import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
-import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
-import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
 import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
+import s from "@/app/components/OutlineView.module.css";
+import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
+import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
+import s1 from "@/app/components/RightSidebar.module.css";
+import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
+import { useToast } from "@/app/hooks/useToast";
+import { handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey } from "@/app/hotkeys";
+import { Tree } from "@/app/tree/Tree";
+import { getAncestorsAsArray, treeNodeToObjectPath, useSetRoot } from "@/app/tree/utils";
+import { copyObjectUrlToClipboard } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
-import {
-  handleTreeHotkeys,
-  isEscapeSelectionHotkey,
-  isMoveUpHotKey,
-  isZoomInHotkey,
-  isZoomOutHotkey,
-} from "@/app/hotkeys";
-import { createRouteUrl } from "@/app/util";
 import logger from "@/lib/logger";
-import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
+import { cn } from "@/lib/utils";
+
+import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 
 interface Props {
   tree: Tree;
@@ -34,6 +32,7 @@ function OutlineContent({ tree }: Props) {
   const graphStore = useGraphStore();
   const user = useUser();
   const viewStore = useViewStore();
+  const { addToast } = useToast();
   const setRoot = useSetRoot();
   const elementRef = useRef<HTMLDivElement>(null);
 
@@ -123,18 +122,32 @@ function OutlineContent({ tree }: Props) {
           <NodeHeaderSettingsMenu treeNode={treeRoot} />
           <TooltipProvider>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <div className={s.IconAndTitle}>
-                  {treeRoot.object.id === graphStore.homeRoot.id ? (
-                    <HomeIcon size={20} />
-                  ) : isGlobalRoot ? (
-                    <Globe size={20} strokeWidth={1.8} />
-                  ) : null}
+              <div className={s.IconAndTitle}>
+                {treeRoot.object.id === graphStore.homeRoot.id ? (
+                  <HomeIcon size={20} />
+                ) : isGlobalRoot ? (
+                  <Globe size={20} strokeWidth={1.8} />
+                ) : null}
+                <TooltipTrigger asChild>
                   <h1 className={s.TitleText}>
                     <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
                   </h1>
-                </div>
-              </TooltipTrigger>
+                </TooltipTrigger>
+              </div>
+              <Button
+                variant="default"
+                className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
+                data-tooltip="Copy URL"
+                size="icon"
+                onClick={() => {
+                  copyObjectUrlToClipboard(treeNodeToObjectPath(treeRoot));
+                  addToast({
+                    title: "Copied URL to clipboard",
+                  });
+                }}
+              >
+                <Link size={16} strokeWidth={1.7} />
+              </Button>
               {tooltipContent && (
                 <TooltipContent side="top" align="start" sideOffset={5}>
                   {tooltipContent}

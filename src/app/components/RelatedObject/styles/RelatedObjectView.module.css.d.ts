@@ -10,6 +10,7 @@ declare const styles: {
   readonly "DotInsidePublic": string;
   readonly "DotOutsidePrivate": string;
   readonly "DotOutsidePublic": string;
+  readonly "HeaderInListView": string;
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
   readonly "NoteContentSection": string;
@@ -29,13 +30,13 @@ declare const styles: {
   readonly "RelatedObjectNodeContent": string;
   readonly "RelatedObjectPublic": string;
   readonly "RelatedObjectRelationsToggle": string;
-  readonly "RelatedObjectRelationsToggleExpanded": string;
   readonly "RelatedObjectRightArea": string;
   readonly "RelationCounter": string;
   readonly "RelationHoverCard": string;
   readonly "Selected": string;
   readonly "Unpinned": string;
   readonly "bulletClick": string;
+  readonly "showTooltip": string;
 };
 export = styles;
 

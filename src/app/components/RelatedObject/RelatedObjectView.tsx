@@ -9,7 +9,6 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
-import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -61,10 +60,7 @@ function RelationsToggle({ treeNode }: { treeNode: DescendantTreeNode }) {
     <Button
       size="xs"
       variant={treeNode.isExpanded ? "default" : "ghostSmooth"}
-      className={cn(
-        styles.RelatedObjectRelationsToggle,
-        treeNode.isExpanded && styles.RelatedObjectRelationsToggleExpanded,
-      )}
+      className={cn(styles.RelatedObjectRelationsToggle, treeNode.isExpanded)}
       onClick={() => {
         tree.setPathExpanded(treeNode.id, !treeNode.isExpanded);
       }}

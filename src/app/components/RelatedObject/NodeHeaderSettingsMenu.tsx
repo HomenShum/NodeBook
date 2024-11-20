@@ -14,9 +14,8 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
-import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
-import { createRouteUrl, downloadSubtree } from "@/app/util";
+import { getAncestorsAsArray, treeNodeToObjectPath, useSetRoot } from "@/app/tree/utils";
+import { copyObjectUrlToClipboard, downloadSubtree } from "@/app/util";
 
 import styles from "./styles/NodeHeaderSettingsMenu.module.css";
 
@@ -55,14 +54,9 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
               {treeNode.object.isPublic ? "Make private" : "Make public"}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={action(async () => {
-                const domain = `${window.location.protocol}//${window.location.host}`;
-                const path = createRouteUrl({
-                  object: treeNode.object,
-                  relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
-                });
-                await navigator.clipboard.writeText(`${domain}${path}`);
-              })}
+              onSelect={() => {
+                copyObjectUrlToClipboard(treeNodeToObjectPath(treeNode));
+              }}
             >
               <ClipboardCopy size={14} />
               Copy URL

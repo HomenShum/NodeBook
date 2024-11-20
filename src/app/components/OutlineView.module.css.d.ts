@@ -1,6 +1,7 @@
 declare const styles: {
   readonly "HeadingContainer": string;
   readonly "IconAndTitle": string;
+  readonly "LinkButton": string;
   readonly "Nodes": string;
   readonly "NoteContentSection": string;
   readonly "OutlineContent": string;
