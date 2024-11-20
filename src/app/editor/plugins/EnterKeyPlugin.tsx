@@ -6,8 +6,8 @@ import { useEffect } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useTree } from "@/app/tree/TreeContext";
-import { DescendantTreeNode, RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import { useToast } from "@/app/hooks/useToast";
+import { DescendantTreeNode, PointerTreeNode, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { isNoteContent } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import appLogger from "@/lib/logger";
@@ -22,6 +22,7 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
   const [editor] = useLexicalComposerContext();
   const tree = treeNode.tree;
   const viewStore = useViewStore();
+  const { addToast } = useToast();
 
   const viewType = viewStore.viewType;
   useEffect(() => {
@@ -81,12 +82,19 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
         if (!isNoteContent(treeNode) && ((viewType === "note" && childOfTreeRoot) || event.shiftKey)) {
           return handleConvertToNote(event);
         } else {
+          if (treeNode instanceof PointerTreeNode) {
+            event.preventDefault();
+            addToast({
+              title: "Cannot split while sublists are flattened",
+            });
+            return true;
+          }
           return handleSplit(event);
         }
       }),
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, graphStore, tree, treeNode, viewType]);
+  }, [editor, graphStore, tree, treeNode, viewType, addToast]);
 
   return null;
 };
