@@ -11,6 +11,7 @@ import { createConfig } from "@/app/editor/createConfig";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
+import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { useClickableMention } from "@/app/editor/utils/useClickableMention";
@@ -55,6 +56,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
         <IgnoreModShiftAPlugin />
         <ReplacementPlugin treeNode={treeNode} />
         <ClearEditorPlugin />
+        <LinkPlugin />
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         {treeNode.object instanceof GraphNode && <SyncWithModelsPlugin node={treeNode.object} treeNode={treeNode} />}
       </LexicalComposer>
