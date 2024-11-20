@@ -155,14 +155,18 @@ const CommandBar = observer(() => {
     (e: React.KeyboardEvent) => {
       switch (e.key) {
         case "ArrowDown":
-          e.preventDefault();
-          e.stopPropagation();
-          setSelectedIndex((prevIndex) => (prevIndex + 1 >= filteredCommands.length ? 0 : prevIndex + 1));
+          if (filteredCommands.length > 1) {
+            e.preventDefault();
+            e.stopPropagation();
+            setSelectedIndex((prevIndex) => (prevIndex + 1 >= filteredCommands.length ? 0 : prevIndex + 1));
+          }
           break;
         case "ArrowUp":
-          e.preventDefault();
-          e.stopPropagation();
-          setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : filteredCommands.length - 1));
+          if (filteredCommands.length > 1) {
+            e.preventDefault();
+            e.stopPropagation();
+            setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : filteredCommands.length - 1));
+          }
           break;
         case "Tab":
         case "Enter":
