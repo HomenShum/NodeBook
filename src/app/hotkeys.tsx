@@ -44,7 +44,10 @@ export const treeHotkeyMapping: {
   { predicate: isMoveSelectionHeadDownHotkey, action: (tree: Tree) => tree.moveNodeSelectionHeadDown() },
   { predicate: isMoveSelectedNodesUpHotkey, action: (tree: Tree) => tree.moveSelectedNodesUp() },
   { predicate: isMoveSelectedNodesDownHotkey, action: (tree: Tree) => tree.moveSelectedNodesDown() },
-  { predicate: isDeleteSelectionHotkey, action: (tree: Tree) => tree.deleteSelection() },
+  {
+    predicate: (event, tree) => isDeleteSelectionHotkey(event) && tree?.selection?.type === "node",
+    action: (tree: Tree) => tree.deleteSelection(),
+  },
   { predicate: isIndentSelectionHotkey, action: (tree: Tree) => tree.indentSelection() },
   { predicate: isDedentSelectionHotkey, action: (tree: Tree) => tree.dedentSelection() },
   { predicate: isEscapeSelectionHotkey, action: (tree: Tree) => tree.escapeSelection() },
