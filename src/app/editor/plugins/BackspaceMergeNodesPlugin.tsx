@@ -78,7 +78,7 @@ export const BackspaceMergeNodesPlugin = () => {
           // Merge into sibling above's last child, or sibling above if it has no children
           const lastChild = treeNode.siblingAbove.visibleChildren.slice(-1)[0];
           handled = mergeNodes(treeNode, lastChild || treeNode.siblingAbove);
-        } else if (treeNode.parent.parent) {
+        } else if (treeNode.parent) {
           // Merge into parent
           handled = mergeNodes(treeNode, treeNode.parent);
         }
