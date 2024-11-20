@@ -9,7 +9,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner, TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { extractGroupId, extractPointedAtObjectId, getSideOrThrow } from "@/app/graph/utils";
+import { extractGroupId, extractPointedAtObjectId, getSideOrThrow, sliceChips } from "@/app/graph/utils";
 import { SerializedTree } from "@/app/persistence/SerializedData";
 import { copyContentFromLexicalNodes } from "@/app/tree/clipboard";
 import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCache";
@@ -617,7 +617,13 @@ export class Tree {
     const treeNode = this.getNodeOrThrow(treeNodeId);
     let node: GraphNode | null = null;
     try {
-      node = await this.graphStore.addNode({ nodeProps: { content: treeNode.object.text.slice(0, -1) } });
+      let content: string | Chip[] = "";
+      if (treeNode.object instanceof GraphNode) {
+        content = sliceChips(treeNode.object.content, 0, -1);
+      } else {
+        content = treeNode.object.text.slice(0, -1);
+      }
+      node = await this.graphStore.addNode({ nodeProps: { content } });
       await this.setObjectOnNode(treeNode.path, node);
     } catch (error) {
       if (node) {

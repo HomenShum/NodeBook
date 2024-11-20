@@ -1,3 +1,4 @@
+import { Chip } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { BaseGroup, DescendantTreeNode, GroupId, NoteContentGroup, PinnedGroup } from "@/app/tree/nodes";
 
@@ -60,4 +61,80 @@ export const extractPointedAtObjectId = (node: DescendantTreeNode): string => {
   return node.relationWithParent.from.id === node.object.id
     ? node.relationWithParent.to.id
     : node.relationWithParent.from.id;
+};
+
+/**
+ * Returns a new array of chips that represents a slice of the original chips array
+ * between start and end positions. Similar to String.slice() but works with an array
+ * of chips while preserving chip boundaries.
+ *
+ * Mentions and linebreaks are tokens, so their content can't be changed and they are
+ * deleted all at once.
+ */
+
+export const sliceChips = (chips: Chip[], start: number, end?: number): Chip[] => {
+  if (!chips.length) return [];
+
+  const result: Chip[] = [];
+  let currentPos = 0;
+
+  // Handle negative indices
+  const totalLength = chips.reduce(
+    (sum, chip) => sum + (chip.type === "mention" || chip.type === "linebreak" ? 1 : chip.value.length),
+    0,
+  );
+  const actualStart = start < 0 ? Math.max(0, totalLength + start) : start;
+  const actualEnd = end === undefined ? totalLength : end < 0 ? totalLength + end : end;
+
+  if (actualStart >= actualEnd) return [];
+
+  for (const chip of chips) {
+    const chipLength = chip.type === "mention" || chip.type === "linebreak" ? 1 : chip.value.length;
+
+    if (currentPos + chipLength <= actualStart) {
+      // Skip chips before start
+      currentPos += chipLength;
+      continue;
+    }
+
+    if (currentPos >= actualEnd) {
+      // Stop after reaching end
+      break;
+    }
+
+    if (chip.type === "mention" || chip.type === "linebreak") {
+      // For mentions and linebreaks - only include if they start within range
+      // and end within range (since they have length 1)
+      if (currentPos >= actualStart && currentPos + 1 <= actualEnd) {
+        result.push(chip);
+      }
+    } else if (chip.type === "link") {
+      // For links - trim the value and url together
+      const startInChip = Math.max(0, actualStart - currentPos);
+      const endInChip = Math.min(chipLength, actualEnd - currentPos);
+
+      const newValue = chip.value.slice(startInChip, endInChip);
+      // Extract protocol if present
+      const urlMatch = chip.url.match(/^(https?:\/\/)(.*)$/);
+      const protocol = urlMatch ? urlMatch[1] : "";
+      const urlWithoutProtocol = urlMatch ? urlMatch[2] : chip.url;
+      // Apply trimming only to the URL part after the protocol
+      const newUrlWithoutProtocol = urlWithoutProtocol.slice(startInChip, endInChip);
+      const newUrl = protocol + newUrlWithoutProtocol;
+      result.push({ ...chip, value: newValue, url: newUrl });
+    } else {
+      // For text chips - trim the value
+      const startInChip = Math.max(0, actualStart - currentPos);
+      const endInChip = Math.min(chipLength, actualEnd - currentPos);
+
+      const newValue = chip.value.slice(startInChip, endInChip);
+      if (newValue) {
+        result.push({ ...chip, value: newValue });
+      }
+    }
+
+    currentPos += chipLength;
+  }
+
+  return result;
 };
