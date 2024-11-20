@@ -128,3 +128,12 @@
     display: none;
   }
 }
+
+.TextInput > input  {
+  outline: 0;
+  border: 0;
+  font-family: monospace;
+  border-radius: 6px;
+  max-height: 24px;
+  box-sizing: border-box;
+}

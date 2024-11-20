@@ -119,6 +119,14 @@ export const DevTools = observer(function DevTools() {
           />
           Replace # with @# while typing
         </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.showIdeapadLinkButton}
+            onChange={(e) => settingsStore.setShowIdeapadLinkButton(e.target.checked)}
+          />
+          Show Ideapad Link Button
+        </label>
         <div className={styles.SearchReplaceContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />

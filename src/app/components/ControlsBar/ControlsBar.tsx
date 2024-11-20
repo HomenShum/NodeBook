@@ -1,6 +1,6 @@
-import { Globe, Link2, ListFilter, Map, MapPin, Sliders, X } from "lucide-react";
+import { Globe, Link2, ListFilter, Map, MapPin, Sliders, WorkflowIcon, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback, useState } from "react";
+import React, { ChangeEvent, useCallback, useState } from "react";
 
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
@@ -16,6 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrim
 import { Switch } from "@/app/components/UIPrimitives/Switch";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { SortOption, Tree } from "@/app/tree/Tree";
+import { ideapadLinkManager } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,14 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const settingsStore = useSettingsStore();
 
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [ideapadLink, setIdeapadLink] = useState(ideapadLinkManager.get(tree.rootObjectId));
+
+  const handleLinkChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const element = event.target as HTMLInputElement;
+    if (!element.value) return;
+    ideapadLinkManager.set(tree.rootObjectId, element.value);
+    setIdeapadLink(element.value);
+  };
 
   const togglePinnedSection = useCallback(() => {
     tree.updateFilter((prev) => ({ ...prev, hidePinnedSection: !prev.hidePinnedSection }));
@@ -121,6 +130,18 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
         </div>
       </div>
       <div className={styles.RightWrapper}>
+        {settingsStore.showIdeapadLinkButton && (
+          <Button
+            size="sm"
+            variant={"default"}
+            onClick={() => window.open(ideapadLink, "_blank")}
+            className={cn(s.ShowTooltip, s.BottomAlign)}
+            data-tooltip={"Open Ideapad"}
+          >
+            <WorkflowIcon size={14} strokeWidth={1.5} />
+            <span>Ideapad</span>
+          </Button>
+        )}
         <Button
           size="sm"
           variant={viewStore.flattenSublists ? "active" : "default"}
@@ -225,6 +246,12 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                   onCheckedChange={(checked: boolean) => settingsStore.setHidePinnedItems(checked)}
                 />
               </div>
+              {settingsStore.showIdeapadLinkButton && (
+                <div className={cn(s.SwitchItem, s.TextInput)}>
+                  <label htmlFor="set-ideapad-link">Set Ideapad Link</label>
+                  <input id="set-ideapad-link" value={ideapadLink} onChange={handleLinkChange} />
+                </div>
+              )}
             </div>
           </PopoverContent>
         </Popover>

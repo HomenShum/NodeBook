@@ -28,6 +28,7 @@ export class SettingsStore {
   public publicMode = true;
   public triggerRelationOnSingleColon = false;
   public atHashtagReplacement = false;
+  public showIdeapadLinkButton = false;
   private stopAutosave: () => void;
 
   constructor(
@@ -63,6 +64,7 @@ export class SettingsStore {
     this.hidePinnedItems = false;
     this.triggerRelationOnSingleColon = false;
     this.atHashtagReplacement = false;
+    this.showIdeapadLinkButton = false;
   }
 
   private async syncToServer() {
@@ -92,6 +94,7 @@ export class SettingsStore {
       triggerRelationOnSingleColon: this.triggerRelationOnSingleColon,
       publicMode: this.publicMode,
       atHashtagReplacement: this.atHashtagReplacement,
+      showIdeapadLinkButton: this.showIdeapadLinkButton,
     };
   }
 
@@ -113,6 +116,7 @@ export class SettingsStore {
     this.triggerRelationOnSingleColon = data.triggerRelationOnSingleColon ?? this.triggerRelationOnSingleColon;
     this.publicMode = data.publicMode ?? this.publicMode;
     this.atHashtagReplacement = data.atHashtagReplacement ?? this.atHashtagReplacement;
+    this.showIdeapadLinkButton = data.showIdeapadLinkButton ?? this.showIdeapadLinkButton;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -176,6 +180,10 @@ export class SettingsStore {
 
   setAtHashtagReplacement(value: boolean): void {
     this.atHashtagReplacement = value;
+  }
+
+  setShowIdeapadLinkButton(value: boolean): void {
+    this.showIdeapadLinkButton = value;
   }
 
   cleanup() {

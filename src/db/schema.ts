@@ -29,6 +29,7 @@ const SerializedUserSettingsSchema = z.object({
   publicMode: z.boolean().optional(),
   triggerRelationOnSingleColon: z.boolean().optional(),
   atHashtagReplacement: z.boolean().optional(),
+  showIdeapadLinkButton: z.boolean().optional()
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 

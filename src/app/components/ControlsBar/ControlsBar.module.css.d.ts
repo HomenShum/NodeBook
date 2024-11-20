@@ -11,6 +11,7 @@ declare const styles: {
   readonly "ShowTooltip": string;
   readonly "SortOptionDropdown": string;
   readonly "SwitchItem": string;
+  readonly "TextInput": string;
 };
 export = styles;
 

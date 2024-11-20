@@ -264,3 +264,16 @@ export const downloadSubtree = (store: GraphStore, object: GraphObject): void =>
   // Clean up the temporary URL
   URL.revokeObjectURL(url);
 };
+
+const keyPrefix = "ideapadlink_";
+export const ideapadLinkManager = {
+  get: (objectId: string): string => {
+    return localStorage.getItem(`${keyPrefix}${objectId}`) || "https://v2.ideapad.io/";
+  },
+  set: (objectId: string, link: string): void => {
+    setTimeout(() => {
+      localStorage.setItem(`${keyPrefix}${objectId}`, link);
+    }, 0);
+  },
+  has: (objectId: string): boolean => !!localStorage.getItem(`${keyPrefix}${objectId}`),
+};
