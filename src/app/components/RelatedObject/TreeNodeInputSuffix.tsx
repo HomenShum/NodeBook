@@ -2,9 +2,10 @@ import { observer } from "mobx-react-lite";
 import React, { useEffect, useRef } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useHandleEnterKey } from "@/app/editor/plugins/EnterKeyPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./styles/RelatedObjectView.module.css";
 
@@ -28,6 +29,8 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
   const tree = treeNode.tree;
   const inputRef = useRef<HTMLInputElement>(null);
   const graphStore = useGraphStore();
+  const viewType = useViewStore().viewType;
+  const handleEnterKey = useHandleEnterKey(tree, treeNode);
 
   // Only grab selection if  tree node
   const treeNodeShouldHaveFocus = tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id;
@@ -54,14 +57,9 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
       onKeyDown={async (e: React.KeyboardEvent) => {
         const isMod = e.metaKey || e.ctrlKey;
         switch (e.key) {
-          case "Enter":
-            e.preventDefault();
-            if (e.shiftKey) {
-              await tree.splitIntoNote(treeNode);
-            } else {
-              await tree.split(treeNode);
-            }
-            break;
+          case "Enter": {
+            return handleEnterKey(e.nativeEvent);
+          }
           case "Backspace":
             if (!treeNode.object.isLocal) {
               try {

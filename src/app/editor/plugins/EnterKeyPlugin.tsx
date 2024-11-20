@@ -1,100 +1,74 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, COMMAND_PRIORITY_NORMAL, KEY_ENTER_COMMAND } from "lexical";
 import { action } from "mobx";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
-import { GraphNode } from "@/app/graph/GraphNode";
+import { Chip } from "@/app/graph/GraphNode";
 import { useToast } from "@/app/hooks/useToast";
 import { DescendantTreeNode, PointerTreeNode, RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import { Tree } from "@/app/tree/Tree";
 import { isNoteContent } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
-import appLogger from "@/lib/logger";
 
-const logger = appLogger.child({ service: "EnterKeyPlugin" });
+export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
+  const { addToast } = useToast();
+  const viewType = useViewStore().viewType;
+  return useCallback(
+    (e: KeyboardEvent, chips?: { before: Chip[]; after: Chip[] }) => {
+      if (e.key !== "Enter") return false;
+      e.preventDefault();
+      e.stopPropagation();
+      const isMod = e.metaKey || e.ctrlKey;
+      const childOfTreeRoot = treeNode.parent instanceof RootTreeNode;
+      if (isMod) {
+        if (isNoteContent(treeNode) && treeNode instanceof DescendantTreeNode) {
+          tree.splitNote(treeNode, chips);
+          return true;
+        } else {
+          tree.split(treeNode, chips);
+          return true;
+        }
+      }
+      if (!isNoteContent(treeNode) && ((viewType === "note" && childOfTreeRoot) || e.shiftKey)) {
+        tree.splitIntoNote(treeNode, chips);
+        return true;
+      } else {
+        if (treeNode instanceof PointerTreeNode) {
+          addToast({
+            title: "Cannot split while sublists are flattened",
+          });
+          return false;
+        }
+        tree.split(treeNode, chips);
+        return true;
+      }
+    },
+    [tree, treeNode, viewType, addToast],
+  );
+}
 
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.
  */
 export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
-  const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
   const tree = treeNode.tree;
-  const viewStore = useViewStore();
-  const { addToast } = useToast();
+  const handleEnterKey = useHandleEnterKey(tree, treeNode);
 
-  const viewType = viewStore.viewType;
   useEffect(() => {
-    function handleSplit(event: KeyboardEvent) {
-      const selection = $getSelection();
-      if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
-      if (!(treeNode.object instanceof GraphNode)) {
-        // For now, we don't support splitting relations. In ENT-3653, we'll
-        // decide if and how to support this.
-        logger.warn("Splitting relations is not supported yet.");
-        return false;
-      }
-      event.preventDefault();
-      event.stopPropagation();
-      const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
-      tree.split(treeNode, { before: chipsBefore, after: chipsAfter });
-      return true;
-    }
-
-    function handleConvertToNote(event: KeyboardEvent) {
-      if (!(treeNode.object instanceof GraphNode)) {
-        logger.warn("Only nodes can be converted to note right now");
-        return false;
-      }
-      const selection = $getSelection();
-      if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
-      event.preventDefault();
-      event.stopPropagation();
-      const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
-      tree.splitIntoNote(treeNode, { before: chipsBefore, after: chipsAfter });
-      return true;
-    }
-
-    function handleSplitNote(event: KeyboardEvent) {
-      const selection = $getSelection();
-      if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
-      if (!(treeNode instanceof DescendantTreeNode)) return false;
-      event.preventDefault();
-      event.stopPropagation();
-      const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
-      tree.splitNote(treeNode, { before: chipsBefore, after: chipsAfter });
-      return true;
-    }
-
-    const childOfTreeRoot = treeNode.parent instanceof RootTreeNode;
     return editor.registerCommand(
       KEY_ENTER_COMMAND,
       action((event) => {
-        if (!event || !graphStore) return false;
-        if (event.metaKey || event.ctrlKey) {
-          if (isNoteContent(treeNode)) {
-            return handleSplitNote(event);
-          } else {
-            return handleSplit(event);
-          }
-        }
-        if (!isNoteContent(treeNode) && ((viewType === "note" && childOfTreeRoot) || event.shiftKey)) {
-          return handleConvertToNote(event);
-        } else {
-          if (treeNode instanceof PointerTreeNode) {
-            event.preventDefault();
-            addToast({
-              title: "Cannot split while sublists are flattened",
-            });
-            return true;
-          }
-          return handleSplit(event);
-        }
+        if (!event) return false;
+        const selection = $getSelection();
+        if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
+        const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
+        return handleEnterKey(event, { before: chipsBefore, after: chipsAfter });
       }),
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, graphStore, tree, treeNode, viewType, addToast]);
+  }, [editor, handleEnterKey]);
 
   return null;
 };

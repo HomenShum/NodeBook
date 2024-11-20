@@ -951,7 +951,7 @@ export class Tree {
 
   async splitNote(
     treeNode: DescendantTreeNode,
-    chips: { before: Chip[]; after: Chip[] },
+    chips?: { before: Chip[]; after: Chip[] },
     inlineSplit: boolean = false,
     newRid?: string,
   ) {
@@ -972,13 +972,15 @@ export class Tree {
     }
     // Create a new node as a sibling of the current note
 
+    const chipsBefore = chips ? chips.before : null;
+    const chipsAfter = chips ? chips.after : [];
     const txs: TxCombined = [];
 
     // Update the content of the original node
-    if (chips.before) {
+    if (chipsBefore) {
       txs.push({
         type: "updateNode",
-        transaction: { nodeId: treeNode.object.id, nodeProps: { content: chips.before } },
+        transaction: { nodeId: treeNode.object.id, nodeProps: { content: chipsBefore } },
       });
     }
 
@@ -997,13 +999,13 @@ export class Tree {
 
     // Add a child to the new note with the content after the split
     const relationIdsInNewNote: string[] = [];
-    if (chips.after.length > 0) {
+    if (chipsAfter.length > 0) {
       const newNoteContentRelationId = uuid();
       txs.push({
         type: "addChildNode",
         transaction: {
           parentId: newNoteId,
-          nodeProps: { content: chips.after },
+          nodeProps: { content: chipsAfter },
           relationProps: { id: newNoteContentRelationId },
         },
       });
