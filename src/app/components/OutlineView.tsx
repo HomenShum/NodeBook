@@ -4,11 +4,11 @@ import { useEffect } from "react";
 
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
+import OutlineContent from "@/app/components/OutlineContent";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import OutlineContent from "@/app/components/OutlineContent";
 
 import s from "./OutlineView.module.css";
 
@@ -21,17 +21,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
 
   const treeRoot = tree.state.root;
 
-  // Set the tree selection to null when the user clicks outside an editor
   useEffect(() => {
-    function clearSelectionOnClickOutsideOutline(e: MouseEvent) {
-      const isEditor =
-        e.target instanceof HTMLElement &&
-        e.target.closest('[data-lexical-editor="true"]') !== null &&
-        (e.target.isContentEditable || e.target.tagName === "INPUT");
-      if (!isEditor) {
-        tree.setFocusedNode(null);
-      }
-    }
     //Todo: This can be moved to hotkeys?
     const handleClipboardEvent = (e: ClipboardEvent) => {
       if (e.type === "copy") {
@@ -39,10 +29,8 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
         if (hasCopied) e.preventDefault();
       }
     };
-    window.addEventListener("click", clearSelectionOnClickOutsideOutline);
     document.addEventListener("copy", handleClipboardEvent);
     return () => {
-      window.removeEventListener("click", clearSelectionOnClickOutsideOutline);
       document.removeEventListener("copy", handleClipboardEvent);
     };
   }, [tree, viewStore.activeTree]);
