@@ -2,7 +2,6 @@ import { X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
-import { ConfirmReplace } from "@/app/components/DataDialog/ConfirmReplace";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import { ImportReviewList } from "@/app/components/DataDialog/ImportReviewList";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -65,12 +64,6 @@ export const ImportDialog = observer(function ImportDialog() {
     reader.readAsText(selectedFile);
   }, []);
 
-  const onReplaceConfirm = useCallback(() => {
-    if (!serializedGraphStore) return;
-    graphStore.resetAndLoad(serializedGraphStore);
-    viewStore.setActiveModal(null);
-  }, [graphStore, viewStore, serializedGraphStore]);
-
   const onAddToGraphClick = useCallback(() => {
     if (!serializedGraphStore) return;
     setIsLoading(true);
@@ -130,7 +123,6 @@ export const ImportDialog = observer(function ImportDialog() {
         <p>No new objects to import.</p>
       )}
       <div className={styles.DialogActions}>
-        <ConfirmReplace disabled={!file || isLoading} onConfirm={onReplaceConfirm} />
         <Button
           disabled={
             !serializedGraphStore ||

@@ -16,7 +16,7 @@ const processEnvSchema = z.object({
   NEXT_PUBLIC_LOG_SERVICE_EXCLUDE: z.string().optional(),
   NEXT_PUBLIC_LOG_SERVICE_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
   NEXT_PUBLIC_HARDCODED_USER_ID: z.string().optional(),
-  ENV: z.union([z.literal("development"), z.literal("production")]).optional(),
+  NEXT_PUBLIC_ENV: z.union([z.literal("development"), z.literal("production"), z.literal("preview")]).optional(),
 });
 processEnvSchema.parse(process.env);
 declare global {
@@ -42,7 +42,7 @@ export const env: {
   isFrontend: boolean;
   pusherKey: string;
   pusherCluster: string;
-  env: "development" | "production";
+  env: "development" | "production" | "preview";
 } = Object.freeze({
   persistTo: process.env.NEXT_PUBLIC_PERSIST_TO || "server",
   isPersistenceEnabled: process.env.NEXT_PUBLIC_PERSISTENCE_ENABLED === "true",
@@ -59,6 +59,6 @@ export const env: {
   logServiceLevel: process.env.NEXT_PUBLIC_LOG_SERVICE_LEVEL || "debug",
   pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY || "",
   pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
-  env: process.env.ENV || "development",
+  env: process.env.NEXT_PUBLIC_ENV || "development",
   hardcodedUserId: process.env.NEXT_PUBLIC_HARDCODED_USER_ID || undefined,
 });

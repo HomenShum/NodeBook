@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
@@ -8,6 +8,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
+import { useToast } from "@/app/hooks/useToast";
 import { useViewStore } from "@/app/view/useViewStore";
 import { SearchAndReplaceDropdownOption, SearchAndReplaceDropdownOptionEnum } from "@/db/schema";
 import logger from "@/lib/logger";
@@ -160,11 +161,7 @@ export const DevTools = observer(function DevTools() {
           <Button size="default" variant="accent" onClick={handleExportAsJson}>
             Export as JSON
           </Button>
-          {env.env !== "production" && (
-            <Button size="default" variant="destructive" onClick={() => viewStore.setActiveModal("clearData")}>
-              Clear all data
-            </Button>
-          )}
+          <DeleteAllButton />
         </div>
 
         <hr className={styles.Divider} />
@@ -191,3 +188,57 @@ export const DevTools = observer(function DevTools() {
     </DataDialog>
   );
 });
+
+function DeleteAllButton() {
+  const auth = useAuth();
+  const graphStore = useGraphStore();
+  const { addToast } = useToast();
+  const [deleting, setDeleting] = useState(false);
+
+  if (env.env === "production" || !auth) return null;
+  return (
+    <Button
+      size="default"
+      variant="destructive"
+      disabled={deleting}
+      onClick={async () => {
+        if (!auth) return;
+        setDeleting(true);
+        try {
+          const token = await auth.getAccessTokenSilently();
+          const res = await fetch("/api/delete-all", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          let message = res.statusText;
+          try {
+            const json = await res.json();
+            message = json.message || message;
+          } catch (e) {
+            // Ignore
+          }
+          if (!res.ok) throw new Error(`${res.status} - ${message}`);
+          graphStore.cleanup();
+          addToast({ title: "All data deleted" });
+        } catch (err) {
+          console.error(err);
+          addToast({
+            title: "Failed to delete data",
+            description: err instanceof Error ? err.message : "Unknown error",
+          });
+        } finally {
+          setDeleting(false);
+        }
+      }}
+    >
+      {deleting ? (
+        <>
+          <span className={styles.Spinner}>⟳</span>
+          Deleting...
+        </>
+      ) : (
+        "Clear all data"
+      )}
+    </Button>
+  );
+}

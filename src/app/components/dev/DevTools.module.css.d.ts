@@ -11,6 +11,8 @@ declare const styles: {
   readonly "SearchReplaceRow": string;
   readonly "SearchReplaceSelect": string;
   readonly "SettingsGroup": string;
+  readonly "Spinner": string;
+  readonly "spin": string;
 };
 export = styles;
 
