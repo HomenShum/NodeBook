@@ -136,8 +136,12 @@ export class UpdateManager {
   }
 
   private isTextSame(updates: GraphUpdate[]) {
+    // This is meant to handle the cases where we do a silent update of:
+    // - merging nodes together
+    // - converting a link to a node
+
     // Compare oldProps to newProps to see if the update is a link conversion
-    if (updates.length === 0 || updates[0].operation !== "updateNode") {
+    if (updates.length !== 1 || updates[0].operation !== "updateNode") {
       return false;
     }
     // Check if the text content is all the same. If it is, then this is part of the previous update so return true.
