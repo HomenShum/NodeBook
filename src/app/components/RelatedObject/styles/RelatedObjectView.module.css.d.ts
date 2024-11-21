@@ -13,6 +13,7 @@ declare const styles: {
   readonly "HeaderInListView": string;
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
+  readonly "LoadingSpinner": string;
   readonly "NoteContentSection": string;
   readonly "NoteContentSectionHeader": string;
   readonly "PinIcon": string;

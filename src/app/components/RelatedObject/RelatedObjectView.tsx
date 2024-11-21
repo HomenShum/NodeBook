@@ -1,4 +1,4 @@
-import { Dot, Play } from "lucide-react";
+import { Dot, LoaderCircle, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
@@ -305,7 +305,16 @@ const Bullet = observer(function Bullet() {
   );
 });
 
+const LoadingSpinner = () => {
+  return (
+    <div className={styles.LoadingSpinner}>
+      <LoaderCircle size={16} />
+    </div>
+  );
+};
+
 const Controls = observer(function Controls() {
+  const viewStore = useViewStore();
   const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
   const isFirstChildOfNoteContent =
     treeNode.parentGroup.id === "noteContent" && treeNode.parentGroup.nodes[0].id === treeNode.id;
@@ -317,6 +326,7 @@ const Controls = observer(function Controls() {
       >
         <div className={styles.RelatedObjectActions}>
           <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
+          {viewStore.isNodeProcessing(treeNode.object.id) && <LoadingSpinner />}
           {treeNode.childCount > 0 && <Toggle treeNode={treeNode} isHovered={isHovered} />}
         </div>
       </div>

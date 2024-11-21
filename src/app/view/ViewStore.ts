@@ -23,8 +23,6 @@ export class ViewStore {
 
   public hoveredNode: Path | null = null;
 
-  // Start mouse tracking variables
-
   private isDown: boolean = false;
   private isDragging: boolean = false;
   public isMouseUpAfterDrag: boolean = true;
@@ -32,9 +30,9 @@ export class ViewStore {
   private downX: number = 0;
   private downY: number = 0;
 
-  // End mouse tracking variables
-
   editorsByPath: Map<string, LexicalEditor> = new Map();
+
+  processingNodeIds: Set<string> = new Set();
 
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
@@ -105,6 +103,9 @@ export class ViewStore {
         toggleQuickCapture: action,
         setActiveTree: action,
         toggleRightSidebar: action,
+        setNodeIsProcessing: action,
+        clearNodeIsProcessing: action,
+        isNodeProcessing: observable,
       });
     }
   }
@@ -246,5 +247,17 @@ export class ViewStore {
     window.removeEventListener("mousemove", this.handleMouseMove);
     window.removeEventListener("mousedown", this.handleMouseDown);
     window.removeEventListener("mouseup", this.handleMouseUp);
+  }
+
+  setNodeIsProcessing(nodeId: string) {
+    this.processingNodeIds.add(nodeId);
+  }
+
+  clearNodeIsProcessing(nodeId: string) {
+    this.processingNodeIds.delete(nodeId);
+  }
+
+  isNodeProcessing(nodeId: string) {
+    return this.processingNodeIds.has(nodeId);
   }
 }

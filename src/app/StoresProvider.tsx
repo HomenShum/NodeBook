@@ -19,6 +19,10 @@ import rootLogger from "@/lib/logger";
 
 export const logger = rootLogger.child({ service: "store-provider" });
 
+const envAllowsMockAuth = () => {
+  return env.env === "development" || env.env === "preview";
+};
+
 export function StoresProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const auth = useAuth();
   const [isLoading, setIsLoading] = useState(auth ? auth.isLoading : false);
@@ -45,7 +49,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
   useEffect(() => {
     let ignore = false;
     async function setupStores() {
-      if (!auth && env.env !== "development") return logger.debug("Skip loading stores while auth is not enabled");
+      if (!auth && !envAllowsMockAuth()) return logger.debug("Skip loading stores while auth is not enabled");
       if (auth?.isLoading) return logger.debug("Skip loading stores while auth is loading");
 
       logger.debug("Starting to setup stores", auth);
@@ -62,7 +66,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       logger.debug("Loading user");
       let user: MewUser;
       try {
-        if (!auth && env.env === "development") {
+        if (!auth && envAllowsMockAuth()) {
           user = MOCK_MEW_USER;
         } else if (auth?.user) {
           const data = await fetchGetOrCreateUser(auth.user, authedFetch);

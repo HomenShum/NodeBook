@@ -40,6 +40,30 @@ Left Area
   gap: 1px;
 }
 
+/*
+Loading spinner
+*/
+
+.LoadingSpinner {
+  display: inline-block;
+  line-height: 1;
+  height: 16px;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.LoadingSpinner svg {
+  animation: spin 1s linear infinite;
+}
+
 /* 
 Bullet
 */
@@ -92,10 +116,7 @@ Bullet
   opacity: 1;
 }
 
-.NoteContentSection:focus-within
-  .NoteContentSection
-  .RelatedObjectContent:focus-within
-  .RelatedObjectBulletContainer.Hidden {
+.NoteContentSection:focus-within .NoteContentSection .RelatedObjectContent:focus-within .RelatedObjectBulletContainer.Hidden {
   opacity: 0;
 }
 
@@ -198,10 +219,12 @@ Bullet
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(4);
     opacity: 0;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
