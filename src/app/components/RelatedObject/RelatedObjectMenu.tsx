@@ -1,4 +1,5 @@
 import {
+  Beaker,
   ClipboardCopy,
   Delete,
   Download,
@@ -30,6 +31,7 @@ import {
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { useParseWithAi } from "@/app/llm/useParseWithAi";
 import { getAncestorsAsArray, useSetAuthorRoot, useSetRoot } from "@/app/tree/utils";
 import { createRouteUrl, downloadSubtree } from "@/app/util";
 
@@ -58,6 +60,8 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
       relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
     });
   }, [treeNode, setRoot]);
+
+  const parseWithAi = useParseWithAi();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);
@@ -198,6 +202,15 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
         Change relation type
       </DropdownMenuItem>
       <DropdownMenuSeparator />
+      {object instanceof GraphNode && (
+        <>
+          <DropdownMenuItem onSelect={() => parseWithAi(object)}>
+            <Beaker size={14} />
+            Parse with AI
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+        </>
+      )}
       <DropdownMenuItem onSelect={() => downloadSubtree(graphStore, object)}>
         <Download size={14} />
         Export subtree

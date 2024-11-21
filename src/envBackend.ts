@@ -11,6 +11,9 @@ const processEnvSchema = z
     AUTH0_JWT_PUBLIC_KEY: z.string().optional(),
     VERCEL_ENV: z.union([z.literal("development"), z.literal("preview"), z.literal("production")]),
     NEXT_PUBLIC_HARDCODED_USER_ID: z.string().optional(),
+    OPENAI_API_KEY: z.string().optional(),
+    EXTRACT_ENTITIES_OPENAI_MODEL: z.string().optional(),
+    EXTRACT_ENTITIES_OPENAI_TEMP: z.string().optional(),
   })
   .refine((data) => data.POSTGRES_CUSTOM_URL || data.POSTGRES_URL, "POSTGRES_URL or POSTGRES_CUSTOM_URL is required");
 processEnvSchema.parse(process.env);
@@ -32,4 +35,10 @@ export const env = Object.freeze({
   PUSHER_SECRET: process.env.PUSHER_SECRET ?? "",
   PUSHER_CLUSTER: process.env.PUSHER_CLUSTER ?? "",
   NEXT_PUBLIC_HARDCODED_USER_ID: process.env.NEXT_PUBLIC_HARDCODED_USER_ID ?? "",
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "",
+  EXTRACT_ENTITIES_OPENAI_MODEL: process.env.EXTRACT_ENTITIES_OPENAI_MODEL ?? "",
+  EXTRACT_ENTITIES_OPENAI_TEMP:
+    process.env.EXTRACT_ENTITIES_OPENAI_TEMP && !isNaN(parseFloat(process.env.EXTRACT_ENTITIES_OPENAI_TEMP))
+      ? parseFloat(process.env.EXTRACT_ENTITIES_OPENAI_TEMP)
+      : null,
 });
