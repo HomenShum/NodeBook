@@ -1,6 +1,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { createRouteUrl, ObjectPath } from "@/app/util";
@@ -198,6 +199,24 @@ export function useSetRoot() {
       router.push(path);
     },
     [viewStore, router],
+  );
+}
+
+export function useSetAuthorRoot() {
+  const viewStore = useViewStore();
+  const graphStore = useGraphStore();
+  const router = useRouter();
+  return useCallback(
+    (authorId: string) => {
+      const authorNode = graphStore.getUserNodeByAuthorId(authorId);
+      if (!authorNode) {
+        return;
+      }
+      const path = createRouteUrl(authorNode.getPath());
+      viewStore.setRoot(authorNode, path);
+      router.push(path);
+    },
+    [viewStore, router, graphStore],
   );
 }
 

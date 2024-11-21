@@ -13,6 +13,7 @@ import {
   PinOff,
   Plus,
   RefreshCcwDot,
+  User,
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -29,10 +30,8 @@ import {
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useTree } from "@/app/tree/TreeContext";
-import { getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
+import { getAncestorsAsArray, useSetAuthorRoot, useSetRoot } from "@/app/tree/utils";
 import { createRouteUrl, downloadSubtree } from "@/app/util";
-import { useViewStore } from "@/app/view/useViewStore";
 
 import { useTreeNode } from "./RelatedObjectContext";
 import styles from "./styles/RelatedObjectMenu.module.css";
@@ -52,6 +51,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
   const relation = treeNode.relationWithParent;
 
   const setRoot = useSetRoot();
+  const setAuthorRoot = useSetAuthorRoot();
   const handleZoom = useCallback(() => {
     setRoot({
       object: treeNode.object,
@@ -75,6 +75,16 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
     </>
   ) : (
     <>
+      {
+        <DropdownMenuItem
+          onSelect={() => {
+            setAuthorRoot(treeNode.object.authorId);
+          }}
+        >
+          <User size={14} />
+          <span>Go to author node</span>
+        </DropdownMenuItem>
+      }
       {object instanceof GraphNode &&
         (treeNode.parentGroup.id === "noteContent" ? (
           <DropdownMenuItem
