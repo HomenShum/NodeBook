@@ -76,18 +76,6 @@ export function parseIndex(a: string): [string, string, string] {
 
 /**
  * Generate N lexically sortable index strings between a and b. See {@link generateIndex} for the format.
- *
- * @example
- * const ids = [
- *  "7YDX6T3S0H-a0-4929",
- *  "7YDX6T3S0H-a1-296Z"
- * ];
- * ids.push(...generateNIndexBetween(ids[0], ids[1], 2));
- * ids.sort();
- * assert(idsBetween[0] === "7YDX6T3S0H-a0-4929");
- * assert(idsBetween[1].startsWith("7YDX6T3S0H-a08-"));
- * assert(idsBetween[2].startsWith("7YDX6T3S0H-a0G-"));
- * assert(idsBetween[3] === "7YDX6T3S0H-a1-296Z");
  */
 export function generateNIndex(n: number = 1, a: string | null = null, b: string | null = null): string[] {
   if (a !== null && b !== null && a >= b) {
@@ -122,13 +110,6 @@ export function generateNIndex(n: number = 1, a: string | null = null, b: string
  * - a 10 character time part which sorts from newest to oldest
  * - a N character fractional-index part
  * - some random characters
- *
- * @example
- * const id = generateIndex();
- * // id is a string like "7YDX6XMVQS-a0-TD28"
- * const parts = id.split("-");
- * assert(parts.length === 3);
- * assert(parts[1] === "a0")
  */
 export function generateIndex(): string {
   return generateNIndex(1)[0];

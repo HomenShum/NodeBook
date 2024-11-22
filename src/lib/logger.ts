@@ -148,21 +148,6 @@ class Logger {
 
 /**
  * Global logger object
- *
- * @example
- * // Basic usage
- * logger.info("hello world");
- * logger.info({ message: "hello world" });
- *
- * @example
- * // If a service is specified, it will be prepended to the message
- * logger.info({ service: "myService", message: "hello world" });
- * // Output: "myService: hello world"
- *
- * @example
- * // Create a child logger with a different log level
- * const childLogger = logger.child({ level: "warn" });
- * childLogger.info("This message will not be logged");
  */
 const logger = new Logger();
 

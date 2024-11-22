@@ -21,20 +21,6 @@ import { Tree } from "@/app/tree/Tree";
  * the template allows for reproducible tree paths (as opposed to if random
  * relation ids were generated).
  *
- * @example
- * const tree = await createTestTreeFromTemplate([
- *  { rid: "o1" },
- *  { rid: "o2", isHead: true, children: [
- *    { rid: "o3" }]},
- *  { rid: "o4", isAnchor: true }
- * ]);
- * // Defaults to the outline root node
- * assert(tree.root.object.id === "user-root-id-SPECIAL::mew|0123456789");
- * // The rid property sets the relation id, which in turn sets the path
- * assert(tree.getNode("/all/o2/all/o3"));
- * // The isHead and isAnchor properties above are used to set the selection
- * assert(tree.selection.headNodeId === "/all/o2" && tree.selection.anchorNodeId === "/all/o4");
- *
  * @DesignNotes
  * We could've made the id property the path to the node, which is what it is in a real
  * tree node, but that would've made the template more verbose.

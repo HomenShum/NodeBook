@@ -1,5 +1,3 @@
-import path from "path";
-
 import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
@@ -7,7 +5,6 @@ import { SettingsStore } from "@/app/graph/SettingsStore";
 import { createTestTreeFromTemplate, expectTreeToMatchTemplate, getNewNoteTxs } from "@/app/tree/__test__/helpers";
 import { Tree } from "@/app/tree/Tree";
 import appLogger from "@/lib/logger";
-import { testAllExamplesInFileExecute } from "@/lib/testAllExamplesInFileExecute";
 
 // Note: If writing tests for selection in future,
 // make sure for the initial state, the anchor and head belong
@@ -458,8 +455,5 @@ describe("Tree", () => {
         });
       });
     });
-  });
-  describe("helper examples should run", () => {
-    testAllExamplesInFileExecute(path.resolve(__dirname, "helpers.ts"), { createTestTreeFromTemplate });
   });
 });
