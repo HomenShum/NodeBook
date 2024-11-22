@@ -4,6 +4,10 @@ import { withAuth } from "@/app/api/authMiddleware";
 
 import { ask } from "./rag";
 
+export const config = {
+  maxDuration: 30,
+};
+
 export const POST = withAuth(async (request: Request) => {
   try {
     // Parse the request body
