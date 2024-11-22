@@ -235,6 +235,19 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <span className={styles.ButtonText}>Your Root ({graphStore.homeRoot.text})</span>
               </Button>
             )}
+            <Button
+              variant="ghost"
+              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+              data-tooltip="Go to Query Interface"
+              onClick={() => {
+                handleNavigation(() => router.push("/query"));
+              }}
+            >
+              <span>
+                <Search size={16} strokeWidth={1.5} />
+              </span>
+              <span>Search</span>
+            </Button>
             {!user.isAnonymous && (
               <>
                 <div className={styles.SidebarSectionHeader}>Workspaces</div>
@@ -283,21 +296,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   <FileSpreadsheet size={16} strokeWidth={1.5} />
                 </span>
                 <span>All Nodes</span>
-              </Button>
-            )}
-            {!user.isAnonymous && (
-              <Button
-                variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Go to Query Interface"
-                onClick={() => {
-                  handleNavigation(() => router.push("/query"));
-                }}
-              >
-                <span>
-                  <Search size={16} strokeWidth={1.5} />
-                </span>
-                <span>Query</span>
               </Button>
             )}
           </div>
