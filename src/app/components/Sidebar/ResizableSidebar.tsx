@@ -246,7 +246,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <span>
                 <Search size={16} strokeWidth={1.5} />
               </span>
-              <span>Search</span>
+              <span>AI Query</span>
             </Button>
             {!user.isAnonymous && (
               <>

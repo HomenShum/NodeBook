@@ -162,7 +162,7 @@ const MewQueryInterface = observer(function MewQueryInterface() {
                 state.response = null;
               }
             })}
-            placeholder="Ask you graph..."
+            placeholder="Ask your graph..."
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 handleFormSubmit(e);
