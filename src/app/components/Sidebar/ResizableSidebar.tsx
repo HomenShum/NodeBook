@@ -1,4 +1,19 @@
-import { FileSpreadsheet, Globe, Home, Key, LogIn, LogOut, Mail, MoonIcon, Newspaper, NotebookText, SettingsIcon, SunIcon, User } from "lucide-react";
+import {
+  FileSpreadsheet,
+  Globe,
+  Home,
+  Key,
+  LogIn,
+  LogOut,
+  Mail,
+  MoonIcon,
+  Newspaper,
+  NotebookText,
+  Search,
+  SettingsIcon,
+  SunIcon,
+  User,
+} from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
@@ -7,7 +22,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/app/auth/useAuth";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
-import SidebarTree from "@/app/components/Sidebar/SidebarTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
@@ -123,12 +137,15 @@ export const ResizableSidebar = observer(function ResizableSidebar({
     };
   }, [isResizing, resize, stopResizing]);
 
-  const handleNavigation = useCallback((action: () => void) => {
-    action();
-    if (window.innerWidth <= 450) { 
-      viewStore.toggleLeftSidebar();
-    }
-  }, [viewStore]);
+  const handleNavigation = useCallback(
+    (action: () => void) => {
+      action();
+      if (window.innerWidth <= 450) {
+        viewStore.toggleLeftSidebar();
+      }
+    },
+    [viewStore],
+  );
 
   return (
     <>
@@ -142,24 +159,35 @@ export const ResizableSidebar = observer(function ResizableSidebar({
       >
         <div className={`${styles.SidebarContent} ${isResizing ? styles.Resizing : ""}`}>
           <div className={styles.Nav}>
-            <Button variant="ghost" size="icon" onClick={handleOpenDevTools} className={cn(styles.ShowTooltip, styles.BottomAlign)} data-tooltip="Settings">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleOpenDevTools}
+              className={cn(styles.ShowTooltip, styles.BottomAlign)}
+              data-tooltip="Settings"
+            >
               <SettingsIcon size={16} strokeWidth={1.5} />
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={cn(styles.ShowTooltip, styles.BottomAlign)} data-tooltip="Account">
-                  <User size={16} strokeWidth={1.5}  />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(styles.ShowTooltip, styles.BottomAlign)}
+                  data-tooltip="Account"
+                >
+                  <User size={16} strokeWidth={1.5} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {user.isAnonymous && (
                   <DropdownMenuItem className={styles.LogInButton} onSelect={() => auth?.loginWithRedirect()}>
-                      <LogIn size={16} strokeWidth={1.5} />
-                      <span>Log in</span>
+                    <LogIn size={16} strokeWidth={1.5} />
+                    <span>Log in</span>
                   </DropdownMenuItem>
                 )}
                 {!user.isAnonymous && auth && (
-                    <>
+                  <>
                     <DropdownMenuItem onSelect={handleLogout} className={styles.LogOutButton}>
                       <LogOut size={16} strokeWidth={1.5} />
                       <span>Log out</span>
@@ -179,76 +207,99 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </DropdownMenu>
           </div>
           <div className={styles.TopContent}>
+            <Button
+              variant="ghost"
+              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+              data-tooltip="Go to Global Root"
+              onClick={() => {
+                handleNavigation(() => setRoot({ object: graphStore.globalRoot }));
+              }}
+            >
+              <span>
+                <Globe size={16} strokeWidth={1.5} />
+              </span>
+              <span>{graphStore.globalRoot.text}</span>
+            </Button>
+            {!user.isAnonymous && (
               <Button
                 variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to Global Root"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                data-tooltip="Go to your root"
                 onClick={() => {
-                  handleNavigation(() => setRoot({ object: graphStore.globalRoot }));
+                  handleNavigation(() => setRoot(graphStore.getDefaultRootForUser()));
                 }}
               >
                 <span>
-                  <Globe size={16} strokeWidth={1.5} />
+                  <Home size={16} strokeWidth={1.5} />
                 </span>
-                <span>{graphStore.globalRoot.text}</span>
+                <span className={styles.ButtonText}>Your Root ({graphStore.homeRoot.text})</span>
               </Button>
-              {!user.isAnonymous && (
+            )}
+            {!user.isAnonymous && (
+              <>
+                <div className={styles.SidebarSectionHeader}>Workspaces</div>
                 <Button
                   variant="ghost"
-                  className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to your root"
+                  className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                  data-tooltip="Your Home as Notes · ⌘⇧H"
                   onClick={() => {
-                    handleNavigation(() => setRoot(graphStore.getDefaultRootForUser()));
+                    handleNavigation(() => {
+                      setRoot(graphStore.getDefaultRootForUser());
+                      viewStore.setViewType(ViewType.Note);
+                    });
                   }}
                 >
-                  <span>
-                    <Home size={16} strokeWidth={1.5} />
-                  </span>
-                  <span className={styles.ButtonText}>Your Root ({graphStore.homeRoot.text})</span>
-                </Button>
-              )}
-              {!user.isAnonymous && (
-                <>
-                  <div className={styles.SidebarSectionHeader}>Workspaces</div>
-                  <Button  variant="ghost" className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Your Home as Notes · ⌘⇧H" 
-                 onClick={() => {
-                  handleNavigation(() => {
-                    setRoot(graphStore.getDefaultRootForUser());
-                    viewStore.setViewType(ViewType.Note);
-                  });
-                }}>
                   <span>
                     <NotebookText size={16} strokeWidth={1.5} />
                   </span>
                   <span>Home&apos;s Notes</span>
                 </Button>
                 <Button
-                variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to global sublists"
-                onClick={() => {
-                  handleNavigation(() => setRoot({ object: graphStore.globalRoot }));
-                  viewStore.setFlattenSublists(true);
-                }}
-              >
-                <span>
-                  <Newspaper size={16} strokeWidth={1.5} />
-                </span>
-                <span>News Feed</span>
-              </Button>
-                </>
-              )}
-              {!user.isAnonymous && <Button
                   variant="ghost"
-                  className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)} data-tooltip="Go to All Nodes"
+                  className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                  data-tooltip="Go to global sublists"
                   onClick={() => {
-                    handleNavigation(() => router.push("/all-nodes"));
+                    handleNavigation(() => setRoot({ object: graphStore.globalRoot }));
+                    viewStore.setFlattenSublists(true);
                   }}
                 >
                   <span>
-                    <FileSpreadsheet size={16} strokeWidth={1.5} />
+                    <Newspaper size={16} strokeWidth={1.5} />
                   </span>
-                  <span>All Nodes</span>
-                </Button>}
-              <div className={styles.SidebarSectionHeader}>Your Tree</div>
-                <SidebarTree />
+                  <span>News Feed</span>
+                </Button>
+              </>
+            )}
+            {!user.isAnonymous && (
+              <Button
+                variant="ghost"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                data-tooltip="Go to All Nodes"
+                onClick={() => {
+                  handleNavigation(() => router.push("/all-nodes"));
+                }}
+              >
+                <span>
+                  <FileSpreadsheet size={16} strokeWidth={1.5} />
+                </span>
+                <span>All Nodes</span>
+              </Button>
+            )}
+            {!user.isAnonymous && (
+              <Button
+                variant="ghost"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                data-tooltip="Go to Query Interface"
+                onClick={() => {
+                  handleNavigation(() => router.push("/query"));
+                }}
+              >
+                <span>
+                  <Search size={16} strokeWidth={1.5} />
+                </span>
+                <span>Query</span>
+              </Button>
+            )}
           </div>
           <div className={styles.BottomNav}>
             <Button
@@ -257,7 +308,8 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               onClick={action(() => {
                 viewStore.isDarkMode = !viewStore.isDarkMode;
               })}
-              className={cn(styles.ShowTooltip, styles.TopAlign)} data-tooltip="Switch Theme"
+              className={cn(styles.ShowTooltip, styles.TopAlign)}
+              data-tooltip="Switch Theme"
             >
               {viewStore.isDarkMode ? (
                 <SunIcon size={16} strokeWidth={1.5} />
