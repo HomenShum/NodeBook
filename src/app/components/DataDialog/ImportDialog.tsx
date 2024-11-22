@@ -27,42 +27,45 @@ export const ImportDialog = observer(function ImportDialog() {
   const [file, setFile] = useState<File | null>(null);
   const [serializedGraphStore, setSerializedGraphStore] = useState<SerializedGraphStore | null>(null);
 
-  const onSelectFile = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files) return;
-    const selectedFile = event.target.files?.[0] ?? null;
-    setFile(selectedFile);
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const fileContent = event.target?.result;
-        if (typeof fileContent !== "string") {
-          throw new Error("Unexpected file content type");
-        }
+  const onSelectFile = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (!event.target.files) return;
+      const selectedFile = event.target.files?.[0] ?? null;
+      setFile(selectedFile);
+      const reader = new FileReader();
+      reader.onload = async (event) => {
         try {
-          // We could attempt some clever stuff here to check if the file is JSON etc but easier to just try and parse it
-          // as a SerializedGraphStore and see if it throws an error.
-          const serializedGraphStore = SerializedGraphStoreSchema.parse(JSON.parse(fileContent));
-          setSerializedGraphStore(serializedGraphStore);
-          logger.info("Successfully parsed serialized graph store");
+          const fileContent = event.target?.result;
+          if (typeof fileContent !== "string") {
+            throw new Error("Unexpected file content type");
+          }
+          try {
+            // We could attempt some clever stuff here to check if the file is JSON etc but easier to just try and parse it
+            // as a SerializedGraphStore and see if it throws an error.
+            const serializedGraphStore = SerializedGraphStoreSchema.parse(JSON.parse(fileContent));
+            setSerializedGraphStore(serializedGraphStore);
+            logger.info("Successfully parsed serialized graph store");
+          } catch (error) {
+            console.log("here?");
+            // If parsing as a SerializedGraphStore fails, we'll assume it's in the plain text upload format and try to handle that.
+            const parsedGraphStore = parsePlainTextUpload(graphStore, fileContent);
+            setSerializedGraphStore(parsedGraphStore);
+            logger.info("Successfully parsed graph store from plain text upload");
+          }
         } catch (error) {
-          console.log("here?");
-          // If parsing as a SerializedGraphStore fails, we'll assume it's in the plain text upload format and try to handle that.
-          const parsedGraphStore = parsePlainTextUpload(graphStore, fileContent);
-          setSerializedGraphStore(parsedGraphStore);
-          logger.info("Successfully parsed graph store from plain text upload");
+          logger.error("Failed to parse file upload store", { error });
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+          setFile(null);
+          setSerializedGraphStore(null);
+          alert("Invalid file format.");
         }
-      } catch (error) {
-        logger.error("Failed to parse file upload store", { error });
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-        setFile(null);
-        setSerializedGraphStore(null);
-        alert("Invalid file format.");
-      }
-    };
-    reader.readAsText(selectedFile);
-  }, []);
+      };
+      reader.readAsText(selectedFile);
+    },
+    [graphStore],
+  );
 
   const onAddToGraphClick = useCallback(() => {
     if (!serializedGraphStore) return;
