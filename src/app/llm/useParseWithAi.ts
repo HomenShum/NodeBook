@@ -3,8 +3,8 @@ import { useCallback } from "react";
 import { useAuth } from "@/app/auth/useAuth";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { ExtractEntitiesRequest } from "@/app/llm/ExtractEntitiesRequest";
-import { transformExtractResponse } from "@/app/llm/transformExtractResponse";
+import { ExtractEntitiesRequest, ExtractEntitiesResponseSchema } from "@/app/llm/ExtractEntitiesRequest";
+import { processExtractResponse } from "@/app/llm/processExtractResponse";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 
@@ -44,8 +44,14 @@ export const useParseWithAi = () => {
         return;
       }
 
-      const { extractedEntities } = await response.json();
-      await transformExtractResponse(graphStore, node, extractedEntities);
+      const parsed = ExtractEntitiesResponseSchema.safeParse(await response.json());
+      if (!parsed.success) {
+        viewStore.clearNodeIsProcessing(node.id);
+        logger.error("Failed to parse with AI", parsed.error);
+        return;
+      }
+
+      await processExtractResponse(graphStore, node, parsed.data.extractedEntities);
 
       viewStore.clearNodeIsProcessing(node.id);
     },

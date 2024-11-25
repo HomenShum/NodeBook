@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { extractEntitiesWithOpenAi } from "@/app/api/extract-entities/extractEntitiesWithOpenAi";
-import { ExtractEntitiesRequestSchema } from "@/app/llm/ExtractEntitiesRequest";
+import { ExtractEntitiesRequestSchema, ExtractEntitiesResponse } from "@/app/llm/ExtractEntitiesRequest";
 
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
@@ -19,5 +19,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
 
   const extractedEntities = await extractEntitiesWithOpenAi(nodeText);
 
-  return NextResponse.json({ extractedEntities });
+  // Declare response like this to get type checking between client and server
+  const response: ExtractEntitiesResponse = { extractedEntities };
+  return NextResponse.json(response);
 }

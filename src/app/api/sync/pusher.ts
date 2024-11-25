@@ -85,7 +85,7 @@ export const broadcastSyncSuccess = async ({ clientId, userId, transactionId, up
   const userChannel = userIdToPusherChannel(userId);
   const updateChunks = updatesToSize(updates);
   for (const chunk of updateChunks) {
-    console.log(`[sync][${userId}] Broadcasting  ${chunk.length} updates through Pusher...`);
+    console.log(`[sync][${userId}] Broadcasting ${chunk.length} updates through Pusher...`);
     // Broadcast the chunk to the user's channel
     broadcastUpdateChunk(pusher, userChannel, { clientId, userId, transactionId, updates: chunk });
 
