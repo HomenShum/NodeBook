@@ -1,11 +1,14 @@
 import { useCallback } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useToast } from "@/app/hooks/useToast";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
+import { useSetRoot } from "@/app/tree/utils";
 
 export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode) => {
   const graphStore = useGraphStore();
+  const { addToast } = useToast();
+  const setRoot = useSetRoot();
   const tree = treeNode.tree;
 
   return useCallback(
@@ -32,9 +35,25 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
           } else {
             tree.togglePathExpanded(mentionTreeNode.path); // If the top level is already expanded
           }
+        } else {
+          addToast({
+            title: "Disconnected mention",
+            description: "The mention is disconnected from this node. Do you want to jump to it?",
+            action: {
+              label: "Jump to node",
+              onClick: () => {
+                setRoot(node.getPath());
+              },
+            },
+          });
         }
+      } else {
+        addToast({
+          title: "Mention not found",
+          description: "The mentioned node was not found in the graph.",
+        });
       }
     },
-    [graphStore, treeNode, tree],
+    [graphStore, tree, treeNode, addToast, setRoot],
   );
 };
