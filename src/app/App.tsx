@@ -2,6 +2,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { observer } from "mobx-react-lite";
 import React, { useEffect, useState } from "react";
+import isHotkey from "is-hotkey";
 
 import { useAuth } from "@/app/auth/useAuth";
 import CommandBar from "@/app/components/CommandBar/CommandBar";
@@ -38,6 +39,21 @@ export default observer(function App({ children }: Props) {
       htmlElement.classList.remove("dark");
     }
   }, [viewStore.isDarkMode]);
+
+  useEffect(() => {
+    if(!viewStore) return;
+    const isCommandBarHotKey = isHotkey("mod+shift+k");
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if(isCommandBarHotKey(event)){
+        event.preventDefault();
+        viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+    }
+  })
 
   useEffect(() => {
     document.documentElement.style.setProperty("--sidebar-width", `${viewStore.sidebarWidth}px`);

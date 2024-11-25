@@ -3,7 +3,6 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useHotkeys } from "react-hotkeys-hook";
 
 import { CmdEditor } from "@/app/components/CommandBar/CmdEditor";
 import { Path } from "@/app/components/Path";
@@ -48,23 +47,6 @@ const CommandBar = observer(() => {
   const close = useCallback(() => {
     viewStore.setCommandBarOpen(false);
   }, [viewStore]);
-
-  //Todo: Get rid of useHotkeys? This is the only instance.
-  useHotkeys(
-    "mod+shift+k",
-    (event) => {
-      event.preventDefault();
-      if (viewStore) {
-        if (viewStore.isCommandBarOpen) {
-          close();
-        } else {
-          viewStore.setCommandBarOpen(true);
-        }
-      }
-    },
-    { enableOnContentEditable: true },
-    [viewStore],
-  );
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
