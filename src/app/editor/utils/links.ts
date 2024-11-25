@@ -60,13 +60,17 @@ export const findUrlMatches = (text: string): Match[] => {
 
   while (currentMatch) {
     const fullMatch = currentMatch[0];
-    matches.push({
-      index: currentMatch.index,
-      length: fullMatch.length,
-      url: fullMatch.startsWith("http") ? fullMatch : `https://${fullMatch}`,
-      text: fullMatch,
-    });
-
+    const isPartOfEmail =
+      !fullMatch.startsWith("http") &&
+      !!text.slice(Math.max(0, currentMatch.index - 2), currentMatch.index).match(/\S@/);
+    if (!isPartOfEmail) {
+      matches.push({
+        index: currentMatch.index,
+        length: fullMatch.length,
+        url: fullMatch.startsWith("http") ? fullMatch : `https://${fullMatch}`,
+        text: fullMatch,
+      });
+    }
     currentMatch = URL_REGEX.exec(text);
   }
 
