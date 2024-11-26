@@ -6,6 +6,7 @@ import { observer } from "mobx-react-lite";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { useToast } from "@/app/hooks/useToast";
 import { useSetRoot } from "@/app/tree/utils";
 import appLogger from "@/lib/logger";
@@ -101,6 +102,7 @@ const state = observable<{
 
 // Main component
 const MewQueryInterface = observer(function MewQueryInterface() {
+  const user = useUser();
   // Split into two functions - one for the form submit, one for the actual query
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +119,7 @@ const MewQueryInterface = observer(function MewQueryInterface() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query, userId: user.id }),
       });
 
       const data: QueryResponse = await response.json();

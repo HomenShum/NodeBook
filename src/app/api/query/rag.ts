@@ -23,18 +23,33 @@ type Message = {
 };
 
 // Core functions
-async function queryIndex(query: string, topK: number = 3) {
+async function queryIndex(query: string, topK: number = 3, userId: string | undefined = undefined) {
   const response = await pinecone.inference.embed("multilingual-e5-large", [query], { inputType: "query" });
   const vector = response.data[0].values;
   if (!vector) {
     return [];
   }
   const index = pinecone.Index(indexName);
-  const results = await index.query({ vector, topK, includeMetadata: true });
-  return results.matches;
+  const publicResults = await index.namespace("public").query({ vector, topK, includeMetadata: true });
+  const matches = publicResults.matches;
+  if (userId !== undefined) {
+    const privateResults = await index.namespace(userId).query({ vector, topK, includeMetadata: true });
+    matches.push(...privateResults.matches);
+  }
+  // sort by score and return topK
+  matches.sort((a, b) => {
+    if (a.score === undefined) {
+      return b.score === undefined ? 0 : 1;
+    }
+    if (b.score === undefined) {
+      return -1;
+    }
+    return b.score - a.score;
+  });
+  return matches.slice(0, topK);
 }
 
-async function lookupEntities(entities: string[]): Promise<Map<string, string>> {
+async function lookupEntities(entities: string[], userId: string | undefined): Promise<Map<string, string>> {
   const db = getDb();
   const results = new Map<string, string>();
 
@@ -52,7 +67,7 @@ async function lookupEntities(entities: string[]): Promise<Map<string, string>> 
     }
 
     // Fall back to embedding search
-    const matches = await queryIndex(entity, 1);
+    const matches = await queryIndex(entity, 1, userId);
     if (matches.length > 0) {
       results.set(entity, matches[0].id);
     }
@@ -61,7 +76,12 @@ async function lookupEntities(entities: string[]): Promise<Map<string, string>> 
   return results;
 }
 
-async function handleFinalStep(originalQuery: string, messages: Message[], debug: boolean): Promise<string> {
+async function handleFinalStep(
+  originalQuery: string,
+  messages: Message[],
+  debug: boolean,
+  userId: string | undefined,
+): Promise<string> {
   const assistantResponse = messages[messages.length - 1].content;
 
   if (!assistantResponse?.includes("FINAL_READY") || !assistantResponse?.includes("ENTITY_LOOKUPS:")) {
@@ -75,7 +95,7 @@ async function handleFinalStep(originalQuery: string, messages: Message[], debug
     .filter((line) => line.startsWith("-"))
     .map((line) => line.slice(1).trim());
 
-  const lookupResults = await lookupEntities(entities);
+  const lookupResults = await lookupEntities(entities, userId);
   const lookupResultsText = Array.from(lookupResults.entries())
     .map(([entity, nodeId]) => `${entity}: ${nodeId}`)
     .join("\n");
@@ -130,7 +150,7 @@ ENTITY_LOOKUPS:
 /**
  * Ask Mew a question
  */
-export async function ask(query: string, debug: boolean = false): Promise<string> {
+export async function ask(query: string, debug: boolean = false, userId: undefined | string): Promise<string> {
   if (debug) {
     console.log("\n" + "=".repeat(50));
     console.log(`INITIAL QUERY: ${query}`);
@@ -138,7 +158,7 @@ export async function ask(query: string, debug: boolean = false): Promise<string
   }
 
   // Initial query
-  const matches = await queryIndex(query);
+  const matches = await queryIndex(query, 3, userId);
 
   // Get textual representations
   const context = await Promise.all(
@@ -197,7 +217,7 @@ export async function ask(query: string, debug: boolean = false): Promise<string
         console.log(newQuery);
       }
 
-      const newMatches = await queryIndex(newQuery, k);
+      const newMatches = await queryIndex(newQuery, k, userId);
       const newContext = await Promise.all(
         newMatches.map(async (match) => {
           const text = match.metadata?.text;
@@ -219,7 +239,7 @@ export async function ask(query: string, debug: boolean = false): Promise<string
       });
     } else if (assistantResponse?.includes("FINAL_READY")) {
       messages.push({ role: "assistant", content: assistantResponse });
-      return handleFinalStep(query, messages, debug);
+      return handleFinalStep(query, messages, debug, userId);
     } else {
       messages.push({ role: "assistant", content: assistantResponse || "" });
       break;
@@ -243,5 +263,5 @@ export async function ask(query: string, debug: boolean = false): Promise<string
   });
 
   messages.push({ role: "assistant", content: finalResponse.choices[0].message.content || "" });
-  return handleFinalStep(query, messages, debug);
+  return handleFinalStep(query, messages, debug, userId);
 }

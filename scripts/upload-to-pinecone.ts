@@ -205,7 +205,7 @@ async function main() {
   const graph = await buildGraph(db);
 
   console.log("Generating text representations...");
-  const nodesWithText: Array<{ node_id: string; text: string }> = [];
+  const nodesWithText: Array<{ node_id: string; text: string; namespace: string }> = [];
   for (const [nodeId, node] of graph.nodes.entries()) {
     if (!node.content) continue;
     const text = getNodeAndNeighboursText(graph, nodeId);
@@ -213,6 +213,7 @@ async function main() {
       nodesWithText.push({
         node_id: nodeId,
         text: trimText(text),
+        namespace: node.isPublic ? "public" : node.authorId,
       });
     }
   }
@@ -220,46 +221,54 @@ async function main() {
   console.log("Generating embeddings and upserting to Pinecone...");
   const batchSize = 96; // embeddings can be most generated in batches of 96
   const maxConcurrent = 10;
-  for (let i = 0; i < nodesWithText.length; i += batchSize * maxConcurrent) {
-    const batchPromises = [];
-    // Create up to maxConcurrent batch promises
-    for (let j = 0; j < maxConcurrent && i + j * batchSize < nodesWithText.length; j++) {
-      const start = i + j * batchSize;
-      const batch = nodesWithText.slice(start, start + batchSize);
 
-      const batchPromise = (async () => {
-        // Generate embeddings for batch
-        const response = await pinecone.inference.embed(
-          "multilingual-e5-large",
-          batch.map((t) => t.text),
-          {
-            inputType: "passage",
-            truncate: "END",
-          },
-        );
-        const embeddings = response.data.map((item) => item.values).filter((v): v is number[] => v !== undefined);
+  // Partition into different namespaces
+  const namespaces = new Set(nodesWithText.map((n) => n.namespace));
+  namespaces.forEach(async (namespace) => {
+    const subsetNodes = nodesWithText.filter((n) => n.namespace === namespace);
+    console.log("Processing namespace:", namespace);
 
-        // Prepare and upsert vectors
-        const vectors = batch.map((item, idx) => ({
-          id: item.node_id,
-          values: embeddings[idx],
-          metadata: {
-            text: item.text,
-          },
-        }));
-        await index.upsert(vectors);
+    for (let i = 0; i < subsetNodes.length; i += batchSize * maxConcurrent) {
+      const batchPromises = [];
+      // Create up to maxConcurrent batch promises
+      for (let j = 0; j < maxConcurrent && i + j * batchSize < subsetNodes.length; j++) {
+        const start = i + j * batchSize;
+        const batch = subsetNodes.slice(start, start + batchSize);
 
-        console.log(
-          `Processed batch ${Math.floor(start / batchSize) + 1} of ${Math.ceil(nodesWithText.length / batchSize)}`,
-        );
-      })();
+        const batchPromise = (async () => {
+          // Generate embeddings for batch
+          const response = await pinecone.inference.embed(
+            "multilingual-e5-large",
+            batch.map((t) => t.text),
+            {
+              inputType: "passage",
+              truncate: "END",
+            },
+          );
+          const embeddings = response.data.map((item) => item.values).filter((v): v is number[] => v !== undefined);
 
-      batchPromises.push(batchPromise);
+          // Prepare and upsert vectors
+          const vectors = batch.map((item, idx) => ({
+            id: item.node_id,
+            values: embeddings[idx],
+            metadata: {
+              text: item.text,
+            },
+          }));
+          await index.namespace(namespace).upsert(vectors);
+
+          console.log(
+            `Processed batch ${Math.floor(start / batchSize) + 1} of ${Math.ceil(subsetNodes.length / batchSize)}`,
+          );
+        })();
+
+        batchPromises.push(batchPromise);
+      }
+
+      // Wait for all concurrent batches to complete before starting the next group
+      await Promise.all(batchPromises);
     }
-
-    // Wait for all concurrent batches to complete before starting the next group
-    await Promise.all(batchPromises);
-  }
+  });
 
   console.log("Done! Your Pinecone index has been populated.");
 }
