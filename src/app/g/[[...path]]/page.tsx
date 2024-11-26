@@ -19,11 +19,11 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
     // If the path is valid, keep the path, and update our view state to match
     // Otherwise, we redirect to the specified object or the default root
     if (path) {
-      viewStore.setRoot(path.objectPath, path.stringPath);
+      viewStore.setRoot(path.objectPath);
     } else {
       const object = pathArray ? graphStore.getNode(pathArray[pathArray.length - 1]) : false;
       if (object) {
-        setRoot({ relations: [], object });
+        setRoot(object);
       } else {
         logger.debug("Could not find object, redirecting to home", pathArray);
         setRoot(graphStore.getDefaultRootForUser());

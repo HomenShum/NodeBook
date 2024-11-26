@@ -28,6 +28,7 @@ export abstract class BaseGraphObject {
   pinnedRelationsList: FractionalPositionedList<GraphRelation>;
   pointerRelationsList: FractionalPositionedList<GraphRelation>;
   noteContentRelationsList: FractionalPositionedList<GraphRelation>;
+  canonicalRelation: GraphRelation | null = null;
 
   protected constructor(store: GraphStore) {
     this.store = store;

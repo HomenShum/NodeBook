@@ -10,16 +10,14 @@ describe("GraphStore.addChildNode", () => {
 
   let parent: GraphNode;
 
-  const NUM_NODES_START = MIN_NUM_NODES_WITH_USER + 1;
+  const NUM_NODES_START = MIN_NUM_NODES_WITH_USER;
   const NUM_RELATIONS_START = MIN_NUM_RELATIONS;
 
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
     graphStore = new GraphStore(MOCK_MEW_USER);
-
-    parent = await graphStore.addNode({});
-
+    parent = graphStore.userRoot;
     graphStore.updateManager.cleanup();
   });
 
@@ -31,15 +29,14 @@ describe("GraphStore.addChildNode", () => {
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START + 1);
   });
   it("should create a new node with the correct parent", async () => {
-    expect(parent.relations).toHaveLength(0);
-
+    const parentRelationCount = parent.relations.length;
     const { node: child, relation } = await graphStore.addChildNode({ parentId: parent.id });
 
     expect(graphStore.getRelation(relation.id)).toBe(relation);
     expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START + 1);
 
     expect(relation.from).toBe(parent);
-    expect(parent.relations).toHaveLength(1);
+    expect(parent.relations).toHaveLength(parentRelationCount + 1);
     expect(parent.relations).toEqual(expect.arrayContaining([relation]));
 
     const parentRelations = child.relations.filter((r) => r.relationType.id === "child" && r.to.id === child.id);
@@ -52,7 +49,10 @@ describe("GraphStore.addChildNode", () => {
     const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [
-        { operation: "addNode", node: child.serialize() },
+        {
+          operation: "addNode",
+          node: { ...child.serialize(), canonicalRelationId: null },
+        },
         {
           operation: "addRelation",
           relation: relation.serialize(),
@@ -80,6 +80,17 @@ describe("GraphStore.addChildNode", () => {
           newPosition: graphStore.getRelationList(child).get(relation.id)?.position,
           oldIsPublic: false,
           newIsPublic: false,
+        },
+        {
+          operation: "updateNode",
+          oldProps: {
+            ...child.serialize(),
+            canonicalRelationId: null,
+          },
+          newProps: {
+            ...child.serialize(),
+            canonicalRelationId: relation.id,
+          },
         },
       ],
     ]);

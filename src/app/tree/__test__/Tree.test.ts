@@ -37,9 +37,8 @@ describe("Tree", () => {
         nodeProps: { content: "4" },
       });
       // Create a tree starting from the root, but only with the first child expanded
-      const tree = new Tree(graphStore, settingsStore, graphStore.userRoot, {
-        expansions: new Map<string, boolean>([[`/all/${r1.id}`, true]]),
-      });
+      const tree = new Tree(graphStore, settingsStore, graphStore.userRoot);
+      tree.setPathExpanded(`${tree.root.id}/all/${r1.id}`, true);
       // prettier-ignore
       expectTreeToMatchTemplate(tree, [
         { rid: r1.id, children: [ // this is expanded, so it's children should be shown
@@ -358,11 +357,10 @@ describe("Tree", () => {
           }
         });
 
-        const splitOn = tree.getNodeOrThrow("/all/original/noteContent/first");
+        const splitOn = tree.getNodeOrThrow(`${tree.root.id}/all/original/noteContent/first`);
         await tree.splitNote(splitOn, { before: [], after: [] }, false, "split");
 
         expectTreeToMatchTemplate(tree, {
-          rid: "",
           children: [
             { rid: "original", children: [{ rid: "first" }] },
             { rid: "split", children: [{ rid: "second", isFocused: true }] },
@@ -381,6 +379,7 @@ describe("Tree", () => {
         });
 
         const tree = new Tree(graphStore, new SettingsStore(), root);
+        const treeRootId = tree.root.id;
         const treeNode = tree.getNodeOrThrow(tree.root.createChildPath(r1));
 
         // Get txs to convert to note
@@ -396,7 +395,7 @@ describe("Tree", () => {
         });
 
         // define cycle parent
-        const cycleParent = tree.getNodeOrThrow("/all/original/noteContent/second");
+        const cycleParent = tree.getNodeOrThrow(`${treeRootId}/all/original/noteContent/second`);
 
         const thirdRel = "third";
 
@@ -437,14 +436,13 @@ describe("Tree", () => {
         ];
         await graphStore.applyCombinedTransaction(cycleTxs);
 
-        tree.setPathExpanded("/all/split/noteContent/second/noteContent/third/all/cycle", false);
+        tree.setPathExpanded(`${treeRootId}/all/split/noteContent/second/noteContent/third/all/cycle`, false);
 
-        const splitOn = tree.getNodeOrThrow("/all/original/noteContent/first");
+        const splitOn = tree.getNodeOrThrow(`${treeRootId}/all/original/noteContent/first`);
 
         await tree.splitNote(splitOn, { before: [], after: [] }, false, "split");
 
         expectTreeToMatchTemplate(tree, {
-          rid: "",
           children: [
             { rid: "original", children: [{ rid: "first" }] },
             {

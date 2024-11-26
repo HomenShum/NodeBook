@@ -34,6 +34,7 @@ describe("GraphStore.load", () => {
           content: [{ type: "text", value: "Node a content" }],
           isPublic: false,
           isNewRelatedObjectsPublic: false,
+          canonicalRelationId: null,
         },
         b: {
           id: "b",
@@ -44,6 +45,7 @@ describe("GraphStore.load", () => {
           content: [{ type: "text", value: "Node b content" }],
           isPublic: false,
           isNewRelatedObjectsPublic: false,
+          canonicalRelationId: null,
         },
       },
       relationTypesById: {
@@ -67,6 +69,7 @@ describe("GraphStore.load", () => {
           toId: "b",
           relationTypeId: "test-rt",
           isPublic: false,
+          canonicalRelationId: null,
         },
       },
       relationsByNodeId: {
@@ -125,6 +128,7 @@ describe("GraphStore.load", () => {
           toId: "c",
           relationTypeId: "test-rt",
           isPublic: false,
+          canonicalRelationId: null,
         },
         b: {
           id: "b",
@@ -136,6 +140,7 @@ describe("GraphStore.load", () => {
           toId: "c",
           relationTypeId: "test-rt",
           isPublic: false,
+          canonicalRelationId: null,
         },
         c: {
           id: "c",
@@ -147,6 +152,7 @@ describe("GraphStore.load", () => {
           toId: "b",
           relationTypeId: "test-rt",
           isPublic: false,
+          canonicalRelationId: null,
         },
       },
       relationsByNodeId: {

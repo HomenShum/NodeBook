@@ -230,6 +230,15 @@ function Response({ response }: { response: ParsedResponse }) {
   const graphStore = useGraphStore();
   const setRoot = useSetRoot();
   const { addToast } = useToast();
+
+  function goToNode(id: string) {
+    const node = graphStore.getNode(id);
+    if (!node) {
+      addToast({ title: "Error", description: "Node not found" });
+      return;
+    }
+    setRoot(node);
+  }
   return (
     <div className={styles.response}>
       {response.map((line, i) => (
@@ -240,39 +249,15 @@ function Response({ response }: { response: ParsedResponse }) {
                 {part.content}
               </span>
             ) : part.type === "citation" ? (
-              <span
-                key={i}
-                data-node-id={part.nodeId}
-                onClick={() => {
-                  const node = graphStore.getNode(part.nodeId);
-                  if (!node) {
-                    addToast({
-                      title: "Error",
-                      description: "Node not found",
-                    });
-                    return;
-                  }
-                  setRoot(node.getPath());
-                }}
-              >
+              <span key={i} data-node-id={part.nodeId} onClick={() => goToNode(part.nodeId)}>
                 <LinkIcon className={styles.responseLinkIcon} size={14} strokeWidth={1.5} />
               </span>
             ) : part.type === "link" ? (
               <span
                 key={i}
                 data-node-id={part.nodeId}
-                onClick={() => {
-                  const node = graphStore.getNode(part.nodeId);
-                  if (!node) {
-                    addToast({
-                      title: "Error",
-                      description: "Node not found",
-                    });
-                    return;
-                  }
-                  setRoot(node.getPath());
-                }}
                 style={{ cursor: "pointer", color: "blue" }}
+                onClick={() => goToNode(part.nodeId)}
               >
                 {part.content}
               </span>

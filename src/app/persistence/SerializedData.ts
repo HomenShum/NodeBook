@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { GroupId } from "@/app/tree/nodes";
 import { Position } from "@/app/util";
 import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 
@@ -24,6 +25,7 @@ export const SerializedNodeSchema = z.object({
   content: z.array(SerializedChipSchema).default([]),
   isPublic: z.boolean().default(false),
   isNewRelatedObjectsPublic: z.boolean().default(false),
+  canonicalRelationId: z.string().nullable().default(null),
 });
 export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
 
@@ -52,6 +54,7 @@ export const SerializedRelationSchema = z.object({
   createdAt: z.coerce.date().default(new Date()),
   updatedAt: z.coerce.date().default(new Date()),
   isPublic: z.boolean().default(false),
+  canonicalRelationId: z.string().nullable().default(null),
 });
 export type SerializedRelation = z.infer<typeof SerializedRelationSchema>;
 
@@ -117,7 +120,7 @@ export type SerializedGraphStore = z.infer<typeof SerializedGraphStoreSchema>;
 export type SerializedTree = {
   id: string;
   rootObjectId: string;
-  pathToRootIds: string[];
+  pathToRootIds: { relationId: string; childGroupId: GroupId }[];
   expansionsByPath: Record<string, boolean>;
 };
 

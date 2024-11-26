@@ -5,6 +5,8 @@ import React, { useCallback } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
+import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
+import QuickCapture from "@/app/components/QuickCapture";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
@@ -22,8 +24,6 @@ import { Ancestor, getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import QuickCapture from "@/app/components/QuickCapture";
-import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -186,10 +186,8 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   const handleNavigation = useCallback(
     (index: number) => {
       if (index > ancestors.length) return;
-      setRoot({
-        relations: ancestors.slice(0, index).map((ancestor) => ancestor.relationToChild),
-        object: index === ancestors.length ? treeNode.object : ancestors[index].object,
-      });
+      const object = index === ancestors.length ? treeNode.object : ancestors[index].object;
+      setRoot(object);
     },
     [treeNode, ancestors, setRoot],
   );
