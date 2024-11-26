@@ -1,0 +1,43 @@
+.SyncStatusIndicator {
+  position: relative;
+  line-height: 1;
+  height: 14px;
+  width: 14px;
+}
+
+.ShowTooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s, visibility 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  background-color: var(--gray-1);
+  border: solid 0.5px var(--gray-6);
+  z-index: 999;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: var(--font-size-mini);
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--gray-11);
+  animation-duration: 400ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+  box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
+  user-select: none;
+}
+
+.ShowTooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.ShowTooltip.RightAlign::after {
+  right: 4px;
+  transform: translateY(8px);
+}

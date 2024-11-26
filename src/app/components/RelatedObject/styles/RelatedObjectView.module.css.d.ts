@@ -38,6 +38,7 @@ declare const styles: {
   readonly "Unpinned": string;
   readonly "bulletClick": string;
   readonly "showTooltip": string;
+  readonly "spin": string;
 };
 export = styles;
 

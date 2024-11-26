@@ -7,6 +7,7 @@ import { useAuth } from "@/app/auth/useAuth";
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
 import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
 import QuickCapture from "@/app/components/QuickCapture";
+import { SyncStatusIndicator } from "@/app/components/SyncStatus/SyncStatusIndicator";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
@@ -296,6 +297,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
                 <SquareSplitHorizontal strokeWidth={1.5} size={14} />
               )}
             </Button>
+            <SyncStatusIndicator />
           </div>
         ) : (
           <Button variant="active" size="sm" onClick={() => auth?.loginWithRedirect()}>

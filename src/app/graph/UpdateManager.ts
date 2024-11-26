@@ -1,4 +1,5 @@
 import { captureException } from "@sentry/nextjs";
+import { action, computed, isObservable, makeObservable, observable } from "mobx";
 import Pusher from "pusher-js";
 
 import { env } from "@/app/envFrontend";
@@ -22,7 +23,7 @@ export class UpdateManager {
 
   private undoStack: GraphUpdate[][] = [];
   private redoStack: GraphUpdate[][] = [];
-  private syncQueue: SyncData[] = [];
+  syncQueue: SyncData[] = [];
 
   private authedFetch?: typeof fetch;
 
@@ -40,6 +41,23 @@ export class UpdateManager {
     this.authedFetch = authedFetch;
     this.refetchCallback = refetchCallback;
     this.applyGraphUpdates = applyUpdatesFn;
+    this.makeObservable();
+  }
+
+  makeObservable() {
+    if (isObservable(this)) {
+      return;
+    }
+    makeObservable(this, {
+      queueUpdates: action,
+      undo: action,
+      redo: action,
+      revertAllPending: action,
+      cleanup: action,
+      syncLocalUpdates: action,
+      syncQueue: observable.shallow,
+      hasPendingUpdates: computed,
+    });
   }
 
   // TODO not sure about these
@@ -272,7 +290,7 @@ export class UpdateManager {
     }
   }
 
-  private async syncLocalUpdates(userFetch: typeof fetch) {
+  async syncLocalUpdates(userFetch: typeof fetch) {
     const syncDataBatch = condenseSyncDataBatch(this.syncQueue);
     this.syncQueue = [];
     let syncData = syncDataBatch.shift();
@@ -310,6 +328,10 @@ export class UpdateManager {
    */
   get pendingUpdates() {
     return this.syncQueue;
+  }
+
+  get hasPendingUpdates() {
+    return this.syncQueue.length > 0;
   }
 
   /**
