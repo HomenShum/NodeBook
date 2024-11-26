@@ -77,21 +77,30 @@ export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath
   let relation = current.canonicalRelation;
   let relatedObject = relation ? getOtherObject(relation, current.id) : null;
   let depth = 0;
+  const relationIds = new Set<string>();
 
-  while (relation && relatedObject && current.id !== GLOBAL_ROOT_ID) {
+  while (depth <= maxDepth && relation && relatedObject && current.id !== GLOBAL_ROOT_ID) {
     relations.push(relation);
+    relationIds.add(relation.id);
 
+    // Move to the next relation
     current = relatedObject;
     relation = current.canonicalRelation;
     relatedObject = relation ? getOtherObject(relation, current.id) : null;
-    depth++;
-    if (depth > maxDepth) {
-      logger.error("Max depth reached while getting canonical path", {
-        objectId: object.id,
-        objectType: object.objectType,
-      });
-      return { object, relations: [] };
+
+    // Break if a cycle is detected
+    if (relation && relationIds.has(relation.id)) {
+      break;
     }
+
+    depth++;
+  }
+
+  if (depth > maxDepth) {
+    logger.error("Max depth reached while getting canonical path", {
+      objectId: object.id,
+      objectType: object.objectType,
+    });
   }
 
   return {
