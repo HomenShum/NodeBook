@@ -2034,7 +2034,9 @@ export class GraphStore {
     // Nodes
     for (const props of Object.values(data.nodesById)) {
       try {
-        this.loadSerializedNode(props);
+        // We initialize the graph node with a null canonical relation, because we haven't
+        // loaded the relations yet. We'll set the canonical relation later.
+        this.loadSerializedNode({ ...props, canonicalRelationId: null });
       } catch (error) {
         logger.error(`Error loading serialized node`, error);
       }
@@ -2105,6 +2107,17 @@ export class GraphStore {
         this.loadSerializedNoteContentRelationList(nodeId, positionsByRelationId);
       } catch (error) {
         logger.error(`Error loading serialized note content relation list`, error);
+      }
+    }
+
+    // Now that relations are loaded, we can set the canonical relations
+    for (const props of Object.values(data.nodesById)) {
+      if (props.canonicalRelationId) {
+        const canonicalRelation = this.getRelation(props.canonicalRelationId);
+        const node = this.getNode(props.id);
+        if (node) {
+          node.update({ canonicalRelation });
+        }
       }
     }
   }
