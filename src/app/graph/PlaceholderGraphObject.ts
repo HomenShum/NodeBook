@@ -1,5 +1,6 @@
-import { BaseGraphObject } from "@/app/graph/GraphObject";
 import { GraphStore } from "@/app/graph/GraphStore";
+
+import { BaseGraphObject } from "./BaseGraphObject";
 
 /**
  * Placeholder object used during deserialize to represent a reference to an object that has not yet been deserialized.

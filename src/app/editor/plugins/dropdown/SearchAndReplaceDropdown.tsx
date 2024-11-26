@@ -17,6 +17,7 @@ import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter"
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { getCanonicalPath } from "@/app/graph/utils";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
@@ -221,7 +222,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
                       {match.type === "node" ? <RelationCounter object={match.object} showTooltip={false} /> : null}
                     </div>
                   </div>
-                  {match.type === "node" ? <Path path={match.object.getPath()} /> : null}
+                  {match.type === "node" ? <Path path={getCanonicalPath(match.object)} /> : null}
                 </>
               )}
             </div>

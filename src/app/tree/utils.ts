@@ -2,8 +2,9 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
+import { getCanonicalPath } from "@/app/graph/utils";
 import { createRouteUrl, ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -12,6 +13,7 @@ import { DescendantTreeNode, GroupId, PathToRootNode, RootTreeNode, TreeNode } f
 export type Ancestor = {
   object: GraphObject;
   relationToChild: GraphRelation;
+  childGroupId: GroupId;
   path: string;
 };
 
@@ -31,6 +33,7 @@ export const getAncestorsAsArray = (node: TreeNode): Ancestor[] => {
     ancestors.push({
       object: treeNode.parent.object,
       relationToChild: treeNode.relationWithParent,
+      childGroupId: treeNode.parentGroup.id,
       path: treeNode.parent.path,
     });
     treeNode = treeNode.parent;
@@ -38,7 +41,12 @@ export const getAncestorsAsArray = (node: TreeNode): Ancestor[] => {
   // Get path nodes above the root
   let pathNode: PathToRootNode | null = treeNode.parent;
   while (pathNode) {
-    ancestors.push({ object: pathNode.object, relationToChild: pathNode.relationToChild, path: pathNode.path });
+    ancestors.push({
+      object: pathNode.object,
+      relationToChild: pathNode.relationToChild,
+      childGroupId: pathNode.childGroupId,
+      path: pathNode.path,
+    });
     pathNode = pathNode.parent;
   }
   // Reverse the array so it goes from furthest to closest
@@ -193,30 +201,27 @@ export function useSetRoot() {
   const viewStore = useViewStore();
   const router = useRouter();
   return useCallback(
-    (objectPath: ObjectPath) => {
-      const path = createRouteUrl(objectPath);
-      viewStore.setRoot(objectPath, path);
-      router.push(path);
+    (obj: ObjectPath | GraphObject) => {
+      const objectPath = isGraphObject(obj) ? getCanonicalPath(obj) : obj;
+      viewStore.setRoot(objectPath);
+      router.push(createRouteUrl(objectPath));
     },
     [viewStore, router],
   );
 }
 
 export function useSetAuthorRoot() {
-  const viewStore = useViewStore();
+  const setRoot = useSetRoot();
   const graphStore = useGraphStore();
-  const router = useRouter();
   return useCallback(
     (authorId: string) => {
       const authorNode = graphStore.getUserNodeByAuthorId(authorId);
       if (!authorNode) {
         return;
       }
-      const path = createRouteUrl(authorNode.getPath());
-      viewStore.setRoot(authorNode, path);
-      router.push(path);
+      setRoot(authorNode);
     },
-    [viewStore, router, graphStore],
+    [setRoot, graphStore],
   );
 }
 

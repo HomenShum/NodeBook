@@ -9,6 +9,7 @@ import { Dropdown } from "@/app/editor/plugins/dropdown/types";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
+import { getCanonicalPath } from "@/app/graph/utils";
 import { TreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
 import { uuid } from "@/app/util";
@@ -149,7 +150,7 @@ export function getMenuRenderFn(
             >
               <div className={styles.DropdownItem}>
                 <div>{option.name}</div>
-                {option.value.type === "existing" && <Path path={option.value.object.getPath()} />}
+                {option.value.type === "existing" && <Path path={getCanonicalPath(option.value.object)} />}
               </div>
             </li>
           ))}

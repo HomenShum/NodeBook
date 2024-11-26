@@ -212,7 +212,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
               data-tooltip="Go to Global Root"
               onClick={() => {
-                handleNavigation(() => setRoot({ object: graphStore.globalRoot }));
+                handleNavigation(() => setRoot(graphStore.globalRoot));
               }}
             >
               <span>
@@ -272,7 +272,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                   data-tooltip="Go to global sublists"
                   onClick={() => {
-                    handleNavigation(() => setRoot({ object: graphStore.globalRoot }));
+                    handleNavigation(() => setRoot(graphStore.globalRoot));
                     viewStore.setFlattenSublists(true);
                   }}
                 >

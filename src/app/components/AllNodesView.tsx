@@ -60,7 +60,7 @@ export const AllNodesView = observer(function AllNodesView() {
   const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const node = nodes[index];
     return (
-      <div key={node.id} className={s.NodeItem} onClick={() => setRoot(node.getPath())} style={style}>
+      <div key={node.id} className={s.NodeItem} onClick={() => setRoot(node)} style={style}>
         <div className={s.NodeTextContainer}>
           <span className={s.NodeText}>{node.text}</span>
         </div>

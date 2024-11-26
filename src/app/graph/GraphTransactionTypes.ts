@@ -13,7 +13,7 @@ export type Positioner<T extends { id: string }> = number | string | T;
 
 export type RelationDirectionForObject = "from" | "to";
 export type TxAddNode = {
-  nodeProps?: GraphNodeProps;
+  nodeProps?: Omit<GraphNodeProps, "canonicalRelation"> & { canonicalRelationId?: string | null };
 };
 
 export type TxRemoveNode = {
@@ -22,7 +22,7 @@ export type TxRemoveNode = {
 
 export type TxUpdateNode = {
   nodeId: string;
-  nodeProps: Partial<GraphNodeProps>;
+  nodeProps: Partial<Omit<GraphNodeProps, "canonicalRelation"> & { canonicalRelationId?: string | null }>;
 };
 
 export type TxAddRelation = {
@@ -31,6 +31,7 @@ export type TxAddRelation = {
   toId: string;
   relationType?: GraphRelationType;
   after?: Positioner<GraphRelation>;
+  canonicalRelationId?: string | null;
 };
 
 export type TxRemoveRelation = {
@@ -51,6 +52,7 @@ export type TxUpdateRelation = {
     relationType?: GraphRelationType;
     relationTypeLabel?: string;
     isInitiallyReversed?: boolean;
+    canonicalRelationId?: string | null;
   };
   reverse?: boolean;
 };
@@ -63,7 +65,7 @@ export type TxAddRelationType = {
 
 export type TxAddChildNode = {
   parentId: string;
-  nodeProps?: GraphNodeProps;
+  nodeProps?: Omit<GraphNodeProps, "canonicalRelation"> & { canonicalRelationId?: string | null };
   relationProps?: GraphRelationPropsWithoutTargets;
   after?: Positioner<GraphRelation>;
 };

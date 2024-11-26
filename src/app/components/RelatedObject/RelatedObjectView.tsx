@@ -10,7 +10,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { getAncestorsAsArray, isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
+import { isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
@@ -227,6 +227,7 @@ const Bullet = observer(function Bullet() {
   const userId = graphStore.user?.id;
   const { treeNode } = useTreeNode();
   const setRoot = useSetRoot();
+
   const viewStore = useViewStore();
   const handleBulletClick = useCallback(
     (event: React.MouseEvent) => {
@@ -234,16 +235,11 @@ const Bullet = observer(function Bullet() {
       event.nativeEvent.stopImmediatePropagation();
       logger.debug("Clicked bullet", treeNode.path);
 
-      const objectPath = {
-        object: treeNode.object,
-        relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
-      };
-
       event.shiftKey
-        ? viewStore.createSidebarTree(objectPath)
+        ? viewStore.createSidebarTree(treeNode.object)
         : treeNode.tree.id === viewStore.mainView.id
-        ? setRoot(objectPath)
-        : treeNode.tree.setRoot(treeNode, treeNode.path);
+        ? setRoot(treeNode.object)
+        : treeNode.tree.setRoot(treeNode.object);
     },
     [setRoot, treeNode, viewStore],
   );

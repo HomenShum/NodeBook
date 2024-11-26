@@ -78,6 +78,11 @@ describe("GraphStore.addRelation", () => {
           newIsPublic: false,
         },
         {
+          operation: "updateNode",
+          oldProps: { ...startNode.serialize(), canonicalRelationId: null },
+          newProps: { ...startNode.serialize(), canonicalRelationId: relation.id },
+        },
+        {
           operation: "updateRelationList",
           nodeId: endNode.id,
           authorId: endNode.authorId,
@@ -87,6 +92,11 @@ describe("GraphStore.addRelation", () => {
           newPosition: relation.toPosition,
           oldIsPublic: false,
           newIsPublic: false,
+        },
+        {
+          operation: "updateNode",
+          oldProps: { ...endNode.serialize(), canonicalRelationId: null },
+          newProps: { ...endNode.serialize(), canonicalRelationId: relation.id },
         },
       ],
     ]);
@@ -166,6 +176,11 @@ describe("GraphStore.addRelation", () => {
           newIsPublic: true,
         },
         {
+          operation: "updateNode",
+          oldProps: { ...startNode.serialize(), canonicalRelationId: null },
+          newProps: { ...startNode.serialize(), canonicalRelationId: relation.id },
+        },
+        {
           operation: "updateRelationList",
           nodeId: endNode.id,
           authorId: endNode.authorId,
@@ -175,6 +190,11 @@ describe("GraphStore.addRelation", () => {
           newPosition: relation.toPosition,
           oldIsPublic: false,
           newIsPublic: true,
+        },
+        {
+          operation: "updateNode",
+          oldProps: { ...endNode.serialize(), canonicalRelationId: null },
+          newProps: { ...endNode.serialize(), canonicalRelationId: relation.id },
         },
       ],
     ]);
