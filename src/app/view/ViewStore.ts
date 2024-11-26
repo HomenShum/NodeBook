@@ -7,7 +7,7 @@ import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { SearchTree } from "@/app/tree/SearchTree";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Path, Root, Tree } from "@/app/tree/Tree";
-import { makeAutoSaving } from "@/app/util";
+import { makeAutoSaving, ObjectPath } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 
 export class ViewStore {
@@ -79,10 +79,10 @@ export class ViewStore {
     }
   }
 
-  setRoot(root: Root) {
-    this.treeView.setRoot(root);
-    this.sublistView.setRoot(root);
-    this.searchView.setRoot(root);
+  setRoot(root: Root, path: Path) {
+    this.treeView.setRoot(root, path);
+    this.sublistView.setRoot(root, path);
+    this.searchView.setRoot(root, path);
   }
 
   makeObservable() {
@@ -186,7 +186,7 @@ export class ViewStore {
     this.isCommandBarOpen = open;
   }
 
-  createSidebarTree(root: Root) {
+  createSidebarTree(root: ObjectPath) {
     this.rightSidebarOpen = true;
     this.sidebarTrees.unshift(new Tree(this.graphStore, this.settingsStore, root));
   }

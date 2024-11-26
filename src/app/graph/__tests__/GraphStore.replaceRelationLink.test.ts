@@ -92,11 +92,6 @@ describe("GraphStore.replaceRelationLink", () => {
           type: "all",
         },
         {
-          operation: "updateNode",
-          oldProps: { ...nodeA.serialize(), canonicalRelationId: relationAB.id },
-          newProps: { ...nodeA.serialize(), canonicalRelationId: relationAC.id },
-        },
-        {
           operation: "updateRelation",
           oldProps: abAtStart,
           newProps: relationAB.serialize(),
@@ -182,7 +177,7 @@ describe("GraphStore.replaceRelationLink", () => {
     const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [
-        { operation: "addNode", node: { ...serializedNewNode, canonicalRelationId: null } },
+        { operation: "addNode", node: serializedNewNode },
         {
           operation: "updateRelationList",
           authorId: "SPECIAL::mew|0123456789",
@@ -193,16 +188,6 @@ describe("GraphStore.replaceRelationLink", () => {
           oldPosition: abPosition,
           relationId: "ab",
           type: "all",
-        },
-        {
-          operation: "updateNode",
-          oldProps: { ...nodeA.serialize(), canonicalRelationId: relationAB.id },
-          newProps: { ...nodeA.serialize(), canonicalRelationId: relationAC.id },
-        },
-        {
-          operation: "updateNode",
-          oldProps: { ...serializedNewNode, canonicalRelationId: null },
-          newProps: { ...serializedNewNode, canonicalRelationId: relationAB.id },
         },
         {
           operation: "updateRelation",

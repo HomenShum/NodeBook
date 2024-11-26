@@ -55,7 +55,10 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
   const setRoot = useSetRoot();
   const setAuthorRoot = useSetAuthorRoot();
   const handleZoom = useCallback(() => {
-    setRoot(treeNode.object);
+    setRoot({
+      object: treeNode.object,
+      relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
+    });
   }, [treeNode, setRoot]);
 
   const parseWithAi = useParseWithAi();

@@ -4,9 +4,10 @@ import { DELETED_NODE_TEXT } from "@/app/graph/constants";
 import { getOtherObject } from "@/app/graph/utils";
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
-import { comparePositions, Position, uuid } from "@/app/util";
+import { comparePositions, ObjectPath, Position, uuid } from "@/app/util";
+import logger from "@/lib/logger";
 
-import { BaseGraphObject } from "./GraphObject";
+import { BaseGraphObject, GraphObject } from "./GraphObject";
 import { GraphRelation } from "./GraphRelation";
 import { GraphStore } from "./GraphStore";
 
@@ -30,7 +31,6 @@ export type GraphNodeProps = {
   updatedAt?: Date;
   isPublic?: boolean;
   isNewRelatedObjectsPublic?: boolean;
-  canonicalRelation?: GraphRelation | null;
 };
 
 export type PositionedRelation = {
@@ -60,7 +60,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       updatedAt = new Date(createdAt.getTime()),
       isPublic = false,
       isNewRelatedObjectsPublic = false,
-      canonicalRelation = null,
     }: GraphNodeProps & { authorId: string },
   ) {
     super(store);
@@ -76,7 +75,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     this.updatedAt = updatedAt;
     this.isPublic = isPublic;
     this.isNewRelatedObjectsPublic = isNewRelatedObjectsPublic;
-    this.canonicalRelation = canonicalRelation;
     this.makeObservable();
   }
 
@@ -88,7 +86,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       updatedAt: observable,
       isPublic: observable,
       isNewRelatedObjectsPublic: observable,
-      canonicalRelation: observable,
       content: observable.shallow,
       update: action,
       text: computed,
@@ -123,10 +120,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       this.updatedAt = newProps.updatedAt;
     } else {
       this.updatedAt = new Date();
-    }
-    if (newProps.canonicalRelation !== undefined) {
-      oldValues.canonicalRelation = this.canonicalRelation;
-      this.canonicalRelation = newProps.canonicalRelation;
     }
 
     return oldValues;
@@ -216,6 +209,53 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     return `Node(${this.id.slice(0, 8)}: ${this.text.slice(0, 8)})`;
   }
 
+  /**
+   * This uses somewhat arbitrary heuristics to try to find a path to the global root.
+   * In the future, we'll probably introduce canonical paths which reliably
+   * lead to the root. See https://linear.app/ideaflow/issue/ENT-3930/canonical-paths
+   */
+  getPath({ limit = 10 }: { limit?: number } = {}): ObjectPath {
+    const relations: GraphRelation[] = [];
+    let current: GraphObject | undefined = this;
+
+    for (let i = 0; i < limit && current && current !== this.store.globalRoot; i++) {
+      const nextRelationOptions: GraphRelation[] = current.relations
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+        .filter((r) => r.to.id === current?.id);
+      let nextRelation: GraphRelation | null = null;
+      // If we're at the user root, default to the usersToUserRelation
+      if (current.id === this.store.userRoot.id) {
+        try {
+          if (
+            (this.store.usersToUserRelation && this.store.usersToUserRelation.to.id === this.store.userRoot.id) ||
+            this.store.usersToUserRelation.from.id === this.store.globalRoot.id
+          ) {
+            nextRelation = this.store.usersToUserRelation;
+          } else {
+            logger.error("Valid usersToUserRelation not found", {
+              current: current.id,
+              usersToUserRelationFromId: this.store.usersToUserRelation.from.id,
+              usersToUserRelationToId: this.store.usersToUserRelation.to.id,
+            });
+          }
+        } catch (error) {
+          logger.error("Error accessing usersToUserRelation:", error);
+        }
+      }
+      if (!nextRelation) {
+        nextRelation =
+          nextRelationOptions.find((r) => r.relationType.id === "child" || r.relationType.id === "sublist") ||
+          nextRelationOptions[0];
+      }
+      if (!nextRelation || relations.some((p) => p.id === nextRelation.id)) {
+        return { relations, object: this };
+      }
+      relations.unshift(nextRelation);
+      current = nextRelation.from;
+    }
+    return { relations, object: this };
+  }
+
   serialize(): SerializedNode {
     return {
       version: this.version,
@@ -226,7 +266,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       content: toJS(this.content),
       isPublic: this.isPublic,
       isNewRelatedObjectsPublic: this.isNewRelatedObjectsPublic,
-      canonicalRelationId: this.canonicalRelation?.id ?? null,
     };
   }
 }

@@ -65,19 +65,22 @@ describe("GraphStore.removeRelation", () => {
       const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
         (update) => update.updates,
       );
-      expect(pendingUpdateSets.length).toBe(1);
-      expect(pendingUpdateSets[0].filter((u) => u.operation === "deleteRelation")).toEqual([
-        {
-          operation: "deleteRelation",
-          deleted: {
-            relation: serializedRelation,
-            relationsList: [],
-            fromPos,
-            toPos,
-            fromPinnedPos: undefined,
-            toPinnedPos: undefined,
+      expect(pendingUpdateSets).toEqual([
+        [
+          {
+            operation: "deleteRelation",
+            deleted: {
+              relation: serializedRelation,
+              relationsList: [],
+              fromPos,
+              toPos,
+              fromPinnedPos: undefined,
+              toPinnedPos: undefined,
+            },
           },
-        },
+          { operation: "deleteNode", node: startNode.serialize() },
+          { operation: "deleteNode", node: endNode.serialize() },
+        ],
       ]);
     });
     it("should leave the from and to nodes if they have other relations", async () => {
@@ -98,19 +101,20 @@ describe("GraphStore.removeRelation", () => {
       const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
         (update) => update.updates,
       );
-      expect(pendingUpdateSets.length).toBe(1);
-      expect(pendingUpdateSets[0].filter((u) => u.operation === "deleteRelation")).toEqual([
-        {
-          operation: "deleteRelation",
-          deleted: {
-            relation: serializedRelation,
-            relationsList: [],
-            fromPos,
-            toPos,
-            fromPinnedPos: undefined,
-            toPinnedPos: undefined,
+      expect(pendingUpdateSets).toEqual([
+        [
+          {
+            operation: "deleteRelation",
+            deleted: {
+              relation: serializedRelation,
+              relationsList: [],
+              fromPos,
+              toPos,
+              fromPinnedPos: undefined,
+              toPinnedPos: undefined,
+            },
           },
-        },
+        ],
       ]);
     });
     it("should create a working revert operation", async () => {
@@ -178,19 +182,20 @@ describe("GraphStore.removeRelation", () => {
       const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
         (update) => update.updates,
       );
-      expect(pendingUpdateSets.length).toBe(1);
-      expect(pendingUpdateSets[0].filter((u) => u.operation === "deleteRelation")).toEqual([
-        {
-          operation: "deleteRelation",
-          deleted: {
-            relation: serializedHyperRelation,
-            relationsList: [],
-            fromPos,
-            toPos,
-            fromPinnedPos: undefined,
-            toPinnedPos: undefined,
+      expect(pendingUpdateSets).toEqual([
+        [
+          {
+            operation: "deleteRelation",
+            deleted: {
+              relation: serializedHyperRelation,
+              relationsList: [],
+              fromPos,
+              toPos,
+              fromPinnedPos: undefined,
+              toPinnedPos: undefined,
+            },
           },
-        },
+        ],
       ]);
     });
     it("should revert properly for a hyperrelation", async () => {
@@ -216,8 +221,6 @@ describe("GraphStore.removeRelation", () => {
       const serializedAB = relationAB.serialize();
       const relABFromPos = graphStore.getRelationList(nodeA).get(relationAB.id)?.position;
       const relABToPos = graphStore.getRelationList(nodeB).get(relationAB.id)?.position;
-      const serializedA = nodeA.serialize();
-      const serializedB = nodeB.serialize();
 
       await graphStore.removeRelation({ relationId: relationAB.id });
 
@@ -231,16 +234,6 @@ describe("GraphStore.removeRelation", () => {
       );
       expect(pendingUpdateSets).toEqual([
         [
-          {
-            operation: "updateNode",
-            oldProps: { ...serializedA, canonicalRelationId: relationAB.id },
-            newProps: { ...serializedA, canonicalRelationId: relationAC.id },
-          },
-          {
-            operation: "updateNode",
-            oldProps: { ...serializedB, canonicalRelationId: relationAB.id },
-            newProps: { ...serializedB, canonicalRelationId: relationBC.id },
-          },
           {
             operation: "deleteRelation",
             deleted: {

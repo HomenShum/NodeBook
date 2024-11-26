@@ -15,7 +15,7 @@ import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useToast } from "@/app/hooks/useToast";
 import { handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey } from "@/app/hotkeys";
 import { Tree } from "@/app/tree/Tree";
-import { treeNodeToObjectPath, useSetRoot } from "@/app/tree/utils";
+import { getAncestorsAsArray, treeNodeToObjectPath, useSetRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
@@ -54,18 +54,26 @@ function OutlineContent({ tree }: Props) {
     if (tree.selectionWithNodes?.type !== "editor") return;
     const node = tree.selectionWithNodes.treeNode;
     if (tree.isMainTree) {
-      setRoot(node.object);
+      setRoot({
+        object: node.object,
+        relations: getAncestorsAsArray(node).map((node) => node.relationToChild),
+      });
     } else {
-      tree.setRoot(node.object);
+      tree.setRoot(node, node.path);
     }
   };
 
   const setParentOfRootAsRoot = () => {
     if (!tree.root.parent) return;
     if (tree.isMainTree) {
-      setRoot(tree.root.parent.object);
+      setRoot({
+        object: tree.root.parent.object,
+        relations: getAncestorsAsArray(tree.root)
+          .slice(0, -1)
+          .map((node) => node.relationToChild),
+      });
     } else {
-      tree.setRoot(tree.root.parent.object);
+      tree.setRoot(tree.root.parent, tree.root.parent.path);
     }
   };
 

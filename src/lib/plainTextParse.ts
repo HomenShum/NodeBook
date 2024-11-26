@@ -50,7 +50,6 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
     content: [{ type: "text", value: `Nodes imported ${new Date(importTs).toISOString()}` }],
     isPublic: false,
     isNewRelatedObjectsPublic: false,
-    canonicalRelationId: null,
   };
   curNodeIdsByDepth[-1] = rootForImportId;
   snapshot.relationsByNodeId[rootForImportId] = {};
@@ -69,9 +68,7 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
     toId: rootForImportId,
     relationTypeId: "child",
     isPublic: false,
-    canonicalRelationId: null,
   };
-  snapshot.nodesById[rootForImportId].canonicalRelationId = importRootRelId;
   snapshot.relationsByNodeId[existingGraphStore.userRootId] = {};
   snapshot.relationsByNodeId[existingGraphStore.userRootId][importRootRelId] = {
     int: 0,
@@ -162,9 +159,6 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
     }
 
     let nodeId = "";
-    const parentId = curNodeIdsByDepth[depth - 1];
-    const relId = `${importIdPrefix}-r-${uuid()}`;
-
     if (nodeIdsByText[nodeText]) {
       // Reuse existing node if we've already seen this text
       nodeId = nodeIdsByText[nodeText];
@@ -180,7 +174,6 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
         content: [{ type: "text", value: nodeText }],
         isPublic: false,
         isNewRelatedObjectsPublic: false,
-        canonicalRelationId: relId,
       };
       snapshot.nodesById[nodeId] = node;
       nodeIdsByText[nodeText] = nodeId;
@@ -189,6 +182,8 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
     curNodeIdsByDepth[depth] = nodeId;
 
     // Create a relation from the parent node to this node
+    const parentId = curNodeIdsByDepth[depth - 1];
+    const relId = `${importIdPrefix}-r-${uuid()}`;
     snapshot.relationsById[relId] = {
       id: relId,
       authorId: authorId,
@@ -199,7 +194,6 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
       toId: !isRelationReverse ? nodeId : parentId,
       relationTypeId: relationTypeId,
       isPublic: false,
-      canonicalRelationId: null,
     };
 
     childCountByNodeId[parentId] = (childCountByNodeId[parentId] || 0) + 1;

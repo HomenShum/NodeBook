@@ -42,7 +42,7 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
             action: {
               label: "Jump to node",
               onClick: () => {
-                setRoot(node);
+                setRoot(node.getPath());
               },
             },
           });

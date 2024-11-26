@@ -27,7 +27,6 @@ export type GraphRelationProps = {
   relationType?: GraphRelationType;
   isPublic?: boolean;
   updatedAt?: Date;
-  canonicalRelation?: GraphRelation | null;
 };
 
 export type GraphRelationPropsWithoutTargets = {
@@ -47,7 +46,6 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
   relationTypeId: string;
   from: GraphObject;
   to: GraphObject;
-  canonicalRelation: GraphRelation | null = null;
 
   constructor(
     store: GraphStore,
@@ -83,7 +81,6 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       relationType: computed,
       from: observable.ref,
       to: observable.ref,
-      canonicalRelation: observable,
       text: computed,
       update: action,
       incrementVersion: action,
@@ -117,9 +114,6 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     }
     if (props.isPublic !== undefined && props.isPublic !== this.isPublic) {
       this.isPublic = props.isPublic;
-    }
-    if (props.canonicalRelation !== undefined) {
-      this.canonicalRelation = props.canonicalRelation;
     }
   }
 
@@ -180,7 +174,6 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       toId: this.to.id,
       relationTypeId: this.relationTypeId,
       isPublic: this.isPublic,
-      canonicalRelationId: this.canonicalRelation?.id ?? null,
     };
   }
 }

@@ -19,7 +19,6 @@ export const RelatedObjectDetails = observer(function RelatedObjectDetails({ pos
       <span className={styles.PathEllipsis}>path: {treeNode.path} </span>
       <span>objectId: {object.id}</span>
       <span>relationId: {relation.id}</span>
-      <span>canonicalRelationId: {object.canonicalRelation?.id || "none"}</span>
       {position && (
         <span>
           position: {position.int}-{position.frac}

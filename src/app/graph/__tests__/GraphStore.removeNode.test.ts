@@ -52,12 +52,11 @@ describe("GraphStore.removeNode", () => {
     expect(pendingUpdateSets).toEqual([[{ operation: "deleteNode", node: orphanNode.serialize() }]]);
   });
   it("should create a working revert operation", async () => {
-    const nodeAAtStart = nodeA.serialize();
     await graphStore.removeNode({ nodeId: nodeA.id });
 
     graphStore.updateManager.revertAllPending();
 
-    expect(graphStore.getNode(nodeA.id)?.serialize()).toEqual(nodeAAtStart);
+    expect(graphStore.getNode(nodeA.id)?.serialize()).toEqual(nodeA.serialize());
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START);
   });
   it("should delete all relations of the specified node", async () => {
@@ -72,12 +71,11 @@ describe("GraphStore.removeNode", () => {
     expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START - 1);
   });
   it("should be able to revert deletion of a node with relations", async () => {
-    const nodeAAtStart = nodeA.serialize();
     await graphStore.removeNode({ nodeId: nodeA.id });
 
     graphStore.updateManager.revertAllPending();
 
-    expect(graphStore.getNode(nodeA.id)?.serialize()).toEqual(nodeAAtStart);
+    expect(graphStore.getNode(nodeA.id)?.serialize()).toEqual(nodeA.serialize());
     expect(graphStore.nodesById.size).toBe(NUM_NODES_START);
     expect(graphStore.getRelation(relationAB.id)?.serialize()).toEqual(relationAB.serialize());
     expect(graphStore.relationsById.size).toBe(NUM_RELATIONS_START);

@@ -100,18 +100,15 @@ export function toTemplate(tree: Tree): TemplateNode {
 export function expectTreeToMatchTemplate(tree: Tree, template: TreeTemplate) {
   const actual = toTemplate(tree);
   if (Array.isArray(template)) {
-    expect(actual.children).toHaveLength(template.length);
-    template.forEach((t, i) => {
-      expect(actual.children?.[i]).toMatchObject(t);
-    });
+    expect(actual.children).toEqual(template);
   } else {
-    expect(actual).toMatchObject(template);
+    expect(actual).toEqual(template);
   }
 }
 
 export type TreeTemplate = TemplateNode | TemplateNode[];
 export type TemplateNode = {
-  rid?: string;
+  rid: string;
   children?: TemplateNode[];
   isHead?: boolean;
   isAnchor?: boolean;

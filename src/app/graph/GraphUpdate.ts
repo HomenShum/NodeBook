@@ -124,7 +124,7 @@ export const generateInverseUpdates = (updates: GraphUpdate[]): GraphUpdate[] =>
       case "deleteNode":
         inverseUpdates.push({
           operation: "addNode",
-          node: { ...update.node, canonicalRelationId: null },
+          node: update.node,
         });
         break;
 

@@ -1,10 +1,6 @@
 import { Chip } from "@/app/graph/GraphNode";
-import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { BaseGroup, DescendantTreeNode, GroupId, NoteContentGroup, PinnedGroup } from "@/app/tree/nodes";
-import { ObjectPath } from "@/app/util";
-import { GLOBAL_ROOT_ID } from "@/lib/constants";
-import logger from "@/lib/logger";
 
 const getSide = (relation: GraphRelation, id: string): "from" | "to" | undefined => {
   if (relation.from.id === id) {
@@ -65,44 +61,6 @@ export const extractPointedAtObjectId = (node: DescendantTreeNode): string => {
   return node.relationWithParent.from.id === node.object.id
     ? node.relationWithParent.to.id
     : node.relationWithParent.from.id;
-};
-
-export const getNextCanonicalRelation = (object: GraphObject) => {
-  return object.relations.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0] || null;
-};
-
-export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath => {
-  const relations: GraphRelation[] = [];
-  let current = object;
-  let relation = current.canonicalRelation;
-  let relatedObject = relation ? getOtherObject(relation, current.id) : null;
-  let depth = 0;
-
-  while (relation && relatedObject && current.id !== GLOBAL_ROOT_ID) {
-    relations.push(relation);
-
-    current = relatedObject;
-    relation = current.canonicalRelation;
-    relatedObject = relation ? getOtherObject(relation, current.id) : null;
-    depth++;
-    if (depth > maxDepth) {
-      logger.error("Max depth reached while getting canonical path", {
-        objectId: object.id,
-        objectType: object.objectType,
-      });
-      return { object, relations: [] };
-    }
-  }
-
-  return {
-    object,
-    relations: relations.reverse(),
-  };
-};
-
-export const objectPathToString = (objectPath: ObjectPath): string => {
-  if (!objectPath.relations?.length) return "";
-  return objectPath.relations.map((r) => "/all/" + r.id).join("");
 };
 
 /**

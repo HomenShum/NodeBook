@@ -84,8 +84,10 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
                       await graphStore.removeNode({ nodeId: treeNode.object.id });
 
                       // navigate to parent, otherwise home
-                      const object = parentAncestor?.object || graphStore.homeRoot;
-                      setRoot(object);
+                      setRoot({
+                        object: parentAncestor?.object || graphStore.homeRoot,
+                        relations: ancestors.slice(0, -1).map((ancestor) => ancestor.relationToChild),
+                      });
                     }
                   })}
                 >

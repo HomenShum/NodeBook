@@ -10,7 +10,6 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { Chip } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
-import { getCanonicalPath } from "@/app/graph/utils";
 import { useToast } from "@/app/hooks/useToast";
 import { useSetRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
@@ -58,7 +57,8 @@ const CommandBar = observer(() => {
   const handleZoomToNode = useCallback(
     (object: GraphObject) => {
       if ("getPath" in object) {
-        setRoot(object);
+        const path = object.getPath();
+        setRoot(path);
         close();
       }
     },
@@ -73,7 +73,7 @@ const CommandBar = observer(() => {
             .search({ text: search.text, filters: { types: ["node"] }, sort: { by: "score" } })
             .nodes.slice(0, 30)
             .map(({ node }) => {
-              const path = getCanonicalPath(node);
+              const path = node.getPath();
               return {
                 type: "navigate" as const,
                 id: node.id,
@@ -108,7 +108,7 @@ const CommandBar = observer(() => {
           close();
           resetSearch();
           if (isCmdPressed) {
-            setRoot(node);
+            setRoot(node.getPath());
           }
 
           // Toast on new node creation

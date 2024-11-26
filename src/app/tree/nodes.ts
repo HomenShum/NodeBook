@@ -17,28 +17,24 @@ export class PathToRootNode {
   object: GraphObject;
   relationToChild: GraphRelation;
   child: PathToRootNode | TreeNode;
-  childGroupId: GroupId;
   parent: PathToRootNode | null = null;
 
   constructor({
     object,
     relationToChild,
-    childGroupId,
     child,
   }: {
     object: GraphObject;
     relationToChild: GraphRelation;
-    childGroupId: GroupId;
     child: PathToRootNode | RootTreeNode;
   }) {
     this.object = object;
     this.relationToChild = relationToChild;
     this.child = child;
-    this.childGroupId = childGroupId;
   }
 
   get path(): string {
-    return this.parent ? this.parent.path + `/${this.childGroupId}/` + this.relationToChild.id : "";
+    return this.parent ? this.parent.path + "/" + this.relationToChild.id : "";
   }
 
   get depth(): number {
@@ -155,7 +151,7 @@ export class RootTreeNode extends BaseTreeNode {
   hydrate() {
     try {
       this.hydrateAncestors();
-      this.path = this.parent?.path || "";
+      this.path = this.parent ? this.tree.path.substring(0, this.tree.path.lastIndexOf("/")) : "";
       this.id = this.path;
       this.depth = this.parent ? this.parent.depth + 1 : 0;
       this.hydrateChildren();
@@ -173,7 +169,7 @@ export class RootTreeNode extends BaseTreeNode {
     const pathToRoot = this.tree.pathToRoot;
     let currentNode: PathToRootNode | RootTreeNode = this;
     for (let i = pathToRoot.length - 1; i >= 0; i--) {
-      const { relation, childGroupId } = pathToRoot[i];
+      const relation = pathToRoot[i];
       if (!relation) {
         break;
       }
@@ -187,7 +183,6 @@ export class RootTreeNode extends BaseTreeNode {
         object: parentObject,
         relationToChild: relation,
         child: currentNode,
-        childGroupId,
       });
       currentNode.parent = parentNode;
       if (currentNode instanceof RootTreeNode) {
@@ -211,7 +206,7 @@ export class SublistRootTreeNode extends RootTreeNode {
     try {
       this.hydrateAncestors();
       this.id = this.path;
-      this.path = this.parent?.path || "";
+      this.path = this.parent ? this.tree.path.substring(0, this.tree.path.lastIndexOf("/")) : "";
       this.depth = this.parent ? this.parent.depth + 1 : 0;
       this.hydrateChildren();
     } catch (e) {

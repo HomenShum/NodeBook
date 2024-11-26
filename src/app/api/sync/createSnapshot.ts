@@ -44,7 +44,6 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       content: JSON.parse(row.content ?? ""),
       isPublic: !!row.isPublic,
       isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
-      canonicalRelationId: row.canonicalRelationId ?? null,
     };
     snapshot.nodesById[node.id] = node;
   }
@@ -94,7 +93,6 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       toId: row.toId ?? "",
       relationTypeId: row.relationTypeId ?? "",
       isPublic: !!row.isPublic,
-      canonicalRelationId: row.canonicalRelationId ?? null,
     };
   }
 
