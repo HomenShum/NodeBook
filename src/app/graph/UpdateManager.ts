@@ -27,6 +27,9 @@ export class UpdateManager {
 
   private authedFetch?: typeof fetch;
 
+  offlineSince: Date | null = null;
+  lastSuccessfulSync: Date = new Date();
+
   private refetchCallback: (data: SerializedGraphStore) => void;
   private applyGraphUpdates: (updates: GraphUpdate[]) => void;
 
@@ -56,7 +59,9 @@ export class UpdateManager {
       cleanup: action,
       syncLocalUpdates: action,
       syncQueue: observable.shallow,
-      hasPendingUpdates: computed,
+      numPendingUpdates: computed,
+      offlineSince: observable,
+      lastSuccessfulSync: observable,
     });
   }
 
@@ -130,6 +135,7 @@ export class UpdateManager {
     const parsed = SerializedGraphStoreSchema.safeParse(latestData.data);
     if (parsed.success) {
       this.refetchCallback(parsed.data);
+      this.lastSuccessfulSync = new Date();
     } else {
       logger.error("Failed to parse latest data snapshot", parsed.error);
     }
@@ -291,36 +297,49 @@ export class UpdateManager {
   }
 
   async syncLocalUpdates(userFetch: typeof fetch) {
+    if (!this.syncQueue.length) {
+      return;
+    }
+
     const syncDataBatch = condenseSyncDataBatch(this.syncQueue);
     this.syncQueue = [];
     let syncData = syncDataBatch.shift();
-    while (syncData) {
-      logger.debug("sending sync data", syncData);
-      let endpoint = "/api/sync";
+    try {
+      while (syncData) {
+        logger.debug("Sending sync data", syncData);
+        let endpoint = "/api/sync";
 
-      const response = await userFetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(syncData),
-      });
+        const response = await userFetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(syncData),
+        });
 
-      if (!response.ok) {
-        logger.error("Sync failed", response);
-        // Revert all pending updates and the current task, moving backwards to ensure that the state is consistent.
-        let lastTask = syncDataBatch.pop();
-        while (lastTask) {
-          this.revertGraphUpdates(lastTask.updates);
-          lastTask = syncDataBatch.pop();
+        if (!response.ok) {
+          logger.error("Sync failed", response);
+          // Revert all pending updates and the current task, moving backwards to ensure that the state is consistent.
+          let lastTask = syncDataBatch.pop();
+          while (lastTask) {
+            this.revertGraphUpdates(lastTask.updates);
+            lastTask = syncDataBatch.pop();
+          }
+          this.revertGraphUpdates(syncData.updates);
+          // Fetch all data from the server to get back to a consistent state.
+          await this.fetchLatestDataSnapshot();
+          return;
         }
-        this.revertGraphUpdates(syncData.updates);
-        // Fetch all data from the server to get back to a consistent state.
-        await this.fetchLatestDataSnapshot();
-        return;
+        syncData = syncDataBatch.shift();
       }
-      syncData = syncDataBatch.shift();
+    } catch (e) {
+      logger.error("Failed to POST sync data to backend", e);
+      this.syncQueue = syncData ? [syncData, ...syncDataBatch] : syncDataBatch;
+      this.offlineSince = this.offlineSince || new Date();
+      return;
     }
+    this.offlineSince = null;
+    this.lastSuccessfulSync = new Date();
   }
 
   /**
@@ -330,8 +349,8 @@ export class UpdateManager {
     return this.syncQueue;
   }
 
-  get hasPendingUpdates() {
-    return this.syncQueue.length > 0;
+  get numPendingUpdates() {
+    return this.syncQueue.length;
   }
 
   /**
