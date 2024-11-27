@@ -6,10 +6,12 @@ import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateN
 import s from "@/app/components/OutlineView.module.css";
 import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
+import { RootObjectDetails } from "@/app/components/RelatedObject/RelatedObjectDetails";
 import s1 from "@/app/components/RightSidebar.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useToast } from "@/app/hooks/useToast";
@@ -32,6 +34,7 @@ function OutlineContent({ tree }: Props) {
   const graphStore = useGraphStore();
   const user = useUser();
   const viewStore = useViewStore();
+  const settingsStore = useSettingsStore();
   const { addToast } = useToast();
   const setRoot = useSetRoot();
   const elementRef = useRef<HTMLDivElement>(null);
@@ -121,9 +124,12 @@ function OutlineContent({ tree }: Props) {
                   <Globe size={20} strokeWidth={1.8} />
                 ) : null}
                 <TooltipTrigger asChild>
-                  <h1 className={s.TitleText}>
-                    <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
-                  </h1>
+                  <div>
+                    <h1 className={s.TitleText}>
+                      <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
+                    </h1>
+                    {settingsStore.showNodeDetails && <RootObjectDetails object={treeRoot.object} />}
+                  </div>
                 </TooltipTrigger>
               </div>
               <Button

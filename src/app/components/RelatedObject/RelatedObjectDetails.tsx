@@ -12,6 +12,15 @@ interface Props {
   relation: GraphRelation;
 }
 
+export const RootObjectDetails = observer(function RootObjectDetails({ object }: { object: GraphObject }) {
+  return (
+    <div className={styles.DetailsContainer}>
+      <span>objectId: {object.id}</span>
+      <span>canonicalRelationId: {object.canonicalRelation?.id || "none"}</span>
+    </div>
+  );
+});
+
 export const RelatedObjectDetails = observer(function RelatedObjectDetails({ position, object, relation }: Props) {
   const { treeNode } = useTreeNode();
   return (
@@ -27,6 +36,8 @@ export const RelatedObjectDetails = observer(function RelatedObjectDetails({ pos
       )}
       <span>createdAt: {object.createdAt.toISOString()}</span>
       <span>updatedAt: {object.updatedAt.toISOString()}</span>
+      <span>relationCreatedAt: {relation.createdAt.toISOString()}</span>
+      <span>relationUpdatedAt: {relation.updatedAt.toISOString()}</span>
     </div>
   );
 });

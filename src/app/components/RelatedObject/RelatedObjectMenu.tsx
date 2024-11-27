@@ -8,6 +8,7 @@ import {
   Expand,
   GitCompare,
   Globe,
+  Link,
   Lock,
   Notebook,
   Pin,
@@ -198,6 +199,23 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
         <RefreshCcwDot size={14} />
         Change relation type
       </DropdownMenuItem>
+      {treeNode.parent.object.canonicalRelation?.id !== treeNode.relationWithParent.id && (
+        <DropdownMenuItem
+          onSelect={async () => {
+            await graphStore.updateNode({
+              nodeId: treeNode.parent.object.id,
+              nodeProps: { canonicalRelationId: treeNode.relationWithParent.id },
+            });
+            // The tree holds a static array of the path ids, so doesn't re-render automatically
+            // when we update the canonical relation. So we force a re-render by re-setting the root
+            // which will re-compute the path ids according to the new canonical relation.
+            tree.setRoot(tree.rootObject);
+          }}
+        >
+          <Link size={14} />
+          Make relation canonical
+        </DropdownMenuItem>
+      )}
       <DropdownMenuSeparator />
       {object instanceof GraphNode && (
         <>
