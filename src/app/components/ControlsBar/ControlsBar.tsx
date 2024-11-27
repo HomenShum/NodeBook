@@ -136,10 +136,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             variant={"default"}
             onClick={() => window.open(ideapadLink, "_blank")}
             className={cn(s.ShowTooltip, s.BottomAlign)}
-            data-tooltip={"Open Ideapad"}
+            data-tooltip={"Open graph view"}
           >
             <WorkflowIcon size={14} strokeWidth={1.5} />
-            <span>Ideapad</span>
+            <span>Graph</span>
           </Button>
         )}
         <Button
