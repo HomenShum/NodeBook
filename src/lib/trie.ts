@@ -1,9 +1,5 @@
 import { reaction } from "mobx";
 
-import appLogger from "@/lib/logger";
-
-const logger = appLogger.child({ service: "trie" });
-
 const SEP = /[\s/]+/;
 const PRE = new RegExp(/["'({[]+/, "");
 
@@ -37,7 +33,6 @@ export class KeywordTrieIndex implements CappedKeywordIndex {
     const disposer = reaction(
       getText,
       (text) => {
-        logger.debug("Update object in trie", { id, text });
         this.removeFromTrie(id);
         this.addIdToTrie(id, text);
       },
@@ -49,7 +44,6 @@ export class KeywordTrieIndex implements CappedKeywordIndex {
   }
 
   delete(id: string) {
-    logger.debug("Delete object from trie", { id });
     const disposers = this.reactionDisposersById.get(id);
     disposers?.forEach((disposer) => disposer());
     this.reactionDisposersById.delete(id);
