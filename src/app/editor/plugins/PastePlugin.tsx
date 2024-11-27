@@ -121,17 +121,16 @@ export const PastePlugin = () => {
             relationsAtDepth[depth + 1] = relationId;
           });
 
-          graphStore.applyCombinedTransaction(txs).then(() => {
-            tree.setFocusedNode(path);
-            // Retreive all new node paths from tree.state using the list of all new relations.
-            // We require that treeNode's path is a prefix.
-            const allPaths = tree.state.descendantTreeNodesById.keys();
-            const prefix = treeNode.path;
-            const newPaths = Array.from(allPaths).filter((path) => path.startsWith(prefix));
-            for (const path of newPaths) {
-              tree.setPathExpanded(path, true);
-            }
-          });
+          graphStore.applyCombinedTransaction(txs);
+          tree.setFocusedNode(path);
+          // Retreive all new node paths from tree.state using the list of all new relations.
+          // We require that treeNode's path is a prefix.
+          const allPaths = tree.state.descendantTreeNodesById.keys();
+          const prefix = treeNode.path;
+          const newPaths = Array.from(allPaths).filter((path) => path.startsWith(prefix));
+          for (const path of newPaths) {
+            tree.setPathExpanded(path, true);
+          }
           return true;
         }
         return false;

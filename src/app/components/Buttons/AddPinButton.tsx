@@ -5,7 +5,6 @@ import styles from "@/app/components/RelatedObject/styles/ChildGroups.module.css
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { PinnedGroup, TreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
 
 interface AddPinButtonProps {
   parentNode: TreeNode;

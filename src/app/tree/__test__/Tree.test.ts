@@ -349,13 +349,12 @@ describe("Tree", () => {
 
         const txs: TxCombined = getNewNoteTxs(tree, treeNode);
 
-        await graphStore.applyCombinedTransaction(txs).then(() => {
-          const secondRelation = graphStore.getRelation("second");
-          if (secondRelation) {
-            const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
-            tree.setFocusedNode(path);
-          }
-        });
+        graphStore.applyCombinedTransaction(txs);
+        const secondRelation = graphStore.getRelation("second");
+        if (secondRelation) {
+          const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
+          tree.setFocusedNode(path);
+        }
 
         const splitOn = tree.getNodeOrThrow(`${tree.root.id}/all/original/noteContent/first`);
         await tree.splitNote(splitOn, { before: [], after: [] }, false, "split");
@@ -386,13 +385,12 @@ describe("Tree", () => {
         const txs: TxCombined = getNewNoteTxs(tree, treeNode);
 
         // Apply txs
-        await graphStore.applyCombinedTransaction(txs).then(() => {
-          const secondRelation = graphStore.getRelation("second");
-          if (secondRelation) {
-            const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
-            tree.setFocusedNode(path);
-          }
-        });
+        graphStore.applyCombinedTransaction(txs);
+        const secondRelation = graphStore.getRelation("second");
+        if (secondRelation) {
+          const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
+          tree.setFocusedNode(path);
+        }
 
         // define cycle parent
         const cycleParent = tree.getNodeOrThrow(`${treeRootId}/all/original/noteContent/second`);
@@ -434,7 +432,7 @@ describe("Tree", () => {
             },
           },
         ];
-        await graphStore.applyCombinedTransaction(cycleTxs);
+        graphStore.applyCombinedTransaction(cycleTxs);
 
         tree.setPathExpanded(`${treeRootId}/all/split/noteContent/second/noteContent/third/all/cycle`, false);
 

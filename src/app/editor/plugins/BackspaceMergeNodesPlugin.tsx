@@ -173,15 +173,14 @@ function useMergers(tree: Tree) {
       }
       const targetTextLength = target.object.text.length;
       const sourceWasExpanded = source.isExpanded;
-      graphStore.applyCombinedTransaction(txs).finally(() => {
-        // If the source was expanded, expand the target
-        if (sourceWasExpanded) {
-          tree.setPathExpanded(target.path, true);
-        }
-        tree.setFocusedNode(focusPath, {
-          anchorOffset: targetTextLength,
-          focusOffset: targetTextLength,
-        });
+      graphStore.applyCombinedTransaction(txs);
+      // If the source was expanded, expand the target
+      if (sourceWasExpanded) {
+        tree.setPathExpanded(target.path, true);
+      }
+      tree.setFocusedNode(focusPath, {
+        anchorOffset: targetTextLength,
+        focusOffset: targetTextLength,
       });
       return true;
     },
@@ -214,12 +213,11 @@ function useMergers(tree: Tree) {
       ];
       const siblingAboveExpanded = note.siblingAbove.isExpanded;
       const path = note.childrenGroupsById.noteContent.createChildPath(note.siblingAbove.relationWithParent);
-      graphStore.applyCombinedTransaction(txs).finally(() => {
-        if (siblingAboveExpanded) {
-          tree.setPathExpanded(path, true);
-        }
-        tree.setFocusedNode(path);
-      });
+      graphStore.applyCombinedTransaction(txs);
+      if (siblingAboveExpanded) {
+        tree.setPathExpanded(path, true);
+      }
+      tree.setFocusedNode(path);
 
       return true;
     },

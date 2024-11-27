@@ -619,7 +619,7 @@ export class Tree {
         after: after instanceof DescendantTreeNode ? after.relationWithParent : after,
       },
     });
-    await this.graphStore.applyCombinedTransaction(txs);
+    this.graphStore.applyCombinedTransaction(txs);
   }
 
   async setObjectOnNode(treeNodeId: string, object: GraphObject, after?: Positioner<DescendantTreeNode>) {
@@ -666,7 +666,7 @@ export class Tree {
       if (selection?.subtreeRoots.some((node) => node instanceof PointerTreeNode)) {
         return;
       }
-      await this.graphStore.applyCombinedTransaction(
+      this.graphStore.applyCombinedTransaction(
         selection.nodes.map((treeNode) => ({
           type: "removeRelation",
           transaction: { relationId: treeNode.relationWithParent.id },
@@ -964,7 +964,7 @@ export class Tree {
 
     // Execute split
 
-    await this.graphStore.applyCombinedTransaction(changes.txs);
+    this.graphStore.applyCombinedTransaction(changes.txs);
 
     if (changes.expansions) {
       for (const [path, expanded] of Object.entries(changes.expansions)) {
@@ -1102,7 +1102,7 @@ export class Tree {
     });
 
     // Apply the transactions
-    await this.graphStore.applyCombinedTransaction(txs);
+    this.graphStore.applyCombinedTransaction(txs);
 
     const relationToNewNote = this.graphStore.getRelation(newRelationId);
 
@@ -1176,13 +1176,13 @@ export class Tree {
       },
     });
 
-    this.graphStore.applyCombinedTransaction(txs).then(() => {
-      const secondRelation = this.graphStore.getRelation(secondRelationId);
-      if (secondRelation) {
-        const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
-        this.setFocusedNode(path, "start", true);
-      }
-    });
+    this.graphStore.applyCombinedTransaction(txs);
+    const secondRelation = this.graphStore.getRelation(secondRelationId);
+    if (secondRelation) {
+      const path = treeNode.childrenGroupsById.noteContent.createChildPath(secondRelation);
+      this.setFocusedNode(path, "start", true);
+    }
+
     return true;
   }
 

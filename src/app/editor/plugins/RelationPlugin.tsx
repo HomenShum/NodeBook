@@ -113,9 +113,8 @@ export const RelationPlugin = observer(function RelationPlugin() {
             },
           });
 
-          graphStore.applyCombinedTransaction(graphStoreTransaction).then(() => {
-            tree.setFocusedNode(treeNode.id, { anchorOffset: 0, focusOffset: 0 });
-          });
+          graphStore.applyCombinedTransaction(graphStoreTransaction);
+          tree.setFocusedNode(treeNode.id, { anchorOffset: 0, focusOffset: 0 });
           return true;
         },
         COMMAND_PRIORITY_NORMAL,
@@ -163,27 +162,24 @@ export const RelationPlugin = observer(function RelationPlugin() {
 
           const oldContent = graphStore.getNode(object.id)?.content ?? [];
 
-          graphStore
-            .applyCombinedTransaction([
-              {
-                type: "updateRelation",
-                transaction: {
-                  relationId: relation.id,
-                  relationProps: { relationType: defaultRelationTypes.child },
-                  reverse: !isForward,
-                },
+          graphStore.applyCombinedTransaction([
+            {
+              type: "updateRelation",
+              transaction: {
+                relationId: relation.id,
+                relationProps: { relationType: defaultRelationTypes.child },
+                reverse: !isForward,
               },
-              {
-                type: "updateNode",
-                transaction: {
-                  nodeId: object.id,
-                  nodeProps: { content: [{ type: "text", value: labelText }, ...oldContent] },
-                },
+            },
+            {
+              type: "updateNode",
+              transaction: {
+                nodeId: object.id,
+                nodeProps: { content: [{ type: "text", value: labelText }, ...oldContent] },
               },
-            ])
-            .then(() => {
-              tree.setFocusedNode(treeNode.id, { anchorOffset: labelText.length, focusOffset: labelText.length });
-            });
+            },
+          ]);
+          tree.setFocusedNode(treeNode.id, { anchorOffset: labelText.length, focusOffset: labelText.length });
           return true;
         },
         COMMAND_PRIORITY_NORMAL,
@@ -204,18 +200,6 @@ export const RelationPlugin = observer(function RelationPlugin() {
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [
-    tree,
-    graphStore,
-    settingsStore,
-    settingsStore.triggerRelationOnSingleColon,
-    editor,
-    object,
-    relation,
-    treeNode.path,
-    treeNode.id,
-    treeNode.relationWithParent.relationType.id,
-    treeNode.relationWithParent.to,
-  ]);
+  }, [tree, graphStore, settingsStore, settingsStore.triggerRelationOnSingleColon, editor, object, relation, treeNode.path, treeNode.id, treeNode.relationWithParent.relationType.id, treeNode.relationWithParent.to]);
   return null;
 });

@@ -243,7 +243,7 @@ export class GraphStore {
    * we should split them into prep and call methods, and for the combined ones,
    * execute first all the prep methods and then all the call ones.
    */
-  async applyCombinedTransaction(txs: TxCombined): Promise<any[]> {
+  applyCombinedTransaction(txs: TxCombined) {
     const updatesArray: GraphUpdate[] = [];
     const results = [];
     for (const tx of txs) {

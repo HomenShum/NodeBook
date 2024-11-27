@@ -223,7 +223,7 @@ describe("UpdateManaager.undo", () => {
     expect(graphStore.updateManager.pendingUpdates.length).toBe(numSyncTasks);
 
     // This combined transaction based on what we do in the BackspaceMergeNodesPlugin
-    await graphStore.applyCombinedTransaction([
+    graphStore.applyCombinedTransaction([
       {
         type: "updateNode",
         transaction: {
@@ -301,7 +301,7 @@ describe("UpdateManaager.undo", () => {
         nodeProps: { content: [{ type: "text", value: "Random non-url child." }] },
       },
     });
-    await graphStore.applyCombinedTransaction(txs);
+    graphStore.applyCombinedTransaction(txs);
     await graphStore.updateNode({
       nodeId: newNodes[0],
       nodeProps: { content: [{ type: "link", url: "https://google.com", value: "https://google.com" }] },

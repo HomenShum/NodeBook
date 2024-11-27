@@ -90,5 +90,5 @@ export const processExtractResponse = async (
     transaction: { fromId: sourceNode.id, toId: entitiesRootId },
   });
 
-  await graphStore.applyCombinedTransaction(txs);
+  graphStore.applyCombinedTransaction(txs);
 };
