@@ -7,6 +7,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { transformTextToChips } from "@/app/editor/utils/links";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
+import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
 import { uuid } from "@/app/util";
@@ -49,6 +50,13 @@ export const PastePlugin = () => {
             ? getLinesFromMewData(mewData, shiftKey)
             : getLinesFromPlainText(event.clipboardData.getData("text/plain"), shiftKey),
         );
+
+        // Get current relation types and create a map of relation type labels to ids so that we can easily
+        // check if a relation type already exists and get the id of a relation type by its label to set a child node's
+        // relation id.
+
+        const newRelTypeIdByLabel = new Map();
+
         let allNewRelationIds: string[] = [];
         if (lines.length > 0) {
           const txs: TxCombined = [];
@@ -67,8 +75,33 @@ export const PastePlugin = () => {
               newContent = [...object.content, ...firstLine.chips];
             }
 
+            // If the first line has a relation type, handle it accordingly.
+            let {
+              chips: newChips,
+              relationTypeLabel,
+              newRelationTypeId,
+              txs: newTxs,
+            } = getNewRelationType(graphStore, newContent, newRelTypeIdByLabel);
+            txs.push(...newTxs);
+            if (newRelationTypeId !== undefined) {
+              // if there's a new relation Type id, add it to the map and set
+              newRelTypeIdByLabel.set(relationTypeLabel, newRelationTypeId);
+            }
+            if (relationTypeLabel !== "child") {
+              // If the relation type is child, we don't need to update the relation
+              txs.push({
+                type: "updateRelation",
+                transaction: {
+                  relationId: relationWithParent.id,
+                  relationProps: {
+                    relationTypeLabel: relationTypeLabel,
+                  },
+                },
+              });
+            }
+
             // Depth is ignored for the first line, since we just add it to the current node
-            txs.push({ type: "updateNode", transaction: { nodeId: object.id, nodeProps: { content: newContent } } });
+            txs.push({ type: "updateNode", transaction: { nodeId: object.id, nodeProps: { content: newChips } } });
 
             // If there are chips with links, add the links as children nodes of the current node.
             // The parent of these nodes will be the current node.
@@ -85,12 +118,32 @@ export const PastePlugin = () => {
             const newNodeId = uuid();
             const relationId = uuid();
             allNewRelationIds.push(relationId);
+
+            let {
+              chips: newChips,
+              relationTypeLabel,
+              newRelationTypeId,
+              txs: newTxs,
+            } = getNewRelationType(graphStore, chips, newRelTypeIdByLabel);
+
+            chips = newChips;
+            txs.push(...newTxs);
+            if (newRelationTypeId !== undefined) {
+              // if there's a new relation Type id, add it to the map and set
+              newRelTypeIdByLabel.set(relationTypeLabel, newRelationTypeId);
+            }
+            const existingRelType = graphStore.getRelationTypeByLabel(relationTypeLabel);
             txs.push({
               type: "addChildNode",
               transaction: {
                 parentId: objectsAtDepth[depth],
                 nodeProps: { id: newNodeId, content: chips },
-                relationProps: { id: relationId },
+                relationProps: {
+                  id: relationId,
+                  relationTypeId: existingRelType
+                    ? existingRelType.relationType
+                    : newRelTypeIdByLabel.get(relationTypeLabel),
+                },
                 after: relationsAtDepth[depth + 1],
               },
             });
@@ -139,6 +192,58 @@ export const PastePlugin = () => {
     );
   }, [object, relationWithParent, graphStore, editor, path, tree, treeNode]);
   return null;
+};
+
+const getRelationTypeLabel = (chips: Chip[]) => {
+  // assumes there is only one relation type label in the chips
+  const indexOfColon = chips.findIndex((chip) => chip.type === "text" && chip.value.includes("::"));
+  let relationTypeLabel = chips
+    .slice(0, indexOfColon + 1)
+    .map((chip) => chip.value)
+    .join("");
+  relationTypeLabel = relationTypeLabel.slice(0, relationTypeLabel.indexOf("::")).trim();
+  return { relationTypeLabel, indexOfColon };
+};
+
+const hasDoubleColon = (chips: Chip[]) => {
+  return chips.some((chip) => chip.type === "text" && chip.value.includes("::"));
+};
+
+const getNewRelationType = (graphStore: GraphStore, chips: Chip[], newRelationTypes: Map<string, string>) => {
+  // Returns the new chips, relation type label and transactions to add the relation type if it doesn't exist
+  let relationTypeLabel = "child";
+  let newRelationTypeId = undefined;
+  const txs: TxCombined = [];
+
+  // If the text has two colons in it, assume this is a relation type being specified.
+  // If it doesn't currently exist, create it.
+
+  if (hasDoubleColon(chips)) {
+    // Get the text up until the two colons
+    let { relationTypeLabel: tmpRelLabel, indexOfColon } = getRelationTypeLabel(chips);
+    relationTypeLabel = tmpRelLabel;
+    // If the relation type label is valid, create a new relation type
+    if (relationTypeLabel.length > 0 && relationTypeLabel.length < 40) {
+      // 40 is an arbitrary maximum label length
+      // 0 makes sure that the label isn't empty
+      if (!graphStore.getRelationTypeByLabel(relationTypeLabel) && !newRelationTypes.has(relationTypeLabel)) {
+        newRelationTypeId = uuid();
+        txs.push({
+          type: "addRelationType",
+          transaction: {
+            id: newRelationTypeId,
+            label: relationTypeLabel,
+          },
+        });
+      }
+      // Slice the colon chip so that we get the text after the colon into the rest of the chip.
+      let slicedColonChip = chips[indexOfColon];
+      slicedColonChip.value = slicedColonChip.value.slice(slicedColonChip.value.indexOf("::") + 2);
+      chips = chips.slice(indexOfColon + 1);
+      chips.unshift(slicedColonChip);
+    }
+  }
+  return { relationTypeLabel, txs, chips, newRelationTypeId };
 };
 
 const getLinkAdditionTxs = (chips: Chip[], parentId: string, groupId: string) => {
