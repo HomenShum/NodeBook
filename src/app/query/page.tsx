@@ -1,5 +1,6 @@
 "use client";
 
+import { captureException } from "@sentry/nextjs";
 import { LinkIcon, Loader2, Search, X } from "lucide-react";
 import { action, observable, toJS } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -135,6 +136,7 @@ const MewQueryInterface = observer(function MewQueryInterface() {
         });
       }
     } catch (err) {
+      captureException(err, { user: { id: user.id }, extra: { query, message: "Error processing AI query" } });
       state.error = "Failed to process query. Please try again.";
     } finally {
       state.isLoading = false;
