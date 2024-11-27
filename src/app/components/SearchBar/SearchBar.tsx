@@ -4,6 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useRef, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { env } from "@/app/envFrontend";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
@@ -70,7 +71,7 @@ export const SearchBar = observer(function SearchBar() {
       <input
         ref={inputRef}
         type="search"
-        placeholder="Search..."
+        placeholder={isExpanded ? `Search... (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."}
         className={styles.SearchContent}
         value={viewStore.searchQuery}
         onChange={handleInputChange}

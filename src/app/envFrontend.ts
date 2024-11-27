@@ -42,6 +42,7 @@ export const env: {
   isFrontend: boolean;
   pusherKey: string;
   pusherCluster: string;
+  isMac: boolean;
   env: "development" | "production" | "preview";
 } = Object.freeze({
   persistTo: process.env.NEXT_PUBLIC_PERSIST_TO || "server",
@@ -61,4 +62,7 @@ export const env: {
   pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
   env: process.env.NEXT_PUBLIC_ENV || "development",
   hardcodedUserId: process.env.NEXT_PUBLIC_HARDCODED_USER_ID || undefined,
+  isMac:
+    typeof navigator !== "undefined" &&
+    (!!navigator.platform.match("Mac") || /Mac(Intel|PPC|ARM)/.test(navigator.userAgent)),
 });
