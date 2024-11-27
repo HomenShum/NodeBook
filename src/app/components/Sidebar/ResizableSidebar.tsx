@@ -2,7 +2,7 @@ import {
   FileSpreadsheet,
   Globe,
   Home,
-  Key,
+  Key, KeyboardIcon,
   LogIn,
   LogOut,
   Mail,
@@ -38,6 +38,7 @@ import { useSetRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { HelpModal } from "@/app/components/HelpModal/HelpModal";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -71,6 +72,11 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const handleOpenDevTools = () => {
     viewStore.setActiveModal("devTools");
   };
+
+  const openHelpModal = () => {
+    console.log("Clicked activeModal");
+    viewStore.setActiveModal("help");
+  }
 
   const handleLogout = useCallback(() => {
     if (!auth) return;
@@ -159,6 +165,15 @@ export const ResizableSidebar = observer(function ResizableSidebar({
       >
         <div className={`${styles.SidebarContent} ${isResizing ? styles.Resizing : ""}`}>
           <div className={styles.Nav}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={openHelpModal}
+              className={cn(styles.ShowTooltip, styles.BottomAlign)}
+              data-tooltip="Help"
+            >
+              <KeyboardIcon size={16} strokeWidth={1.5} />
+            </Button>
             <Button
               variant="ghost"
               size="icon"
@@ -331,6 +346,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
           <div className={styles.ResizerHandle} />
         </div>
       </aside>
+      <HelpModal/>
       <DevTools />
       <ImportDialog />
       {user.isAnonymous && (

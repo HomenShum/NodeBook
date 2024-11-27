@@ -1,0 +1,46 @@
+.HotkeyItem {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 1px 5px;
+}
+
+.HotkeyItem:hover {
+  background-color: #d9eef3;
+}
+
+.HotkeyItemKeys {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.HotkeyItemKeys span {
+  margin: 0 4px;
+}
+
+.kbd {
+  --kbd-color-background: #f7f7f7;
+  --kbd-color-border: #cbcccd;
+  --kbd-color-text: #222325;
+  background-color: #f7f7f7;
+  border-radius: 0.25rem;
+  border: 1px solid var(--kbd-color-border);
+  box-shadow: 0 2px 0 1px var(--kbd-color-border);
+  color: var(--kbd-color-text);
+  cursor: default;
+  display: inline-block;
+  font-size: 0.875em;
+  line-height: 1;
+  min-width: 0.75rem;
+  padding: 2px 5px;
+  position: relative;
+  text-align: center;
+  top: -1px;
+}
+
+.kbd:hover {
+  box-shadow: 0 1px 0 0.5px var(--kbd-color-border);
+  top: 1px;
+}

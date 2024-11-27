@@ -38,7 +38,7 @@ export class ViewStore {
   public rightSidebarOpen = false;
   public isDarkMode = false;
   public sidebarWidth = 268;
-  public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | null = null;
+  public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | "help" | null = null;
   public isCommandBarOpen: boolean = false;
   private deepSearching: boolean = false;
   public sidebarTrees: Tree[] = [];
@@ -166,7 +166,7 @@ export class ViewStore {
     this.leftSidebarOpen = !this.leftSidebarOpen;
   }
 
-  setActiveModal(modal: "devTools" | "importData" | "clearData" | "setPublic" | null) {
+  setActiveModal(modal: "devTools" | "importData" | "clearData" | "setPublic" | "help" | null) {
     this.activeModal = modal;
   }
 

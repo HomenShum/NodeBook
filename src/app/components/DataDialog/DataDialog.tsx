@@ -12,7 +12,7 @@ interface Props {
   title: string;
   description: string;
   children: ReactNode;
-  modalType: "devTools" | "importData" | "clearData";
+  modalType: "devTools" | "importData" | "clearData" | "help";
   showBackButton?: boolean;
   onBack?: () => void;
 }
