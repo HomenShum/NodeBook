@@ -10,7 +10,8 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
+import { getAncestorsAsArray, isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
+import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
@@ -61,7 +62,7 @@ function RelationsToggle({ treeNode }: { treeNode: DescendantTreeNode }) {
       size="xs"
       variant={treeNode.isExpanded ? "default" : "ghostSmooth"}
       className={cn(styles.RelatedObjectRelationsToggle, treeNode.isExpanded)}
-      onClick={() => {
+      onPointerDown={() => {
         tree.setPathExpanded(treeNode.id, !treeNode.isExpanded);
       }}
     >
@@ -83,6 +84,7 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [relationComboboxIsOpen, setRelationComboboxIsOpen] = useState(false);
   const [viewType, setViewType] = useState<RelatedObjectViewType>("edit");
+
   return (
     <TreeNodeProvider
       value={{
@@ -125,40 +127,58 @@ const Content = observer(function Content() {
   const nodeSelectionAnchorId = tree.selection && tree.selection.type === "node" ? tree.selection.anchorNodeId : null;
   const nodeSelectionHeadId = tree.selection && tree.selection.type === "node" ? tree.selection.headNodeId : null;
 
+  const isMobile = useIsMobile();
+  const handleTap = useCallback(() => {
+    if (isMobile) {
+      treeNode.tree.setFocusedNode(treeNode.path, "end", true);
+    }
+  }, [isMobile, treeNode]);
+
   return (
     <>
       <div className={cn(styles.RelatedObjectNode, tree.isNodeSelected(treeNode.id) && styles.Selected)}>
         <div className={styles.RelatedObjectNodeContent}>
           {showRelationType && (
-            <RelationCombobox
-              setUpdatingRelationType={setUpdatingRelationType}
-              treeNode={treeNode}
-              isOpen={relationComboboxIsOpen}
-              setIsOpen={setRelationComboboxIsOpen}
-            />
-          )}
-          {treeNode.object.noteContentRelationsList.size > 0 ? (
             <div
-              className={cn(
-                styles.NoteContentSection,
-                treeNode.parent instanceof RootTreeNode &&
+              onPointerDown={(e) => {
+                if (isMobile) {
+                  e.stopPropagation();
+                  setRelationComboboxIsOpen(!relationComboboxIsOpen);
+                }
+              }}
+            >
+              <RelationCombobox
+                setUpdatingRelationType={setUpdatingRelationType}
+                treeNode={treeNode}
+                isOpen={relationComboboxIsOpen}
+                setIsOpen={setRelationComboboxIsOpen}
+              />
+            </div>
+          )}
+          <div onPointerDown={handleTap} style={{ width: "100%" }}>
+            {treeNode.object.noteContentRelationsList.size > 0 ? (
+              <div
+                className={cn(
+                  styles.NoteContentSection,
+                  treeNode.parent instanceof RootTreeNode &&
                   viewStore.viewType === "note" &&
                   styles.ChildOfRootInNoteView,
-              )}
-            >
-              <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
-            </div>
-          ) : viewType === "replace" ? (
-            <ReplaceRelatedNodeView treeNode={treeNode} />
-          ) : treeNode.object.objectType === "node" ? (
-            <RelatedNodeView treeNode={treeNode} />
-          ) : treeNode.object.objectType === "relation" ? (
-            <RelatedRelationView treeNode={treeNode} />
-          ) : treeNode.object.objectType === "placeholder" ? (
-            <span>(Private)</span>
-          ) : (
-            <>{treeNode.object satisfies never}</>
-          )}
+                )}
+              >
+                <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
+              </div>
+            ) : viewType === "replace" ? (
+              <ReplaceRelatedNodeView treeNode={treeNode} />
+            ) : treeNode.object.objectType === "node" ? (
+              <RelatedNodeView treeNode={treeNode} />
+            ) : treeNode.object.objectType === "relation" ? (
+              <RelatedRelationView treeNode={treeNode} />
+            ) : treeNode.object.objectType === "placeholder" ? (
+              <span>(Private)</span>
+            ) : (
+              <>{treeNode.object satisfies never}</>
+            )}
+          </div>
         </div>
         {settingsStore.showNodeDetails && viewType !== "replace" && (
           <RelatedObjectDetails
@@ -181,7 +201,7 @@ const Content = observer(function Content() {
             treeNode.parentGroup.id === "pinned" && styles.Hidden,
             treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? styles.Pinned : styles.Unpinned,
           )}
-          onClick={() => {
+          onPointerDown={() => {
             const isPinned = treeNode.parent.object.isRelationPinned(treeNode.relationWithParent);
             if (isPinned) {
               treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent);
@@ -238,8 +258,8 @@ const Bullet = observer(function Bullet() {
       event.shiftKey
         ? viewStore.createSidebarTree(treeNode.object)
         : treeNode.tree.id === viewStore.mainView.id
-        ? setRoot(treeNode.object)
-        : treeNode.tree.setRoot(treeNode.object);
+          ? setRoot(treeNode.object)
+          : treeNode.tree.setRoot(treeNode.object);
     },
     [setRoot, treeNode, viewStore],
   );
@@ -248,11 +268,9 @@ const Bullet = observer(function Bullet() {
     return graphStore.usersById.get(authorId)?.username || authorId;
   };
 
-  const tooltipContent = `Node's author: ${
-    treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
-  }
-    Relation author: ${
-      treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
+  const tooltipContent = `Node's author: ${treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
+    }
+    Relation author: ${treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
     }
     Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}
   `;
@@ -275,7 +293,7 @@ const Bullet = observer(function Bullet() {
               [styles.DotInsidePublic]: treeNode.object.isPublic,
               [styles.DotInsidePrivate]: !treeNode.object.isPublic,
             })}
-            onClick={(event) => handleBulletClick(event)}
+            onPointerDown={(event) => handleBulletClick(event)}
           />
           {hasChildren && !treeNode.isExpanded && (
             // with a shadow around it if it has children
@@ -294,7 +312,7 @@ const Bullet = observer(function Bullet() {
         <CyclicIcon
           className={cn(styles.Circle, { [styles.CirclePrivate]: !treeNode.object.isPublic })}
           //@ts-ignore
-          onClick={(event) => handleBulletClick(event)}
+          onPointerDown={(event) => handleBulletClick(event)}
         />
       )}
     </div>
@@ -314,6 +332,7 @@ const Controls = observer(function Controls() {
   const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
   const isFirstChildOfNoteContent =
     treeNode.parentGroup.id === "noteContent" && treeNode.parentGroup.nodes[0].id === treeNode.id;
+  const isMobile = useIsMobile();
   return (
     <>
       <div
@@ -321,9 +340,9 @@ const Controls = observer(function Controls() {
         style={{ visibility: isFirstChildOfNoteContent ? "hidden" : "visible" }}
       >
         <div className={styles.RelatedObjectActions}>
-          <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isHovered} />
+          <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isMobile ? true : isHovered} />
           {viewStore.isNodeProcessing(treeNode.object.id) && <LoadingSpinner />}
-          {treeNode.childCount > 0 && <Toggle treeNode={treeNode} isHovered={isHovered} />}
+          {treeNode.childCount > 0 && <Toggle treeNode={treeNode} isHovered={isMobile ? true : isHovered} />}
         </div>
       </div>
     </>

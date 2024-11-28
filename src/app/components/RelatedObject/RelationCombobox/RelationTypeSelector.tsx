@@ -177,9 +177,9 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
             label={label}
             relation={relation}
             isSelected={highlightedIndex === index}
-            onSelect={() => {
+            onSelect={async () => {
               itemWasSelectedRef.current = true;
-              onSelect();
+              await onSelect();
               close();
             }}
             setSelected={() => setHighlightedIndex(index)}

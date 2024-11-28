@@ -2,15 +2,14 @@ import { Edit2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRef } from "react";
 
+import { TreeNodeInputPrefix } from "@/app/components/RelatedObject/TreeNodeInputPrefix";
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useUser } from "@/app/contexts/UserContext";
 import { NodeEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
-import { TreeNodeInputPrefix } from "@/app/components/RelatedObject/TreeNodeInputPrefix";
 
 import styles from "./styles/RelatedNodeView.module.css";
 
@@ -50,8 +49,11 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
         {isGlobal && !user.isAnonymous && <TreeNodeInputPrefix treeNode={treeNode} isEditorEditable={editableEditor} />}
         <div
           className={cnInnerContainer}
-          onClick={() => {
-            if (isReadOnlyReference) tree.togglePathExpanded(treeNode.path);
+          onPointerDown={(e) => {
+            if (isReadOnlyReference) {
+              e.stopPropagation();
+              tree.togglePathExpanded(treeNode.path);
+            }
           }}
         >
           <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} boundaryRef={ref} />
@@ -60,7 +62,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
               variant="ghost"
               size="icon"
               className={styles.EditButton}
-              onClick={(e) => {
+              onPointerDown={(e) => {
                 e.stopPropagation(); // Prevent the node from expanding/collapsing
                 tree.setFocusedNode(treeNode.id, "end", true);
               }}

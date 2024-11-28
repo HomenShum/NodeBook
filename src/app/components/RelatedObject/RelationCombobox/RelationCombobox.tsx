@@ -10,6 +10,7 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { useUser } from "@/app/contexts/UserContext";
 import { DescendantTreeNode, PointerTreeNode } from "@/app/tree/nodes";
+import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 
 interface Props {
@@ -33,7 +34,8 @@ export const RelationCombobox = observer(function RelationCombobox({
 
   const viewStore = useViewStore();
   const isForward = relation.to.id === object.id;
-  const [isHovered, setIsHovered] = React.useState(false);
+  const isMobile = useIsMobile();
+  const [isHovered, setIsHovered] = React.useState(isMobile);
 
   if (viewStore.flattenSublists && treeNode instanceof PointerTreeNode && !treeNode.showRelation) {
     return null;
@@ -61,8 +63,8 @@ export const RelationCombobox = observer(function RelationCombobox({
       role="combobox"
       aria-expanded={isOpen}
       className={styles.RelationComboboxLabel}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => !isMobile && setIsHovered(true)}
+      onMouseLeave={() => !isMobile && setIsHovered(false)}
     >
       {relation.relationType.id === "sublist" && <SublistIcon />}
       {relation.relationType.id === "child" && relation.from === treeNode.object && <ParentRelationIcon />}
@@ -74,6 +76,7 @@ export const RelationCombobox = observer(function RelationCombobox({
   if (!isHovered && !isOpen) {
     return button;
   }
+
   return (
     <Popover
       open={isOpen}
@@ -86,7 +89,15 @@ export const RelationCombobox = observer(function RelationCombobox({
       }}
     >
       <PopoverTrigger asChild>{button}</PopoverTrigger>
-      {isOpen && <RelationTypeSelector treeNode={treeNode} close={close} />}
+      {isOpen && (
+        <div
+          onPointerDown={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          <RelationTypeSelector treeNode={treeNode} close={close} />
+        </div>
+      )}
     </Popover>
   );
 });
