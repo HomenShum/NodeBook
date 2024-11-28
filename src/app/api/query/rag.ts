@@ -3,11 +3,44 @@ import console from "console";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { eq } from "drizzle-orm";
 import { OpenAI } from "openai";
+import { zodResponseFormat } from "openai/helpers/zod";
+import { z } from "zod";
 
 import { getDb } from "@/db";
 import { graphNodeTable } from "@/db/schema";
 import { env } from "@/envBackend";
 import { pgConnectionStringToPineconeIndexName } from "@/lib/pinecone";
+
+const MODEL_NAME = "gpt-4o";
+
+// Define the text chip schema
+const textChipSchema = z.object({
+  type: z.literal("text"),
+  content: z.string(),
+});
+
+// Define the citation chip schema
+const citationChipSchema = z.object({
+  type: z.literal("citation"),
+  nodeId: z.string(),
+});
+
+const linkChipSchema = z.object({
+  type: z.literal("link"),
+  nodeId: z.string(),
+  content: z.string(),
+});
+
+// Define the chip schema (either a text chip or a citation chip)
+const chipSchema = z.union([textChipSchema, citationChipSchema, linkChipSchema]);
+
+// Define the list of chips schema
+const chipListSchema = z.array(chipSchema);
+
+const wrappedChipListSchema = z.object({
+  // This is necessary because the openAI API doesn't permit root-level arrays
+  content: z.array(chipListSchema),
+});
 
 const MAX_QUERIES = 5;
 
@@ -101,25 +134,34 @@ async function handleFinalStep(
     .join("\n");
 
   const finalResponse = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: MODEL_NAME,
     messages: [
       ...messages,
       { role: "assistant", content: assistantResponse },
       {
         role: "user",
-        content: `Here are the node IDs for your entity lookups:\n\n${lookupResultsText}\n\nPlease compose your final answer addressing the original query: "${originalQuery}".\nStart your response with "FINAL_ANSWER" and cite each entity using double brackets [[node_id]]. When citing, include the text of the entity and put the citation next to it.`,
+        content: `Here are the node IDs for your entity lookups:\n\n${lookupResultsText}\n\n
+        Please compose your final answer addressing the original query: "${originalQuery}".\n
+        For each line of your response, compose a list of chips in the response. For each block of text, use the text type. For each citation, replace the text with a citation chip. For each link, replace the text with a link chip. When citing, include the text of the entity in the text beside the citation chip and ensure that the chip is as close to the entity as possible.`,
       },
     ],
+    response_format: zodResponseFormat(wrappedChipListSchema, "chipListList"),
     temperature: 0,
   });
 
   const finalResponseContent = finalResponse.choices[0].message.content;
 
-  if (!finalResponseContent?.startsWith("FINAL_ANSWER")) {
-    throw new Error("Invalid response format - missing FINAL_ANSWER prefix");
+  if (finalResponseContent === null) {
+    const response = {
+      content: {
+        type: "text",
+        content: "No response from the model.",
+      },
+    };
+    return JSON.stringify(response);
   }
 
-  return finalResponseContent.replace("FINAL_ANSWER:", "").replace("FINAL_ANSWER", "").trim();
+  return finalResponseContent;
 }
 
 const SYSTEM_PROMPT = `You are an senior analyst specialized in answering complex user-generated queries in a variety of domains, 
@@ -193,7 +235,7 @@ export async function ask(query: string, debug: boolean = false, userId: undefin
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: MODEL_NAME,
       messages,
       temperature: 0,
     });
@@ -257,7 +299,7 @@ export async function ask(query: string, debug: boolean = false, userId: undefin
   });
 
   const finalResponse = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: MODEL_NAME,
     messages,
     temperature: 0,
   });

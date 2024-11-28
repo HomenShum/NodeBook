@@ -22,7 +22,7 @@ export const POST = withAuth(async (request) => {
       userId = undefined;
     }
 
-    const response = await ask(query, true, userId);
+    const response = await ask(query, false, userId);
     return NextResponse.json({ response });
   } catch (error) {
     console.error(error);

@@ -38,57 +38,6 @@ type ResponseLine =
   | { type: "link"; nodeId: string; content: string };
 type ParsedResponse = ResponseLine[][];
 
-const processResponse = (text: string): ParsedResponse => {
-  const lines = text.split("\n");
-
-  const result: ParsedResponse = [];
-
-  for (const line of lines) {
-    const parts: ResponseLine[] = [];
-    let lastIndex = 0;
-    const matches = line.matchAll(/\[\[([^\]]+)\]\]/g);
-
-    for (const match of matches) {
-      // Add text before the match
-      if (match.index! > lastIndex) {
-        parts.push({
-          type: "text",
-          content: line.slice(lastIndex, match.index),
-        });
-      }
-
-      // Add the link
-      if (match[1].includes("|")) {
-        const [nodeId, content] = match[1].split("|");
-        parts.push({
-          type: "link",
-          nodeId,
-          content,
-        });
-      } else {
-        parts.push({
-          type: "citation",
-          nodeId: match[1],
-        });
-      }
-
-      lastIndex = match.index! + match[0].length;
-    }
-
-    // Add remaining text after last match
-    if (lastIndex < line.length) {
-      parts.push({
-        type: "text",
-        content: line.slice(lastIndex),
-      });
-    }
-
-    result.push(parts);
-  }
-
-  return result;
-};
-
 const state = observable<{
   query: string;
   response: ParsedResponse | null;
@@ -128,7 +77,7 @@ const MewQueryInterface = observer(function MewQueryInterface() {
       if (data.error) {
         state.error = data.error;
       } else {
-        state.response = processResponse(data.response);
+        state.response = JSON.parse(data.response).content;
         logger.info("query response", {
           query,
           response: data.response,
@@ -143,7 +92,6 @@ const MewQueryInterface = observer(function MewQueryInterface() {
     }
   });
 
-  console.log(EXAMPLE_QUERIES);
   return (
     <div className={styles.container}>
       <form onSubmit={handleFormSubmit} className={styles.form}>
