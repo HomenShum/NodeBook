@@ -438,7 +438,20 @@ export class Tree {
   }
 
   togglePathExpanded(path: Path) {
-    this.expansionsByPath.set(path, !this.expansionsByPath.get(path));
+    const currentStatus = this.expansionsByPath.get(path);
+    const shouldExpand = currentStatus === undefined || currentStatus === false;
+
+    if (shouldExpand) {
+      // If the node has more than 50 children, warn the user.
+      const node = this.getNodeOrThrow(path);
+      const numChildren = node.childCount;
+      if (numChildren > 50) {
+        const expand = confirm(`Are you sure you want to expand this node? It has ${numChildren} children.`);
+        if (!expand) return;
+      }
+    }
+
+    this.expansionsByPath.set(path, !currentStatus);
     this.expansionLocalStorageCache.update(this.expansionsByPath);
   }
 
