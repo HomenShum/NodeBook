@@ -1,34 +1,33 @@
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 
-export const ImportReviewList = ({ existingData, newData }:
-  { existingData: SerializedGraphStore; newData: SerializedGraphStore }) => {
-  const {
-    nodesById: existingNodesById,
-    relationTypesById: existingRelationTypesById,
-  } = existingData;
+export const ImportReviewList = ({
+  existingData,
+  newData,
+}: {
+  existingData: SerializedGraphStore;
+  newData: SerializedGraphStore;
+}) => {
+  const { nodesById: existingNodesById, relationTypesById: existingRelationTypesById } = existingData;
 
-  const {
-    nodesById: newNodesById,
-    relationTypesById: newRelationTypesById,
-  } = newData;
+  const { nodesById: newNodesById, relationTypesById: newRelationTypesById } = newData;
 
   const existingNodeIds = new Set(Object.keys(existingData.nodesById));
   const existingRelationIds = new Set(Object.keys(existingData.relationsById));
   const existingRelationTypeIds = new Set(Object.keys(existingData.relationTypesById));
 
-  const newNodes = Object.values(newData.nodesById).filter(node => !existingNodeIds.has(node.id));
-  const newRelations = Object.values(newData.relationsById).filter(relation => !existingRelationIds.has(relation.id));
-  const newRelationTypes = Object.values(newData.relationTypesById).filter(type => !existingRelationTypeIds.has(type.id));
+  const newNodes = Object.values(newData.nodesById).filter((node) => !existingNodeIds.has(node.id));
+  const newRelations = Object.values(newData.relationsById).filter((relation) => !existingRelationIds.has(relation.id));
+  const newRelationTypes = Object.values(newData.relationTypesById).filter(
+    (type) => !existingRelationTypeIds.has(type.id),
+  );
 
   const getNodeLabel = (nodeId: string) => {
-    const node =
-      newNodesById[nodeId] || existingNodesById[nodeId];
+    const node = newNodesById[nodeId] || existingNodesById[nodeId];
     return node?.content?.[0]?.value || "Unknown Node";
   };
 
   const getRelationTypeLabel = (typeId: string) => {
-    const relationType =
-      newRelationTypesById[typeId] || existingRelationTypesById[typeId];
+    const relationType = newRelationTypesById[typeId] || existingRelationTypesById[typeId];
     return relationType?.label || "Unknown Relation Type";
   };
 
@@ -40,10 +39,8 @@ export const ImportReviewList = ({ existingData, newData }:
           <div>
             <h4>Nodes ({newNodes.length})</h4>
             <ul style={{ listStyleType: "circle" }}>
-              {newNodes.map((node) => (
-                <li key={node.id}>
-                  {getNodeLabel(node.id)}
-                </li>
+              {newNodes.slice(0, 100).map((node) => (
+                <li key={node.id}>{getNodeLabel(node.id)}</li>
               ))}
             </ul>
           </div>
@@ -52,9 +49,10 @@ export const ImportReviewList = ({ existingData, newData }:
           <div>
             <h4>Relations ({newRelations.length})</h4>
             <ul style={{ listStyleType: "circle" }}>
-              {newRelations.map((relation) => (
+              {newRelations.slice(0, 100).map((relation) => (
                 <li key={relation.id}>
-                  {getNodeLabel(relation.fromId)} ― {getRelationTypeLabel(relation.relationTypeId)} → {getNodeLabel(relation.toId)}
+                  {getNodeLabel(relation.fromId)} ― {getRelationTypeLabel(relation.relationTypeId)} →{" "}
+                  {getNodeLabel(relation.toId)}
                 </li>
               ))}
             </ul>
@@ -65,9 +63,7 @@ export const ImportReviewList = ({ existingData, newData }:
             <h4>Relation Types ({newRelationTypes.length})</h4>
             <ul style={{ listStyleType: "circle" }}>
               {newRelationTypes.map((relationType) => (
-                <li key={relationType.id}>
-                  {relationType.label}
-                </li>
+                <li key={relationType.id}>{relationType.label}</li>
               ))}
             </ul>
           </div>

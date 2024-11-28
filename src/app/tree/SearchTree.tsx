@@ -22,6 +22,7 @@ export class SearchTree extends Tree {
   }
 
   deepSearch(query: string) {
+    let start = Date.now();
     this.search = query;
     const results = this.graphStore.search({
       text: query,
@@ -36,12 +37,13 @@ export class SearchTree extends Tree {
     }
     // PATHFINDING code start. This is the heavy lifting.
     // Start is always the root ID, so we know its path is just "rootId"
-    const paths = this.graphStore
-      .getAllPaths(
-        this.rootObject,
-        Array.from(results.nodes, (n) => n.node),
-      )
-      .filter((p) => p !== null);
+    const paths = this.graphStore.getAllPaths(
+      this.rootObject,
+      Array.from(results.nodes, (n) => n.node),
+    );
+    let end = Date.now();
+    console.log("Time taken to get all paths", end - start);
+    start = Date.now();
     this.searchRelations = new Set<string>(paths.flat());
     // For each relation path, create the tree path and expand it
     for (const path of paths) {
@@ -62,6 +64,9 @@ export class SearchTree extends Tree {
         }
       }
     }
+    end = Date.now();
+    console.log("Time taken to expand paths", end - start);
+    start = Date.now();
     // EDGE CASE handling for getting ideal behaviour:
     // 1. If a node is a leaf node that we retreived, we want to hide its relations but keep the node in the tree.
     // 2. If a node is a node along a path of the tree, we keep it but remove its non-path siblings.
@@ -93,16 +98,20 @@ export class SearchTree extends Tree {
         return;
       }
       treeNode.childrenGroups.forEach((group) => {
-        group.nodes = group.nodes.filter((child) => {
-          if (this.searchRelations.has(child.relationWithParent.id)) {
-            return true;
-          } else {
-            this.hiddenRelations.add(child.relationWithParent.id);
-            return false;
-          }
-        });
+        const newlyHidden = group.hydrate_subset(this.searchRelations);
+        newlyHidden.forEach((rel) => this.hiddenRelations.add(rel));
+        // group.nodes = group.nodes.slice(0, 50).filter((child) => {
+        //   if (this.searchRelations.has(child.relationWithParent.id)) {
+        //     return true;
+        //   } else {
+        //     this.hiddenRelations.add(child.relationWithParent.id);
+        //     return false;
+        //   }
+        // });
       });
     });
+    end = Date.now();
+    console.log("Time taken to hide relations", end - start);
   }
 
   protected applyFilter(treeNode: TreeNode): boolean {

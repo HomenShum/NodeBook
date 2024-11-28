@@ -439,6 +439,56 @@ export abstract class BaseGroup {
     this.nodes = nodes;
   }
 
+  hydrate_subset(subsetRelations: Set<string>): Set<string> {
+    const newlyHidden = new Set<string>();
+    const nodes = [];
+    for (const { relation, position } of this.relationsWithPositions) {
+      if (!subsetRelations.has(relation.id)) {
+        newlyHidden.add(relation.id);
+      }
+      const object = getOtherObject(relation, this.parent.object.id);
+      if (!object) {
+        const message = "Object not found for relation during hydration";
+        const data = {
+          relationId: relation.id,
+          fromId: relation.from.id,
+          toId: relation.to.id,
+          parentId: this.parent.object.id,
+        };
+        logger.debug(message, data);
+        captureMessage(message, { extra: data, level: "info" });
+        continue;
+      }
+
+      // This hides bullets which are part of the noteContent list. That way you don't see them inside
+      // the note content *and* the children below the note.
+      if (this.id !== "noteContent" && this.parent.object.noteContentRelationsList.has(relation.id)) {
+        continue;
+      }
+
+      const node = new DescendantTreeNode({
+        object,
+        position,
+        relationWithParent: relation,
+        group: this,
+      });
+
+      if (
+        // Only hydrate children if the parent is expanded. This is important to avoid
+        // infinite recursion since we allow circular references in the graph.
+        (this.parent.isExpanded && this.isExpanded) ||
+        // Except the note content group. In this case, we always hydrate the children, because this group
+        // is visible even if the node is not expanded.
+        (this.id === "noteContent" && node.instanceCountInPath <= 1)
+      ) {
+        node.hydrate();
+      }
+      nodes.push(node);
+    }
+    this.nodes = nodes;
+    return newlyHidden;
+  }
+
   hydrate() {
     const nodes = [];
     for (const { relation, position } of this.relationsWithPositions) {

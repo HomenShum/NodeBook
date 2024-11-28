@@ -1,4 +1,3 @@
-import { captureMessage } from "@sentry/nextjs";
 import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
@@ -1981,9 +1980,6 @@ export class GraphStore {
           throw new Error(`Relation with id ${obj.id} does not exist`);
         }
       } else if (obj instanceof PlaceholderGraphObject) {
-        const message = "Placeholder object is being used";
-        logger.debug(message, { objectId: obj.id });
-        captureMessage(message, { extra: { objectId: obj.id }, level: "info" });
       } else {
         throw new Error("Invalid object type");
       }
@@ -2262,7 +2258,7 @@ export class GraphStore {
     const result: GraphObject[] = [];
     const queue: GraphObject[] = [root];
     while (queue.length > 0) {
-      const node = queue.shift()!;
+      const node = queue.pop()!;
       if (visited.has(node.id)) continue;
       visited.add(node.id);
       result.push(node);
@@ -2367,7 +2363,7 @@ export class GraphStore {
     return Array.from(this.relationsById.values()).filter((r) => r.from.id === node.id);
   }
 
-  getAllPaths(from: GraphNode, to: GraphNode[]): Array<Array<string> | null> {
+  getAllPaths(from: GraphNode, to: GraphNode[]): Array<Array<string>> {
     // BFS from the one "from" node to find all shortest paths to the target "to" nodes
     // Caches current shortest paths so that we can use dynamic programming to find longer paths.
     // We only implement this for paths from nodes to nodes, so we must check that nextNode is a node.
@@ -2375,29 +2371,31 @@ export class GraphStore {
 
     // NOTE: This is only optimal for unweighted edges. If in the future we want e.g. nonlocal edges
     //  to "cost" more, we should implement Dijkstra's algorithm instead.
+    if (to.length === 0) {
+      return [];
+    }
 
-    const paths: Array<Array<string> | null> = to.map(() => null);
+    const paths: Array<Array<string>> = [];
     const queue: Array<[GraphNode, number, Array<string>, Array<string>]> = [[from, 0, [from.id], []]];
     const visited = new Set<string>();
+    const lookupSet = new Set(to.map((node) => node.id));
 
     while (queue.length > 0) {
       const [node, depth, path, relationPath] = queue.shift()!;
-
-      // Check if this node is one of our targets
-      const targetIndex = to.findIndex((target) => target.id === node.id);
-      if (targetIndex !== -1 && paths[targetIndex] === null) {
-        paths[targetIndex] = relationPath;
-      }
-
-      // Don't revisit nodes or go too deep
-      if (visited.has(node.id) || depth > 20) continue;
+      if (visited.has(node.id) || depth > 10) continue;
       visited.add(node.id);
 
-      // Get all relations from this node
-      const relations = this.getRelationsFrom(node);
-      for (const relation of relations) {
-        const nextNode = relation.to;
-        if (nextNode instanceof GraphNode) {
+      // Check if this node is one of our targets
+      if (lookupSet.has(node.id) && relationPath.length > 0) {
+        paths.push(relationPath);
+        if (paths.length > 50) {
+          break;
+        }
+      }
+
+      for (const { item: relation } of node.allRelationsList.values()) {
+        const nextNode = relation.to.id === node.id ? relation.from : relation.to;
+        if (nextNode instanceof GraphNode && !visited.has(nextNode.id)) {
           queue.push([nextNode, depth + 1, [...path, nextNode.id], [...relationPath, relation.id]]);
         }
       }

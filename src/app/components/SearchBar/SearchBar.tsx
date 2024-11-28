@@ -1,7 +1,7 @@
 import { Search, X } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { env } from "@/app/envFrontend";
@@ -13,6 +13,8 @@ import styles from "./SearchBar.module.css";
 export const SearchBar = observer(function SearchBar() {
   const viewStore = useViewStore();
   const [isExpanded, setIsExpanded] = useState(!!viewStore.searchQuery);
+  const [visibleInput, setVisibleInput] = useState("");
+  const [lastInputTime, setLastInputTime] = useState(new Date());
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -30,6 +32,7 @@ export const SearchBar = observer(function SearchBar() {
     (e: React.MouseEvent) => {
       e.stopPropagation();
       viewStore.cancelDeepSearch();
+      setVisibleInput("");
       setIsExpanded(false);
       inputRef.current?.blur();
     },
@@ -50,12 +53,20 @@ export const SearchBar = observer(function SearchBar() {
     inputRef.current?.focus();
   }, []);
 
-  const handleInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      viewStore.setSearchQuery(e.target.value);
-    },
-    [viewStore],
-  );
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setVisibleInput(e.target.value);
+    setLastInputTime(new Date());
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (new Date().getTime() - lastInputTime.getTime() > 400 && viewStore.searchQuery !== visibleInput) {
+        viewStore.setSearchQuery(visibleInput);
+      }
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [viewStore, visibleInput, lastInputTime]);
 
   return (
     <div
@@ -73,7 +84,7 @@ export const SearchBar = observer(function SearchBar() {
         type="search"
         placeholder={isExpanded ? `Search... (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."}
         className={styles.SearchContent}
-        value={viewStore.searchQuery}
+        value={visibleInput}
         onChange={handleInputChange}
         onFocus={() => {
           setIsExpanded(true);
@@ -85,6 +96,7 @@ export const SearchBar = observer(function SearchBar() {
             // NOTE: Vimium will screw this up! It will override custom ESC behavior
             setIsExpanded(false);
             viewStore.cancelDeepSearch();
+            setVisibleInput("");
           } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
             viewStore.mainView.createChildOfRootAndFocus({

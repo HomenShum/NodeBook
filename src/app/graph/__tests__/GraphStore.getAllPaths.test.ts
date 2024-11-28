@@ -39,13 +39,10 @@ describe("GraphStore.getAllPaths", () => {
 
   it("should return the correct shortest path even with cycles", () => {
     const paths = graphStore.getAllPaths(nodeA, [nodeD, nodeE]);
-    expect(paths).toEqual([
-      [relationAB.id, relationBC.id, relationCD.id],
-      [relationAB.id, relationBE.id],
-    ]);
+    expect(paths).toEqual([[relationDA.id], [relationAB.id, relationBE.id]]);
   });
   it("should return null when no path exists", () => {
     const paths = graphStore.getAllPaths(nodeA, [orphanNode]);
-    expect(paths).toEqual([null]);
+    expect(paths).toEqual([]);
   });
 });
