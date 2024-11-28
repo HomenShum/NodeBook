@@ -224,7 +224,7 @@ async function main() {
 
   // Partition into different namespaces
   const namespaces = new Set(nodesWithText.map((n) => n.namespace));
-  namespaces.forEach(async (namespace) => {
+  for (const namespace of namespaces) {
     const subsetNodes = nodesWithText.filter((n) => n.namespace === namespace);
     console.log("Processing namespace:", namespace);
 
@@ -268,7 +268,7 @@ async function main() {
       // Wait for all concurrent batches to complete before starting the next group
       await Promise.all(batchPromises);
     }
-  });
+  }
 
   console.log("Done! Your Pinecone index has been populated.");
 }
