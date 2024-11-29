@@ -91,6 +91,9 @@ function OutlineContent({ tree }: Props) {
         setParentOfRootAsRoot();
       }
       if (wasEventHandled) {
+        if(!tree.selection || tree.selection.type === "node"){
+          elementRef.current && elementRef.current.focus();
+        }
         logger.debug(`KeyboardEvent was handled by OutlineContent for treeId:`, tree.id);
       }
       viewStore.setActiveTree(tree);

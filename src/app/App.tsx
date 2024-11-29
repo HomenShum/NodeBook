@@ -14,6 +14,7 @@ import { useLoading } from "@/app/contexts/LoadingContext";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
 import RightSidebar from "@/app/components/RightSidebar";
+import { isCommandBarHotKey } from "@/app/hotkeys";
 
 import styles from "./app.module.css";
 
@@ -42,7 +43,6 @@ export default observer(function App({ children }: Props) {
 
   useEffect(() => {
     if(!viewStore) return;
-    const isCommandBarHotKey = isHotkey("mod+shift+k");
     const handleKeyDown = (event: KeyboardEvent) => {
       if(isCommandBarHotKey(event)){
         event.preventDefault();
