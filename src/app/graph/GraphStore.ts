@@ -2374,6 +2374,7 @@ export class GraphStore {
     if (to.length === 0) {
       return [];
     }
+    const userId = this.user.id;
 
     const paths: Array<Array<string>> = [];
     const queue: Array<[GraphNode, number, Array<string>, Array<string>]> = [[from, 0, [from.id], []]];
@@ -2395,7 +2396,11 @@ export class GraphStore {
 
       for (const { item: relation } of node.allRelationsList.values()) {
         const nextNode = relation.to.id === node.id ? relation.from : relation.to;
-        if (nextNode instanceof GraphNode && !visited.has(nextNode.id)) {
+        if (
+          nextNode instanceof GraphNode &&
+          !visited.has(nextNode.id) &&
+          (nextNode.isPublic || nextNode.authorId === userId)
+        ) {
           queue.push([nextNode, depth + 1, [...path, nextNode.id], [...relationPath, relation.id]]);
         }
       }

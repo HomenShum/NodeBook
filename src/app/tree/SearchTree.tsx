@@ -31,6 +31,9 @@ export class SearchTree extends Tree {
       },
     });
 
+    // Filter out nodes that don't belong to the current user and are not public
+    results.nodes = results.nodes.filter((n) => n.node.isPublic || n.node.authorId === this.graphStore.user.id);
+
     if (!(this.rootObject instanceof GraphNode)) {
       logger.warn("Root is not a node, this case isn't handled yet. Cancelling search.");
       return;
