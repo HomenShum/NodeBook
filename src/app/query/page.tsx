@@ -189,6 +189,7 @@ function Response({ response }: { response: ParsedResponse }) {
     }
     setRoot(node);
   }
+
   return (
     <div className={styles.response}>
       {response.map((line, i) => (
@@ -199,18 +200,30 @@ function Response({ response }: { response: ParsedResponse }) {
                 {part.content}
               </span>
             ) : part.type === "citation" ? (
-              <span key={i} data-node-id={part.nodeId} onClick={() => goToNode(part.nodeId)}>
-                <LinkIcon className={styles.responseLinkIcon} size={14} strokeWidth={1.5} />
-              </span>
+              graphStore.getNode(part.nodeId) ? (
+                <span key={i} data-node-id={part.nodeId} onClick={() => goToNode(part.nodeId)}>
+                  <LinkIcon className={styles.responseLinkIcon} size={14} strokeWidth={1.5} />
+                </span>
+              ) : (
+                <span key={i} className={styles.responseText}>
+                  {"< Citation not Found >"}
+                </span>
+              )
             ) : part.type === "link" ? (
-              <span
-                key={i}
-                data-node-id={part.nodeId}
-                style={{ cursor: "pointer", color: "blue" }}
-                onClick={() => goToNode(part.nodeId)}
-              >
-                {part.content}
-              </span>
+              graphStore.getNode(part.nodeId) ? (
+                <span
+                  key={i}
+                  data-node-id={part.nodeId}
+                  style={{ cursor: "pointer", color: "blue" }}
+                  onClick={() => goToNode(part.nodeId)}
+                >
+                  {part.content}
+                </span>
+              ) : (
+                <span key={i} className={styles.responseText}>
+                  {part.content}
+                </span>
+              )
             ) : null,
           )}
         </div>
