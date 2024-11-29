@@ -123,17 +123,8 @@ export class ViewStore {
   }
 
   setSearchQuery(query: string) {
-    // We redo the search entirely after every modification of the search bar.
-    // This is temporary; can see this being a problem with huge graphs.
-    // The reason this is here for now is because Workflowy does updates to the search
-    //  tree after a delay rel. to the latest update in the search bar, and I'm not sure
-    //  if we want to mimic that exact same thing. We can adjust this relatively simply.
+    // We modify the search bar selectively with logic encoded in the SearchBar class.
 
-    if (query === "" && this.searchQuery !== "") {
-      this.searchView.clearSearch(this.treeView.root);
-      this.searchQuery = "";
-      return;
-    }
     this.searchQuery = query;
     this.searchView.clearSearch(this.treeView.root);
     this.searchView.deepSearch(query);

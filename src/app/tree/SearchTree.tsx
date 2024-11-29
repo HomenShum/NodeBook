@@ -24,6 +24,11 @@ export class SearchTree extends Tree {
   deepSearch(query: string) {
     let start = Date.now();
     this.search = query;
+    if (query === "") {
+      this.clearSearch(this.root);
+      this.root.hydrate();
+      return;
+    }
     const results = this.graphStore.search({
       text: query,
       filters: {
@@ -55,8 +60,11 @@ export class SearchTree extends Tree {
         // if the relation list associated with this relation is of type noteContent, then use 'noteContent' instead of 'all'
         const fromNodeId = this.graphStore.getRelationOrThrow(rel).from;
         const noteContent = this.graphStore.getRelationList(fromNodeId, "noteContent");
+        const pinnedContentIds = this.graphStore.getRelationList(fromNodeId, "pinned").keys;
         if (noteContent.size > 0) {
           curPath = createPath(curPath, "noteContent", rel);
+        } else if (pinnedContentIds.some((pinId) => pinId === rel)) {
+          curPath = createPath(curPath, "pinned", rel);
         } else {
           curPath = createPath(curPath, "all", rel);
         }
@@ -103,16 +111,9 @@ export class SearchTree extends Tree {
       treeNode.childrenGroups.forEach((group) => {
         const newlyHidden = group.hydrate_subset(this.searchRelations);
         newlyHidden.forEach((rel) => this.hiddenRelations.add(rel));
-        // group.nodes = group.nodes.slice(0, 50).filter((child) => {
-        //   if (this.searchRelations.has(child.relationWithParent.id)) {
-        //     return true;
-        //   } else {
-        //     this.hiddenRelations.add(child.relationWithParent.id);
-        //     return false;
-        //   }
-        // });
       });
     });
+
     end = Date.now();
     console.log("Time taken to hide relations", end - start);
   }

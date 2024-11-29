@@ -41,11 +41,12 @@ export const SearchBar = observer(function SearchBar() {
 
   const handleContainerClick = useCallback(
     (e: React.MouseEvent) => {
+      viewStore.searchView.setFocusedNode(null);
       if (!isExpanded || e.target === containerRef.current) {
         inputRef.current?.focus();
       }
     },
-    [isExpanded],
+    [isExpanded, viewStore],
   );
 
   const handleIconClick = useCallback((e: React.MouseEvent) => {
@@ -103,6 +104,11 @@ export const SearchBar = observer(function SearchBar() {
               nodeProps: { content: [{ type: "text", value: viewStore.searchQuery }] },
             });
             viewStore.setSearchQuery("");
+          } else if (e.key === "k" && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
+            e.preventDefault();
+            viewStore.mainView.createChildOfRootAndFocus({
+              nodeProps: { content: [{ type: "text", value: "" }] },
+            });
           }
         })}
       />
