@@ -445,7 +445,7 @@ export class Tree {
       // If the node has more than 50 children, warn the user.
       const node = this.getNodeOrThrow(path);
       const numChildren = node.childCount;
-      if (numChildren > 50) {
+      if (numChildren > 100) {
         const expand = confirm(`Are you sure you want to expand this node? It has ${numChildren} children.`);
         if (!expand) return;
       }
