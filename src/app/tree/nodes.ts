@@ -445,6 +445,7 @@ export abstract class BaseGroup {
     for (const { relation, position } of this.relationsWithPositions) {
       if (!subsetRelations.has(relation.id)) {
         newlyHidden.add(relation.id);
+        continue;
       }
       const object = getOtherObject(relation, this.parent.object.id);
       if (!object) {

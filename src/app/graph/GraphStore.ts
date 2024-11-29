@@ -2388,7 +2388,7 @@ export class GraphStore {
       // Check if this node is one of our targets
       if (lookupSet.has(node.id) && relationPath.length > 0) {
         paths.push(relationPath);
-        if (paths.length > 50) {
+        if (paths.length > 30) {
           break;
         }
       }
