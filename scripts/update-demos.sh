@@ -8,7 +8,7 @@ echo "Updating main branch"
 git checkout main && git pull origin main
 
 # List of demo branches to update
-demo_branches=("lidemo" "lippdemo" "scrapedemo")
+demo_branches=("lidemo" "lidemo-lite" "lippdemo" "scrapedemo")
 
 for branch in "${demo_branches[@]}"; do
   echo "Updating ${branch} branch"

@@ -207,7 +207,7 @@ def filter_for_top_people(graph: Dict[str, Any]):
 
 if __name__ == "__main__":
     linkedin_dir = os.path.join('input-data', 'LinkedIn')
-    graph = graphify_linkedin(linkedin_dir)
-    filtered_graph = filter_for_top_people(graph)
+    # graph = graphify_linkedin(linkedin_dir)
+    graph = filter_for_top_people(graphify_linkedin(linkedin_dir))
     with open("output-data/lidemo.json", "w") as f:
-        json.dump(filtered_graph, f, indent=2)
+        json.dump(graph, f, indent=2)

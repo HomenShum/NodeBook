@@ -46,7 +46,9 @@ export const ImportDialog = observer(function ImportDialog() {
             setSerializedGraphStore(serializedGraphStore);
             logger.info("Successfully parsed serialized graph store");
           } catch (error) {
-            console.log("here?");
+            if (selectedFile?.name.endsWith(".json")) {
+              throw error;
+            }
             // If parsing as a SerializedGraphStore fails, we'll assume it's in the plain text upload format and try to handle that.
             const parsedGraphStore = parsePlainTextUpload(graphStore, fileContent);
             setSerializedGraphStore(parsedGraphStore);

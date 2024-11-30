@@ -14,7 +14,7 @@ async function main() {
     process.exit(1);
   }
 
-  const connectionString = env.POSTGRES_CONNECTION_STRING;
+  const connectionString = process.argv[2] || env.POSTGRES_CONNECTION_STRING;
   const dbName = new URL(connectionString).pathname.slice(1);
 
   if (dbName === PROD_DB_NAME) {
