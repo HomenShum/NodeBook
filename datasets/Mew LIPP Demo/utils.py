@@ -87,7 +87,8 @@ def create_graph() -> Graph:
         "nodesById": {},
         "relationsById": {},
         "relationTypesById": {},
-        "nodesByContent": {}
+        "nodesByContent": {},
+        "relationsByContent": {}
     }
 
 def hash_content(content: str) -> str:
@@ -101,10 +102,10 @@ def text_to_graph(text: str, root_node=None, graph = None) -> Graph:
     min_parents = 0
     parent_stack: List[str] = []
     if root_node:
-        graph["nodesById"][root_node] = create_node(root_node, root_node)
-        parent_stack.append(root_node)
+        graph["nodesById"][root_node["id"]] = root_node
+        parent_stack.append(root_node["id"])
         min_parents = 1
-
+    
     for line in text.splitlines():
         if not line.strip():
             continue
@@ -131,7 +132,7 @@ def text_to_graph(text: str, root_node=None, graph = None) -> Graph:
         # Create relation if we have a parent
         if parent_stack:
             parent_id = parent_stack[-1]
-            
+
             # Create relation type if specified
             relation_type_id = "child"
             if relation_type:
@@ -143,10 +144,14 @@ def text_to_graph(text: str, root_node=None, graph = None) -> Graph:
                         f"is {relation_type} of",
                         id = relation_type_id
                     )
-            
+
             # Create the relation
-            relation = create_relation(parent_id, current_id, relation_type_id)
-            graph["relationsById"][relation["id"]] = relation
+            # but only if we don't already have a relation b/w the same nodes with the same relation type
+            relation_hash = hash_content(f"{parent_id} {relation_type_id} {current_id}")
+            if relation_hash not in graph["relationsByContent"]:
+                relation = create_relation(parent_id, current_id, relation_type_id)
+                graph["relationsByContent"][relation_hash] = relation["id"]
+                graph["relationsById"][relation["id"]] = relation
             
         parent_stack.append(current_id)
 
