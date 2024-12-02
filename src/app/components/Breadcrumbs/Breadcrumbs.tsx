@@ -1,6 +1,7 @@
 "use client";
-import { ChevronRight, Command, Ellipsis, Home, Lock, SquareSplitHorizontal, Unlock, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, Command, Ellipsis, Home, Lock, SquareSplitHorizontal, Unlock, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
 import React, { useCallback } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
@@ -183,6 +184,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   const auth = useAuth();
   const tree = treeNode.tree;
   const ancestors = getAncestorsAsArray(treeNode);
+  const router = useRouter();
 
   const handleNavigation = useCallback(
     (index: number) => {
@@ -240,6 +242,15 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   return (
     <>
       <nav className={s.BreadcrumbContainer} aria-label="breadcrumb">
+        <Button
+          variant="default"
+          size="icon"
+          className={cn(s.ShowTooltip, s.BottomAlign)}
+          data-tooltip="Go back"
+          onClick={() => router.back()}
+        >
+          <ArrowLeft size={14} strokeWidth={1.5} />
+        </Button>
         <Button
           variant="default"
           size="icon"
