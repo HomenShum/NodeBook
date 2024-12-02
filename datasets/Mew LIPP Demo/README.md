@@ -1,12 +1,40 @@
+# Mew demo datasets
 
+## Getting started
 
-# Getting started
+Install dependencies:
 
 ```
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+
+Create a folders for the input and output data:
+
+```
+mkdir input-data output-data
+```
+
+Place the contents of the [this google drive folder](https://drive.google.com/drive/u/1/folders/17kzsQtV4cR8QWTlzNi4NSTckTI_8yIO4) in the `input-data` folder.
+
+
+## Scrapedemo dataset
+
+Requires `input-data/stanford-independent-labs.txt` to exist.
+
+```
+python scrapedemo.py
+```
+
+## LinkedIn dataset
+
+Requires `input-data/josh_langam_only.json` to exist.
+
+```
+python lidemo.py
+```
+
 
 # Old
 

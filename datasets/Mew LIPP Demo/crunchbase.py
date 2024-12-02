@@ -3,13 +3,8 @@ from collections import defaultdict
 
 import pandas as pd
 
-# Define data directory path
-DATA_DIR = os.path.join('input-data', 'GoodSignal', 'Crunchbase')  # Adjust this path as needed
-
-# input: people.csv, jobs.csv, funding_rounds.csv, organizations.csv 
-# output: crunchbase.csv (filtered for only invested in by top VCs, then inner join relevant files)
-
-crunchbase_path = os.path.join("output-data", 'crunchbase.txt')
+input_dir = os.path.join('input-data', 'crunchbase')  # Adjust this path as needed
+output_path = os.path.join("output-data", 'crunchbase.txt')
 
 def get_crunchbase_df():
     # Target investors to match - using word boundaries for more precise matching
@@ -25,20 +20,20 @@ def get_crunchbase_df():
         r'\bIntel Capital\b',r'\bMenlo Ventures\b',r'\bGeneral Catalyst\b'
     ]
     
-    people = pd.read_csv(os.path.join(DATA_DIR, 'people.csv'), usecols=[
+    people = pd.read_csv(os.path.join(input_dir, 'people.csv'), usecols=[
         'first_name', 'last_name', 'linkedin_url', 'uuid'
     ])
         
-    jobs = pd.read_csv(os.path.join(DATA_DIR, 'jobs.csv'), usecols=[
+    jobs = pd.read_csv(os.path.join(input_dir, 'jobs.csv'), usecols=[
         'org_uuid', 'title', 'person_uuid'
     ])
         
-    funding_rounds = pd.read_csv(os.path.join(DATA_DIR, 'funding_rounds.csv'), usecols=[
+    funding_rounds = pd.read_csv(os.path.join(input_dir, 'funding_rounds.csv'), usecols=[
         'company_name', 'country_code', 'state_code', 'investment_type',
         'announced_on', 'raised_amount_usd', 'investor_names', 'company_uuid'
     ])
         
-    organizations = pd.read_csv(os.path.join(DATA_DIR, 'organizations.csv'), usecols=[
+    organizations = pd.read_csv(os.path.join(input_dir, 'organizations.csv'), usecols=[
         'uuid', 'short_description', 'homepage_url', 'category_list', 'category_group_list'
     ])
         
@@ -98,7 +93,7 @@ def get_crunchbase_df():
 def create_crunchbase_csv():
     print("Creating crunchbase.csv...")
     crunchbase_df = get_crunchbase_df()
-    output_path = os.path.join(DATA_DIR, 'crunchbase.csv')  
+    output_path = os.path.join(input_dir, 'crunchbase.csv')  
     crunchbase_df.to_csv(output_path, index=False, date_format='%Y-%m-%d')
     print(f"Successfully processed {len(crunchbase_df)} records")
     print(f"Output saved to: {output_path}")
@@ -186,14 +181,14 @@ def create_crunchbase_txt():
     print("Starting create_crunchbase_txt...")
     crunchbase_df = get_crunchbase_df()
     crunchbase_txt = crunchbase_df_to_txt(crunchbase_df)
-    with open(crunchbase_path, 'w') as file:
+    with open(output_path, 'w') as file:
         file.write(crunchbase_txt)
     return crunchbase_txt
 
 def get_or_create_crunchbase_path():
-    if not os.path.exists(crunchbase_path):
+    if not os.path.exists(output_path):
         create_crunchbase_txt()
-    return crunchbase_path
+    return output_path
 
 if __name__ == "__main__":
     create_crunchbase_txt()

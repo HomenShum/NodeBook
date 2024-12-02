@@ -2,10 +2,14 @@ import glob
 import json
 import os
 import uuid
+from copy import deepcopy
 from datetime import datetime
 from typing import Any, Dict
 
 import pandas as pd
+from utils import Graph, create_graph
+
+linkedin_dir = os.path.join('input-data', 'LinkedIn')
 
 author_id = "global-admin"
 global_users_id = "global-users-id"
@@ -66,11 +70,12 @@ default_relation_types = [
     create_relation_type("LinkedIn URL", "is LinkedIn URL of", id="linkedin-url")
 ]
 
-def graphify_linkedin(linkedin_folder):
+def graphify_linkedin(linkedin_folder, graph = None):
     # Initialize data structures
-    nodes = {}  # id -> node
-    relations = {}  # id -> relation
-    relation_types = {};
+    graph = deepcopy(graph) if graph else create_graph()
+    relation_types = graph["relationTypesById"]
+    nodes = graph["nodesById"]
+    relations = graph["relationsById"]
 
     # Add default relation types
     for relation_type in default_relation_types:
@@ -81,6 +86,7 @@ def graphify_linkedin(linkedin_folder):
     datasets = [] # { "linkedin_user_full_name": str, "linkedin_user_id": str, "df": pd.DataFrame }[]
     expected_columns = ["First Name", "Last Name", "URL", "Email Address", "Company", "Position", "Connected On"]
     for file in linkedin_files:
+        print(f"Processing {file}")
         linkedin_user_full_name = os.path.splitext(os.path.basename(file))[0]
         linkedin_user_id = name_to_id(linkedin_user_full_name)
         df = pd.read_csv(file, skiprows=3)
@@ -156,11 +162,7 @@ def graphify_linkedin(linkedin_folder):
             email_relation = create_relation(row["contact_id"], email_node["id"], email_relation_type["id"])
             relations[email_relation["id"]] = email_relation
 
-    return {
-        "nodesById": nodes,
-        "relationsById": relations,
-        "relationTypesById": relation_types
-    }
+    return graph
 
 def filter_for_top_people(graph: Dict[str, Any]): 
     relations_by_node_id = {}
@@ -202,12 +204,18 @@ def filter_for_top_people(graph: Dict[str, Any]):
     return {
         "nodesById": filtered_nodes,
         "relationsById": filtered_relations,
-        "relationTypesById": graph["relationTypesById"]
+        "relationTypesById": graph["relationTypesById"],
+        "nodesByContent": graph["nodesByContent"]
     }
 
 if __name__ == "__main__":
-    linkedin_dir = os.path.join('input-data', 'LinkedIn')
-    # graph = graphify_linkedin(linkedin_dir)
-    graph = filter_for_top_people(graphify_linkedin(linkedin_dir))
+
+    # Full version
+    graph = graphify_linkedin(linkedin_dir)
     with open("output-data/lidemo.json", "w") as f:
         json.dump(graph, f, indent=2)
+
+    # Lite version
+    graph_lite = filter_for_top_people(graph)
+    with open("output-data/lidemo-lite.json", "w") as f:
+        json.dump(graph_lite, f, indent=2)

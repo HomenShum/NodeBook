@@ -1,16 +1,15 @@
-import argparse
-import json
-import os
-import re
+import hashlib
 import uuid
 from collections import deque
+from copy import deepcopy
 from datetime import datetime
 from typing import Any, Dict, List
 
+Graph = Dict[str, Dict] 
+
 global_root_node_id = "global-root-id"
-root_id = "stanford-independent-labs"
-global_root_to_stanford_independent_labs_relation_id = "global-root-to-stanford-independent-labs"
-file_name = "stanford-independent-labs"
+author_id = "global-admin"
+global_users_id = "global-users-id"
 
 def create_node(content: str, id = None) -> Dict[str, Any]:
     """Create a node matching SerializedNode schema"""
@@ -83,23 +82,28 @@ def parse_line(line: str):
 def relation_type_text_to_id(relation_type_text: str) -> str:
     return f"relation-type-{'-'.join(relation_type_text.lower().split())}"
 
-def text_to_graph(text: str) -> Dict[str, Dict]:
+def create_graph() -> Graph:
+    return {
+        "nodesById": {},
+        "relationsById": {},
+        "relationTypesById": {},
+        "nodesByContent": {}
+    }
+
+def hash_content(content: str) -> str:
+    return hashlib.sha256(content.lower().encode()).hexdigest()
+
+def text_to_graph(text: str, root_node=None, graph = None) -> Graph:
     # Initialize data structures
-    nodes_by_id: Dict[str, Dict] = {}  # id -> node
-    nodes_by_content: Dict[str, str] = {}  # content -> id
-    relations: Dict[str, Dict] = {}  # id -> relation
-    relation_types: Dict[str, Dict] = {}  # id -> relation_type
+    graph = deepcopy(graph) or create_graph()
 
-    # Create a root node
-    
-    nodes_by_id[root_id] = create_node("Stanford Independent Labs", root_id)
-
-    # Add it as a child of the global user
-    relation = create_relation(global_root_node_id, root_id, id = global_root_to_stanford_independent_labs_relation_id)
-    relations[relation["id"]] = relation
-    
     # Parse lines and track parent stack
-    parent_stack: List[str] = [root_id]
+    min_parents = 0
+    parent_stack: List[str] = []
+    if root_node:
+        graph["nodesById"][root_node] = create_node(root_node, root_node)
+        parent_stack.append(root_node)
+        min_parents = 1
 
     for line in text.splitlines():
         if not line.strip():
@@ -112,15 +116,16 @@ def text_to_graph(text: str) -> Dict[str, Dict]:
         indent_level, content, relation_type = parsed
 
         # Get or create node ID for this content
-        if content in nodes_by_content:
-            current_id = nodes_by_content[content]
+        content_hash = hash_content(content)
+        if content_hash in graph["nodesByContent"]:
+            current_id = graph["nodesByContent"][content_hash]
         else:
             current_id = str(uuid.uuid4())
-            nodes_by_content[content] = current_id
-            nodes_by_id[current_id] = create_node(content, current_id)
+            graph["nodesByContent"][content_hash] = current_id
+            graph["nodesById"][current_id] = create_node(content, current_id)
         
         # Update parent stack based on indent level
-        while len(parent_stack) > indent_level + 1:
+        while len(parent_stack) > indent_level + min_parents:
             parent_stack.pop()
             
         # Create relation if we have a parent
@@ -132,8 +137,8 @@ def text_to_graph(text: str) -> Dict[str, Dict]:
             if relation_type:
                 # Use consistent IDs for relation types with same label
                 relation_type_id = relation_type_text_to_id(relation_type)
-                if relation_type_id not in relation_types:
-                    relation_types[relation_type_id] = create_relation_type(
+                if relation_type_id not in graph["relationTypesById"]:
+                    graph["relationTypesById"][relation_type_id] = create_relation_type(
                         relation_type,
                         f"is {relation_type} of",
                         id = relation_type_id
@@ -141,20 +146,17 @@ def text_to_graph(text: str) -> Dict[str, Dict]:
             
             # Create the relation
             relation = create_relation(parent_id, current_id, relation_type_id)
-            relations[relation["id"]] = relation
+            graph["relationsById"][relation["id"]] = relation
             
         parent_stack.append(current_id)
 
-    return {
-        "nodesById": nodes_by_id,
-        "relationsById": relations,
-        "relationTypesById": relation_types
-    }
+    return graph
 
-def filter_graph(graph, threshold_depth=2, max_children=5):
+def filter_graph(graph, root_id, threshold_depth=2, max_children=3) -> Graph:
     nodes_by_id = graph["nodesById"]
     relations_by_id = graph["relationsById"]
-    
+    relation_types_by_id = graph["relationTypesById"]
+
     # Build adjacency list
     relations_by_node_id = {}
     for relation in relations_by_id.values():
@@ -164,7 +166,7 @@ def filter_graph(graph, threshold_depth=2, max_children=5):
     # Initialize BFS
     visited_node = set()
     visited_relation = set()
-    queue = deque([(root_id, global_root_to_stanford_independent_labs_relation_id, 0)])
+    queue = deque([(root_id, None, 0)])
     visited_node.add(root_id)
 
     def other_end(relation):
@@ -189,21 +191,14 @@ def filter_graph(graph, threshold_depth=2, max_children=5):
             if next_node_id not in visited_node:
               queue.append((next_node_id, r["id"], depth + 1))
     
-    return {
-        "nodesById": {node_id: nodes_by_id[node_id] for node_id in visited_node if node_id in nodes_by_id},
-        "relationsById": {rid: relations_by_id[rid] for rid in visited_relation if rid in relations_by_id},
-        "relationTypesById": graph["relationTypesById"]
-    }
+    # Create new graph with only visited nodes and relations
+    new_graph = create_graph()
+    new_graph["nodesById"] = {node_id: nodes_by_id[node_id] for node_id in visited_node if node_id in nodes_by_id}
+    new_graph["relationsById"] = {rid: relations_by_id[rid] for rid in visited_relation if rid in relations_by_id}
+    relation_type_ids = set()
+    for relation in new_graph["relationsById"].values():
+        relation_type_ids.add(relation["relationTypeId"])
+    new_graph["relationTypesById"] = {rtid: relation_types_by_id[rtid] for rtid in relation_type_ids if rtid in relation_types_by_id}
+    new_graph["nodesByContent"] = {content_hash: node_id for content_hash, node_id in graph["nodesByContent"].items() if node_id in new_graph["nodesById"]}
 
-if __name__ == "__main__":
-    text = open("input-data/stanford-independent-labs.txt", "r").read()
-    
-    # Full version
-    graph = text_to_graph(text)
-    with open(os.path.join("output-data", f"{file_name}.json"), "w") as f:
-        json.dump(graph, f, indent=2)
-
-    # Lite version
-    graph_lite = filter_graph(graph)
-    with open(os.path.join("output-data", f"{file_name}-lite.json"), "w") as f:
-        json.dump(graph_lite, f, indent=2)
+    return new_graph

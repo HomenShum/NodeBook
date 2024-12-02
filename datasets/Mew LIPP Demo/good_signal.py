@@ -3,7 +3,7 @@ import os
 
 from crunchbase import get_or_create_crunchbase_path
 
-good_signal_dir = os.path.join("input-data", "GoodSignal")
+good_signal_dir = os.path.join("input-data", "good-signal")
 output_path = os.path.join("output-data", 'goodsignal.txt')
 
 def get_good_signal_txt():
