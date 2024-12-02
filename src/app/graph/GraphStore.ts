@@ -2374,6 +2374,7 @@ export class GraphStore {
     if (to.length === 0) {
       return [];
     }
+
     const userId = this.user.id;
 
     const paths: Array<Array<string>> = [];
@@ -2389,6 +2390,7 @@ export class GraphStore {
       // Check if this node is one of our targets
       if (lookupSet.has(node.id) && relationPath.length > 0) {
         paths.push(relationPath);
+
         if (paths.length > 30) {
           break;
         }
@@ -2396,6 +2398,7 @@ export class GraphStore {
 
       for (const { item: relation } of node.allRelationsList.values()) {
         const nextNode = relation.to.id === node.id ? relation.from : relation.to;
+
         if (
           nextNode instanceof GraphNode &&
           !visited.has(nextNode.id) &&

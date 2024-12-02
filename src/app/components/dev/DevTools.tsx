@@ -76,6 +76,48 @@ export const DevTools = observer(function DevTools() {
     URL.revokeObjectURL(url);
   }, [graphStore]);
 
+  const handleExportToIdeapad = useCallback(() => {
+    // Create snapshot format
+    const graphData = graphStore.serialize();
+
+    const snapshot = {
+      nodes: Object.values(graphData.nodesById).map((node) => ({
+        clientId: node.id,
+        userId: user.id,
+        title: node.content.map((elem) => elem.value).join("") || "",
+        likeCount: 0,
+        commentCount: 0,
+        colorId: null,
+        isDeleted: false,
+        anonymous: null,
+        status: "not-acknowledged",
+        attachedBoardClientId: null,
+        permissionsExplicitlySet: false,
+        createdAt: node.createdAt || new Date().toISOString(),
+        updatedAt: node.updatedAt || new Date().toISOString(),
+        attributes: {},
+      })),
+      edges: Object.values(graphData.relationsById).map((relation) => ({
+        id: relation.id.split("-")[0],
+        clientId: relation.id,
+        sourceIdeaClientId: relation.fromId,
+        targetIdeaClientId: relation.toId,
+        labelText: graphStore.getRelationType(relation.relationTypeId)?.label || "",
+        colorId: null,
+        isDeleted: false,
+      })),
+    };
+
+    // Export as JSON
+    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ideapad_export.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [graphStore, user.id]);
+
   return (
     <DataDialog title="" description="" modalType="devTools">
       <div className={styles.SettingsGroup}>
@@ -160,6 +202,9 @@ export const DevTools = observer(function DevTools() {
           </Button>
           <Button size="default" variant="accent" onClick={handleExportAsJson}>
             Export as JSON
+          </Button>
+          <Button size="default" variant="accent" onClick={handleExportToIdeapad}>
+            Export to Ideapad
           </Button>
           <DeleteAllButton />
         </div>
