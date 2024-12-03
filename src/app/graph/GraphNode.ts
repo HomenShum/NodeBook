@@ -195,8 +195,10 @@ export class GraphNode extends BaseGraphObject implements Serializable {
             if (object instanceof GraphNode) return object._dfsText({ [this.id]: true }, true);
             if (object instanceof GraphRelation) return "[Relation]";
             return object ? object.text : "";
-          }),
-      ].join(" ");
+          })
+          .filter((t) => t !== "")
+          .join(" \\ "),
+      ].join("");
     } else {
       return text;
     }
