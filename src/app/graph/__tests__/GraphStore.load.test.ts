@@ -35,6 +35,7 @@ describe("GraphStore.load", () => {
           isPublic: false,
           isNewRelatedObjectsPublic: false,
           canonicalRelationId: null,
+          isChecked: false,
         },
         b: {
           id: "b",
@@ -46,6 +47,7 @@ describe("GraphStore.load", () => {
           isPublic: false,
           isNewRelatedObjectsPublic: false,
           canonicalRelationId: null,
+          isChecked: false
         },
       },
       relationTypesById: {

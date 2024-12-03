@@ -81,3 +81,7 @@
 .Placeholder {
   color: var(--gray-8);
 }
+
+.StrikeThrough {
+  text-decoration: line-through;
+}

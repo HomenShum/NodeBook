@@ -241,7 +241,7 @@ Node
   flex: 1 1 0%;
   padding: 0 0 0 4px;
   margin-right: 4px;
-  margin-bottom: 4px;
+  margin-bottom: 0px;
   align-items: flex-start;
   background-color: transparent;
   position: relative;

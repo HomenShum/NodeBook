@@ -372,6 +372,7 @@ export class GraphStore {
         content: props.content,
         isPublic: !!(props.isPublic || (this.settings && this.settings.publicMode)),
         isNewRelatedObjectsPublic: !!props.isNewRelatedObjectsPublic,
+        isChecked: !!(props.isChecked),
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
         canonicalRelation,

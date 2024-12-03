@@ -10,6 +10,7 @@ declare const styles: {
   readonly "Placeholder": string;
   readonly "TextContent": string;
   readonly "TreeNodeReference": string;
+  readonly "StrikeThrough": string
 };
 export = styles;
 

@@ -61,6 +61,7 @@ export const graphNodeTable = pgTable(
     isPublic: boolean("is_public").default(false),
     isNewRelatedObjectsPublic: boolean("is_new_related_objects_public").default(false),
     canonicalRelationId: text("canonical_relation_id"),
+    isChecked: boolean("is_checked").default(false)
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),

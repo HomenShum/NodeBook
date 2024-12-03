@@ -30,6 +30,7 @@ export type GraphNodeProps = {
   updatedAt?: Date;
   isPublic?: boolean;
   isNewRelatedObjectsPublic?: boolean;
+  isChecked?: boolean;
   canonicalRelation?: GraphRelation | null;
 };
 
@@ -48,6 +49,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   updatedAt: Date;
   isPublic: boolean = true;
   isNewRelatedObjectsPublic: boolean;
+  isChecked: boolean = false;
 
   constructor(
     store: GraphStore,
@@ -61,6 +63,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isPublic = false,
       isNewRelatedObjectsPublic = false,
       canonicalRelation = null,
+      isChecked = false,
     }: GraphNodeProps & { authorId: string },
   ) {
     super(store);
@@ -77,6 +80,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     this.isPublic = isPublic;
     this.isNewRelatedObjectsPublic = isNewRelatedObjectsPublic;
     this.canonicalRelation = canonicalRelation;
+    this.isChecked = isChecked;
     this.makeObservable();
   }
 
@@ -88,6 +92,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       updatedAt: observable,
       isPublic: observable,
       isNewRelatedObjectsPublic: observable,
+      isChecked: observable,
       canonicalRelation: observable,
       content: observable.shallow,
       update: action,
@@ -111,6 +116,10 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     if (newProps.isNewRelatedObjectsPublic !== undefined) {
       oldValues.isNewRelatedObjectsPublic = this.isNewRelatedObjectsPublic;
       this.isNewRelatedObjectsPublic = newProps.isNewRelatedObjectsPublic;
+    }
+    if(newProps.isChecked !== undefined){
+      oldValues.isChecked = this.isChecked;
+      this.isChecked = newProps.isChecked;
     }
     oldValues.version = this.version;
     if (newProps.version !== undefined) {
@@ -227,6 +236,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isPublic: this.isPublic,
       isNewRelatedObjectsPublic: this.isNewRelatedObjectsPublic,
       canonicalRelationId: this.canonicalRelation?.id ?? null,
+      isChecked: this.isChecked || false
     };
   }
 }

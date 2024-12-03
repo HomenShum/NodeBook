@@ -26,6 +26,7 @@ import { Ancestor, getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { GraphNode } from "@/app/graph/GraphNode";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -226,6 +227,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
                 alsoSetRelatedObjects: false,
                 alsoSetChildrenAndDescendants: false,
                 isNewRelatedObjectsPublic: false,
+                isChecked: object instanceof GraphNode ? object.isChecked : false
               },
             })),
           );

@@ -84,6 +84,7 @@ describe("GraphStore.setIsPublic", () => {
       alsoSetRelatedObjects: false,
       alsoSetChildrenAndDescendants: false,
       isNewRelatedObjectsPublic: false,
+      isChecked: false
     });
 
     expect(rootNode.isPublic).toBe(true);
@@ -97,6 +98,7 @@ describe("GraphStore.setIsPublic", () => {
       alsoSetRelatedObjects: false,
       alsoSetChildrenAndDescendants: false,
       isNewRelatedObjectsPublic: false,
+      isChecked: false
     });
 
     expect(rootNode.isPublic).toBe(true);
@@ -122,6 +124,7 @@ describe("GraphStore.setIsPublic", () => {
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: false,
       isNewRelatedObjectsPublic: false,
+      isChecked: false
     });
 
     // Direct object should be set
@@ -160,6 +163,7 @@ describe("GraphStore.setIsPublic", () => {
       alsoSetRelatedObjects: false,
       alsoSetChildrenAndDescendants: true,
       isNewRelatedObjectsPublic: false,
+      isChecked: false
     });
 
     // Direct object should be set
@@ -197,6 +201,7 @@ describe("GraphStore.setIsPublic", () => {
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
       isNewRelatedObjectsPublic: false,
+      isChecked: false
     });
 
     // Direct object should be set
@@ -235,6 +240,7 @@ describe("GraphStore.setIsPublic", () => {
       alsoSetRelatedObjects: false,
       alsoSetChildrenAndDescendants: false,
       isNewRelatedObjectsPublic: false,
+      isChecked: false
     });
 
     // These updated
@@ -269,6 +275,7 @@ describe("GraphStore.setIsPublic", () => {
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
       isNewRelatedObjectsPublic: false,
+      isChecked: false
     });
 
     // Everything but the parent objects updated
@@ -315,6 +322,7 @@ describe("GraphStore.setIsPublic", () => {
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
       isNewRelatedObjectsPublic: true,
+      isChecked: false
     });
     expect(childNode.isPublic).toBe(true);
     expect(childNode.isNewRelatedObjectsPublic).toBe(true);
@@ -325,6 +333,7 @@ describe("GraphStore.setIsPublic", () => {
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
       isNewRelatedObjectsPublic: false,
+      isChecked: false
     });
 
     expect(childNode.isPublic).toBe(true);

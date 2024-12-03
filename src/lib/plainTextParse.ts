@@ -51,6 +51,7 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
     isPublic: false,
     isNewRelatedObjectsPublic: false,
     canonicalRelationId: null,
+    isChecked: false,
   };
   curNodeIdsByDepth[-1] = rootForImportId;
   snapshot.relationsByNodeId[rootForImportId] = {};
@@ -181,6 +182,7 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
         isPublic: false,
         isNewRelatedObjectsPublic: false,
         canonicalRelationId: relId,
+        isChecked: false
       };
       snapshot.nodesById[nodeId] = node;
       nodeIdsByText[nodeText] = nodeId;

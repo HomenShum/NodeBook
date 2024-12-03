@@ -1,5 +1,5 @@
 import { captureException } from "@sentry/nextjs";
-import { action, computed, isObservable, makeObservable, observable } from "mobx";
+import { action, computed, isObservable, makeObservable, observable, runInAction } from "mobx";
 import Pusher from "pusher-js";
 
 import { env } from "@/app/envFrontend";
@@ -338,8 +338,10 @@ export class UpdateManager {
       this.offlineSince = this.offlineSince || new Date();
       return;
     }
-    this.offlineSince = null;
-    this.lastSuccessfulSync = new Date();
+    runInAction(() => {
+      this.offlineSince = null;
+      this.lastSuccessfulSync = new Date();
+    });
   }
 
   /**

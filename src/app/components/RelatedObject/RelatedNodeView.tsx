@@ -41,6 +41,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   const cnInnerContainer = cn(
     styles.FlexContainer,
     isLocal ? "" : isEditMode ? cn(styles.Pill, styles.Editor) : cn(isExpanded && styles.Expanded, styles.Pill),
+    treeNode.isTodoItem && treeNode.object instanceof GraphNode && treeNode.object.isChecked ? cn(styles.StrikeThrough) : ""
   );
 
   return (

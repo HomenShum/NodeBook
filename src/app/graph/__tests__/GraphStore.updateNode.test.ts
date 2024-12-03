@@ -43,6 +43,25 @@ describe("GraphStore.updateNode", () => {
     expect(graphStore.nodesById.size).toBe(NUM_START_NODES);
     expect(node.content).toEqual([{ type: "text", value: "new content" }]);
   });
+  it("mark the todo as completed", async () => {
+    expect(node).toBeDefined();
+    expect(graphStore.getNode(node.id)).toBe(node);
+    expect(graphStore.nodesById.size).toBe(NUM_START_NODES);
+
+    await graphStore.updateNode({
+      nodeId: node.id,
+      nodeProps: { content: "new content", isChecked: true },
+    });
+
+    expect(node.isChecked).toEqual(true);
+
+    await graphStore.updateNode({
+      nodeId: node.id,
+      nodeProps: { content: "new content", isChecked: false },
+    });
+
+    expect(node.isChecked).toEqual(false);
+  });
   it("should create a working revert operation", async () => {
     await graphStore.updateNode({
       nodeId: node.id,

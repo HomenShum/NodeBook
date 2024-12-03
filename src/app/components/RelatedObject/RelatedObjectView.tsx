@@ -15,6 +15,7 @@ import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/app/components/Checkbox/Checkbox";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
 import { RelatedNodeView } from "./RelatedNodeView";
@@ -45,6 +46,7 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
       <Main treeNode={treeNode}>
         <Controls />
         {!hideBullet && <Bullet />}
+        {treeNode.isTodoItem && <Checkbox node={treeNode}/>}
         <Content />
       </Main>
       {viewStore.viewType === "note" && treeNode.parent instanceof RootTreeNode && treeNode.childCount > 0 && (
