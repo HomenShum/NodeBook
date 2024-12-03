@@ -521,11 +521,17 @@ export class Tree {
       const isSameRelationAsParentToGrandparent =
         treeNode.relationWithParent.id === treeNode.parent.relationWithParent?.id;
       const grandparentNotInBreadcrumb = !(treeNode.parent.parent instanceof PathToRootNode);
+      const nodeIsNoteContent = isNoteContent(treeNode);
       if (filter.hideAllParents && isParentRelation) {
         return false;
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
         return false;
-      } else if (filter.hideDirectParent && isSameRelationAsParentToGrandparent && grandparentNotInBreadcrumb) {
+      } else if (
+        filter.hideDirectParent &&
+        isSameRelationAsParentToGrandparent &&
+        grandparentNotInBreadcrumb &&
+        !nodeIsNoteContent
+      ) {
         return false;
       }
       return true;

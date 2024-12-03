@@ -5,7 +5,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { Filter, Path, Root, Tree } from "@/app/tree/Tree";
-import { createPath, walkTree } from "@/app/tree/utils";
+import { createPath, isNoteContent, walkTree } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
 import logger from "@/lib/logger";
 
@@ -146,11 +146,17 @@ export class SearchTree extends Tree {
       const isSameRelationAsParentToGrandparent =
         treeNode.relationWithParent.id === treeNode.parent.relationWithParent?.id;
       const grandparentNotInBreadcrumb = !(treeNode.parent.parent instanceof PathToRootNode);
+      const nodeIsNoteContent = isNoteContent(treeNode);
       if (filter.hideAllParents && isParentRelation) {
         return false;
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
         return false;
-      } else if (filter.hideDirectParent && isSameRelationAsParentToGrandparent && grandparentNotInBreadcrumb) {
+      } else if (
+        filter.hideDirectParent &&
+        isSameRelationAsParentToGrandparent &&
+        grandparentNotInBreadcrumb &&
+        !nodeIsNoteContent
+      ) {
         return false;
       }
       const relId = treeNode.relationWithParent.id;
