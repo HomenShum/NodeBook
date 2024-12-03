@@ -581,8 +581,22 @@ export class Tree {
     walk(treeNode);
   }
 
-  async createChildOfRootAndFocus({ nodeProps }: { nodeProps?: GraphNodeProps } = {}) {
-    const { node, relation } = await this.createChildNode({ parent: this.root, nodeProps });
+  /**
+   * Creates a new child node at the root level and focuses it for editing.
+   * If atBottom is true, adds the node at the bottom of the list instead of the top.
+   */
+  async createChildOfRootAndFocus({
+    nodeProps,
+    atBottom = false,
+  }: {
+    nodeProps?: GraphNodeProps;
+    atBottom?: boolean;
+  } = {}): Promise<{ node: GraphNode; relation: GraphRelation; path: string }> {
+    const { node, relation } = await this.createChildNode({
+      parent: this.root,
+      nodeProps,
+      after: atBottom ? -1 : undefined,
+    });
     const path = this.root.childrenGroupsById.all.createChildPath(relation);
     this.setFocusedNode(path, "end", true);
     return { node, relation, path };

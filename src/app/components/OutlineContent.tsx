@@ -91,7 +91,7 @@ function OutlineContent({ tree }: Props) {
         setParentOfRootAsRoot();
       }
       if (wasEventHandled) {
-        if(!tree.selection || tree.selection.type === "node"){
+        if (!tree.selection || tree.selection.type === "node") {
           elementRef.current && elementRef.current.focus();
         }
         logger.debug(`KeyboardEvent was handled by OutlineContent for treeId:`, tree.id);
@@ -175,6 +175,16 @@ function OutlineContent({ tree }: Props) {
           />
         )}
       </div>
+      {!user.isAnonymous && (
+        <div
+          className={s.EmptySpaceClickArea}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            tree.createChildOfRootAndFocus({ atBottom: true });
+          }}
+        />
+      )}
     </div>
   );
 }
