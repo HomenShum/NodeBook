@@ -19,7 +19,7 @@
     "vercel:link": "yarn vercel link --cwd . -p mew --scope ideaflowco -y",
     "pinecone:upload": "tsx scripts/upload-to-pinecone.ts",
     "find-dead-code": "knip",
-    "update-demos": "bash scripts/update-demos.sh"
+    "update-branches": "bash scripts/update-branches.sh"
   },
   "dependencies": {
     "@auth0/auth0-react": "^2.2.4",
