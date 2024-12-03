@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { transformTextToChips } from "@/app/editor/utils/links";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
@@ -11,6 +12,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
 import { uuid } from "@/app/util";
+import { PasteLinksOption } from "@/db/schema";
 import { useViewStore } from "@/app/view/useViewStore";
 
 /**
@@ -18,6 +20,7 @@ import { useViewStore } from "@/app/view/useViewStore";
  */
 export const PastePlugin = () => {
   const graphStore = useGraphStore();
+  const settingsStore = useSettingsStore();
   const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
   const { treeNode } = useTreeNode();
@@ -42,6 +45,8 @@ export const PastePlugin = () => {
     return editor.registerCommand<ClipboardEvent>(
       PASTE_COMMAND,
       (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         const shiftKey = shiftWasPressed.current;
         shiftWasPressed.current = false;
         if (!(object instanceof GraphNode) || !event.clipboardData) return false;
@@ -84,6 +89,7 @@ export const PastePlugin = () => {
               newRelationTypeId,
               txs: newTxs,
             } = getNewRelationType(graphStore, newContent, newRelTypeIdByLabel);
+
             txs.push(...newTxs);
             if (newRelationTypeId !== undefined) {
               // if there's a new relation Type id, add it to the map and set
@@ -105,9 +111,7 @@ export const PastePlugin = () => {
             // Depth is ignored for the first line, since we just add it to the current node
             txs.push({ type: "updateNode", transaction: { nodeId: object.id, nodeProps: { content: newChips } } });
 
-            // If there are chips with links, add the links as children nodes of the current node.
-            // The parent of these nodes will be the current node.
-            txs.push(...getLinkAdditionTxs(firstLine.chips, object.id, groupId));
+            txs.push(...getLinkAdditionTxs(newChips, object.id, settingsStore.pasteLinksDropdown));
           }
 
           // Add to this arrays as depth increases during iterating over lines, remove as it decreases
@@ -143,14 +147,14 @@ export const PastePlugin = () => {
                 relationProps: {
                   id: relationId,
                   relationTypeId: existingRelType
-                    ? existingRelType.relationType
+                    ? existingRelType.relationType.id
                     : newRelTypeIdByLabel.get(relationTypeLabel),
                 },
                 after: relationsAtDepth[depth + 1],
               },
             });
 
-            txs.push(...getLinkAdditionTxs(chips, newNodeId, groupId));
+            txs.push(...getLinkAdditionTxs(chips, newNodeId, settingsStore.pasteLinksDropdown));
 
             // Add the newly created relations to the same group as this node's parent
             if (groupId === "pinned" || (groupId === "noteContent" && depth === 0)) {
@@ -192,7 +196,8 @@ export const PastePlugin = () => {
       },
       COMMAND_PRIORITY_LOW,
     );
-  }, [object, relationWithParent, graphStore, editor, path, tree, treeNode, viewStore.viewType, viewStore.activeTree]);
+
+  }, [object, relationWithParent, graphStore, editor, path, tree, treeNode, viewStore.viewType, viewStore.activeTree, settingsStore]);
   return null;
 };
 
@@ -248,7 +253,7 @@ const getNewRelationType = (graphStore: GraphStore, chips: Chip[], newRelationTy
   return { relationTypeLabel, txs, chips, newRelationTypeId };
 };
 
-const getLinkAdditionTxs = (chips: Chip[], parentId: string, groupId: string) => {
+const getLinkAdditionTxs = (chips: Chip[], parentId: string, mode: PasteLinksOption) => {
   // If the firstline consists of only a single link chip, return an empty array
   if (chips.length === 1 && chips[0].type === "link") {
     return [];
@@ -261,19 +266,59 @@ const getLinkAdditionTxs = (chips: Chip[], parentId: string, groupId: string) =>
     .filter((chip) => chip !== undefined) as Chip[];
   const txs: TxCombined = [];
 
-  links.forEach((link) => {
-    const newNodeId = uuid();
-    const relationId = uuid();
+  switch (mode) {
+    case "PopulateAsChildren":
+      links.forEach((link) => {
+        const newNodeId = uuid();
+        const relationId = uuid();
 
-    txs.push({
-      type: "addChildNode",
-      transaction: {
-        parentId: parentId,
-        nodeProps: { id: newNodeId, content: [link] },
-        relationProps: { id: relationId },
-      },
-    });
-  });
+        txs.push({
+          type: "addChildNode",
+          transaction: {
+            parentId: parentId,
+            nodeProps: { id: newNodeId, content: [link] },
+            relationProps: { id: relationId },
+          },
+        });
+      });
+      break;
+    case "PopulateAsOrphanedNodes":
+      const linkTextToNodeId = new Map<string, string>();
+      links.forEach((link) => {
+        const newNodeId = uuid();
+
+        txs.push({
+          type: "addNode",
+          transaction: {
+            nodeProps: { id: newNodeId, content: [link] },
+          },
+        });
+
+        if (!linkTextToNodeId.has(link.value)) {
+          linkTextToNodeId.set(link.value, newNodeId);
+          // Add relation between the mentioned node and the parent node
+          txs.push({
+            type: "addRelation",
+            transaction: {
+              fromId: newNodeId,
+              toId: parentId,
+            },
+          });
+        }
+      });
+      // Replace the link chips with mention chips
+      chips = chips.map((chip) => {
+        if (chip.type === "link" && linkTextToNodeId.has(chip.value)) {
+          return { type: "mention", value: linkTextToNodeId.get(chip.value) ?? chip.value };
+        }
+        return chip;
+      });
+      txs.push({
+        type: "updateNode",
+        transaction: { nodeId: parentId, nodeProps: { content: chips } },
+      });
+      break;
+  }
   return txs;
 };
 

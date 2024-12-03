@@ -10,7 +10,12 @@ import { useUser } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
 import { useToast } from "@/app/hooks/useToast";
 import { useViewStore } from "@/app/view/useViewStore";
-import { SearchAndReplaceDropdownOption, SearchAndReplaceDropdownOptionEnum } from "@/db/schema";
+import {
+  PasteLinksOption,
+  PasteLinksOptionEnum,
+  SearchAndReplaceDropdownOption,
+  SearchAndReplaceDropdownOptionEnum,
+} from "@/db/schema";
 import logger from "@/lib/logger";
 
 import styles from "./DevTools.module.css";
@@ -33,6 +38,35 @@ const SelectSearchAndReplaceDropdown = observer(function SelectSearchAndReplaceD
       onChange={(e) => settingsStore.setSearchAndReplaceDropdown(e.target.value as SearchAndReplaceDropdownOption)}
     >
       {searchAndReplaceDropdownOptions.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+});
+
+const SelectPastingLinksDropdown = observer(function SelectSearchAndReplaceDropdown() {
+  const settingsStore = useSettingsStore();
+
+  const pasteLinkOptions: { label: string; value: PasteLinksOption }[] = [
+    { label: "Nothing", value: PasteLinksOptionEnum.enum.Nothing },
+    {
+      label: "Populate links as children",
+      value: PasteLinksOptionEnum.enum.PopulateAsChildren,
+    },
+    {
+      label: "Links as orphaned nodes & convert links to mentions",
+      value: PasteLinksOptionEnum.enum.PopulateAsOrphanedNodes,
+    },
+  ];
+
+  return (
+    <select
+      value={settingsStore.pasteLinksDropdown}
+      onChange={(e) => settingsStore.setPasteLinksDropdown(e.target.value as PasteLinksOption)}
+    >
+      {pasteLinkOptions.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
         </option>
@@ -170,9 +204,13 @@ export const DevTools = observer(function DevTools() {
           />
           Show Ideapad Link Button
         </label>
-        <div className={styles.SearchReplaceContainer}>
+        <div className={styles.DevToolsDropdownContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />
+        </div>
+        <div className={styles.DevToolsDropdownContainer}>
+          <label>Pasting links behaviour:</label>
+          <SelectPastingLinksDropdown />
         </div>
         {env.env !== "production" && (
           <>

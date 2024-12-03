@@ -3,6 +3,8 @@
 import { autorun, isObservable, makeAutoObservable } from "mobx";
 
 import {
+  PasteLinksOption,
+  PasteLinksOptionEnum,
   SearchAndReplaceDropdownOption,
   SearchAndReplaceDropdownOptionEnum,
   SerializedUserSettings,
@@ -21,6 +23,7 @@ export class SettingsStore {
   public hideBulletBackgroundIfParentsOnly = true;
   public searchAndReplaceDropdown: SearchAndReplaceDropdownOption =
     SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly;
+  public pasteLinksDropdown: PasteLinksOption = PasteLinksOptionEnum.enum.Nothing;
   public disableCycles = true;
   public addStreamLabeledRelationsToMyLists = true;
   public allowShiftTabAboveViewRoot = false;
@@ -58,6 +61,7 @@ export class SettingsStore {
     this.hideThoughtstreamBullets = true;
     this.hideBulletBackgroundIfParentsOnly = true;
     this.searchAndReplaceDropdown = SearchAndReplaceDropdownOptionEnum.enum.LabelledOnly;
+    this.pasteLinksDropdown = PasteLinksOptionEnum.enum.Nothing;
     this.disableCycles = true;
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
@@ -88,6 +92,7 @@ export class SettingsStore {
       hideThoughtstreamBullets: this.hideThoughtstreamBullets,
       hideBulletBackgroundIfParentsOnly: this.hideBulletBackgroundIfParentsOnly,
       searchAndReplaceDropdown: this.searchAndReplaceDropdown,
+      pasteLinksDropdown: this.pasteLinksDropdown,
       disableCycles: this.disableCycles,
       allowShiftTabAboveViewRoot: this.allowShiftTabAboveViewRoot,
       hidePinnedItems: this.hidePinnedItems,
@@ -110,6 +115,7 @@ export class SettingsStore {
     this.hideBulletBackgroundIfParentsOnly =
       data.hideBulletBackgroundIfParentsOnly ?? this.hideBulletBackgroundIfParentsOnly;
     this.searchAndReplaceDropdown = data.searchAndReplaceDropdown ?? this.searchAndReplaceDropdown;
+    this.pasteLinksDropdown = data.pasteLinksDropdown ?? this.pasteLinksDropdown;
     this.disableCycles = data.disableCycles ?? this.disableCycles;
     this.allowShiftTabAboveViewRoot = data.allowShiftTabAboveViewRoot ?? this.allowShiftTabAboveViewRoot;
     this.hidePinnedItems = data.hidePinnedItems ?? this.hidePinnedItems;
@@ -157,6 +163,10 @@ export class SettingsStore {
 
   setSearchAndReplaceDropdown(value: SearchAndReplaceDropdownOption) {
     this.searchAndReplaceDropdown = value;
+  }
+
+  setPasteLinksDropdown(value: PasteLinksOption) {
+    this.pasteLinksDropdown = value;
   }
 
   setDisableCycles(value: boolean) {

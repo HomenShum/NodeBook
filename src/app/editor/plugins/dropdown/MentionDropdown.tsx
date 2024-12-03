@@ -11,7 +11,6 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { TreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
 import { uuid } from "@/app/util";
 import { MenuTextMatch, cn } from "@/lib/utils";
 

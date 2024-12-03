@@ -12,6 +12,9 @@ export type PersistedData = z.infer<typeof PersistedDataSchema>;
 export const SearchAndReplaceDropdownOptionEnum = z.enum(["Always", "LabelledOnly", "SemicolonOnly"]);
 export type SearchAndReplaceDropdownOption = z.infer<typeof SearchAndReplaceDropdownOptionEnum>;
 
+export const PasteLinksOptionEnum = z.enum(["Nothing", "PopulateAsChildren", "PopulateAsOrphanedNodes"]);
+export type PasteLinksOption = z.infer<typeof PasteLinksOptionEnum>;
+
 const SerializedUserSettingsSchema = z.object({
   addAllNewNodesAsChildrenOfUserNode: z.boolean().optional(),
   showNodeDetails: z.boolean().optional(),
@@ -23,6 +26,7 @@ const SerializedUserSettingsSchema = z.object({
   hideBulletBackgroundIfParentsOnly: z.boolean().optional(),
   searchAndReplaceEnabled: z.boolean().optional(),
   searchAndReplaceDropdown: SearchAndReplaceDropdownOptionEnum.optional(),
+  pasteLinksDropdown: PasteLinksOptionEnum.optional(),
   disableCycles: z.boolean().optional(),
   allowShiftTabAboveViewRoot: z.boolean().optional(),
   hidePinnedItems: z.boolean().optional(),

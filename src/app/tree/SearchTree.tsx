@@ -79,7 +79,7 @@ export class SearchTree extends Tree {
     console.log("Time taken to expand paths", end - start);
     start = Date.now();
     // EDGE CASE handling for getting ideal behaviour:
-    // 1. If a node is a leaf node that we retreived, we want to hide its relations but keep the node in the tree.
+    // 1. If a node is a leaf node that we retrieved, we want to hide its relations but keep the node in the tree.
     // 2. If a node is a node along a path of the tree, we keep it but remove its non-path siblings.
     // 3. By maintaining this list of hidden relations, we can filter them out and edit the rest of the tree at will.
 

@@ -59,7 +59,7 @@
   align-items: baseline;
 }
 
-.SearchReplaceContainer {
+.DevToolsDropdownContainer {
   display: flex;
   margin-left: 26px;
   gap: 8px;
