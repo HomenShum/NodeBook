@@ -35,6 +35,7 @@ export const env = Object.freeze({
   PUSHER_KEY: process.env.PUSHER_KEY ?? "",
   PUSHER_SECRET: process.env.PUSHER_SECRET ?? "",
   PUSHER_CLUSTER: process.env.PUSHER_CLUSTER ?? "",
+  PUSHER_CHANNEL_PREFIX: process.env.NEXT_PUBLIC_PUSHER_CHANNEL_PREFIX ?? "",
   NEXT_PUBLIC_HARDCODED_USER_ID: process.env.NEXT_PUBLIC_HARDCODED_USER_ID ?? "",
   OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "",
   EXTRACT_ENTITIES_OPENAI_MODEL: process.env.EXTRACT_ENTITIES_OPENAI_MODEL ?? "",

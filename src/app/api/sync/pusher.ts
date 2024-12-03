@@ -3,7 +3,7 @@ import Pusher from "pusher";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 import { SyncData } from "@/app/graph/SyncData";
 import { env } from "@/envBackend";
-import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
+import { getGlobalGraphChannel, userIdToPusherChannel } from "@/lib/pusher";
 
 // Pusher has a 10KB limit on message size, so we need to chunk updates into smaller pieces
 // https://pusher.com/docs/channels/library_auth_reference/rest-api/#post-event-trigger-an-event
@@ -82,7 +82,8 @@ export const broadcastSyncSuccess = async ({ clientId, userId, transactionId, up
     cluster: env.PUSHER_CLUSTER ?? "",
     useTLS: true,
   });
-  const userChannel = userIdToPusherChannel(userId);
+  const userChannel = userIdToPusherChannel({ channelPrefix: env.PUSHER_CHANNEL_PREFIX, userId });
+  const globalChannel = getGlobalGraphChannel(env.PUSHER_CHANNEL_PREFIX);
   const updateChunks = updatesToSize(updates);
   for (const chunk of updateChunks) {
     console.log(`[sync][${userId}] Broadcasting ${chunk.length} updates through Pusher...`);
@@ -92,7 +93,7 @@ export const broadcastSyncSuccess = async ({ clientId, userId, transactionId, up
     // Broadcast the public updates to the global channel
     const publicUpdates = chunk.filter(updateIsPublic);
     if (publicUpdates.length > 0) {
-      broadcastUpdateChunk(pusher, GLOBAL_GRAPH_CHANNEL, { clientId, userId, transactionId, updates: publicUpdates });
+      broadcastUpdateChunk(pusher, globalChannel, { clientId, userId, transactionId, updates: publicUpdates });
     }
   }
 };

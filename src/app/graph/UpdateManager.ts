@@ -8,7 +8,7 @@ import { condenseSyncDataBatch, SyncData, SyncDataSchema } from "@/app/graph/Syn
 import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
 import { uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
-import { GLOBAL_GRAPH_CHANNEL, userIdToPusherChannel } from "@/lib/pusher";
+import { getGlobalGraphChannel, userIdToPusherChannel } from "@/lib/pusher";
 
 const logger = appLogger.child({ service: "UpdateManager" });
 
@@ -71,7 +71,9 @@ export class UpdateManager {
     this.isSyncing = true;
 
     // Subscribe to changes from other clients
-    const userChannel = pusher.subscribe(userIdToPusherChannel(this.userId));
+    const userChannel = pusher.subscribe(
+      userIdToPusherChannel({ channelPrefix: env.pusherChannelPrefix, userId: this.userId }),
+    );
     userChannel.bind("transaction-accepted", (data: any) => {
       const parsedSyncData = SyncDataSchema.safeParse(data);
       if (!parsedSyncData.success) {
@@ -85,7 +87,7 @@ export class UpdateManager {
 
       this.handleSyncData(parsedSyncData.data, true);
     });
-    const globalChannel = pusher.subscribe(GLOBAL_GRAPH_CHANNEL);
+    const globalChannel = pusher.subscribe(getGlobalGraphChannel(env.pusherChannelPrefix));
     globalChannel.bind("transaction-accepted", (data: any) => {
       const parsedSyncData = SyncDataSchema.safeParse(data);
       if (!parsedSyncData.success) {
@@ -119,8 +121,8 @@ export class UpdateManager {
 
   stopSync() {
     clearTimeout(this.nextSyncId);
-    pusher.unsubscribe(userIdToPusherChannel(this.userId));
-    pusher.unsubscribe(GLOBAL_GRAPH_CHANNEL);
+    pusher.unsubscribe(userIdToPusherChannel({ channelPrefix: env.pusherChannelPrefix, userId: this.userId }));
+    pusher.unsubscribe(getGlobalGraphChannel(env.pusherChannelPrefix));
     this.isSyncing = false;
   }
 

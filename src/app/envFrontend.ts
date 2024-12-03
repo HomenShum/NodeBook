@@ -10,6 +10,7 @@ const processEnvSchema = z.object({
   NEXT_PUBLIC_USE_MOCK_USER_IF_AUTH_DISABLED: z.union([z.literal("true"), z.literal("false")]).optional(),
   NEXT_PUBLIC_PUSHER_KEY: z.string().optional(),
   NEXT_PUBLIC_PUSHER_CLUSTER: z.string().optional(),
+  NEXT_PUBLIC_PUSHER_CHANNEL_PREFIX: z.string().optional(),
   NEXT_PUBLIC_GIT_COMMIT_SHA: z.string().optional(),
   NEXT_PUBLIC_BUILD_ID: z.string().optional(),
   NEXT_PUBLIC_LOG_SERVICE_INCLUDE: z.string().optional(),
@@ -42,6 +43,7 @@ export const env: {
   isFrontend: boolean;
   pusherKey: string;
   pusherCluster: string;
+  pusherChannelPrefix: string;
   isMac: boolean;
   env: "development" | "production" | "preview";
 } = Object.freeze({
@@ -60,6 +62,7 @@ export const env: {
   logServiceLevel: process.env.NEXT_PUBLIC_LOG_SERVICE_LEVEL || "debug",
   pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY || "",
   pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
+  pusherChannelPrefix: process.env.NEXT_PUBLIC_PUSHER_CHANNEL_PREFIX || "",
   env: process.env.NEXT_PUBLIC_ENV || "development",
   hardcodedUserId: process.env.NEXT_PUBLIC_HARDCODED_USER_ID || undefined,
   isMac:
