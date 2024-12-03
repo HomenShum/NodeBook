@@ -13,16 +13,17 @@ import { useViewStore } from "@/app/view/useViewStore";
 
 export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
   const { addToast } = useToast();
-  const viewType = useViewStore().viewType;
+  const viewStore = useViewStore();
   return useCallback(
     (e: KeyboardEvent, chips?: { before: Chip[]; after: Chip[] }) => {
       if (e.key !== "Enter") return false;
       e.preventDefault();
       e.stopPropagation();
+      const nodeIsNoteContent = isNoteContent(treeNode);
       const isMod = e.metaKey || e.ctrlKey;
       const childOfTreeRoot = treeNode.parent instanceof RootTreeNode;
       if (isMod) {
-        if (isNoteContent(treeNode) && treeNode instanceof DescendantTreeNode) {
+        if (nodeIsNoteContent && treeNode instanceof DescendantTreeNode) {
           tree.splitNote(treeNode, chips);
           return true;
         } else {
@@ -30,7 +31,16 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
           return true;
         }
       }
-      if (!isNoteContent(treeNode) && ((viewType === "note" && childOfTreeRoot) || e.shiftKey)) {
+      if (
+        !nodeIsNoteContent &&
+        viewStore.viewType === "note" &&
+        treeNode instanceof DescendantTreeNode &&
+        treeNode.relationWithParent.relationType.label !== "child"
+      ) {
+        tree.convertToNote(treeNode, true);
+        return true;
+      }
+      if (!nodeIsNoteContent && ((viewStore.viewType === "note" && childOfTreeRoot) || e.shiftKey)) {
         tree.splitIntoNote(treeNode, chips);
         return true;
       } else {
@@ -44,7 +54,7 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
         return true;
       }
     },
-    [tree, treeNode, viewType, addToast],
+    [tree, treeNode, viewStore.viewType, addToast],
   );
 }
 

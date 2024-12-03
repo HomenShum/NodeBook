@@ -1219,6 +1219,105 @@ export class Tree {
     return true;
   }
 
+  convertToNote(treeNode: DescendantTreeNode, createNodeAfter: boolean = false) {
+    // Convert the current node to a note by:
+    // - Creating a new note node as a sibling below the current node
+    // - Adding the current node as the first child of the note by replacing the relation
+    //    to parent with a relation to the new note node
+    // - Assumes there are no children. If there are children then do nothing.
+
+    if (!(treeNode.object instanceof GraphNode)) {
+      logger.warn("Only nodes can be converted to note right now");
+      return false;
+    }
+    const txs: TxCombined = [];
+    const parentPath = treeNode.parent.path;
+
+    // Add two children to the current node
+    const noteRootId = uuid();
+    const relToNoteRootId = uuid();
+
+    const newRelationId = uuid();
+    const newNodeId = uuid();
+    if (createNodeAfter) {
+      txs.push({
+        type: "addChildNode",
+        transaction: {
+          parentId: treeNode.parent.object.id,
+          nodeProps: { id: newNodeId, content: [] },
+          relationProps: { id: newRelationId },
+        },
+      });
+    }
+
+    txs.push({
+      type: "addNode",
+      transaction: {
+        nodeProps: { content: "", id: noteRootId },
+      },
+    });
+
+    txs.push({
+      type: "addRelation",
+      transaction: {
+        fromId: treeNode.parent.object.id,
+        toId: noteRootId,
+        relationType: defaultRelationTypes.child,
+        id: relToNoteRootId,
+        after: treeNode.relationWithParent,
+      },
+    });
+
+    txs.push({
+      type: "replaceRelationLink",
+      transaction: {
+        direction: getSideOrThrow(treeNode.relationWithParent, treeNode.parent.object.id),
+        relationId: treeNode.relationWithParent.id,
+        replaceWith: { type: "existing-object", id: noteRootId },
+      },
+    });
+
+    if (createNodeAfter) {
+      txs.push({
+        type: "replaceRelationLink",
+        transaction: {
+          direction: getSideOrThrow(treeNode.relationWithParent, treeNode.parent.object.id),
+          relationId: newRelationId,
+          replaceWith: { type: "existing-object", id: noteRootId },
+        },
+      });
+    }
+
+    // Add relation to note content list
+    txs.push({
+      type: "addRelationToList",
+      transaction: {
+        objectId: noteRootId,
+        relationId: createNodeAfter
+          ? [treeNode.relationWithParent.id, newRelationId]
+          : [treeNode.relationWithParent.id],
+        listType: "noteContent",
+      },
+    });
+
+    this.graphStore.applyCombinedTransaction(txs);
+    const newNoteRoot = this.graphStore.getNode(noteRootId);
+
+    if (newNoteRoot) {
+      const path = parentPath + "/all/" + relToNoteRootId + "/noteContent/" + treeNode.relationWithParent.id;
+      this.setFocusedNode(path, "start", true);
+    }
+
+    if (createNodeAfter) {
+      const newRelation = this.graphStore.getRelation(newRelationId);
+      if (newRelation) {
+        const path = parentPath + "/all/" + relToNoteRootId + "/noteContent/" + newRelation.id;
+        this.setFocusedNode(path, "start", true);
+      }
+    }
+    return true;
+  }
+
   /**
    * Moves the selected or focused nodes up one step.
    */

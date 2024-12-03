@@ -11,12 +11,14 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
 import { uuid } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
 
 /**
  * Plugin that allows pasting multiple lines of text into a node.
  */
 export const PastePlugin = () => {
   const graphStore = useGraphStore();
+  const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
   const { treeNode } = useTreeNode();
   const tree = treeNode.tree;
@@ -190,7 +192,7 @@ export const PastePlugin = () => {
       },
       COMMAND_PRIORITY_LOW,
     );
-  }, [object, relationWithParent, graphStore, editor, path, tree, treeNode]);
+  }, [object, relationWithParent, graphStore, editor, path, tree, treeNode, viewStore.viewType, viewStore.activeTree]);
   return null;
 };
 
