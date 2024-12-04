@@ -181,7 +181,15 @@ function OutlineContent({ tree }: Props) {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            tree.createChildOfRootAndFocus({ atBottom: true });
+            // Set focus to last part of final root node
+            const lastNode = treeRoot.visibleChildren[treeRoot.visibleChildren.length - 1];
+            // If the last node is note content, create a child at the end of the tree instead.
+            if (lastNode.object.noteContentRelationsList.size > 0) {
+              tree.createChildOfRootAndFocus({ atBottom: true });
+              return;
+            } else {
+              tree.setFocusedNode(lastNode.path, "end");
+            }
           }}
         />
       )}

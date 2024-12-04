@@ -164,9 +164,4 @@
 .EmptySpaceClickArea {
   flex: 1;
   min-height: 100px;
-  cursor: text;
-}
-
-.EmptySpaceClickArea:hover {
-  background-color: var(--gray-2);
 }
