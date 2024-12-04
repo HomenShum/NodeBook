@@ -58,9 +58,12 @@ export function MentionDropdown({
         mentionNode.selectEnd();
 
         if (opt.value.type === "new") {
+          const newNodeText = opt.name.slice("Create new node: ".length);
+          const newNodeIsHashtag = newNodeText.startsWith("#");
+          const parentId = newNodeIsHashtag ? graphStore.myHashtagsNodeId : graphStore.userRootId;
           await graphStore.addChildNode({
-            parentId: graphStore.userRoot.id,
-            nodeProps: { id: graphNodeId, content: opt.name.slice("Create new node: ".length) },
+            parentId: parentId,
+            nodeProps: { id: graphNodeId, content: newNodeText },
           });
         }
         closeMenu();

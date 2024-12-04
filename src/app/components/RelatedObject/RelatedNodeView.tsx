@@ -30,11 +30,13 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
     tree.selection?.type === "editor" ? tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode : false;
   const isReadOnlyReference = isGlobal && !isEditMode;
   const objectIsGraphNode = treeNode.object instanceof GraphNode;
-  const editableEditor = !user.isAnonymous && objectIsGraphNode && (isLocal || isEditMode);
+  const objectIsEditRestricted = treeNode.object.isEditRestricted;
+  const editableEditor = !user.isAnonymous && objectIsGraphNode && (isLocal || isEditMode) && !objectIsEditRestricted;
 
+  const outerShouldBeColumn = isLocal && !objectIsEditRestricted;
   const cnOuterContainer = cn(
-    isLocal && styles.ColumnContainer,
-    !isLocal && styles.TreeNodeReference,
+    outerShouldBeColumn && styles.ColumnContainer,
+    !outerShouldBeColumn && styles.TreeNodeReference,
     isReadOnlyReference && styles.PillContainer,
   );
 
@@ -47,7 +49,9 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   return (
     <div ref={ref} className={styles.Container}>
       <div className={cnOuterContainer}>
-        {isGlobal && !user.isAnonymous && <TreeNodeInputPrefix treeNode={treeNode} isEditorEditable={editableEditor} />}
+        {(isGlobal || objectIsEditRestricted) && !user.isAnonymous && (
+          <TreeNodeInputPrefix treeNode={treeNode} isEditorEditable={editableEditor} />
+        )}
         <div
           className={cnInnerContainer}
           onPointerDown={(e) => {
@@ -72,7 +76,9 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
             </Button>
           )}
         </div>
-        {isGlobal && !user.isAnonymous && <TreeNodeInputSuffix treeNode={treeNode} isEditorEditable={editableEditor} />}
+        {(isGlobal || objectIsEditRestricted) && !user.isAnonymous && (
+          <TreeNodeInputSuffix treeNode={treeNode} isEditorEditable={editableEditor} />
+        )}
       </div>
     </div>
   );

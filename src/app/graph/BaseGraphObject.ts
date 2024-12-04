@@ -6,7 +6,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { comparePositions } from "@/app/util";
-import { USER_ROOT_ID_PREFIX } from "@/lib/constants";
+import { GLOBAL_ROOT_ID, USER_MY_HASHTAGS_NODE_ID_PREFIX, USER_ROOT_ID_PREFIX } from "@/lib/constants";
 
 export abstract class BaseGraphObject {
   abstract readonly objectType: string;
@@ -78,6 +78,42 @@ export abstract class BaseGraphObject {
 
   get noteContentRelationsWithPositions(): PositionedRelation[] {
     return this.noteContentRelationsList.values().map(({ position, item }) => ({ position, relation: item }));
+  }
+
+  /**
+   * Returns true if this is a special object that should not be user-deletable.
+   *
+   * Examples: the global graph root, the user root, the user's "My Hashtags" node.
+   */
+  get isDeleteRestricted(): boolean {
+    if (this.id === GLOBAL_ROOT_ID) {
+      return true;
+    }
+    if (this.id.startsWith(USER_ROOT_ID_PREFIX)) {
+      return true;
+    }
+    if (this.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Returns true if this is a special object that should not be user-editable.
+   *
+   * Examples: the global graph root, the user's "My Hashtags" node.
+   *
+   * Does NOT include a user's own root node because that's populated semi-arbitrarily with Auth0 data and
+   * we want to allow users to potentially change it to something more meaningful.
+   */
+  get isEditRestricted(): boolean {
+    if (this.id === GLOBAL_ROOT_ID) {
+      return true;
+    }
+    if (this.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
+      return true;
+    }
+    return false;
   }
 
   /**

@@ -23,6 +23,7 @@ import {
   GLOBAL_ROOT_ID,
   GLOBAL_USERS_NODE_ID,
   GLOBAL_USERS_RELATION_ID,
+  USER_MY_HASHTAGS_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
   USERS_TO_USER_RELATION_ID_PREFIX,
 } from "@/lib/constants";
@@ -140,6 +141,18 @@ export class GraphStore {
 
   get homeRoot(): GraphNode {
     return this.user.isAnonymous ? this.globalRoot : this.userRoot;
+  }
+
+  get myHashtagsNodeId(): string {
+    return USER_MY_HASHTAGS_NODE_ID_PREFIX + this.user.id;
+  }
+
+  get myHashtagsNode(): GraphNode {
+    const node = this.nodesById.get(this.myHashtagsNodeId);
+    if (!node) {
+      throw new Error("My hashtags node not found");
+    }
+    return node;
   }
 
   get usersNode(): GraphNode {
@@ -1028,11 +1041,8 @@ export class GraphStore {
     if (!node) {
       throw new Error("Node does not exist");
     }
-    if (node.id.startsWith(USER_ROOT_ID_PREFIX)) {
-      throw new Error("Cannot delete user root node");
-    }
-    if (node.id === this.globalRoot.id) {
-      throw new Error("Cannot delete global root node");
+    if (node.isDeleteRestricted) {
+      throw new Error("Cannot delete special node");
     }
 
     const updates: GraphUpdate[] = [];
@@ -1882,6 +1892,31 @@ export class GraphStore {
       });
       usersToUserRelation = relation;
       updates.push(...usersToUserRelationUpdates);
+    }
+
+    // My Hashtags node for user
+    let myHashtagsNode = this.nodesById.get(this.myHashtagsNodeId);
+    if (!myHashtagsNode && !this.user.isAnonymous) {
+      const { node, updates: myHashtagsNodeUpdates } = this._addNode({
+        id: this.myHashtagsNodeId,
+        content: [{ type: "text", value: "My Hashtags" }],
+        authorId: this.user.id,
+      });
+      myHashtagsNode = node;
+      updates.push(...myHashtagsNodeUpdates);
+    }
+
+    // User->My Hashtags
+    let userToMyHashtagsRelation = userRoot?.relations.find((r) => r.to.id === this.myHashtagsNodeId);
+    if (!userToMyHashtagsRelation && userRoot && myHashtagsNode) {
+      const { relation, updates: newRelationUpdates } = this.createRelation({
+        from: userRoot,
+        to: myHashtagsNode,
+      });
+      userToMyHashtagsRelation = relation;
+      updates.push(...newRelationUpdates);
+      const { updates: pinUpdates } = this._pinRelations(userRoot.id, [userToMyHashtagsRelation.id]);
+      updates.push(...pinUpdates);
     }
 
     if (!this.user.isAnonymous && updates.length > 0) {

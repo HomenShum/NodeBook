@@ -29,7 +29,7 @@ interface Props {
 export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, noteTitle }: Props) {
   const user = useUser();
 
-  const editable = !user.isAnonymous && treeNode.object instanceof GraphNode;
+  const editable = !user.isAnonymous && treeNode.object instanceof GraphNode && !treeNode.object.isEditRestricted;
   const handleMentionNodeClick = useClickableMention(treeNode);
   const isNote = treeNode.object.noteContentRelationsList.size > 0;
 

@@ -29,7 +29,11 @@ import { Tree } from "@/app/tree/Tree";
 export async function createTestTreeFromTemplate(template: TemplateNode[]) {
   const settingsStore = new SettingsStore();
   const graphStore = new GraphStore(MOCK_MEW_USER);
-  const tree = new Tree(graphStore, settingsStore, graphStore.userRoot);
+  const { node: rootNodeForTree } = await graphStore.addChildNode({
+    parentId: graphStore.userRoot.id,
+    nodeProps: { content: "Tree root" },
+  });
+  const tree = new Tree(graphStore, settingsStore, rootNodeForTree);
   let selectionHeadPath: string | undefined;
   let selectionAnchorPath: string | undefined;
   let isFocusedPath: string | undefined;

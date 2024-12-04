@@ -72,7 +72,7 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
               <Download size={14} />
               Export subtree
             </DropdownMenuItem>
-            {treeNode.object.isRoot && (
+            {!treeNode.object.isDeleteRestricted && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
