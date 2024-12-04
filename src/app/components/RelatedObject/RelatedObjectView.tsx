@@ -2,6 +2,7 @@ import { Dot, LoaderCircle, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
+import { Checkbox } from "@/app/components/Checkbox/Checkbox";
 import { CyclicIcon, PinCustomIcon } from "@/app/components/CustomIcons";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
@@ -10,12 +11,11 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { getAncestorsAsArray, isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
+import { isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
 import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
-import { Checkbox } from "@/app/components/Checkbox/Checkbox";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
 import { RelatedNodeView } from "./RelatedNodeView";
@@ -46,7 +46,7 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
       <Main treeNode={treeNode}>
         <Controls />
         {!hideBullet && <Bullet />}
-        {treeNode.isTodoItem && <Checkbox node={treeNode}/>}
+        {treeNode.isTodoItem && <Checkbox node={treeNode} />}
         <Content />
       </Main>
       {viewStore.viewType === "note" && treeNode.parent instanceof RootTreeNode && treeNode.childCount > 0 && (
@@ -163,8 +163,8 @@ const Content = observer(function Content() {
                 className={cn(
                   styles.NoteContentSection,
                   treeNode.parent instanceof RootTreeNode &&
-                  viewStore.viewType === "note" &&
-                  styles.ChildOfRootInNoteView,
+                    viewStore.viewType === "note" &&
+                    styles.ChildOfRootInNoteView,
                 )}
               >
                 <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
@@ -260,8 +260,8 @@ const Bullet = observer(function Bullet() {
       event.shiftKey
         ? viewStore.createSidebarTree(treeNode.object)
         : treeNode.tree.id === viewStore.mainView.id
-          ? setRoot(treeNode.object)
-          : treeNode.tree.setRoot(treeNode.object);
+        ? setRoot(treeNode.object)
+        : treeNode.tree.setRoot(treeNode.object);
     },
     [setRoot, treeNode, viewStore],
   );
@@ -270,19 +270,24 @@ const Bullet = observer(function Bullet() {
     return graphStore.usersById.get(authorId)?.username || authorId;
   };
 
-  const tooltipContent = `Node's author: ${treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
-    }
-    Relation author: ${treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
+  const tooltipContent = `Node's author: ${
+    treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
+  }
+    Relation author: ${
+      treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
     }
     Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}
   `;
-
   const isEmpty = !treeNode.object.text.trim();
   const hasChildren = treeNode.childCount > 0;
-
+  const isNoteContentRoot = isNoteContent(treeNode) && treeNode.parentGroup.id === "noteContent";
   return (
     <div
-      className={cn(styles.RelatedObjectBulletContainer, isEmpty && !hasChildren && styles.Hidden)}
+      className={cn(
+        styles.RelatedObjectBulletContainer,
+        isEmpty && !hasChildren && styles.Hidden,
+        isNoteContentRoot && styles.NoteContentRootBullet,
+      )}
       data-tooltip={tooltipContent}
     >
       {treeNode.instanceCountInPath <= 1 ? (
@@ -342,7 +347,10 @@ const Controls = observer(function Controls() {
         style={{ visibility: isFirstChildOfNoteContent ? "hidden" : "visible" }}
       >
         <div className={styles.RelatedObjectActions}>
-          <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={isMobile ? true : isHovered} />
+          <RelatedObjectMenu
+            setUpdatingRelationType={setUpdatingRelationType}
+            isHovered={isMobile ? true : isHovered}
+          />
           {viewStore.isNodeProcessing(treeNode.object.id) && <LoadingSpinner />}
           {treeNode.childCount > 0 && <Toggle treeNode={treeNode} isHovered={isMobile ? true : isHovered} />}
         </div>
