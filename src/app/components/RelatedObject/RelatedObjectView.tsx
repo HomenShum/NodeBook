@@ -1,4 +1,4 @@
-import { Dot, LoaderCircle, Play } from "lucide-react";
+import { CornerDownRight, Dot, LoaderCircle, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
@@ -149,6 +149,10 @@ const Content = observer(function Content() {
                 }
               }}
             >
+              {viewStore.viewType === "note" &&
+                treeNode.object.noteContentRelationsList.size === 0 && // Notecontent is empty
+                treeNode.parent instanceof RootTreeNode &&
+                !isUnlabelledChild(treeNode) && <CornerDownRight size={16} className={styles.ElbowArrow} />}
               <RelationCombobox
                 setUpdatingRelationType={setUpdatingRelationType}
                 treeNode={treeNode}

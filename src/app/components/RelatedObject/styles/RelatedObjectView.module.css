@@ -500,3 +500,10 @@ Right Area
   opacity: 1;
   visibility: visible;
 }
+
+.ElbowArrow {
+  color: var(--gray-8);
+  position: absolute;
+  left: -40px;
+  top: 2px;
+}

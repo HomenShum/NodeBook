@@ -10,6 +10,7 @@ declare const styles: {
   readonly DotInsidePublic: string;
   readonly DotOutsidePrivate: string;
   readonly DotOutsidePublic: string;
+  readonly ElbowArrow: string;
   readonly HeaderInListView: string;
   readonly Hidden: string;
   readonly HoverCardTrigger: string;
