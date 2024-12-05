@@ -13,9 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, treeNodeToObjectPath, useSetRoot } from "@/app/tree/utils";
-import { copyObjectUrlToClipboard, downloadSubtree } from "@/app/util";
+import { copyObjectUrlToClipboard, downloadSubtree, exportToIdeapad } from "@/app/util";
 
 import styles from "./styles/NodeHeaderSettingsMenu.module.css";
 
@@ -25,9 +27,11 @@ interface Props {
 
 export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({ treeNode }: Props) {
   const graphStore = useGraphStore();
+  const settingsStore = useSettingsStore();
   const tree = treeNode.tree;
   const router = useRouter();
   const setRoot = useSetRoot();
+  const user = useUser();
 
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);
 
@@ -72,6 +76,14 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
               <Download size={14} />
               Export subtree
             </DropdownMenuItem>
+            {settingsStore.showExportSubtreeToIdeapad && (
+              <>
+                <DropdownMenuItem onSelect={() => exportToIdeapad(graphStore, treeNode.object, user.id)}>
+                  <Download size={14} />
+                  Export to Ideapad
+                </DropdownMenuItem>
+              </>
+            )}
             {!treeNode.object.isDeleteRestricted && (
               <>
                 <DropdownMenuSeparator />

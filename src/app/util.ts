@@ -4,6 +4,7 @@ import { autorun, toJS } from "mobx";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
+import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -277,3 +278,50 @@ export const ideapadLinkManager = {
   },
   has: (objectId: string): boolean => !!localStorage.getItem(`${keyPrefix}${objectId}`),
 };
+
+export function exportToIdeapad(graphStore: GraphStore, rootNode: GraphObject, userId: string) {
+  // if rootNode isn't a GraphNode, throw
+  if (!(rootNode instanceof GraphNode)) {
+    throw new Error("Root node is not a GraphNode");
+  }
+  // Get subtree data using existing serializeSubtree method
+  const subtreeData = graphStore.serializeSubtree(rootNode);
+
+  // Create snapshot format
+  const snapshot = {
+    nodes: Object.values(subtreeData.nodesById).map((node) => ({
+      clientId: node.id,
+      userId: userId,
+      title: node.content.map((elem) => elem.value).join("") || "",
+      likeCount: 0,
+      commentCount: 0,
+      colorId: null,
+      isDeleted: false,
+      anonymous: null,
+      status: "not-acknowledged",
+      attachedBoardClientId: null,
+      permissionsExplicitlySet: false,
+      createdAt: node.createdAt || new Date().toISOString(),
+      updatedAt: node.updatedAt || new Date().toISOString(),
+      attributes: {},
+    })),
+    edges: Object.values(subtreeData.relationsById).map((relation) => ({
+      id: relation.id.split("-")[0],
+      clientId: relation.id,
+      sourceIdeaClientId: relation.fromId,
+      targetIdeaClientId: relation.toId,
+      labelText: graphStore.getRelationType(relation.relationTypeId)?.label || "",
+      colorId: null,
+      isDeleted: false,
+    })),
+  };
+
+  // Export as JSON
+  const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "ideapad_subtree_export.json";
+  link.click();
+  URL.revokeObjectURL(url);
+}

@@ -204,6 +204,14 @@ export const DevTools = observer(function DevTools() {
           />
           Show Ideapad Link Button
         </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.showExportSubtreeToIdeapad}
+            onChange={(e) => settingsStore.setShowExportSubtreeToIdeapad(e.target.checked)}
+          />
+          Show Export Subtree to Ideapad
+        </label>
         <div className={styles.DevToolsDropdownContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />

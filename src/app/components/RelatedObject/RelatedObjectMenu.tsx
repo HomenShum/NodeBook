@@ -30,11 +30,12 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useParseWithAi } from "@/app/llm/useParseWithAi";
 import { getAncestorsAsArray, useSetAuthorRoot, useSetRoot } from "@/app/tree/utils";
-import { createRouteUrl, downloadSubtree } from "@/app/util";
+import { createRouteUrl, downloadSubtree, exportToIdeapad } from "@/app/util";
 
 import { useTreeNode } from "./RelatedObjectContext";
 import styles from "./styles/RelatedObjectMenu.module.css";
@@ -47,6 +48,7 @@ interface Props {
 export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdatingRelationType, isHovered }: Props) {
   const user = useUser();
   const graphStore = useGraphStore();
+  const settingsStore = useSettingsStore();
   const { treeNode, viewType, setViewType } = useTreeNode();
   const tree = treeNode.tree;
   const object = treeNode.object;
@@ -230,6 +232,14 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
         <Download size={14} />
         Export subtree
       </DropdownMenuItem>
+      {settingsStore.showExportSubtreeToIdeapad && (
+        <>
+          <DropdownMenuItem onSelect={() => exportToIdeapad(graphStore, treeNode.object, user.id)}>
+            <Download size={14} />
+            Export to Ideapad
+          </DropdownMenuItem>
+        </>
+      )}
     </>
   );
 

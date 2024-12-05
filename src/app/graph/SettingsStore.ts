@@ -32,6 +32,7 @@ export class SettingsStore {
   public triggerRelationOnSingleColon = false;
   public atHashtagReplacement = false;
   public showIdeapadLinkButton = false;
+  public showExportSubtreeToIdeapad: boolean = false;
   private stopAutosave: () => void;
 
   constructor(
@@ -69,6 +70,7 @@ export class SettingsStore {
     this.triggerRelationOnSingleColon = false;
     this.atHashtagReplacement = false;
     this.showIdeapadLinkButton = false;
+    this.showExportSubtreeToIdeapad = false;
   }
 
   private async syncToServer() {
@@ -100,6 +102,7 @@ export class SettingsStore {
       publicMode: this.publicMode,
       atHashtagReplacement: this.atHashtagReplacement,
       showIdeapadLinkButton: this.showIdeapadLinkButton,
+      showExportSubtreeToIdeapad: this.showExportSubtreeToIdeapad,
     };
   }
 
@@ -123,6 +126,7 @@ export class SettingsStore {
     this.publicMode = data.publicMode ?? this.publicMode;
     this.atHashtagReplacement = data.atHashtagReplacement ?? this.atHashtagReplacement;
     this.showIdeapadLinkButton = data.showIdeapadLinkButton ?? this.showIdeapadLinkButton;
+    this.showExportSubtreeToIdeapad = data.showExportSubtreeToIdeapad ?? this.showExportSubtreeToIdeapad;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -194,6 +198,10 @@ export class SettingsStore {
 
   setShowIdeapadLinkButton(value: boolean): void {
     this.showIdeapadLinkButton = value;
+  }
+
+  setShowExportSubtreeToIdeapad(value: boolean): void {
+    this.showExportSubtreeToIdeapad = value;
   }
 
   cleanup() {

@@ -33,7 +33,8 @@ const SerializedUserSettingsSchema = z.object({
   publicMode: z.boolean().optional(),
   triggerRelationOnSingleColon: z.boolean().optional(),
   atHashtagReplacement: z.boolean().optional(),
-  showIdeapadLinkButton: z.boolean().optional()
+  showIdeapadLinkButton: z.boolean().optional(),
+  showExportSubtreeToIdeapad: z.boolean().optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 
@@ -65,7 +66,7 @@ export const graphNodeTable = pgTable(
     isPublic: boolean("is_public").default(false),
     isNewRelatedObjectsPublic: boolean("is_new_related_objects_public").default(false),
     canonicalRelationId: text("canonical_relation_id"),
-    isChecked: boolean("is_checked").default(false)
+    isChecked: boolean("is_checked").default(false),
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),
