@@ -385,7 +385,7 @@ export class GraphStore {
         content: props.content,
         isPublic: !!(props.isPublic || (this.settings && this.settings.publicMode)),
         isNewRelatedObjectsPublic: !!props.isNewRelatedObjectsPublic,
-        isChecked: !!(props.isChecked),
+        isChecked: !!props.isChecked,
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
         canonicalRelation,
@@ -2121,21 +2121,21 @@ export class GraphStore {
     // Relation positions
     for (const [nodeId, positionsByRelationId] of Object.entries(data.relationsByNodeId)) {
       try {
-        this.loadSerializedAllRelationList(nodeId, positionsByRelationId);
+        this.loadSerializedRelationList("all", nodeId, positionsByRelationId);
       } catch (error) {
         logger.error(`Error loading serialized all relation list`, error);
       }
     }
     for (const [nodeId, positionsByRelationId] of Object.entries(data.pinnedRelationsByNodeId)) {
       try {
-        this.loadSerializedPinnedRelationList(nodeId, positionsByRelationId);
+        this.loadSerializedRelationList("pinned", nodeId, positionsByRelationId);
       } catch (error) {
         logger.error(`Error loading serialized pinned relation list`, error);
       }
     }
     for (const [nodeId, positionsByRelationId] of Object.entries(data.noteContentRelationsByNodeId)) {
       try {
-        this.loadSerializedNoteContentRelationList(nodeId, positionsByRelationId);
+        this.loadSerializedRelationList("noteContent", nodeId, positionsByRelationId);
       } catch (error) {
         logger.error(`Error loading serialized note content relation list`, error);
       }
@@ -2261,32 +2261,40 @@ export class GraphStore {
    * Load serialized positioned relations list into the store.
    * @see file://./design-notes.md#load-methods
    */
-  private loadSerializedAllRelationList(
+  private loadSerializedRelationList(
+    listType: ListType,
     objectId: string,
     positionsByRelationId: SerializedPositionList<GraphRelation>,
   ) {
     const { object, relationsWithPositions } = this.resolveRelationListReferences(objectId, positionsByRelationId);
-    object.allRelationsList.load(relationsWithPositions);
-  }
+    const list = this.getRelationList(object, listType);
+    list.load(relationsWithPositions);
 
-  /**
-   * Load serialized pinned relations list into the store.
-   * @see file://./design-notes.md#load-methods
-   */
-  private loadSerializedPinnedRelationList(
-    objectId: string,
-    positionsByRelationId: SerializedPositionList<GraphRelation>,
-  ) {
-    const { object, relationsWithPositions } = this.resolveRelationListReferences(objectId, positionsByRelationId);
-    object.pinnedRelationsList.load(relationsWithPositions);
-  }
-
-  private loadSerializedNoteContentRelationList(
-    objectId: string,
-    positionsByRelationId: SerializedPositionList<GraphRelation>,
-  ) {
-    const { object, relationsWithPositions } = this.resolveRelationListReferences(objectId, positionsByRelationId);
-    object.noteContentRelationsList.load(relationsWithPositions);
+    const relationsInListButNotLoaded = list
+      .values()
+      .map((v) => v.item)
+      .filter((v) => !relationsWithPositions.map((loaded) => loaded.item.id).includes(v.id));
+    const updates: GraphUpdate[] = [];
+    for (const rel of relationsInListButNotLoaded) {
+      logger.debug(
+        `Relation ${rel.id} was present in "${listType}" list for ${objectId} but its position was missing in the data snapshot. ` +
+          `Generating GraphUpdate to persist the automatically assigned position.`,
+      );
+      updates.push({
+        operation: "updateRelationList",
+        authorId: this.user.id,
+        nodeId: objectId,
+        type: listType,
+        relationId: rel.id,
+        oldPosition: null,
+        newPosition: list.get(rel.id)!.position,
+        oldIsPublic: rel.isPublic,
+        newIsPublic: rel.isPublic,
+      });
+    }
+    if (updates.length > 0) {
+      this.updateManager.queueUpdates(updates);
+    }
   }
 
   private gatherSubtree(root: GraphObject): GraphObject[] {
