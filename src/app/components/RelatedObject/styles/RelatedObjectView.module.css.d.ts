@@ -27,6 +27,7 @@ declare const styles: {
   readonly RelatedObjectContainer: string;
   readonly RelatedObjectContent: string;
   readonly RelatedObjectInputSuffix: string;
+  readonly NoteContentSuffix: string;
   readonly RelatedObjectLeftArea: string;
   readonly RelatedObjectLeftHandler: string;
   readonly RelatedObjectNode: string;

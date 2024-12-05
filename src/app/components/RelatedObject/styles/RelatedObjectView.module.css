@@ -339,6 +339,7 @@ Right Area
 
 .PinIcon {
   /* TODO: Fix adress sizing from the SVG side */
+  z-index: 3;
   transform: scaleX(-1) scale(0.8) translate(-1px, 1px);
 }
 
@@ -433,6 +434,23 @@ Right Area
 
 .NoteContentSectionHeader {
   padding: 12px 0px 12px 4px;
+}
+
+.NoteContentSuffix {
+  display: flex;
+  flex: 1;
+  align-self: stretch;
+  background: transparent;
+  outline: none;
+  border: none;
+  width: 100%;
+  min-height: 100%;
+  cursor: text;
+  caret-color: var(--gray-12);
+  position: absolute;
+  bottom: 0;
+  left: -3px;
+  z-index: 1;
 }
 
 .HeaderInListView {

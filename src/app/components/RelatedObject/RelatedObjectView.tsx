@@ -4,6 +4,7 @@ import React, { useCallback, useState } from "react";
 
 import { Checkbox } from "@/app/components/Checkbox/Checkbox";
 import { CyclicIcon, PinCustomIcon } from "@/app/components/CustomIcons";
+import { NoteContentSuffix } from "@/app/components/RelatedObject/NoteContentSuffix";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -34,6 +35,7 @@ interface Props {
 
 export const RelatedObjectView = observer(function RelatedObjectView({ treeNode }: Props) {
   const viewStore = useViewStore();
+
   const hideBullet =
     viewStore.viewType === "note" &&
     // node is a direct child of the root
@@ -194,55 +196,68 @@ const Content = observer(function Content() {
           />
         )}
       </div>
-      <div className={styles.RelatedObjectRightArea}>
-        {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
-        <Button
-          size="state"
-          variant="ghost"
-          data-tooltip={
-            treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? "Unpin node" : "Pin node"
-          }
-          className={cn(
-            styles.PinToggle,
-            treeNode.parentGroup.id === "pinned" && styles.Hidden,
-            treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? styles.Pinned : styles.Unpinned,
-          )}
-          onPointerDown={() => {
-            const isPinned = treeNode.parent.object.isRelationPinned(treeNode.relationWithParent);
-            if (isPinned) {
-              treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent);
-            } else {
-              treeNode.parent.object.pinChildRelation(treeNode.relationWithParent);
+      <div>
+        {
+          // Check for note content
+          viewStore.viewType === "outline" && treeNode.object.noteContentRelationsList.size > 0 && (
+            <div
+              style={{ width: "10%", height: "100%", position: "absolute" }}
+              // On click, set focus to noteContentSuffix
+            >
+              <NoteContentSuffix treeNode={treeNode} isEditorEditable={false} />
+            </div>
+          )
+        }
+        <div className={styles.RelatedObjectRightArea}>
+          {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
+          <Button
+            size="state"
+            variant="ghost"
+            data-tooltip={
+              treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? "Unpin node" : "Pin node"
             }
-          }}
-        >
-          <div className={styles.PinIcon}>
-            <PinCustomIcon />
-          </div>
-        </Button>
+            className={cn(
+              styles.PinToggle,
+              treeNode.parentGroup.id === "pinned" && styles.Hidden,
+              treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? styles.Pinned : styles.Unpinned,
+            )}
+            onPointerDown={() => {
+              const isPinned = treeNode.parent.object.isRelationPinned(treeNode.relationWithParent);
+              if (isPinned) {
+                treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent);
+              } else {
+                treeNode.parent.object.pinChildRelation(treeNode.relationWithParent);
+              }
+            }}
+          >
+            <div className={styles.PinIcon}>
+              <PinCustomIcon />
+            </div>
+          </Button>
 
-        {/* I think not showing this in replace mode is a good option but feel free to change */}
-        {viewType !== "replace" && (
-          <RelationCounter
-            object={treeNode.object}
-            onClick={() => tree.togglePathExpanded(treeNode.path)}
-            showTooltip={true}
-          />
-        )}
-        {env.env !== "production" && (
-          <>
-            {treeNode.id === nodeSelectionAnchorId && (
-              <div title="Anchor" className={styles.RelationCounter}>
-                A
-              </div>
-            )}
-            {treeNode.id === nodeSelectionHeadId && (
-              <div title="Head" className={styles.RelationCounter}>
-                H
-              </div>
-            )}
-          </>
-        )}
+          {/* I think not showing this in replace mode is a good option but feel free to change */}
+          {viewType !== "replace" && (
+            <RelationCounter
+              object={treeNode.object}
+              onClick={() => tree.togglePathExpanded(treeNode.path)}
+              showTooltip={true}
+            />
+          )}
+          {env.env !== "production" && (
+            <>
+              {treeNode.id === nodeSelectionAnchorId && (
+                <div title="Anchor" className={styles.RelationCounter}>
+                  A
+                </div>
+              )}
+              {treeNode.id === nodeSelectionHeadId && (
+                <div title="Head" className={styles.RelationCounter}>
+                  H
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </>
   );

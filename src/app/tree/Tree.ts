@@ -675,10 +675,14 @@ export class Tree {
    */
   async replaceObjectAtNodeWithCopy(treeNodeId: string) {
     const treeNode = this.getNodeOrThrow(treeNodeId);
+    // If the node has noteContent, then we don't delete the node - we just replace the content with empty te
     let node: GraphNode | null = null;
+    const hasNoteContent = treeNode.object.noteContentRelationsList.size > 0;
     try {
       let content: string | Chip[] = "";
-      if (treeNode.object instanceof GraphNode) {
+      if (hasNoteContent) {
+        content = "";
+      } else if (treeNode.object instanceof GraphNode) {
         content = sliceChips(treeNode.object.content, 0, -1);
       } else {
         content = treeNode.object.text.slice(0, -1);
@@ -686,7 +690,7 @@ export class Tree {
       node = await this.graphStore.addNode({ nodeProps: { content } });
       await this.setObjectOnNode(treeNode.path, node);
     } catch (error) {
-      if (node) {
+      if (node && !hasNoteContent) {
         await this.graphStore.removeNode({ nodeId: node.id });
       }
       throw error;
