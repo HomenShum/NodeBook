@@ -218,7 +218,7 @@ export const DevTools = observer(function DevTools() {
             checked={settingsStore.showGraphViewButton}
             onChange={(e) => settingsStore.setShowGraphViewButton(e.target.checked)}
           />
-          Show Graph View Button
+          Show Graph View Button (Scrappy Demo)
         </label>
         <div className={styles.DevToolsDropdownContainer}>
           <label>Trigger search and replace dropdown:</label>
