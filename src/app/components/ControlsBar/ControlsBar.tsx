@@ -1,9 +1,10 @@
-import { Globe, Link2, ListFilter, Map, MapPin, Sliders, WorkflowIcon, X } from "lucide-react";
+import { Globe, Link2, ListFilter, Map, MapPin, NetworkIcon, Sliders, WorkflowIcon, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { ChangeEvent, useCallback, useState } from "react";
 
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
+import { GraphViewModal } from "@/app/components/Modals/GraphViewModal";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -58,6 +59,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
 
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [ideapadLink, setIdeapadLink] = useState(ideapadLinkManager.get(tree.rootObjectId));
+  const [isGraphViewOpen, setIsGraphViewOpen] = useState(false);
 
   const handleLinkChange = (event: ChangeEvent<HTMLInputElement>) => {
     const element = event.target as HTMLInputElement;
@@ -255,7 +257,20 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             </div>
           </PopoverContent>
         </Popover>
+        {settingsStore.showGraphViewButton && (
+          <Button
+            size="sm"
+            variant="default"
+            onClick={() => setIsGraphViewOpen(true)}
+            className={cn(s.ShowTooltip, s.BottomAlign)}
+            data-tooltip="View Graph"
+          >
+            <NetworkIcon size={14} strokeWidth={1.5} />
+            <span>Graph View</span>
+          </Button>
+        )}
       </div>
+      {isGraphViewOpen && <GraphViewModal isOpen={isGraphViewOpen} onClose={() => setIsGraphViewOpen(false)} />}
     </div>
   );
 });

@@ -35,6 +35,7 @@ const SerializedUserSettingsSchema = z.object({
   atHashtagReplacement: z.boolean().optional(),
   showIdeapadLinkButton: z.boolean().optional(),
   showExportSubtreeToIdeapad: z.boolean().optional(),
+  showGraphViewButton: z.boolean().optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 

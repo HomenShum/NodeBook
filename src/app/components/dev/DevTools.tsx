@@ -212,6 +212,14 @@ export const DevTools = observer(function DevTools() {
           />
           Show Export Subtree to Ideapad
         </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.showGraphViewButton}
+            onChange={(e) => settingsStore.setShowGraphViewButton(e.target.checked)}
+          />
+          Show Graph View Button
+        </label>
         <div className={styles.DevToolsDropdownContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />

@@ -33,6 +33,7 @@ export class SettingsStore {
   public atHashtagReplacement = false;
   public showIdeapadLinkButton = false;
   public showExportSubtreeToIdeapad: boolean = false;
+  public showGraphViewButton = false;
   private stopAutosave: () => void;
 
   constructor(
@@ -71,6 +72,7 @@ export class SettingsStore {
     this.atHashtagReplacement = false;
     this.showIdeapadLinkButton = false;
     this.showExportSubtreeToIdeapad = false;
+    this.showGraphViewButton = false;
   }
 
   private async syncToServer() {
@@ -103,6 +105,7 @@ export class SettingsStore {
       atHashtagReplacement: this.atHashtagReplacement,
       showIdeapadLinkButton: this.showIdeapadLinkButton,
       showExportSubtreeToIdeapad: this.showExportSubtreeToIdeapad,
+      showGraphViewButton: this.showGraphViewButton,
     };
   }
 
@@ -127,6 +130,7 @@ export class SettingsStore {
     this.atHashtagReplacement = data.atHashtagReplacement ?? this.atHashtagReplacement;
     this.showIdeapadLinkButton = data.showIdeapadLinkButton ?? this.showIdeapadLinkButton;
     this.showExportSubtreeToIdeapad = data.showExportSubtreeToIdeapad ?? this.showExportSubtreeToIdeapad;
+    this.showGraphViewButton = data.showGraphViewButton ?? this.showGraphViewButton;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -202,6 +206,10 @@ export class SettingsStore {
 
   setShowExportSubtreeToIdeapad(value: boolean): void {
     this.showExportSubtreeToIdeapad = value;
+  }
+
+  setShowGraphViewButton(value: boolean): void {
+    this.showGraphViewButton = value;
   }
 
   cleanup() {
