@@ -2,6 +2,7 @@ import { useCallback } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { ExtractEntitiesRequest, ExtractEntitiesResponseSchema } from "@/app/llm/ExtractEntitiesRequest";
 import { processExtractResponse } from "@/app/llm/processExtractResponse";
@@ -12,6 +13,7 @@ export const useParseWithAi = () => {
   const auth = useAuth();
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
+  const settingsStore = useSettingsStore();
 
   return useCallback(
     async (node: GraphNode) => {
@@ -51,10 +53,15 @@ export const useParseWithAi = () => {
         return;
       }
 
-      await processExtractResponse(graphStore, node, parsed.data.extractedEntities);
+      await processExtractResponse(
+        graphStore,
+        node,
+        parsed.data.extractedEntities,
+        settingsStore.parseWithAiLinkingOption,
+      );
 
       viewStore.clearNodeIsProcessing(node.id);
     },
-    [auth, graphStore, viewStore],
+    [auth, graphStore, viewStore, settingsStore],
   );
 };

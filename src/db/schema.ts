@@ -15,6 +15,9 @@ export type SearchAndReplaceDropdownOption = z.infer<typeof SearchAndReplaceDrop
 export const PasteLinksOptionEnum = z.enum(["Nothing", "PopulateAsChildren", "PopulateAsOrphanedNodes"]);
 export type PasteLinksOption = z.infer<typeof PasteLinksOptionEnum>;
 
+export const ParseWithAiLinkingOptionEnum = z.enum(["None", "LinkNodesInParse", "LinkNodesInGraph"]);
+export type ParseWithAiLinkingOption = z.infer<typeof ParseWithAiLinkingOptionEnum>;
+
 const SerializedUserSettingsSchema = z.object({
   addAllNewNodesAsChildrenOfUserNode: z.boolean().optional(),
   showNodeDetails: z.boolean().optional(),
@@ -36,6 +39,7 @@ const SerializedUserSettingsSchema = z.object({
   showIdeapadLinkButton: z.boolean().optional(),
   showExportSubtreeToIdeapad: z.boolean().optional(),
   showGraphViewButton: z.boolean().optional(),
+  parseWithAiLinkingOption: ParseWithAiLinkingOptionEnum.optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 

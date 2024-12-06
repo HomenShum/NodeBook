@@ -3,6 +3,8 @@
 import { autorun, isObservable, makeAutoObservable } from "mobx";
 
 import {
+  ParseWithAiLinkingOption,
+  ParseWithAiLinkingOptionEnum,
   PasteLinksOption,
   PasteLinksOptionEnum,
   SearchAndReplaceDropdownOption,
@@ -34,6 +36,7 @@ export class SettingsStore {
   public showIdeapadLinkButton = false;
   public showExportSubtreeToIdeapad: boolean = false;
   public showGraphViewButton = false;
+  public parseWithAiLinkingOption: ParseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   private stopAutosave: () => void;
 
   constructor(
@@ -73,6 +76,7 @@ export class SettingsStore {
     this.showIdeapadLinkButton = false;
     this.showExportSubtreeToIdeapad = false;
     this.showGraphViewButton = false;
+    this.parseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   }
 
   private async syncToServer() {
@@ -106,6 +110,7 @@ export class SettingsStore {
       showIdeapadLinkButton: this.showIdeapadLinkButton,
       showExportSubtreeToIdeapad: this.showExportSubtreeToIdeapad,
       showGraphViewButton: this.showGraphViewButton,
+      parseWithAiLinkingOption: this.parseWithAiLinkingOption,
     };
   }
 
@@ -131,6 +136,7 @@ export class SettingsStore {
     this.showIdeapadLinkButton = data.showIdeapadLinkButton ?? this.showIdeapadLinkButton;
     this.showExportSubtreeToIdeapad = data.showExportSubtreeToIdeapad ?? this.showExportSubtreeToIdeapad;
     this.showGraphViewButton = data.showGraphViewButton ?? this.showGraphViewButton;
+    this.parseWithAiLinkingOption = data.parseWithAiLinkingOption ?? this.parseWithAiLinkingOption;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -180,6 +186,7 @@ export class SettingsStore {
   setDisableCycles(value: boolean) {
     this.disableCycles = value;
   }
+
   setAddStreamLabeledRelationsToMyLists(value: boolean) {
     this.addStreamLabeledRelationsToMyLists = value;
   }
@@ -210,6 +217,10 @@ export class SettingsStore {
 
   setShowGraphViewButton(value: boolean): void {
     this.showGraphViewButton = value;
+  }
+
+  setParseWithAiLinkingOption(value: ParseWithAiLinkingOption): void {
+    this.parseWithAiLinkingOption = value;
   }
 
   cleanup() {

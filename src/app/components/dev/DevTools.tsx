@@ -11,6 +11,8 @@ import { env } from "@/app/envFrontend";
 import { useToast } from "@/app/hooks/useToast";
 import { useViewStore } from "@/app/view/useViewStore";
 import {
+  ParseWithAiLinkingOption,
+  ParseWithAiLinkingOptionEnum,
   PasteLinksOption,
   PasteLinksOptionEnum,
   SearchAndReplaceDropdownOption,
@@ -67,6 +69,35 @@ const SelectPastingLinksDropdown = observer(function SelectSearchAndReplaceDropd
       onChange={(e) => settingsStore.setPasteLinksDropdown(e.target.value as PasteLinksOption)}
     >
       {pasteLinkOptions.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  );
+});
+
+const ParseWithAiLinkingDropdown = observer(function ParseWithAiLinkingDropdown() {
+  const settingsStore = useSettingsStore();
+
+  const parseWithAiOptions: { label: string; value: ParseWithAiLinkingOption }[] = [
+    { label: "None", value: ParseWithAiLinkingOptionEnum.enum.None },
+    {
+      label: "Link nodes parsed from text to each other",
+      value: ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse,
+    },
+    {
+      label: "Link parsed nodes to anything in graph",
+      value: ParseWithAiLinkingOptionEnum.enum.LinkNodesInGraph,
+    },
+  ];
+
+  return (
+    <select
+      value={settingsStore.parseWithAiLinkingOption}
+      onChange={(e) => settingsStore.setParseWithAiLinkingOption(e.target.value as ParseWithAiLinkingOption)}
+    >
+      {parseWithAiOptions.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
         </option>
@@ -227,6 +258,10 @@ export const DevTools = observer(function DevTools() {
         <div className={styles.DevToolsDropdownContainer}>
           <label>Pasting links behaviour:</label>
           <SelectPastingLinksDropdown />
+        </div>
+        <div className={styles.DevToolsDropdownContainer}>
+          <label>Parse with AI node linking:</label>
+          <ParseWithAiLinkingDropdown />
         </div>
         {env.env !== "production" && (
           <>
