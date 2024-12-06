@@ -1,20 +1,35 @@
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
+import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
+import { useSetRoot } from "@/app/tree/utils";
+import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
-import styles from "./SidebarTree.module.css";
+import styles from "./MyHashtagsTree.module.css";
 
 interface TreeElementProps {
   object: GraphObject;
 }
 
 const TreeElement = observer(function TreeElement({ object }: TreeElementProps) {
+  const viewStore = useViewStore();
+  const setRoot = useSetRoot();
   const [isExpanded, setIsExpanded] = useState(false);
   const uniqueChildren = [...new Set(object.children)];
+
+  const handleNavigation = useCallback(
+    (action: () => void) => {
+      action();
+      if (window.innerWidth <= 450) {
+        viewStore.toggleLeftSidebar();
+      }
+    },
+    [viewStore],
+  );
 
   return (
     <>
@@ -32,17 +47,29 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
         </div>
       </div>
       <div className={styles.SidebarTreeChildren}>
-        {isExpanded && uniqueChildren.map((o) => <TreeElement object={o} key={o.id}></TreeElement>)}
+        {isExpanded &&
+          uniqueChildren.map((o) => (
+            <Button
+              variant="ghost"
+              className={cn(styles.Button)}
+              onClick={() => {
+                handleNavigation(() => setRoot(o));
+              }}
+              key={o.id}
+            >
+              {o.text}
+            </Button>
+          ))}
       </div>
     </>
   );
 });
 
-export default observer(function SidebarTree() {
+export const MyHashtagsTree = observer(function SidebarTree() {
   const graphStore = useGraphStore();
   return (
     <div className={styles.SidebarTreeContainer}>
-      <TreeElement object={graphStore.homeRoot}></TreeElement>
+      <TreeElement object={graphStore.myHashtagsNode}></TreeElement>
     </div>
   );
 });

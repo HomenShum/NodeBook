@@ -1,17 +1,18 @@
 declare const styles: {
-  readonly HeadingContainer: string;
-  readonly IconAndTitle: string;
-  readonly LinkButton: string;
-  readonly Nodes: string;
-  readonly NoteContentSection: string;
-  readonly OutlineContent: string;
-  readonly OutlineView: string;
-  readonly OutlineViewFull: string;
-  readonly TitleContainer: string;
-  readonly TitleText: string;
-  readonly TooltipContent: string;
-  readonly Transparent: string;
-  readonly WindowNav: string;
-  readonly EmptySpaceClickArea: string;
+  readonly "EmptySpaceClickArea": string;
+  readonly "HeadingContainer": string;
+  readonly "IconAndTitle": string;
+  readonly "LinkButton": string;
+  readonly "Nodes": string;
+  readonly "NoteContentSection": string;
+  readonly "OutlineContent": string;
+  readonly "OutlineView": string;
+  readonly "OutlineViewFull": string;
+  readonly "TitleContainer": string;
+  readonly "TitleText": string;
+  readonly "TooltipContent": string;
+  readonly "Transparent": string;
+  readonly "WindowNav": string;
 };
 export = styles;
+

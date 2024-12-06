@@ -8,9 +8,9 @@ declare const styles: {
   readonly "Pill": string;
   readonly "PillContainer": string;
   readonly "Placeholder": string;
+  readonly "StrikeThrough": string;
   readonly "TextContent": string;
   readonly "TreeNodeReference": string;
-  readonly "StrikeThrough": string
 };
 export = styles;
 

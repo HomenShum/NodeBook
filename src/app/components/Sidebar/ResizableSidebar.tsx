@@ -2,7 +2,8 @@ import {
   FileSpreadsheet,
   Globe,
   Home,
-  Key, KeyboardIcon,
+  Key,
+  KeyboardIcon,
   LogIn,
   LogOut,
   Mail,
@@ -22,6 +23,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/app/auth/useAuth";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
+import { HelpModal } from "@/app/components/HelpModal/HelpModal";
+import { MyHashtagsTree } from "@/app/components/Sidebar/MyHashtagsTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
@@ -38,7 +41,6 @@ import { useSetRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { HelpModal } from "@/app/components/HelpModal/HelpModal";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -76,7 +78,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const openHelpModal = () => {
     console.log("Clicked activeModal");
     viewStore.setActiveModal("help");
-  }
+  };
 
   const handleLogout = useCallback(() => {
     if (!auth) return;
@@ -263,6 +265,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </span>
               <span>AI Query</span>
             </Button>
+            {!user.isAnonymous && <MyHashtagsTree />}
             {!user.isAnonymous && (
               <>
                 <div className={styles.SidebarSectionHeader}>Workspaces</div>
@@ -346,7 +349,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
           <div className={styles.ResizerHandle} />
         </div>
       </aside>
-      <HelpModal/>
+      <HelpModal />
       <DevTools />
       <ImportDialog />
       {user.isAnonymous && (
