@@ -459,9 +459,8 @@ Right Area
 
 .NoteContentSection.ChildOfRootInNoteView {
   border: none;
-  margin: 0;
   padding: 0 4px;
-  transform: translateX(-8px) translateY(0);
+  margin: 0 0 0 -8px;
 }
 
 .NoteContentSection.ChildOfRootInNoteView::before {
