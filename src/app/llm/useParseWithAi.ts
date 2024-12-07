@@ -6,6 +6,9 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { ExtractEntitiesRequest, ExtractEntitiesResponseSchema } from "@/app/llm/ExtractEntitiesRequest";
 import { processExtractResponse } from "@/app/llm/processExtractResponse";
+import { DescendantTreeNode } from "@/app/tree/nodes";
+import { useTree } from "@/app/tree/TreeContext";
+import { createPath } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 
@@ -14,9 +17,15 @@ export const useParseWithAi = () => {
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
+  const tree = useTree();
 
   return useCallback(
-    async (node: GraphNode) => {
+    async (treeNode: DescendantTreeNode) => {
+      const node = treeNode.object;
+      if (!(node instanceof GraphNode)) {
+        logger.error("Object of TreeNode passed to ParseWithAi is not a GraphNode", treeNode);
+        return;
+      }
       const textToParse = node.text;
 
       if (!textToParse) {
@@ -53,15 +62,21 @@ export const useParseWithAi = () => {
         return;
       }
 
-      await processExtractResponse(
+      const createdRootRelId = await processExtractResponse(
         graphStore,
         node,
         parsed.data.extractedEntities,
         settingsStore.parseWithAiLinkingOption,
       );
 
+      if (createdRootRelId) {
+        tree.setPathExpanded(treeNode.path, true);
+        const pathToEntitiesRoot = createPath(treeNode.path, "all", createdRootRelId);
+        tree.setPathExpanded(pathToEntitiesRoot, true);
+      }
+
       viewStore.clearNodeIsProcessing(node.id);
     },
-    [auth, graphStore, viewStore, settingsStore],
+    [viewStore, auth, graphStore, settingsStore.parseWithAiLinkingOption, tree],
   );
 };

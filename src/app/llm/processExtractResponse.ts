@@ -28,16 +28,21 @@ export const processExtractResponse = async (
 
   const entityNodeIdsByEntityName: { [entityName: string]: string } = {};
 
+  let extractedEntityNames = extractedEntities
+    .map((e) => e.name) // All the top level entities
+    .concat(extractedEntities.flatMap((e) => e.relations.flatMap((r) => r.otherEntities))); // Everything listed as a target in relations
+  extractedEntityNames = [...new Set(extractedEntityNames)]; // Remove duplicates
+
   if (nodeLinkingSetting === "LinkNodesInGraph") {
     // If user setting is to link nodes in the graph, we check if there's any existing node with the same content
-    for (const entity of extractedEntities) {
-      const searchResults = graphStore.search({ text: entity.name, filters: { types: ["node"] } });
+    for (const entity of extractedEntityNames) {
+      const searchResults = graphStore.search({ text: entity, filters: { types: ["node"] } });
       for (const result of searchResults.nodes) {
-        if (result.node.content.map((c) => c.value).join("") !== entity.name) {
+        if (result.node.content.map((c) => c.value).join("") !== entity) {
           continue;
         }
         const otherNodeId = result.node.id;
-        entityNodeIdsByEntityName[entity.name] = otherNodeId;
+        entityNodeIdsByEntityName[entity] = otherNodeId;
         txs.push({
           type: "addRelation",
           transaction: {
@@ -50,17 +55,17 @@ export const processExtractResponse = async (
     }
   }
 
-  for (const entity of extractedEntities) {
-    if (entityNodeIdsByEntityName[entity.name]) {
+  for (const entity of extractedEntityNames) {
+    if (entityNodeIdsByEntityName[entity]) {
       // If we've already linked this entity to an existing node, skip adding it as a new node
       continue;
     }
-    entityNodeIdsByEntityName[entity.name] = uuid();
+    entityNodeIdsByEntityName[entity] = uuid();
     txs.push({
       type: "addChildNode",
       transaction: {
         parentId: entitiesRootId,
-        nodeProps: { id: entityNodeIdsByEntityName[entity.name], content: entity.name },
+        nodeProps: { id: entityNodeIdsByEntityName[entity], content: entity },
       },
     });
   }
@@ -70,7 +75,21 @@ export const processExtractResponse = async (
     for (const rel of entity.relations) {
       for (const otherEntity of rel.otherEntities) {
         if (nodeLinkingSetting !== "None" && entityNodeIdsByEntityName[otherEntity]) {
-          // If the other entity is one of the top-level entities extracted in this parse, just add a relation
+          // If the other entity is one of the top-level entities extracted in this parse, we want to add a relation.
+          const otherNodeId = entityNodeIdsByEntityName[otherEntity];
+
+          // First, though, we do a check to see if the relation already exists to avoid duplicates.
+          const entityNode = graphStore.getNode(entityNodeId);
+          const existingRelation = entityNode?.relations.find(
+            (r) =>
+              (r.to.id === otherNodeId || r.from.id === otherNodeId) &&
+              (r.relationType.label === rel.relation || r.relationType.reverseLabel === rel.relation),
+          );
+          if (existingRelation) {
+            continue;
+          }
+
+          // If the relation doesn't exist, we add it in two steps: first, add the relation, then make sure the relation type is set properly.
           const relationId = uuid();
           txs.push(
             {
@@ -115,10 +134,13 @@ export const processExtractResponse = async (
     }
   }
 
+  const relToEntitiesRootId = uuid();
   txs.push({
     type: "addRelation",
-    transaction: { fromId: sourceNode.id, toId: entitiesRootId },
+    transaction: { id: relToEntitiesRootId, fromId: sourceNode.id, toId: entitiesRootId },
   });
 
   graphStore.applyCombinedTransaction(txs);
+
+  return relToEntitiesRootId;
 };

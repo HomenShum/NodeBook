@@ -221,7 +221,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
       <DropdownMenuSeparator />
       {object instanceof GraphNode && (
         <>
-          <DropdownMenuItem onSelect={() => parseWithAi(object)}>
+          <DropdownMenuItem onSelect={() => parseWithAi(treeNode)}>
             <Beaker size={14} />
             Parse with AI
           </DropdownMenuItem>
