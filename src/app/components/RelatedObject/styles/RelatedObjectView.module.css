@@ -453,6 +453,20 @@ Right Area
   z-index: 1;
 }
 
+.NoteContentPrefix {
+  display: flex;
+  flex: 1;
+  align-self: stretch;
+  background: transparent;
+  outline: none;
+  border: none;
+  height: 100%;
+  width: 100%;
+  cursor: text;
+  caret-color: var(--gray-12);
+  z-index: 1;
+}
+
 .HeaderInListView {
   padding: 4px 20px;
 }

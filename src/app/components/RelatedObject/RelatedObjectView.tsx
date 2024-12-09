@@ -4,6 +4,7 @@ import React, { useCallback, useState } from "react";
 
 import { Checkbox } from "@/app/components/Checkbox/Checkbox";
 import { CyclicIcon, PinCustomIcon } from "@/app/components/CustomIcons";
+import { NoteContentPrefix } from "@/app/components/RelatedObject/NoteContentPrefix";
 import { NoteContentSuffix } from "@/app/components/RelatedObject/NoteContentSuffix";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
@@ -173,6 +174,9 @@ const Content = observer(function Content() {
                     styles.ChildOfRootInNoteView,
                 )}
               >
+                <div style={{ position: "absolute", left: -2, top: 4, width: "10px", height: "20px" }}>
+                  <NoteContentPrefix treeNode={treeNode} />
+                </div>
                 <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
               </div>
             ) : viewType === "replace" ? (
@@ -204,7 +208,7 @@ const Content = observer(function Content() {
               style={{ width: "10%", height: "100%", position: "absolute" }}
               // On click, set focus to noteContentSuffix
             >
-              <NoteContentSuffix treeNode={treeNode} isEditorEditable={false} />
+              <NoteContentSuffix treeNode={treeNode} />
             </div>
           )
         }

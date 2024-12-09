@@ -70,8 +70,23 @@ export const ArrowKeyPlugin = () => {
         KEY_ARROW_LEFT_COMMAND,
         (event) => {
           const selectionStart = $getSelection()?.getStartEndPoints()?.[0];
+
           // Offset is 0 when at start of text
           if (!selectionStart || selectionStart.offset !== 0) return false;
+
+          // Check if we're in the first node of note content
+          const isFirstNoteContentNode =
+            treeNode.parentGroup.id === "noteContent" && treeNode.parentGroup.nodes[0] === treeNode;
+          if (isFirstNoteContentNode) {
+            event.preventDefault();
+            // Focus the note content prefix
+            const prefixInput = document.querySelector(`[data-note-prefix="${treeNode.parent?.object.id}"]`);
+            if (prefixInput instanceof HTMLElement) {
+              prefixInput.focus();
+              return true;
+            }
+          }
+
           const focusedMoved = tree.moveEditorSelectionUp("end");
           if (!focusedMoved) return false;
           event.preventDefault();
