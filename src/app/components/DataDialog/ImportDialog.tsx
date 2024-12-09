@@ -7,6 +7,7 @@ import { ImportReviewList } from "@/app/components/DataDialog/ImportReviewList";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { parseIdeapadData } from "@/app/persistence/IdeapadImport";
 import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
 import { useViewStore } from "@/app/view/useViewStore";
 import appLogger from "@/lib/logger";
@@ -26,6 +27,7 @@ export const ImportDialog = observer(function ImportDialog() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [serializedGraphStore, setSerializedGraphStore] = useState<SerializedGraphStore | null>(null);
+  const [importType, setImportType] = useState<"mew" | "ideapad" | null>(null);
 
   const onSelectFile = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,9 +41,16 @@ export const ImportDialog = observer(function ImportDialog() {
           if (typeof fileContent !== "string") {
             throw new Error("Unexpected file content type");
           }
+
+          if (importType === "ideapad") {
+            const ideapadData = JSON.parse(fileContent);
+            const convertedData = parseIdeapadData(ideapadData, user.id);
+            setSerializedGraphStore(convertedData);
+            logger.info("Successfully parsed Ideapad data");
+            return;
+          }
+
           try {
-            // We could attempt some clever stuff here to check if the file is JSON etc but easier to just try and parse it
-            // as a SerializedGraphStore and see if it throws an error.
             const serializedGraphStore = SerializedGraphStoreSchema.parse(JSON.parse(fileContent));
             setSerializedGraphStore(serializedGraphStore);
             logger.info("Successfully parsed serialized graph store");
@@ -49,7 +58,6 @@ export const ImportDialog = observer(function ImportDialog() {
             if (selectedFile?.name.endsWith(".json")) {
               throw error;
             }
-            // If parsing as a SerializedGraphStore fails, we'll assume it's in the plain text upload format and try to handle that.
             const parsedGraphStore = parsePlainTextUpload(graphStore, fileContent);
             setSerializedGraphStore(parsedGraphStore);
             logger.info("Successfully parsed graph store from plain text upload");
@@ -66,7 +74,7 @@ export const ImportDialog = observer(function ImportDialog() {
       };
       reader.readAsText(selectedFile);
     },
-    [graphStore],
+    [graphStore, user.id, importType],
   );
 
   const onAddToGraphClick = useCallback(() => {
@@ -86,39 +94,54 @@ export const ImportDialog = observer(function ImportDialog() {
       showBackButton
       onBack={() => viewStore.setActiveModal("devTools")}
     >
-      <fieldset className={styles.FileFieldset}>
+      <div className={styles.ImportTypeButtons}>
+        <Button size="sm" variant={importType === "mew" ? "default" : "outline"} onClick={() => setImportType("mew")}>
+          Import Mew/Text File
+        </Button>
         <Button
           size="sm"
-          className={styles.Button}
-          variant={file ? "outline" : "default"}
-          onClick={() => fileInputRef.current?.click()}
+          variant={importType === "ideapad" ? "default" : "outline"}
+          onClick={() => setImportType("ideapad")}
         >
-          {file ? "Change file" : "Select file"}
+          Import from Ideapad
         </Button>
-        <input
-          type="file"
-          accept=".json,.txt"
-          ref={fileInputRef}
-          className={styles.InvisibleInput}
-          onChange={onSelectFile}
-        />
-        {file && (
-          <p className={styles.SelectedFileLabel}>
-            Selected: {file.name}
-            <button
-              onClick={() => {
-                setFile(null);
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = "";
-                }
-                setSerializedGraphStore(null);
-              }}
-            >
-              <X size={12} />
-            </button>
-          </p>
-        )}
-      </fieldset>
+      </div>
+
+      {importType && (
+        <fieldset className={styles.FileFieldset}>
+          <Button
+            size="sm"
+            className={styles.Button}
+            variant={file ? "outline" : "default"}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {file ? "Change file" : "Select file"}
+          </Button>
+          <input
+            type="file"
+            accept=".json,.txt"
+            ref={fileInputRef}
+            className={styles.InvisibleInput}
+            onChange={onSelectFile}
+          />
+          {file && (
+            <p className={styles.SelectedFileLabel}>
+              Selected: {file.name}
+              <button
+                onClick={() => {
+                  setFile(null);
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                  }
+                  setSerializedGraphStore(null);
+                }}
+              >
+                <X size={12} />
+              </button>
+            </p>
+          )}
+        </fieldset>
+      )}
       {serializedGraphStore &&
       (Object.keys(serializedGraphStore.nodesById).length > 0 ||
         Object.keys(serializedGraphStore.relationsById).length > 0 ||
