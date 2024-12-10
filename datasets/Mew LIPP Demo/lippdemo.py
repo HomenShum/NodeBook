@@ -4,13 +4,13 @@ import re
 from typing import Union
 
 import pandas as pd
-from lidemo import get_people_node_ids, graphify_linkedin, linkedin_dir
-from utils import (Graph, GraphDict, add_text_graph, filter_graph,
-                   global_root_node_id)
+from lidemo import *
+from utils import *
 
 vcs_list_id = "vcs_list_node_id"
 
 crunchbase_dir = os.path.join('input-data', 'crunchbase')
+josh_langsam_path = os.path.join('input-data', 'josh-langam.json')
 
 top_vcs = set([
     "Sequoia Capital",
@@ -162,6 +162,37 @@ def create_good_signal(good_signal_dir: str, linkedin_graph: Union[None, Graph] 
     return graph
 
 
+def add_josh_langam(graph: Graph):
+    with open(josh_langsam_path, "r") as f:
+        josh_langsam_dict = json.load(f)
+
+    for relation in josh_langsam_dict["relationsById"].values():
+        # Get or create relation type
+        relation_type = josh_langsam_dict["relationTypesById"].get(relation["relationTypeId"])
+        relation_type = graph.get_or_create_relation_type(relation_type["label"], relation_type["reverseLabel"])
+
+        # Get or create nodes
+        from_node = josh_langsam_dict["nodesById"].get(relation["fromId"])
+        from_node = graph.get_or_create_node(from_node["content"][0]["value"])
+        to_node = josh_langsam_dict["nodesById"].get(relation["toId"])
+        to_node = graph.get_or_create_node(to_node["content"][0]["value"])
+
+        # Add relation
+        graph.upsert_relation(from_node["id"], to_node["id"], relation_type["id"])
+
+        # Add person type to Josh Langam
+        if node_to_text(from_node) == "Joshua Langam":
+            persons_node = graph.get_node(person_type_node_id)
+            if persons_node:
+                graph.upsert_relation(persons_node["id"], from_node["id"], "type")
+        if node_to_text(to_node) == "Joshua Langam":
+            persons_node = graph.get_node(person_type_node_id)
+            if persons_node:
+                graph.upsert_relation(from_node["id"], persons_node["id"], "type")
+
+    return graph
+
+
 def filter_for_top_people_and_vcs(graph: Graph):
     filtered_graph = Graph()
     filtered_graph._graph["relationTypesById"] = graph.to_dict()["relationTypesById"]
@@ -202,10 +233,9 @@ if __name__ == "__main__":
     # Full version
 
     print("Graphifying LinkedIn")
-    graph = Graph(graphify_linkedin(linkedin_dir))
+    graph = graphify_linkedin(linkedin_dir)
 
-    # Need this in the graph or else walking later doesn't work
-    graph.upsert_node("Global root", id=global_root_node_id)
+    # graph = add_josh_langam(graph)
 
     print("Creating good signal")
     graph = create_good_signal(good_signal_dir, graph)
