@@ -1,19 +1,19 @@
 import glob
 import json
 import os
-import uuid
-from copy import deepcopy
-from datetime import datetime
 from typing import Any, Dict
 
 import pandas as pd
-from utils import (GraphDict, clean_first_name, clean_last_name, create_graph,
-                   get_or_create_node)
+from utils import (Graph, GraphDict, clean_first_name, clean_last_name,
+                   global_root_node_id)
 
 linkedin_dir = os.path.join('input-data', 'LinkedIn')
 
 author_id = "global-admin"
 global_users_id = "global-users-id"
+person_type_node_id = "person-type-node-id"
+company_type_node_id = "company-type-node-id"
+linkedin_users_node_id = "linkedin-users-node-id"
 
 def name_to_id(content):
     # Remove non-alphabetic characters and replace with whitespace
@@ -24,69 +24,15 @@ def name_to_id(content):
 def url_to_id(content):
     return content.split("/")[-1].lower()
 
-def create_node(content, id=None):
-    """Helper to create a node matching SerializedNode schema"""
-    return {
-        "id": id if id else str(uuid.uuid4()),
-        "authorId": author_id,
-        "version": 1,
-        "createdAt": datetime.now().isoformat(),
-        "updatedAt": datetime.now().isoformat(),
-        "content": [{"type": "text", "value": content}],
-        "isPublic": True,
-        "isNewRelatedObjectsPublic": False,
-        "canonicalRelationId": None
-    }
-
-def create_relation_type(label, reverse_label="", id=None):
-    """Helper to create a relation type matching SerializedRelationType schema"""
-    return {
-        "id": id if id else str(uuid.uuid4()),
-        "authorId": author_id,
-        "version": 1,
-        "label": label,
-        "reverseLabel": reverse_label,
-        "isPublic": True
-    }
-
-def create_relation(from_id, to_id, relation_type_id="child", id=None):
-    """Helper to create a relation matching SerializedRelation schema"""
-    return {
-        "id": id if id else str(uuid.uuid4()),
-        "fromId": from_id,
-        "toId": to_id,
-        "relationTypeId": relation_type_id,
-        "version": 1,
-        "authorId": author_id,
-        "createdAt": datetime.now().isoformat(),
-        "updatedAt": datetime.now().isoformat(),
-        "isPublic": True,
-        "canonicalRelationId": None
-    }
-
-default_relation_types = [
-    create_relation_type("works at", "employs", id="works-at"),
-    # Note: get_people_node_ids and get_source_linkedin_user_node_ids use this 
-    # relation type id. If you change the id, you must also update those functions.
-    create_relation_type("knows", "knows", id="knows"),
-    create_relation_type("email address", "is Email Address of", id="email"),
-    create_relation_type("LinkedIn URL", "is LinkedIn URL of", id="linkedin-url")
-]
 
 def graphify_linkedin(linkedin_folder, graph = None):
-    # Initialize data structures
-    graph = deepcopy(graph) if graph else create_graph()
-    relation_types = graph["relationTypesById"]
-    nodes = graph["nodesById"]
-    relations = graph["relationsById"]
-
-    # Add default relation types
-    for relation_type in default_relation_types:
-        relation_types[relation_type["id"]] = relation_type
+    # Initialize graph
+    graph = Graph(graph.to_dict()) if graph else Graph()
 
     # Load LinkedIn data
     linkedin_files = glob.glob(f"{linkedin_folder}/*.csv")
-    datasets = [] # { "linkedin_user_full_name": str, "linkedin_user_id": str, "df": pd.DataFrame }[]
+    # linkedin_files = glob.glob(f"{linkedin_folder}/Cody Hergenroeder.csv")
+    datasets = [] # { "linkedin_user_full_name": str, "df": pd.DataFrame }[]
     expected_columns = ["First Name", "Last Name", "URL", "Email Address", "Company", "Position", "Connected On"]
     for file in linkedin_files:
         print(f"Processing {file}")
@@ -102,107 +48,126 @@ def graphify_linkedin(linkedin_folder, graph = None):
             "df": df
         })
 
+
+    # Create type nodes
+    person_type_node, _ = graph.upsert_related_node(global_root_node_id, "Person", node_id=person_type_node_id)
+    company_type_node, _ = graph.upsert_related_node(global_root_node_id, "Company", node_id=company_type_node_id)
+    linkedin_users_node, _ = graph.upsert_related_node(global_root_node_id, "LinkedIn Users", node_id=linkedin_users_node_id)
+
     # Create all the people nodes and connections
-    people_nodes = {}
-    knows_relations = {}
     for dataset in datasets:
         # Create person node for linkedin user
-        linkedin_user_node = get_or_create_node(graph, dataset["linkedin_user_full_name"])
-        people_nodes.setdefault(linkedin_user_node["id"], linkedin_user_node)
+        linkedin_user_node = graph.upsert_node(dataset["linkedin_user_full_name"])
+        graph.upsert_relation(linkedin_user_node["id"], person_type_node["id"], "type")
+        graph.upsert_relation(linkedin_users_node["id"], linkedin_user_node["id"])
+        
         for _, row in dataset["df"].iterrows():
             # Get or create person node for contact
             full_name = clean_first_name(row['First Name'].strip()) + " " + clean_last_name(row['Last Name'].strip())
-            contact_node = get_or_create_node(graph, full_name, row["contact_id"])
-            people_nodes.setdefault(contact_node["id"], contact_node)
+            contact_node = graph.upsert_node(full_name, id=row["contact_id"])
+            graph.upsert_relation(contact_node["id"], person_type_node["id"], "type")
 
-            # Create knows relation between linkedin user and contact. We use a set to avoid cases
-            # where we have multiple connections between the same two people.
+            # Create knows relation between linkedin user and contact
             connection_id = "-knows-".join(sorted([linkedin_user_node["id"], contact_node["id"]]))
-            knows_relations.setdefault(connection_id, create_relation(linkedin_user_node["id"], contact_node["id"], "knows", id=connection_id))
-    nodes.update(people_nodes)
-    relations.update(knows_relations)
+            graph.upsert_relation(linkedin_user_node["id"], contact_node["id"], "knows", id=connection_id)
 
     # Add info about people
     people_info_df = pd.concat([dataset["df"] for dataset in datasets], ignore_index=True)
     people_info_df = people_info_df.drop_duplicates(subset=['contact_id'], keep='first')
     for _, row in people_info_df.iterrows():
-        if row["contact_id"] not in people_nodes:
+        if row["contact_id"] not in graph._graph["nodesById"]:
             continue
+        [company, position, contact_id, url, email] = [str(v) if pd.notna(v) else "" for v in row[["Company", "Position", "contact_id", "URL", "Email Address"]].values]
 
         # Company and position
-        if not row['Company']:
-            company_id = name_to_id(row['Company'])
-            company_node = nodes.setdefault(company_id, create_node(row['Company'], company_id))
+        if company:
+            company_id = name_to_id(company)
 
-            if not row["Position"]:
+            # For some reason people sometimes put their own name in the company field. Ignore those.
+            if company_id == contact_id:
+                continue
+
+            company_node = graph.upsert_node(company, id=company_id)
+            graph.upsert_relation(company_node["id"], company_type_node["id"], "type")
+
+            if not position:
                 label_company_to_person = str(row["Position"]) # e.g. "CEO:"
                 label_person_to_company = f"is {label_company_to_person} of" # e.g. "is CEO of:"
                 position_relation_type_id = name_to_id(label_company_to_person)
-                relation_types.setdefault(position_relation_type_id, create_relation_type(label_person_to_company, label_company_to_person, id=position_relation_type_id))
+                graph.upsert_relation_type(label_person_to_company, label_company_to_person, id=position_relation_type_id)
             else:
                 position_relation_type_id = "works-at"
 
-            relation = create_relation(row["contact_id"], company_node["id"], position_relation_type_id)
-            relations[relation["id"]] = relation
+            graph.upsert_relation(contact_id, company_node["id"], position_relation_type_id)
 
         # URL
-        if not row["URL"]:
-            url_relation_type = relation_types["linkedin-url"]
-            url_node = create_node(row["URL"])
-            nodes[url_node["id"]] = url_node
-            url_relation = create_relation(row["contact_id"], url_node["id"], url_relation_type["id"])
-            relations[url_relation["id"]] = url_relation
+        if url:
+            graph.upsert_property(contact_id, url, key_id="linkedin-url")
 
         # Email
-        if not row["Email Address"]:
-            email_relation_type = relation_types["email"]
-            email_node = create_node(row["Email Address"])
-            nodes[email_node["id"]] = email_node
-            email_relation = create_relation(row["contact_id"], email_node["id"], email_relation_type["id"])
-            relations[email_relation["id"]] = email_relation
+        if email:
+            graph.upsert_property(contact_id, email, key_id="email")
 
     return graph
 
-def filter_for_top_people(graph: Dict[str, Any]): 
-    relations_by_node_id = {}
-    for relation in graph["relationsById"].values():
-        relations_by_node_id.setdefault(relation["fromId"], []).append(relation)
-        relations_by_node_id.setdefault(relation["toId"], []).append(relation)
+def filter_for_top_people(graph: Graph) -> Graph:
+    filtered_graph = Graph()
+    people_ids = get_people_node_ids(graph._graph)
 
-    # Select 50 people with most relations 
-    people_ids = get_people_node_ids(graph)
-    relations_by_people_id = {id: relations_by_node_id[id] for id in people_ids}
-    people_id_relation_tuples = sorted(relations_by_people_id.items(), key=lambda x: len(x[1]), reverse=True)
-    top_people_ids = set(people_id for people_id, _ in people_id_relation_tuples[:50])
+    # Add all users whose linkedin export is in the graph
+    included_people_ids = set()
+    linkedin_users_node = graph.get_node(linkedin_users_node_id)
+    if linkedin_users_node:
+        filtered_graph.add_node(linkedin_users_node)
+        for adjacent_relation, adjacent_node in graph.walk_adjacent(linkedin_users_node["id"], 1):
+            filtered_graph.add_node(adjacent_node)
+            filtered_graph.add_relation(adjacent_relation)
+            if adjacent_node["id"] in people_ids:
+                included_people_ids.add(adjacent_node["id"])
 
-    # Filter nodes and relations
-    filtered_nodes = {}
-    filtered_relations = {}
-    for relation in graph["relationsById"].values():
-        # Skip relations between people if not both in top 50
-        if (relation["fromId"] in people_ids and 
-            relation["toId"] in people_ids and 
-            not (relation["fromId"] in top_people_ids and 
-                 relation["toId"] in top_people_ids)):
-            continue
-            
-        # Skip relations not connected to any top person
-        if not (relation["fromId"] in top_people_ids or 
-                relation["toId"] in top_people_ids):
-            continue
+    # Select 50 other people with most relations 
+    for people_id in sorted(people_ids, key=lambda id: len(graph._relations_by_from_id[id]) + len(graph._relations_by_to_id[id]), reverse=True)[:50]:
+        included_people_ids.add(people_id)
 
-        # Add relation and its nodes
-        filtered_relations[relation["id"]] = relation
-        for node_id in (relation["fromId"], relation["toId"]):
-            if node := graph["nodesById"].get(node_id):
-                filtered_nodes[node_id] = node
-    return {
-        "nodesById": filtered_nodes,
-        "relationsById": filtered_relations,
-        "relationTypesById": graph["relationTypesById"],
-        "nodesByContent": graph["nodesByContent"],
-        "relationsByContent": graph["relationsByContent"]
-    }
+    # Add top people
+    person_node = graph.get_node(person_type_node_id)
+    # Walk nodes adjacent to Person node, adding the top people and their ancestors
+    if person_node:
+        filtered_graph.add_node(person_node)
+        for adjacent_relation, adjacent_node in graph.walk_adjacent(person_node["id"], 1):
+            if adjacent_node["id"] == global_root_node_id:
+                filtered_graph.add_relation(adjacent_relation)
+                continue
+            # Add person node
+            if adjacent_node["id"] not in included_people_ids: continue
+            filtered_graph.add_node(adjacent_node)
+            filtered_graph.add_relation(adjacent_relation)
+            # Add all directly connected nodes, ignoring people who aren't the top people
+            for relation_to_person, adjacent_node in graph.walk_descendants(adjacent_node["id"], 1):
+                if adjacent_node["id"] in people_ids and adjacent_node["id"] not in included_people_ids:
+                    continue
+                filtered_graph.add_node(adjacent_node)
+                filtered_graph.add_relation(relation_to_person)
+
+    # Add relations associated with the companies connected to the top people
+    companies_node = graph.get_node(company_type_node_id)
+    if companies_node:
+        filtered_graph.add_node(companies_node)
+        for relation_to_person, company_node in graph.walk_ancestors(companies_node["id"], 1):
+            # Add relation connected to companies node
+            if company_node["id"] not in filtered_graph._graph["nodesById"]: continue
+            filtered_graph.add_relation(relation_to_person)
+            # Add all directly connected nodes, ignoring people who aren't the top people
+            for relation_to_person, adjacent_node in graph.walk_descendants(company_node["id"], 1):
+                if adjacent_node["id"] in people_ids and adjacent_node["id"] not in included_people_ids:
+                    continue
+                filtered_graph.add_node(adjacent_node)
+                filtered_graph.add_relation(relation_to_person)
+
+
+
+    return filtered_graph
+
 
 def get_people_node_ids(graph: Dict[str, Any]):
     people_ids = set()
@@ -220,20 +185,15 @@ def get_source_linkedin_user_node_ids(graph: Dict[str, Any]):
     return people_ids
 
 if __name__ == "__main__":
-    # Full version
     graph = graphify_linkedin(linkedin_dir)
-    # Add all source LinkedIn user nodes as children of global users
-    for id in get_source_linkedin_user_node_ids(graph):
-        rel = create_relation(global_users_id, id)
-        graph["relationsById"][rel["id"]] = rel
+
+    # Full version
+    graph_full = Graph(graph.to_dict())
     with open("output-data/lidemo.json", "w") as f:
-        json.dump(graph, f, indent=2)
+        json.dump(graph_full.to_dict(), f, indent=2)
 
     # Lite version
     graph_lite = filter_for_top_people(graph)
-    # Add *all* people as children of global users
-    for node_id in get_people_node_ids(graph_lite):
-        rel = create_relation(global_users_id, node_id)
-        graph_lite["relationsById"][rel["id"]] = rel
     with open("output-data/lidemo-lite.json", "w") as f:
-        json.dump(graph_lite, f, indent=2)
+        json.dump(graph_lite.to_dict(), f, indent=2)
+

@@ -4,9 +4,22 @@ import uuid
 from collections import defaultdict, deque
 from copy import deepcopy
 from datetime import datetime
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Union
 
 GraphDict = Dict[str, Dict] 
+
+default_relation_types = {
+    "child": { "label": "child", "reverse_label": "parent" },
+    "linkedin-url": { "label": "LinkedIn URL", "reverse_label": "is LinkedIn URL of"},
+    "works-at": { "label": "works at", "reverse_label": "employs"},
+    "knows": { "label": "knows", "reverse_label": "knows"},
+    "email": { "label": "email address", "reverse_label": "is Email Address of"},
+    "type": { "label": "type", "reverse_label": "is type of"}
+}
+
+global_root_node_id = "global-root-id"
+author_id = "global-admin"
+global_users_id = "global-users-id"
 
 def create_node(content: str, id = None) -> Dict[str, Any]:
     """Create a node matching SerializedNode schema"""
@@ -47,11 +60,6 @@ def create_relation_type(label: str, reverse_label = None, id = None) -> Dict[st
         "isPublic": True
     }
 
-
-default_relation_types = {
-    "child": { "label": "child", "reverse_label": "parent" },
-    "linkedin-url": { "label": "LinkedIn URL", "reverse_label": "is LinkedIn URL of"}
-}
 class Graph:
     def __init__(self, graph_dict: Union[None, GraphDict] = None):
         self._graph = graph_dict or {
@@ -59,13 +67,17 @@ class Graph:
             "relationsById": {},
             "relationTypesById": {},
         }
-        for relation_type_id, relation_type in default_relation_types.items():
-            if relation_type_id not in self._graph["relationTypesById"]:
-                self.add_relation_type(create_relation_type(relation_type["label"], relation_type["reverse_label"], id=relation_type_id))
         self._nodes_by_content = {}
         self._relations_by_content = {}
         self._relations_by_from_id = defaultdict(set)
         self._relations_by_to_id = defaultdict(set)
+
+        # Add default data
+        for relation_type_id, relation_type in default_relation_types.items():
+            if relation_type_id not in self._graph["relationTypesById"]:
+                self.add_relation_type(create_relation_type(relation_type["label"], relation_type["reverse_label"], id=relation_type_id))
+        self.upsert_node("Global Root", id=global_root_node_id)
+
         self.reindex()
 
     def reindex(self):
@@ -145,6 +157,9 @@ class Graph:
 
     def upsert_relation(self, from_id: str, to_id: str, relation_type_id: str = "child", id = None) -> None:
         """Upsert a relation to the graph and update the content index"""
+        if from_id == to_id:
+            print("WARNING: from_id == to_id", from_id, to_id)
+            return
         relation = self.get_or_create_relation(from_id, to_id, relation_type_id, id=id)
         self.add_relation(relation)
 
@@ -220,6 +235,25 @@ class Graph:
                 yield relation, parent
                 stack.append((parent["id"], steps_left - 1))
 
+    def walk_descendants(self, node_id: str, max_steps = 10):
+        visited = set()
+        stack = [(node_id, max_steps)]
+        while stack:
+            current_id, steps_left = stack.pop()
+            if current_id == global_root_node_id:
+                continue
+            if steps_left <= 0 or current_id in visited:
+                continue
+            visited.add(current_id)
+
+            for relation_id in self._relations_by_from_id.get(current_id, []):
+                relation = self.get_relation(relation_id)
+                if not relation: continue
+                child = self.get_node(relation["toId"])
+                if not child: continue
+                yield relation, child
+                stack.append((child["id"], steps_left - 1))
+
     def walk_adjacent(self, node_id: str, max_steps = 10):
         visited = set() 
         stack = [(node_id, max_steps)]
@@ -259,13 +293,6 @@ class Graph:
         graph_dict["nodesByContent"] = deepcopy(self._nodes_by_content)
         graph_dict["relationsByContent"] = deepcopy(self._relations_by_content)
         return graph_dict
-
-
-global_root_node_id = "global-root-id"
-author_id = "global-admin"
-global_users_id = "global-users-id"
-
-
 
 
 def parse_line(line: str):

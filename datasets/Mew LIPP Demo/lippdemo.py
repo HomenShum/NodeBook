@@ -4,14 +4,9 @@ import re
 from typing import Union
 
 import pandas as pd
-from crunchbase import get_crunchbase_df
-from lidemo import (filter_for_top_people, get_people_node_ids,
-                    graphify_linkedin, linkedin_dir)
-from utils import (Graph, GraphDict, add_node, add_relation, add_text_graph,
-                   clean_first_name, clean_last_name,
-                   create_and_add_related_node, create_graph, filter_graph,
-                   get_or_create_node, get_or_create_relation,
-                   global_root_node_id, update_nodes_by_content)
+from lidemo import get_people_node_ids, graphify_linkedin, linkedin_dir
+from utils import (Graph, GraphDict, add_text_graph, filter_graph,
+                   global_root_node_id)
 
 vcs_list_id = "vcs_list_node_id"
 
