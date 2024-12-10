@@ -12,13 +12,13 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
 import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
-import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
 import { RelatedNodeView } from "./RelatedNodeView";
@@ -37,7 +37,10 @@ interface Props {
 
 export const RelatedObjectView = observer(function RelatedObjectView({ treeNode }: Props) {
   const viewStore = useViewStore();
-  const viewType = (treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
+  const viewType =
+    treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree
+      ? viewStore.quickCaptureViewType
+      : viewStore.viewType;
 
   const hideBullet =
     viewType === "note" &&
@@ -129,8 +132,17 @@ const Content = observer(function Content() {
   } = useTreeNode();
   const tree = treeNode.tree;
   const viewStore = useViewStore();
-  const treeViewType = (treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
+  const treeViewType =
+    treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree
+      ? viewStore.quickCaptureViewType
+      : viewStore.viewType;
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
+  const [manualShowRelationType, setManualShowRelationType] = useState(false);
+
+  const openRelComboBox = () => {
+    setRelationComboboxIsOpen(true);
+    setManualShowRelationType(true);
+  };
 
   const nodeSelectionAnchorId = tree.selection && tree.selection.type === "node" ? tree.selection.anchorNodeId : null;
   const nodeSelectionHeadId = tree.selection && tree.selection.type === "node" ? tree.selection.headNodeId : null;
@@ -146,7 +158,7 @@ const Content = observer(function Content() {
     <>
       <div className={cn(styles.RelatedObjectNode, tree.isNodeSelected(treeNode.id) && styles.Selected)}>
         <div className={styles.RelatedObjectNodeContent}>
-          {showRelationType && (
+          {(showRelationType || manualShowRelationType) && (
             <div
               onPointerDown={(e) => {
                 if (isMobile) {
@@ -164,6 +176,7 @@ const Content = observer(function Content() {
                 treeNode={treeNode}
                 isOpen={relationComboboxIsOpen}
                 setIsOpen={setRelationComboboxIsOpen}
+                setShowRelationType={setManualShowRelationType}
               />
             </div>
           )}
@@ -172,13 +185,11 @@ const Content = observer(function Content() {
               <div
                 className={cn(
                   styles.NoteContentSection,
-                  treeNode.parent instanceof RootTreeNode &&
-                    treeViewType === "note" &&
-                    styles.ChildOfRootInNoteView,
+                  treeNode.parent instanceof RootTreeNode && treeViewType === "note" && styles.ChildOfRootInNoteView,
                 )}
               >
                 <div style={{ position: "absolute", left: -2, top: 4, width: "10px", height: "20px" }}>
-                  <NoteContentPrefix treeNode={treeNode} />
+                  <NoteContentPrefix treeNode={treeNode} openRelComboBox={openRelComboBox} />
                 </div>
                 <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
               </div>
@@ -286,7 +297,9 @@ const Bullet = observer(function Bullet() {
 
       event.shiftKey
         ? viewStore.createSidebarTree(treeNode.object)
-        : treeNode.tree.id === viewStore.mainView.id || (treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree)
+        : treeNode.tree.id === viewStore.mainView.id ||
+          treeNode.tree instanceof QuickCaptureTree ||
+          treeNode.tree instanceof QuickCaptureSearchTree
         ? setRoot(treeNode.object)
         : treeNode.tree.setRoot(treeNode.object);
     },

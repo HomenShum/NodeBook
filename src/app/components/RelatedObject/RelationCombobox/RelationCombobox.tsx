@@ -18,6 +18,7 @@ interface Props {
   treeNode: DescendantTreeNode | PointerTreeNode;
   isOpen: boolean;
   setIsOpen: (value: boolean) => void;
+  setShowRelationType: (value: boolean) => void;
 }
 
 export const RelationCombobox = observer(function RelationCombobox({
@@ -25,6 +26,7 @@ export const RelationCombobox = observer(function RelationCombobox({
   treeNode,
   isOpen,
   setIsOpen,
+  setShowRelationType,
 }: Props) {
   const user = useUser();
 
@@ -44,6 +46,7 @@ export const RelationCombobox = observer(function RelationCombobox({
   const close = () => {
     setIsOpen(false);
     setUpdatingRelationType(false);
+    setShowRelationType(false);
     treeNode.tree.setFocusedNode(treeNode.id);
   };
 

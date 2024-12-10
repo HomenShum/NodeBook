@@ -121,7 +121,7 @@ export const ArrowKeyPlugin = () => {
         COMMAND_PRIORITY_EDITOR,
       ),
     );
-  }, [editor, editMode, tree, treeNode.id]);
+  }, [editor, editMode, tree, treeNode]);
 
   return null;
 };

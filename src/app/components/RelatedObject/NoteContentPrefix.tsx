@@ -8,13 +8,14 @@ import styles from "./styles/RelatedObjectView.module.css";
 
 type Props = {
   treeNode: DescendantTreeNode;
+  openRelComboBox: () => void;
 };
 
 /**
  * Renders an invisible input at the beginning of note content to allow
  * for easy navigation between note content and note content prefix.
  */
-export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode }: Props) {
+export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode, openRelComboBox }: Props) {
   const tree = treeNode.tree;
   const inputRef = useRef<HTMLInputElement>(null);
   const handleEnterKey = useHandleEnterKey(tree, treeNode);
@@ -26,18 +27,9 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode 
         className={styles.NoteContentPrefix}
         onKeyDown={async (e: React.KeyboardEvent) => {
           switch (e.key) {
-            // case "Enter": {
-            //   return handleEnterKey(e.nativeEvent);
-            // }
-            // case "Backspace":
-            //   try {
-            //     e.preventDefault();
-            //     await tree.replaceObjectAtNodeWithCopy(treeNode.id);
-            //     tree.setFocusedNode(treeNode.id);
-            //   } catch (error) {
-            //     alert(error instanceof Error ? error.message : "Unknown error");
-            //   }
-            //   break;
+            case "Enter": {
+              return handleEnterKey(e.nativeEvent);
+            }
             case "ArrowRight":
               e.preventDefault();
               e.stopPropagation();
@@ -50,15 +42,20 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode 
               e.nativeEvent.stopImmediatePropagation();
               tree.moveEditorSelectionDown("start");
               break;
-            // case "ArrowUp":
-            //   e.preventDefault();
-            //   e.stopPropagation();
-            //   e.nativeEvent.stopImmediatePropagation();
-            //   e.metaKey || e.ctrlKey ? tree.collapseAtSelection() : tree.moveEditorSelectionUp("start");
-            //   break;
+            case "ArrowUp":
+              e.preventDefault();
+              e.stopPropagation();
+              e.nativeEvent.stopImmediatePropagation();
+              e.metaKey || e.ctrlKey ? tree.collapseAtSelection() : tree.moveEditorSelectionUp("start");
+              break;
             case "ArrowLeft":
               e.preventDefault();
               tree.moveEditorSelectionUp("end");
+              break;
+            default:
+              e.preventDefault();
+              e.stopPropagation();
+              openRelComboBox();
               break;
           }
         }}
