@@ -19,6 +19,7 @@ import { useTree } from "@/app/tree/TreeContext";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 
 import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./styles/ChildGroups.module.css";
@@ -52,13 +53,14 @@ interface NoteContentSectionProps {
 
 export const NoteContentSection = observer(function NoteContentSection({ parentNode, group }: NoteContentSectionProps) {
   const viewStore = useViewStore();
+  const viewType = (parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
   if (parentNode instanceof DescendantTreeNode && parentNode.instanceCountInPath > 1) {
     return <div>Circular reference to {`"${parentNode.object.text}"`}</div>;
   }
   if (group.nodes.length === 0) {
     return null;
   }
-  const topLevelNote = viewStore.viewType === "note" && parentNode.parent instanceof RootTreeNode;
+  const topLevelNote = viewType === "note" && parentNode.parent instanceof RootTreeNode;
   const rootNote = parentNode instanceof RootTreeNode;
   return (
     <div>
@@ -84,7 +86,8 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
   const user = useUser();
   const isRoot = parentNode instanceof RootTreeNode;
   const isEmpty = group.nodes.length === 0;
-  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
+  const viewType = (parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
+  const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
 
   if (isEmpty && !group.isExpanded && !isRoot) {
     return null;
@@ -122,7 +125,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
           ))}
           <div
             className={`${styles.PinSectionSeparator} ${
-              viewStore.viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
+              viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
             }`}
           />
         </>
@@ -138,7 +141,8 @@ interface AllSectionProps {
 
 const AllSection = observer(function AllSection({ parentNode, group }: AllSectionProps) {
   const viewStore = useViewStore();
-  const noteView = parentNode instanceof RootTreeNode && viewStore.viewType === ViewType.Note;
+  const viewType = (parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
+  const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
 
   return (
     <div>

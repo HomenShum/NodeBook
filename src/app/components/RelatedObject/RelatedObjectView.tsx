@@ -18,6 +18,7 @@ import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
 import { RelatedNodeView } from "./RelatedNodeView";
@@ -36,9 +37,10 @@ interface Props {
 
 export const RelatedObjectView = observer(function RelatedObjectView({ treeNode }: Props) {
   const viewStore = useViewStore();
+  const viewType = (treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
 
   const hideBullet =
-    viewStore.viewType === "note" &&
+    viewType === "note" &&
     // node is a direct child of the root
     (treeNode.parent instanceof RootTreeNode ||
       // or node is content of a note which is a direct child of the root
@@ -52,7 +54,7 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
         {treeNode.isTodoItem && <Checkbox node={treeNode} />}
         <Content />
       </Main>
-      {viewStore.viewType === "note" && treeNode.parent instanceof RootTreeNode && treeNode.childCount > 0 && (
+      {viewType === "note" && treeNode.parent instanceof RootTreeNode && treeNode.childCount > 0 && (
         <RelationsToggle treeNode={treeNode} />
       )}
       {treeNode.isExpanded && <ChildGroups treeNode={treeNode} />}
@@ -127,6 +129,7 @@ const Content = observer(function Content() {
   } = useTreeNode();
   const tree = treeNode.tree;
   const viewStore = useViewStore();
+  const treeViewType = (treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
 
   const nodeSelectionAnchorId = tree.selection && tree.selection.type === "node" ? tree.selection.anchorNodeId : null;
@@ -152,7 +155,7 @@ const Content = observer(function Content() {
                 }
               }}
             >
-              {viewStore.viewType === "note" &&
+              {treeViewType === "note" &&
                 treeNode.object.noteContentRelationsList.size === 0 && // Notecontent is empty
                 treeNode.parent instanceof RootTreeNode &&
                 !isUnlabelledChild(treeNode) && <CornerDownRight size={16} className={styles.ElbowArrow} />}
@@ -170,7 +173,7 @@ const Content = observer(function Content() {
                 className={cn(
                   styles.NoteContentSection,
                   treeNode.parent instanceof RootTreeNode &&
-                    viewStore.viewType === "note" &&
+                    treeViewType === "note" &&
                     styles.ChildOfRootInNoteView,
                 )}
               >
@@ -203,7 +206,7 @@ const Content = observer(function Content() {
       <div>
         {
           // Check for note content
-          viewStore.viewType === "outline" && treeNode.object.noteContentRelationsList.size > 0 && (
+          treeViewType === "outline" && treeNode.object.noteContentRelationsList.size > 0 && (
             <div
               style={{ width: "10%", height: "100%", position: "absolute" }}
               // On click, set focus to noteContentSuffix
@@ -269,6 +272,7 @@ const Content = observer(function Content() {
 
 const Bullet = observer(function Bullet() {
   const graphStore = useGraphStore();
+  const settingsStore = useSettingsStore();
   const userId = graphStore.user?.id;
   const { treeNode } = useTreeNode();
   const setRoot = useSetRoot();
@@ -282,7 +286,7 @@ const Bullet = observer(function Bullet() {
 
       event.shiftKey
         ? viewStore.createSidebarTree(treeNode.object)
-        : treeNode.tree.id === viewStore.mainView.id
+        : treeNode.tree.id === viewStore.mainView.id || (treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree)
         ? setRoot(treeNode.object)
         : treeNode.tree.setRoot(treeNode.object);
     },
@@ -308,7 +312,7 @@ const Bullet = observer(function Bullet() {
     <div
       className={cn(
         styles.RelatedObjectBulletContainer,
-        isEmpty && !hasChildren && styles.Hidden,
+        isEmpty && !hasChildren && !settingsStore.showBulletForEmptyNode && styles.Hidden,
         isNoteContentRoot && styles.NoteContentRootBullet,
       )}
       data-tooltip={tooltipContent}

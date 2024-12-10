@@ -20,6 +20,7 @@ export const isCopyHotkey = isHotkey("mod+c");
 export const isExpandAtSelectionHotKey = isHotkey("mod+ArrowDown");
 export const isCollapseAtSelectionHotKey = isHotkey("mod+ArrowUp");
 export const isCommandBarHotKey = isHotkey("mod+shift+k");
+export const isQuickCaptureHotkey = isHotkey("mod+q");
 
 export const treeHotkeyMapping: {
   predicate: (event: KeyboardEvent, tree?: Tree) => boolean;

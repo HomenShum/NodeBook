@@ -16,3 +16,7 @@
     border: 0;
     padding: 0;
 }
+
+.QuickCaptureContainer > [class*="ControlsBar"] {
+    border: 0;
+}

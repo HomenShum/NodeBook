@@ -2,7 +2,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { observer } from "mobx-react-lite";
 import React, { useEffect, useState } from "react";
-import isHotkey from "is-hotkey";
 
 import { useAuth } from "@/app/auth/useAuth";
 import CommandBar from "@/app/components/CommandBar/CommandBar";
@@ -13,8 +12,7 @@ import Loader from "@/app/components/UIPrimitives/Loader";
 import { useLoading } from "@/app/contexts/LoadingContext";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
-import RightSidebar from "@/app/components/RightSidebar";
-import { isCommandBarHotKey } from "@/app/hotkeys";
+import { isCommandBarHotKey, isQuickCaptureHotkey } from "@/app/hotkeys";
 
 import styles from "./app.module.css";
 
@@ -47,6 +45,10 @@ export default observer(function App({ children }: Props) {
       if(isCommandBarHotKey(event)){
         event.preventDefault();
         viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen);
+      }
+      if(isQuickCaptureHotkey(event)){
+        event.preventDefault();
+        viewStore.toggleQuickCapture();
       }
     }
     document.addEventListener("keydown", handleKeyDown);
@@ -107,7 +109,6 @@ export default observer(function App({ children }: Props) {
               </main>
             </div>
           </div>
-          <RightSidebar />
         </div>
       </div>
     );

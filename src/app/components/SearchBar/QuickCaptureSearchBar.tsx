@@ -10,9 +10,9 @@ import { cn } from "@/lib/utils";
 
 import styles from "./SearchBar.module.css";
 
-export const SearchBar = observer(function SearchBar() {
+export const QuickCaptureSearchBar = observer(function SearchBar() {
   const viewStore = useViewStore();
-  const [isExpanded, setIsExpanded] = useState(!!viewStore.searchQuery);
+  const [isExpanded, setIsExpanded] = useState(!!viewStore.quickCaptureSearchQuery);
   const [visibleInput, setVisibleInput] = useState("");
   const [lastInputTime, setLastInputTime] = useState(new Date());
   const inputRef = useRef<HTMLInputElement>(null);
@@ -20,9 +20,9 @@ export const SearchBar = observer(function SearchBar() {
 
   const handleBlur = useCallback(
     (e: React.FocusEvent) => {
-      if (!containerRef.current?.contains(e.relatedTarget as Node) && !viewStore.searchQuery) {
+      if (!containerRef.current?.contains(e.relatedTarget as Node) && !viewStore.quickCaptureSearchQuery) {
         setIsExpanded(false);
-        viewStore.cancelDeepSearch();
+        viewStore.cancelQuickCaptureDeepSearch();
       }
     },
     [viewStore],
@@ -31,7 +31,7 @@ export const SearchBar = observer(function SearchBar() {
   const handleCancelClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      viewStore.cancelDeepSearch();
+      viewStore.cancelQuickCaptureDeepSearch();
       setVisibleInput("");
       setIsExpanded(false);
       inputRef.current?.blur();
@@ -41,7 +41,7 @@ export const SearchBar = observer(function SearchBar() {
 
   const handleContainerClick = useCallback(
     (e: React.MouseEvent) => {
-      viewStore.searchView.setFocusedNode(null);
+      viewStore.quickCaptureSearchView.setFocusedNode(null);
       if (!isExpanded || e.target === containerRef.current) {
         inputRef.current?.focus();
       }
@@ -61,8 +61,8 @@ export const SearchBar = observer(function SearchBar() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (new Date().getTime() - lastInputTime.getTime() > 400 && viewStore.searchQuery !== visibleInput) {
-        viewStore.setSearchQuery(visibleInput);
+      if (new Date().getTime() - lastInputTime.getTime() > 400 && viewStore.quickCaptureSearchQuery !== visibleInput) {
+        viewStore.setQuickCaptureSearchQuery(visibleInput);
       }
     }, 100);
 
@@ -89,24 +89,24 @@ export const SearchBar = observer(function SearchBar() {
         onChange={handleInputChange}
         onFocus={() => {
           setIsExpanded(true);
-          viewStore.setDeepSearching(true);
+          viewStore.setQuickCaptureDeepSearching(true);
         }}
         onBlur={handleBlur}
         onKeyDown={action((e) => {
           if (e.key === "Escape") {
             // NOTE: Vimium will screw this up! It will override custom ESC behavior
             setIsExpanded(false);
-            viewStore.cancelDeepSearch();
+            viewStore.cancelQuickCaptureDeepSearch();
             setVisibleInput("");
           } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            viewStore.mainView.createChildOfRootAndFocus({
-              nodeProps: { content: [{ type: "text", value: viewStore.searchQuery }] },
+            viewStore.quickCaptureView?.createChildOfRootAndFocus({
+              nodeProps: { content: [{ type: "text", value: viewStore.quickCaptureSearchQuery }] },
             });
-            viewStore.setSearchQuery("");
+            viewStore.setQuickCaptureSearchQuery("");
           } else if (e.key === "k" && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
             e.preventDefault();
-            viewStore.mainView.createChildOfRootAndFocus({
+            viewStore.quickCaptureView?.createChildOfRootAndFocus({
               nodeProps: { content: [{ type: "text", value: "" }] },
             });
           }

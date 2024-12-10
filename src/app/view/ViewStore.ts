@@ -9,17 +9,21 @@ import { SublistTree } from "@/app/tree/SublistTree";
 import { Path, Root, Tree } from "@/app/tree/Tree";
 import { makeAutoSaving } from "@/app/util";
 import { ViewType } from "@/app/view/types";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 
 export class ViewStore {
   private readonly settingsStore: SettingsStore;
   private readonly graphStore: GraphStore;
   public searchQuery: string = "";
+  public quickCaptureSearchQuery: string = "";
   public flattenSublists: boolean = false;
 
   public viewType = ViewType.Outline;
+  public quickCaptureViewType = ViewType.Note;
   public treeView: Tree;
   public sublistView: Tree;
   public searchView: SearchTree;
+  public quickCaptureSearchView: QuickCaptureSearchTree;
 
   public hoveredNode: Path | null = null;
 
@@ -41,6 +45,7 @@ export class ViewStore {
   public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | "help" | null = null;
   public isCommandBarOpen: boolean = false;
   private deepSearching: boolean = false;
+  private quickCaptureDeepSearching: boolean = false;
   public sidebarTrees: Tree[] = [];
   public quickCaptureTree: Tree | null = null;
   public activeTree: Tree;
@@ -61,6 +66,7 @@ export class ViewStore {
     this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser(), { isMainTree: true });
     this.sublistView = new SublistTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.searchView = new SearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
+    this.quickCaptureSearchView = new QuickCaptureSearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.activeTree = this.treeView;
   }
 
@@ -79,6 +85,13 @@ export class ViewStore {
     }
   }
 
+  get quickCaptureView(): Tree | null{
+    if(this.quickCaptureDeepSearching){
+      return this.quickCaptureSearchView
+    }
+    return this.quickCaptureTree;
+  }
+
   setRoot(root: Root) {
     this.treeView.setRoot(root);
     this.sublistView.setRoot(root);
@@ -89,7 +102,9 @@ export class ViewStore {
     if (!isObservable(this)) {
       makeAutoObservable(this, {
         setViewType: action,
+        setQuickCaptureViewType: action,
         setSearchQuery: action,
+        setQuickCaptureSearchQuery: action,
         setFlattenSublists: action,
         setCommandBarOpen: action,
         isMouseUpAfterDrag: observable,
@@ -97,7 +112,9 @@ export class ViewStore {
         handleMouseMove: action,
         handleMouseUp: action,
         setDeepSearching: action,
+        setQuickCaptureDeepSearching: action,
         isDeepSearching: computed,
+        isQuickCaptureDeepSearching: computed,
         createSidebarTree: action,
         deleteSidebarTree: action,
         toggleQuickCapture: action,
@@ -106,6 +123,9 @@ export class ViewStore {
         setNodeIsProcessing: action,
         clearNodeIsProcessing: action,
         isNodeProcessing: observable,
+        cancelDeepSearch: action,
+        cancelQuickCaptureDeepSearch: action,
+        quickCaptureView: computed
       });
     }
   }
@@ -114,8 +134,16 @@ export class ViewStore {
     this.deepSearching = deepSearching;
   }
 
+  setQuickCaptureDeepSearching(deepSearching: boolean) {
+    this.quickCaptureDeepSearching = deepSearching;
+  }
+
   setViewType(viewType: ViewType) {
     this.viewType = viewType;
+  }
+
+  setQuickCaptureViewType(viewType: ViewType) {
+    this.quickCaptureViewType = viewType;
   }
 
   setFlattenSublists(flattenSublists: boolean) {
@@ -124,14 +152,24 @@ export class ViewStore {
 
   setSearchQuery(query: string) {
     // We modify the search bar selectively with logic encoded in the SearchBar class.
-
     this.searchQuery = query;
     this.searchView.clearSearch(this.treeView.root);
     this.searchView.deepSearch(query);
   }
 
+  setQuickCaptureSearchQuery(query: string){
+    if(!this.quickCaptureTree) return;
+    this.quickCaptureSearchQuery = query;
+    this.quickCaptureSearchView.clearSearch(this.quickCaptureTree.root);
+    this.quickCaptureSearchView.deepSearch(query);
+  }
+
   get isDeepSearching() {
     return this.deepSearching;
+  }
+
+  get isQuickCaptureDeepSearching(){
+    return this.quickCaptureDeepSearching;
   }
 
   cancelDeepSearch() {
@@ -139,6 +177,13 @@ export class ViewStore {
     this.setDeepSearching(false);
     this.setSearchQuery("");
     this.searchView.clearSearch(this.treeView.root);
+  }
+
+  cancelQuickCaptureDeepSearch() {
+    if(!this.quickCaptureTree) return;
+    this.setQuickCaptureDeepSearching(false);
+    this.setQuickCaptureSearchQuery("");
+    this.quickCaptureSearchView.clearSearch(this.quickCaptureTree.root)
   }
 
   cleanup() {
@@ -189,7 +234,7 @@ export class ViewStore {
   toggleQuickCapture() {
     this.quickCaptureTree = this.quickCaptureTree
       ? null
-      : new Tree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser());
+      : new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser());
   }
 
   setActiveTree(tree: Tree) {

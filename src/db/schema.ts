@@ -40,6 +40,7 @@ const SerializedUserSettingsSchema = z.object({
   showExportSubtreeToIdeapad: z.boolean().optional(),
   showGraphViewButton: z.boolean().optional(),
   parseWithAiLinkingOption: ParseWithAiLinkingOptionEnum.optional(),
+  showBulletForEmptyNode: z.boolean().optional()
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 

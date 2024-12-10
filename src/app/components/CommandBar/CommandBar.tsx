@@ -91,7 +91,7 @@ const CommandBar = observer(() => {
         type: "create" as const,
         id: "create",
         name: search.text === "" ? "Create blank node" : `Create new node: "${search.text}"`,
-        perform: async (isCmdPressed: boolean) => {
+        perform: async (isShiftPressed: boolean) => {
           const { node } = await graphStore.addChildNode({
             parentId: graphStore.userRoot.id,
             nodeProps: { content: search.chips },
@@ -107,7 +107,7 @@ const CommandBar = observer(() => {
 
           close();
           resetSearch();
-          if (isCmdPressed) {
+          if (isShiftPressed) {
             setRoot(node);
           }
 
@@ -154,8 +154,9 @@ const CommandBar = observer(() => {
         case "Enter":
           e.preventDefault();
           e.stopPropagation();
-          if (filteredCommands[selectedIndex]) {
-            filteredCommands[selectedIndex].perform(e.metaKey);
+          const index = (e.ctrlKey || e.metaKey) ? filteredCommands.length - 1 : selectedIndex;
+          if (filteredCommands[index]) {
+            filteredCommands[index].perform(e.shiftKey);
           }
           break;
       }

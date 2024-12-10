@@ -251,6 +251,14 @@ export const DevTools = observer(function DevTools() {
           />
           Show Graph View Button (Scrappy Demo)
         </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.showBulletForEmptyNode}
+            onChange={(e) => settingsStore.setShowBulletForEmptyNode(e.target.checked)}
+          />
+          Show bullets for empty nodes
+        </label>
         <div className={styles.DevToolsDropdownContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />

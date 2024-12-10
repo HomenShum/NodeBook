@@ -269,6 +269,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
         {!user.isAnonymous ? (
           <div className={s.BreadcrumbRightArea}>
             <Button
+              style={{ position: "relative" }}
               variant="default"
               className={cn(s.ShowTooltip, s.BottomAlign)}
               data-tooltip="Command bar"
@@ -278,6 +279,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
               <Command size={14} strokeWidth={1.5} />
             </Button>
             <Button
+              style={{ position: "relative" }}
               className={cn(s.ShowTooltip, s.RightAlign)}
               data-tooltip={settingsStore.publicMode ? "Public mode" : "Private mode"}
               variant={settingsStore.publicMode ? "active" : "default"}

@@ -31,7 +31,7 @@ const filterIcons: { [key: string]: React.ReactNode } = {
   Places: <MapPin size={14} />,
 };
 
-const FilterPill = ({ filter, onRemove }: { filter: string; onRemove: (filter: string) => void }) => {
+export const FilterPill = ({ filter, onRemove }: { filter: string; onRemove: (filter: string) => void }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -91,7 +91,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   return (
     <div className={s.ControlsBar}>
       <div className={styles.ControlsBarWrapper}>
-        <SearchBar />
+        <SearchBar/>
         {selectedFilters.map((filter) => (
           <FilterPill
             key={filter}

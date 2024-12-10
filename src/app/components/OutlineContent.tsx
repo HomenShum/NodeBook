@@ -22,6 +22,7 @@ import { copyObjectUrlToClipboard } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 
 import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 
@@ -53,10 +54,10 @@ function OutlineContent({ tree }: Props) {
     );
   }, [isGlobalRoot, treeRoot.object.authorId, treeRoot.object.createdAt, userId, graphStore]);
 
-  const setCurrentNodeAsRoot = () => {
+  const setCurrentNodeAsRoot = (forceUpdateMainTree: boolean = false) => {
     if (tree.selectionWithNodes?.type !== "editor") return;
     const node = tree.selectionWithNodes.treeNode;
-    if (tree.isMainTree) {
+    if (tree.isMainTree || forceUpdateMainTree) {
       setRoot(node.object);
     } else {
       tree.setRoot(node.object);
@@ -84,7 +85,7 @@ function OutlineContent({ tree }: Props) {
       }
       if (isZoomInHotkey(event)) {
         wasEventHandled = true;
-        setCurrentNodeAsRoot();
+        setCurrentNodeAsRoot((tree instanceof QuickCaptureTree) || tree instanceof QuickCaptureSearchTree);
       }
       if (isZoomOutHotkey(event)) {
         wasEventHandled = true;

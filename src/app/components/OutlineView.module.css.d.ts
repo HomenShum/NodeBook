@@ -13,6 +13,7 @@ declare const styles: {
   readonly "TooltipContent": string;
   readonly "Transparent": string;
   readonly "WindowNav": string;
+  readonly "MainAndSidebarContainer": string;
 };
 export = styles;
 

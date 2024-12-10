@@ -33,7 +33,8 @@ const list: HotkeyItem[] = [
   { name: "Copy", keys: [`${modKey}`, "C"] },
   { name: "Expand at Selection", keys: [`${modKey}`, "↓"] },
   { name: "Collapse at Selection", keys: [`${modKey}`, "↑"] },
-  {name: "Open Command Bar", keys: [`${modKey}`,"Shift","K"]}
+  {name: "Open Command Bar", keys: [`${modKey}`,"Shift","K"]},
+  {name: "Open Quick Capture", keys: [`${modKey}`,"Q"]}
 ];
 
 export const HelpModal = observer(function HelpModal() {

@@ -165,3 +165,11 @@
   flex: 1;
   min-height: 100px;
 }
+
+.MainAndSidebarContainer {
+  display: flex;
+}
+
+.MainAndSidebarContainer > .OutlineContent {
+  flex-grow: 1;
+}
