@@ -1,20 +1,19 @@
 import json
 import os
 
-from utils import (create_node, create_relation, filter_graph,
-                   global_root_node_id, text_to_graph)
+from utils import (add_text_graph, create_node, create_relation, filter_graph,
+                   global_root_node_id)
 
-root_id = "stanford-independent-labs"
+labs_root_id = "stanford-independent-labs"
 file_name = "stanford-independent-labs"
 
 if __name__ == "__main__":
     text = open("input-data/stanford-independent-labs.txt", "r").read()
-    root_node = create_node("Stanford Independent Labs", root_id)
+    root_node = create_node("Stanford Independent Labs", labs_root_id)
 
     # Create graph and make it a child of the global root node
-    graph = text_to_graph(text, root_node)
-    rel_to_global_root = create_relation(global_root_node_id, root_id)
-    graph["relationsById"][rel_to_global_root["id"]] = rel_to_global_root
+    graph = add_text_graph(text, root_node)
+    graph.upsert_relation(global_root_node_id, labs_root_id)
 
     # Save full version
     with open(os.path.join("output-data", f"{file_name}.json"), "w") as f:
