@@ -249,7 +249,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <span>
                   <Home size={16} strokeWidth={1.5} />
                 </span>
-                <span className={styles.ButtonText}>Your Root ({graphStore.homeRoot.text})</span>
+                <span className={styles.ButtonText}>Your Root ({graphStore.homeRoot.contentOnlyAsText})</span>
               </Button>
             )}
             <Button

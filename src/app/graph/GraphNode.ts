@@ -99,6 +99,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       text: computed,
       isLocal: computed,
       relationsWithPositions: computed,
+      contentOnlyAsText: computed,
     });
   }
 
@@ -117,7 +118,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       oldValues.isNewRelatedObjectsPublic = this.isNewRelatedObjectsPublic;
       this.isNewRelatedObjectsPublic = newProps.isNewRelatedObjectsPublic;
     }
-    if(newProps.isChecked !== undefined){
+    if (newProps.isChecked !== undefined) {
       oldValues.isChecked = this.isChecked;
       this.isChecked = newProps.isChecked;
     }
@@ -182,6 +183,10 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       .join("");
   }
 
+  get contentOnlyAsText(): string {
+    return this._dfsText({}, true);
+  }
+
   get text(): string {
     const text = this._dfsText({}, true);
     if (this.noteContentRelationsList.size > 0) {
@@ -238,7 +243,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isPublic: this.isPublic,
       isNewRelatedObjectsPublic: this.isNewRelatedObjectsPublic,
       canonicalRelationId: this.canonicalRelation?.id ?? null,
-      isChecked: this.isChecked || false
+      isChecked: this.isChecked || false,
     };
   }
 }
