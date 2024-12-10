@@ -16,13 +16,13 @@ import { useUser } from "@/app/contexts/UserContext";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { useToast } from "@/app/hooks/useToast";
 import { handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey } from "@/app/hotkeys";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { Tree } from "@/app/tree/Tree";
 import { treeNodeToObjectPath, useSetRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
-import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 
 import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 
@@ -85,7 +85,7 @@ function OutlineContent({ tree }: Props) {
       }
       if (isZoomInHotkey(event)) {
         wasEventHandled = true;
-        setCurrentNodeAsRoot((tree instanceof QuickCaptureTree) || tree instanceof QuickCaptureSearchTree);
+        setCurrentNodeAsRoot(tree instanceof QuickCaptureTree || tree instanceof QuickCaptureSearchTree);
       }
       if (isZoomOutHotkey(event)) {
         wasEventHandled = true;
@@ -185,9 +185,8 @@ function OutlineContent({ tree }: Props) {
             // Set focus to last part of final root node
             const lastNode = treeRoot.visibleChildren[treeRoot.visibleChildren.length - 1];
             // If the last node is note content, create a child at the end of the tree instead.
-            if (lastNode.object.noteContentRelationsList.size > 0) {
+            if (lastNode.object.noteContentRelationsList.size > 0 || lastNode.visibleChildren.length > 0) {
               tree.createChildOfRootAndFocus({ atBottom: true });
-              return;
             } else {
               tree.setFocusedNode(lastNode.path, "end");
             }
