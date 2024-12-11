@@ -267,11 +267,12 @@ if __name__ == "__main__":
     graph = add_linkedin(graph)
     graph = add_josh_langam(graph)
     graph = add_good_signal(graph)
-
+    
 
     # Create full version
     people_ids = set([node["id"] for node in graph.get_people_nodes()])
     graph_full = filter_by_people(graph, people_ids)
+    assign_canonical_relation(graph_full)
     assert_graph_integrity(graph_full._graph)
     full_path = os.path.join(output_dir, f"lippdemo.json")
     with open(full_path, "w") as f:
@@ -286,6 +287,7 @@ if __name__ == "__main__":
     )[:30]
     top_people_ids = set(node["id"] for node in people_by_relations)
     graph_lite = filter_by_people(graph, top_people_ids)
+    assign_canonical_relation(graph_lite)
     assert_graph_integrity(graph_lite._graph)
     lite_path = os.path.join(output_dir, f"lippdemo-lite.json")
     with open(lite_path, "w") as f:

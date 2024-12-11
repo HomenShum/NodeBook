@@ -2175,7 +2175,11 @@ export class GraphStore {
    * that isn't the relationType, it'll push it.
    */
   importData(data: SerializedGraphStore) {
-    let allNodeUpdates = this.loadBatchedSerializedNode(data.nodesById);
+    const allNodeUpdates = this.loadBatchedSerializedNode(
+      Object.fromEntries(
+        Object.entries(data.nodesById).map(([id, props]) => [id, { ...props, canonicalRelationId: null }]),
+      ),
+    );
 
     // cut out into its own load serialized relationtype function?
     let allRelationTypeUpdates: GraphUpdate[] = [];
@@ -2197,7 +2201,21 @@ export class GraphStore {
       }
     }
 
-    let allRelationUpdates = this.loadBatchedSerializedRelation(data.relationsById);
+    const allRelationUpdates = this.loadBatchedSerializedRelation(data.relationsById);
+
+    // Because the nodes and loaded before relations, the canonical relations are not set yet.
+    // We need to set them now once all relations are loaded.
+    for (const props of Object.values(data.nodesById)) {
+      if (!props.canonicalRelationId) continue;
+      const canonicalRelation = this.getRelation(props.canonicalRelationId);
+      if (!canonicalRelation) continue;
+      const { updates } = this._updateNode({
+        nodeId: props.id,
+        nodeProps: { canonicalRelationId: canonicalRelation?.id },
+      });
+      allNodeUpdates.push(...updates);
+    }
+
     return this.updateManager.syncImportUpdates(allNodeUpdates.concat(allRelationUpdates, allRelationTypeUpdates));
   }
 

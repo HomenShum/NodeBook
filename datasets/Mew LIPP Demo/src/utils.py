@@ -56,13 +56,12 @@ top_vcs = set([
 
 # constant ids
 author_id = "global-admin"
+global_root_node_id = "global-root-id"
 global_users_id = "global-users-id"
 linkedin_users_node_id = "linkedin-users-node-id"
 laurel_touby_id = "laurel-touby"
 vcs_list_id = "vcs_list_node_id"
-global_root_node_id = "global-root-id"
 author_id = "global-admin"
-global_users_id = "global-users-id"
 person_type_node_id = "person-type-node-id"
 company_type_node_id = "company-type-node-id"
 investor_type_node_id = "investor-type-node-id"
@@ -588,3 +587,29 @@ def clean_first_name(first_name):
     first_name = re.sub(r'^Dr\.\s*', '', first_name, flags=re.IGNORECASE)
     return first_name.strip()
 
+
+def assign_canonical_relation(graph: Graph, root_node_id = global_root_node_id):
+    root_node = graph.get_node(root_node_id)
+    if not root_node: return
+    max_steps = len(graph._graph["nodesById"]) + 10
+    steps = 0
+    visited = set()
+    queue = deque([(root_node["id"], None)])
+    while queue:
+        current_node_id, parent_relation_id = queue.popleft()
+        if not current_node_id or current_node_id in visited: continue
+        current_node = graph.get_node(current_node_id)
+        if not current_node: continue
+
+        # Assign canonical relation
+        visited.add(current_node_id)
+        current_node["canonicalRelationId"] = parent_relation_id
+        steps += 1
+        if steps > max_steps:
+            print(f"WARNING: Max steps while assigning canonical relations")
+            break
+        
+        # Add children to queue
+        for relation in graph.get_relations_with_from_id(current_node_id):
+            queue.append((relation["toId"], relation["id"]))
+    return graph
