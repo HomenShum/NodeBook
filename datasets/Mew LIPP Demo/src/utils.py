@@ -164,23 +164,16 @@ class Graph:
             if not node: continue
             yield node
 
-    def get_nodes_by_type(self, type_node_id: str) -> List[Dict[str, Any]]:
-        """Get a node by type node id"""
-        type_node = self.get_node(type_node_id)
-        if not type_node:
-            return []
+    def get_people_nodes(self) -> List[Dict[str, Any]]:
         nodes = {}
-        for i, relation_id in enumerate(self._relations_by_to_id.get(type_node_id, [])):
+        for relation_id in self._relations_by_to_id.get(person_type_node_id, []):
             relation = self.get_relation(relation_id)
             if not relation: continue
-            if relation["relationTypeId"] != default_relation_types["type"]["id"]: continue
+            if relation["relationTypeId"] != "type": continue
             node = self.get_node(relation["fromId"])
             if not node: continue
             nodes[node["id"]] = node
         return list(nodes.values())
-
-    def get_people_nodes(self) -> List[Dict[str, Any]]:
-        return self.get_nodes_by_type(person_type_node_id)
 
     def add_node(self, node):
         if not node:
@@ -310,82 +303,42 @@ class Graph:
         return value_node, relation, relation_type
 
     def walk_ancestors(self, node_id: str, max_steps = 10):
-        visited = set()
-        stack = [(node_id, max_steps)]
-        while stack:
-            current_id, steps_left = stack.pop()
-            if current_id == global_root_node_id:
-                continue
-            if steps_left <= 0 or current_id in visited:
-                continue
-            visited.add(current_id)
-
-            for relation_id in self._relations_by_to_id.get(current_id, []):
-                relation = self.get_relation(relation_id)
-                if not relation: continue
-                parent = self.get_node(relation["fromId"])
-                if not parent: continue
-                yield relation, parent
-                stack.append((parent["id"], steps_left - 1))
+        return self.walk_adjacent(node_id, max_steps, outgoing=False, incoming=True)
 
     def walk_descendants(self, node_id: str, max_steps = 10):
-        visited = set()
-        stack = [(node_id, max_steps)]
-        while stack:
-            current_id, steps_left = stack.pop()
-            if current_id == global_root_node_id:
-                continue
-            if steps_left <= 0 or current_id in visited:
-                continue
-            visited.add(current_id)
+        return self.walk_adjacent(node_id, max_steps, outgoing=True, incoming=False)
 
-            for relation_id in self._relations_by_from_id.get(current_id, []):
-                relation = self.get_relation(relation_id)
-                if not relation: continue
-                child = self.get_node(relation["toId"])
-                if not child: continue
-                yield relation, child
-                stack.append((child["id"], steps_left - 1))
-
-    def walk_adjacent(self, node_id: str, max_steps = 10):
+    def walk_adjacent(self, node_id: str, max_steps = 10, outgoing = True, incoming = True):
         visited = set() 
-        stack = [(node_id, max_steps)]
-        while stack:
-            current_id, steps_left = stack.pop()
+        queue = deque([(node_id, max_steps)])
+        while queue:
+            current_id, steps_left = queue.popleft()
             if current_id == global_root_node_id:
                 continue
             if steps_left <= 0 or current_id in visited:
                 continue
             visited.add(current_id)
 
-            for relation_id in self._relations_by_to_id.get(current_id, []):
-                relation = self.get_relation(relation_id)
-                if not relation: continue
-                parent = self.get_node(relation["fromId"])
-                if not parent: continue
-                yield relation, parent
-                stack.append((relation["fromId"], steps_left - 1))
+            if incoming:
+                for relation_id in self._relations_by_to_id.get(current_id, []):
+                    relation = self.get_relation(relation_id)
+                    if not relation: continue
+                    parent = self.get_node(relation["fromId"])
+                    if not parent: continue
+                    yield relation, parent
+                    queue.append((relation["fromId"], steps_left - 1))
 
-            for relation_id in self._relations_by_from_id.get(current_id, []):
-                relation = self.get_relation(relation_id)
-                if not relation: continue
-                child = self.get_node(relation["toId"])
-                if not child: continue
-                yield relation, child
-                stack.append((relation["toId"], steps_left - 1))
+            if outgoing:
+                for relation_id in self._relations_by_from_id.get(current_id, []):
+                    relation = self.get_relation(relation_id)
+                    if not relation: continue
+                    child = self.get_node(relation["toId"])
+                    if not child: continue
+                    yield relation, child
+                    queue.append((relation["toId"], steps_left - 1))
     
-    # def remove_hangovers(self):
-    #     """Remove relations that point at nothing"""
-    #     for relation in self._graph["relationsById"].values():
-    #         if (relation["fromId"] not in self._graph["nodesById"] and relation["fromId"] != global_root_node_id) or relation["toId"] not in self._graph["nodesById"]:
-    #             del self._graph["relationsById"][relation["id"]]
-
     def to_dict(self) -> Dict[str, Dict]:
-        """Return the underlying graph dictionary"""
-        graph_dict = deepcopy(self._graph)
-        graph_dict["nodesByContent"] = deepcopy(self._nodes_by_content)
-        graph_dict["relationsByContent"] = deepcopy(self._relations_by_content)
-        return graph_dict
+        return deepcopy(self._graph)
 
 
 def parse_line(line: str):
@@ -425,15 +378,6 @@ def relation_type_text_to_id(relation_type_text: str) -> str:
             return relation_type["id"]
     return f"relation-type-{'-'.join(relation_type_text.lower().split())}"
 
-def create_graph() -> GraphDict:
-    return {
-        "nodesById": {},
-        "relationsById": {},
-        "relationTypesById": {},
-        "nodesByContent": {},
-        "relationsByContent": {}
-    }
-
 def hash_content(content: str) -> str:
     return hashlib.sha256(content.lower().encode()).hexdigest()
 
@@ -445,63 +389,6 @@ def hash_relation(relation: Dict[str, Any]) -> str:
 
 def node_to_text(node: Dict[str, Any]) -> str:
     return node["content"][0]["value"]
-
-def update_nodes_by_content(graph: GraphDict, ids: Union[List[str], None] = None):
-    ids = ids or list(graph["nodesById"].keys())
-    for id in ids:
-        node = graph["nodesById"][id]
-        content_hash = hash_content(node_to_text(node))
-        graph["nodesByContent"][content_hash] = id
-    return graph
-
-def get_or_create_node(graph: GraphDict, content: str, id=None):
-    content_hash = hash_content(content)
-    if content_hash in graph["nodesByContent"]:
-        id = graph["nodesByContent"][content_hash]
-        return graph["nodesById"][id]
-    else:
-        return create_node(content, id=id)
-
-def get_or_create_relation(graph: GraphDict, from_id: str, to_id: str, relation_type_id: str = "child", id=None):
-    relation_hash = hash_relation({ "fromId": from_id, "toId": to_id, "relationTypeId": relation_type_id })
-    id = graph["relationsByContent"].get(relation_hash)
-    if id:
-        return graph["relationsById"][id]
-    else:
-        return create_relation(from_id, to_id, relation_type_id, id=id)
-
-def get_or_create_relation_type(graph: GraphDict, label: str, reverse_label=None):
-    relation_type_id = relation_type_text_to_id(label)
-    if relation_type_id in graph["relationTypesById"]:
-        return graph["relationTypesById"][relation_type_id]
-    else:
-        return create_relation_type(label, reverse_label, id=relation_type_id)
-
-def add_node(graph: GraphDict, node: Dict[str, Any]):
-    graph["nodesById"][node["id"]] = node
-    graph["nodesByContent"][hash_content(node["content"][0]["value"])] = node["id"]
-    return graph
-
-def add_relation(graph: GraphDict, relation: Dict[str, Any]):
-    graph["relationsById"][relation["id"]] = relation
-    graph["relationsByContent"][hash_relation(relation)] = relation["id"]
-    return graph
-
-def add_relation_type(graph: GraphDict, relation_type: Dict[str, Any]):
-    graph["relationTypesById"][relation_type["id"]] = relation_type
-    return graph
-
-def create_and_add_related_node(graph: GraphDict, parent_id: str, node_content: str, relation_type_label = None, node_id = None, relation_id = None):
-    node = get_or_create_node(graph, node_content, id=node_id)
-    relation_type_id = "child"
-    if relation_type_label:
-        relation_type = get_or_create_relation_type(graph, relation_type_label)
-        add_relation_type(graph, relation_type)
-        relation_type_id = relation_type["id"]
-    add_node(graph, node)
-    relation = get_or_create_relation(graph, parent_id, node["id"], relation_type_id, id=relation_id)
-    add_relation(graph, relation)
-    return node, relation
 
 def add_text_graph(text: str, root_node_id=None, graph: Union[None, Graph] = None) -> Graph:
     graph = graph or Graph()
@@ -529,7 +416,6 @@ def add_text_graph(text: str, root_node_id=None, graph: Union[None, Graph] = Non
         parent_stack.append(node["id"])
 
     return graph
-
 
 def clean_last_name(last_name):
     """Clean a last name by removing titles, degrees, and other suffixes"""
@@ -587,7 +473,6 @@ def clean_first_name(first_name):
     """Clean a first name by removing titles like 'Dr.'"""
     first_name = re.sub(r'^Dr\.\s*', '', first_name, flags=re.IGNORECASE)
     return first_name.strip()
-
 
 def assign_canonical_relation(graph: Graph, root_node_id = global_root_node_id):
     root_node = graph.get_node(root_node_id)

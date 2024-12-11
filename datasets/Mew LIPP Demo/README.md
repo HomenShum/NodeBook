@@ -1,5 +1,14 @@
 # Mew demo datasets
 
+This repository contains the code for creating the demo datasets for the following demo instances:
+
+- Linkedin: https://lidemo.ideaflow.app/
+- Linkedin lite: https://lidemo-lite.ideaflow.app/
+- Linkedin++: https://lippdemo.ideaflow.app/
+- Linkedin++ lite: https://lippdemo-lite.ideaflow.app/
+- Scrapedemo: https://scrapedemo.ideaflow.app/
+- Scrapedemo lite: https://scrapedemo-lite.ideaflow.app/
+
 ## Setup
 
 Install dependencies:
@@ -16,7 +25,7 @@ Create a folders for the input and output data:
 mkdir data data/input data/output
 ```
 
-Place the contents of the [this google drive folder](https://drive.google.com/drive/u/1/folders/17kzsQtV4cR8QWTlzNi4NSTckTI_8yIO4) in the `data/input` folder.
+Download and unzip the input data from [here](https://drive.google.com/drive/u/1/folders/1Jx-xXHLq2-YUrece0wNbKAgUUIheKJFr) and place it's contents in the `data/input` folder.
 
 ## Create datasets
 
@@ -41,11 +50,5 @@ You'll find the datasets in the `data/output` folder.
 
 ## Upload datasets
 
-Upload the datasets to the following demo instances. Make sure to clear the old dataset (from settings) before uploading a new one.
+Upload the datasets to the following demo instances (links above). Make sure to clear the old dataset before uploading a new one (there's a button for that in the settings).
 
-Linkedin: https://lidemo.ideaflow.app/
-Linkedin lite: https://lidemo-lite.ideaflow.app/
-Linkedin++: https://lippdemo.ideaflow.app/
-Linkedin++ lite: https://lippdemo-lite.ideaflow.app/
-Scrapedemo: https://scrapedemo.ideaflow.app/
-Scrapedemo lite: https://scrapedemo-lite.ideaflow.app/
