@@ -610,7 +610,10 @@ def assign_canonical_relation(graph: Graph, root_node_id = global_root_node_id):
             print(f"WARNING: Max steps while assigning canonical relations")
             break
         
-        # Add children to queue
-        for relation in graph.get_relations_with_from_id(current_node_id):
-            queue.append((relation["toId"], relation["id"]))
+        # Add outgoing relations and "type" relations to queue (this is so we descend into e.g. "Person" and "Company" nodes)
+        relations = graph.get_relations_with_from_id(current_node_id)
+        relations.extend([r for r in graph.get_relations_with_to_id(current_node_id) if r["relationTypeId"] == "type"])
+        for relation in relations:
+            next_node_id = relation["toId"] if relation["fromId"] == current_node_id else relation["fromId"]
+            queue.append((next_node_id, relation["id"]))
     return graph
