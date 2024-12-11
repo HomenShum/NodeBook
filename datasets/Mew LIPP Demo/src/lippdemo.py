@@ -144,7 +144,7 @@ def add_josh_langam(graph: Graph):
     for relation in josh_langsam_dict["relationsById"].values():
         # Get or create relation type
         relation_type = josh_langsam_dict["relationTypesById"].get(relation["relationTypeId"])
-        relation_type = graph.get_or_create_relation_type(relation_type["label"], relation_type["reverseLabel"], id=relation_type["id"])
+        relation_type = graph.get_or_create_relation_type(relation_type["label"], relation_type["reverseLabel"])
         graph.add_relation_type(relation_type)
 
         # Get or create nodes
@@ -267,11 +267,14 @@ if __name__ == "__main__":
     graph = add_linkedin(graph)
     graph = add_josh_langam(graph)
     graph = add_good_signal(graph)
-    
+    people_by_relation_count = sorted(
+        graph.get_people_nodes(),
+        key=lambda node: len(graph.get_relations_with_from_id(node["id"])) + len(graph.get_relations_with_to_id(node["id"])),
+        reverse=True
+    )
 
     # Create full version
-    people_ids = set([node["id"] for node in graph.get_people_nodes()])
-    graph_full = filter_by_people(graph, people_ids)
+    graph_full = filter_by_people(graph, set([node["id"] for node in people_by_relation_count[:1000]]))
     assign_canonical_relation(graph_full)
     assert_graph_integrity(graph_full._graph)
     full_path = os.path.join(output_dir, f"lippdemo.json")
@@ -279,14 +282,7 @@ if __name__ == "__main__":
         json.dump(graph_full.to_dict(), f)
     
     # Create lite version
-    people_nodes = graph.get_people_nodes()
-    people_by_relations = sorted(
-        people_nodes,
-        key=lambda node: len(graph.get_relations_with_from_id(node["id"])) + len(graph.get_relations_with_to_id(node["id"])),
-        reverse=True
-    )[:30]
-    top_people_ids = set(node["id"] for node in people_by_relations)
-    graph_lite = filter_by_people(graph, top_people_ids)
+    graph_lite = filter_by_people(graph, set(node["id"] for node in people_by_relation_count[:30]))
     assign_canonical_relation(graph_lite)
     assert_graph_integrity(graph_lite._graph)
     lite_path = os.path.join(output_dir, f"lippdemo-lite.json")

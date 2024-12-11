@@ -419,6 +419,7 @@ def parse_line(line: str):
     return indent_level, content, relation_type
 
 def relation_type_text_to_id(relation_type_text: str) -> str:
+    relation_type_text = relation_type_text.lower()
     for relation_type in default_relation_types.values():
         if relation_type["label"] == relation_type_text:
             return relation_type["id"]
