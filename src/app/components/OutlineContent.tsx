@@ -128,7 +128,7 @@ function OutlineContent({ tree }: Props) {
                   <Globe size={20} strokeWidth={1.8} />
                 ) : null}
                 <TooltipTrigger asChild>
-                  <div>
+                  <div style={{ width: "100%" }}>
                     <h1 className={s.TitleText}>
                       <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
                     </h1>
