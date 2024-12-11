@@ -49,6 +49,7 @@ export class ViewStore {
   public sidebarTrees: Tree[] = [];
   public quickCaptureTree: Tree | null = null;
   public activeTree: Tree;
+  public notificationPaneOpen = false;
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.isCommandBarOpen = false;
@@ -125,7 +126,8 @@ export class ViewStore {
         isNodeProcessing: observable,
         cancelDeepSearch: action,
         cancelQuickCaptureDeepSearch: action,
-        quickCaptureView: computed
+        quickCaptureView: computed,
+        setNotificationPaneOpen: action
       });
     }
   }
@@ -296,4 +298,9 @@ export class ViewStore {
   isNodeProcessing(nodeId: string) {
     return this.processingNodeIds.has(nodeId);
   }
+
+  setNotificationPaneOpen(state: boolean){
+    this.notificationPaneOpen = state;
+  }
+
 }

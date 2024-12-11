@@ -38,6 +38,7 @@ export class SettingsStore {
   public showGraphViewButton = false;
   public parseWithAiLinkingOption: ParseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   public showBulletForEmptyNode: boolean = false;
+  public showNotifications: boolean = false;
   private stopAutosave: () => void;
 
   constructor(
@@ -79,6 +80,7 @@ export class SettingsStore {
     this.showGraphViewButton = false;
     this.parseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
     this.showBulletForEmptyNode = false;
+    this.showNotifications = false;
   }
 
   private async syncToServer() {
@@ -113,7 +115,8 @@ export class SettingsStore {
       showExportSubtreeToIdeapad: this.showExportSubtreeToIdeapad,
       showGraphViewButton: this.showGraphViewButton,
       parseWithAiLinkingOption: this.parseWithAiLinkingOption,
-      showBulletForEmptyNode: this.showBulletForEmptyNode
+      showBulletForEmptyNode: this.showBulletForEmptyNode,
+      showNotifications: this.showNotifications
     };
   }
 
@@ -141,8 +144,7 @@ export class SettingsStore {
     this.showGraphViewButton = data.showGraphViewButton ?? this.showGraphViewButton;
     this.parseWithAiLinkingOption = data.parseWithAiLinkingOption ?? this.parseWithAiLinkingOption;
     this.showBulletForEmptyNode = data.showBulletForEmptyNode ?? this.showBulletForEmptyNode
-
-
+    this.showNotifications = data.showNotifications ?? this.showNotifications;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -230,6 +232,9 @@ export class SettingsStore {
   }
   setShowBulletForEmptyNode(value: boolean) {
     this.showBulletForEmptyNode = value;
+  }
+  setShowNotifications(value: boolean) {
+    this.showNotifications = value;
   }
 
   cleanup() {

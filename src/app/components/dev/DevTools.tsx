@@ -259,6 +259,14 @@ export const DevTools = observer(function DevTools() {
           />
           Show bullets for empty nodes
         </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.showNotifications}
+            onChange={(e) => settingsStore.setShowNotifications(e.target.checked)}
+          />
+          Show notifications
+        </label>
         <div className={styles.DevToolsDropdownContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />

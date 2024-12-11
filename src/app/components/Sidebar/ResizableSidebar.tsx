@@ -1,4 +1,5 @@
 import {
+  BellDotIcon,
   FileSpreadsheet,
   Globe,
   Home,
@@ -41,6 +42,8 @@ import { useSetRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -67,6 +70,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const [activePointerId, setActivePointerId] = useState<number | null>(null);
 
   const graphStore = useGraphStore();
+  const settingsStore = useSettingsStore();
   const viewStore = useViewStore();
   const setRoot = useSetRoot();
   const router = useRouter();
@@ -76,9 +80,12 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   };
 
   const openHelpModal = () => {
-    console.log("Clicked activeModal");
     viewStore.setActiveModal("help");
   };
+
+  const toggleNotificationsPane = () => {
+    viewStore.setNotificationPaneOpen(!viewStore.notificationPaneOpen);
+  }
 
   const handleLogout = useCallback(() => {
     if (!auth) return;
@@ -167,6 +174,17 @@ export const ResizableSidebar = observer(function ResizableSidebar({
       >
         <div className={`${styles.SidebarContent} ${isResizing ? styles.Resizing : ""}`}>
           <div className={styles.Nav}>
+            {
+              settingsStore.showNotifications && <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleNotificationsPane}
+                className={cn(styles.ShowTooltip, styles.BottomAlign)}
+                data-tooltip="Notifications"
+              >
+                <BellDotIcon size={16} strokeWidth={1.5} />
+              </Button>
+            }
             <Button
               variant="ghost"
               size="icon"
@@ -349,6 +367,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
           <div className={styles.ResizerHandle} />
         </div>
       </aside>
+      <NotificationPane/>
       <HelpModal />
       <DevTools />
       <ImportDialog />

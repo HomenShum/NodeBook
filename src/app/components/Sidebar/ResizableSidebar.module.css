@@ -96,6 +96,14 @@
   gap: 8px;
 }
 
+.Nav > button {
+  cursor: pointer;
+}
+
+.Nav > button:nth-child(1) > svg circle {
+  color: red;
+}
+
 .TopContent {
   display: flex;
   gap: 2px;
