@@ -159,7 +159,7 @@
 }
 
 .Button {
-  width: 100%;
+  width: 100% !important;
   text-align: left;
   padding: 8px 8px;
   justify-content: left;

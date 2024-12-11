@@ -25,6 +25,7 @@ import { useAuth } from "@/app/auth/useAuth";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import { HelpModal } from "@/app/components/HelpModal/HelpModal";
+import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
 import { MyHashtagsTree } from "@/app/components/Sidebar/MyHashtagsTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -37,13 +38,12 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { useSetRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
-import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -85,7 +85,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
 
   const toggleNotificationsPane = () => {
     viewStore.setNotificationPaneOpen(!viewStore.notificationPaneOpen);
-  }
+  };
 
   const handleLogout = useCallback(() => {
     if (!auth) return;
@@ -174,8 +174,8 @@ export const ResizableSidebar = observer(function ResizableSidebar({
       >
         <div className={`${styles.SidebarContent} ${isResizing ? styles.Resizing : ""}`}>
           <div className={styles.Nav}>
-            {
-              settingsStore.showNotifications && <Button
+            {settingsStore.showNotifications && (
+              <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleNotificationsPane}
@@ -184,7 +184,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               >
                 <BellDotIcon size={16} strokeWidth={1.5} />
               </Button>
-            }
+            )}
             <Button
               variant="ghost"
               size="icon"
@@ -253,7 +253,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <span>
                 <Globe size={16} strokeWidth={1.5} />
               </span>
-              <span>{graphStore.globalRoot.text}</span>
+              <span className={styles.ButtonText}>{graphStore.globalRoot.text}</span>
             </Button>
             {!user.isAnonymous && (
               <Button
@@ -281,7 +281,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <span>
                 <Search size={16} strokeWidth={1.5} />
               </span>
-              <span>AI Query</span>
+              <span className={styles.ButtonText}>AI Query</span>
             </Button>
             {!user.isAnonymous && <MyHashtagsTree />}
             {!user.isAnonymous && (
@@ -301,7 +301,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   <span>
                     <NotebookText size={16} strokeWidth={1.5} />
                   </span>
-                  <span>Home&apos;s Notes</span>
+                  <span className={styles.ButtonText}>Home&apos;s Notes</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -315,7 +315,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   <span>
                     <Newspaper size={16} strokeWidth={1.5} />
                   </span>
-                  <span>News Feed</span>
+                  <span className={styles.ButtonText}>News Feed</span>
                 </Button>
               </>
             )}
@@ -331,7 +331,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <span>
                   <FileSpreadsheet size={16} strokeWidth={1.5} />
                 </span>
-                <span>All Nodes</span>
+                <span className={styles.ButtonText}>All Nodes</span>
               </Button>
             )}
           </div>
@@ -367,7 +367,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
           <div className={styles.ResizerHandle} />
         </div>
       </aside>
-      <NotificationPane/>
+      <NotificationPane />
       <HelpModal />
       <DevTools />
       <ImportDialog />
