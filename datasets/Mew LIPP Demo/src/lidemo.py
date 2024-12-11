@@ -4,16 +4,8 @@ import os
 from typing import Any, Dict
 
 import pandas as pd
-from utils import (Graph, GraphDict, clean_first_name, clean_last_name,
-                   global_root_node_id)
+from utils import *
 
-linkedin_dir = os.path.join('input-data', 'LinkedIn')
-
-author_id = "global-admin"
-global_users_id = "global-users-id"
-person_type_node_id = "person-type-node-id"
-company_type_node_id = "company-type-node-id"
-linkedin_users_node_id = "linkedin-users-node-id"
 
 def name_to_id(content):
     # Remove non-alphabetic characters and replace with whitespace
@@ -24,18 +16,15 @@ def name_to_id(content):
 def url_to_id(content):
     return content.split("/")[-1].lower()
 
-
-def graphify_linkedin(linkedin_folder, graph = None):
+def add_linkedin(graph = None):
     # Initialize graph
     graph = Graph(graph.to_dict()) if graph else Graph()
 
     # Load LinkedIn data
-    linkedin_files = glob.glob(f"{linkedin_folder}/*.csv")
-    # linkedin_files = glob.glob(f"{linkedin_folder}/Cody Hergenroeder.csv")
+    linkedin_files = glob.glob(f"{linkedin_dir}/*.csv")
     datasets = [] # { "linkedin_user_full_name": str, "df": pd.DataFrame }[]
     expected_columns = ["First Name", "Last Name", "URL", "Email Address", "Company", "Position", "Connected On"]
     for file in linkedin_files:
-        print(f"Processing {file}")
         linkedin_user_full_name = os.path.splitext(os.path.basename(file))[0]
         df = pd.read_csv(file, skiprows=3)
         assert list(df.columns) == expected_columns, \
@@ -110,9 +99,15 @@ def graphify_linkedin(linkedin_folder, graph = None):
 
     return graph
 
+def add_laurel_touby(graph: Graph):
+    text = open(laurel_touby_path, "r").read()
+    graph = add_text_graph(text, graph=graph)
+    graph.upsert_relation(global_root_node_id, laurel_touby_id, "type")
+    return graph
+
 def filter_for_top_people(graph: Graph) -> Graph:
     filtered_graph = Graph()
-    people_ids = get_people_node_ids(graph._graph)
+    people_ids = set([n["id"] for n in graph.get_people_nodes()])
 
     # Add all users whose linkedin export is in the graph
     included_people_ids = set()
@@ -124,6 +119,8 @@ def filter_for_top_people(graph: Graph) -> Graph:
             filtered_graph.add_relation(adjacent_relation)
             if adjacent_node["id"] in people_ids:
                 included_people_ids.add(adjacent_node["id"])
+    # Add Laurel Touby
+    included_people_ids.add(laurel_touby_id)
 
     # Select 50 other people with most relations 
     for people_id in sorted(people_ids, key=lambda id: len(graph._relations_by_from_id[id]) + len(graph._relations_by_to_id[id]), reverse=True)[:50]:
@@ -164,36 +161,25 @@ def filter_for_top_people(graph: Graph) -> Graph:
                 filtered_graph.add_node(adjacent_node)
                 filtered_graph.add_relation(relation_to_person)
 
-
+    # Add all relation types
+    for relation_type in graph._graph["relationTypesById"].values():
+        filtered_graph.add_relation_type(relation_type)
 
     return filtered_graph
 
-
-def get_people_node_ids(graph: Dict[str, Any]):
-    people_ids = set()
-    for relation in graph["relationsById"].values():
-        if relation["relationTypeId"] == "knows":
-            people_ids.add(relation["fromId"])
-            people_ids.add(relation["toId"])
-    return people_ids
-
-def get_source_linkedin_user_node_ids(graph: Dict[str, Any]):
-    people_ids = set()
-    for relation in graph["relationsById"].values():
-        if relation["relationTypeId"] == "knows":
-            people_ids.add(relation["fromId"])
-    return people_ids
-
 if __name__ == "__main__":
-    graph = graphify_linkedin(linkedin_dir)
+    graph = Graph()
+    graph = add_linkedin(graph)
+    graph = add_laurel_touby(graph)
 
     # Full version
     graph_full = Graph(graph.to_dict())
-    with open("output-data/lidemo.json", "w") as f:
+    with open(os.path.join(output_dir, f"lidemo.json"), "w") as f:
         json.dump(graph_full.to_dict(), f, indent=2)
 
     # Lite version
     graph_lite = filter_for_top_people(graph)
-    with open("output-data/lidemo-lite.json", "w") as f:
+    with open(os.path.join(output_dir, f"lidemo-lite.json"), "w") as f:
         json.dump(graph_lite.to_dict(), f, indent=2)
+
 

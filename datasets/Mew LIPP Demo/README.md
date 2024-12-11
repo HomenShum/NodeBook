@@ -1,6 +1,6 @@
 # Mew demo datasets
 
-## Getting started
+## Setup
 
 Install dependencies:
 
@@ -13,60 +13,39 @@ pip install -r requirements.txt
 Create a folders for the input and output data:
 
 ```
-mkdir input-data output-data
+mkdir data data/input data/output
 ```
 
-Place the contents of the [this google drive folder](https://drive.google.com/drive/u/1/folders/17kzsQtV4cR8QWTlzNi4NSTckTI_8yIO4) in the `input-data` folder.
+Place the contents of the [this google drive folder](https://drive.google.com/drive/u/1/folders/17kzsQtV4cR8QWTlzNi4NSTckTI_8yIO4) in the `data/input` folder.
 
+## Create datasets
 
-## Scrapedemo dataset
-
-Requires `input-data/stanford-independent-labs.txt` to exist.
-
+Linkedin:
 ```
-python scrapedemo.py
+python src/lidemo.py
 ```
 
-## LinkedIn dataset
-
-Requires `input-data/josh_langam_only.json` to exist.
-
+Linkedin++:
 ```
-python lidemo.py
+python src/lippdemo.py
 ```
 
+Scrapedemo:
+```
+python src/scrapedemo.py
+```
 
-# Old
+Each script creates both the full and lite versions of the dataset.
 
-Run the python files in this order:
-- /GoodSignal/Crunchbase/1_filter_merge.py
-- /GoodSignal/Crunchbase/2_convert_csv_to_outline.py
-- /GoodSignal/merge_good_signal.py
-- /merge_good_signal_with_linkedin.py
+You'll find the datasets in the `data/output` folder.
 
-Manually add at the end:
-- Manually add in ‘josh_langam_only.json’.I
-  - This was the file I mentioned earlier Taylor, where I used ‘export subtree’ and I
-can’t seem to actually get the import to happen. You can take a crack at it-the
-file is the main Mew LIPP Demo folder.
-- Create a node called “List of Top VCs”. Manually connect the following VC names:
-  - Sequoia Capital
-  - SV Angel
-  - Lightspeed Venture Partners
-  - Andreessen Horowitz
-  - Kleiner Perkins
-  - Khosla Ventures
-  - Tiger Global Management
-  - Dragoneer Investment Group
-  - New Enterprise Associates
-  - Accel
-  - Bessemer Venture Partners
-  - First Round Capital
-  - Spark Capital
-  - Founders Fund
-  - Intel Capital
-  - Menlo Ventures
-  - General Catalyst
+## Upload datasets
 
-Note for Taylor:
-- Taylor can create a system to convert the ‘lippdemo.txt’ output into a ‘lippdema.ison’ file so that the import plays nice with Mew.
+Upload the datasets to the following demo instances. Make sure to clear the old dataset (from settings) before uploading a new one.
+
+Linkedin: https://lidemo.ideaflow.app/
+Linkedin lite: https://lidemo-lite.ideaflow.app/
+Linkedin++: https://lippdemo.ideaflow.app/
+Linkedin++ lite: https://lippdemo-lite.ideaflow.app/
+Scrapedemo: https://scrapedemo.ideaflow.app/
+Scrapedemo lite: https://scrapedemo-lite.ideaflow.app/

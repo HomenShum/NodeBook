@@ -1,4 +1,5 @@
-input-data/
-output-data/
+data/
 venv/
+__pycache__/
 *.pyc
+
