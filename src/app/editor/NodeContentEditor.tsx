@@ -9,6 +9,7 @@ import { RefObject } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
 import { ArrowKeyPlugin } from "@/app/editor/plugins/ArrowKeyPlugin";
+import { AtKeyPlugin } from "@/app/editor/plugins/AtKeyPlugin";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
@@ -70,6 +71,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <PastePlugin />}
         {isEditorEditable && <RelationPlugin />}
         {isEditorEditable && <IgnoreModShiftAPlugin />}
+        {isEditorEditable && <AtKeyPlugin treeNode={treeNode} />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />
         <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
