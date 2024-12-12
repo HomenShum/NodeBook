@@ -9,6 +9,7 @@ import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
+import { getNextAbove } from "@/app/tree/utils";
 
 /**
  * Concat two arrays of Chips into one.
@@ -75,9 +76,9 @@ export const BackspaceMergeNodesPlugin = () => {
             }
           }
         } else if (treeNode.siblingAbove) {
-          // Merge into sibling above's last child, or sibling above if it has no children
-          const lastChild = treeNode.siblingAbove.visibleChildren.slice(-1)[0];
-          handled = mergeNodes(treeNode, lastChild || treeNode.siblingAbove);
+          // Merge into sibling above's last node above, or sibling above if it has no children
+          const nextNodeAbove = getNextAbove(treeNode);
+          handled = mergeNodes(treeNode, nextNodeAbove || treeNode.siblingAbove);
         } else if (treeNode.parent) {
           // Merge into parent
           handled = mergeNodes(treeNode, treeNode.parent);
