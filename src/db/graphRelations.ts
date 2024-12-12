@@ -18,6 +18,7 @@ export const createRelations = async (tx: MewDbTransaction, relations: Serialize
         toId: relation.toId,
         relationTypeId: relation.relationTypeId,
         isPublic: relation.isPublic,
+        canonicalRelationId: relation.canonicalRelationId,
       })),
     )
     .returning({ createdId: graphRelationTable.id });
@@ -42,6 +43,7 @@ export const updateRelation = async (
       toId: newProps.toId,
       relationTypeId: newProps.relationTypeId,
       isPublic: newProps.isPublic,
+      canonicalRelationId: newProps.canonicalRelationId,
     })
     .where(
       and(
