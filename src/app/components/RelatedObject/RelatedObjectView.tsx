@@ -138,6 +138,7 @@ const Content = observer(function Content() {
       : viewStore.viewType;
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
   const [manualShowRelationType, setManualShowRelationType] = useState(false);
+  const comboBoxWidth = document.getElementById([treeNode.id, "relationCombobox"].join("-"))?.clientWidth;
 
   const openRelComboBox = () => {
     setRelationComboboxIsOpen(true);
@@ -160,6 +161,7 @@ const Content = observer(function Content() {
         <div className={styles.RelatedObjectNodeContent}>
           {(showRelationType || manualShowRelationType) && (
             <div
+              id={[treeNode.id, "relationCombobox"].join("-")}
               onPointerDown={(e) => {
                 if (isMobile) {
                   e.stopPropagation();
@@ -188,10 +190,18 @@ const Content = observer(function Content() {
                   treeNode.parent instanceof RootTreeNode && treeViewType === "note" && styles.ChildOfRootInNoteView,
                 )}
               >
-                <div style={{ position: "absolute", left: -2, top: 4, width: "10px", height: "20px" }}>
+                <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
+                <div
+                  style={{
+                    position: "absolute",
+                    left: comboBoxWidth ? comboBoxWidth : -2,
+                    top: 3,
+                    width: "10px",
+                    height: "20px",
+                  }}
+                >
                   <NoteContentPrefix treeNode={treeNode} openRelComboBox={openRelComboBox} />
                 </div>
-                <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
               </div>
             ) : viewType === "replace" ? (
               <ReplaceRelatedNodeView treeNode={treeNode} />

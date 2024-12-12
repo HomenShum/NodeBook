@@ -15,11 +15,10 @@ import {
   RootTreeNode,
   TreeNode,
 } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 
 import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./styles/ChildGroups.module.css";
@@ -53,7 +52,10 @@ interface NoteContentSectionProps {
 
 export const NoteContentSection = observer(function NoteContentSection({ parentNode, group }: NoteContentSectionProps) {
   const viewStore = useViewStore();
-  const viewType = (parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
+  const viewType =
+    parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree
+      ? viewStore.quickCaptureViewType
+      : viewStore.viewType;
   if (parentNode instanceof DescendantTreeNode && parentNode.instanceCountInPath > 1) {
     return <div>Circular reference to {`"${parentNode.object.text}"`}</div>;
   }
@@ -86,7 +88,10 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
   const user = useUser();
   const isRoot = parentNode instanceof RootTreeNode;
   const isEmpty = group.nodes.length === 0;
-  const viewType = (parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
+  const viewType =
+    parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree
+      ? viewStore.quickCaptureViewType
+      : viewStore.viewType;
   const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
 
   if (isEmpty && !group.isExpanded && !isRoot) {
@@ -141,7 +146,10 @@ interface AllSectionProps {
 
 const AllSection = observer(function AllSection({ parentNode, group }: AllSectionProps) {
   const viewStore = useViewStore();
-  const viewType = (parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType : viewStore.viewType;
+  const viewType =
+    parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree
+      ? viewStore.quickCaptureViewType
+      : viewStore.viewType;
   const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
 
   return (
