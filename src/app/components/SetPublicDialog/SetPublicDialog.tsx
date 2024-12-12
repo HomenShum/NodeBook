@@ -5,8 +5,8 @@ import { useCallback, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { TreeNode } from "@/app/tree/nodes";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { TreeNode } from "@/app/tree/nodes";
 
 import styles from "./SetPublicDialog.module.css";
 
@@ -34,10 +34,20 @@ export const SetPublicDialog = observer(function SetPublicDialog({ isOpen, setOp
       alsoSetRelatedObjects: includeRelatedObjects,
       alsoSetChildrenAndDescendants: includeChildrenAndDescendants,
       isNewRelatedObjectsPublic: isSwitchingToPublic ? isNewRelatedObjectsPublic : false,
-      isChecked: treeNode.object instanceof GraphNode ? treeNode.object.isChecked : false
+      isChecked: treeNode.object instanceof GraphNode ? treeNode.object.isChecked : false,
     });
     setOpen(false);
-  }, [graphStore, objectId, relationId, isSwitchingToPublic, includeRelatedObjects, includeChildrenAndDescendants, isNewRelatedObjectsPublic, treeNode.object, setOpen]);
+  }, [
+    graphStore,
+    objectId,
+    relationId,
+    isSwitchingToPublic,
+    includeRelatedObjects,
+    includeChildrenAndDescendants,
+    isNewRelatedObjectsPublic,
+    treeNode.object,
+    setOpen,
+  ]);
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={setOpen}>

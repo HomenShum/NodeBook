@@ -571,9 +571,15 @@ export class GraphStore {
         if (rel.authorId !== this.user.id) continue;
         // No updates to parents (and parent relations) of the specified object
         if (rel.relationType.id === "child" && rel.to.id === object.id) continue;
+        if (rel.id === relationId) continue;
         // First set the value on the relation itself
         const { updates: relUpdates } = this._setObjectIsPublic(rel, isPublic);
         updates.push(...relUpdates);
+        // Set the relation type as well
+        const { updates: relTypeUpdates } = this._updateRelationType(rel.relationType.id, {
+          isPublic: isPublic,
+        });
+        updates.push(...relTypeUpdates);
         // ...then set the value for the other object in the relation
         const otherObject = rel.from.id === object.id ? rel.to : rel.from;
         const { updates: otherObjectUpdates } = this._setObjectIsPublic(otherObject, isPublic);
@@ -676,7 +682,7 @@ export class GraphStore {
   }
 
   private _addRelationType(
-    props: { id?: string; version?: number; label: string; reverseLabel?: string },
+    props: { id?: string; version?: number; label: string; reverseLabel?: string; isPublic?: boolean },
     fromServer = false,
   ): { relationType: GraphRelationType; updates: GraphUpdate[] } {
     const id = props.id ?? uuid();
@@ -701,7 +707,7 @@ export class GraphStore {
       authorId: this.user.id,
       label,
       reverseLabel,
-      isPublic: false,
+      isPublic: props.isPublic ?? false,
     };
     this.relationTypesById[id] = newRelationType;
     this.cappedKeywordIndex.add(newRelationType.id, () => newRelationType.label + " " + newRelationType.reverseLabel);
@@ -811,6 +817,7 @@ export class GraphStore {
       if (!relTypeAndDirection) {
         const { relationType, updates: relTypeUpdates } = this._addRelationType({
           label: tx.relationProps.relationTypeLabel,
+          isPublic: tx.relationProps.isPublic,
         });
         updates.push(...relTypeUpdates);
         newProps.relationTypeId = relationType.id;

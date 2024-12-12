@@ -95,7 +95,7 @@ export const RelationPlugin = observer(function RelationPlugin() {
               type: "updateRelation",
               transaction: {
                 relationId: relation.id,
-                relationProps: { relationTypeLabel: relationTypeText, isInitiallyReversed },
+                relationProps: { relationTypeLabel: relationTypeText, isInitiallyReversed, isPublic: object.isPublic },
               },
             });
           }
