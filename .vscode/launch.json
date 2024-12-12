@@ -21,6 +21,16 @@
       "justMyCode": true,
       "cwd": "${workspaceFolder}/datasets/Mew LIPP Demo",
       "python": "${workspaceFolder}/datasets/Mew LIPP Demo/venv/bin/python"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug with tsx",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/tsx",
+      "program": "${file}",
+      "skipFiles": ["<node_internals>/**"],
+      "outFiles": ["${workspaceFolder}/**/*.js"],
+      "console": "integratedTerminal"
     }
   ]
 }
