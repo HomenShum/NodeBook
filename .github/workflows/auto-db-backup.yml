@@ -24,9 +24,11 @@ jobs:
 
       - name: Dump the database
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PROD_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          MEW_LITE_DATABASE_URL: ${{ secrets.MEW_LITE_DATABASE_URL }}
         run: |
-          /usr/lib/postgresql/16/bin/pg_dump -Fc -Z1 -v -d $DATABASE_URL -f dump.bak
+          /usr/lib/postgresql/16/bin/pg_dump -Fc -Z1 -v -d $PROD_DATABASE_URL -f prod_dump.bak
+          /usr/lib/postgresql/16/bin/pg_dump -Fc -Z1 -v -d $MEW_LITE_DATABASE_URL -f mew_lite_dump.bak
           ls -la
 
       - name: Upload db dump to S3
@@ -35,4 +37,5 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: us-west-1
         run: |
-          aws s3 cp dump.bak s3://mew-vercel-backup/dump-$(date +%F-%H-%M).bak
+          aws s3 cp prod_dump.bak s3://mew-vercel-backup/prod_dump-$(date +%F-%H-%M).bak
+          aws s3 cp mew_lite_dump.bak s3://mew-vercel-backup/mew_lite_dump-$(date +%F-%H-%M).bak
