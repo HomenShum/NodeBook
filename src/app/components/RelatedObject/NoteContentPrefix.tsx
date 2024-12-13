@@ -1,7 +1,6 @@
 import { observer } from "mobx-react-lite";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
-import { useHandleEnterKey } from "@/app/editor/plugins/EnterKeyPlugin";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 
 import styles from "./styles/RelatedObjectView.module.css";
@@ -18,7 +17,21 @@ type Props = {
 export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode, openRelComboBox }: Props) {
   const tree = treeNode.tree;
   const inputRef = useRef<HTMLInputElement>(null);
-  const handleEnterKey = useHandleEnterKey(tree, treeNode);
+  const focusOnNode = function () {
+    inputRef.current?.focus();
+  };
+
+  // Only grab selection if  tree node
+  const treeNodeShouldHaveFocus = tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNode.id;
+  const isEndPosition = tree.selection?.type === "editor" && tree.selection.position === "end";
+  useEffect(() => {
+    const inputFocused = inputRef.current?.contains(document.activeElement);
+    if (!inputFocused && treeNodeShouldHaveFocus && isEndPosition) {
+      inputRef.current?.focus();
+    } else if (inputFocused && !treeNodeShouldHaveFocus) {
+      inputRef.current?.blur();
+    }
+  }, [treeNodeShouldHaveFocus, isEndPosition]);
 
   return (
     <div style={{ height: "20px", width: "100%", bottom: 0, position: "absolute", alignItems: "end" }}>
@@ -28,7 +41,14 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode,
         onKeyDown={async (e: React.KeyboardEvent) => {
           switch (e.key) {
             case "Enter": {
-              return handleEnterKey(e.nativeEvent);
+              // Create child node above the current node
+              e.preventDefault();
+              e.stopPropagation();
+              e.nativeEvent.stopImmediatePropagation();
+              const nodeAbove = treeNode.siblingAbove;
+              if (nodeAbove) {
+                tree.createChildNode({ parent: treeNode.parent, after: nodeAbove });
+              }
             }
             case "ArrowRight":
               e.preventDefault();
@@ -59,6 +79,7 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode,
               break;
           }
         }}
+        ref={inputRef}
         type="text"
         onChange={(e) => {
           e.preventDefault();
