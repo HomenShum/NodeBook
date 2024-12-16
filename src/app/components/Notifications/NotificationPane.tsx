@@ -15,7 +15,7 @@ export const NotificationPane = observer(function NotificationPane() {
     <div className={cn(styles.NotificationPane, viewStore.notificationPaneOpen ? styles.NotificationPaneActive : "")}>
       <NotificationHeader/>
       <div className={styles.NotificationItemsContainer}>
-        {items.map(item => <NotificationItem key={item.body} item={item}/>)}
+        {items.map((item,idx) => <NotificationItem key={idx} item={item}/>)}
       </div>
     </div>
   );
