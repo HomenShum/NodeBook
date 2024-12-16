@@ -26,12 +26,13 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode,
   const isEndPosition = tree.selection?.type === "editor" && tree.selection.position === "end";
   useEffect(() => {
     const inputFocused = inputRef.current?.contains(document.activeElement);
+
     if (!inputFocused && treeNodeShouldHaveFocus && isEndPosition) {
       inputRef.current?.focus();
     } else if (inputFocused && !treeNodeShouldHaveFocus) {
       inputRef.current?.blur();
     }
-  }, [treeNodeShouldHaveFocus, isEndPosition]);
+  }, [treeNodeShouldHaveFocus, isEndPosition, tree]);
 
   return (
     <div style={{ height: "20px", width: "100%", bottom: 0, position: "absolute", alignItems: "end" }}>

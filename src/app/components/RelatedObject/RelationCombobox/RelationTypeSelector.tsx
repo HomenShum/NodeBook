@@ -124,6 +124,17 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     <PopoverContent
       onCloseAutoFocus={(e) => {
         e.preventDefault();
+        // Focus on the prefix if the treeNode has noteContent
+        const hasNoteContent = treeNode.childrenGroupsById["noteContent"].nodes.length > 0;
+        if (hasNoteContent) {
+          // Focus on the prefix.
+          const prefixInput = document.querySelector(`[data-note-prefix="${treeNode.object.id}"]`);
+          if (prefixInput && prefixInput instanceof HTMLInputElement) {
+            prefixInput.focus();
+          } else {
+            throw new Error("Prefix input not found");
+          }
+        }
         handleExternalClose();
       }}
       onKeyDown={(e) => {
