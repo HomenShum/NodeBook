@@ -227,7 +227,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
                 alsoSetRelatedObjects: false,
                 alsoSetChildrenAndDescendants: false,
                 isNewRelatedObjectsPublic: false,
-                isChecked: object instanceof GraphNode ? object.isChecked : false
+                isChecked: object instanceof GraphNode ? object.isChecked : null
               },
             })),
           );

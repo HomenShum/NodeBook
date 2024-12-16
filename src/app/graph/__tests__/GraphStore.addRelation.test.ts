@@ -122,7 +122,7 @@ describe("GraphStore.addRelation", () => {
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
       isNewRelatedObjectsPublic: true,
-      isChecked: false
+      isChecked: null
     });
 
     await graphStore.setIsPublic({
@@ -131,7 +131,7 @@ describe("GraphStore.addRelation", () => {
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
       isNewRelatedObjectsPublic: false,
-      isChecked: false
+      isChecked: null
     });
 
     const relation = await graphStore.addRelation({

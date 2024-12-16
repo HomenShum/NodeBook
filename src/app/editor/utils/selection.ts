@@ -308,3 +308,26 @@ export function $getCaretPosition(): null | {
     isAtBottom: lineCount === lineNumber,
   };
 }
+
+export function $atEditorStart() {
+  const selection = $getSelection();
+  if (!$isRangeSelection(selection)) return false;
+
+  const startEnd = selection.getStartEndPoints();
+  if (!startEnd) return false;
+  const [selectionStart, selectionEnd] = startEnd;
+
+  // Editor content is structured as nodes.
+  // At the start of every node, the offset is expected to be 0.
+  // However, the offset is 0 only when the caret is positioned at the start of the first node.
+  // In all other cases, it returns the end offset of the previous node.
+  //
+  // For example: If the cursor is placed between "_" (a space) and "@",
+  // you are at the start of the Mention Node. However, the offset will be 7,
+  // which is the end offset of the preceding Text Node ("Taylor_"), instead of 0.
+  //  0 1 2 3 4 5 6 7 1 2 3 4 5 6 1 2 3 4
+  //   T a y l o r _ @ l i k e s _ c a t
+  //  |_____________|___________|_______|
+  //     TNode          MNode     TNode
+  return selectionStart.offset === 0 && selectionEnd.offset === 0;
+}

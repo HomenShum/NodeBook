@@ -5,7 +5,7 @@ const TEMP_USER_ID = UNLOGGED_USER.id; // TODO: This is simply to satisfy the ty
 
 export const ALL_LIST_TYPES = ["pinned", "noteContent", "all"] as const;
 export type ListType = (typeof ALL_LIST_TYPES)[number];
-type DefaultRelationType = "child" | "relatedTo" | "author" | "sublist" | "todo" | "empty";
+type DefaultRelationType = "child" | "relatedTo" | "author" | "sublist" | "empty";
 
 export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType> = {
   child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent", isPublic: false },
@@ -32,14 +32,6 @@ export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType
     label: "sublist",
     reverseLabel: "sublist of",
     isPublic: false,
-  },
-  todo: {
-    version: 1,
-    id: "todo",
-    authorId: TEMP_USER_ID,
-    label: "todo",
-    reverseLabel: "todo of",
-    isPublic: false
   },
   empty: { version: 1, id: "empty", authorId: TEMP_USER_ID, label: "", reverseLabel: "", isPublic: false },
 };

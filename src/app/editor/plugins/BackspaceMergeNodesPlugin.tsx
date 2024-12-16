@@ -1,5 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_NORMAL, KEY_BACKSPACE_COMMAND } from "lexical";
+import { COMMAND_PRIORITY_NORMAL, KEY_BACKSPACE_COMMAND } from "lexical";
 import { useCallback, useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
@@ -10,6 +10,7 @@ import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
 import { getNextAbove } from "@/app/tree/utils";
+import { $atEditorStart } from "@/app/editor/utils/selection";
 
 /**
  * Concat two arrays of Chips into one.
@@ -226,16 +227,4 @@ function useMergers(tree: Tree) {
   );
 
   return { mergeNodes, addSiblingAboveIntoNote };
-}
-
-function $atEditorStart() {
-  const selection = $getSelection();
-  if (!$isRangeSelection(selection)) return false;
-
-  const startEnd = selection.getStartEndPoints();
-  if (!startEnd) return false;
-  const [selectionStart, selectionEnd] = startEnd;
-
-  // Offset is 0 when at start of text
-  return selectionStart.offset === 0 && selectionEnd.offset === 0;
 }

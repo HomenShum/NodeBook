@@ -34,7 +34,7 @@ export const SetPublicDialog = observer(function SetPublicDialog({ isOpen, setOp
       alsoSetRelatedObjects: includeRelatedObjects,
       alsoSetChildrenAndDescendants: includeChildrenAndDescendants,
       isNewRelatedObjectsPublic: isSwitchingToPublic ? isNewRelatedObjectsPublic : false,
-      isChecked: treeNode.object instanceof GraphNode ? treeNode.object.isChecked : false,
+      isChecked: treeNode.object instanceof GraphNode ? treeNode.object.isChecked : null,
     });
     setOpen(false);
   }, [

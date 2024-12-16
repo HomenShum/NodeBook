@@ -1,0 +1,1 @@
+ALTER TABLE "graph_node" ALTER COLUMN "is_checked" SET DEFAULT NULL;

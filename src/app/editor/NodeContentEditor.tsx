@@ -26,6 +26,7 @@ import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
+import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
 
 import styles from "./Editor.module.css";
 
@@ -67,6 +68,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <MinusKeyPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
         {isEditorEditable && <ArrowKeyPlugin />}
+        {isEditorEditable && <TodoPlugin treeNode={treeNode}/>}
         {isEditorEditable && <BackspaceMergeNodesPlugin />}
         {isEditorEditable && <PastePlugin />}
         {isEditorEditable && <RelationPlugin />}

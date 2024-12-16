@@ -15,13 +15,13 @@ export const Checkbox = observer(function Checkbox({node}: Props) {
 
   const graphStore = useGraphStore();
 
-  if(!(node.object instanceof GraphNode)) return <></>
+  if(!(node.object instanceof GraphNode) || node.object.isChecked === null) return <></>
 
   const handleOnChange = async () => {
     await graphStore.updateNode({
       nodeId: node.object.id,
       nodeProps: {
-        isChecked: node.object instanceof GraphNode ? !node.object.isChecked : false
+        isChecked: node.object instanceof GraphNode ? !node.object.isChecked : null
       }
     })
   }

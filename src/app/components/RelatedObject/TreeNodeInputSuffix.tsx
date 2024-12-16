@@ -87,7 +87,6 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
             e.stopPropagation();
             e.nativeEvent.stopImmediatePropagation();
             if (isMod && e.shiftKey) {
-              console.log("Before moveSelectedNodesUp");
               tree.moveSelectedNodesUp();
               break;
             }

@@ -3,7 +3,7 @@ import { LexicalEditor } from "lexical";
 
 import { env } from "@/app/envFrontend";
 import { defaultRelationTypes } from "@/app/graph/constants";
-import { PositionedRelation } from "@/app/graph/GraphNode";
+import { GraphNode, PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
@@ -169,10 +169,6 @@ export class RootTreeNode extends BaseTreeNode {
     return this;
   }
 
-  get isTodoList(): boolean {
-    return this.object.relations.some((r => r.relationType.id === defaultRelationTypes.todo.id && r.to.id === this.object.id));
-  }
-
   protected hydrateAncestors() {
     const pathToRoot = this.tree.pathToRoot;
     let currentNode: PathToRootNode | RootTreeNode = this;
@@ -290,11 +286,7 @@ export class DescendantTreeNode extends BaseTreeNode {
   }
 
   get isTodoItem(): boolean {
-    return typeof DescendantTreeNode && this.parent.isTodoList && this.relationWithParent.to.id === this.object.id;
-  }
-
-  get isTodoList(): boolean {
-    return this.relationWithParent ? this.relationWithParent.relationType.id === defaultRelationTypes.todo.id && this.relationWithParent.to.id === this.object.id : false;
+    return typeof DescendantTreeNode && this.object instanceof GraphNode && typeof this.object.isChecked === "boolean";
   }
 
   get isExpanded() {

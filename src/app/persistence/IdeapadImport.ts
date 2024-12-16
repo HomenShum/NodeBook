@@ -46,7 +46,7 @@ export function parseIdeapadData(data: IdeapadSnapshot, userId: string): Seriali
       isPublic: false,
       isNewRelatedObjectsPublic: false,
       canonicalRelationId: null,
-      isChecked: false,
+      isChecked: null,
     };
     snapshot.relationsByNodeId[nodeId] = {};
     snapshot.pinnedRelationsByNodeId[nodeId] = {};

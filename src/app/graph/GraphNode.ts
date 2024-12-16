@@ -30,7 +30,7 @@ export type GraphNodeProps = {
   updatedAt?: Date;
   isPublic?: boolean;
   isNewRelatedObjectsPublic?: boolean;
-  isChecked?: boolean;
+  isChecked?: boolean | null;
   canonicalRelation?: GraphRelation | null;
 };
 
@@ -49,7 +49,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   updatedAt: Date;
   isPublic: boolean = true;
   isNewRelatedObjectsPublic: boolean;
-  isChecked: boolean = false;
+  isChecked: boolean | null = null;
 
   constructor(
     store: GraphStore,
@@ -63,7 +63,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isPublic = false,
       isNewRelatedObjectsPublic = false,
       canonicalRelation = null,
-      isChecked = false,
+      isChecked = null,
     }: GraphNodeProps & { authorId: string },
   ) {
     super(store);
@@ -243,7 +243,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isPublic: this.isPublic,
       isNewRelatedObjectsPublic: this.isNewRelatedObjectsPublic,
       canonicalRelationId: this.canonicalRelation?.id ?? null,
-      isChecked: this.isChecked || false,
+      isChecked: this.isChecked ?? null,
     };
   }
 }
