@@ -40,10 +40,6 @@ export class SublistTree extends Tree {
       });
     };
 
-    if (treeNode instanceof RootTreeNode) {
-      treeNode.childrenGroups.forEach((group) => group.nodes.forEach((node) => walk(node)));
-    } else {
-      walk(treeNode);
-    }
+    walk(treeNode);
   }
 }
