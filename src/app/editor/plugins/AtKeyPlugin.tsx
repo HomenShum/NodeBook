@@ -35,8 +35,7 @@ export function useHandleAtKey(tree: Tree, treeNode: TreeNode) {
       if (!treeSelection || treeSelection.type !== "editor") return false;
       const posn = treeSelection.position;
       if (posn === "start" || posn === "end" || posn.anchorOffset === posn.focusOffset) return false;
-      e.preventDefault();
-      e.stopPropagation();
+
       // Update the text content to have an "@" at the start of the selection
       const node = graphStore.getNode(treeNode.object.id);
       if (!node) return false;
@@ -47,7 +46,12 @@ export function useHandleAtKey(tree: Tree, treeNode: TreeNode) {
       const chip = node.content[chipIndex];
       const chipType = chip.type;
       if (chipType !== "text") return false;
-      const newValue = chip.value.slice(0, valueIndex) + " @" + chip.value.slice(valueIndex);
+      if (chip.value[valueIndex - 1] !== " " && !(valueIndex === 0 && chipIndex === 0)) return false;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const newValue = chip.value.slice(0, valueIndex) + "@" + chip.value.slice(valueIndex);
       const newContent: Chip[] = [...node.content];
       newContent[chipIndex] = { type: "text", value: newValue };
       const txs: TxCombined = [];
@@ -56,7 +60,7 @@ export function useHandleAtKey(tree: Tree, treeNode: TreeNode) {
       tree.selection = {
         type: "editor",
         treeNodeId: treeNode.id,
-        position: { anchorOffset: greaterPosn + 2, focusOffset: greaterPosn + 2 },
+        position: { anchorOffset: greaterPosn + 1, focusOffset: greaterPosn + 1 },
       };
       return true;
     },
