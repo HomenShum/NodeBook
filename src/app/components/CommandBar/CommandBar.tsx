@@ -57,10 +57,8 @@ const CommandBar = observer(() => {
 
   const handleZoomToNode = useCallback(
     (object: GraphObject) => {
-      if ("getPath" in object) {
-        setRoot(object);
-        close();
-      }
+      setRoot(object);
+      close();
     },
     [setRoot, close],
   );
@@ -154,7 +152,7 @@ const CommandBar = observer(() => {
         case "Enter":
           e.preventDefault();
           e.stopPropagation();
-          const index = (e.ctrlKey || e.metaKey) ? filteredCommands.length - 1 : selectedIndex;
+          const index = e.ctrlKey || e.metaKey ? filteredCommands.length - 1 : selectedIndex;
           if (filteredCommands[index]) {
             filteredCommands[index].perform(e.shiftKey);
           }
