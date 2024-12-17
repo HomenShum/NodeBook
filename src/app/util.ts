@@ -1,4 +1,5 @@
 "use client";
+
 import { generateKeyBetween } from "fractional-indexing";
 import { autorun, toJS } from "mobx";
 import { useEffect, useState } from "react";
@@ -9,6 +10,7 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { getOtherObject } from "@/app/graph/utils";
+import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import logger from "@/lib/logger";
 
 // TODO: what should we actually use for this?
@@ -279,18 +281,42 @@ export const ideapadLinkManager = {
   has: (objectId: string): boolean => !!localStorage.getItem(`${keyPrefix}${objectId}`),
 };
 
-export function exportToIdeapad(graphStore: GraphStore, rootNode: GraphObject, userId: string) {
-  // if rootNode isn't a GraphNode, throw
-  if (!(rootNode instanceof GraphNode)) {
-    throw new Error("Root node is not a GraphNode");
+/**
+ * Returns a hash code from a string
+ * @param  {String} str The string to hash.
+ * @return {Number}    A 32bit integer
+ * @see http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/
+ */
+function hashCode(str: string, seed = 0) {
+  let h1 = 0xdeadbeef ^ seed,
+    h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
   }
-  // Get subtree data using existing serializeSubtree method
-  const subtreeData = graphStore.serializeSubtree(rootNode);
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
 
-  // Create snapshot format
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+}
+
+function getProperId(id: string, limit: number = 36, int: boolean = false) {
+  if (id.length === 0) {
+    return "";
+  }
+  if (id.length > limit || int) {
+    return hashCode(id).toString().slice(0, limit);
+  }
+  return id;
+}
+
+export function ideapadSnapshotFromSerializedGraph(data: SerializedGraphStore, userId: string, graphStore: GraphStore) {
   const snapshot = {
-    nodes: Object.values(subtreeData.nodesById).map((node) => ({
-      clientId: node.id,
+    nodes: Object.values(data.nodesById).map((node) => ({
+      clientId: getProperId(node.id, 36),
       userId: userId,
       title: node.content.map((elem) => elem.value).join("") || "",
       likeCount: 0,
@@ -305,16 +331,34 @@ export function exportToIdeapad(graphStore: GraphStore, rootNode: GraphObject, u
       updatedAt: node.updatedAt || new Date().toISOString(),
       attributes: {},
     })),
-    edges: Object.values(subtreeData.relationsById).map((relation) => ({
-      id: relation.id.split("-")[0],
-      clientId: relation.id,
-      sourceIdeaClientId: relation.fromId,
-      targetIdeaClientId: relation.toId,
+    edges: Object.values(data.relationsById).map((relation) => ({
+      id: getProperId(relation.id, 9, true),
+      clientId: getProperId(relation.id, 36),
+      sourceIdeaClientId: getProperId(relation.fromId, 36),
+      targetIdeaClientId: getProperId(relation.toId, 36),
       labelText: graphStore.getRelationType(relation.relationTypeId)?.label || "",
       colorId: null,
       isDeleted: false,
     })),
   };
+  // Remove connections with source or client not found in nodes. This can happen when nodes are private.
+  const allNodeIds = new Set(snapshot.nodes.map((node) => node.clientId));
+  snapshot.edges = snapshot.edges.filter(
+    (edge) => allNodeIds.has(edge.sourceIdeaClientId) && allNodeIds.has(edge.targetIdeaClientId),
+  );
+  return snapshot;
+}
+
+export function exportToIdeapad(graphStore: GraphStore, rootNode: GraphObject, userId: string) {
+  // if rootNode isn't a GraphNode, throw
+  if (!(rootNode instanceof GraphNode)) {
+    throw new Error("Root node is not a GraphNode");
+  }
+  // Get subtree data using existing serializeSubtree method
+  const subtreeData = graphStore.serializeSubtree(rootNode);
+
+  // Create snapshot format
+  const snapshot = ideapadSnapshotFromSerializedGraph(subtreeData, userId, graphStore);
 
   // Export as JSON
   const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });

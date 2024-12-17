@@ -9,6 +9,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
 import { useToast } from "@/app/hooks/useToast";
+import { ideapadSnapshotFromSerializedGraph } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import {
   ParseWithAiLinkingOption,
@@ -145,33 +146,7 @@ export const DevTools = observer(function DevTools() {
     // Create snapshot format
     const graphData = graphStore.serialize();
 
-    const snapshot = {
-      nodes: Object.values(graphData.nodesById).map((node) => ({
-        clientId: node.id,
-        userId: user.id,
-        title: node.content.map((elem) => elem.value).join("") || "",
-        likeCount: 0,
-        commentCount: 0,
-        colorId: null,
-        isDeleted: false,
-        anonymous: null,
-        status: "not-acknowledged",
-        attachedBoardClientId: null,
-        permissionsExplicitlySet: false,
-        createdAt: node.createdAt || new Date().toISOString(),
-        updatedAt: node.updatedAt || new Date().toISOString(),
-        attributes: {},
-      })),
-      edges: Object.values(graphData.relationsById).map((relation) => ({
-        id: relation.id.split("-")[0],
-        clientId: relation.id,
-        sourceIdeaClientId: relation.fromId,
-        targetIdeaClientId: relation.toId,
-        labelText: graphStore.getRelationType(relation.relationTypeId)?.label || "",
-        colorId: null,
-        isDeleted: false,
-      })),
-    };
+    const snapshot = ideapadSnapshotFromSerializedGraph(graphData, user.id, graphStore);
 
     // Export as JSON
     const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
