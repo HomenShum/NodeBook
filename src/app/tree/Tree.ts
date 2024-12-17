@@ -1,6 +1,7 @@
 import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 import { SetStateAction } from "react";
 
+import { BaseGraphObject } from "@/app/graph/BaseGraphObject";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
 import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
@@ -1588,6 +1589,32 @@ export class Tree {
     const selection = this.selection;
     if (selection?.type !== "editor") return;
     this.setPathExpanded(selection.treeNodeId, true);
+  }
+
+  /**
+   * Update the canonical relations on all ancestors of the given node
+   * such that the path to the node in the current tree becomes the
+   * canonical path in the graph.
+   *
+   * See {@link BaseGraphObject.canonicalRelation} for more information.
+   */
+  makePathToNodeCanonical(treeNode: TreeNode) {
+    const trx: TxCombined = [];
+    let node: DescendantTreeNode | RootTreeNode | PathToRootNode | null = treeNode;
+    let relationWithParent: GraphRelation | null = treeNode.relationWithParent;
+    while (node && relationWithParent) {
+      trx.push({
+        type: "updateNode",
+        transaction: {
+          nodeId: node.object.id,
+          nodeProps: { canonicalRelationId: relationWithParent.id },
+        },
+      });
+      node = node.parent;
+      relationWithParent =
+        node instanceof DescendantTreeNode ? node.relationWithParent : node?.parent?.relationToChild ?? null;
+    }
+    this.graphStore.applyCombinedTransaction(trx);
   }
 
   clear(root: Root) {

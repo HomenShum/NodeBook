@@ -22,6 +22,12 @@ export abstract class BaseGraphObject {
   pinnedRelationsList: FractionalPositionedList<GraphRelation>;
   pointerRelationsList: FractionalPositionedList<GraphRelation>;
   noteContentRelationsList: FractionalPositionedList<GraphRelation>;
+  /**
+   * The canonical relation for this object.
+   *
+   * This is the relation that is used to determine the path to this object.
+   * It's analogous to the parent directory in a file system.
+   */
   canonicalRelation: GraphRelation | null = null;
 
   protected constructor(store: GraphStore) {

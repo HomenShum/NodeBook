@@ -203,11 +203,8 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
       </DropdownMenuItem>
       {treeNode.parent.object.canonicalRelation?.id !== treeNode.relationWithParent.id && (
         <DropdownMenuItem
-          onSelect={async () => {
-            await graphStore.updateNode({
-              nodeId: treeNode.parent.object.id,
-              nodeProps: { canonicalRelationId: treeNode.relationWithParent.id },
-            });
+          onSelect={() => {
+            tree.makePathToNodeCanonical(treeNode);
             // The tree holds a static array of the path ids, so doesn't re-render automatically
             // when we update the canonical relation. So we force a re-render by re-setting the root
             // which will re-compute the path ids according to the new canonical relation.
@@ -215,7 +212,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
           }}
         >
           <Link size={14} />
-          Make relation canonical
+          Make current path canonical
         </DropdownMenuItem>
       )}
       <DropdownMenuSeparator />
