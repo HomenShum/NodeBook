@@ -189,6 +189,7 @@ const Content = observer(function Content() {
                   styles.NoteContentSection,
                   treeNode.parent instanceof RootTreeNode && treeViewType === "note" && styles.ChildOfRootInNoteView,
                 )}
+                id={treeNode.id + "-noteContent"}
               >
                 <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
                 <div

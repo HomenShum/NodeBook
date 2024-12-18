@@ -16,7 +16,22 @@ type Props = {
  */
 export const NoteContentSuffix = observer(function NoteContentSuffix({ treeNode }: Props) {
   const tree = treeNode.tree;
+  const [clickedBkspc, setClickedBckspc] = React.useState(false);
   const handleEnterKey = useHandleEnterKey(tree, treeNode);
+  const handleBackspaceKey = async (e: Event) => {
+    if (clickedBkspc) {
+      await tree.replaceObjectAtNodeWithCopy(treeNode.id);
+      tree.setFocusedNode(treeNode.id);
+      setClickedBckspc(false);
+    } else {
+      setClickedBckspc(true);
+      // Select the node with proper Id and set the background color
+      const node = document.getElementById(treeNode.id + "-noteContent");
+      if (node) {
+        node.style.backgroundColor = "var(--teal-a3)";
+      }
+    }
+  };
 
   return (
     <div style={{ height: "20px", width: "100%", bottom: 0, position: "absolute", alignItems: "end" }}>
@@ -31,8 +46,7 @@ export const NoteContentSuffix = observer(function NoteContentSuffix({ treeNode 
             case "Backspace":
               try {
                 e.preventDefault();
-                await tree.replaceObjectAtNodeWithCopy(treeNode.id);
-                tree.setFocusedNode(treeNode.id);
+                await handleBackspaceKey(e.nativeEvent);
               } catch (error) {
                 alert(error instanceof Error ? error.message : "Unknown error");
               }
@@ -64,6 +78,13 @@ export const NoteContentSuffix = observer(function NoteContentSuffix({ treeNode 
         onChange={(e) => {
           e.preventDefault();
           e.stopPropagation();
+        }}
+        onBlur={(e) => {
+          const node = document.getElementById(treeNode.id + "-noteContent");
+          if (node) {
+            node.style.removeProperty("background-color");
+            setClickedBckspc(false);
+          }
         }}
         value=""
         type="text"
