@@ -17,8 +17,20 @@ type Props = {
 export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode, openRelComboBox }: Props) {
   const tree = treeNode.tree;
   const inputRef = useRef<HTMLInputElement>(null);
-  const focusOnNode = function () {
-    inputRef.current?.focus();
+  const [clickedBkspc, setClickedBckspc] = React.useState(false);
+  const handleBackspaceKey = async (e: Event) => {
+    if (clickedBkspc) {
+      await tree.replaceObjectAtNodeWithCopy(treeNode.id);
+      tree.setFocusedNode(treeNode.id);
+      setClickedBckspc(false);
+    } else {
+      setClickedBckspc(true);
+      // Select the node with proper Id and set the background color
+      const node = document.getElementById(treeNode.id + "-noteContent");
+      if (node) {
+        node.style.backgroundColor = "var(--teal-a3)";
+      }
+    }
   };
 
   // Only grab selection if  tree node
@@ -73,6 +85,14 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode,
               e.preventDefault();
               tree.moveEditorSelectionUp("end");
               break;
+            case "Backspace":
+              try {
+                e.preventDefault();
+                await handleBackspaceKey(e.nativeEvent);
+              } catch (error) {
+                alert(error instanceof Error ? error.message : "Unknown error");
+              }
+              break;
             default:
               e.preventDefault();
               e.stopPropagation();
@@ -82,6 +102,13 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode,
         }}
         ref={inputRef}
         type="text"
+        onBlur={(e) => {
+          const node = document.getElementById(treeNode.id + "-noteContent");
+          if (node) {
+            node.style.removeProperty("background-color");
+            setClickedBckspc(false);
+          }
+        }}
         onChange={(e) => {
           e.preventDefault();
           e.stopPropagation();

@@ -1,6 +1,6 @@
 import { CornerDownRight, Dot, LoaderCircle, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 import { Checkbox } from "@/app/components/Checkbox/Checkbox";
 import { CyclicIcon, PinCustomIcon } from "@/app/components/CustomIcons";
@@ -138,7 +138,12 @@ const Content = observer(function Content() {
       : viewStore.viewType;
   const showRelationType = !isUnlabelledChild(treeNode) || updatingRelationType;
   const [manualShowRelationType, setManualShowRelationType] = useState(false);
-  const comboBoxWidth = document.getElementById([treeNode.id, "relationCombobox"].join("-"))?.clientWidth;
+  const [comboBoxWidth, setComboBoxWidth] = useState(
+    document.getElementById([treeNode.id, "relationCombobox"].join("-"))?.clientWidth,
+  );
+  useEffect(() => {
+    setComboBoxWidth(document.getElementById([treeNode.id, "relationCombobox"].join("-"))?.clientWidth);
+  }, [relationComboboxIsOpen, treeNode.relationWithParent.relationType, setComboBoxWidth, treeNode.id]);
 
   const openRelComboBox = () => {
     setRelationComboboxIsOpen(true);
