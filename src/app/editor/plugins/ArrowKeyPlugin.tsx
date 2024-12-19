@@ -87,6 +87,17 @@ export const ArrowKeyPlugin = () => {
             }
           }
 
+          // If the previous node is note content, focus on the suffix
+          const prevNode = treeNode.siblingAbove;
+          if (prevNode !== null && prevNode.childrenGroupsById["noteContent"].nodes.length > 0) {
+            event.preventDefault();
+            const suffixInput = document.querySelector(`[data-note-suffix="${prevNode.object.id}"]`);
+            if (suffixInput instanceof HTMLElement) {
+              suffixInput.focus();
+              return true;
+            }
+          }
+
           const focusedMoved = tree.moveEditorSelectionUp("end");
           if (!focusedMoved) return false;
           event.preventDefault();

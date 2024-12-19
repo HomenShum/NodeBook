@@ -37,6 +37,7 @@ export const NoteContentSuffix = observer(function NoteContentSuffix({ treeNode 
     <div style={{ height: "20px", width: "100%", bottom: 0, position: "absolute", alignItems: "end" }}>
       <input
         className={styles.NoteContentSuffix}
+        data-note-suffix={treeNode.object.id}
         onKeyDown={async (e: React.KeyboardEvent) => {
           const isMod = e.metaKey || e.ctrlKey;
           switch (e.key) {
@@ -55,12 +56,16 @@ export const NoteContentSuffix = observer(function NoteContentSuffix({ treeNode 
             case "ArrowDown":
               e.preventDefault();
               e.stopPropagation();
-              e.nativeEvent.stopImmediatePropagation();
+              const nextNode = treeNode.siblingBelow;
               if (isMod && e.shiftKey) {
                 tree.moveSelectedNodesDown();
                 break;
               }
-              isMod ? tree.expandAtSelection() : tree.moveEditorSelectionDown("start");
+              isMod
+                ? tree.expandAtSelection()
+                : nextNode
+                ? tree.setFocusedNode(nextNode?.id, "start")
+                : tree.moveEditorSelectionDown("start");
               break;
             case "ArrowUp":
               e.preventDefault();
