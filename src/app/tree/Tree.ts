@@ -23,8 +23,8 @@ import { ExpansionLocalStorageCache } from "@/app/tree/ExpansionLocalStorageCach
 import { SelectionStack } from "@/app/tree/SelectionStack";
 import { SortOptionLocalStorageCache } from "@/app/tree/SortOptionLocalStorageCache";
 import { comparePositions, compareTimestamps, ObjectPath, uuid } from "@/app/util";
-import appLogger from "@/lib/logger";
 import { ViewType } from "@/app/view/types";
+import appLogger from "@/lib/logger";
 
 import {
   BaseTreeNode,
@@ -48,7 +48,6 @@ import {
   isNoteContent,
   walkTree,
 } from "./utils";
-
 
 /**
  * Forward slash delimited relation ids.
@@ -95,7 +94,7 @@ export class Tree {
         direction: "desc",
       },
       isMainTree = false,
-      viewType = ViewType.Outline
+      viewType = ViewType.Outline,
     }: {
       id?: string;
       search?: string;
@@ -385,13 +384,13 @@ export class Tree {
     return this.selection?.type === "editor" && this.selection.treeNodeId === treeNodeId;
   }
 
-  focus(){
-    if(this.root.visibleChildren.length === 0) return;
+  focus() {
+    if (this.root.visibleChildren.length === 0) return;
     let nodeToFocus: DescendantTreeNode | null = this.root.visibleChildren[0];
-    while (nodeToFocus && (nodeToFocus.object.isEditRestricted || nodeToFocus.object.isDeleteRestricted)){
+    while (nodeToFocus && (nodeToFocus.object.isEditRestricted || nodeToFocus.object.isDeleteRestricted)) {
       nodeToFocus = nodeToFocus.siblingBelow;
     }
-    if(!nodeToFocus) return;
+    if (!nodeToFocus) return;
     this.setFocusedNode(nodeToFocus.id);
   }
 
@@ -1240,7 +1239,7 @@ export class Tree {
     return true;
   }
 
-  convertToNote(treeNode: DescendantTreeNode, createNodeAfter: boolean = false) {
+  convertToNote(treeNode: DescendantTreeNode, createNodeAfter: boolean = false, returnTxs = false, newRootId?: string) {
     // Convert the current node to a note by:
     // - Creating a new note node as a sibling below the current node
     // - Adding the current node as the first child of the note by replacing the relation
@@ -1255,7 +1254,7 @@ export class Tree {
     const parentPath = treeNode.parent.path;
 
     // Add two children to the current node
-    const noteRootId = uuid();
+    const noteRootId = newRootId ? newRootId : uuid();
     const relToNoteRootId = uuid();
 
     const newRelationId = uuid();
@@ -1320,7 +1319,9 @@ export class Tree {
         listType: "noteContent",
       },
     });
-
+    if (returnTxs) {
+      return txs;
+    }
     this.graphStore.applyCombinedTransaction(txs);
     const newNoteRoot = this.graphStore.getNode(noteRootId);
 

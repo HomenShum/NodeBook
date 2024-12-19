@@ -12,8 +12,8 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
 import { uuid } from "@/app/util";
-import { PasteLinksOption } from "@/db/schema";
 import { useViewStore } from "@/app/view/useViewStore";
+import { PasteLinksOption } from "@/db/schema";
 
 /**
  * Plugin that allows pasting multiple lines of text into a node.
@@ -58,6 +58,18 @@ export const PastePlugin = () => {
             : getLinesFromPlainText(event.clipboardData.getData("text/plain"), shiftKey),
         );
 
+        let txs: TxCombined = [];
+        let convertToNote = false;
+        const newRootId = uuid();
+        // If there are multiple lines and viewType is note, convert the node to note
+        if (lines.length > 1 && viewStore.viewType === "note" && treeNode.parentGroup.id !== "noteContent") {
+          let noteConversion = tree.convertToNote(treeNode, false, true, newRootId);
+          if (noteConversion instanceof Array) {
+            txs.push(...noteConversion);
+            convertToNote = true;
+          }
+        }
+
         // Get current relation types and create a map of relation type labels to ids so that we can easily
         // check if a relation type already exists and get the id of a relation type by its label to set a child node's
         // relation id.
@@ -66,10 +78,12 @@ export const PastePlugin = () => {
 
         let allNewRelationIds: string[] = [];
         if (lines.length > 0) {
-          const txs: TxCombined = [];
           // Insert the first line into the current node
           const firstLine = lines.shift();
-          const groupId = treeNode.parentGroup.id;
+          let groupId = treeNode.parentGroup.id;
+          if (convertToNote) {
+            groupId = "noteContent";
+          }
           if (firstLine) {
             const selection = $getSelection();
             let newContent: Chip[];
@@ -115,7 +129,8 @@ export const PastePlugin = () => {
           }
 
           // Add to this arrays as depth increases during iterating over lines, remove as it decreases
-          const objectsAtDepth: string[] = [treeNode.parent.object.id, object.id];
+          const rootParent = convertToNote ? newRootId : treeNode.parent.object.id;
+          const objectsAtDepth: string[] = [rootParent, object.id];
           const relationsAtDepth: string[] = ["UNUSED", relationWithParent.id];
           let lastDepth = 0;
 
@@ -196,8 +211,18 @@ export const PastePlugin = () => {
       },
       COMMAND_PRIORITY_LOW,
     );
-
-  }, [object, relationWithParent, graphStore, editor, path, tree, treeNode, viewStore.viewType, viewStore.activeTree, settingsStore]);
+  }, [
+    object,
+    relationWithParent,
+    graphStore,
+    editor,
+    path,
+    tree,
+    treeNode,
+    viewStore.viewType,
+    viewStore.activeTree,
+    settingsStore,
+  ]);
   return null;
 };
 

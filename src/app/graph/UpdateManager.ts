@@ -194,7 +194,6 @@ export class UpdateManager {
     };
     this.syncQueue.push(dataForSync);
   }
-
   undo() {
     const updates = this.undoStack.pop();
     if (!updates) {
