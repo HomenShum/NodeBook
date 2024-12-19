@@ -7,7 +7,7 @@ import s from "@/app/components/OutlineView.module.css";
 import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
 import { RootObjectDetails } from "@/app/components/RelatedObject/RelatedObjectDetails";
-import s1 from "@/app/components/RightSidebar.module.css";
+import s1 from "@/app/components/RightSidebar/RightSidebar.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -18,7 +18,7 @@ import { useToast } from "@/app/hooks/useToast";
 import { handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey } from "@/app/hotkeys";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { Tree } from "@/app/tree/Tree";
-import { treeNodeToObjectPath, useSetRoot } from "@/app/tree/utils";
+import { treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
@@ -37,7 +37,7 @@ function OutlineContent({ tree }: Props) {
   const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
   const { addToast } = useToast();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const elementRef = useRef<HTMLDivElement>(null);
 
   const userId = graphStore.user?.id;
@@ -185,7 +185,7 @@ function OutlineContent({ tree }: Props) {
             // Set focus to last part of final root node
             const lastNode = treeRoot.visibleChildren[treeRoot.visibleChildren.length - 1];
             // If the last node is note content, create a child at the end of the tree instead.
-            if (lastNode.object.noteContentRelationsList.size > 0 || lastNode.visibleChildren.length > 0) {
+            if (!lastNode || lastNode.object.noteContentRelationsList.size > 0 || lastNode.visibleChildren.length > 0) {
               tree.createChildOfRootAndFocus({ atBottom: true });
             } else {
               tree.setFocusedNode(lastNode.path, "end");

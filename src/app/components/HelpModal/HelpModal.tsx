@@ -14,6 +14,7 @@ type HotkeyItem = {
 }
 
 const modKey = toKeyName('mod') === "control" ? "Ctrl" : "⌘";
+const optionKey = toKeyName('opt') === "alt" ? "Alt" : "⌥";
 
 const list: HotkeyItem[] = [
   { name: "Move Up", keys: ["↑"] },
@@ -34,7 +35,8 @@ const list: HotkeyItem[] = [
   { name: "Expand at Selection", keys: [`${modKey}`, "↓"] },
   { name: "Collapse at Selection", keys: [`${modKey}`, "↑"] },
   {name: "Open Command Bar", keys: [`${modKey}`,"Shift","K"]},
-  {name: "Open Quick Capture", keys: [`${modKey}`,"Q"]}
+  {name: "Open Quick Capture", keys: [`${modKey}`,`${optionKey}`,"K"]},
+  {name: "Open Right Sidebar", keys: [`${modKey}`,`${optionKey}`,"S"]}
 ];
 
 export const HelpModal = observer(function HelpModal() {

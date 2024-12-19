@@ -12,7 +12,7 @@ import Loader from "@/app/components/UIPrimitives/Loader";
 import { useLoading } from "@/app/contexts/LoadingContext";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
-import { isCommandBarHotKey, isQuickCaptureHotkey } from "@/app/hotkeys";
+import { isCommandBarHotKey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
 
 import styles from "./app.module.css";
 
@@ -49,6 +49,10 @@ export default observer(function App({ children }: Props) {
       if(isQuickCaptureHotkey(event)){
         event.preventDefault();
         viewStore.toggleQuickCapture();
+      }
+      if(isRightSidebarHotkey(event)){
+        event.preventDefault();
+        viewStore.toggleRightSidebar();
       }
     }
     document.addEventListener("keydown", handleKeyDown);

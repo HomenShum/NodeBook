@@ -1,8 +1,8 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { Globe, Link2, ListFilter, Map, MapPin } from "lucide-react";
 
-import s from "@/app/components/QuickCapture.module.css";
+import s from "@/app/components/QuickCapture/QuickCapture.module.css";
 import s1 from "@/app/components/ControlsBar/ControlsBar.module.css"
 import { useViewStore } from "@/app/view/useViewStore";
 import OutlineContent from "@/app/components/OutlineContent";
@@ -20,6 +20,8 @@ import { FilterPill } from "@/app/components/ControlsBar/ControlsBar";
 import { cn } from "@/lib/utils";
 import { NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { QuickCaptureSearchBar } from "@/app/components/SearchBar/QuickCaptureSearchBar";
+import { DescendantTreeNode } from "@/app/tree/nodes";
+import QuickCaptureMenu from "@/app/components/QuickCapture/QuickCaptureMenu";
 
 function QuickCapture() {
   const viewStore = useViewStore();
@@ -42,10 +44,16 @@ function QuickCapture() {
     viewStore.setQuickCaptureViewType(viewStore.quickCaptureViewType === ViewType.Outline ? ViewType.Note : ViewType.Outline);
   }, [viewStore]);
 
+  useEffect(() => {
+    if(!viewStore.quickCaptureTree) return;
+    viewStore.quickCaptureTree.focus();
+  }, [viewStore.quickCaptureTree]);
+
   if (!viewStore.quickCaptureView) return <></>;
 
   return (
     <div className={s.QuickCaptureContainer}>
+      <QuickCaptureMenu/>
       <div className={s1.ControlsBar}>
         <div className={s1.ControlsBarWrapper}>
           <div className={s1.ControlsBarWrapper}>

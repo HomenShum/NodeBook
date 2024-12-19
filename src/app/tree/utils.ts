@@ -197,7 +197,7 @@ export function walkTree(treeNode: TreeNode, callback: (node: TreeNode) => boole
   treeNode.visibleChildren.forEach((child) => walkTree(child, callback));
 }
 
-export function useSetRoot() {
+export function useSetMainRoot() {
   const viewStore = useViewStore();
   const router = useRouter();
   return useCallback(
@@ -211,7 +211,7 @@ export function useSetRoot() {
 }
 
 export function useSetAuthorRoot() {
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const graphStore = useGraphStore();
   return useCallback(
     (authorId: string) => {

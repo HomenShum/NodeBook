@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 
 import { useViewStore } from "@/app/view/useViewStore";
 import OutlineContent from "@/app/components/OutlineContent";
-import s from "@/app/components/RightSidebar.module.css";
+import s from "@/app/components/RightSidebar/RightSidebar.module.css";
 
 const RightSidebar = observer(function RightSidebar() {
   const viewStore = useViewStore();

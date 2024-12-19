@@ -9,7 +9,7 @@ import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import RightSidebar from "@/app/components/RightSidebar";
+import RightSidebar from "@/app/components/RightSidebar/RightSidebar";
 
 import s from "./OutlineView.module.css";
 

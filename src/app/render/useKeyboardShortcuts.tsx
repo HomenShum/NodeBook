@@ -4,7 +4,7 @@ import { useCallback, useEffect } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
-import { useSetRoot } from "@/app/tree/utils";
+import { useSetMainRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -12,7 +12,7 @@ export const useKeyboardShortcuts = () => {
   const user = useUser();
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const handleKeyDown = useCallback(
     async (e: KeyboardEvent) => {
       const metaOrCtrl = e.metaKey || e.ctrlKey; // Command key on Mac, Ctrl key on Windows

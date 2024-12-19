@@ -14,7 +14,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { isNoteContent, isUnlabelledChild, useSetRoot } from "@/app/tree/utils";
+import { isNoteContent, isUnlabelledChild, useSetMainRoot } from "@/app/tree/utils";
 import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
@@ -302,7 +302,7 @@ const Bullet = observer(function Bullet() {
   const settingsStore = useSettingsStore();
   const userId = graphStore.user?.id;
   const { treeNode } = useTreeNode();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
 
   const viewStore = useViewStore();
   const handleBulletClick = useCallback(

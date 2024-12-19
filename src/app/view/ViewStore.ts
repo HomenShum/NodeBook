@@ -40,6 +40,7 @@ export class ViewStore {
 
   public leftSidebarOpen = false;
   public rightSidebarOpen = false;
+  public quickCaptureOpen = false;
   public isDarkMode = false;
   public sidebarWidth = 268;
   public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | "help" | null = null;
@@ -61,6 +62,8 @@ export class ViewStore {
       sidebarWidth: true,
       activeModal: true,
       sidebarTrees: false,
+      quickCaptureViewType: true,
+      quickCaptureOpen: true
     });
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
@@ -69,8 +72,10 @@ export class ViewStore {
     this.searchView = new SearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.quickCaptureSearchView = new QuickCaptureSearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.activeTree = this.treeView;
+    this.quickCaptureTree = this.quickCaptureOpen ? new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser(), {
+      viewType: this.quickCaptureViewType
+    }) : null;
   }
-
   /**
    * Return state associated with the main view.
    * When we introduced sublists, we had to split the view into two separate trees.
@@ -234,9 +239,10 @@ export class ViewStore {
   }
 
   toggleQuickCapture() {
-    this.quickCaptureTree = this.quickCaptureTree
-      ? null
-      : new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser());
+    this.quickCaptureOpen = !this.quickCaptureOpen;
+    this.quickCaptureTree = this.quickCaptureOpen ? new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser(), {
+      viewType: this.quickCaptureViewType
+    }) : null;
   }
 
   setActiveTree(tree: Tree) {

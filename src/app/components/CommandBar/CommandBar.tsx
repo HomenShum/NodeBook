@@ -12,7 +12,7 @@ import { Chip } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { useToast } from "@/app/hooks/useToast";
-import { useSetRoot } from "@/app/tree/utils";
+import { useSetMainRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -53,7 +53,7 @@ const CommandBar = observer(() => {
   const listRef = useRef<HTMLDivElement>(null);
   const dropdownContainerRef = useRef<HTMLDivElement>(null);
   const graphStore = useGraphStore();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
 
   const handleZoomToNode = useCallback(
     (object: GraphObject) => {

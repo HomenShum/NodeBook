@@ -34,7 +34,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useParseWithAi } from "@/app/llm/useParseWithAi";
-import { getAncestorsAsArray, useSetAuthorRoot, useSetRoot } from "@/app/tree/utils";
+import { getAncestorsAsArray, useSetAuthorRoot, useSetMainRoot } from "@/app/tree/utils";
 import { createRouteUrl, downloadSubtree, exportToIdeapad } from "@/app/util";
 
 import { useTreeNode } from "./RelatedObjectContext";
@@ -55,7 +55,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
   const parent = treeNode.parent.object;
   const relation = treeNode.relationWithParent;
 
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const setAuthorRoot = useSetAuthorRoot();
   const handleZoom = useCallback(() => {
     setRoot(treeNode.object);

@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
-import { useSetRoot } from "@/app/tree/utils";
+import { useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +17,7 @@ interface TreeElementProps {
 
 const TreeElement = observer(function TreeElement({ object }: TreeElementProps) {
   const viewStore = useViewStore();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const [isExpanded, setIsExpanded] = useState(false);
   const uniqueChildren = [...new Set(object.children)];
 

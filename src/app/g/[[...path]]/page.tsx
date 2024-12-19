@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { MainView } from "@/app/components/MainView";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useSetRoot } from "@/app/tree/utils";
+import { useSetMainRoot } from "@/app/tree/utils";
 import { parsePathArray } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
@@ -12,7 +12,7 @@ import logger from "@/lib/logger";
 function Page({ params: { path: pathArray } }: { params: { path: string[] | undefined } }) {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
 
   useEffect(() => {
     const path = parsePathArray(pathArray ?? [], graphStore);

@@ -9,7 +9,7 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { useToast } from "@/app/hooks/useToast";
-import { useSetRoot } from "@/app/tree/utils";
+import { useSetMainRoot } from "@/app/tree/utils";
 import appLogger from "@/lib/logger";
 
 import styles from "./page.module.css";
@@ -178,7 +178,7 @@ const MewQueryInterface = observer(function MewQueryInterface() {
 
 function Response({ response }: { response: ParsedResponse }) {
   const graphStore = useGraphStore();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const { addToast } = useToast();
 
   function goToNode(id: string) {

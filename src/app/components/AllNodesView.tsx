@@ -9,7 +9,7 @@ import { FixedSizeList as List } from "react-window";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { getOtherObject } from "@/app/graph/utils";
-import { useSetRoot } from "@/app/tree/utils";
+import { useSetMainRoot } from "@/app/tree/utils";
 import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 
 import s from "./AllNodesView.module.css";
@@ -18,7 +18,7 @@ export const AllNodesView = observer(function AllNodesView() {
   const graphStore = useGraphStore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
 
   const selectedAuthorId = searchParams.get("authorId") || "all";
   const [hideHomepageNodes, setHideHomepageNodes] = useState(false);

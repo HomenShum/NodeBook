@@ -16,7 +16,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { getAncestorsAsArray, treeNodeToObjectPath, useSetRoot } from "@/app/tree/utils";
+import { getAncestorsAsArray, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard, downloadSubtree, exportToIdeapad } from "@/app/util";
 
 import styles from "./styles/NodeHeaderSettingsMenu.module.css";
@@ -30,7 +30,7 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
   const settingsStore = useSettingsStore();
   const tree = treeNode.tree;
   const router = useRouter();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const user = useUser();
 
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);

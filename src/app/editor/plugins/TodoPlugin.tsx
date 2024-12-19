@@ -36,7 +36,6 @@ export const TodoPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
           || treeNode.isTodoItem){
           return false;
         }
-        console.log(editor.getRootElement()?.textContent);
         const shouldCreateEmptyTodo = editor.getRootElement()?.textContent?.startsWith("[]") || false;
         const shouldCreateCheckedTodo = editor.getRootElement()?.textContent?.toLowerCase()?.startsWith("[x]") || false;
         if(!shouldCreateEmptyTodo && !shouldCreateCheckedTodo) return false;

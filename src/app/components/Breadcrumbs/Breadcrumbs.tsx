@@ -7,7 +7,7 @@ import React, { useCallback } from "react";
 import { useAuth } from "@/app/auth/useAuth";
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
 import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
-import QuickCapture from "@/app/components/QuickCapture";
+import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 import { SyncStatusIndicator } from "@/app/components/SyncStatus/SyncStatusIndicator";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -22,7 +22,7 @@ import { useUser } from "@/app/contexts/UserContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { TreeNode } from "@/app/tree/nodes";
-import { Ancestor, getAncestorsAsArray, useSetRoot } from "@/app/tree/utils";
+import { Ancestor, getAncestorsAsArray, useSetMainRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -178,7 +178,7 @@ interface BreadcrumbsProps {
 
 export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: BreadcrumbsProps) {
   const settingsStore = useSettingsStore();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const user = useUser();
@@ -291,7 +291,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
             <Button
               style={{ position: "relative" }}
               className={cn(s.ShowTooltip, s.RightAlign)}
-              data-tooltip={viewStore.quickCaptureTree ? "Quick capture opened" : "Quick capture closed"}
+              data-tooltip={viewStore.quickCaptureTree ? "Close Quick Capture" : "Open Quick Capture"}
               variant={"default"}
               size="icon"
               onClick={() => viewStore.toggleQuickCapture()}
@@ -301,7 +301,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
             <Button
               style={{ position: "relative" }}
               className={cn(s.ShowTooltip, s.RightAlign)}
-              data-tooltip={viewStore.rightSidebarOpen ? "Side trees opened" : "Side trees closed"}
+              data-tooltip={viewStore.rightSidebarOpen ? "Close Side Tree View" : "Open Side Tree View"}
               variant={viewStore.rightSidebarOpen ? "active" : "default"}
               size="icon"
               onClick={() => viewStore.toggleRightSidebar()}

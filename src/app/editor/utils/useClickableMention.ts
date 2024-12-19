@@ -3,12 +3,12 @@ import { useCallback } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useToast } from "@/app/hooks/useToast";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { useSetRoot } from "@/app/tree/utils";
+import { useSetMainRoot } from "@/app/tree/utils";
 
 export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode) => {
   const graphStore = useGraphStore();
   const { addToast } = useToast();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const tree = treeNode.tree;
 
   return useCallback(
@@ -20,6 +20,11 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
       const isTopLevelExpanded = tree.isPathExpanded(treeNode.path) || treeNode instanceof RootTreeNode;
 
       if (node) {
+        if(!tree.isMainTree){
+          setRoot(node);
+          return;
+        }
+
         if (!isTopLevelExpanded && treeNode instanceof DescendantTreeNode) {
           tree.togglePathExpanded(treeNode.path);
         }

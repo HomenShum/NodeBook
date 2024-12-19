@@ -54,16 +54,20 @@ export function MentionDropdown({
       const text = opt.value.type === "new" ? opt.value.text : opt.value.object.text;
       editor.update(async () => {
         const mentionNode = $createMentionNode(graphNodeId, text);
+        const currentNodeId = editor.getRootElement()?.getAttribute("data-nodeid");
+        if(!currentNodeId) return;
+        const currentObject = graphStore.getNode(currentNodeId);
+        if(!currentObject) return;
         nodeToReplace.replace(mentionNode);
         mentionNode.selectEnd();
-
         if (opt.value.type === "new") {
           const newNodeText = opt.name.slice("Create new node: ".length);
           const newNodeIsHashtag = newNodeText.startsWith("#");
           const parentId = newNodeIsHashtag ? graphStore.myHashtagsNodeId : graphStore.userRootId;
           await graphStore.addChildNode({
             parentId: parentId,
-            nodeProps: { id: graphNodeId, content: newNodeText },
+            nodeProps: { id: graphNodeId, content: newNodeText},
+            after: currentObject.canonicalRelation ?? -1
           });
         }
         closeMenu();
@@ -114,10 +118,7 @@ export class MentionTypeaheadOption extends MenuOption {
     this.value = typeof value === "string" ? { type: "new", text: value } : { type: "existing", object: value };
   }
   get name() {
-    return this.value.type === "new" ? `Create new node: ${this.value.text}` : this.value.object.text;
-  }
-  get matchText() {
-    return this.value.type === "new" ? this.value.text : this.value.object.text;
+    return this.value.type === "new" ? `Create new node: ${this.value.text.trim()}` : this.value.object.text;
   }
 }
 

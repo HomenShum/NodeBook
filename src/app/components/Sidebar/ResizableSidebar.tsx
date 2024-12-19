@@ -40,7 +40,7 @@ import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
-import { useSetRoot } from "@/app/tree/utils";
+import { useSetMainRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -72,7 +72,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const graphStore = useGraphStore();
   const settingsStore = useSettingsStore();
   const viewStore = useViewStore();
-  const setRoot = useSetRoot();
+  const setRoot = useSetMainRoot();
   const router = useRouter();
 
   const handleOpenDevTools = () => {

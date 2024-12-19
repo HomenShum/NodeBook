@@ -24,6 +24,7 @@ import { SelectionStack } from "@/app/tree/SelectionStack";
 import { SortOptionLocalStorageCache } from "@/app/tree/SortOptionLocalStorageCache";
 import { comparePositions, compareTimestamps, ObjectPath, uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
+import { ViewType } from "@/app/view/types";
 
 import {
   BaseTreeNode,
@@ -47,6 +48,7 @@ import {
   isNoteContent,
   walkTree,
 } from "./utils";
+
 
 /**
  * Forward slash delimited relation ids.
@@ -93,6 +95,7 @@ export class Tree {
         direction: "desc",
       },
       isMainTree = false,
+      viewType = ViewType.Outline
     }: {
       id?: string;
       search?: string;
@@ -101,6 +104,7 @@ export class Tree {
       selection?: TreeSelection | null;
       sortOption?: SortOption;
       isMainTree?: boolean;
+      viewType?: ViewType;
     } = {},
   ) {
     this.id = id;
@@ -117,8 +121,9 @@ export class Tree {
     this.expansionsByPath = expansions.size === 0 ? this.expansionLocalStorageCache.load() : expansions;
     this.selection = selection;
     this.selectionStack = new SelectionStack();
+    this.isMainTree = isMainTree;
+    this.viewType = viewType;
     this.makeObservable();
-    this.isMainTree = isMainTree || false;
   }
 
   makeObservable() {
@@ -228,6 +233,7 @@ export class Tree {
   textsByObjectId = new Map<string, string>();
 
   public readonly isMainTree: boolean = false;
+  public viewType: ViewType;
 
   /**
    * @DesignNote The settings store is used as the default filter, and any
@@ -377,6 +383,16 @@ export class Tree {
   /** Returns true if the given node's editor is focused. */
   isNodeFocused(treeNodeId: string) {
     return this.selection?.type === "editor" && this.selection.treeNodeId === treeNodeId;
+  }
+
+  focus(){
+    if(this.root.visibleChildren.length === 0) return;
+    let nodeToFocus: DescendantTreeNode | null = this.root.visibleChildren[0];
+    while (nodeToFocus && (nodeToFocus.object.isEditRestricted || nodeToFocus.object.isDeleteRestricted)){
+      nodeToFocus = nodeToFocus.siblingBelow;
+    }
+    if(!nodeToFocus) return;
+    this.setFocusedNode(nodeToFocus.id);
   }
 
   isNodeSelected(treeNodeId: string) {
@@ -1622,7 +1638,6 @@ export class Tree {
     this.expansionsByPath.clear();
     // this.textsCache.clear();
     this.textsByObjectId.clear();
-    this.expansionLocalStorageCache.clear();
     this.sortOptionLocalStorageCache.clear();
   }
 
