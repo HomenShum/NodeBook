@@ -2,12 +2,15 @@
 set -e
 
 # Create a copy of the original .env.local file
-cp .env.local .env.local.copy
+if [ -f .env.local ]; then
+  mv .env.local .env.local.copy
+fi
 
 echo "Updating main branch"
 git checkout main && git pull origin main
 
-branches=("mew-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite")
+# branches=("mew-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite")
+branches=("mew-lite")
 
 for branch in "${branches[@]}"; do
   echo "Updating ${branch} branch"
@@ -27,7 +30,12 @@ done
 
 # Reset .env.local to the original state
 git checkout main
-cp .env.local.copy .env.local
-rm .env.local.copy
+if [ -f .env.local.copy ]; then
+  # If we had an original .env.local, restore it from the backup
+  mv .env.local.copy .env.local
+else
+  # If we didn't have an original .env.local, remove the one created during the process
+  rm -f .env.local
+fi
 
 echo "Done"
