@@ -1,0 +1,39 @@
+name: Update Branches
+
+on:
+  push:
+    branches:
+      - main
+  # Manual trigger
+  workflow_dispatch:
+
+jobs:
+  update-branches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for all branches
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Setup Git config
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Make script executable
+        run: chmod +x ./scripts/update-branches.sh
+
+      - name: Run update branches script
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: ./scripts/update-branches.sh

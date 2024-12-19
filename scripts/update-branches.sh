@@ -7,7 +7,7 @@ cp .env.local .env.local.copy
 echo "Updating main branch"
 git checkout main && git pull origin main
 
-branches=("lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite" "mew-lite")
+branches=("mew-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite")
 
 for branch in "${branches[@]}"; do
   echo "Updating ${branch} branch"
@@ -17,7 +17,11 @@ for branch in "${branches[@]}"; do
   git push
   
   echo "Migrating ${branch} branch"
-  yarn vercel env pull --environment=preview --git-branch="$branch" .env.local
+  if [ -n "$VERCEL_TOKEN" ]; then
+    yarn vercel env pull --environment=preview --git-branch="$branch" --token="$VERCEL_TOKEN" .env.local
+  else
+    yarn vercel env pull --environment=preview --git-branch="$branch" .env.local
+  fi
   yarn db:migrate -y
 done
 
