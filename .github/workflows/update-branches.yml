@@ -1,9 +1,9 @@
 name: Update Branches
 
 on:
-  push:
-    branches:
-      - main
+  # push:
+  #   branches:
+  #     - main
   # Manual trigger
   workflow_dispatch:
 
