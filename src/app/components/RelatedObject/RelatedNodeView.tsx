@@ -68,7 +68,8 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
               size="icon"
               className={styles.EditButton}
               onPointerDown={(e) => {
-                e.stopPropagation(); // Prevent the node from expanding/collapsing
+                e.preventDefault();
+                e.stopPropagation();
                 tree.setFocusedNode(treeNode.id, "end", true);
               }}
             >
