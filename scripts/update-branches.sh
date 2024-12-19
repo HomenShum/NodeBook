@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+vercel_token=$1
+
 # Create a copy of the original .env.local file
 if [ -f .env.local ]; then
   mv .env.local .env.local.copy
@@ -20,8 +22,8 @@ for branch in "${branches[@]}"; do
   git push
   
   echo "Migrating ${branch} branch"
-  if [ -n "$VERCEL_TOKEN" ]; then
-    yarn vercel env pull --environment=preview --git-branch="$branch" --token="$VERCEL_TOKEN" .env.local
+  if [ -n "$vercel_token" ]; then
+    yarn vercel env pull --environment=preview --git-branch="$branch" --token="$vercel_token" .env.local
   else
     yarn vercel env pull --environment=preview --git-branch="$branch" .env.local
   fi
