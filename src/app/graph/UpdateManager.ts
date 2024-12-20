@@ -310,13 +310,21 @@ export class UpdateManager {
         logger.debug("Sending sync data", syncData);
         let endpoint = "/api/sync";
 
-        const response = await userFetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(syncData),
-        });
+        let response: Response = { ok: false } as any;
+        let tries = 0;
+        while (!response.ok) {
+          response = await userFetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(syncData),
+          });
+          tries++;
+          if (tries > 3) {
+            break;
+          }
+        }
 
         if (!response.ok) {
           logger.error("Sync failed", response);
