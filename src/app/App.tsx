@@ -13,6 +13,7 @@ import { useLoading } from "@/app/contexts/LoadingContext";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
 import { isCommandBarHotKey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
+import useServiceWorker from "@/app/hooks/useServiceWorker";
 
 import styles from "./app.module.css";
 
@@ -29,6 +30,7 @@ export default observer(function App({ children }: Props) {
 
   const viewStore = useViewStore();
   useKeyboardShortcuts();
+  useServiceWorker();
 
   useEffect(() => {
     const htmlElement = document.documentElement;

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Head from "next/head";
+import React from "react";
 
 import LayoutClient from "./LayoutClient";
 
@@ -25,6 +26,7 @@ export default function Layout({
           name="viewport"
           content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
         />
+        <link rel="manifest" href="manifest.json" />
       </Head>
       <body>
         <LayoutClient>{children}</LayoutClient>
