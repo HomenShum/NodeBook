@@ -1,9 +1,9 @@
 name: Update Branches
 
 on:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
   # Manual trigger
   workflow_dispatch:
 
@@ -31,8 +31,5 @@ jobs:
           git config --global user.name 'GitHub Actions Bot'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
 
-      - name: Make script executable
-        run: chmod +x ./scripts/update-branches.sh
-
       - name: Run update branches script
-        run: ./scripts/update-branches.sh ${{ secrets.VERCEL_TOKEN }}
+        run: bash ./scripts/update-branches.sh ${{ secrets.VERCEL_TOKEN }}

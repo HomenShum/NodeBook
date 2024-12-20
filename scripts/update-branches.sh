@@ -7,12 +7,16 @@ vercel_token=$1
 if [ -f .env.local ]; then
   mv .env.local .env.local.copy
 fi
+current_branch=$(git rev-parse --abbrev-ref HEAD)
 
 echo "Updating main branch"
 git checkout main && git pull origin main
 
-# branches=("mew-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite")
-branches=("mew-lite")
+branches=("mew-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite")
+
+if [ -n "$vercel_token" ]; then
+  yarn vercel link --yes --project prj_M9QeEZasw5AkcJ8Z6sf2WCwelhjz --token="$vercel_token"
+fi
 
 for branch in "${branches[@]}"; do
   echo "Updating ${branch} branch"
@@ -39,5 +43,7 @@ else
   # If we didn't have an original .env.local, remove the one created during the process
   rm -f .env.local
 fi
+
+git checkout "$current_branch"
 
 echo "Done"
