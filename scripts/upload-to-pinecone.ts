@@ -16,6 +16,7 @@
  */
 
 import { Pinecone } from "@pinecone-database/pinecone";
+import { sql } from "drizzle-orm";
 
 import { getDb } from "@/db";
 import {
@@ -46,6 +47,15 @@ interface Relation {
   toId: string;
   relationLabel: string;
   reverseLabel: string;
+}
+
+async function hasRecentChanges(db: MewDatabase, hours: number = 24): Promise<boolean> {
+  const result = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(graphNodeTable)
+    .where(sql`updated_at > NOW() - INTERVAL '${hours} hours'`);
+
+  return result[0].count > 0;
 }
 
 async function getOrCreateIndex(pc: Pinecone): Promise<PineconeIndex> {
@@ -197,10 +207,19 @@ function trimText(text: string, maxTokens = 8191): string {
   return text.length > maxChars ? text.slice(0, maxChars) : text;
 }
 
-async function main() {
+async function main(options: { sinceHours?: number }) {
   const pinecone = new Pinecone({ apiKey: env.PINECONE_API_KEY });
   const index = await getOrCreateIndex(pinecone);
   const db = getDb();
+
+  // Check for recent changes if sinceHours is specified
+  if (options.sinceHours) {
+    const hasChanges = await hasRecentChanges(db, options.sinceHours);
+    if (!hasChanges) {
+      console.log(`No changes in the last ${options.sinceHours} hours. Skipping update.`);
+      return;
+    }
+  }
 
   console.log("Building graph from database...");
   const graph = await buildGraph(db);
@@ -274,4 +293,14 @@ async function main() {
   console.log("Done! Your Pinecone index has been populated.");
 }
 
-main();
+if (require.main === module) {
+  const args = process.argv.slice(2);
+
+  let sinceHours: number | undefined = undefined;
+  const sinceHoursIndex = args.indexOf("--since-hours");
+  if (sinceHoursIndex !== -1 && args[sinceHoursIndex + 1]) {
+    sinceHours = parseInt(args[sinceHoursIndex + 1], 10);
+  }
+
+  main({ sinceHours }).catch(console.error);
+}
