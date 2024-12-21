@@ -47,7 +47,7 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
         treeNode instanceof DescendantTreeNode &&
         treeNode.relationWithParent.relationType.label !== "child"
       ) {
-        tree.convertToNote(treeNode, true);
+        tree.convertToNote(treeNode, false);
         return true;
       }
       if (!nodeIsNoteContent && ((viewType === "note" && childOfTreeRoot) || e.shiftKey)) {

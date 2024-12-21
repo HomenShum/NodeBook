@@ -42,11 +42,10 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
       ? viewStore.quickCaptureViewType
       : viewStore.viewType;
 
-  const hideBullet =
+    // node is content of a note which is a direct child of the root
+    const hideBullet =
     viewType === "note" &&
-    // node is a direct child of the root
-    (treeNode.parent instanceof RootTreeNode ||
-      // or node is content of a note which is a direct child of the root
+    (
       (isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode));
 
   return (

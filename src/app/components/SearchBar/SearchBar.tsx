@@ -100,12 +100,14 @@ export const SearchBar = observer(function SearchBar() {
             setVisibleInput("");
           } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
+            e.nativeEvent.stopImmediatePropagation();
             viewStore.mainView.createChildOfRootAndFocus({
               nodeProps: { content: [{ type: "text", value: viewStore.searchQuery }] },
             });
             viewStore.setSearchQuery("");
           } else if (e.key === "k" && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
             e.preventDefault();
+            e.nativeEvent.stopImmediatePropagation();
             viewStore.mainView.createChildOfRootAndFocus({
               nodeProps: { content: [{ type: "text", value: "" }] },
             });

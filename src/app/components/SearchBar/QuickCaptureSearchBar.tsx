@@ -100,13 +100,15 @@ export const QuickCaptureSearchBar = observer(function SearchBar() {
             setVisibleInput("");
           } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            viewStore.quickCaptureView?.createChildOfRootAndFocus({
+            e.nativeEvent.stopImmediatePropagation();
+            viewStore.quickCaptureView.createChildOfRootAndFocus({
               nodeProps: { content: [{ type: "text", value: viewStore.quickCaptureSearchQuery }] },
             });
             viewStore.setQuickCaptureSearchQuery("");
           } else if (e.key === "k" && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
             e.preventDefault();
-            viewStore.quickCaptureView?.createChildOfRootAndFocus({
+            e.nativeEvent.stopImmediatePropagation();
+            viewStore.quickCaptureView.createChildOfRootAndFocus({
               nodeProps: { content: [{ type: "text", value: "" }] },
             });
             viewStore.setQuickCaptureSearchQuery("");

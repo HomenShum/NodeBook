@@ -10,7 +10,7 @@ import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
-import { TreeNode } from "@/app/tree/nodes";
+import {RootTreeNode, TreeNode} from "@/app/tree/nodes";
 import { uuid } from "@/app/util";
 import { MenuTextMatch, cn } from "@/lib/utils";
 
@@ -67,7 +67,7 @@ export function MentionDropdown({
           await graphStore.addChildNode({
             parentId: parentId,
             nodeProps: { id: graphNodeId, content: newNodeText},
-            after: newNodeIsHashtag ? -1 : (treeNode.relationWithParent ?? -1)
+            after: newNodeIsHashtag ? -1 : (treeNode.parent instanceof RootTreeNode ? (treeNode.relationWithParent ?? -1) : -1)
           });
         }
         closeMenu();

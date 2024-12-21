@@ -1327,14 +1327,14 @@ export class Tree {
 
     if (newNoteRoot) {
       const path = parentPath + "/all/" + relToNoteRootId + "/noteContent/" + treeNode.relationWithParent.id;
-      this.setFocusedNode(path, "start", true);
+      this.setFocusedNode(path, "end", true);
     }
 
     if (createNodeAfter) {
       const newRelation = this.graphStore.getRelation(newRelationId);
       if (newRelation) {
         const path = parentPath + "/all/" + relToNoteRootId + "/noteContent/" + newRelation.id;
-        this.setFocusedNode(path, "start", true);
+        this.setFocusedNode(path, "end", true);
       }
     }
     return true;
