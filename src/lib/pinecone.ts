@@ -4,5 +4,5 @@ export function pgConnectionStringToPineconeIndexName(connectionString: string) 
   const dbInstanceEndpoint = dbEndpoint.split("/")[0];
   const dbInstanceName = dbInstanceEndpoint.split(".")[0];
   const dbName = connectionStringWithoutParams.split("/").pop();
-  return `${dbInstanceName}-${dbName}`;
+  return `${dbInstanceName}-${dbName}`.replace("_", "-").toLowerCase();
 }

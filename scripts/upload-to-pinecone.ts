@@ -30,6 +30,7 @@ import { env } from "@/envBackend";
 import { pgConnectionStringToPineconeIndexName } from "@/lib/pinecone";
 
 const indexName = pgConnectionStringToPineconeIndexName(env.POSTGRES_CONNECTION_STRING);
+console.log("Index name:", indexName);
 type PineconeIndex = ReturnType<Pinecone["Index"]>;
 
 interface Graph {
