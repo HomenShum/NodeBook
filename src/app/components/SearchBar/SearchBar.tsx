@@ -83,7 +83,7 @@ export const SearchBar = observer(function SearchBar() {
       <input
         ref={inputRef}
         type="search"
-        placeholder={isExpanded ? `Search... (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."}
+        placeholder={isExpanded ? `Search... ${' '.repeat(20)}Create (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."}
         className={styles.SearchContent}
         value={visibleInput}
         onChange={handleInputChange}

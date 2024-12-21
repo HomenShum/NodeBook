@@ -12,7 +12,7 @@ import Loader from "@/app/components/UIPrimitives/Loader";
 import { useLoading } from "@/app/contexts/LoadingContext";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
-import { isCommandBarHotKey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
+import {isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey} from "@/app/hotkeys";
 import useServiceWorker from "@/app/hooks/useServiceWorker";
 
 import styles from "./app.module.css";
@@ -43,18 +43,27 @@ export default observer(function App({ children }: Props) {
 
   useEffect(() => {
     if(!viewStore) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = async (event: KeyboardEvent) => {
       if(isCommandBarHotKey(event)){
         event.preventDefault();
         viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen);
       }
       if(isQuickCaptureHotkey(event)){
         event.preventDefault();
-        viewStore.toggleQuickCapture();
+        if(!viewStore.quickCaptureOpen){
+          viewStore.toggleQuickCapture();
+        }
+        await viewStore.quickCaptureTree.createChildOfRootAndFocus()
       }
       if(isRightSidebarHotkey(event)){
         event.preventDefault();
         viewStore.toggleRightSidebar();
+      }
+      if(isFocusSearchHotkey(event)){
+        event.preventDefault();
+        const searchInputs = document.querySelectorAll('input[type="search"]');
+        if(searchInputs.length <= 0) return;
+        (searchInputs[0] as HTMLElement).focus();
       }
     }
     document.addEventListener("keydown", handleKeyDown);

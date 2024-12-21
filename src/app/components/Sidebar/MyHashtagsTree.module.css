@@ -9,11 +9,10 @@
 
 .SidebarTreeBlock {
   display: flex;
-  gap: 4px;
   width: 100%;
   height: 28px;
-  padding: 2px 4px;
-  align-items: center;
+  margin-top: 16px;
+  align-items: end;
   justify-content: start;
   font-size: var(--font-size-sm);
   color: var(--gray-12);
@@ -46,19 +45,15 @@
   align-items: center;
   justify-content: center;
   border-radius: 2px;
+  color: var(--gray-8);
 }
 
 .IconBox:hover {
-  background-color: var(--gray-6);
-  cursor: default;
+  color: var(--gray-9);
 }
 
 .IconExpanded {
   transform: rotate(90deg);
-}
-
-.IconInactive {
-  color: var(--gray-8);
 }
 
 .Button {

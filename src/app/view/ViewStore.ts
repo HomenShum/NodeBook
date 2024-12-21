@@ -48,7 +48,7 @@ export class ViewStore {
   private deepSearching: boolean = false;
   private quickCaptureDeepSearching: boolean = false;
   public sidebarTrees: Tree[] = [];
-  public quickCaptureTree: Tree | null = null;
+  public quickCaptureTree: Tree;
   public activeTree: Tree;
   public notificationPaneOpen = false;
 
@@ -72,9 +72,9 @@ export class ViewStore {
     this.searchView = new SearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.quickCaptureSearchView = new QuickCaptureSearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.activeTree = this.treeView;
-    this.quickCaptureTree = this.quickCaptureOpen ? new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser(), {
+    this.quickCaptureTree = new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser(), {
       viewType: this.quickCaptureViewType
-    }) : null;
+    });
   }
   /**
    * Return state associated with the main view.
@@ -151,6 +151,9 @@ export class ViewStore {
 
   setQuickCaptureViewType(viewType: ViewType) {
     this.quickCaptureViewType = viewType;
+    this.quickCaptureTree = new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser(), {
+      viewType: this.quickCaptureViewType
+    });
   }
 
   setFlattenSublists(flattenSublists: boolean) {
@@ -240,9 +243,6 @@ export class ViewStore {
 
   toggleQuickCapture() {
     this.quickCaptureOpen = !this.quickCaptureOpen;
-    this.quickCaptureTree = this.quickCaptureOpen ? new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser(), {
-      viewType: this.quickCaptureViewType
-    }) : null;
   }
 
   setActiveTree(tree: Tree) {

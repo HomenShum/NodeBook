@@ -32,7 +32,7 @@ function QuickCapture() {
   }, []);
 
   const updateSortOption = (partialSortOption: Partial<SortOption>) => {
-    if(!viewStore.quickCaptureTree) return;
+    if(!viewStore.quickCaptureOpen) return;
     const newSortOption: SortOption = {
       ...viewStore.quickCaptureTree.sortOption,
       ...partialSortOption,
@@ -43,11 +43,6 @@ function QuickCapture() {
   const toggleViewType = useCallback(() => {
     viewStore.setQuickCaptureViewType(viewStore.quickCaptureViewType === ViewType.Outline ? ViewType.Note : ViewType.Outline);
   }, [viewStore]);
-
-  useEffect(() => {
-    if(!viewStore.quickCaptureTree) return;
-    viewStore.quickCaptureTree.focus();
-  }, [viewStore.quickCaptureTree]);
 
   if (!viewStore.quickCaptureView) return <></>;
 

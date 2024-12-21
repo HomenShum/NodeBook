@@ -27,6 +27,7 @@ import { truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 import { GraphNode } from "@/app/graph/GraphNode";
+import {modKeyName, optionKeyName} from "@/app/hotkeys";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -265,14 +266,14 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
         <div className={s.BreadcrumbWrapper}>
           <RenderBreadcrumbs treeNode={treeNode} ancestors={ancestors} handleNavigation={handleNavigation} />
         </div>
-        {viewStore.quickCaptureTree && <QuickCapture />}
+        {viewStore.quickCaptureOpen && <QuickCapture />}
         {!user.isAnonymous ? (
           <div className={s.BreadcrumbRightArea}>
             <Button
               style={{ position: "relative" }}
               variant="default"
               className={cn(s.ShowTooltip, s.BottomAlign)}
-              data-tooltip="Command bar"
+              data-tooltip={`Command bar · ` + [`${modKeyName}`,"⇧","K"].join("+")}
               size="icon"
               onClick={() => viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen)}
             >
@@ -291,17 +292,17 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
             <Button
               style={{ position: "relative" }}
               className={cn(s.ShowTooltip, s.RightAlign)}
-              data-tooltip={viewStore.quickCaptureTree ? "Close Quick Capture" : "Open Quick Capture"}
+              data-tooltip={viewStore.quickCaptureOpen ? `Close Quick Capture` : (`Open Quick Capture · ` + [`${modKeyName}`,`${optionKeyName}`,"K"].join('+'))}
               variant={"default"}
               size="icon"
               onClick={() => viewStore.toggleQuickCapture()}
             >
-              {viewStore.quickCaptureTree ? <X size={14} /> : <QuickCaptureIcon />}
+              {viewStore.quickCaptureOpen ? <X size={14} /> : <QuickCaptureIcon />}
             </Button>
             <Button
               style={{ position: "relative" }}
               className={cn(s.ShowTooltip, s.RightAlign)}
-              data-tooltip={viewStore.rightSidebarOpen ? "Close Side Tree View" : "Open Side Tree View"}
+              data-tooltip={(viewStore.rightSidebarOpen ? "Close Side Tree View" : "Open Side Tree View") + ` · ` +[`${modKeyName}`,`${optionKeyName}`,"S"].join('+')}
               variant={viewStore.rightSidebarOpen ? "active" : "default"}
               size="icon"
               onClick={() => viewStore.toggleRightSidebar()}

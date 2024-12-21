@@ -311,13 +311,26 @@ const Bullet = observer(function Bullet() {
       event.nativeEvent.stopImmediatePropagation();
       logger.debug("Clicked bullet", treeNode.path);
 
-      event.shiftKey
-        ? viewStore.createSidebarTree(treeNode.object)
-        : treeNode.tree.id === viewStore.mainView.id ||
-          treeNode.tree instanceof QuickCaptureTree ||
-          treeNode.tree instanceof QuickCaptureSearchTree
-        ? setRoot(treeNode.object)
-        : treeNode.tree.setRoot(treeNode.object);
+      const isMainTree = treeNode.tree.isMainTree || treeNode.tree.id === viewStore.searchView.id || treeNode.tree.id === viewStore.mainView.id;
+      const isQuickCaptureTree = treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree;
+      const isSidebarTree = !isMainTree&& !isQuickCaptureTree;
+
+      if(event.shiftKey && isSidebarTree){
+        setRoot(treeNode.object);
+        return;
+      }
+
+      if(event.shiftKey && !isSidebarTree){
+        viewStore.createSidebarTree(treeNode.object);
+        return;
+      }
+
+      if(!event.shiftKey && isSidebarTree){
+          treeNode.tree.setRoot(treeNode.object);
+          return;
+      }
+
+      setRoot(treeNode.object);
     },
     [setRoot, treeNode, viewStore],
   );

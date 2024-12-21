@@ -67,7 +67,7 @@ export function MentionDropdown({
           await graphStore.addChildNode({
             parentId: parentId,
             nodeProps: { id: graphNodeId, content: newNodeText},
-            after: currentObject.canonicalRelation ?? -1
+            after: newNodeIsHashtag ? -1 : (treeNode.relationWithParent ?? -1)
           });
         }
         closeMenu();

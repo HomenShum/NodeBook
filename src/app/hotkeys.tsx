@@ -1,6 +1,9 @@
-import isHotkey from "is-hotkey";
+import isHotkey, {toKeyName} from "is-hotkey";
 
 import { Tree } from "@/app/tree/Tree";
+
+export const modKeyName = toKeyName('mod') === "control" ? "Ctrl" : "⌘";
+export const optionKeyName = toKeyName('opt') === "alt" ? "Alt" : "⌥";
 
 export const isMoveUpHotKey = isHotkey("ArrowUp");
 export const isMoveDownHotkey = isHotkey("ArrowDown");
@@ -22,6 +25,7 @@ export const isCollapseAtSelectionHotKey = isHotkey("mod+ArrowUp");
 export const isCommandBarHotKey = isHotkey("mod+shift+k");
 export const isQuickCaptureHotkey = isHotkey("mod+opt+k");
 export const isRightSidebarHotkey = isHotkey("mod+opt+s");
+export const isFocusSearchHotkey = isHotkey("mod+/");
 
 export const treeHotkeyMapping: {
   predicate: (event: KeyboardEvent, tree?: Tree) => boolean;

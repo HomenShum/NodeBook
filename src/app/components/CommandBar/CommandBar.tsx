@@ -29,7 +29,7 @@ type Command =
       type: "create";
       id: string;
       name: string;
-      perform: (isCmdPressed: boolean) => void;
+      perform: () => void;
     }
   | {
       type: "navigate";
@@ -37,7 +37,7 @@ type Command =
       name: string;
       object: GraphObject;
       path: ObjectPath;
-      perform: (isCmdPressed: boolean) => void;
+      perform: () => void;
     };
 
 const CommandBar = observer(() => {
@@ -74,7 +74,7 @@ const CommandBar = observer(() => {
         type: "create" as const,
         id: "create",
         name: search.text === "" ? "Create blank node" : `Create new node: "${search.text}"`,
-        perform: async (isShiftPressed: boolean) => {
+        perform: async () => {
           const { node } = await graphStore.addChildNode({
             parentId: graphStore.userRoot.id,
             nodeProps: { content: search.chips },
@@ -90,9 +90,7 @@ const CommandBar = observer(() => {
 
           close();
           resetSearch();
-          if (isShiftPressed) {
-            setRoot(node);
-          }
+          setRoot(node);
 
           // Toast on new node creation
           addToast({
@@ -173,7 +171,7 @@ const CommandBar = observer(() => {
           e.stopPropagation();
           const index = e.ctrlKey || e.metaKey ? filteredCommands.length - 1 : selectedIndex;
           if (filteredCommands[index]) {
-            filteredCommands[index].perform(e.shiftKey);
+            filteredCommands[index].perform();
           }
           break;
       }
@@ -233,7 +231,7 @@ const CommandBar = observer(() => {
                   <div
                     key={command.id}
                     className={cn(styles.Item, selectedIndex === index && styles.Selected)}
-                    onClick={(e) => command.perform(e.metaKey)}
+                    onClick={(e) => command.perform()}
                   >
                     <span>{command.name}</span>
                     {command.type !== "create" && <Path path={command.path} />}

@@ -1,28 +1,30 @@
-import { Globe, HomeIcon, Link, X } from "lucide-react";
-import { observer } from "mobx-react-lite";
-import { useEffect, useMemo, useRef } from "react";
+import {Globe, HomeIcon, Link, X} from "lucide-react";
+import {observer} from "mobx-react-lite";
+import {useEffect, useMemo, useRef} from "react";
 
-import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
+import {ClickToCreateNodeButton} from "@/app/components/Buttons/ClickToCreateNodeButton";
 import s from "@/app/components/OutlineView.module.css";
-import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
-import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
-import { RootObjectDetails } from "@/app/components/RelatedObject/RelatedObjectDetails";
+import {ChildGroups, NoteContentSection} from "@/app/components/RelatedObject/ChildGroups";
+import {NodeHeaderSettingsMenu} from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
+import {RootObjectDetails} from "@/app/components/RelatedObject/RelatedObjectDetails";
 import s1 from "@/app/components/RightSidebar/RightSidebar.module.css";
-import { Button } from "@/app/components/UIPrimitives/Button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
-import { useUser } from "@/app/contexts/UserContext";
-import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
-import { useToast } from "@/app/hooks/useToast";
-import { handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey } from "@/app/hotkeys";
-import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
-import { Tree } from "@/app/tree/Tree";
-import { treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
-import { copyObjectUrlToClipboard } from "@/app/util";
-import { useViewStore } from "@/app/view/useViewStore";
+import {Button} from "@/app/components/UIPrimitives/Button";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/app/components/UIPrimitives/Tooltip";
+import {useGraphStore} from "@/app/contexts/GraphStoreContext";
+import {useSettingsStore} from "@/app/contexts/SettingsStoreContext";
+import {useUser} from "@/app/contexts/UserContext";
+import {NodeHeaderEditor} from "@/app/editor/NodeHeaderEditor";
+import {useToast} from "@/app/hooks/useToast";
+import {handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey} from "@/app/hotkeys";
+import {QuickCaptureSearchTree, QuickCaptureTree} from "@/app/tree/QuickCaptureTree";
+import {Tree} from "@/app/tree/Tree";
+import {treeNodeToObjectPath, useSetMainRoot} from "@/app/tree/utils";
+import {copyObjectUrlToClipboard} from "@/app/util";
+import {useViewStore} from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
-import { cn } from "@/lib/utils";
+import {cn} from "@/lib/utils";
+import {ViewType} from "@/app/view/types";
+import {SearchTree} from "@/app/tree/SearchTree";
 
 import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 
@@ -76,7 +78,7 @@ function OutlineContent({ tree }: Props) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       let wasEventHandled = false;
-      if (tree.id === viewStore.quickCaptureTree?.id && isEscapeSelectionHotkey(event)) {
+      if (tree.id === viewStore.quickCaptureTree.id && isEscapeSelectionHotkey(event)) {
         wasEventHandled = true;
         viewStore.toggleQuickCapture();
       }
@@ -111,12 +113,15 @@ function OutlineContent({ tree }: Props) {
     };
   });
 
+  const hideHeader = (((tree.isMainTree) || (tree instanceof SearchTree && !(tree instanceof QuickCaptureSearchTree))) && viewStore.viewType === ViewType.Note) || ((tree instanceof QuickCaptureTree || tree instanceof QuickCaptureSearchTree) && viewStore.quickCaptureViewType === ViewType.Note);
+
   return (
     <div id={tree.id} tabIndex={-1} className={s.OutlineContent} ref={elementRef}>
       <span className={s1.CloseTreeButton} onClick={() => viewStore.deleteSidebarTree(tree.id)}>
         <X />
       </span>
-      <div className={s.HeadingContainer}>
+
+      {!hideHeader && <div className={s.HeadingContainer}>
         <div className={s.TitleContainer}>
           <NodeHeaderSettingsMenu treeNode={treeRoot} />
           <TooltipProvider>
@@ -127,7 +132,7 @@ function OutlineContent({ tree }: Props) {
                 ) : isGlobalRoot ? (
                   <Globe size={20} strokeWidth={1.8} />
                 ) : null}
-                <TooltipTrigger asChild>
+                 <TooltipTrigger asChild>
                   <div style={{ width: "100%" }}>
                     <h1 className={s.TitleText}>
                       <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
@@ -163,7 +168,7 @@ function OutlineContent({ tree }: Props) {
             <NoteContentSection parentNode={treeRoot} group={treeRoot.childrenGroupsById.noteContent} />
           </div>
         )}
-      </div>
+      </div>}
       <div className={s.Nodes}>
         <ChildGroups treeNode={treeRoot} />
         {!user.isAnonymous && treeRoot.childCount === 0 && (

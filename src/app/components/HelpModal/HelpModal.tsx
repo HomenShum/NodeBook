@@ -6,15 +6,13 @@ import { useViewStore } from "@/app/view/useViewStore";
 import { DataDialog } from "@/app/components/DataDialog/DataDialog";
 import styles from "@/app/components/dev/DevTools.module.css";
 import hotkeyStyles from "@/app/components/HelpModal/HelpModal.module.css"
+import {modKeyName, optionKeyName} from "@/app/hotkeys";
 
 
 type HotkeyItem = {
   name: string,
   keys: string[]
 }
-
-const modKey = toKeyName('mod') === "control" ? "Ctrl" : "⌘";
-const optionKey = toKeyName('opt') === "alt" ? "Alt" : "⌥";
 
 const list: HotkeyItem[] = [
   { name: "Move Up", keys: ["↑"] },
@@ -23,20 +21,20 @@ const list: HotkeyItem[] = [
   { name: "Move Right", keys: ["→"] },
   { name: "Move Selection Head Up", keys: ["Shift", "↑"] },
   { name: "Move Selection Head Down", keys: ["Shift", "↓"] },
-  { name: "Move Selected Nodes Up", keys: [`${modKey}`, "Shift", "↑"] },
-  { name: "Move Selected Nodes Down", keys: [`${modKey}`, "Shift", "↓"] },
+  { name: "Move Selected Nodes Up", keys: [`${modKeyName}`, "Shift", "↑"] },
+  { name: "Move Selected Nodes Down", keys: [`${modKeyName}`, "Shift", "↓"] },
   { name: "Delete Selection", keys: ["Delete/Backspace"] },
   { name: "Indent Selection", keys: ["Tab"] },
   { name: "Dedent Selection", keys: ["Shift", "Tab"] },
   { name: "Escape Selection", keys: ["Esc"] },
-  { name: "Zoom In", keys: [`${modKey}`, "."] },
-  { name: "Zoom Out", keys: [`${modKey}`, ","] },
-  { name: "Copy", keys: [`${modKey}`, "C"] },
-  { name: "Expand at Selection", keys: [`${modKey}`, "↓"] },
-  { name: "Collapse at Selection", keys: [`${modKey}`, "↑"] },
-  {name: "Open Command Bar", keys: [`${modKey}`,"Shift","K"]},
-  {name: "Open Quick Capture", keys: [`${modKey}`,`${optionKey}`,"K"]},
-  {name: "Open Right Sidebar", keys: [`${modKey}`,`${optionKey}`,"S"]}
+  { name: "Zoom In", keys: [`${modKeyName}`, "."] },
+  { name: "Zoom Out", keys: [`${modKeyName}`, ","] },
+  { name: "Copy", keys: [`${modKeyName}`, "C"] },
+  { name: "Expand at Selection", keys: [`${modKeyName}`, "↓"] },
+  { name: "Collapse at Selection", keys: [`${modKeyName}`, "↑"] },
+  {name: "Open Command Bar", keys: [`${modKeyName}`,"Shift","K"]},
+  {name: "Open Quick Capture", keys: [`${modKeyName}`,`${optionKeyName}`,"K"]},
+  {name: "Open Right Sidebar", keys: [`${modKeyName}`,`${optionKeyName}`,"S"]}
 ];
 
 export const HelpModal = observer(function HelpModal() {

@@ -57,7 +57,7 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  width: 72px;
+  width: 200px;
   min-width: 72px;
   max-width: 250px;
   transition: all 0.15s ease;
@@ -86,7 +86,7 @@
 }
 
 .SearchExpanded .SearchContent[type="search"] {
-  width: 144px;
+  width: 250px;
 }
 
 .CancelSearch {

@@ -4,7 +4,7 @@ import {
   Globe,
   Home,
   Key,
-  KeyboardIcon,
+  KeyboardIcon, ListIcon,
   LogIn,
   LogOut,
   Mail,
@@ -259,16 +259,37 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <Button
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Go to your root"
+                data-tooltip="Go to your stream"
                 onClick={() => {
-                  handleNavigation(() => setRoot(graphStore.getDefaultRootForUser()));
+                  handleNavigation(() => {
+                    setRoot(graphStore.getDefaultRootForUser());
+                    viewStore.setViewType(ViewType.Note);
+                  });
                 }}
               >
                 <span>
                   <Home size={16} strokeWidth={1.5} />
                 </span>
-                <span className={styles.ButtonText}>Your Root ({graphStore.homeRoot.contentOnlyAsText})</span>
+                <span className={styles.ButtonText}>Your Stream</span>
               </Button>
+            )}
+            {!user.isAnonymous && (
+                <Button
+                    variant="ghost"
+                    className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                    data-tooltip="Go to your list"
+                    onClick={() => {
+                      handleNavigation(() => {
+                        setRoot(graphStore.getDefaultRootForUser());
+                        viewStore.setViewType(ViewType.Outline);
+                      });
+                    }}
+                >
+                <span>
+                  <ListIcon size={16} strokeWidth={1.5} />
+                </span>
+                  <span className={styles.ButtonText}>Your List</span>
+                </Button>
             )}
             <Button
               variant="ghost"
@@ -283,30 +304,13 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </span>
               <span className={styles.ButtonText}>AI Query</span>
             </Button>
-            {!user.isAnonymous && <MyHashtagsTree />}
             {!user.isAnonymous && (
               <>
-                <div className={styles.SidebarSectionHeader}>Workspaces</div>
+                <div className={styles.SidebarSectionHeader}>Feeds</div>
                 <Button
                   variant="ghost"
                   className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                  data-tooltip="Your Home as Notes · ⌘⇧H"
-                  onClick={() => {
-                    handleNavigation(() => {
-                      setRoot(graphStore.getDefaultRootForUser());
-                      viewStore.setViewType(ViewType.Note);
-                    });
-                  }}
-                >
-                  <span>
-                    <NotebookText size={16} strokeWidth={1.5} />
-                  </span>
-                  <span className={styles.ButtonText}>Home&apos;s Notes</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                  data-tooltip="Go to global sublists"
+                  data-tooltip="Go to your news feed"
                   onClick={() => {
                     handleNavigation(() => setRoot(graphStore.globalRoot));
                     viewStore.setFlattenSublists(true);
@@ -323,7 +327,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <Button
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Go to All Nodes"
+                data-tooltip="See recently created Notes"
                 onClick={() => {
                   handleNavigation(() => router.push("/all-nodes"));
                 }}
@@ -331,9 +335,10 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <span>
                   <FileSpreadsheet size={16} strokeWidth={1.5} />
                 </span>
-                <span className={styles.ButtonText}>All Nodes</span>
+                <span className={styles.ButtonText}>Recently Created Notes</span>
               </Button>
             )}
+            {!user.isAnonymous && <MyHashtagsTree />}
           </div>
           <div className={styles.BottomNav}>
             <Button

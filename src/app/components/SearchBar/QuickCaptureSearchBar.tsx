@@ -83,7 +83,7 @@ export const QuickCaptureSearchBar = observer(function SearchBar() {
       <input
         ref={inputRef}
         type="search"
-        placeholder={isExpanded ? `Search... (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."}
+        placeholder={isExpanded ? `Search...${' '.repeat(20)}Create (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."}
         className={styles.SearchContent}
         value={visibleInput}
         onChange={handleInputChange}
@@ -104,7 +104,7 @@ export const QuickCaptureSearchBar = observer(function SearchBar() {
               nodeProps: { content: [{ type: "text", value: viewStore.quickCaptureSearchQuery }] },
             });
             viewStore.setQuickCaptureSearchQuery("");
-          } else if (e.key === "k" && (e.metaKey || e.ctrlKey) && !e.shiftKey) {
+          } else if (e.key === "k" && (e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey) {
             e.preventDefault();
             viewStore.quickCaptureView?.createChildOfRootAndFocus({
               nodeProps: { content: [{ type: "text", value: "" }] },
