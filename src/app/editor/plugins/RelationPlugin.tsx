@@ -90,12 +90,11 @@ export const RelationPlugin = observer(function RelationPlugin() {
               },
             });
           } else {
-            const isInitiallyReversed = relationTypeText.endsWith(" of");
             graphStoreTransaction.push({
               type: "updateRelation",
               transaction: {
                 relationId: relation.id,
-                relationProps: { relationTypeLabel: relationTypeText, isInitiallyReversed, isPublic: object.isPublic },
+                relationProps: { relationTypeLabel: relationTypeText, isPublic: object.isPublic },
               },
             });
           }

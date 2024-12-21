@@ -3969,6 +3969,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/wink-pos-tagger@npm:^2":
+  version: 2.2.6
+  resolution: "@types/wink-pos-tagger@npm:2.2.6"
+  dependencies:
+    "@types/wink-tokenizer": "npm:*"
+  checksum: 10c0/08793659ad3f2a8c59d9af65d567e3843669606630816f180ed65835ee2e08f00e4363ea65d7ddf86432bdeb71262436ea8dc3f58c99ca9eb8e57434f506d014
+  languageName: node
+  linkType: hard
+
+"@types/wink-tokenizer@npm:*":
+  version: 4.0.6
+  resolution: "@types/wink-tokenizer@npm:4.0.6"
+  checksum: 10c0/e3ce0711fc8a94f8bfb3af56519d02184ad90bd9d65c949705cf5f15cd04a7c88721b5b85163d371385e7f3fda937bc1812f584ed438f1231e77949cb24cebf7
+  languageName: node
+  linkType: hard
+
 "@types/yargs-parser@npm:*":
   version: 21.0.3
   resolution: "@types/yargs-parser@npm:21.0.3"
@@ -6129,10 +6145,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"emoji-regex@npm:^9.2.2":
+"emoji-regex@npm:^9.0.0, emoji-regex@npm:^9.2.2":
   version: 9.2.2
   resolution: "emoji-regex@npm:9.2.2"
   checksum: 10c0/af014e759a72064cf66e6e694a7fc6b0ed3d8db680427b021a89727689671cefe9d04151b2cad51dbaf85d5ba790d061cd167f1cf32eb7b281f6368b3c181639
+  languageName: node
+  linkType: hard
+
+"en-inflectors@npm:^1.0.12":
+  version: 1.0.12
+  resolution: "en-inflectors@npm:1.0.12"
+  dependencies:
+    en-stemmer: "npm:^1.0.2"
+  checksum: 10c0/c399cee8e9d03879730f91e2f20f0c9c4efd01b1bd4f8e713c04862a61b5e383c07c2a7e4e3633bcb3bfe987e0f680fd9c6cb83435082751ac7faa2b31639c97
+  languageName: node
+  linkType: hard
+
+"en-stemmer@npm:^1.0.2":
+  version: 1.0.3
+  resolution: "en-stemmer@npm:1.0.3"
+  checksum: 10c0/f82a4d7ed3bb3e5f28c0b7722092038d068980e001a1ae0d79697180a984b05030d2e4acc2ce89b451183936f3a9bde7ea8b4195d8b31e3ed8643599f6902951
   languageName: node
   linkType: hard
 
@@ -9897,6 +9929,7 @@ __metadata:
     "@types/react-dom": "npm:^18"
     "@types/react-window": "npm:^1"
     "@types/uuid": "npm:^9.0.8"
+    "@types/wink-pos-tagger": "npm:^2"
     "@typescript-eslint/eslint-plugin": "npm:^8.15.0"
     "@typescript-eslint/parser": "npm:^8.15.0"
     "@vercel/postgres": "npm:^0.8.0"
@@ -9907,6 +9940,7 @@ __metadata:
     drizzle-kit: "npm:^0.20.14"
     drizzle-orm: "npm:^0.29.5"
     drizzle-zod: "npm:^0.5.1"
+    en-inflectors: "npm:^1.0.12"
     eslint: "npm:^8"
     eslint-config-next: "npm:14.1.2"
     eslint-plugin-import: "npm:^2.29.1"
@@ -9939,6 +9973,7 @@ __metadata:
     typescript-eslint: "npm:^8.15.0"
     uuid: "npm:^9.0.1"
     vercel: "npm:^33.5.5"
+    wink-pos-tagger: "npm:^2.2.2"
     zod: "npm:^3.22.4"
   languageName: unknown
   linkType: soft
@@ -13257,6 +13292,59 @@ __metadata:
   dependencies:
     string-width: "npm:^1.0.2 || 2 || 3 || 4"
   checksum: 10c0/1d9c2a3e36dfb09832f38e2e699c367ef190f96b82c71f809bc0822c306f5379df87bab47bed27ea99106d86447e50eb972d3c516c2f95782807a9d082fbea95
+  languageName: node
+  linkType: hard
+
+"wink-helpers@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "wink-helpers@npm:2.0.0"
+  checksum: 10c0/90459238ae0b391ee7b266c68c41f34468c685b9134bfa769ba317ae6f5ed86df520cb4c2c413903f3af5a0b58af4737086349284c9e5e6a1c169b805f6c3c75
+  languageName: node
+  linkType: hard
+
+"wink-lemmatizer@npm:^3.0.1":
+  version: 3.0.4
+  resolution: "wink-lemmatizer@npm:3.0.4"
+  dependencies:
+    wink-lexicon: "npm:^2.2.0"
+    wink-porter2-stemmer: "npm:^2.0.0"
+  checksum: 10c0/021c106d14f458c8d52e90df38ccf5513e8a9bb9c3a92c8266bbe38d7ec2c988fd5ad14570e582258e5089181d4e36c96b1bd4917c574af6b78c90c001c77c92
+  languageName: node
+  linkType: hard
+
+"wink-lexicon@npm:^2.1.1, wink-lexicon@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "wink-lexicon@npm:2.2.0"
+  checksum: 10c0/5beae713362302c60c433bbf49ae79e3cfbf367babc7756122e6178a3b79083977852fd5cd5bfaf89ef911486ac968721004df5c12421ab014a526bd40160ad6
+  languageName: node
+  linkType: hard
+
+"wink-porter2-stemmer@npm:^2.0.0":
+  version: 2.0.1
+  resolution: "wink-porter2-stemmer@npm:2.0.1"
+  checksum: 10c0/4a234d7272a39dcc55d19c3e3cf5b656c4815e48a4d116dc7615d7571b337c8df7e4addec7a6cde38cdbd8c6199453ca3a47567b08d3b43b2116af55111349c4
+  languageName: node
+  linkType: hard
+
+"wink-pos-tagger@npm:^2.2.2":
+  version: 2.2.2
+  resolution: "wink-pos-tagger@npm:2.2.2"
+  dependencies:
+    wink-helpers: "npm:^2.0.0"
+    wink-lemmatizer: "npm:^3.0.1"
+    wink-lexicon: "npm:^2.1.1"
+    wink-porter2-stemmer: "npm:^2.0.0"
+    wink-tokenizer: "npm:^5.2.1"
+  checksum: 10c0/244df80a3dbc49483b001a3377e0e42d5fba694906d5d4fecd33aaa99ef33c4debf1ef6250a590c3699de0d01c4b2fcd98503a6ac45408bac91ff4d1d856bbce
+  languageName: node
+  linkType: hard
+
+"wink-tokenizer@npm:^5.2.1":
+  version: 5.3.0
+  resolution: "wink-tokenizer@npm:5.3.0"
+  dependencies:
+    emoji-regex: "npm:^9.0.0"
+  checksum: 10c0/0403b5d5a6796db55aca647904dd368754ab9c81b58f644d9ce555e8612b48d538df4df667090edf5200c48ba8c21908b134906740d67f0e4eaaaf19507d776f
   languageName: node
   linkType: hard
 
