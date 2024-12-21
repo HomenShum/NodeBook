@@ -8,6 +8,7 @@ import { CmdEditor } from "@/app/components/CommandBar/CmdEditor";
 import { Path } from "@/app/components/Path";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
 import { Chip } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { getCanonicalPath } from "@/app/graph/utils";
@@ -18,6 +19,8 @@ import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
 import styles from "./CommandBar.module.css";
+
+const MAX_DROPDOWN_RESULTS = 30;
 
 export type Search = { text: string; chips: Chip[] };
 
@@ -63,28 +66,10 @@ const CommandBar = observer(() => {
     [setRoot, close],
   );
 
+  const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, graphStore.userRoot.id);
+
   const filteredCommands = useMemo<Command[]>(() => {
     return [
-      ...(search.text === ""
-        ? []
-        : graphStore
-            .search({ text: search.text, filters: { types: ["node"] }, sort: { by: "score" } })
-            .nodes.slice(0, 30)
-            .map(({ node }) => {
-              const path = getCanonicalPath(node);
-              return {
-                type: "navigate" as const,
-                id: node.id,
-                name: node.text,
-                object: node,
-                path,
-                perform: () => {
-                  close();
-                  resetSearch();
-                  setRoot(path);
-                },
-              };
-            })),
       {
         type: "create" as const,
         id: "create",
@@ -123,8 +108,42 @@ const CommandBar = observer(() => {
           return node.id;
         },
       },
+      ...(search.text === ""
+        ? getRecentNodes().map(({ object }) => {
+            const path = getCanonicalPath(object);
+            return {
+              type: "navigate" as const,
+              id: object.id,
+              name: object.text,
+              object,
+              path,
+              perform: () => {
+                close();
+                resetSearch();
+                setRoot(path);
+              },
+            };
+          })
+        : graphStore
+            .search({ text: search.text, filters: { types: ["node"] }, sort: { by: "score" } })
+            .nodes.slice(0, MAX_DROPDOWN_RESULTS)
+            .map(({ node }) => {
+              const path = getCanonicalPath(node);
+              return {
+                type: "navigate" as const,
+                id: node.id,
+                name: node.text,
+                object: node,
+                path,
+                perform: () => {
+                  close();
+                  resetSearch();
+                  setRoot(path);
+                },
+              };
+            })),
     ];
-  }, [graphStore, setRoot, search, close, addToast, handleZoomToNode]);
+  }, [graphStore, setRoot, search, close, addToast, handleZoomToNode, getRecentNodes]);
 
   useEffect(() => {
     setSelectedIndex(0);

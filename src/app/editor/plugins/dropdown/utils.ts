@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { Match } from "@/app/editor/plugins/dropdown/types";
+import { GraphNodeMatch, Match } from "@/app/editor/plugins/dropdown/types";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -157,10 +157,10 @@ export const useGetMatchesForTreeNode = (maxResults: number, treeNode: TreeNode)
   );
 };
 
-export const useGetRecentNodes = (maxResults: number, toFilterByNodeId?: string): (() => Match[]) => {
+export const useGetRecentNodes = (maxResults: number, toFilterByNodeId?: string): (() => GraphNodeMatch[]) => {
   const graphStore = useGraphStore();
 
-  return useCallback((): Match[] => {
+  return useCallback((): GraphNodeMatch[] => {
     let recentNodes = Array.from(graphStore.nodesById.values());
 
     if (toFilterByNodeId) {
