@@ -295,7 +295,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
               data-tooltip={viewStore.quickCaptureOpen ? `Close Quick Capture` : (`Open Quick Capture · ` + [`${modKeyName}`,`${optionKeyName}`,"K"].join('+'))}
               variant={"default"}
               size="icon"
-              onClick={() => viewStore.toggleQuickCapture()}
+              onClick={() => viewStore.quickCaptureOpen ? viewStore.closeQuickCapture(): viewStore.openQuickCaptureAndCreateNode()}
             >
               {viewStore.quickCaptureOpen ? <X size={14} /> : <QuickCaptureIcon />}
             </Button>

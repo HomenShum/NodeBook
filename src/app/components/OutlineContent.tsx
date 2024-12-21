@@ -80,7 +80,12 @@ function OutlineContent({ tree }: Props) {
       let wasEventHandled = false;
       if (tree.id === viewStore.quickCaptureTree.id && isEscapeSelectionHotkey(event)) {
         wasEventHandled = true;
-        viewStore.toggleQuickCapture();
+        viewStore.closeQuickCapture();
+      }
+      if(tree.isMainTree && tree.selection === null && isEscapeSelectionHotkey(event)){
+        wasEventHandled = true;
+        setRoot(graphStore.getDefaultRootForUser());
+        viewStore.setViewType(ViewType.Note);
       }
       if (!wasEventHandled) {
         wasEventHandled = handleTreeHotkeys(event, tree);

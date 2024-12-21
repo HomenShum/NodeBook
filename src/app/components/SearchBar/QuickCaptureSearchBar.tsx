@@ -109,6 +109,7 @@ export const QuickCaptureSearchBar = observer(function SearchBar() {
             viewStore.quickCaptureView?.createChildOfRootAndFocus({
               nodeProps: { content: [{ type: "text", value: "" }] },
             });
+            viewStore.setQuickCaptureSearchQuery("");
           }
         })}
       />

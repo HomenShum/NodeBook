@@ -50,10 +50,7 @@ export default observer(function App({ children }: Props) {
       }
       if(isQuickCaptureHotkey(event)){
         event.preventDefault();
-        if(!viewStore.quickCaptureOpen){
-          viewStore.toggleQuickCapture();
-        }
-        await viewStore.quickCaptureTree.createChildOfRootAndFocus()
+        viewStore.openQuickCaptureAndCreateNode();
       }
       if(isRightSidebarHotkey(event)){
         event.preventDefault();
@@ -70,7 +67,7 @@ export default observer(function App({ children }: Props) {
     return () => {
       document.removeEventListener("keydown", handleKeyDown)
     }
-  })
+  }, [viewStore])
 
   useEffect(() => {
     document.documentElement.style.setProperty("--sidebar-width", `${viewStore.sidebarWidth}px`);

@@ -91,7 +91,7 @@ export class ViewStore {
     }
   }
 
-  get quickCaptureView(): Tree | null{
+  get quickCaptureView(): Tree{
     if(this.quickCaptureDeepSearching){
       return this.quickCaptureSearchView
     }
@@ -123,7 +123,8 @@ export class ViewStore {
         isQuickCaptureDeepSearching: computed,
         createSidebarTree: action,
         deleteSidebarTree: action,
-        toggleQuickCapture: action,
+        openQuickCaptureAndCreateNode: action,
+        closeQuickCapture: action,
         setActiveTree: action,
         toggleRightSidebar: action,
         setNodeIsProcessing: action,
@@ -243,6 +244,15 @@ export class ViewStore {
 
   toggleQuickCapture() {
     this.quickCaptureOpen = !this.quickCaptureOpen;
+  }
+
+  openQuickCaptureAndCreateNode() {
+    this.quickCaptureOpen = true;
+    this.quickCaptureTree.createChildOfRootAndFocus();
+  }
+
+  closeQuickCapture(){
+    this.quickCaptureOpen = false;
   }
 
   setActiveTree(tree: Tree) {

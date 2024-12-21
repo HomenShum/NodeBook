@@ -7,9 +7,9 @@
   height:99vh;
   background: none;
   margin-top: 1px;
-  max-width: 33.33vw;
-  min-width: 33.33vw;
-  width:33.33vw;
+  max-width: 50vw;
+  min-width: 50vw;
+  width: 50vw;
   overflow-y: auto;
 }
 

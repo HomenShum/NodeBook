@@ -109,6 +109,7 @@ export const SearchBar = observer(function SearchBar() {
             viewStore.mainView.createChildOfRootAndFocus({
               nodeProps: { content: [{ type: "text", value: "" }] },
             });
+            viewStore.setSearchQuery("");
           }
         })}
       />

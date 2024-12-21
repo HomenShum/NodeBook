@@ -16,14 +16,14 @@ function QuickCaptureMenu() {
   const handleMainViewExpand = () => {
     if(!viewStore.quickCaptureOpen) return;
     const root = viewStore.quickCaptureTree.root.object;
-    viewStore.toggleQuickCapture();
+    viewStore.closeQuickCapture();
     setMainRoot(root);
   }
 
     const handleSideViewExpand = () => {
         if(!viewStore.quickCaptureOpen) return;
         const root = viewStore.quickCaptureTree.root.object;
-        viewStore.toggleQuickCapture();
+        viewStore.closeQuickCapture();
         viewStore.createSidebarTree(root)
     }
 
@@ -33,7 +33,7 @@ function QuickCaptureMenu() {
         className={cn(s1.ShowTooltip, s1.RightAlign)}
         data-tooltip={"Close Quick Capture"}
         size="icon"
-        onClick={() => viewStore.toggleQuickCapture()}
+        onClick={() => viewStore.closeQuickCapture()}
       >
         <X size={14} />
       </Button>

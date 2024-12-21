@@ -195,7 +195,6 @@ export class SearchTree extends Tree {
       this.removeFromSearchExpansions(path);
     }
     this.expansionsByPath.set(path, isExpanded);
-    this.expansionLocalStorageCache.update(this.expansionsByPath);
   }
 
   togglePathExpanded(path: Path) {
@@ -206,6 +205,5 @@ export class SearchTree extends Tree {
       this.removeFromSearchExpansions(path);
     }
     this.expansionsByPath.set(path, newState);
-    this.expansionLocalStorageCache.update(this.expansionsByPath);
   }
 }

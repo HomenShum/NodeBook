@@ -19,6 +19,7 @@ import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptur
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import {SearchTree} from "@/app/tree/SearchTree";
 
 import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./styles/ChildGroups.module.css";
@@ -94,7 +95,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
       : viewStore.viewType;
   const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
 
-  if (isEmpty && !group.isExpanded && !isRoot) {
+  if ((tree instanceof SearchTree) || (isEmpty && !group.isExpanded && !isRoot)) {
     return null;
   }
 

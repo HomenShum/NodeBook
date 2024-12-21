@@ -1549,13 +1549,16 @@ export class Tree {
   /**
    * Convert a node selection to an editor selection or and editor selection to
    * no selection.
+   *
    */
   escapeSelection() {
-    if (this.selection === null) {
-      return;
-    } else if (this.selection?.type === "node") {
+    if(this.selection === null) return;
+
+    if(this.selection.type === "node") {
       this.setFocusedNode(this.selection.headNodeId);
+      return;
     }
+    this.setFocusedNode(null);
   }
 
   /**
