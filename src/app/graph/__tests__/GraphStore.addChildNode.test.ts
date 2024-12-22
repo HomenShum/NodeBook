@@ -3,14 +3,14 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 
-import { MIN_NUM_NODES_WITH_USER, MIN_NUM_RELATIONS } from "./helpers";
+import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
 
 describe("GraphStore.addChildNode", () => {
   let graphStore: GraphStore;
 
   let parent: GraphNode;
 
-  const NUM_NODES_START = MIN_NUM_NODES_WITH_USER;
+  const NUM_NODES_START = MIN_NUM_NODES;
   const NUM_RELATIONS_START = MIN_NUM_RELATIONS;
 
   beforeEach(async () => {

@@ -1874,7 +1874,7 @@ export class GraphStore {
 
     // User node
     let userRoot = this.nodesById.get(this.userRootId);
-    if (!userRoot && !this.user.isAnonymous) {
+    if (!userRoot) {
       const { node, updates: userRootUpdates } = this._addNode({
         id: this.userRootId,
         content: [{ type: "text", value: this.user.name || this.user.id || "Untitled User" }],
@@ -1899,7 +1899,7 @@ export class GraphStore {
 
     // My Hashtags node for user
     let myHashtagsNode = this.nodesById.get(this.myHashtagsNodeId);
-    if (!myHashtagsNode && !this.user.isAnonymous) {
+    if (!myHashtagsNode) {
       const { node, updates: myHashtagsNodeUpdates } = this._addNode({
         id: this.myHashtagsNodeId,
         content: [{ type: "text", value: "My Hashtags" }],

@@ -3,12 +3,12 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 
-import { MIN_NUM_NODES_WITH_USER, MIN_NUM_RELATIONS } from "./helpers";
+import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
 
 describe("GraphStore.load", () => {
   let graphStore: GraphStore;
 
-  const NUM_START_NODES = MIN_NUM_NODES_WITH_USER;
+  const NUM_START_NODES = MIN_NUM_NODES;
   const NUM_START_RELATIONS = MIN_NUM_RELATIONS;
 
   beforeEach(async () => {
@@ -47,7 +47,7 @@ describe("GraphStore.load", () => {
           isPublic: false,
           isNewRelatedObjectsPublic: false,
           canonicalRelationId: null,
-          isChecked: null
+          isChecked: null,
         },
       },
       relationTypesById: {

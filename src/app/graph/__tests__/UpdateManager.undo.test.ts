@@ -3,14 +3,14 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 
-import { MIN_NUM_NODES_WITH_USER, MIN_NUM_RELATIONS } from "./helpers";
+import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
 
 describe("UpdateManaager.undo", () => {
   let graphStore: GraphStore;
 
   let node: GraphNode;
 
-  const NUM_NODES_START = MIN_NUM_NODES_WITH_USER + 1;
+  const NUM_NODES_START = MIN_NUM_NODES + 1;
   const NUM_RELATIONS_START = MIN_NUM_RELATIONS;
 
   beforeEach(async () => {

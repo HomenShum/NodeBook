@@ -3,7 +3,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 
-import { MIN_NUM_NODES_WITH_USER } from "./helpers";
+import { MIN_NUM_NODES } from "./helpers";
 
 describe("GraphStore.addNode", () => {
   let graphStore: GraphStore;
@@ -20,7 +20,7 @@ describe("GraphStore.addNode", () => {
 
     expect(node).toBeDefined();
     expect(graphStore.getNode(node.id)).toBe(node);
-    expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES_WITH_USER + 1);
+    expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES + 1);
   });
   it("should queue a GraphUpdate for creating a node", async () => {
     const node = await graphStore.addNode({});
@@ -35,7 +35,7 @@ describe("GraphStore.addNode", () => {
     graphStore.updateManager.revertAllPending();
 
     expect(graphStore.getNode(node.id)).toBeUndefined();
-    expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES_WITH_USER);
+    expect(graphStore.nodesById.size).toBe(MIN_NUM_NODES);
   });
   it("should create a public node in public mode and vice versa", async () => {
     graphStore.settings?.setPublicMode(true);

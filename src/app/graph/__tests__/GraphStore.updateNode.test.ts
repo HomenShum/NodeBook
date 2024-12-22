@@ -3,14 +3,14 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 
-import { MIN_NUM_NODES_WITH_USER } from "./helpers";
+import { MIN_NUM_NODES } from "./helpers";
 
 describe("GraphStore.updateNode", () => {
   let graphStore: GraphStore;
 
   let node: GraphNode;
 
-  const NUM_START_NODES = MIN_NUM_NODES_WITH_USER + 1;
+  const NUM_START_NODES = MIN_NUM_NODES + 1;
 
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
