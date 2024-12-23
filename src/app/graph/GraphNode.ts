@@ -153,7 +153,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
    * to _dfsText. Need to come up with a cleaner solution
    * without breaking things.
    */
-  _dfsText(visitedMap: Record<string, boolean> = {}, markupMentions = true): string {
+  _dfsText(visitedMap: Record<string, boolean> = {}): string {
     visitedMap[this.id] = true;
     return this.content
       .map((chip) => {
@@ -164,13 +164,13 @@ export class GraphNode extends BaseGraphObject implements Serializable {
             return chip.value;
           case "mention":
             const referencedNode = this.store.getNode(chip.value);
-            if (!referencedNode) return markupMentions ? `@[${DELETED_NODE_TEXT}]` : DELETED_NODE_TEXT;
+            if (!referencedNode) return `@[${DELETED_NODE_TEXT}]`;
             try {
               if (visitedMap[referencedNode.id]) {
                 return "";
               } else {
-                const text = referencedNode._dfsText(visitedMap, markupMentions);
-                return markupMentions ? `@[${text}]` : text;
+                const text = referencedNode._dfsText(visitedMap);
+                return `@[${text}]`;
               }
             } catch (error) {
               console.error("Error accessing referencedNode.text:", error);
@@ -184,11 +184,11 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   }
 
   get contentOnlyAsText(): string {
-    return this._dfsText({}, true);
+    return this._dfsText({});
   }
 
   get text(): string {
-    const text = this._dfsText({}, true);
+    const text = this._dfsText({});
     if (this.noteContentRelationsList.size > 0) {
       return [
         text ? text + " - " : "",
@@ -197,7 +197,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
           .sort((a, b) => comparePositions(a.position, b.position))
           .map(({ item }) => {
             const object = getOtherObject(item, this.id);
-            if (object instanceof GraphNode) return object._dfsText({ [this.id]: true }, true);
+            if (object instanceof GraphNode) return object._dfsText({ [this.id]: true });
             if (object instanceof GraphRelation) return "[Relation]";
             return object ? object.text : "";
           })
@@ -210,22 +210,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   }
 
   get searchText(): string {
-    if (this.noteContentRelationsList.size > 0) {
-      return [
-        this._dfsText({}, false),
-        ...this.noteContentRelationsList
-          .values()
-          .sort((a, b) => comparePositions(a.position, b.position))
-          .map(({ item }) => {
-            const object = getOtherObject(item, this.id);
-            if (object instanceof GraphNode) return object._dfsText({}, false);
-            if (object instanceof GraphRelation) return "[Relation]";
-            return object ? object.searchText : "";
-          }),
-      ].join(" ");
-    } else {
-      return this._dfsText({}, false);
-    }
+    return this.text;
   }
 
   toString() {

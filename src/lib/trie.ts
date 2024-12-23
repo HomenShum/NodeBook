@@ -1,7 +1,7 @@
 import { reaction } from "mobx";
 
 const SEP = /[\s/]+/;
-const PRE = new RegExp(/["'({[]+/, "");
+const PRE = new RegExp(/^["'({[@#]+/, "");
 
 export interface CappedKeywordIndex {
   add(id: string, getText: () => string): void;
@@ -92,7 +92,13 @@ export class KeywordTrieIndex implements CappedKeywordIndex {
     const words = content
       .toLocaleLowerCase()
       .split(SEP)
-      .map((word) => word.replace(PRE, ""));
+      .flatMap((word) => {
+        const m = word.match(PRE);
+        if (m) {
+          return [word, word.slice(m[0].length)];
+        }
+        return [word];
+      });
     // if the content contains a URL, we want to index the distinct parts of the URL as well
     if (this.urlRegex.test(content)) {
       const urlKWMatches = content.match(this.urlRegex);
