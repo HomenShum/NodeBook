@@ -2,6 +2,7 @@ import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import {
   $createParagraphNode,
@@ -11,6 +12,7 @@ import {
   $setSelection,
   COMMAND_PRIORITY_LOW,
   KEY_ENTER_COMMAND,
+  KEY_MODIFIER_COMMAND,
   TextNode,
 } from "lexical";
 import { useEffect } from "react";
@@ -40,14 +42,18 @@ function OnChangePlugin({ onChange }: { onChange: (search: Search) => void }) {
   return null;
 }
 
-function PreventEnterPlugin() {
+function PreventDefaultPlugin() {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     editor.registerCommand(
       KEY_ENTER_COMMAND,
       (e) => {
         if (!e) return false;
-        if (e.shiftKey) {
+        if (e.key === "z") {
+          // Prevent the nodes content being undone/redone when command bar is open
+          e.stopPropagation();
+          return false;
+        } else if (e.shiftKey) {
           // On shift+enter, allow the editor to handle it and create a new line,
           // and prevent the command bar from selecting an option.
           e.stopPropagation();
@@ -60,6 +66,17 @@ function PreventEnterPlugin() {
         }
       },
       // Low priority so it doesn't prevent the mention dropdown enter handling
+      COMMAND_PRIORITY_LOW,
+    );
+    editor.registerCommand(
+      KEY_MODIFIER_COMMAND,
+      (e) => {
+        if (e?.key === "z" && (e.ctrlKey || e.metaKey)) {
+          e.stopPropagation();
+          return true;
+        }
+        return false;
+      },
       COMMAND_PRIORITY_LOW,
     );
   }, [editor]);
@@ -112,9 +129,10 @@ export const CmdEditor = ({ dropdownContainerRef, onChange, initialValue }: Prop
         ErrorBoundary={LexicalErrorBoundary}
         contentEditable={<ContentEditable className={styles.Input} suppressContentEditableWarning />}
       />
+      <HistoryPlugin />
       <OnChangePlugin onChange={onChange} />
       <CommandBarMentionDropdown dropdownContainerRef={dropdownContainerRef} />
-      <PreventEnterPlugin />
+      <PreventDefaultPlugin />
       <ReplacementPlugin treeNode={null} />
     </LexicalComposer>
   );
