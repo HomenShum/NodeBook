@@ -8,6 +8,7 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useUser } from "@/app/contexts/UserContext";
 import { NodeEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { getCanonicalPath, objectPathToBreadcrumb } from "@/app/graph/utils";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
 
@@ -43,8 +44,16 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   const cnInnerContainer = cn(
     styles.FlexContainer,
     isLocal ? "" : isEditMode ? cn(styles.Pill, styles.Editor) : cn(isExpanded && styles.Expanded, styles.Pill),
-    treeNode.isTodoItem && treeNode.object instanceof GraphNode && treeNode.object.isChecked ? cn(styles.StrikeThrough) : ""
+    treeNode.isTodoItem && treeNode.object instanceof GraphNode && treeNode.object.isChecked
+      ? cn(styles.StrikeThrough)
+      : "",
   );
+
+  const path = getCanonicalPath(treeNode.object);
+  const breadcrumbs = objectPathToBreadcrumb(path);
+  const tooltipContent = `Node ID: ${treeNode.object.id}
+    ${breadcrumbs.join(" / ")}
+  `;
 
   return (
     <div ref={ref} className={styles.Container}>
@@ -60,6 +69,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
               tree.togglePathExpanded(treeNode.path);
             }
           }}
+          data-tooltip={tooltipContent}
         >
           <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} boundaryRef={ref} />
           {isReadOnlyReference && !user.isAnonymous && (

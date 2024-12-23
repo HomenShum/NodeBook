@@ -2,7 +2,7 @@ import { Chip } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { BaseGroup, DescendantTreeNode, GroupId, NoteContentGroup, PinnedGroup } from "@/app/tree/nodes";
-import { ObjectPath } from "@/app/util";
+import { ObjectPath, objectPathToObjects } from "@/app/util";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import logger from "@/lib/logger";
 
@@ -109,9 +109,10 @@ export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath
   };
 };
 
-export const objectPathToString = (objectPath: ObjectPath): string => {
-  if (!objectPath.relations?.length) return "";
-  return objectPath.relations.map((r) => "/all/" + r.id).join("");
+export const objectPathToBreadcrumb = (objectPath: ObjectPath): string[] => {
+  const objectsInPath = objectPathToObjects(objectPath);
+  if (!objectsInPath || objectsInPath.length === 1) return [];
+  return objectsInPath.map((o) => o.text);
 };
 
 /**

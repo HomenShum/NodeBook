@@ -47,7 +47,35 @@
   cursor: pointer;
 }
 
+/* 
+Tooltip
+*/
+.TreeNodeReference .Pill::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 4px;
+  background-color: var(--gray-1);
+  color: var(--gray-10);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-mini);
+  width: max-content;
+  max-width: 400px;
+  white-space: pre-line;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s 0.3s, visibility 0.2s 0.3s;
+  z-index: 50;
+  box-shadow: var(--shadow-sm);
+  border: 0.5px solid var(--gray-6);
+}
 
+.TreeNodeReference .Pill:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
 
 .TreeNodeReference .Pill.Expanded {
   border: 0.5px solid var(--teal-8);

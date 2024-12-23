@@ -138,7 +138,7 @@ Tooltip
   white-space: pre-line;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s 0.5s, visibility 0.2s 0.5s;
+  transition: opacity 0.2s 0.3s, visibility 0.2s 0.3s;
   z-index: 50;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
