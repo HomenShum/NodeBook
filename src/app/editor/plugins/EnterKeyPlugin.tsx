@@ -7,10 +7,10 @@ import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { Chip } from "@/app/graph/GraphNode";
 import { useToast } from "@/app/hooks/useToast";
 import { DescendantTreeNode, PointerTreeNode, RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { Tree } from "@/app/tree/Tree";
 import { isNoteContent } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
-import {QuickCaptureSearchTree, QuickCaptureTree} from "@/app/tree/QuickCaptureTree";
 
 export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
   const { addToast } = useToast();
@@ -20,20 +20,23 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
       if (e.key !== "Enter") return false;
       e.preventDefault();
       e.stopPropagation();
-      const viewType = (treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree) ? viewStore.quickCaptureViewType: viewStore.viewType
+      const viewType =
+        treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree
+          ? viewStore.quickCaptureViewType
+          : viewStore.viewType;
       const nodeIsNoteContent = isNoteContent(treeNode);
       const isMod = e.metaKey || e.ctrlKey;
-      const childOfTreeRoot = treeNode.parent instanceof RootTreeNode;
+
       //Todo: This can be cleaned up
       if (isMod || treeNode.object.isEditRestricted) {
         if (nodeIsNoteContent && treeNode instanceof DescendantTreeNode) {
-            if(chips && chips.after.length === 0 && chips.before.length > 0){
-                tree.createChildNode({
-                    parent: tree.root,
-                    after: -1
-                })
-                return true;
-            }
+          if (chips && chips.after.length === 0 && chips.before.length > 0) {
+            tree.createChildNode({
+              parent: tree.root,
+              after: -1,
+            });
+            return true;
+          }
           tree.splitNote(treeNode, chips);
           return true;
         } else {
@@ -41,28 +44,32 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
           return true;
         }
       }
+
+      const childOfTreeRoot = treeNode.parent instanceof RootTreeNode;
       if (
         !nodeIsNoteContent &&
         viewType === "note" &&
+        childOfTreeRoot &&
         treeNode instanceof DescendantTreeNode &&
         treeNode.relationWithParent.relationType.label !== "child"
       ) {
-        tree.convertToNote(treeNode, false);
+        tree.convertToNote(treeNode, true);
         return true;
       }
+
       if (!nodeIsNoteContent && ((viewType === "note" && childOfTreeRoot) || e.shiftKey)) {
         tree.splitIntoNote(treeNode, chips);
         return true;
-      } else {
-        if (treeNode instanceof PointerTreeNode) {
-          addToast({
-            title: "Cannot split while sublists are flattened",
-          });
-          return false;
-        }
-        tree.split(treeNode, chips);
-        return true;
       }
+
+      if (treeNode instanceof PointerTreeNode) {
+        addToast({
+          title: "Cannot split while sublists are flattened",
+        });
+        return false;
+      }
+      tree.split(treeNode, chips);
+      return true;
     },
     [treeNode, viewStore.quickCaptureViewType, viewStore.viewType, tree, addToast],
   );
