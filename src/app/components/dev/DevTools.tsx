@@ -9,7 +9,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
 import { useToast } from "@/app/hooks/useToast";
-import { ideapadSnapshotFromSerializedGraph } from "@/app/util";
+import { exportToIdeapad, ideapadSnapshotFromGraph } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import {
   ParseWithAiLinkingOption,
@@ -143,19 +143,8 @@ export const DevTools = observer(function DevTools() {
   }, [graphStore]);
 
   const handleExportToIdeapad = useCallback(() => {
-    // Create snapshot format
-    const graphData = graphStore.serialize();
-
-    const snapshot = ideapadSnapshotFromSerializedGraph(graphData, user.id, graphStore);
-
-    // Export as JSON
-    const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "ideapad_export.json";
-    link.click();
-    URL.revokeObjectURL(url);
+    const { nodes, edges } = ideapadSnapshotFromGraph(graphStore, user.id);
+    exportToIdeapad({ nodes, edges });
   }, [graphStore, user.id]);
 
   return (

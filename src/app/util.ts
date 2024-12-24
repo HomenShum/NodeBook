@@ -1,6 +1,7 @@
 "use client";
 
 import { generateKeyBetween } from "fractional-indexing";
+import JSZip from "jszip";
 import { autorun, toJS } from "mobx";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -349,7 +350,90 @@ export function ideapadSnapshotFromSerializedGraph(data: SerializedGraphStore, u
   return snapshot;
 }
 
-export function exportToIdeapad(graphStore: GraphStore, rootNode: GraphObject, userId: string) {
+/**
+ * TODO There's no reason for this to be different from ideapadSnapshotFromSerializedGraph.
+ * It was implemented as part of https://github.com/IdeaFlowCo/mew/pull/762 and I made it
+ * a separate function to avoid breaking existing functions. I intended to refactor it
+ * together with the function above but ran out of time so left them separate.
+ */
+export function ideapadSnapshotFromGraph(graphStore: GraphStore, userId: string) {
+  const nodesToIgnore = new Set<string>();
+  const relationsToIgnore = new Set<string>();
+  const attributesByNodeId = new Map<string, any>();
+  const colorsByNodeId = new Map<string, number>();
+
+  for (const relation of graphStore.relationsById.values()) {
+    if (relation.relationType.label === "ideapad_show_as") {
+      if (relation.to.text === "attribute") {
+        nodesToIgnore.add(relation.to.id); // hide the "attribute" node
+        // Collect relations that have been flagged to become ideapad attributes
+        const attributeRelation = graphStore.getRelation(relation.from.id);
+        if (!attributeRelation) continue;
+        nodesToIgnore.add(attributeRelation.to.id);
+        relationsToIgnore.add(attributeRelation.id);
+        attributesByNodeId.set(attributeRelation.from.id, {
+          ...(attributesByNodeId.get(attributeRelation.from.id) || {}),
+          [attributeRelation.relationType.label]: attributeRelation.to.text,
+        });
+      } else if (relation.to.text === "none") {
+        // Collect objects that have been flagged to be ignored
+        nodesToIgnore.add(relation.from.id);
+        nodesToIgnore.add(relation.to.id);
+      }
+    } else if (relation.relationType.label === "ideapad_color") {
+      try {
+        const colorInt = parseInt(relation.to.text);
+        colorsByNodeId.set(relation.from.id, colorInt);
+        nodesToIgnore.add(relation.to.id);
+        relationsToIgnore.add(relation.id);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }
+
+  const edges: Map<string, any> = new Map();
+  for (const relation of graphStore.relationsById.values()) {
+    if (relationsToIgnore.has(relation.id)) continue;
+    if (nodesToIgnore.has(relation.from.id) || nodesToIgnore.has(relation.to.id)) continue;
+    edges.set(relation.id, {
+      id: relation.id.split("-")[0],
+      clientId: relation.id,
+      sourceIdeaClientId: relation.from.id,
+      targetIdeaClientId: relation.to.id,
+      labelText: relation.relationType.label,
+      colorId: null,
+      isDeleted: false,
+    });
+  }
+
+  const nodes = new Map<string, any>();
+  for (const node of graphStore.nodesById.values()) {
+    if (nodesToIgnore.has(node.id)) {
+      continue;
+    }
+    nodes.set(node.id, {
+      clientId: node.id,
+      userId: userId,
+      title: node.content.map((elem) => elem.value).join("") || "",
+      likeCount: 0,
+      commentCount: 0,
+      colorId: colorsByNodeId.get(node.id) || null,
+      isDeleted: false,
+      anonymous: null,
+      status: "not-acknowledged",
+      attachedBoardClientId: null,
+      permissionsExplicitlySet: false,
+      createdAt: node.createdAt || new Date().toISOString(),
+      updatedAt: node.updatedAt || new Date().toISOString(),
+      attributes: attributesByNodeId.get(node.id) || {},
+    });
+  }
+
+  return { nodes, edges };
+}
+
+export function exportSubtreeToIdeapad(graphStore: GraphStore, rootNode: GraphObject, userId: string) {
   // if rootNode isn't a GraphNode, throw
   if (!(rootNode instanceof GraphNode)) {
     throw new Error("Root node is not a GraphNode");
@@ -360,12 +444,91 @@ export function exportToIdeapad(graphStore: GraphStore, rootNode: GraphObject, u
   // Create snapshot format
   const snapshot = ideapadSnapshotFromSerializedGraph(subtreeData, userId, graphStore);
 
-  // Export as JSON
-  const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "ideapad_subtree_export.json";
-  link.click();
-  URL.revokeObjectURL(url);
+  // Export as zip
+  const nodes = new Map(snapshot.nodes.map((node) => [node.clientId, node]));
+  const edges = new Map(snapshot.edges.map((edge) => [edge.clientId, edge]));
+  exportToIdeapad({ nodes, edges });
+}
+
+/**
+ * Exports a graph to Ideapad.
+ *
+ * The Ideapad export format is a zip file containing multiple JSON files.
+ * Each file contains a chunk of the data.
+ *
+ * This is done because the Ideapad export format has a limit of 1MB per file.
+ */
+export function exportToIdeapad({ nodes, edges }: { nodes: Map<string, any>; edges: Map<string, any> }) {
+  // Split data into chunks of approximately 700KB (leaving room for JSON formatting)
+  const MAX_CHUNK_SIZE = 700 * 1024; // 700KB in bytes
+
+  const chunks: { nodes: any[]; edges: any[] }[] = [];
+  let currentChunk: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
+  let currentSize = 0;
+
+  // Add edges and nodes to chunks
+  const processedNodes = new Set<string>();
+  for (const edge of edges.values()) {
+    const sourceNode = nodes.get(edge.sourceIdeaClientId);
+    const targetNode = nodes.get(edge.targetIdeaClientId);
+    if (!sourceNode || !targetNode) continue;
+
+    let data: any = { edge };
+    if (!processedNodes.has(edge.sourceIdeaClientId)) {
+      data.sourceNode = sourceNode;
+      processedNodes.add(edge.sourceIdeaClientId);
+    }
+    if (!processedNodes.has(edge.targetIdeaClientId)) {
+      data.targetNode = targetNode;
+      processedNodes.add(edge.targetIdeaClientId);
+    }
+
+    const size = new Blob([JSON.stringify(data)]).size;
+    if (currentSize + size > MAX_CHUNK_SIZE) {
+      chunks.push(currentChunk);
+      currentChunk = { nodes: [], edges: [] };
+      currentSize = 0;
+    }
+
+    currentChunk.edges.push(data.edge);
+    if (data.sourceNode) currentChunk.nodes.push(data.sourceNode);
+    if (data.targetNode) currentChunk.nodes.push(data.targetNode);
+    currentSize += size;
+  }
+
+  // Add remaining nodes to chunks
+  for (const node of nodes.values()) {
+    if (processedNodes.has(node.clientId)) continue;
+
+    const size = new Blob([JSON.stringify(node)]).size;
+    if (currentSize + size > MAX_CHUNK_SIZE) {
+      chunks.push(currentChunk);
+      currentChunk = { nodes: [], edges: [] };
+      currentSize = 0;
+    }
+
+    currentChunk.nodes.push(node);
+    currentSize += size;
+  }
+  if (currentChunk.nodes.length > 0 || currentChunk.edges.length > 0) {
+    chunks.push(currentChunk);
+  }
+
+  // Create zip file containing all chunks
+  const zip = new JSZip();
+
+  // Add node chunks to zip
+  chunks.forEach((chunk, index) => {
+    zip.file(`chunk_${index + 1}.json`, JSON.stringify(chunk, null, 2));
+  });
+
+  // Generate and download zip file
+  zip.generateAsync({ type: "blob" }).then((content) => {
+    const url = URL.createObjectURL(content);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ideapad_export.zip";
+    link.click();
+    URL.revokeObjectURL(url);
+  });
 }

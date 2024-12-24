@@ -13,14 +13,14 @@
       "skipFiles": ["**/node_modules/**"]
     },
     {
-      "name": "Python: Debug Mew LIPP Demo scripts",
+      "name": "Python: Debug demo dataset script",
       "type": "debugpy",
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "cwd": "${workspaceFolder}/datasets/Mew LIPP Demo",
-      "python": "${workspaceFolder}/datasets/Mew LIPP Demo/venv/bin/python"
+      "cwd": "${workspaceFolder}/datasets/demos",
+      "python": "${workspaceFolder}/datasets/demos/venv/bin/python"
     },
     {
       "type": "node",

@@ -17,7 +17,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
-import { copyObjectUrlToClipboard, downloadSubtree, exportToIdeapad } from "@/app/util";
+import { copyObjectUrlToClipboard, downloadSubtree, exportSubtreeToIdeapad } from "@/app/util";
 
 import styles from "./styles/NodeHeaderSettingsMenu.module.css";
 
@@ -78,7 +78,7 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
             </DropdownMenuItem>
             {settingsStore.showExportSubtreeToIdeapad && (
               <>
-                <DropdownMenuItem onSelect={() => exportToIdeapad(graphStore, treeNode.object, user.id)}>
+                <DropdownMenuItem onSelect={() => exportSubtreeToIdeapad(graphStore, treeNode.object, user.id)}>
                   <Download size={14} />
                   Export to Ideapad
                 </DropdownMenuItem>
