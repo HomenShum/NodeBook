@@ -290,6 +290,12 @@ export const DevTools = observer(function DevTools() {
             <span>Git commit SHA:</span> {env.gitCommitSha}
           </p>
         )}
+        <p>
+          <span>Node count:</span> {graphStore.nodesById.size}
+        </p>
+        <p>
+          <span>Relation count:</span> {graphStore.relationsById.size}
+        </p>
         <Button size="default" variant="default" onClick={() => settingsStore.resetToDefaults()}>
           Reset user settings to default
         </Button>
