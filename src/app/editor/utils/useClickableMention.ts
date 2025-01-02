@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useDoubleClick } from "@/app/hooks/useDoubleClick";
 import { useToast } from "@/app/hooks/useToast";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { useSetMainRoot } from "@/app/tree/utils";
@@ -11,16 +12,14 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
   const setRoot = useSetMainRoot();
   const tree = treeNode.tree;
 
-  return useCallback(
-    (e: Event) => {
-      e.stopPropagation();
-
+  const handleSingleClick = useCallback(
+    (e: any) => {
       const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
       const node = graphStore.getNode(nodeId);
       const isTopLevelExpanded = tree.isPathExpanded(treeNode.path) || treeNode instanceof RootTreeNode;
 
       if (node) {
-        if(!tree.isMainTree){
+        if (!tree.isMainTree) {
           setRoot(node);
           return;
         }
@@ -61,4 +60,10 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
     },
     [graphStore, tree, treeNode, addToast, setRoot],
   );
+
+  const handleDoubleClick = (e: any) => {
+    // No-op on double click, allow RelatedNodeView render to handle event
+  };
+
+  return useDoubleClick({ onSingleClick: handleSingleClick, onDoubleClick: handleDoubleClick });
 };

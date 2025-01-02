@@ -34,10 +34,10 @@ import styles from "./Editor.module.css";
 interface Props {
   treeNode: DescendantTreeNode;
   isEditorEditable: boolean;
-  boundaryRef: RefObject<HTMLDivElement>;
+  editorRef: RefObject<HTMLDivElement>;
 }
 
-export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEditable, boundaryRef }: Props) {
+export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEditable, editorRef }: Props) {
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
@@ -46,7 +46,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
   const handleMentionNodeClick = useClickableMention(treeNode);
 
   return (
-    <div className={styles.EditorWrapper}>
+    <div className={styles.EditorWrapper} ref={editorRef}>
       <LexicalComposer
         initialConfig={createConfig({ namespace: "descendant-editor", treeNode, editable: isEditorEditable })}
       >

@@ -1,6 +1,6 @@
 import { Edit2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useRef } from "react";
+import { MouseEvent, useRef } from "react";
 
 import { TreeNodeInputPrefix } from "@/app/components/RelatedObject/TreeNodeInputPrefix";
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
@@ -11,8 +11,11 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { getCanonicalPath, objectPathToBreadcrumb } from "@/app/graph/utils";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
+import { useDoubleClick } from "@/app/hooks/useDoubleClick";
 
 import styles from "./styles/RelatedNodeView.module.css";
+
+const DOUBLE_CLICK_TIME_THRESHOLD = 250;
 
 interface Props {
   treeNode: DescendantTreeNode;
@@ -21,7 +24,7 @@ interface Props {
 export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: Props) {
   const user = useUser();
   const tree = treeNode.tree;
-  const ref = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const isLocal = treeNode.object.isLocal;
   const isGlobal = treeNode.object.isGlobal;
@@ -55,23 +58,53 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
     ${breadcrumbs.join(" / ")}
   `;
 
+  const handleClick = useDoubleClick({
+    onSingleClick: () => {
+      tree.togglePathExpanded(treeNode.path);
+    },
+    onDoubleClick: (e) => {
+      const element = editorRef.current;
+      if (!element) return;
+
+      const text = element.textContent || "";
+      const selection = window.getSelection();
+
+      if (selection && element.firstChild) {
+        // Get click position relative to the element
+        const rect = element.getBoundingClientRect();
+        const x = (e as MouseEvent).clientX - rect.left;
+
+        // Estimate the clicked character position
+        const charWidth = rect.width / text.length;
+        const charPosition = Math.min(Math.floor(x / charWidth), text.length);
+
+        tree.setFocusedNode(treeNode.id, { anchorOffset: charPosition, focusOffset: charPosition }, true);
+      }
+    },
+  });
+
   return (
-    <div ref={ref} className={styles.Container}>
+    <div className={styles.Container}>
       <div className={cnOuterContainer}>
         {(isGlobal || objectIsEditRestricted) && !user.isAnonymous && (
           <TreeNodeInputPrefix treeNode={treeNode} isEditorEditable={editableEditor} />
         )}
         <div
           className={cnInnerContainer}
+          onClick={(e) => {
+            if (isReadOnlyReference) {
+              e.stopPropagation();
+              handleClick(e);
+            }
+          }}
           onPointerDown={(e) => {
             if (isReadOnlyReference) {
               e.stopPropagation();
-              tree.togglePathExpanded(treeNode.path);
             }
           }}
           data-tooltip={tooltipContent}
         >
-          <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} boundaryRef={ref} />
+          <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} editorRef={editorRef} />
           {isReadOnlyReference && !user.isAnonymous && (
             <Button
               variant="ghost"
