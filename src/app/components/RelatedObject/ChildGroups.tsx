@@ -4,6 +4,7 @@ import { AddPinButton } from "@/app/components/Buttons/AddPinButton";
 import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import {
   AllGroup,
@@ -146,6 +147,7 @@ interface AllSectionProps {
 }
 
 const AllSection = observer(function AllSection({ parentNode, group }: AllSectionProps) {
+  const settingsStore = useSettingsStore();
   const viewStore = useViewStore();
   const viewType =
     parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree
@@ -155,14 +157,21 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
 
   return (
     <div>
-      {group.nodes.map((childTreeNode, i) => {
-        return (
-          <div key={childTreeNode.path}>
-            {noteView && <Separator i={i} />}
-            <RelatedObjectView treeNode={childTreeNode} />
-          </div>
-        );
-      })}
+      {group.nodes
+        .filter((childTreeNode) => {
+          return (
+            !settingsStore.hidePinnedItems ||
+            !childTreeNode.parent.object.isRelationPinned(childTreeNode.relationWithParent)
+          );
+        })
+        .map((childTreeNode, i) => {
+          return (
+            <div key={childTreeNode.path}>
+              {noteView && <Separator i={i} />}
+              <RelatedObjectView treeNode={childTreeNode} />
+            </div>
+          );
+        })}
     </div>
   );
 });

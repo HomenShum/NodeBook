@@ -68,10 +68,6 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     setIdeapadLink(element.value);
   };
 
-  const togglePinnedSection = useCallback(() => {
-    tree.updateFilter((prev) => ({ ...prev, hidePinnedSection: !prev.hidePinnedSection }));
-  }, [tree]);
-
   const toggleFilter = useCallback((filter: string) => {
     setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
   }, []);
@@ -91,7 +87,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   return (
     <div className={s.ControlsBar}>
       <div className={styles.ControlsBarWrapper}>
-        <SearchBar/>
+        <SearchBar />
         {selectedFilters.map((filter) => (
           <FilterPill
             key={filter}

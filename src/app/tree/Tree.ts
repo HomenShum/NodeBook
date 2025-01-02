@@ -244,7 +244,7 @@ export class Tree {
       hideAllParents: this.settingsStore.hideAllParents,
       hideAllRootParents: this.settingsStore.hideAllRootParents,
       hideDirectParent: this.settingsStore.hideDirectParent,
-      hidePinnedSection: false,
+      hidePinnedSection: this.settingsStore.hidePinnedItems,
       ...this.partialFilter,
     };
   }
@@ -515,9 +515,6 @@ export class Tree {
     function walk(treeNode: TreeNode, filter: Filter) {
       if (hidePointerSection) {
         treeNode.childrenGroupsById.pointer.nodes = [];
-      }
-      if (filter.hidePinnedSection) {
-        treeNode.childrenGroupsById.pinned.nodes = [];
       }
       treeNode.childrenGroups.forEach((group) => {
         group.nodes = group.nodes.filter((child) => walk(child, filter));
@@ -1552,9 +1549,9 @@ export class Tree {
    *
    */
   escapeSelection() {
-    if(this.selection === null) return;
+    if (this.selection === null) return;
 
-    if(this.selection.type === "node") {
+    if (this.selection.type === "node") {
       this.setFocusedNode(this.selection.headNodeId);
       return;
     }
