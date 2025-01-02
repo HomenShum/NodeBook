@@ -4,13 +4,13 @@ import { useCallback, useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { $atEditorStart } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
 import { getNextAbove } from "@/app/tree/utils";
-import { $atEditorStart } from "@/app/editor/utils/selection";
 
 /**
  * Concat two arrays of Chips into one.
@@ -56,7 +56,6 @@ export const BackspaceMergeNodesPlugin = () => {
         if (treeNode instanceof PointerTreeNode) {
           return false;
         }
-
         let handled = false;
         if (
           // We're at the start of the first child of a note
@@ -72,8 +71,14 @@ export const BackspaceMergeNodesPlugin = () => {
               // Merge note into note above
               handled = mergeNodes(treeNode.parent, treeNode.parent.siblingAbove);
             } else {
-              // Merge note into bullet above
-              handled = addSiblingAboveIntoNote(treeNode.parent);
+              // Go into prefix
+              const prefixInput = document.querySelector(`[data-note-prefix="${treeNode.parent.object.id}"]`);
+              if (prefixInput && prefixInput instanceof HTMLInputElement) {
+                prefixInput.focus();
+                handled = true;
+              } else {
+                handled = false;
+              }
             }
           }
         } else if (treeNode.siblingAbove) {
