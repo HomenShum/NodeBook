@@ -126,6 +126,7 @@ export const ArrowKeyPlugin = () => {
             const suffixInput = document.querySelector(`[data-note-suffix="${treeNode.parent.object.id}"]`);
             if (suffixInput && suffixInput instanceof HTMLInputElement) {
               suffixInput.focus();
+              return true;
             } else {
               throw new Error("Suffix note input not found");
             }
