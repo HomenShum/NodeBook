@@ -1,15 +1,23 @@
-import { Search } from "lucide-react";
+import { Delete, Plus, Search } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import { ParentRelationIcon } from "@/app/components/CustomIcons";
 import SelectionItem from "@/app/components/RelatedObject/RelationCombobox/SelectionItem";
 import styles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
 import { PopoverContent } from "@/app/components/UIPrimitives/Popover";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { defaultRelationTypes } from "@/app/graph/constants";
+import { defaultRelationTypes, getRelationTypeIcon } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 
 const getCreationLabel = (search: string) => `Create "${search}" relation type`;
+
+interface RelationTypeItem {
+  key: string;
+  label: string;
+  onSelect: () => void;
+  icon?: () => JSX.Element;
+}
 
 interface SelectorProps {
   treeNode: DescendantTreeNode;
@@ -21,7 +29,9 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
   const relation = treeNode.relationWithParent;
   const isForward = relation.to.id === treeNode.object.id;
   const graphStore = useGraphStore();
-  const [search, setSearch] = useState(relation.relationType.label);
+  const [search, setSearch] = useState(
+    relation.relationType.id === "child" && !isForward ? "parent" : relation.relationType.label,
+  );
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const itemWasSelectedRef = useRef(false);
 
@@ -46,31 +56,54 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
   );
 
   const items = useMemo(() => {
-    const tmpItems = graphStore
-      .search({
-        text: search,
-        filters: {
-          types: ["relationType"],
-        },
-        sort: {
-          by: "score",
-          order: "desc",
-        },
-      })
-      .relationTypes.map(({ relationType }) => [
-        {
-          key: `${relationType.id}-forward`,
-          label: relationType.label,
-          onSelect: async () => await handleSelect(relationType, "forward"),
-        },
-        {
-          key: `${relationType.id}-reverse`,
-          label: relationType.reverseLabel,
-          onSelect: async () => await handleSelect(relationType, "reverse"),
-        },
-      ])
-      .flat()
-      .filter(({ label }) => label.toLowerCase().includes(search.toLowerCase()));
+    const tmpItems: RelationTypeItem[] = [];
+
+    // Handle special default relation types
+    if (search === "child") {
+      tmpItems.push({
+        key: "parent",
+        label: "parent",
+        onSelect: async () => await handleSelect(defaultRelationTypes.child, "reverse"),
+        icon: () => <ParentRelationIcon />,
+      });
+    } else if (search === "parent") {
+      tmpItems.push({
+        key: "child",
+        label: "child",
+        onSelect: async () => await handleSelect(defaultRelationTypes.child, "forward"),
+        icon: () => <ParentRelationIcon />,
+      });
+    }
+
+    tmpItems.push(
+      ...graphStore
+        .search({
+          text: search,
+          filters: {
+            types: ["relationType"],
+          },
+          sort: {
+            by: "score",
+            order: "desc",
+          },
+        })
+        .relationTypes.map(({ relationType }) => [
+          {
+            key: `${relationType.id}-forward`,
+            label: relationType.label,
+            onSelect: async () => await handleSelect(relationType, "forward"),
+            icon: getRelationTypeIcon(relationType.id),
+          },
+          {
+            key: `${relationType.id}-reverse`,
+            label: relationType.reverseLabel,
+            onSelect: async () => await handleSelect(relationType, "reverse"),
+            icon: getRelationTypeIcon(relationType.id),
+          },
+        ])
+        .flat()
+        .filter(({ label }) => label.toLowerCase().includes(search.toLowerCase())),
+    );
 
     if (search.length > 0 && parent !== null && relation.relationType.label !== search) {
       tmpItems.push({
@@ -85,6 +118,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
             relationProps: { relationType },
           });
         },
+        icon: () => <Plus size={14} strokeWidth={1.5} />,
       });
     }
 
@@ -100,6 +134,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
           reverse: !isForward,
         });
       },
+      icon: () => <Delete size={14} strokeWidth={1.5} />,
     });
 
     return tmpItems;
@@ -181,7 +216,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
         />
       </div>
       <div className={styles.RelationComboboxGroup}>
-        {items.map(({ key, label, onSelect }, index) => (
+        {items.map(({ key, label, onSelect, icon }, index) => (
           <SelectionItem
             key={key}
             keyProp={key}
@@ -195,6 +230,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
             }}
             setSelected={() => setHighlightedIndex(index)}
             isForward={isForward}
+            icon={icon}
           />
         ))}
       </div>

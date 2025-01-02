@@ -2,7 +2,13 @@ import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { NodeType } from "@/app/editor/plugins/dropdown/utils";
-import { ALL_LIST_TYPES, defaultRelationTypes, ListType, MAX_PREFIX_LENGTH } from "@/app/graph/constants";
+import {
+  ALL_LIST_TYPES,
+  defaultRelationTypes,
+  getRelationTypeReverseLabel,
+  ListType,
+  MAX_PREFIX_LENGTH,
+} from "@/app/graph/constants";
 import { GraphUpdate, PartialUpdateRelationList } from "@/app/graph/GraphUpdate";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { GraphRelationType } from "@/app/graph/types";
@@ -2409,7 +2415,7 @@ export class GraphStore {
       } else if (include.relationTypes && isGraphRelationType(object)) {
         const relationType = object;
         const label = relationType.label.toLocaleLowerCase();
-        const reverseLabel = relationType.reverseLabel.toLocaleLowerCase();
+        const reverseLabel = getRelationTypeReverseLabel(relationType);
         if (keywords.every((kw) => label.includes(kw)) || keywords.every((kw) => reverseLabel.includes(kw))) {
           results.relationTypes.push({ relationType, score: scoreMatch(text, procText) });
         }

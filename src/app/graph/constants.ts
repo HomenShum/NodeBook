@@ -1,4 +1,5 @@
 import { UNLOGGED_USER } from "@/app/auth/MewUser";
+import { ParentRelationIcon, SublistIcon } from "@/app/components/CustomIcons";
 import { GraphRelationType } from "@/app/graph/types";
 
 const TEMP_USER_ID = UNLOGGED_USER.id; // TODO: This is simply to satisfy the type checker, we should change this
@@ -6,6 +7,21 @@ const TEMP_USER_ID = UNLOGGED_USER.id; // TODO: This is simply to satisfy the ty
 export const ALL_LIST_TYPES = ["pinned", "noteContent", "all"] as const;
 export type ListType = (typeof ALL_LIST_TYPES)[number];
 type DefaultRelationType = "child" | "relatedTo" | "author" | "sublist" | "empty";
+
+export const getRelationTypeIcon = (relationType: string): (() => JSX.Element) | undefined => {
+  switch (relationType) {
+    case "sublist":
+      return SublistIcon;
+    case "child":
+      return ParentRelationIcon;
+    default:
+      return undefined;
+  }
+};
+
+export const getRelationTypeReverseLabel = (relationType: GraphRelationType): string => {
+  return relationType.id === "child" ? "parent" : relationType.reverseLabel;
+};
 
 export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType> = {
   child: { version: 1, id: "child", authorId: TEMP_USER_ID, label: "child", reverseLabel: "parent", isPublic: false },

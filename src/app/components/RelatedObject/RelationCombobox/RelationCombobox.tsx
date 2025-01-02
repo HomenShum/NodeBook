@@ -9,6 +9,7 @@ import styles from "@/app/components/RelatedObject/styles/RelationCombobox.modul
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { useUser } from "@/app/contexts/UserContext";
+import { getRelationTypeIcon } from "@/app/graph/constants";
 import { DescendantTreeNode, PointerTreeNode } from "@/app/tree/nodes";
 import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -58,6 +59,8 @@ export const RelationCombobox = observer(function RelationCombobox({
       </Button>
     );
   }
+
+  const icon = getRelationTypeIcon(relation.relationType.id);
 
   const button = (
     <Button

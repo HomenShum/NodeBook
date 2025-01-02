@@ -13,9 +13,19 @@ interface SelectionItem {
   setSelected: (key: string) => void;
   isForward: boolean;
   relation: GraphRelation;
+  icon?: () => JSX.Element;
 }
 
-function SelectionItem({ keyProp, label, onSelect, isSelected, setSelected, isForward, relation }: SelectionItem) {
+function SelectionItem({
+  keyProp,
+  label,
+  onSelect,
+  isSelected,
+  setSelected,
+  isForward,
+  relation,
+  icon,
+}: SelectionItem) {
   return (
     <div
       className={cn(styles.RelationComboboxItem, isSelected && styles.Selected)}
@@ -28,6 +38,7 @@ function SelectionItem({ keyProp, label, onSelect, isSelected, setSelected, isFo
           relToKey(relation.relationType, isForward) === keyProp ? styles.SelectedIcon : styles.Transparent,
         )}
       />
+      {icon && icon()}
       <div>{label}</div>
     </div>
   );
