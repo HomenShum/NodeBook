@@ -76,11 +76,6 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode,
               tree.moveEditorSelectionDown("start");
               break;
             case "ArrowUp":
-              e.preventDefault();
-              e.stopPropagation();
-              e.nativeEvent.stopImmediatePropagation();
-              e.metaKey || e.ctrlKey ? tree.collapseAtSelection() : tree.moveEditorSelectionUp("start");
-              break;
             case "ArrowLeft":
               e.preventDefault();
               tree.moveEditorSelectionUp("end");

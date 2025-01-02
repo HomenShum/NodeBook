@@ -118,7 +118,26 @@ export const ArrowKeyPlugin = () => {
             // Selection not at end of editor
             return false;
           }
-          if (editMode) {
+
+          const siblingBelowNoteContent = treeNode.siblingBelow?.childrenGroupsById["noteContent"].nodes.length;
+
+          // If we are in the last node of a multiline note, go into the suffix
+          if (treeNode.parentGroup.id === "noteContent" && treeNode === treeNode.parentGroup.nodes[-1]) {
+            const suffixInput = document.querySelector(`[data-note-suffix="${treeNode.parent.object.id}"]`);
+            if (suffixInput && suffixInput instanceof HTMLInputElement) {
+              suffixInput.focus();
+            } else {
+              throw new Error("Suffix note input not found");
+            }
+          } else if (siblingBelowNoteContent && siblingBelowNoteContent > 0) {
+            const prefixInput = document.querySelector(`[data-note-prefix="${treeNode.siblingBelow.object.id}"]`);
+            if (prefixInput instanceof HTMLElement) {
+              prefixInput.focus();
+              return true;
+            } else {
+              throw new Error("Prefix note input not found");
+            }
+          } else if (editMode) {
             // disable edit mode and move selection outside of editor
             tree.setFocusedNode(treeNode.id, "end", false);
           } else {
@@ -126,6 +145,7 @@ export const ArrowKeyPlugin = () => {
             const focusedMoved = tree.moveEditorSelectionDown("start");
             if (!focusedMoved) return false;
           }
+
           event.preventDefault();
           return true;
         },
