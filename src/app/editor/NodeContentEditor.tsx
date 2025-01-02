@@ -27,6 +27,7 @@ import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
+import { WordBreakPlugin } from "@/app/editor/plugins/WordBreakPlugin";
 
 import styles from "./Editor.module.css";
 
@@ -61,6 +62,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
           placeholder={<span className={styles.PlaceholderNode}>Start writing...</span>}
         />
         <SyncWithModelsPlugin node={treeNode.object} treeNode={treeNode} />
+        {isEditorEditable && <WordBreakPlugin />}
         {isEditorEditable && <LinkPlugin />}
         {isEditorEditable && <ReplacementPlugin treeNode={treeNode} />}
         {isEditorEditable && <ClearEditorPlugin />}
