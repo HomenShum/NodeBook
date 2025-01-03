@@ -39,8 +39,20 @@ export const ArrowKeyPlugin = () => {
             const caretPosition = $getCaretPosition();
             if (!caretPosition) return false;
             if (caretPosition.isAtTop) {
+              // navigate the the node above
               event.preventDefault();
-              tree.moveEditorSelectionUp("end");
+              if (tree.selection?.type === "editor") {
+                if (tree.selection.position === "end" && element.textContent) {
+                  tree.moveEditorSelectionUp({
+                    anchorOffset: element.textContent.length,
+                    focusOffset: element.textContent.length,
+                  });
+                } else {
+                  tree.moveEditorSelectionUp(tree.selection.position);
+                }
+              } else {
+                tree.moveEditorSelectionUp("end");
+              }
               return true;
             }
           }
@@ -57,8 +69,20 @@ export const ArrowKeyPlugin = () => {
             const caretPosition = $getCaretPosition();
             if (!caretPosition) return false;
             if (caretPosition.isAtBottom) {
+              // navigate the the node below
               event.preventDefault();
-              tree.moveEditorSelectionDown("start");
+              if (tree.selection?.type === "editor") {
+                if (tree.selection.position === "end" && element.textContent) {
+                  tree.moveEditorSelectionDown({
+                    anchorOffset: element.textContent.length,
+                    focusOffset: element.textContent.length,
+                  });
+                } else {
+                  tree.moveEditorSelectionDown(tree.selection.position);
+                }
+              } else {
+                tree.moveEditorSelectionDown("start");
+              }
               return true;
             }
           }

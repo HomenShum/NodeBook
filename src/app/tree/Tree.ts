@@ -1516,9 +1516,10 @@ export class Tree {
     const selection = this.selectionWithNodes;
     if (!selection) return false;
     const treeNode = selection.type === "editor" ? selection.treeNode : selection.top;
+    const editMode = selection.type === "editor" ? selection.editMode : false;
     const next = getNextAbove(treeNode) || selection.top;
     if (!next) return false;
-    this.setFocusedNode(next.path, position, false);
+    this.setFocusedNode(next.path, position, editMode);
     return true;
   }
 
@@ -1532,13 +1533,14 @@ export class Tree {
       selection.type === "editor"
         ? getNextBelow(selection.treeNode)
         : getNextSubtreeBelow(selection.bottom) || selection.bottom;
+    const editMode = selection.type === "editor" ? selection.editMode : false;
     if (!next) return false;
     const firstChild = next.visibleChildren[0];
     if (firstChild && isNoteContent(firstChild)) {
-      this.setFocusedNode(firstChild.path, position, false);
+      this.setFocusedNode(firstChild.path, position, editMode);
       return true;
     } else {
-      this.setFocusedNode(next.path, position, false);
+      this.setFocusedNode(next.path, position, editMode);
       return true;
     }
   }
