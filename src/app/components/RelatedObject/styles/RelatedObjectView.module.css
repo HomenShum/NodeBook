@@ -362,20 +362,6 @@ Right Area
   opacity: 0;
 }
 
-.RelatedObjectContent:hover .PinToggle.Hidden {
-  opacity: 1;
-}
-
-.PinToggle.Pinned {
-  color: var(--teal-8);
-}
-
-.PinToggle.Unpinned {
-  color: var(--gray-8);
-  opacity: 0;
-  transition: opacity 0.1s ease-in-out;
-}
-
 .PinToggle.Pinned:hover {
   color: var(--tomato-9);
   background-color: var(--tomato-2);
@@ -522,7 +508,7 @@ Right Area
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s 0.5s, visibility 0.2s 0.5s;
-  z-index: 1;
+  z-index: 5;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
 }

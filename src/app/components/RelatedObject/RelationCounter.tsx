@@ -1,6 +1,6 @@
 import { GraphObject } from "@/app/graph/GraphObject";
 
-import styles from "./styles/RelationCounter.module.css";
+import styles from "./styles/RelatedObjectView.module.css";
 
 export const RelationCounter = ({
   object,
