@@ -3,7 +3,6 @@ declare const styles: {
   readonly "ButtonIcon": string;
   readonly "IconBox": string;
   readonly "IconExpanded": string;
-  readonly "IconInactive": string;
   readonly "Selected": string;
   readonly "SidebarTreeBlock": string;
   readonly "SidebarTreeChildren": string;

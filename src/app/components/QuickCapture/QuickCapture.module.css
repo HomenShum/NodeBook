@@ -1,41 +1,41 @@
 .QuickCaptureContainer {
-    background-color: var(--gray-1);
-    position: absolute;
-    top: 0;
-    right: 0;
-    border-radius: 6px;
-    min-height: 50vh;
-    border: 0.5px solid var(--gray-6);
-    padding: 40px;
-    width: 43vw;
-    box-shadow: rgba(99, 99, 99, 0.2) 0 2px 8px 0;
+  background-color: var(--gray-1);
+  position: absolute;
+  top: 0;
+  right: 0;
+  border-radius: 6px;
+  min-height: 50vh;
+  border: 0.5px solid var(--gray-6);
+  padding: 40px;
+  width: 43vw;
+  box-shadow: rgba(99, 99, 99, 0.2) 0 2px 8px 0;
 }
 
-.QuickCaptureContainer > [class*="OutlineContent"] {
-    margin: 0;
-    border: 0;
-    padding: 0;
+.QuickCaptureContainer > [class*="ContentContainer"] {
+  margin: 0;
+  border: 0;
+  padding: 0;
 }
 
 .QuickCaptureContainer > [class*="ControlsBar"] {
-    border: 0;
+  border: 0;
 }
 
 .QuickCaptureContainer input[type="search"] {
-    width: 200px;
+  width: 200px;
 }
 
 .QuickCaptureContainer [class*="SearchExpanded"] input[type="search"] {
-    width: 250px;
+  width: 250px;
 }
 
 .QuickCaptureMenu {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-left: 6px;
-    height: 40px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  height: 40px;
 }

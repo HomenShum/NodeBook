@@ -1,15 +1,16 @@
 "use client";
 import { observer } from "mobx-react-lite";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import OutlineContent from "@/app/components/OutlineContent";
+import RightSidebar from "@/app/components/RightSidebar/RightSidebar";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import RightSidebar from "@/app/components/RightSidebar/RightSidebar";
+import appStyles from "@/app/app.module.css";
 
 import s from "./OutlineView.module.css";
 
@@ -39,8 +40,8 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
   return (
     <TreeContext.Provider value={tree}>
       <div
-        className={cn(s.OutlineView, {
-          [s.OutlineViewFull]: !viewStore.leftSidebarOpen,
+        className={cn(appStyles.ViewContainer, {
+          [appStyles.ViewContainerFull]: !viewStore.leftSidebarOpen,
         })}
       >
         <div className={s.WindowNav}>

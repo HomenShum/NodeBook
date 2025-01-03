@@ -3,17 +3,15 @@ declare const styles: {
   readonly "HeadingContainer": string;
   readonly "IconAndTitle": string;
   readonly "LinkButton": string;
+  readonly "MainAndSidebarContainer": string;
   readonly "Nodes": string;
   readonly "NoteContentSection": string;
   readonly "OutlineContent": string;
-  readonly "OutlineView": string;
-  readonly "OutlineViewFull": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
   readonly "TooltipContent": string;
   readonly "Transparent": string;
   readonly "WindowNav": string;
-  readonly "MainAndSidebarContainer": string;
 };
 export = styles;
 

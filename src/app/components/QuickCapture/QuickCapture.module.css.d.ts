@@ -1,0 +1,6 @@
+declare const styles: {
+  readonly "QuickCaptureContainer": string;
+  readonly "QuickCaptureMenu": string;
+};
+export = styles;
+

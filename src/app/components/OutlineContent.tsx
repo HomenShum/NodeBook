@@ -1,30 +1,31 @@
-import {Globe, HomeIcon, Link, X} from "lucide-react";
-import {observer} from "mobx-react-lite";
-import {useEffect, useMemo, useRef} from "react";
+import { Globe, HomeIcon, Link, X } from "lucide-react";
+import { observer } from "mobx-react-lite";
+import { useEffect, useMemo, useRef } from "react";
 
-import {ClickToCreateNodeButton} from "@/app/components/Buttons/ClickToCreateNodeButton";
+import appStyles from "@/app/app.module.css";
+import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
 import s from "@/app/components/OutlineView.module.css";
-import {ChildGroups, NoteContentSection} from "@/app/components/RelatedObject/ChildGroups";
-import {NodeHeaderSettingsMenu} from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
-import {RootObjectDetails} from "@/app/components/RelatedObject/RelatedObjectDetails";
+import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
+import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
+import { RootObjectDetails } from "@/app/components/RelatedObject/RelatedObjectDetails";
 import s1 from "@/app/components/RightSidebar/RightSidebar.module.css";
-import {Button} from "@/app/components/UIPrimitives/Button";
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/app/components/UIPrimitives/Tooltip";
-import {useGraphStore} from "@/app/contexts/GraphStoreContext";
-import {useSettingsStore} from "@/app/contexts/SettingsStoreContext";
-import {useUser} from "@/app/contexts/UserContext";
-import {NodeHeaderEditor} from "@/app/editor/NodeHeaderEditor";
-import {useToast} from "@/app/hooks/useToast";
-import {handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey} from "@/app/hotkeys";
-import {QuickCaptureSearchTree, QuickCaptureTree} from "@/app/tree/QuickCaptureTree";
-import {Tree} from "@/app/tree/Tree";
-import {treeNodeToObjectPath, useSetMainRoot} from "@/app/tree/utils";
-import {copyObjectUrlToClipboard} from "@/app/util";
-import {useViewStore} from "@/app/view/useViewStore";
+import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
+import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
+import { useToast } from "@/app/hooks/useToast";
+import { handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey } from "@/app/hotkeys";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
+import { SearchTree } from "@/app/tree/SearchTree";
+import { Tree } from "@/app/tree/Tree";
+import { treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
+import { copyObjectUrlToClipboard } from "@/app/util";
+import { ViewType } from "@/app/view/types";
+import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
-import {cn} from "@/lib/utils";
-import {ViewType} from "@/app/view/types";
-import {SearchTree} from "@/app/tree/SearchTree";
+import { cn } from "@/lib/utils";
 
 import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 
@@ -82,7 +83,7 @@ function OutlineContent({ tree }: Props) {
         wasEventHandled = true;
         viewStore.closeQuickCapture();
       }
-      if(tree.isMainTree && tree.selection === null && isEscapeSelectionHotkey(event)){
+      if (tree.isMainTree && tree.selection === null && isEscapeSelectionHotkey(event)) {
         wasEventHandled = true;
         setRoot(graphStore.getDefaultRootForUser());
         viewStore.setViewType(ViewType.Note);
@@ -118,62 +119,68 @@ function OutlineContent({ tree }: Props) {
     };
   });
 
-  const hideHeader = (((tree.isMainTree) || (tree instanceof SearchTree && !(tree instanceof QuickCaptureSearchTree))) && viewStore.viewType === ViewType.Note) || ((tree instanceof QuickCaptureTree || tree instanceof QuickCaptureSearchTree) && viewStore.quickCaptureViewType === ViewType.Note);
+  const hideHeader =
+    ((tree.isMainTree || (tree instanceof SearchTree && !(tree instanceof QuickCaptureSearchTree))) &&
+      viewStore.viewType === ViewType.Note) ||
+    ((tree instanceof QuickCaptureTree || tree instanceof QuickCaptureSearchTree) &&
+      viewStore.quickCaptureViewType === ViewType.Note);
 
   return (
-    <div id={tree.id} tabIndex={-1} className={s.OutlineContent} ref={elementRef}>
+    <div id={tree.id} tabIndex={-1} className={appStyles.ContentContainer} ref={elementRef}>
       <span className={s1.CloseTreeButton} onClick={() => viewStore.deleteSidebarTree(tree.id)}>
         <X />
       </span>
 
-      {!hideHeader && <div className={s.HeadingContainer}>
-        <div className={s.TitleContainer}>
-          <NodeHeaderSettingsMenu treeNode={treeRoot} />
-          <TooltipProvider>
-            <Tooltip>
-              <div className={s.IconAndTitle}>
-                {treeRoot.object.id === graphStore.homeRoot.id ? (
-                  <HomeIcon size={20} />
-                ) : isGlobalRoot ? (
-                  <Globe size={20} strokeWidth={1.8} />
-                ) : null}
-                 <TooltipTrigger asChild>
-                  <div style={{ width: "100%" }}>
-                    <h1 className={s.TitleText}>
-                      <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
-                    </h1>
-                    {settingsStore.showNodeDetails && <RootObjectDetails object={treeRoot.object} />}
-                  </div>
-                </TooltipTrigger>
-              </div>
-              <Button
-                variant="default"
-                className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
-                data-tooltip="Copy URL"
-                size="icon"
-                onClick={() => {
-                  copyObjectUrlToClipboard(treeNodeToObjectPath(treeRoot));
-                  addToast({
-                    title: "Copied URL to clipboard",
-                  });
-                }}
-              >
-                <Link size={16} strokeWidth={1.7} />
-              </Button>
-              {tooltipContent && (
-                <TooltipContent side="top" align="start" sideOffset={5}>
-                  {tooltipContent}
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-        {treeRoot.object.noteContentRelationsList.size > 0 && (
-          <div className={s.NoteContentSection}>
-            <NoteContentSection parentNode={treeRoot} group={treeRoot.childrenGroupsById.noteContent} />
+      {!hideHeader && (
+        <div className={s.HeadingContainer}>
+          <div className={s.TitleContainer}>
+            <NodeHeaderSettingsMenu treeNode={treeRoot} />
+            <TooltipProvider>
+              <Tooltip>
+                <div className={s.IconAndTitle}>
+                  {treeRoot.object.id === graphStore.homeRoot.id ? (
+                    <HomeIcon size={20} />
+                  ) : isGlobalRoot ? (
+                    <Globe size={20} strokeWidth={1.8} />
+                  ) : null}
+                  <TooltipTrigger asChild>
+                    <div style={{ width: "100%" }}>
+                      <h1 className={s.TitleText}>
+                        <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
+                      </h1>
+                      {settingsStore.showNodeDetails && <RootObjectDetails object={treeRoot.object} />}
+                    </div>
+                  </TooltipTrigger>
+                </div>
+                <Button
+                  variant="default"
+                  className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
+                  data-tooltip="Copy URL"
+                  size="icon"
+                  onClick={() => {
+                    copyObjectUrlToClipboard(treeNodeToObjectPath(treeRoot));
+                    addToast({
+                      title: "Copied URL to clipboard",
+                    });
+                  }}
+                >
+                  <Link size={16} strokeWidth={1.7} />
+                </Button>
+                {tooltipContent && (
+                  <TooltipContent side="top" align="start" sideOffset={5}>
+                    {tooltipContent}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           </div>
-        )}
-      </div>}
+          {treeRoot.object.noteContentRelationsList.size > 0 && (
+            <div className={s.NoteContentSection}>
+              <NoteContentSection parentNode={treeRoot} group={treeRoot.childrenGroupsById.noteContent} />
+            </div>
+          )}
+        </div>
+      )}
       <div className={s.Nodes}>
         <ChildGroups treeNode={treeRoot} />
         {!user.isAnonymous && treeRoot.childCount === 0 && (

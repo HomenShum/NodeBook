@@ -13,7 +13,7 @@
   overflow-y: auto;
 }
 
-.RightSidebar > [class*="OutlineContent"]  {
+.RightSidebar > [class*="ContentContainer"]  {
   height: fit-content;
   min-height: fit-content;
   flex:1;
@@ -23,7 +23,7 @@
   border-radius: 0;
 }
 
-.RightSidebar > [class*="OutlineContent"] > .HeadingContainer {
+.RightSidebar > [class*="ContentContainer"] > .HeadingContainer {
   padding: 18px 52px 4px 20px;
 }
 
@@ -41,6 +41,6 @@
   opacity: 0.8;
 }
 
-.RightSidebar > [class*="OutlineContent"] > .CloseTreeButton {
+.RightSidebar > [class*="ContentContainer"] > .CloseTreeButton {
   display: block;
 }

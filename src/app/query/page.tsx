@@ -11,6 +11,9 @@ import { useUser } from "@/app/contexts/UserContext";
 import { useToast } from "@/app/hooks/useToast";
 import { useSetMainRoot } from "@/app/tree/utils";
 import appLogger from "@/lib/logger";
+import appStyles from "@/app/app.module.css";
+import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import styles from "./page.module.css";
 
@@ -53,6 +56,8 @@ const state = observable<{
 // Main component
 const MewQueryInterface = observer(function MewQueryInterface() {
   const user = useUser();
+  const viewStore = useViewStore();
+
   // Split into two functions - one for the form submit, one for the actual query
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +98,7 @@ const MewQueryInterface = observer(function MewQueryInterface() {
   });
 
   return (
-    <div className={styles.container}>
+    <div className={cn(appStyles.ViewContainer, { [appStyles.ViewContainerFull]: !viewStore.leftSidebarOpen })}>
       <form onSubmit={handleFormSubmit} className={styles.form}>
         {/* Search bar */}
         <div className={styles.searchContainer}>
@@ -193,21 +198,17 @@ function Response({ response }: { response: ParsedResponse }) {
   return (
     <div className={styles.response}>
       {response.map((line, i) => (
-        <div key={i} className={styles.responseLine}>
+        <div key={i}>
           {line.map((part, i) =>
             part.type === "text" ? (
-              <span key={i} className={styles.responseText}>
-                {part.content}
-              </span>
+              <span key={i}>{part.content}</span>
             ) : part.type === "citation" ? (
               graphStore.getNode(part.nodeId) ? (
                 <span key={i} data-node-id={part.nodeId} onClick={() => goToNode(part.nodeId)}>
-                  <LinkIcon className={styles.responseLinkIcon} size={14} strokeWidth={1.5} />
+                  <LinkIcon size={14} strokeWidth={1.5} />
                 </span>
               ) : (
-                <span key={i} className={styles.responseText}>
-                  {"< Citation not Found >"}
-                </span>
+                <span key={i}>{"< Citation not Found >"}</span>
               )
             ) : part.type === "link" ? (
               graphStore.getNode(part.nodeId) ? (
@@ -220,9 +221,7 @@ function Response({ response }: { response: ParsedResponse }) {
                   {part.content}
                 </span>
               ) : (
-                <span key={i} className={styles.responseText}>
-                  {part.content}
-                </span>
+                <span key={i}>{part.content}</span>
               )
             ) : null,
           )}

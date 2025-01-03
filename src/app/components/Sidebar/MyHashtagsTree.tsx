@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import styles from "./MyHashtagsTree.module.css";
 import styles1 from "./ResizableSidebar.module.css";
 
-
 interface TreeElementProps {
   object: GraphObject;
 }
@@ -39,13 +38,9 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
         <div className={styles1.SidebarSectionHeader}>
           <span>{object.text}</span>
         </div>
-      <div className={styles.IconBox} onClick={() => uniqueChildren.length > 0 && setIsExpanded(!isExpanded)}>
-          <Play
-              size={8}
-              fill="currentColor"
-              className={cn(uniqueChildren.length === 0 && styles.IconInactive, isExpanded && styles.IconExpanded)}
-          />
-      </div>
+        <div className={styles.IconBox} onClick={() => uniqueChildren.length > 0 && setIsExpanded(!isExpanded)}>
+          <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+        </div>
       </div>
       <div className={styles.SidebarTreeChildren}>
         {isExpanded &&

@@ -1,59 +1,8 @@
-.OutlineView {
-  position: relative;
-  width: 100%;
-  margin: 0 8px 8px 0;
-  border-radius: 6px;
-  height: 100dvh;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available; /* For iOS */
-  background-color: var(--gray-2);
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-.OutlineViewFull {
-  margin: 0 8px 8px 8px;
-}
-
-.OutlineContent {
-  display: flex;
-  justify-content: start;
-  flex-direction: column;
-  background-color: var(--gray-1);
-  height: calc(100dvh - 96px);
-  padding-bottom: 72px;
-  border-bottom-left-radius: 6px;
-  border-bottom-right-radius: 6px;
-  border: 0.5px solid var(--gray-6);
-  border-top: none;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--gray-6) var(--gray-2);
-  outline: 0;
-}
-
-.OutlineContent::-webkit-scrollbar {
-  width: 8px;
-}
-
-.OutlineContent::-webkit-scrollbar-track {
-  background: var(--gray-2);
-}
-
-.OutlineContent::-webkit-scrollbar-thumb {
-  background-color: var(--gray-6);
-  border-radius: 4px;
-  border: 2px solid var(--gray-2);
-}
-
 .WindowNav {
   position: sticky;
-  border-radius: 8px;
-  padding-top: 8px;
   height: 88px;
   top: 0;
   z-index: 20;
-  background-color: var(--gray-2);
   overscroll-behavior: none;
 }
 
@@ -170,6 +119,6 @@
   display: flex;
 }
 
-.MainAndSidebarContainer > .OutlineContent {
+.MainAndSidebarContainer > [class*="ContentContainer"] {
   flex-grow: 1;
 }

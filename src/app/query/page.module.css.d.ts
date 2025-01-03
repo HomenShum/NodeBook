@@ -1,0 +1,34 @@
+declare const styles: {
+  readonly "button": string;
+  readonly "clearButton": string;
+  readonly "configGrid": string;
+  readonly "error": string;
+  readonly "errorHeader": string;
+  readonly "errorIcon": string;
+  readonly "errorMessage": string;
+  readonly "errorTitle": string;
+  readonly "exampleIcon": string;
+  readonly "exampleQuery": string;
+  readonly "examplesSection": string;
+  readonly "examplesTitle": string;
+  readonly "form": string;
+  readonly "label": string;
+  readonly "loadingIcon": string;
+  readonly "response": string;
+  readonly "searchContainer": string;
+  readonly "searchIcon": string;
+  readonly "searchIconWrapper": string;
+  readonly "searchInput": string;
+  readonly "searchResults": string;
+  readonly "searchWrapper": string;
+  readonly "select": string;
+  readonly "slider": string;
+  readonly "sliderGroup": string;
+  readonly "sliderValue": string;
+  readonly "spin": string;
+  readonly "subtleConfig": string;
+  readonly "textarea": string;
+  readonly "title": string;
+};
+export = styles;
+

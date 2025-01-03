@@ -1,0 +1,3 @@
+yarn tcm:generate-types
+yarn lint --fix
+git add .

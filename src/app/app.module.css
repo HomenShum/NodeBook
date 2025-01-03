@@ -111,3 +111,52 @@
     display: none;
   }
 }
+
+.ViewContainer {
+  position: relative;
+  width: 100%;
+  margin: 8px 8px 8px 0;
+  border-radius: 6px;
+  height: 100dvh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available; /* For iOS */
+  background-color: var(--gray-1);
+  border: 0.5px solid var(--gray-6);
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.ViewContainerFull {
+  margin: 8px 8px 8px 8px;
+}
+
+.ContentContainer {
+  display: flex;
+  justify-content: start;
+  flex-direction: column;
+  background-color: var(--gray-1);
+  height: calc(100dvh - 96px);
+  padding-bottom: 72px;
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border: 0.5px solid var(--gray-6);
+  border-top: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-6) var(--gray-2);
+  outline: 0;
+}
+
+.ContentContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ContentContainer::-webkit-scrollbar-track {
+  background: var(--gray-2);
+}
+
+.ContentContainer::-webkit-scrollbar-thumb {
+  background-color: var(--gray-6);
+  border-radius: 4px;
+  border: 2px solid var(--gray-2);
+}
