@@ -1236,6 +1236,38 @@ export class Tree {
     return true;
   }
 
+  convertSingleLineNoteToNode(treeNode: DescendantTreeNode) {
+    const txs: TxCombined = [];
+    if (treeNode.parentGroup.id !== "noteContent") {
+      logger.error("Can only convert single line notes to nodes when they are in the noteContent group");
+      return false;
+    }
+    const noteParent = treeNode.parent.parent;
+    const noteRootRelation = treeNode.parent.relationWithParent;
+    if (!noteParent || !noteRootRelation) {
+      logger.error("Can't convert single line note to node when it has no parent");
+      return false;
+    }
+    txs.push({
+      type: "replaceRelationLink",
+      transaction: {
+        direction: getSideOrThrow(noteRootRelation, treeNode.parent.object.id),
+        relationId: noteRootRelation.id,
+        replaceWith: { type: "existing-object", id: treeNode.object.id },
+      },
+    });
+    // Delete the note content root node
+    txs.push({
+      type: "removeNode",
+      transaction: { nodeId: treeNode.parent.object.id },
+    });
+
+    this.graphStore.applyCombinedTransaction(txs);
+    const position = this.selection?.type === "editor" ? this.selection.position : "start";
+    this.setFocusedNode(createPath(noteParent.path, "all", noteRootRelation.id), position);
+    return true;
+  }
+
   convertToNote(treeNode: DescendantTreeNode, createNodeAfter: boolean = false, returnTxs = false, newRootId?: string) {
     // Convert the current node to a note by:
     // - Creating a new note node as a sibling below the current node

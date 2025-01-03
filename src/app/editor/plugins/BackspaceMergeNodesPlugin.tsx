@@ -10,6 +10,7 @@ import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
+import { useTree } from "@/app/tree/TreeContext";
 import { getNextAbove } from "@/app/tree/utils";
 
 /**
@@ -36,6 +37,7 @@ const concatChips = (targetNodeChips: Chip[], sourceNodeChips: Chip[]): Chip[] =
 export const BackspaceMergeNodesPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const { treeNode } = useTreeNode();
+  const tree = useTree();
   const { mergeNodes, addSiblingAboveIntoNote } = useMergers(treeNode.tree);
 
   useEffect(() => {
@@ -90,6 +92,16 @@ export const BackspaceMergeNodesPlugin = () => {
           handled = mergeNodes(treeNode, treeNode.parent);
         }
         if (handled) {
+          if (
+            treeNode.parentGroup.id === "noteContent" &&
+            treeNode.parent.childrenGroupsById["noteContent"].nodes.length === 2 &&
+            treeNode.parent.childrenGroupsById["noteContent"].nodes[1] === treeNode
+          ) {
+            const sibAbove = treeNode.siblingAboveInSameGroup;
+            if (sibAbove) {
+              tree.convertSingleLineNoteToNode(sibAbove);
+            }
+          }
           event.preventDefault();
           return true;
         }
@@ -97,7 +109,7 @@ export const BackspaceMergeNodesPlugin = () => {
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, mergeNodes, addSiblingAboveIntoNote, treeNode]);
+  }, [editor, mergeNodes, addSiblingAboveIntoNote, treeNode, tree]);
 
   return null;
 };
