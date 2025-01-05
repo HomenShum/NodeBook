@@ -384,6 +384,7 @@ Right Area
   align-self: stretch;
   align-items: center;
   background: transparent;
+  caret-color: var(--gray-12);
   outline: none;
   border: none;
   width: 0;

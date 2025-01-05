@@ -4,7 +4,6 @@ import React, { useEffect, useRef } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
 
 type Props = {
   treeNode: DescendantTreeNode;
@@ -51,13 +50,13 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
         zIndex: 1,
         cursor: "text",
         pointerEvents: "all",
+        caretColor: "var(--gray-12)",
       }}
       onFocus={() => {
         if (!tree.isNodeFocused(treeNode.id)) {
           tree.setFocusedNode(treeNode.path);
         }
       }}
-
       //Todo: Can this be replaced with hotkeys?
       onKeyDown={async (e: React.KeyboardEvent) => {
         const isMod = e.metaKey || e.ctrlKey;
