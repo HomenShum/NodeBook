@@ -389,7 +389,11 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
                     if len(parent_stack) < 3:
                         return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
                     elif len(parent_stack) == 3:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        if content == "Jesse Zhang":
+                            return upsert_extreme_talent_person(parent_stack[-1]["id"], "Jesse Zhang (boulder, co)",\
+                                                                relation_type_label, node_id="jesse-zhang-boulder-co", normalize=False)
+                        else:
+                            return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
                     else:
                         return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "ISEF":
