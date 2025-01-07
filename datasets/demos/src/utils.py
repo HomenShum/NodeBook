@@ -267,6 +267,15 @@ class Graph:
             return None
         return self.get_node(node_id)
 
+    def get_nodes(self):
+        return list(self._graph["nodesById"].values())
+    
+    def get_relations(self):
+        return list(self._graph["relationsById"].values())
+    
+    def get_relation_types(self):
+        return list(self._graph["relationTypesById"].values())
+
     def get_people_nodes(self) -> List[Dict[str, Any]]:
         nodes = {}
         for relation_id in self._relations_by_to_id.get(person_type_node_id, []):
@@ -364,7 +373,8 @@ class Graph:
             del self._relations_by_content[hash]
 
     def remove_relation_type(self, relation_type_id: str):
-        del self._graph["relationTypesById"][relation_type_id]
+        if relation_type_id in self._graph["relationTypesById"]:
+            del self._graph["relationTypesById"][relation_type_id]
 
     def upsert_type_to_node(self, node_id: str, type_id: str) -> None:
         if type_id not in type_node_ids:

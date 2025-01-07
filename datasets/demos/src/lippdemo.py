@@ -171,8 +171,9 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
         make_person(graph, node["id"])
         return node
 
-    def upsert_extreme_talent_person(parent_id, content, relation_type_label):
-        node = graph.upsert_node(normalize_name(content))
+    def upsert_extreme_talent_person(parent_id, content, relation_type_label, node_id=None, normalize=True):
+        name = normalize_name(content) if normalize else content
+        node = graph.upsert_node(name, id=node_id)
         relation_type = graph.upsert_relation_type(relation_type_label)
         graph.upsert_relation(parent_id, node["id"], relation_type["id"])
         make_extreme_talent_person(graph, node["id"])
@@ -256,6 +257,15 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
                 else:
                     return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
             parse_text_graph(text, add_mlh_top_hackers)
+            # Remove "Can't Live Without" relations
+            relation_type_ids = set()
+            for relation in graph.get_relations():
+                relation_type = graph.get_relation_type(relation["relationTypeId"])
+                if relation_type and relation_type["label"] == "Can't Live Without":
+                    relation_type_ids.add(relation_type["id"])
+                    graph.remove_relation(relation["id"])
+            for relation_type_id in relation_type_ids:
+                graph.remove_relation_type(relation_type_id)
 
         elif name == "Scholarships and Fellowships List":
             def add_scholarships_and_fellowships_list(content, parent_stack, relation_type_label):
@@ -357,7 +367,13 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
                                 return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
                         else:
                             if len(parent_stack) == 5:
-                                return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                                if content == "Kevin Lin":
+                                    # Special case for Kevin Lin to differentiate from the twitter founder
+                                    return upsert_extreme_talent_person(parent_stack[-1]["id"], "Kevin Lin (phd student @ uc berkeley)", \
+                                                                        relation_type_label, node_id="kevin-lin-phd", normalize=False)
+                                else:
+                                    return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+
                             elif len(parent_stack) == 6:
                                 return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
                             else:
@@ -439,7 +455,17 @@ def add_josh_langam(graph: Graph):
     with open(josh_langsam_path, "r") as f:
         josh_langsam_dict = json.load(f)
 
+    # Get josh langsam node ids
+    josh_langsam_node_ids = set()
+    for node in josh_langsam_dict["nodesById"].values():
+        if node["content"][0]["value"] == "Joshua Langsam" or node["content"][0]["value"] == "Josh Langsam":
+            josh_langsam_node_ids.add(node["id"])
+
     for relation in josh_langsam_dict["relationsById"].values():
+        # Only add relations which connect to josh langsam nodes
+        if relation["fromId"] not in josh_langsam_node_ids and relation["toId"] not in josh_langsam_node_ids:
+            continue
+
         # Get or create relation type
         relation_type = josh_langsam_dict["relationTypesById"].get(relation["relationTypeId"])
         relation_type = graph.get_or_create_relation_type(relation_type["label"], relation_type["reverseLabel"])
@@ -664,14 +690,18 @@ if __name__ == "__main__":
 
     # Sort people
     linkedin_people = []
-    connected_extreme_talent = []
+    extreme_talent_not_connected = []
+    extreme_talent_connected = []
     everyone_else = []
     linkedin_people_ids = set(n["id"] for n in graph.get_related_nodes_from_id(linkedin_users_node_id))
     for node in all_people_nodes:
         if node["id"] in linkedin_people_ids:
             linkedin_people.append(node)
-        elif graph.is_extreme_talent(node["id"]) and len(people_to_top_investors_set.get(node["id"], set())) > 0:
-            connected_extreme_talent.append(node)
+        elif graph.is_extreme_talent(node["id"]):
+            if len(people_to_top_investors_set.get(node["id"], set())) > 0:
+                extreme_talent_connected.append(node)
+            else:
+                extreme_talent_not_connected.append(node)
         else:
             everyone_else.append(node)
     def sort_key(node):
@@ -680,7 +710,12 @@ if __name__ == "__main__":
             # Then by text
             node_to_text(node),
         )
-    sorted_people = linkedin_people + sorted(connected_extreme_talent, key=sort_key, reverse=True) + sorted(everyone_else, key=sort_key, reverse=True)
+    sorted_people = linkedin_people + sorted(extreme_talent_connected, key=sort_key, reverse=True) + sorted(extreme_talent_not_connected + everyone_else, key=sort_key, reverse=True)
+    # Print stats about different groups
+    extreme_talent = extreme_talent_connected + extreme_talent_not_connected
+    print(f"LinkedIn people: {len(linkedin_people)}")
+    print(f"Extreme talent: {len(extreme_talent)} (very connected ones: {len(extreme_talent_connected)})")
+    print(f"Everyone else: {len(everyone_else)}")
 
     # Unless a relation is between important nodes (people, companies, or investors)
     # Flag it as an ideapad attribute
