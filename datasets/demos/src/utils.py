@@ -19,7 +19,6 @@ crunchbase_dir = os.path.join(input_dir, 'crunchbase')
 josh_langsam_path = os.path.join(input_dir, 'josh-langam.json')
 laurel_touby_path = os.path.join(input_dir, 'laureltouby.txt')
 good_signal_dir = os.path.join(input_dir, "good-signal")
-# good_signal_dir = os.path.join(input_dir, "good-signal", "small")
 linkedin_dir = os.path.join(input_dir, 'linkedin')
 good_signal_paths = {
     "intelligentcrazypeople": os.path.join(good_signal_dir, "intelligentcrazypeople.txt"),
@@ -47,9 +46,11 @@ class DefaultRelationTypes:
     ideapad_show_as = RelationTypeClass("ideapad_show_as", "ideapad_show_as", "is_ideapad_show_as_of")
     ideapad_color = RelationTypeClass("ideapad_color", "ideapad_color", "is_ideapad_color_of")
     ideapad_extreme_talent = RelationTypeClass("ideapad_extreme_talent", "is_extreme_talent", "is_extreme_talent_of")
+    ideapad_extreme_talent_list = RelationTypeClass("ideapad_extreme_talent_list", "is_extreme_talent_list", "is_extreme_talent_list_of")
     website_url = RelationTypeClass("website-url", "website URL", "is website URL of")
     founder = RelationTypeClass("founder", "founder", "is founder of")
     description = RelationTypeClass("description", "description", "is description of")
+    industry = RelationTypeClass("industry", "Industry", "is Industry of")
 
     def __iter__(self) -> Iterator[RelationTypeClass]:
         # This returns all class variables that are RelationType instances
@@ -63,6 +64,7 @@ def is_ideapad_relation_type(relation_type_id: str) -> bool:
         default_relation_types.ideapad_show_as.id,
         default_relation_types.ideapad_color.id,
         default_relation_types.ideapad_extreme_talent.id,
+        default_relation_types.ideapad_extreme_talent_list.id,
     ]
 
 top_vcs = set([
@@ -94,6 +96,7 @@ author_id = "global-admin"
 global_root_node_id = "global-root-id"
 global_users_id = "global-users-id"
 linkedin_users_node_id = "linkedin-users-node-id"
+extreme_talent_lists_node_id = "extreme-talent-lists-node-id"
 laurel_touby_id = "laurel-touby"
 vcs_list_id = "vcs_list_node_id"
 author_id = "global-admin"
@@ -434,9 +437,9 @@ class Graph:
         relation = self.get_or_create_relation(parent_id, node["id"], relation_type["id"], id=relation_id)
         return node, relation, relation_type
 
-    def upsert_related_node(self, parent_id: str, node_content: str, relation_type_label = None, node_id = None, relation_id = None, related_type_id = None):
+    def upsert_related_node(self, parent_id: str, node_content: str, relation_type_label = None, node_id = None, relation_id = None, relation_type_id = None):
         """Upsert a node and relate it to a parent node"""
-        node, relation, relation_type = self.get_or_create_related_node(parent_id, node_content, relation_type_label, node_id, relation_id)
+        node, relation, relation_type = self.get_or_create_related_node(parent_id, node_content, relation_type_label, node_id, relation_id, relation_type_id)
         self.add_node(node)
         self.add_relation_type(relation_type)
         self.add_relation(relation)
@@ -881,6 +884,11 @@ def make_extreme_talent_person(graph: Graph, node_id: str):
     _, is_extreme_talent_relation, _ = graph.upsert_property(node_id, "true", key_id=default_relation_types.ideapad_extreme_talent.id)
     make_ideapad_attribute(graph, is_extreme_talent_relation)
     graph.upsert_property(node_id, "15", key_id=default_relation_types.ideapad_color.id)
+
+def make_extreme_talent_list(graph: Graph, node_id: str):
+    _, is_extreme_talent_list_relation, _ = graph.upsert_property(node_id, "true", key_id=default_relation_types.ideapad_extreme_talent_list.id)
+    make_ideapad_attribute(graph, is_extreme_talent_list_relation)
+    graph.upsert_property(node_id, "55", key_id=default_relation_types.ideapad_color.id)
 
 def make_ideapad_attribute(graph: Graph, relation: Union[Dict[str, Any], str, None]):
     if not relation: return

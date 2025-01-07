@@ -1,7 +1,6 @@
 "use client";
 
 import { generateKeyBetween } from "fractional-indexing";
-import JSZip from "jszip";
 import { autorun, toJS } from "mobx";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -453,82 +452,31 @@ export function exportSubtreeToIdeapad(graphStore: GraphStore, rootNode: GraphOb
 /**
  * Exports a graph to Ideapad.
  *
- * The Ideapad export format is a zip file containing multiple JSON files.
- * Each file contains a chunk of the data.
- *
- * This is done because the Ideapad export format has a limit of 1MB per file.
+ * Exports the data as a single JSON file containing nodes and edges.
  */
 export function exportToIdeapad({ nodes, edges }: { nodes: Map<string, any>; edges: Map<string, any> }) {
-  // Split data into chunks of approximately 700KB (leaving room for JSON formatting)
-  const MAX_CHUNK_SIZE = 700 * 1024; // 700KB in bytes
+  // Convert maps to arrays for JSON serialization
+  const data = {
+    nodes: Array.from(nodes.values()),
+    edges: Array.from(edges.values()),
+  };
 
-  const chunks: { nodes: any[]; edges: any[] }[] = [];
-  let currentChunk: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
-  let currentSize = 0;
+  // Create timestamp suffix in format YYYY-MM-DD_HH-mm-ss
+  const now = new Date();
+  const timestamp = now
+    .toISOString()
+    .replace(/[:.]/g, "-") // Replace colons and periods with hyphens
+    .replace("T", "_") // Replace T with underscore
+    .slice(0, 19); // Take only YYYY-MM-DD_HH-mm-ss part
 
-  // Add edges and nodes to chunks
-  const processedNodes = new Set<string>();
-  for (const edge of edges.values()) {
-    const sourceNode = nodes.get(edge.sourceIdeaClientId);
-    const targetNode = nodes.get(edge.targetIdeaClientId);
-    if (!sourceNode || !targetNode) continue;
+  // Create JSON blob
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
 
-    let data: any = { edge };
-    if (!processedNodes.has(edge.sourceIdeaClientId)) {
-      data.sourceNode = sourceNode;
-      processedNodes.add(edge.sourceIdeaClientId);
-    }
-    if (!processedNodes.has(edge.targetIdeaClientId)) {
-      data.targetNode = targetNode;
-      processedNodes.add(edge.targetIdeaClientId);
-    }
-
-    const size = new Blob([JSON.stringify(data)]).size;
-    if (currentSize + size > MAX_CHUNK_SIZE) {
-      chunks.push(currentChunk);
-      currentChunk = { nodes: [], edges: [] };
-      currentSize = 0;
-    }
-
-    currentChunk.edges.push(data.edge);
-    if (data.sourceNode) currentChunk.nodes.push(data.sourceNode);
-    if (data.targetNode) currentChunk.nodes.push(data.targetNode);
-    currentSize += size;
-  }
-
-  // Add remaining nodes to chunks
-  for (const node of nodes.values()) {
-    if (processedNodes.has(node.clientId)) continue;
-
-    const size = new Blob([JSON.stringify(node)]).size;
-    if (currentSize + size > MAX_CHUNK_SIZE) {
-      chunks.push(currentChunk);
-      currentChunk = { nodes: [], edges: [] };
-      currentSize = 0;
-    }
-
-    currentChunk.nodes.push(node);
-    currentSize += size;
-  }
-  if (currentChunk.nodes.length > 0 || currentChunk.edges.length > 0) {
-    chunks.push(currentChunk);
-  }
-
-  // Create zip file containing all chunks
-  const zip = new JSZip();
-
-  // Add node chunks to zip
-  chunks.forEach((chunk, index) => {
-    zip.file(`chunk_${index + 1}.json`, JSON.stringify(chunk, null, 2));
-  });
-
-  // Generate and download zip file
-  zip.generateAsync({ type: "blob" }).then((content) => {
-    const url = URL.createObjectURL(content);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "ideapad_export.zip";
-    link.click();
-    URL.revokeObjectURL(url);
-  });
+  // Download file
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `ideapad_export_${timestamp}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
 }

@@ -66,6 +66,13 @@ def add_crunchbase_data(graph=None):
         'uuid', 'short_description', 'homepage_url', 'category_list', 'category_group_list'
     ])\
         .dropna(subset=["uuid"]).fillna("").astype(str)
+    # Get category groups sorted by frequency
+    category_groups = org_df["category_group_list"]\
+        .str.slice(1, -1)\
+        .str.split(",").explode()\
+        .str.strip()\
+        .value_counts()\
+        .to_dict()
 
     # Create joint table
 
@@ -121,6 +128,11 @@ def add_crunchbase_data(graph=None):
             node, _ = graph.upsert_related_node(org_node["id"], category, "Tag")
             make_ideapad_none(graph, node)
 
+        category_group = str(row['category_group_list'] or '')
+        if len(category_group) > 0:
+            _, relation, _ = graph.upsert_property(org_node["id"], category_group, key_id=default_relation_types.industry.id)
+            make_ideapad_attribute(graph, relation)
+
         # Relate founder to company 
         graph.upsert_relation(org_node["id"], founder_node["id"], default_relation_types.founder.id)
 
@@ -139,7 +151,7 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
     graph = linkedin_graph or Graph()
 
     # Create extreme talent lists node
-    extreme_talent_lists_node, _ = graph.upsert_related_node(global_root_node_id, "Extreme Talent Lists")
+    extreme_talent_lists_node, _ = graph.upsert_related_node(global_root_node_id, "Extreme Talent Lists", node_id=extreme_talent_lists_node_id)
 
     def normalize_name(content):
         content = re.sub(r"\s*\(.*\)", "", content).strip()
@@ -184,7 +196,7 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
 
     def upsert_related_node(parent_id, content, relation_type_label):
         node, _, _ = graph.upsert_related_node2(parent_id, content, relation_type_label, upsert_node=False)
-        make_ideapad_none(graph, node)
+        # make_ideapad_none(graph, node)
         return node
 
     # Add all good signal text files to the graph
@@ -199,7 +211,7 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
             def process_yc_companies(content, parent_stack, relation_type_label):
                 label_lower = relation_type_label.lower()
                 if len(parent_stack) == 0:
-                    return upsert_related_node(global_root_node_id, content, relation_type_label)
+                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
                 elif len(parent_stack) == 1:
                     return upsert_company(parent_stack[-1]["id"], content, relation_type_label)
                 elif "founder" in label_lower:
@@ -211,7 +223,7 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
         elif name == "intelligentcrazypeople":
             def add_intelligent_crazy_people(content, parent_stack, relation_type_label):
                 if len(parent_stack) == 0:
-                    return upsert_related_node(global_root_node_id, content, relation_type_label)
+                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
                 elif len(parent_stack) == 1:
                     return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
                 elif len(parent_stack) == 2:
@@ -224,7 +236,7 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
             def add_international_olympiad_winners(content, parent_stack, relation_type_label):
                 label_lower = relation_type_label.lower()
                 if len(parent_stack) == 0:
-                    return upsert_related_node(global_root_node_id, content, relation_type_label)
+                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
                 elif "gold" in label_lower or "silver" in label_lower or "bronze" in label_lower:
                     return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
                 elif graph.is_person(parent_stack[-1]["id"]):
@@ -236,7 +248,7 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
         elif name == "MLH Top Hackers":
             def add_mlh_top_hackers(content, parent_stack, relation_type_label):
                 if len(parent_stack) == 0:
-                    return upsert_related_node(global_root_node_id, content, relation_type_label)
+                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
                 elif len(parent_stack) == 1:
                     return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
                 elif len(parent_stack) == 2:
@@ -248,7 +260,7 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
         elif name == "Scholarships and Fellowships List":
             def add_scholarships_and_fellowships_list(content, parent_stack, relation_type_label):
                 if len(parent_stack) == 0:
-                    return upsert_related_node(global_root_node_id, content, relation_type_label)
+                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
                 elif len(parent_stack) == 1:
                     return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
 
@@ -316,7 +328,7 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
         elif name == "Misc Competition Winners":
             def add_misc_competition_winners(content, parent_stack, relation_type_label):
                 if len(parent_stack) == 0:
-                    return upsert_related_node(global_root_node_id, content, relation_type_label)
+                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
                 elif len(parent_stack) == 1:
                     return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
 
@@ -569,10 +581,7 @@ def filter_by_people(graph: Graph, people_node_ids: set[str]):
     for relation in graph._graph["relationsById"].values():
         type = graph.get_relation_type(relation["relationTypeId"])
         if not type: continue
-        if filtered_graph.has(relation["fromId"]) and \
-          (type["id"] == default_relation_types.ideapad_show_as.id \
-          or type["id"] == default_relation_types.ideapad_color.id \
-          or type["id"] == default_relation_types.ideapad_extreme_talent.id):
+        if filtered_graph.has(relation["fromId"]) and is_ideapad_relation_type(relation["relationTypeId"]):
             filtered_graph.add_relation(relation)
             to_node = graph.get_node(relation["toId"])
             if to_node:
@@ -621,14 +630,12 @@ if __name__ == "__main__":
 
 
     # Get counts of people, companies, and investors
-
     all_people_nodes = graph.get_people_nodes()
     all_people_node_ids = set(node["id"] for node in all_people_nodes)
     all_company_node_ids = set(node["id"] for node in graph.get_companies_nodes())
     all_investor_node_ids = set(node["id"] for node in graph.get_investor_nodes())
     all_extreme_talent_node_ids = set(node["id"] for node in graph.get_extreme_talent_nodes())
     top_investor_node_ids = set(node["id"] for node in graph.get_related_nodes_from_id(vcs_list_id))
-    print(f"Top investor node ids: {top_investor_node_ids}")
 
     # Get set of top investors each person is connected to
     people_to_top_investors_set = {}
@@ -655,12 +662,25 @@ if __name__ == "__main__":
 
     important_node_ids = all_people_node_ids | all_company_node_ids | all_investor_node_ids
 
+    # Sort people
+    linkedin_people = []
+    connected_extreme_talent = []
+    everyone_else = []
+    linkedin_people_ids = set(n["id"] for n in graph.get_related_nodes_from_id(linkedin_users_node_id))
+    for node in all_people_nodes:
+        if node["id"] in linkedin_people_ids:
+            linkedin_people.append(node)
+        elif graph.is_extreme_talent(node["id"]) and len(people_to_top_investors_set.get(node["id"], set())) > 0:
+            connected_extreme_talent.append(node)
+        else:
+            everyone_else.append(node)
     def sort_key(node):
         return (
-            graph.is_extreme_talent(node["id"]) and len(people_to_top_investors_set.get(node["id"], set())) > 0,
             len(people_to_company_ids.get(node["id"], set())) + len(people_to_top_investors_set.get(node["id"], set())),
+            # Then by text
+            node_to_text(node),
         )
-    sorted_people = sorted(all_people_nodes, key=lambda n: sort_key(n), reverse=True)
+    sorted_people = linkedin_people + sorted(connected_extreme_talent, key=sort_key, reverse=True) + sorted(everyone_else, key=sort_key, reverse=True)
 
     # Unless a relation is between important nodes (people, companies, or investors)
     # Flag it as an ideapad attribute
@@ -685,19 +705,56 @@ if __name__ == "__main__":
         # If it's a relation about a person/company, make it an ideapad attribute
         if from_is_important_node:
             make_ideapad_attribute(graph, relation)
-    # Hide all nodes that aren't important
+
+    # Find all nodes the extreme talent list nodes
+    extreme_talent_lists_node_ids = set()
+    def collect_extreme_talent_lists(node_id: str, ancestor_ids: set, depth = 0):
+        if depth > 10: return # Don't go too deep
+        for relation, node, _ in graph.walk_descendants(node_id, 1):
+            if node["id"] in all_people_node_ids:
+                extreme_talent_lists_node_ids.update(ancestor_ids)
+            # Walk down to children
+            if relation["relationTypeId"] == default_relation_types.child.id:
+                collect_extreme_talent_lists(node["id"], ancestor_ids | {node["id"]}, depth + 1)
+    collect_extreme_talent_lists(extreme_talent_lists_node_id, {extreme_talent_lists_node_id})
+    for node_id in extreme_talent_lists_node_ids:
+        make_extreme_talent_list(graph, node_id)
+
+    # Add extreme talent ancestors to important nodes
+    important_node_ids = important_node_ids | extreme_talent_lists_node_ids
+
+    # Hide all non-important nodes
     nodes = list(graph._graph["nodesById"].values())
     for node in nodes:
         if node["id"] not in important_node_ids:
             make_ideapad_none(graph, node)
 
+    # Create mock data with industries split out
+    graph_industries = Graph()
+    industries = set()
+    for relation in graph._graph["relationsById"].values():
+        if relation["relationTypeId"] == default_relation_types.industry.id:
+            to_node = graph.get_node(relation["toId"])
+            if to_node:
+                text = node_to_text(to_node)
+                industries.update(text.split(","))
+    for industry in industries:
+        mock_node = create_node(str(uuid.uuid4())[:10])
+        graph_industries.add_node(mock_node)
+        _, relation = graph_industries.upsert_related_node(mock_node["id"], industry, relation_type_id=default_relation_types.industry.id)
+        make_ideapad_attribute(graph_industries, relation)
+    with open(os.path.join(output_dir, f"lippdemo-industries.json"), "w") as f:
+        json.dump(graph_industries.to_dict(), f)
+
     # Create full version
     graph_full = filter_by_people(graph, set([node["id"] for node in sorted_people[:5000]]))
+    # graph_full = filter_by_people(graph, set([node["id"] for node in sorted_people]))
     assign_canonical_relation(graph_full)
     assert_graph_integrity(graph_full._graph)
     full_path = os.path.join(output_dir, f"lippdemo.json")
     with open(full_path, "w") as f:
         json.dump(graph_full.to_dict(), f)
+    print(f"Saved full version to {full_path}")
     
     # Create lite version
     graph_lite = filter_by_people(graph, set(node["id"] for node in sorted_people[:300]))
@@ -707,6 +764,6 @@ if __name__ == "__main__":
     with open(lite_path, "w") as f:
         json.dump(graph_lite.to_dict(), f)
 
-    print(f"Saved full version to {full_path}")
+    
     print(f"Saved lite version to {lite_path}")
     
