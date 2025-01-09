@@ -92,14 +92,17 @@ export const BackspaceMergeNodesPlugin = () => {
           handled = mergeNodes(treeNode, treeNode.parent);
         }
         if (handled) {
-          if (
+          const destroyMLNote =
             treeNode.parentGroup.id === "noteContent" &&
+            tree.selection !== null &&
+            tree.selection.type === "editor" &&
             treeNode.parent.childrenGroupsById["noteContent"].nodes.length === 2 &&
-            treeNode.parent.childrenGroupsById["noteContent"].nodes[1] === treeNode
-          ) {
-            const sibAbove = treeNode.siblingAboveInSameGroup;
-            if (sibAbove) {
-              tree.convertSingleLineNoteToNode(sibAbove);
+            treeNode.parent.childrenGroupsById["noteContent"].nodes[1] === treeNode;
+
+          if (destroyMLNote) {
+            const firstNoteNode = treeNode.parent.childrenGroupsById["noteContent"].nodes[0];
+            if (firstNoteNode) {
+              tree.convertSingleLineNoteToNode(firstNoteNode);
             }
           }
           event.preventDefault();

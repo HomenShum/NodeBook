@@ -54,6 +54,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
         <DropdownPlugin treeNode={treeNode} />
         <EnterKeyPlugin treeNode={treeNode} />
         <IgnoreModShiftAPlugin />
+
         <ReplacementPlugin treeNode={treeNode} />
         <ClearEditorPlugin />
         <LinkPlugin />
