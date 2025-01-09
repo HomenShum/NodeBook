@@ -2,6 +2,7 @@ import { observer } from "mobx-react-lite";
 import React, { useEffect, useRef } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 
@@ -74,10 +75,35 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
             break;
           case "Backspace":
             if (!treeNode.object.isLocal) {
+              const object = treeNode.object;
+              const relation = treeNode.relationWithParent;
               try {
-                e.preventDefault();
-                await tree.replaceObjectAtNodeWithCopy(treeNode.id);
-                tree.setFocusedNode(treeNode.id);
+                if (
+                  treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id &&
+                  treeNode.relationWithParent.to === object
+                ) {
+                  return false;
+                }
+                // Go ahead with removing relation type and setting content
+
+                const isForward = relation.to.id === object.id;
+                let labelText = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
+                labelText += treeNode.object.text.length > 0 ? " " : "";
+
+                const oldContent = graphStore.getNode(object.id)?.content ?? [];
+
+                graphStore.applyCombinedTransaction([
+                  {
+                    type: "updateRelation",
+                    transaction: {
+                      relationId: relation.id,
+                      relationProps: { relationType: defaultRelationTypes.child },
+                      reverse: !isForward,
+                    },
+                  },
+                ]);
+                tree.setFocusedNode(treeNode.id, { anchorOffset: labelText.length, focusOffset: labelText.length });
+                return true;
               } catch (error) {
                 alert(error instanceof Error ? error.message : "Unknown error");
               }
