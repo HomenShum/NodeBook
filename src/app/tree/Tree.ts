@@ -937,7 +937,6 @@ export class Tree {
         transaction: {
           fromId: treeNode.parent.object.id,
           toId: treeNode.object.id,
-          relationType: defaultRelationTypes.child,
           id: relationId,
           after: treeNode.relationWithParent,
         },
@@ -1311,7 +1310,6 @@ export class Tree {
       transaction: {
         fromId: treeNode.parent.object.id,
         toId: noteRootId,
-        relationType: defaultRelationTypes.child,
         id: relToNoteRootId,
         after: treeNode.relationWithParent,
       },

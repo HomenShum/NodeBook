@@ -458,7 +458,7 @@ export class GraphStore {
         id: tx.relationProps?.id,
         fromId: wannaBeParent.id,
         toId: newNode.id,
-        relationType: this.relationTypesById[tx.relationProps?.relationTypeId ?? ""] || defaultRelationTypes.child,
+        relationTypeId: tx.relationProps?.relationTypeId,
         after: tx.after,
       });
       newRelation = relation;
@@ -773,6 +773,16 @@ export class GraphStore {
     if (!from || !to) {
       throw new Error(`GraphObject with id ${from ? tx.toId : tx.fromId} does not exist`);
     }
+    // Get the relation type. If they didn't specify a relation type, or we don't have it, use the child relation type.
+    let relationType: GraphRelationType;
+    if (tx.relationTypeId && !this.relationTypesById[tx.relationTypeId]) {
+      logger.warn(`Relation type with id ${tx.relationTypeId} does not exist. Using child relation type instead.`);
+      relationType = this.relationTypesById.child;
+    } else if (!tx.relationTypeId) {
+      relationType = this.relationTypesById.child;
+    } else {
+      relationType = this.relationTypesById[tx.relationTypeId];
+    }
 
     // TODO: simplify further and make it similar to _addNode()
     return this.createRelation(
@@ -780,7 +790,7 @@ export class GraphStore {
         id: tx.id,
         from,
         to,
-        relationType: tx.relationType,
+        relationType,
       },
       tx.after,
     );

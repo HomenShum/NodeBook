@@ -29,7 +29,7 @@ export type TxAddRelation = {
   id?: string;
   fromId: string;
   toId: string;
-  relationType?: GraphRelationType;
+  relationTypeId?: string;
   after?: Positioner<GraphRelation>;
   canonicalRelationId?: string | null;
 };
