@@ -18,17 +18,18 @@ stanford_labs_path = os.path.join(input_dir, 'stanford-independent-labs.txt')
 crunchbase_dir = os.path.join(input_dir, 'crunchbase')
 josh_langsam_path = os.path.join(input_dir, 'josh-langam.json')
 laurel_touby_path = os.path.join(input_dir, 'laureltouby.txt')
-good_signal_dir = os.path.join(input_dir, "good-signal")
+extreme_talent_lists_dir = os.path.join(input_dir, "extreme-talent-lists")
 linkedin_dir = os.path.join(input_dir, 'linkedin')
-good_signal_paths = {
-    "intelligentcrazypeople": os.path.join(good_signal_dir, "intelligentcrazypeople.txt"),
-    "CPHOF": os.path.join(good_signal_dir, "CPHOF.txt"),
-    "YC Companies": os.path.join(good_signal_dir, "YC Companies_flattened.txt"),
-    "International Olympiad Winners": os.path.join(good_signal_dir, "International Olympiad Winners.txt"),
-    "Misc Competition Winners": os.path.join(good_signal_dir, "Misc Competition Winners.txt"),
-    "MLH Top Hackers": os.path.join(good_signal_dir, "MLH Top Hackers.txt"),
-    "Scholarships and Fellowships List": os.path.join(good_signal_dir, "Scholarships and Fellowships List.txt"),
+extreme_talent_lists_paths = {
+    "intelligentcrazypeople": os.path.join(extreme_talent_lists_dir, "intelligentcrazypeople.txt"),
+    "CPHOF": os.path.join(extreme_talent_lists_dir, "CPHOF.txt"),
+    "YC Companies": os.path.join(extreme_talent_lists_dir, "YC Companies_flattened.txt"),
+    "International Olympiad Winners": os.path.join(extreme_talent_lists_dir, "International Olympiad Winners.txt"),
+    "Misc Competition Winners": os.path.join(extreme_talent_lists_dir, "Misc Competition Winners.txt"),
+    "MLH Top Hackers": os.path.join(extreme_talent_lists_dir, "MLH Top Hackers.txt"),
+    "Scholarships and Fellowships List": os.path.join(extreme_talent_lists_dir, "Scholarships and Fellowships List.txt"),
 }
+yc_companies_path = os.path.join(input_dir, "YC Companies_flattened.txt")
 
 class RelationTypeClass:
     def __init__(self, id: str, label: str, reverse_label: str):
@@ -47,6 +48,7 @@ class DefaultRelationTypes:
     ideapad_color = RelationTypeClass("ideapad_color", "ideapad_color", "is_ideapad_color_of")
     ideapad_extreme_talent = RelationTypeClass("ideapad_extreme_talent", "is_extreme_talent", "is_extreme_talent_of")
     ideapad_extreme_talent_list = RelationTypeClass("ideapad_extreme_talent_list", "is_extreme_talent_list", "is_extreme_talent_list_of")
+    ideapad_extreme_talent_source_lists = RelationTypeClass("ideapad_extreme_talent_source_lists", "extreme_talent_source_lists", "extreme_talent_source_lists_of")
     website_url = RelationTypeClass("website-url", "website URL", "is website URL of")
     founder = RelationTypeClass("founder", "founder", "is founder of")
     description = RelationTypeClass("description", "description", "is description of")
@@ -65,6 +67,7 @@ def is_ideapad_relation_type(relation_type_id: str) -> bool:
         default_relation_types.ideapad_color.id,
         default_relation_types.ideapad_extreme_talent.id,
         default_relation_types.ideapad_extreme_talent_list.id,
+        default_relation_types.ideapad_extreme_talent_source_lists.id,
     ]
 
 top_vcs = set([
@@ -458,7 +461,9 @@ class Graph:
     def upsert_related_node2(self, parent_id: str, value: Union[str, Node], label: Union[str, Dict, None] = None, upsert_node = None):
         # Special case for linkedin and website
         label_str_lower = label["label"].lower() if isinstance(label, Dict) else (label.lower() if isinstance(label, str) else "")
-        if value == "":
+        is_labelled_number = isinstance(value, str) and isinstance(label, str) and len(label) > 0 and re.match(r"\d+", value)
+
+        if value == "" or is_labelled_number:
             relation_type = self.get_or_create_relation_type(label) if isinstance(label, str) else label
             upsert_node = upsert_node if upsert_node is not None else False
         elif "linkedin" in label_str_lower:
@@ -470,10 +475,6 @@ class Graph:
             relation_type = self.upsert_relation_type(r.label, r.reverse_label, r.id)
             upsert_node = upsert_node if upsert_node is not None else False
         elif "description" in label_str_lower:
-            r = default_relation_types.description
-            relation_type = self.upsert_relation_type(r.label, r.reverse_label, r.id)
-            upsert_node = upsert_node if upsert_node is not None else False
-        elif isinstance(value, str) and re.match(r"\d+", value):
             r = default_relation_types.description
             relation_type = self.upsert_relation_type(r.label, r.reverse_label, r.id)
             upsert_node = upsert_node if upsert_node is not None else False
@@ -602,6 +603,14 @@ class Graph:
                 to_node = self.get_node(relation["toId"])
                 if to_node and to_node["id"] == person_type_node_id:
                     return True
+        return False
+
+    def is_typed(self, node_id: str) -> bool:
+        node = self.get_node(node_id)
+        if not node: return False
+        for relation in self.get_relations_with_from_id(node_id):
+            if relation["relationTypeId"] == default_relation_types.type.id:
+                return True
         return False
 
     def is_extreme_talent(self, node_id: str) -> bool:
@@ -859,7 +868,6 @@ def unattribute_relations_to_node(graph: Graph, node_id: str):
     for relation_id in relation_ids:
         graph.remove_relation(relation_id)
 
-
 def make_person(graph: Graph, node_id: str):
     node = graph.get_node(node_id)
     if not node: return
@@ -899,6 +907,13 @@ def make_extreme_talent_list(graph: Graph, node_id: str):
     _, is_extreme_talent_list_relation, _ = graph.upsert_property(node_id, "true", key_id=default_relation_types.ideapad_extreme_talent_list.id)
     make_ideapad_attribute(graph, is_extreme_talent_list_relation)
     graph.upsert_property(node_id, "55", key_id=default_relation_types.ideapad_color.id)
+
+def upsert_extreme_talent_source_lists(graph: Graph, node_id: str, ancestor_path_string: str):
+    node = graph.get_node(node_id)
+    if not node: return
+    _, relation, _ = graph.upsert_property(node_id, ancestor_path_string, \
+                          key_id=default_relation_types.ideapad_extreme_talent_source_lists.id)
+    make_ideapad_attribute(graph, relation)
 
 def make_ideapad_attribute(graph: Graph, relation: Union[Dict[str, Any], str, None]):
     if not relation: return

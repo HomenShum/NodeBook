@@ -28,6 +28,54 @@ def assert_graph_integrity(graph: GraphDict):
     if issues:
         raise Exception("\n".join(issues))
     
+def normalize_name(content):
+    content = re.sub(r"\s*\(.*\)", "", content).strip()
+    parts = re.split(r"[\s,]+", content)
+    if "," in content:
+        if len(parts) == 2:
+            parts = [parts[1], parts[0]]
+        elif len(parts) == 3 and parts[-1].endswith("."):
+            parts = [parts[1], parts[0]]
+    name = " ".join([c[0].upper() + c[1:].lower() for c in parts if len(c) > 1])
+    return name
+
+def upsert_person(graph, parent_id, content, relation_type_label):
+    node = graph.upsert_node(normalize_name(content))
+    relation_type = graph.upsert_relation_type(relation_type_label)
+    graph.upsert_relation(parent_id, node["id"], relation_type["id"])
+    make_person(graph, node["id"])
+    return node
+
+def upsert_extreme_talent_person(graph, parent_id, content, relation_type_label, node_id=None, normalize=True):
+    name = normalize_name(content) if normalize else content
+    node = graph.upsert_node(name, id=node_id)
+    relation_type = graph.upsert_relation_type(relation_type_label)
+    graph.upsert_relation(parent_id, node["id"], relation_type["id"])
+    make_extreme_talent_person(graph, node["id"])
+    return node
+
+def upsert_company(graph, parent_id, content, relation_type_label):
+    node = graph.upsert_node(content)
+    graph.upsert_relation(parent_id, node["id"], relation_type_label)
+    make_company(graph, node["id"])
+    return node
+
+def upsert_person_property(graph, parent_id, content, relation_type_label):
+    if relation_type_label:
+        node, relation, _ = graph.upsert_property(parent_id, content, relation_type_label)
+        make_ideapad_attribute(graph, relation)
+        return node
+    else:
+        node, _, _ = graph.upsert_related_node2(parent_id, content, relation_type_label, upsert_node=False)
+        make_ideapad_none(graph, node)
+        return node
+
+def upsert_related_node(graph, parent_id, content, relation_type_label):
+    node, _, _ = graph.upsert_related_node2(parent_id, content, relation_type_label, upsert_node=False)
+    # make_ideapad_none(graph, node)
+    return node
+
+# ---
 
 def add_crunchbase_data(graph=None):
     graph = graph or Graph()
@@ -147,115 +195,76 @@ def add_crunchbase_data(graph=None):
     return graph
 
 
-def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
-    graph = linkedin_graph or Graph()
+def add_yc_companies(graph: Union[None, Graph] = None) -> Graph:
+    graph = graph or Graph()
+
+    text = open(yc_companies_path, "r").read()
+
+    def process_yc_companies(content, parent_stack, relation_type_label):
+        label_lower = relation_type_label.lower()
+        if len(parent_stack) == 0:
+            return upsert_related_node(graph, global_root_node_id, content, relation_type_label)
+        elif len(parent_stack) == 1:
+            return upsert_company(graph, parent_stack[-1]["id"], content, relation_type_label)
+        elif "founder" in label_lower:
+            return upsert_person(graph, parent_stack[-1]["id"], content, relation_type_label)
+        else:
+            return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
+
+    parse_text_graph(text, process_yc_companies)
+
+    return graph
+
+
+def add_extreme_talent(graph: Union[None, Graph] = None) -> Graph:
+    graph = graph or Graph()
 
     # Create extreme talent lists node
     extreme_talent_lists_node, _ = graph.upsert_related_node(global_root_node_id, "Extreme Talent Lists", node_id=extreme_talent_lists_node_id)
 
-    def normalize_name(content):
-        content = re.sub(r"\s*\(.*\)", "", content).strip()
-        parts = re.split(r"[\s,]+", content)
-        if "," in content:
-            if len(parts) == 2:
-                parts = [parts[1], parts[0]]
-            elif len(parts) == 3 and parts[-1].endswith("."):
-                parts = [parts[1], parts[0]]
-        name = " ".join([c[0].upper() + c[1:].lower() for c in parts if len(c) > 1])
-        return name
-
-    def upsert_person(parent_id, content, relation_type_label):
-        node = graph.upsert_node(normalize_name(content))
-        relation_type = graph.upsert_relation_type(relation_type_label)
-        graph.upsert_relation(parent_id, node["id"], relation_type["id"])
-        make_person(graph, node["id"])
-        return node
-
-    def upsert_extreme_talent_person(parent_id, content, relation_type_label, node_id=None, normalize=True):
-        name = normalize_name(content) if normalize else content
-        node = graph.upsert_node(name, id=node_id)
-        relation_type = graph.upsert_relation_type(relation_type_label)
-        graph.upsert_relation(parent_id, node["id"], relation_type["id"])
-        make_extreme_talent_person(graph, node["id"])
-        return node
-
-    def upsert_company(parent_id, content, relation_type_label):
-        node = graph.upsert_node(content)
-        graph.upsert_relation(parent_id, node["id"], relation_type_label)
-        make_company(graph, node["id"])
-        return node
-
-    def upsert_person_property(parent_id, content, relation_type_label):
-        if relation_type_label:
-            node, relation, _ = graph.upsert_property(parent_id, content, relation_type_label)
-            make_ideapad_attribute(graph, relation)
-            return node
-        else:
-            node, _, _ = graph.upsert_related_node2(parent_id, content, relation_type_label, upsert_node=False)
-            make_ideapad_none(graph, node)
-            return node
-
-    def upsert_related_node(parent_id, content, relation_type_label):
-        node, _, _ = graph.upsert_related_node2(parent_id, content, relation_type_label, upsert_node=False)
-        # make_ideapad_none(graph, node)
-        return node
-
     # Add all good signal text files to the graph
-    for name, file_path in good_signal_paths.items():
+    for name, file_path in extreme_talent_lists_paths.items():
         if not os.path.exists(file_path):
             print(f"WARNING: Good signal file not found: {file_path}")
             continue
         text = open(file_path, "r").read()
         print(f"Adding {file_path} to graph")
 
-        if name == "YC Companies":
-            def process_yc_companies(content, parent_stack, relation_type_label):
-                label_lower = relation_type_label.lower()
-                if len(parent_stack) == 0:
-                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
-                elif len(parent_stack) == 1:
-                    return upsert_company(parent_stack[-1]["id"], content, relation_type_label)
-                elif "founder" in label_lower:
-                    return upsert_person(parent_stack[-1]["id"], content, relation_type_label)
-                else:
-                    return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
-            parse_text_graph(text, process_yc_companies)
-
-        elif name == "intelligentcrazypeople":
+        if name == "intelligentcrazypeople":
             def add_intelligent_crazy_people(content, parent_stack, relation_type_label):
                 if len(parent_stack) == 0:
-                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
+                    return upsert_related_node(graph, extreme_talent_lists_node["id"], content, relation_type_label)
                 elif len(parent_stack) == 1:
-                    return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif len(parent_stack) == 2:
-                    return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                 else:
-                    return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
             parse_text_graph(text, add_intelligent_crazy_people)
 
         elif name == "International Olympiad Winners":
             def add_international_olympiad_winners(content, parent_stack, relation_type_label):
                 label_lower = relation_type_label.lower()
                 if len(parent_stack) == 0:
-                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
+                    return upsert_related_node(graph, extreme_talent_lists_node["id"], content, relation_type_label)
                 elif "gold" in label_lower or "silver" in label_lower or "bronze" in label_lower:
-                    return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif graph.is_person(parent_stack[-1]["id"]):
-                    return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                 else:
-                    return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
             parse_text_graph(text, add_international_olympiad_winners)
 
         elif name == "MLH Top Hackers":
             def add_mlh_top_hackers(content, parent_stack, relation_type_label):
                 if len(parent_stack) == 0:
-                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
+                    return upsert_related_node(graph, extreme_talent_lists_node["id"], content, relation_type_label)
                 elif len(parent_stack) == 1:
-                    return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif len(parent_stack) == 2:
-                    return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                 else:
-                    return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
             parse_text_graph(text, add_mlh_top_hackers)
             # Remove "Can't Live Without" relations
             relation_type_ids = set()
@@ -270,170 +279,170 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
         elif name == "Scholarships and Fellowships List":
             def add_scholarships_and_fellowships_list(content, parent_stack, relation_type_label):
                 if len(parent_stack) == 0:
-                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
+                    return upsert_related_node(graph, extreme_talent_lists_node["id"], content, relation_type_label)
                 elif len(parent_stack) == 1:
-                    return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
 
                 sublist_name = node_to_text(parent_stack[1])
                 if sublist_name == "Thiel Fellows":
                     if len(parent_stack) == 2:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "Schwarzman Scholars" or sublist_name == "Rhodes Scholars":
                     if len(parent_stack) == 2 and not relation_type_label:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     elif len(parent_stack) == 3:
-                        return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "Marshall Scholars":
                     if len(parent_stack) == 3:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     elif graph.is_person(parent_stack[-1]["id"]):
-                        return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "MacArthur Fellows":
                     if len(parent_stack) == 2 and content != "description" and not relation_type_label:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     elif len(parent_stack) == 3:
-                        return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "Kleiner Perkins Fellows" or sublist_name == "Fulbright Scholars":
                     if len(parent_stack) == 2:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     elif len(parent_stack) == 3:
-                        return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "Goldwater Scholars":
                     if len(parent_stack) == 4:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     elif len(parent_stack) == 5:
-                        return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "Foresight Institute Fellows":
                     if len(parent_stack) < 3:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                     elif len(parent_stack) == 3:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "Davidson Fellowship":
                     if len(parent_stack) >= 3:
                         sublist2_name = node_to_text(parent_stack[2])
                         year = sublist2_name.split(" ")[0]
                         person_depth = 4 if year == "2023" or year == "2022" or year == "2021" else 3
                         if len(parent_stack) == person_depth:
-                            return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                            return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                         elif len(parent_stack) == person_depth + 1:
-                            return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                            return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                         else:
-                            return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                            return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
             parse_text_graph(text, add_scholarships_and_fellowships_list)
         
         elif name == "Misc Competition Winners":
             def add_misc_competition_winners(content, parent_stack, relation_type_label):
                 if len(parent_stack) == 0:
-                    return upsert_related_node(extreme_talent_lists_node["id"], content, relation_type_label)
+                    return upsert_related_node(graph, extreme_talent_lists_node["id"], content, relation_type_label)
                 elif len(parent_stack) == 1:
-                    return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
 
                 sublist_name = node_to_text(parent_stack[1])
                 if sublist_name == "Google Science Fair Winners":
                     if len(parent_stack) == 4 and not relation_type_label:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "Hackathon Winners":
                     sublist2_name = node_to_text(parent_stack[2]) if len(parent_stack) > 2 else ""
                     if sublist2_name == "CalHacks Hackathon Winners":
                         parent_node = parent_stack[-1]
                         if len(parent_stack) == 5 and relation_type_label == "Contributor":
-                            return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                            return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                         elif graph.is_person(parent_node["id"]):
-                            return upsert_person_property(parent_node["id"], content, relation_type_label)
+                            return upsert_person_property(graph, parent_node["id"], content, relation_type_label)
                         else:
-                            return upsert_related_node(parent_node["id"], content, relation_type_label)
+                            return upsert_related_node(graph, parent_node["id"], content, relation_type_label)
                     elif sublist2_name == "MIT Hackathon Winners":
                         sublist3_name = node_to_text(parent_stack[2])
                         if sublist3_name == "MIT $100K":
                             if relation_type_label == "Winner" or len(parent_stack) == 8:
-                                return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                             else:
-                                return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                         else:
                             if len(parent_stack) == 5:
                                 if content == "Kevin Lin":
                                     # Special case for Kevin Lin to differentiate from the twitter founder
-                                    return upsert_extreme_talent_person(parent_stack[-1]["id"], "Kevin Lin (phd student @ uc berkeley)", \
+                                    return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], "Kevin Lin (phd student @ uc berkeley)", \
                                                                         relation_type_label, node_id="kevin-lin-phd", normalize=False)
                                 else:
-                                    return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                                    return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
 
                             elif len(parent_stack) == 6:
-                                return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                             else:
-                                return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
                         if len(parent_stack) == 5 and relation_type_label == "Contributor":
-                            return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                            return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                         elif graph.is_person(parent_stack[-1]["id"]):
-                            return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                            return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                         else:
-                            return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                            return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "Intel Regeneron STS Finalists":
                     if len(parent_stack) < 3:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                     elif len(parent_stack) == 3:
                         if content == "Jesse Zhang":
-                            return upsert_extreme_talent_person(parent_stack[-1]["id"], "Jesse Zhang (boulder, co)",\
+                            return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], "Jesse Zhang (boulder, co)",\
                                                                 relation_type_label, node_id="jesse-zhang-boulder-co", normalize=False)
                         else:
-                            return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                            return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "ISEF":
                     if len(parent_stack) == 5:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "NSF":
                     if len(parent_stack) > 3:
                         sublist3_name = node_to_text(parent_stack[3])
                         if sublist3_name == "Alan T Waterman Award":
                             if len(parent_stack) > 4 and node_to_text(parent_stack[4]) == "Alan T Waterman Award Recipients":
                                 if len(parent_stack) == 6:
-                                    return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                                    return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                                 elif len(parent_stack) == 7:
-                                    return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
-                            return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                                    return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
+                            return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                         elif sublist3_name == "Presidential Early Career Award for Scientists and Engineers":
                             if len(parent_stack) == 4 and not relation_type_label:
-                                return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                             elif len(parent_stack) == 5:
-                                return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                             else:
-                                return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                         elif sublist3_name == "President's National Medal of Science":
                             if len(parent_stack) == 5 and not relation_type_label:
-                                return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                             elif len(parent_stack) == 6:
-                                return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                             else:
-                                return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                                return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "Siemens Competition" or sublist_name == "National Speech & Debate Tournament Winners" or sublist_name == "The William Lowell Putnam Mathematical Competition Winners":
                     if len(parent_stack) == 4:
-                        return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                     elif len(parent_stack) == 5:
-                        return upsert_person_property(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_person_property(graph, parent_stack[-1]["id"], content, relation_type_label)
                     else:
-                        return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                        return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
                 elif sublist_name == "YoungArts":
                     # This list mixes people and organizations in a way that's hard
                     # to parse, so we'll just skip it
@@ -443,15 +452,14 @@ def add_extreme_talent(linkedin_graph: Union[None, Graph] = None) -> Graph:
             def add_coding_competition_winners(content, parent_stack, relation_type_label):
                 label_lower = (relation_type_label or "").lower()
                 if "gold" in label_lower or "silver" in label_lower or "bronze" in label_lower:
-                    return upsert_extreme_talent_person(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_extreme_talent_person(graph, parent_stack[-1]["id"], content, relation_type_label)
                 else:
-                    return upsert_related_node(parent_stack[-1]["id"], content, relation_type_label)
+                    return upsert_related_node(graph, parent_stack[-1]["id"], content, relation_type_label)
             parse_text_graph(text, add_coding_competition_winners)
         else:
             print(f"WARNING: Good path specified but not implemented: {name}")
             # Add everything else to extreme talent lists
             # add_text_graph(text, extreme_talent_lists_node["id"], graph=graph)
-
     return graph
 
 
@@ -644,6 +652,7 @@ def filter_by_people(graph: Graph, people_node_ids: set[str]):
 
     return filtered_graph
 
+
 if __name__ == "__main__":
     graph = Graph()
     print("Adding linkedin data...")
@@ -652,12 +661,14 @@ if __name__ == "__main__":
     print("Adding josh langam data...")
     graph = add_josh_langam(graph)
 
+    print("Adding yc companies data...")
+    graph = add_yc_companies(graph)
+
     print("Adding extreme talent data...")
     graph = add_extreme_talent(graph)
     
     print("Adding crunchbase data...")
     graph = add_crunchbase_data(graph)
-
 
     # Get counts of people, companies, and investors
     all_people_nodes = graph.get_people_nodes()
@@ -746,18 +757,27 @@ if __name__ == "__main__":
             make_ideapad_attribute(graph, relation)
 
     # Find all nodes the extreme talent list nodes
-    extreme_talent_lists_node_ids = set()
-    def collect_extreme_talent_lists(node_id: str, ancestor_ids: set, depth = 0):
+    extreme_talent_lists_node_ids = {extreme_talent_lists_node_id}
+    person_to_extreme_talent_lists = defaultdict(set) # node id -> list of extreme talent lists path string
+    def collect_extreme_talent_lists(node_id: str, ancestors: list, depth = 0):
         if depth > 10: return # Don't go too deep
         for relation, node, _ in graph.walk_descendants(node_id, 1):
             if node["id"] in all_people_node_ids:
+                ancestor_ids = [ancestor["id"] for ancestor in ancestors]
+                ancestor_path_string = "/".join([node_to_text(ancestor) for ancestor in ancestors])
                 extreme_talent_lists_node_ids.update(ancestor_ids)
+                person_to_extreme_talent_lists[node["id"]].add(ancestor_path_string)
             # Walk down to children
-            if relation["relationTypeId"] == default_relation_types.child.id:
-                collect_extreme_talent_lists(node["id"], ancestor_ids | {node["id"]}, depth + 1)
-    collect_extreme_talent_lists(extreme_talent_lists_node_id, {extreme_talent_lists_node_id})
+            if relation["relationTypeId"] == default_relation_types.child.id and not graph.is_typed(node["id"]):
+                collect_extreme_talent_lists(node["id"], ancestors + [node], depth + 1)
+    collect_extreme_talent_lists(extreme_talent_lists_node_id, [])
+    # Flag nodes as extreme talent lists
     for node_id in extreme_talent_lists_node_ids:
         make_extreme_talent_list(graph, node_id)
+    # Add all extreme talent lists to person nodes as attribute
+    for person_node_id, extreme_talent_lists in person_to_extreme_talent_lists.items():
+        ancestor_path_string = ",".join([f'"{list_name}"' for list_name in sorted(extreme_talent_lists)])
+        upsert_extreme_talent_source_lists(graph, person_node_id, ancestor_path_string)
 
     # Add extreme talent ancestors to important nodes
     important_node_ids = important_node_ids | extreme_talent_lists_node_ids
