@@ -15,6 +15,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
+import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useToast } from "@/app/hooks/useToast";
 import { handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey } from "@/app/hotkeys";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
@@ -32,6 +33,29 @@ import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 interface Props {
   tree: Tree;
 }
+
+const RelationHeader = observer(function RelationHeader({ relation }: { relation: GraphRelation }) {
+  const setRoot = useSetMainRoot();
+
+  return (
+    <div className={s.RelationHeader}>
+      <div className={s.RelationObjects}>
+        From:
+        <span className={s.RelationObject} onClick={() => setRoot(relation.from)}>
+          {relation.from.id}
+        </span>
+        To:
+        <span className={s.RelationObject} onClick={() => setRoot(relation.to)}>
+          {relation.to.id}
+        </span>
+      </div>
+      <div className={s.RelationObjects}>
+        Relation Type:
+        <div className={s.RelationType}>{relation.relationType.label}</div>
+      </div>
+    </div>
+  );
+});
 
 function OutlineContent({ tree }: Props) {
   const treeRoot = tree.state.root;
@@ -179,6 +203,7 @@ function OutlineContent({ tree }: Props) {
               <NoteContentSection parentNode={treeRoot} group={treeRoot.childrenGroupsById.noteContent} />
             </div>
           )}
+          {treeRoot.object instanceof GraphRelation && <RelationHeader relation={treeRoot.object} />}
         </div>
       )}
       <div className={s.Nodes}>

@@ -7,6 +7,10 @@ declare const styles: {
   readonly "Nodes": string;
   readonly "NoteContentSection": string;
   readonly "OutlineContent": string;
+  readonly "RelationHeader": string;
+  readonly "RelationObject": string;
+  readonly "RelationObjects": string;
+  readonly "RelationType": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
   readonly "TooltipContent": string;

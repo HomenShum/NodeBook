@@ -122,3 +122,39 @@
 .MainAndSidebarContainer > [class*="ContentContainer"] {
   flex-grow: 1;
 }
+
+.RelationHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-5);
+  margin-bottom: 16px;
+}
+
+.RelationObjects {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-sm);
+}
+
+.RelationObject {
+  color: var(--teal-11);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.RelationObject:hover {
+  color: var(--teal-10);
+  text-decoration: underline;
+}
+
+.RelationType {
+  color: var(--teal-11);
+  transition: color 0.2s ease;
+}
+
+.RelationType:hover {
+  color: var(--teal-10);
+}
