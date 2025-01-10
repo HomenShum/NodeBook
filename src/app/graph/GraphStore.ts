@@ -1225,8 +1225,9 @@ export class GraphStore {
     try {
       // Delete relations to this relation
       for (const rel of relation.relations) {
-        const { deleted: deletedData } = this.deleteRelation(rel);
+        const { deleted: deletedData, updates: deleteRelationUpdates } = this.deleteRelation(rel);
         deleted.relationsList.push(deletedData);
+        updates.push(...deleteRelationUpdates);
       }
 
       const { from: fromNode, to: toNode } = relation;

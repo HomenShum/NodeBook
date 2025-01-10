@@ -209,8 +209,5 @@ const invertDeleteRelationUpdate = (update: DeletedRelationData): AddRelation[] 
       toPinnedPos: update.toPinnedPos,
     },
   ];
-  for (const relation of update.relationsList) {
-    inverse.push(...invertDeleteRelationUpdate(relation));
-  }
   return inverse;
 };

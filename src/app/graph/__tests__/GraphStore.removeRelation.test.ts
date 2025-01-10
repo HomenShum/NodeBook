@@ -214,6 +214,7 @@ describe("GraphStore.removeRelation", () => {
       const hyperFromPos = graphStore.getRelationList(relationAB).get(hyperRelation.id)?.position;
       const hyperToPos = graphStore.getRelationList(relationBC).get(hyperRelation.id)?.position;
       const serializedAB = relationAB.serialize();
+      const serializedBC = relationBC.serialize();
       const relABFromPos = graphStore.getRelationList(nodeA).get(relationAB.id)?.position;
       const relABToPos = graphStore.getRelationList(nodeB).get(relationAB.id)?.position;
       const serializedA = nodeA.serialize();
@@ -229,36 +230,76 @@ describe("GraphStore.removeRelation", () => {
       const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map(
         (update) => update.updates,
       );
+
       expect(pendingUpdateSets).toEqual([
         [
           {
-            operation: "updateNode",
-            oldProps: { ...serializedA, canonicalRelationId: relationAB.id },
-            newProps: { ...serializedA, canonicalRelationId: relationAC.id },
+            operation: "updateRelation",
+            oldProps: {
+              ...serializedAB,
+              canonicalRelationId: "hyper",
+            },
+            newProps: {
+              ...serializedAB,
+              canonicalRelationId: null,
+            },
+          },
+          {
+            operation: "updateRelation",
+            oldProps: {
+              ...serializedBC,
+              canonicalRelationId: "hyper",
+            },
+            newProps: {
+              ...serializedBC,
+              canonicalRelationId: null,
+            },
+          },
+          {
+            operation: "deleteRelation",
+            deleted: {
+              relation: serializedHyperRelation,
+              fromPos: hyperFromPos,
+              toPos: hyperToPos,
+              relationsList: [],
+            },
           },
           {
             operation: "updateNode",
-            oldProps: { ...serializedB, canonicalRelationId: relationAB.id },
-            newProps: { ...serializedB, canonicalRelationId: relationBC.id },
+            oldProps: {
+              ...serializedA,
+              canonicalRelationId: "ab",
+            },
+            newProps: {
+              ...serializedA,
+              canonicalRelationId: "ac",
+            },
+          },
+          {
+            operation: "updateNode",
+            oldProps: {
+              ...serializedB,
+              canonicalRelationId: "ab",
+            },
+            newProps: {
+              ...serializedB,
+              canonicalRelationId: "bc",
+            },
           },
           {
             operation: "deleteRelation",
             deleted: {
               relation: serializedAB,
+              fromPos: relABFromPos,
+              toPos: relABToPos,
               relationsList: [
                 {
                   relation: serializedHyperRelation,
-                  relationsList: [],
                   fromPos: hyperFromPos,
                   toPos: hyperToPos,
-                  fromPinnedPos: undefined,
-                  toPinnedPos: undefined,
+                  relationsList: [],
                 },
               ],
-              fromPos: relABFromPos,
-              toPos: relABToPos,
-              fromPinnedPos: undefined,
-              toPinnedPos: undefined,
             },
           },
         ],
