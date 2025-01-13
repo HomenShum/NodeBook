@@ -1,9 +1,9 @@
-import isHotkey, {toKeyName} from "is-hotkey";
+import isHotkey, { toKeyName } from "is-hotkey";
 
 import { Tree } from "@/app/tree/Tree";
 
-export const modKeyName = toKeyName('mod') === "control" ? "Ctrl" : "⌘";
-export const optionKeyName = toKeyName('opt') === "alt" ? "Alt" : "⌥";
+export const modKeyName = toKeyName("mod") === "control" ? "Ctrl" : "⌘";
+export const optionKeyName = toKeyName("opt") === "alt" ? "Alt" : "⌥";
 
 export const isMoveUpHotKey = isHotkey("ArrowUp");
 export const isMoveDownHotkey = isHotkey("ArrowDown");
@@ -17,6 +17,9 @@ export const isDeleteSelectionHotkey = isHotkey(["delete", "backspace"]);
 export const isIndentSelectionHotkey = isHotkey("tab");
 export const isDedentSelectionHotkey = isHotkey("shift+tab");
 export const isEscapeSelectionHotkey = isHotkey("esc");
+export const isToggleCheckedTodoHotkey = isHotkey("]");
+export const isToggleUncheckedTodoHotkey = isHotkey("[");
+export const isToggleOffTodoHotkey = isHotkey("shift+[");
 export const isZoomInHotkey = isHotkey("mod+.");
 export const isZoomOutHotkey = isHotkey("mod+,");
 export const isCopyHotkey = isHotkey("mod+c");
@@ -60,6 +63,9 @@ export const treeHotkeyMapping: {
   { predicate: isEscapeSelectionHotkey, action: (tree: Tree) => tree.escapeSelection() },
   { predicate: isExpandAtSelectionHotKey, action: (tree: Tree) => tree.expandAtSelection() },
   { predicate: isCollapseAtSelectionHotKey, action: (tree: Tree) => tree.collapseAtSelection() },
+  { predicate: isToggleUncheckedTodoHotkey, action: (tree: Tree) => tree.toggleTodo(false) },
+  { predicate: isToggleCheckedTodoHotkey, action: (tree: Tree) => tree.toggleTodo(true) },
+  { predicate: isToggleOffTodoHotkey, action: (tree: Tree) => tree.toggleTodo(null) },
 ];
 
 export const handleTreeHotkeys = (event: KeyboardEvent, tree: Tree): boolean => {

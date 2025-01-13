@@ -443,6 +443,16 @@ export class Tree {
     return { rootObjectId: this.rootObjectId, pathToRootIds: this.pathToRootIds };
   }
 
+  toggleTodo(isChecked: boolean | null) {
+    const selection = this.selectionWithNodes;
+    if (!selection || selection.type !== "node") return;
+    const txs = selection.nodes.map((node) => ({
+      type: "updateNode" as const,
+      transaction: { nodeId: node.object.id, nodeProps: { isChecked } },
+    }));
+    this.graphStore.applyCombinedTransaction(txs);
+  }
+
   // For objects, we default to collapsed.
   isPathExpanded(path: Path): boolean {
     return this.expansionsByPath.get(path) || false;
