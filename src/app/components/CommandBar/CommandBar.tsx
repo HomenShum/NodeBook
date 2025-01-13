@@ -29,7 +29,7 @@ type Command =
       type: "create";
       id: string;
       name: string;
-      perform: () => void;
+      perform: (event?: React.MouseEvent<HTMLDivElement>) => void;
     }
   | {
       type: "navigate";
@@ -37,7 +37,7 @@ type Command =
       name: string;
       object: GraphObject;
       path: ObjectPath;
-      perform: () => void;
+      perform: (event?: React.MouseEvent<HTMLDivElement>) => void;
     };
 
 const CommandBar = observer(() => {
@@ -79,10 +79,14 @@ const CommandBar = observer(() => {
               name: object.text,
               object,
               path,
-              perform: () => {
-                close();
-                resetSearch();
-                setRoot(path);
+              perform: (event?: React.MouseEvent<HTMLDivElement>) => {
+                if (event?.shiftKey) {
+                  viewStore.createSidebarTree(object);
+                } else {
+                  close();
+                  resetSearch();
+                  setRoot(path);
+                }
               },
             };
           })
@@ -97,10 +101,14 @@ const CommandBar = observer(() => {
                 name: node.text,
                 object: node,
                 path,
-                perform: () => {
-                  close();
-                  resetSearch();
-                  setRoot(path);
+                perform: (event?: React.MouseEvent<HTMLDivElement>) => {
+                  if (event?.shiftKey) {
+                    viewStore.createSidebarTree(node);
+                  } else {
+                    close();
+                    resetSearch();
+                    setRoot(path);
+                  }
                 },
               };
             })),
@@ -231,7 +239,7 @@ const CommandBar = observer(() => {
                   <div
                     key={command.id}
                     className={cn(styles.Item, selectedIndex === index && styles.Selected)}
-                    onClick={(e) => command.perform()}
+                    onClick={(e) => command.perform(e)}
                   >
                     <span>{command.name}</span>
                     {command.type !== "create" && <Path path={command.path} />}

@@ -6,6 +6,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { truncateText, useIsMobile } from "@/app/util";
 import { cn } from "@/lib/utils";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -25,13 +26,22 @@ export const BreadcrumbItem = observer(function BreadcrumbItem({
   handleNavigation,
 }: BreadcrumbItemProps) {
   const graphStore = useGraphStore();
+  const viewStore = useViewStore();
   const isMobile = useIsMobile();
+
+  const handleClick = (event: React.MouseEvent<HTMLSpanElement>) => {
+    if (event.shiftKey) {
+      viewStore.createSidebarTree(object);
+    } else {
+      handleNavigation(index);
+    }
+  };
 
   return (
     <React.Fragment key={`${path}-${object.text}`}>
       {index > 0 && <ChevronRight size={12} strokeWidth={2} className={s.Separator} />}
 
-      <span className={s.Breadcrumb} onClick={() => handleNavigation(index)}>
+      <span className={s.Breadcrumb} onClick={handleClick}>
         {object.id === graphStore.globalRoot.id ? (
           <span className={s.Icon}>
             <Globe size={14} strokeWidth={1.5} />
@@ -43,9 +53,9 @@ export const BreadcrumbItem = observer(function BreadcrumbItem({
         ) : null}
         {/* hide the GlobalRoot text on mobile when inside other paths */}
         {(isRoot || object.id !== graphStore.globalRoot.id || !isMobile) && (
-            <span className={cn({ [s.BlankContent]: !object.text })}>
-              {truncateText(object.text || "(blank)", isMobile ? 15 : 32)}
-            </span>
+          <span className={cn({ [s.BlankContent]: !object.text })}>
+            {truncateText(object.text || "(blank)", isMobile ? 15 : 32)}
+          </span>
         )}
         {/* don't show the pill when inside user and global root */}
         {isRoot && object.id !== graphStore.globalRoot.id && object.id !== graphStore.homeRoot.id && (
