@@ -71,8 +71,14 @@ export const treeHotkeyMapping: {
 export const handleTreeHotkeys = (event: KeyboardEvent, tree: Tree): boolean => {
   for (const { predicate, action } of treeHotkeyMapping) {
     if (predicate(event, tree)) {
-      event.preventDefault();
-      event.stopPropagation();
+      if (
+        predicate !== isToggleCheckedTodoHotkey &&
+        predicate !== isToggleUncheckedTodoHotkey &&
+        predicate !== isToggleOffTodoHotkey
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
       action(tree);
       return true;
     }
