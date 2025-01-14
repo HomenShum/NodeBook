@@ -1,6 +1,6 @@
 .TooltipContent {
   min-width: 50px;
-  max-width: 200px;
+  max-width: 300px;
   background-color: var(--gray-1);
   border: solid 0.5px var(--gray-6);
   z-index: 50;

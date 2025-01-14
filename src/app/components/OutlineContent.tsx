@@ -16,6 +16,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
 import { GraphRelation } from "@/app/graph/GraphRelation";
+import { getCanonicalPath, objectPathToBreadcrumb } from "@/app/graph/utils";
 import { useToast } from "@/app/hooks/useToast";
 import { handleTreeHotkeys, isEscapeSelectionHotkey, isZoomInHotkey, isZoomOutHotkey } from "@/app/hotkeys";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
@@ -73,13 +74,17 @@ function OutlineContent({ tree }: Props) {
   const tooltipContent = useMemo(() => {
     const authorId = treeRoot.object.authorId;
     const authorName = authorId === userId ? "You" : graphStore.usersById.get(authorId)?.username || authorId;
+    const path = getCanonicalPath(treeRoot.object);
+    const breadcrumbs = objectPathToBreadcrumb(path);
+
     return isGlobalRoot ? null : (
       <>
         <div className={s.TooltipContent}>Node&apos;s author: {authorName}</div>
         <div className={s.TooltipContent}>Created: {new Date(treeRoot.object.createdAt).toLocaleDateString()}</div>
+        <div className={s.TooltipContent}>{breadcrumbs.join(" / ")}</div>
       </>
     );
-  }, [isGlobalRoot, treeRoot.object.authorId, treeRoot.object.createdAt, userId, graphStore]);
+  }, [isGlobalRoot, treeRoot.object, userId, graphStore]);
 
   const setCurrentNodeAsRoot = (forceUpdateMainTree: boolean = false) => {
     if (tree.selectionWithNodes?.type !== "editor") return;

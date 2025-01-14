@@ -9,9 +9,9 @@ import { useUser } from "@/app/contexts/UserContext";
 import { NodeEditor } from "@/app/editor/NodeContentEditor";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { getCanonicalPath, objectPathToBreadcrumb } from "@/app/graph/utils";
+import { useDoubleClick } from "@/app/hooks/useDoubleClick";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
-import { useDoubleClick } from "@/app/hooks/useDoubleClick";
 
 import styles from "./styles/RelatedNodeView.module.css";
 

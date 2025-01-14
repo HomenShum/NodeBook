@@ -42,11 +42,8 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
       ? viewStore.quickCaptureViewType
       : viewStore.viewType;
 
-    // node is content of a note which is a direct child of the root
-    const hideBullet =
-    viewType === "note" &&
-    (
-      (isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode));
+  // node is content of a note which is a direct child of the root
+  const hideBullet = viewType === "note" && isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode;
 
   return (
     <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
@@ -310,23 +307,27 @@ const Bullet = observer(function Bullet() {
       event.nativeEvent.stopImmediatePropagation();
       logger.debug("Clicked bullet", treeNode.path);
 
-      const isMainTree = treeNode.tree.isMainTree || treeNode.tree.id === viewStore.searchView.id || treeNode.tree.id === viewStore.mainView.id;
-      const isQuickCaptureTree = treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree;
-      const isSidebarTree = !isMainTree&& !isQuickCaptureTree;
+      const isMainTree =
+        treeNode.tree.isMainTree ||
+        treeNode.tree.id === viewStore.searchView.id ||
+        treeNode.tree.id === viewStore.mainView.id;
+      const isQuickCaptureTree =
+        treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree;
+      const isSidebarTree = !isMainTree && !isQuickCaptureTree;
 
-      if(event.shiftKey && isSidebarTree){
+      if (event.shiftKey && isSidebarTree) {
         setRoot(treeNode.object);
         return;
       }
 
-      if(event.shiftKey && !isSidebarTree){
+      if (event.shiftKey && !isSidebarTree) {
         viewStore.createSidebarTree(treeNode.object);
         return;
       }
 
-      if(!event.shiftKey && isSidebarTree){
-          treeNode.tree.setRoot(treeNode.object);
-          return;
+      if (!event.shiftKey && isSidebarTree) {
+        treeNode.tree.setRoot(treeNode.object);
+        return;
       }
 
       setRoot(treeNode.object);
