@@ -474,10 +474,11 @@ Right Area
 
 .RelationCounter {
   height: 18px;
+  width: fit-content;
+  padding: 0 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
   text-align: center;
   border-radius: 4px;
   font-size: var(--font-size-mini);
@@ -495,8 +496,7 @@ Right Area
   content: attr(data-tooltip);
   position: absolute;
   top: -2px;
-  left: 50%;
-  transform: translateX(-100%);
+  left: -75px;
   background-color: var(--gray-1);
   padding: 4px 8px;
   border-radius: 4px;
