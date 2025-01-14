@@ -192,7 +192,7 @@ function getNodeAndNeighboursText(graph: Graph, nodeId: string): string | null {
   if (neighbors.length > 0) {
     result += "\nRELATIONSHIPS:\n";
     for (const neighbor of neighbors) {
-      result += `- ${neighbor.label}: ${neighbor.text} (id: ${neighbor.id})\n`;
+      result += `- ${neighbor.label}: ${neighbor.text}\n`;
     }
   }
   return result;

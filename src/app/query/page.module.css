@@ -242,3 +242,30 @@
 .loadingIcon {
   animation: spin 1s linear infinite;
 }
+
+.responseLine {
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.responseText {
+  white-space: pre-wrap; /* This preserves whitespace and line breaks */
+}
+
+.citationLink {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--link-color);
+  padding: 0 0.25rem;
+}
+
+.linkText {
+  color: var(--link-color);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.responseLinkIcon {
+  vertical-align: middle;
+}

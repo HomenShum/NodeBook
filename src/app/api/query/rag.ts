@@ -1,63 +1,181 @@
-import console from "console";
-
 import { Pinecone } from "@pinecone-database/pinecone";
 import { eq } from "drizzle-orm";
 import { OpenAI } from "openai";
-import { zodResponseFormat } from "openai/helpers/zod";
-import { z } from "zod";
 
 import { getDb } from "@/db";
 import { graphNodeTable } from "@/db/schema";
 import { env } from "@/envBackend";
+import logger from "@/lib/logger";
 import { pgConnectionStringToPineconeIndexName } from "@/lib/pinecone";
 
 const MODEL_NAME = "gpt-4o";
 
-// Define the text chip schema
-const textChipSchema = z.object({
-  type: z.literal("text"),
-  content: z.string(),
-});
-
-// Define the citation chip schema
-const citationChipSchema = z.object({
-  type: z.literal("citation"),
-  nodeId: z.string(),
-});
-
-const linkChipSchema = z.object({
-  type: z.literal("link"),
-  nodeId: z.string(),
-  content: z.string(),
-});
-
-// Define the chip schema (either a text chip or a citation chip)
-const chipSchema = z.union([textChipSchema, citationChipSchema, linkChipSchema]);
-
-// Define the list of chips schema
-const chipListSchema = z.array(chipSchema);
-
-const wrappedChipListSchema = z.object({
-  // This is necessary because the openAI API doesn't permit root-level arrays
-  content: z.array(chipListSchema),
-});
-
-const MAX_QUERIES = 5;
-
-// Initialize clients once per module load
-const pinecone = new Pinecone({ apiKey: env.PINECONE_API_KEY });
-const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-const indexName = pgConnectionStringToPineconeIndexName(env.POSTGRES_CONNECTION_STRING);
-
-// Types
 type Message = {
   role: "system" | "user" | "assistant";
   content: string;
 };
 
-// Core functions
+type TextChip = {
+  type: "text";
+  content: string;
+};
+
+type CitationChip = {
+  type: "citation";
+  nodeId: string;
+};
+
+type LinkChip = {
+  type: "link";
+  url: string;
+  content: string;
+};
+
+// This regex captures either double-bracket citations or Markdown links.
+const MARKDOWN_PATTERN = /(\[\[(.*?)\]\])|(\[([^\]]+)\]\((.*?)\))/g;
+
+// Define match types
+type LinkMatch = {
+  text: string;
+  url: string;
+  fullMatch: string;
+};
+
+type CitationMatch = {
+  entityName: string;
+  fullMatch: string;
+};
+
+type MatchPosition = {
+  matchIndex: number;
+  matchLength: number;
+};
+
+type Match = MatchPosition & {
+  link: LinkMatch | null;
+  citation: CitationMatch | null;
+};
+
+function parseMarkdownMatches(text: string): Match[] {
+  const matches: Match[] = [];
+  let match;
+
+  MARKDOWN_PATTERN.lastIndex = 0; // reset lastIndex
+  // match[0] is always the full match
+  // match[1], match[2] are for citation: full citation, entity name
+  // match[3], match[4], match[5] are for link: full link, link text, url
+  while ((match = MARKDOWN_PATTERN.exec(text)) !== null) {
+    matches.push({
+      citation: match[1]
+        ? {
+            entityName: match[2].trim(),
+            fullMatch: match[1],
+          }
+        : null,
+      link: match[3]
+        ? {
+            text: match[4].trim(),
+            url: match[5].trim(),
+            fullMatch: match[3],
+          }
+        : null,
+      matchIndex: match.index,
+      matchLength: match[0].length,
+    });
+  }
+
+  return matches;
+}
+
+/**
+ * Convert final text into an array of chips:
+ * - Citations: [[Some entity]]
+ * - Links: [text](https://www.example.com)
+ * - Everything else is text
+ */
+function parseChipsFromText(
+  finalText: string,
+  lookupResults: Map<string, string>,
+): Array<TextChip | CitationChip | LinkChip> {
+  const chips: Array<TextChip | CitationChip | LinkChip> = [];
+  let currentIndex = 0;
+
+  const matches = parseMarkdownMatches(finalText);
+
+  for (const matchData of matches) {
+    // Add text before this match as a plain text chip
+    const textBeforeMatch = finalText.slice(currentIndex, matchData.matchIndex);
+
+    if (matchData.citation) {
+      // Double-bracket citation
+      const { entityName } = matchData.citation;
+      const nodeId = lookupResults.get(entityName) ?? entityName;
+
+      // Create or append to text chip with bolded citation text
+      const boldedText = `**${entityName}**`;
+      if (textBeforeMatch || chips.length === 0) {
+        chips.push({
+          type: "text",
+          content: textBeforeMatch + boldedText,
+        });
+      } else {
+        // Append to the last text chip if it exists
+        const lastChip = chips[chips.length - 1];
+        if (lastChip.type === "text") {
+          lastChip.content += boldedText;
+        } else {
+          chips.push({
+            type: "text",
+            content: boldedText,
+          });
+        }
+      }
+
+      // Add the citation chip
+      chips.push({
+        type: "citation",
+        nodeId,
+      });
+    } else if (matchData.link) {
+      // Markdown link
+      if (textBeforeMatch) {
+        chips.push({
+          type: "text",
+          content: textBeforeMatch,
+        });
+      }
+
+      chips.push({
+        type: "link",
+        url: matchData.link.url,
+        content: matchData.link.text,
+      });
+    }
+
+    currentIndex = matchData.matchIndex + matchData.matchLength;
+  }
+
+  // Add any remaining text
+  if (currentIndex < finalText.length) {
+    chips.push({
+      type: "text",
+      content: finalText.slice(currentIndex),
+    });
+  }
+
+  return chips;
+}
+
+const pinecone = new Pinecone({ apiKey: env.PINECONE_API_KEY });
+const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+const indexName = pgConnectionStringToPineconeIndexName(env.POSTGRES_CONNECTION_STRING);
+
+const MAX_QUERIES = 5;
+
 async function queryIndex(query: string, topK: number = 3, userId: string | undefined = undefined) {
-  const response = await pinecone.inference.embed("multilingual-e5-large", [query], { inputType: "query" });
+  const response = await pinecone.inference.embed("multilingual-e5-large", [query], {
+    inputType: "query",
+  });
   const vector = response.data[0].values;
   if (!vector) {
     return [];
@@ -69,7 +187,6 @@ async function queryIndex(query: string, topK: number = 3, userId: string | unde
     const privateResults = await index.namespace(userId).query({ vector, topK, includeMetadata: true });
     matches.push(...privateResults.matches);
   }
-  // sort by score and return topK
   matches.sort((a, b) => {
     if (a.score === undefined) {
       return b.score === undefined ? 0 : 1;
@@ -87,7 +204,7 @@ async function lookupEntities(entities: string[], userId: string | undefined): P
   const results = new Map<string, string>();
 
   for (const entity of entities) {
-    // First try exact match
+    // First try exact match in the DB
     const nodes = await db
       .select({ id: graphNodeTable.id })
       .from(graphNodeTable)
@@ -102,119 +219,106 @@ async function lookupEntities(entities: string[], userId: string | undefined): P
     // Fall back to embedding search
     const matches = await queryIndex(entity, 1, userId);
     if (matches.length > 0) {
-      results.set(entity, matches[0].id);
+      const bestMatch = matches[0];
+      results.set(entity, bestMatch.id);
     }
   }
 
   return results;
 }
 
-async function handleFinalStep(
-  originalQuery: string,
-  messages: Message[],
-  debug: boolean,
-  userId: string | undefined,
-): Promise<string> {
-  const assistantResponse = messages[messages.length - 1].content;
-
-  if (!assistantResponse?.includes("FINAL_READY") || !assistantResponse?.includes("ENTITY_LOOKUPS:")) {
-    throw new Error("Invalid response format - missing FINAL_READY or ENTITY_LOOKUPS");
+/**
+ * Once we've decided that the LLM's last message is the final,
+ * we parse out any entity names in [[...]], look them up,
+ * then parse to chips.
+ */
+async function handleFinalStep(finalAnswer: string, userId: string | undefined): Promise<string> {
+  // 1) Find all unique entities in [[some entity]] form
+  const citationsRegex = /\[\[(.*?)\]\]/g;
+  const citedEntities = new Set<string>();
+  let match;
+  while ((match = citationsRegex.exec(finalAnswer)) !== null) {
+    const entityName = match[1].trim();
+    citedEntities.add(entityName);
   }
 
-  const lookupPart = assistantResponse.split("ENTITY_LOOKUPS:")[1].trim();
-  const entities = lookupPart
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("-"))
-    .map((line) => line.slice(1).trim());
+  // 2) Lookup those entities to get their node IDs
+  const lookupResults = await lookupEntities(Array.from(citedEntities), userId);
 
-  const lookupResults = await lookupEntities(entities, userId);
-  const lookupResultsText = Array.from(lookupResults.entries())
-    .map(([entity, nodeId]) => `${entity}: ${nodeId}`)
-    .join("\n");
+  // 3) Convert the final text into chips
+  const chips = parseChipsFromText(finalAnswer, lookupResults);
 
-  const finalResponse = await openai.chat.completions.create({
-    model: MODEL_NAME,
-    messages: [
-      ...messages,
-      { role: "assistant", content: assistantResponse },
-      {
-        role: "user",
-        content: `Here are the node IDs for your entity lookups:\n\n${lookupResultsText}\n\n
-        Please compose your final answer addressing the original query: "${originalQuery}".\n
-        For each line of your response, compose a list of chips in the response. For each block of text, use the text type. For each citation, replace the text with a citation chip. For each link, replace the text with a link chip. When citing, include the text of the entity in the text beside the citation chip and ensure that the chip is as close to the entity as possible.`,
-      },
-    ],
-    response_format: zodResponseFormat(wrappedChipListSchema, "chipListList"),
-    temperature: 0,
-  });
-
-  const finalResponseContent = finalResponse.choices[0].message.content;
-
-  if (finalResponseContent === null) {
-    const response = {
-      content: {
-        type: "text",
-        content: "No response from the model.",
-      },
-    };
-    return JSON.stringify(response);
-  }
-
-  return finalResponseContent;
+  // 4) Return as JSON
+  return JSON.stringify({ content: [chips] }, null, 2);
 }
 
-const SYSTEM_PROMPT = `You are an senior analyst specialized in answering complex user-generated queries in a variety of domains, 
-using an advanced knowledge graph system called Mew. For any given query, you will be provided with a set of nodes retrieved 
+/**
+ * New system prompt:
+ * - LLM can request more queries via "ADDITIONAL_QUERY_<k>: <query>"
+ * - Otherwise, it should produce its final textual answer.
+ * - For knowledge graph references, it should use [[Entity Name]] style.
+ * - For web URLs, it should use standard Markdown link syntax.
+ */
+const SYSTEM_PROMPT = `You are a senior analyst specialized in answering complex user-generated queries in a variety of domains, 
+using an advanced knowledge graph system called Mew. For any given query, you will also be provided with a set of nodes retrieved 
 from Mew using the user's query. The nodes will be delimited by XML tags and presented to you with their 
-2-hop context. For example, consider that for the user query "Stanford Professors Calvin Xu has worked with",
-the node "Calvin Xu" is retrieved from Mew. It will be presented to you as follows:
+immediate context. For example, consider that for the user query "Stanford Professors Calvin Xu has worked with",
+the node "Calvin Xu" is retrieved from Mew. It will be presented to you as follows, where under RELATIONSHIPS, all entities related
+to the node are listed with their relationship to the node; "child" and "parent" indicate hierarchy and are the most common relationships.
 
 <node_context>
 CONTENT: Calvin Xu
 RELATIONSHIPS:
-- member: Syrgkanis Lab (id: lab123)
-- works with: Charilaos Kanatsoulis (id: char456)
-- liked by: CS205L Continuous Mathematical Methods for Machine Learning (id: cs205)
+- member: Syrgkanis Lab
+- liked by: CS205L Continuous Mathematical Methods for Machine Learning
 </node_context>
 
-If you need more information to answer the question completely, you can request up to ${MAX_QUERIES}
-additional queries each retrieving k nodes from Mew that will be presented to you in the same way.
-To do so, respond with the word "ADDITIONAL_QUERY_<k>: <your query>".
+If you need more information about related entities to answer the query, you may request up to ${MAX_QUERIES} additional queries,
+each retrieving up to k nodes from Mew. To do so, respond with: ADDITIONAL_QUERY_<k>: <your query>. In this example, \`ADDITIONAL_QUERY_3: "Syrgkanis Lab"\` will retrieve up to 3 related nodes:
 
-When you have sufficient information to answer the original query, respond in the following format:
-FINAL_READY
-ENTITY_LOOKUPS:
-- entity_1
-- entity_2
-...`;
+<node_context>
+CONTENT: Syrgkanis Lab
+RELATIONSHIPS:
+- member: Calvin Xu
+- child: Vasilis Syrgkanis
+</node_context>
+
+When you have sufficient information, respond with your final answer in normal text:
+- Any specific entities / nodes in the knowledge graph must be cited using double-square brackets.
+  - for example, "[[Calvin Xu]] has worked with [[Vasilis Syrgkanis]]"
+  - never quote a node by name, always use double-square brackets
+- Use standard Markdown for web links, e.g. [link text](https://example.com).
+  - never quote a link, always use the Markdown link syntax
+- Everything else should be plain text.
+- Be succinct and to the point.
+- If it is unclear whether your answer satisfies all constraints of the user's query, clearly state that.
+- Do not use first person in your answer. Do not mention your thinking process or how you arrived at your answer.
+`;
 
 /**
- * Ask Mew a question
+ * Main ask function
  */
 export async function ask(query: string, debug: boolean = false, userId: undefined | string): Promise<string> {
   if (debug) {
-    console.log("\n" + "=".repeat(50));
-    console.log(`INITIAL QUERY: ${query}`);
-    console.log("=".repeat(50));
+    logger.debug("\n" + "=".repeat(50));
+    logger.debug(`INITIAL QUERY: ${query}`);
+    logger.debug("=".repeat(50));
   }
 
-  // Initial query
   const matches = await queryIndex(query, 3, userId);
 
-  // Get textual representations
   const context = await Promise.all(
     matches.map(async (match) => {
-      let text = match.metadata?.text;
+      const text = match.metadata?.text;
       return text ? `<node_context>\n${text}\n</node_context>\n\n` : "";
     }),
   );
 
   if (debug) {
-    console.log("\nINITIAL CONTEXT:");
-    console.log("-".repeat(50));
-    console.log(context.join(""));
-    console.log("-".repeat(50));
+    logger.debug("\nINITIAL CONTEXT:");
+    logger.debug("-".repeat(50));
+    logger.debug(context.join(""));
+    logger.debug("-".repeat(50));
   }
 
   const messages: Message[] = [
@@ -230,8 +334,8 @@ export async function ask(query: string, debug: boolean = false, userId: undefin
   let queriesMade = 0;
   while (queriesMade < MAX_QUERIES) {
     if (debug) {
-      console.log(`\nTURN ${queriesMade + 1}`);
-      console.log("-".repeat(50));
+      logger.debug(`\nTURN ${queriesMade + 1}`);
+      logger.debug("-".repeat(50));
     }
 
     const response = await openai.chat.completions.create({
@@ -240,25 +344,26 @@ export async function ask(query: string, debug: boolean = false, userId: undefin
       temperature: 0,
     });
 
-    const assistantResponse = response.choices[0].message.content;
+    const assistantResponse = response.choices[0].message.content ?? "";
 
     if (debug) {
-      console.log("\nASSISTANT:");
-      console.log(assistantResponse);
+      logger.debug("\nASSISTANT:");
+      logger.debug(assistantResponse);
     }
 
-    if (assistantResponse?.includes("ADDITIONAL_QUERY_")) {
+    if (assistantResponse.includes("ADDITIONAL_QUERY_")) {
       queriesMade++;
-
+      // "ADDITIONAL_QUERY_<k>: <some text>"
       const queryPart = assistantResponse.split("ADDITIONAL_QUERY_")[1].split("\n")[0].trim();
       const k = parseInt(queryPart.split(":")[0]);
       const newQuery = queryPart.split(":", 2)[1].trim();
 
       if (debug) {
-        console.log(`\nMAKING ADDITIONAL QUERY (k=${k}):`);
-        console.log(newQuery);
+        logger.debug(`\nMAKING ADDITIONAL QUERY (k=${k}):`);
+        logger.debug(newQuery);
       }
 
+      // Retrieve context for the new query
       const newMatches = await queryIndex(newQuery, k, userId);
       const newContext = await Promise.all(
         newMatches.map(async (match) => {
@@ -268,34 +373,37 @@ export async function ask(query: string, debug: boolean = false, userId: undefin
       );
 
       if (debug) {
-        console.log("\nADDITIONAL CONTEXT:");
-        console.log("-".repeat(50));
-        console.log(newContext.join(""));
-        console.log("-".repeat(50));
+        logger.debug("\nADDITIONAL CONTEXT:");
+        logger.debug("-".repeat(50));
+        logger.debug(newContext.join(""));
+        logger.debug("-".repeat(50));
       }
 
+      // Add assistant's last response & new context
       messages.push({ role: "assistant", content: assistantResponse });
       messages.push({
         role: "user",
-        content: `Additional context for query '${newQuery}':\n${newContext.join("")}`,
+        content: `Additional context for query '${newQuery}':\n${newContext.join(
+          "",
+        )}\n\n If you are ready to compose the final answer, remember to cite all entities using double-square brackets.`,
       });
-    } else if (assistantResponse?.includes("FINAL_READY")) {
-      messages.push({ role: "assistant", content: assistantResponse });
-      return handleFinalStep(query, messages, debug, userId);
     } else {
-      messages.push({ role: "assistant", content: assistantResponse || "" });
-      break;
+      // We treat whatever the model returned as final if it does not request more queries
+      messages.push({ role: "assistant", content: assistantResponse });
+      if (debug) {
+        logger.debug("\nNo more additional queries requested. Using final answer from LLM.\n");
+      }
+      return handleFinalStep(assistantResponse, userId);
     }
   }
 
-  // Max queries reached
   if (debug) {
-    console.log("\nMAX QUERIES REACHED OR INVALID RESPONSE FORMAT - FORCING FINAL ANSWER");
+    logger.debug("\nMAX QUERIES REACHED - FORCING FINAL ANSWER");
   }
 
   messages.push({
     role: "user",
-    content: `You have used all available additional queries or the response format was invalid. Please provide your FINAL_READY and entity lookups based on the information you have.`,
+    content: `You have used all available additional queries. Please provide your final answer addressing the original query "${query}" now, citing nodes with [[Entity Name]] and standard Markdown for web links.`,
   });
 
   const finalResponse = await openai.chat.completions.create({
@@ -304,6 +412,7 @@ export async function ask(query: string, debug: boolean = false, userId: undefin
     temperature: 0,
   });
 
-  messages.push({ role: "assistant", content: finalResponse.choices[0].message.content || "" });
-  return handleFinalStep(query, messages, debug, userId);
+  const forcedAnswer = finalResponse.choices[0].message.content ?? "";
+  messages.push({ role: "assistant", content: forcedAnswer });
+  return handleFinalStep(forcedAnswer, userId);
 }

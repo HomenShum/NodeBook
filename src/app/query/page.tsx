@@ -5,14 +5,14 @@ import { LinkIcon, Loader2, Search, X } from "lucide-react";
 import { action, observable, toJS } from "mobx";
 import { observer } from "mobx-react-lite";
 
+import appStyles from "@/app/app.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { useToast } from "@/app/hooks/useToast";
 import { useSetMainRoot } from "@/app/tree/utils";
-import appLogger from "@/lib/logger";
-import appStyles from "@/app/app.module.css";
 import { useViewStore } from "@/app/view/useViewStore";
+import appLogger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 import styles from "./page.module.css";
@@ -21,15 +21,13 @@ const logger = appLogger.child({
   service: "query",
 });
 
-// Example queries from the original code
 const EXAMPLE_QUERIES = [
   "founders of companies in Boston in biology",
-  "Tell me about the dietary requirements of Ridhi's dinner party on Dec 24",
+  "companies that would be impacted by copper shortage",
   "Connections from Josh Langsam to tier one vcs",
   "founders of a series a company interested in sustainability",
 ];
 
-// Types for our API responses
 type QueryResponse = {
   response: string;
   error?: string;
@@ -38,7 +36,7 @@ type QueryResponse = {
 type ResponseLine =
   | { type: "text"; content: string }
   | { type: "citation"; nodeId: string }
-  | { type: "link"; nodeId: string; content: string };
+  | { type: "link"; url: string; content: string };
 type ParsedResponse = ResponseLine[][];
 
 const state = observable<{
@@ -53,12 +51,10 @@ const state = observable<{
   isLoading: false,
 });
 
-// Main component
 const MewQueryInterface = observer(function MewQueryInterface() {
   const user = useUser();
   const viewStore = useViewStore();
 
-  // Split into two functions - one for the form submit, one for the actual query
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await executeQuery(state.query);
@@ -181,6 +177,28 @@ const MewQueryInterface = observer(function MewQueryInterface() {
   );
 });
 
+// parse basic markdown (bold/italics)
+function parseMarkdown(text: string): JSX.Element {
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          // bold text
+          return <strong key={i}>{part.slice(2, -2)}</strong>;
+        } else if (part.startsWith('*') && part.endsWith('*')) {
+          // italic text
+          return <em key={i}>{part.slice(1, -1)}</em>;
+        } else {
+          // regular text (preserve whitespace)
+          return <span key={i}>{part}</span>;
+        }
+      })}
+    </>
+  );
+}
+
 function Response({ response }: { response: ParsedResponse }) {
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
@@ -197,36 +215,51 @@ function Response({ response }: { response: ParsedResponse }) {
 
   return (
     <div className={styles.response}>
-      {response.map((line, i) => (
-        <div key={i}>
-          {line.map((part, i) =>
-            part.type === "text" ? (
-              <span key={i}>{part.content}</span>
-            ) : part.type === "citation" ? (
-              graphStore.getNode(part.nodeId) ? (
-                <span key={i} data-node-id={part.nodeId} onClick={() => goToNode(part.nodeId)}>
-                  <LinkIcon size={14} strokeWidth={1.5} />
-                </span>
-              ) : (
-                <span key={i}>{"< Citation not Found >"}</span>
-              )
-            ) : part.type === "link" ? (
-              graphStore.getNode(part.nodeId) ? (
+      {response.map((line, lineIndex) => {
+        const elements: JSX.Element[] = [];
+
+        line.forEach((part, partIndex) => {
+          if (part.type === "text") {
+            elements.push(
+              <span key={`text-${partIndex}`} className={styles.responseText}>
+                {parseMarkdown(part.content)}
+              </span>
+            );
+          } else if (part.type === "citation") {
+            const node = graphStore.getNode(part.nodeId);
+            if (node) {
+              elements.push(
                 <span
-                  key={i}
+                  key={`citation-${partIndex}`}
                   data-node-id={part.nodeId}
-                  style={{ cursor: "pointer", color: "blue" }}
                   onClick={() => goToNode(part.nodeId)}
+                  className={styles.citationLink}
                 >
-                  {part.content}
+                  <LinkIcon className={styles.responseLinkIcon} size={14} strokeWidth={1.5} />
                 </span>
-              ) : (
-                <span key={i}>{part.content}</span>
-              )
-            ) : null,
-          )}
-        </div>
-      ))}
+              );
+            }
+          } else if (part.type === "link") {
+            elements.push(
+              <a
+                key={`link-${partIndex}`}
+                href={part.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.linkText}
+              >
+                {part.content}
+              </a>
+            );
+          }
+        });
+
+        return (
+          <div key={lineIndex} className={styles.responseLine}>
+            {elements}
+          </div>
+        );
+      })}
     </div>
   );
 }
