@@ -2,6 +2,7 @@
   display: flex;
   gap: 5px;
   align-items: flex-start;
+  padding-left: 2px;
   flex: 1 1 0%;
   letter-spacing: -0.02rem;
 }
@@ -39,6 +40,7 @@
 .TreeNodeReference .Pill {
   position: relative;
   padding: 0 4px;
+  margin-left: -4px;
   height: calc(100% - 2px);
   max-width: calc(100% - 24px);
   border: 0.5px solid var(--teal-7);

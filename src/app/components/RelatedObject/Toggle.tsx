@@ -1,7 +1,6 @@
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
-import { useTree } from "@/app/tree/TreeContext";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
 
