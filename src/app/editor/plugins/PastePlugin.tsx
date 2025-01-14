@@ -134,6 +134,8 @@ export const PastePlugin = () => {
           const relationsAtDepth: string[] = ["UNUSED", relationWithParent.id];
           let lastDepth = 0;
 
+          let createSiblingUnder = lines.length > 0;
+
           // Then for the remaining lines, create children positioned after the correct parent
           lines.forEach(({ chips, depth }) => {
             const newNodeId = uuid();
@@ -195,8 +197,25 @@ export const PastePlugin = () => {
             relationsAtDepth[depth + 1] = relationId;
           });
 
+          let siblingRelId = uuid();
+          if (createSiblingUnder) {
+            console.log(`Relations at depth: ${relationsAtDepth}`);
+            txs.push({
+              type: "addChildNode",
+              transaction: {
+                parentId: treeNode.parent.object.id,
+                relationProps: {
+                  id: siblingRelId,
+                },
+                after: relationsAtDepth[0] === "UNUSED" ? relationsAtDepth[1] : relationsAtDepth[0],
+              },
+            });
+          }
+
           graphStore.applyCombinedTransaction(txs);
-          tree.setFocusedNode(path);
+
+          tree.setFocusedNode(createSiblingUnder ? treeNode.parent.path + `/${groupId}/` + siblingRelId : path, "end");
+
           // Retreive all new node paths from tree.state using the list of all new relations.
           // We require that treeNode's path is a prefix.
           const allPaths = tree.state.descendantTreeNodesById.keys();
