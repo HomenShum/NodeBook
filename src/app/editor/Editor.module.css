@@ -77,3 +77,13 @@
   opacity: 1;
   transition: opacity 1s ease-in-out 2s;
 }
+
+/* 
+ * This is a workaround to prevent the editor from collapsing to a zero height
+ * line which the user can't click into.
+
+ * See LogCollapsedEditorPlugin.tsx for more details.
+ */
+.ContentEditable p {
+  min-height: 1rem;
+}

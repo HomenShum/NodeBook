@@ -15,6 +15,7 @@ import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
+import { LogCollapsedEditorPlugin } from "@/app/editor/plugins/LogGhostBulletStatePlugin";
 import { MinusKeyPlugin } from "@/app/editor/plugins/MinusKeyPlugin";
 import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
@@ -77,6 +78,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />
         <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
+        <LogCollapsedEditorPlugin />
       </LexicalComposer>
     </div>
   );
