@@ -92,7 +92,17 @@ const CommandBar = observer(() => {
           })
         : graphStore
             .search({ text: search.text, filters: { types: ["node"] }, sort: { by: "score" } })
-            .nodes.slice(0, MAX_DROPDOWN_RESULTS)
+            .nodes.sort((a, b) => {
+              if (a.score === b.score) {
+                // If scores are the same, prefer non-notes over notes
+                const aIsNote = a.node.noteContentRelationsList.size > 0;
+                const bIsNote = b.node.noteContentRelationsList.size > 0;
+                if (aIsNote && !bIsNote) return 1;
+                if (!aIsNote && bIsNote) return -1;
+              }
+              return 0;
+            })
+            .slice(0, MAX_DROPDOWN_RESULTS)
             .map(({ node }) => {
               const path = getCanonicalPath(node);
               return {

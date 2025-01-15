@@ -90,8 +90,12 @@ export function getMatches(
         return a.isForward ? -1 : 1;
       }
 
-      // if both objects are nodes, favor the one with more relations
       if (a.type === "node" && b.type === "node") {
+        // Prefer non-notes over notes
+        const aIsNote = a.object.noteContentRelationsList.size > 0;
+        const bIsNote = b.object.noteContentRelationsList.size > 0;
+        if (aIsNote !== bIsNote) return aIsNote ? 1 : -1;
+        // Prefer the node with more relations
         const aRelations = a.object.relations.length;
         const bRelations = b.object.relations.length;
         if (aRelations !== bRelations) return bRelations - aRelations;
