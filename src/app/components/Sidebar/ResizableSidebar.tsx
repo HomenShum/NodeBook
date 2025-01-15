@@ -4,13 +4,13 @@ import {
   Globe,
   Home,
   Key,
-  KeyboardIcon, ListIcon,
+  KeyboardIcon,
+  ListIcon,
   LogIn,
   LogOut,
   Mail,
   MoonIcon,
   Newspaper,
-  NotebookText,
   Search,
   SettingsIcon,
   SunIcon,
@@ -246,11 +246,15 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               variant="ghost"
               className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
               data-tooltip="Go to Global Root"
-              onClick={() => {
-                handleNavigation(() => {
-                  setRoot(graphStore.globalRoot);
-                  viewStore.setViewType(ViewType.Outline);
-                });
+              onClick={(e) => {
+                if (e.shiftKey) {
+                  viewStore.createSidebarTree(graphStore.globalRoot);
+                } else {
+                  handleNavigation(() => {
+                    setRoot(graphStore.globalRoot);
+                    viewStore.setViewType(ViewType.Note);
+                  });
+                }
               }}
             >
               <span>
@@ -263,11 +267,15 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                 data-tooltip="Go to your stream"
-                onClick={() => {
-                  handleNavigation(() => {
-                    setRoot(graphStore.getDefaultRootForUser());
-                    viewStore.setViewType(ViewType.Note);
-                  });
+                onClick={(e) => {
+                  if (e.shiftKey) {
+                    viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
+                  } else {
+                    handleNavigation(() => {
+                      setRoot(graphStore.getDefaultRootForUser());
+                      viewStore.setViewType(ViewType.Note);
+                    });
+                  }
                 }}
               >
                 <span>
@@ -277,22 +285,26 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </Button>
             )}
             {!user.isAnonymous && (
-                <Button
-                    variant="ghost"
-                    className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                    data-tooltip="Go to your list"
-                    onClick={() => {
-                      handleNavigation(() => {
-                        setRoot(graphStore.getDefaultRootForUser());
-                        viewStore.setViewType(ViewType.Outline);
-                      });
-                    }}
-                >
+              <Button
+                variant="ghost"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                data-tooltip="Go to your list"
+                onClick={(e) => {
+                  if (e.shiftKey) {
+                    viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
+                  } else {
+                    handleNavigation(() => {
+                      setRoot(graphStore.getDefaultRootForUser());
+                      viewStore.setViewType(ViewType.Outline);
+                    });
+                  }
+                }}
+              >
                 <span>
                   <ListIcon size={16} strokeWidth={1.5} />
                 </span>
-                  <span className={styles.ButtonText}>Your List</span>
-                </Button>
+                <span className={styles.ButtonText}>Your List</span>
+              </Button>
             )}
             <Button
               variant="ghost"
