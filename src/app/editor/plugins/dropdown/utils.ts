@@ -94,7 +94,8 @@ export function getMatches(
         // Prefer non-notes over notes
         const aIsNote = a.object.noteContentRelationsList.size > 0;
         const bIsNote = b.object.noteContentRelationsList.size > 0;
-        if (aIsNote !== bIsNote) return aIsNote ? 1 : -1;
+        if (aIsNote && !bIsNote) return 1;
+        if (!aIsNote && bIsNote) return -1;
         // Prefer the node with more relations
         const aRelations = a.object.relations.length;
         const bRelations = b.object.relations.length;

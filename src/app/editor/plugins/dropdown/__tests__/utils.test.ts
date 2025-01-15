@@ -23,9 +23,27 @@ describe("getMatches", () => {
     const maxResults = 10;
 
     const mockNodes = [
-      { id: "nodeA", text: `${SEARCH_TERM} node A`, createdAt: new Date(2023, 0, 1), relations: [] },
-      { id: "nodeB", text: `${SEARCH_TERM} node B`, createdAt: new Date(2023, 0, 2), relations: [] },
-      { id: "nodeC", text: `${SEARCH_TERM} node C`, createdAt: new Date(2023, 0, 2), relations: [] },
+      {
+        id: "nodeA",
+        text: `${SEARCH_TERM} node A`,
+        createdAt: new Date(2023, 0, 1),
+        relations: [],
+        noteContentRelationsList: { size: 0 },
+      },
+      {
+        id: "nodeB",
+        text: `${SEARCH_TERM} node B`,
+        createdAt: new Date(2023, 0, 2),
+        relations: [],
+        noteContentRelationsList: { size: 0 },
+      },
+      {
+        id: "nodeC",
+        text: `${SEARCH_TERM} node C`,
+        createdAt: new Date(2023, 0, 2),
+        relations: [],
+        noteContentRelationsList: { size: 0 },
+      },
     ];
     const mockRelations = [
       { id: "relAB", from: { id: "nodeA" }, to: { id: "nodeB" }, createdAt: new Date(2023, 0, 3) },
@@ -57,9 +75,27 @@ describe("getMatches", () => {
     const maxResults = 2;
 
     const mockNodes = [
-      { id: "node1", text: `${SEARCH_TERM} node 1`, createdAt: new Date(2023, 0, 1), relations: [] },
-      { id: "node2", text: `${SEARCH_TERM} node 2`, createdAt: new Date(2023, 0, 2), relations: [] },
-      { id: "node3", text: `${SEARCH_TERM} node 3`, createdAt: new Date(2023, 0, 3), relations: [] },
+      {
+        id: "node1",
+        text: `${SEARCH_TERM} node 1`,
+        createdAt: new Date(2023, 0, 1),
+        relations: [],
+        noteContentRelationsList: { size: 0 },
+      },
+      {
+        id: "node2",
+        text: `${SEARCH_TERM} node 2`,
+        createdAt: new Date(2023, 0, 2),
+        relations: [],
+        noteContentRelationsList: { size: 0 },
+      },
+      {
+        id: "node3",
+        text: `${SEARCH_TERM} node 3`,
+        createdAt: new Date(2023, 0, 3),
+        relations: [],
+        noteContentRelationsList: { size: 0 },
+      },
     ];
 
     mockGraphStore.search.mockReturnValue({
@@ -91,14 +127,27 @@ describe("getMatches", () => {
     const maxResults = 10;
 
     const mockNodes = [
-      { id: "node1", text: `${SEARCH_TERM} node 1`, createdAt: new Date(2023, 0, 1), relations: [] },
+      {
+        id: "node1",
+        text: `${SEARCH_TERM} node 1`,
+        createdAt: new Date(2023, 0, 1),
+        relations: [],
+        noteContentRelationsList: { size: 0 },
+      },
       {
         id: "node2",
         text: `${SEARCH_TERM} node 2`,
         createdAt: new Date(2023, 0, 2),
         relations: [{ id: "rel1" }, { id: "rel2" }],
+        noteContentRelationsList: { size: 0 },
       },
-      { id: "node3", text: `${SEARCH_TERM} node 3`, createdAt: new Date(2023, 0, 3), relations: [{ id: "rel2" }] },
+      {
+        id: "node3",
+        text: `${SEARCH_TERM} node 3`,
+        createdAt: new Date(2023, 0, 3),
+        relations: [{ id: "rel2" }],
+        noteContentRelationsList: { size: 0 },
+      },
     ];
 
     mockGraphStore.search.mockReturnValue({
