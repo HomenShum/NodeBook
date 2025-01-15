@@ -900,6 +900,10 @@ export class Tree {
       logger.debug("Cannot split PointerTreeNode");
       return;
     }
+    let isChecked: boolean | undefined = undefined;
+    if (treeNode.object instanceof GraphNode && typeof treeNode.object.isChecked === "boolean") {
+      isChecked = false;
+    }
 
     // Split strategies
 
@@ -916,7 +920,7 @@ export class Tree {
         type: "addChildNode",
         transaction: {
           parentId: treeNode.object.id,
-          nodeProps: { content: chips?.after ?? [] },
+          nodeProps: { content: chips?.after ?? [], isChecked },
           relationProps: { id: relationId },
         },
       });
@@ -941,7 +945,7 @@ export class Tree {
         transaction: {
           parentId: treeNode.parent.object.id,
           after: treeNode.parentGroup.id === "pinned" ? -1 : treeNode.relationWithParent,
-          nodeProps: { content: chips?.after ?? [] },
+          nodeProps: { content: chips?.after ?? [], isChecked },
           relationProps: { id: relationId },
         },
       });
@@ -987,7 +991,7 @@ export class Tree {
       txs.push({
         type: "addNode",
         transaction: {
-          nodeProps: { content: [], id: newNodeId },
+          nodeProps: { content: [], id: newNodeId, isChecked },
         },
       });
       txs.push({

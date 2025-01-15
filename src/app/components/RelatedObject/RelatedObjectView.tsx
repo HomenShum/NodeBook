@@ -50,7 +50,6 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
       <Main treeNode={treeNode}>
         <Controls />
         {!hideBullet && <Bullet />}
-        {treeNode.isTodoItem && <Checkbox node={treeNode} />}
         <Content />
       </Main>
       {viewType === "note" && treeNode.parent instanceof RootTreeNode && treeNode.childCount > 0 && (
@@ -160,6 +159,7 @@ const Content = observer(function Content() {
     <>
       <div className={cn(styles.RelatedObjectNode, tree.isNodeSelected(treeNode.id) && styles.Selected)}>
         <div className={styles.RelatedObjectNodeContent}>
+          {treeNode.isTodoItem && <Checkbox node={treeNode} />}
           {(showRelationType || manualShowRelationType) && (
             <div
               id={[treeNode.id, "relationCombobox"].join("-")}
