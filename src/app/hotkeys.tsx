@@ -17,9 +17,7 @@ export const isDeleteSelectionHotkey = isHotkey(["delete", "backspace"]);
 export const isIndentSelectionHotkey = isHotkey("tab");
 export const isDedentSelectionHotkey = isHotkey("shift+tab");
 export const isEscapeSelectionHotkey = isHotkey("esc");
-export const isToggleCheckedTodoHotkey = isHotkey("]");
-export const isToggleUncheckedTodoHotkey = isHotkey("[");
-export const isToggleOffTodoHotkey = isHotkey("shift+[");
+export const isToggleTodoHotkey = isHotkey("[");
 export const isZoomInHotkey = isHotkey("mod+.");
 export const isZoomOutHotkey = isHotkey("mod+,");
 export const isCopyHotkey = isHotkey("mod+c");
@@ -63,19 +61,13 @@ export const treeHotkeyMapping: {
   { predicate: isEscapeSelectionHotkey, action: (tree: Tree) => tree.escapeSelection() },
   { predicate: isExpandAtSelectionHotKey, action: (tree: Tree) => tree.expandAtSelection() },
   { predicate: isCollapseAtSelectionHotKey, action: (tree: Tree) => tree.collapseAtSelection() },
-  { predicate: isToggleUncheckedTodoHotkey, action: (tree: Tree) => tree.toggleTodo(false) },
-  { predicate: isToggleCheckedTodoHotkey, action: (tree: Tree) => tree.toggleTodo(true) },
-  { predicate: isToggleOffTodoHotkey, action: (tree: Tree) => tree.toggleTodo(null) },
+  { predicate: isToggleTodoHotkey, action: (tree: Tree) => tree.toggleTodo() },
 ];
 
 export const handleTreeHotkeys = (event: KeyboardEvent, tree: Tree): boolean => {
   for (const { predicate, action } of treeHotkeyMapping) {
     if (predicate(event, tree)) {
-      if (
-        predicate !== isToggleCheckedTodoHotkey &&
-        predicate !== isToggleUncheckedTodoHotkey &&
-        predicate !== isToggleOffTodoHotkey
-      ) {
+      if (predicate !== isToggleTodoHotkey) {
         event.preventDefault();
         event.stopPropagation();
       }

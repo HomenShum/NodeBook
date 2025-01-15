@@ -443,13 +443,35 @@ export class Tree {
     return { rootObjectId: this.rootObjectId, pathToRootIds: this.pathToRootIds };
   }
 
-  toggleTodo(isChecked: boolean | null) {
+  toggleTodo() {
     const selection = this.selectionWithNodes;
     if (!selection || selection.type !== "node") return;
-    const txs = selection.nodes.map((node) => ({
-      type: "updateNode" as const,
-      transaction: { nodeId: node.object.id, nodeProps: { isChecked } },
-    }));
+    const txs = selection.nodes.map((node) => {
+      let isChecked = null;
+      if (node.object instanceof GraphNode) {
+        switch (node.object.isChecked) {
+          case null:
+            isChecked = false;
+            break;
+          case true:
+            isChecked = null;
+            break;
+          case false:
+            isChecked = true;
+            break;
+        }
+      }
+      console.log(isChecked);
+      return {
+        type: "updateNode" as const,
+        transaction: {
+          nodeId: node.object.id,
+          nodeProps: {
+            isChecked,
+          },
+        },
+      };
+    });
     this.graphStore.applyCombinedTransaction(txs);
   }
 
