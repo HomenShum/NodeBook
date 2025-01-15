@@ -4,12 +4,12 @@ import { action, computed, isObservable, makeAutoObservable, observable } from "
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
+import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { SearchTree } from "@/app/tree/SearchTree";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Path, Root, Tree } from "@/app/tree/Tree";
 import { makeAutoSaving } from "@/app/util";
 import { ViewType } from "@/app/view/types";
-import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 
 export class ViewStore {
   private readonly settingsStore: SettingsStore;
@@ -17,6 +17,7 @@ export class ViewStore {
   public searchQuery: string = "";
   public quickCaptureSearchQuery: string = "";
   public flattenSublists: boolean = false;
+  public graphMode: boolean = false;
 
   public viewType = ViewType.Outline;
   public quickCaptureViewType = ViewType.Note;
@@ -61,20 +62,30 @@ export class ViewStore {
       isDarkMode: true,
       sidebarWidth: true,
       activeModal: true,
+      graphMode: true,
       sidebarTrees: false,
       quickCaptureViewType: true,
-      quickCaptureOpen: true
+      quickCaptureOpen: true,
     });
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
     this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser(), { isMainTree: true });
     this.sublistView = new SublistTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.searchView = new SearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
-    this.quickCaptureSearchView = new QuickCaptureSearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
+    this.quickCaptureSearchView = new QuickCaptureSearchTree(
+      graphStore,
+      this.settingsStore,
+      graphStore.getDefaultRootForUser(),
+    );
     this.activeTree = this.treeView;
-    this.quickCaptureTree = new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser(), {
-      viewType: this.quickCaptureViewType
-    });
+    this.quickCaptureTree = new QuickCaptureTree(
+      this.graphStore,
+      this.settingsStore,
+      this.graphStore.getDefaultRootForUser(),
+      {
+        viewType: this.quickCaptureViewType,
+      },
+    );
   }
   /**
    * Return state associated with the main view.
@@ -91,9 +102,9 @@ export class ViewStore {
     }
   }
 
-  get quickCaptureView(): Tree{
-    if(this.quickCaptureDeepSearching){
-      return this.quickCaptureSearchView
+  get quickCaptureView(): Tree {
+    if (this.quickCaptureDeepSearching) {
+      return this.quickCaptureSearchView;
     }
     return this.quickCaptureTree;
   }
@@ -113,6 +124,7 @@ export class ViewStore {
         setQuickCaptureSearchQuery: action,
         setFlattenSublists: action,
         setCommandBarOpen: action,
+        setGraphMode: action,
         isMouseUpAfterDrag: observable,
         handleMouseDown: action,
         handleMouseMove: action,
@@ -133,7 +145,7 @@ export class ViewStore {
         cancelDeepSearch: action,
         cancelQuickCaptureDeepSearch: action,
         quickCaptureView: computed,
-        setNotificationPaneOpen: action
+        setNotificationPaneOpen: action,
       });
     }
   }
@@ -152,13 +164,22 @@ export class ViewStore {
 
   setQuickCaptureViewType(viewType: ViewType) {
     this.quickCaptureViewType = viewType;
-    this.quickCaptureTree = new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.getDefaultRootForUser(), {
-      viewType: this.quickCaptureViewType
-    });
+    this.quickCaptureTree = new QuickCaptureTree(
+      this.graphStore,
+      this.settingsStore,
+      this.graphStore.getDefaultRootForUser(),
+      {
+        viewType: this.quickCaptureViewType,
+      },
+    );
   }
 
   setFlattenSublists(flattenSublists: boolean) {
     this.flattenSublists = flattenSublists;
+  }
+
+  setGraphMode(graphMode: boolean) {
+    this.graphMode = graphMode;
   }
 
   setSearchQuery(query: string) {
@@ -168,8 +189,8 @@ export class ViewStore {
     this.searchView.deepSearch(query);
   }
 
-  setQuickCaptureSearchQuery(query: string){
-    if(!this.quickCaptureTree) return;
+  setQuickCaptureSearchQuery(query: string) {
+    if (!this.quickCaptureTree) return;
     this.quickCaptureSearchQuery = query;
     this.quickCaptureSearchView.clearSearch(this.quickCaptureTree.root);
     this.quickCaptureSearchView.deepSearch(query);
@@ -179,7 +200,7 @@ export class ViewStore {
     return this.deepSearching;
   }
 
-  get isQuickCaptureDeepSearching(){
+  get isQuickCaptureDeepSearching() {
     return this.quickCaptureDeepSearching;
   }
 
@@ -191,10 +212,10 @@ export class ViewStore {
   }
 
   cancelQuickCaptureDeepSearch() {
-    if(!this.quickCaptureTree) return;
+    if (!this.quickCaptureTree) return;
     this.setQuickCaptureDeepSearching(false);
     this.setQuickCaptureSearchQuery("");
-    this.quickCaptureSearchView.clearSearch(this.quickCaptureTree.root)
+    this.quickCaptureSearchView.clearSearch(this.quickCaptureTree.root);
   }
 
   cleanup() {
@@ -251,7 +272,7 @@ export class ViewStore {
     this.quickCaptureTree.createChildOfRootAndFocus();
   }
 
-  closeQuickCapture(){
+  closeQuickCapture() {
     this.quickCaptureOpen = false;
   }
 
@@ -315,8 +336,7 @@ export class ViewStore {
     return this.processingNodeIds.has(nodeId);
   }
 
-  setNotificationPaneOpen(state: boolean){
+  setNotificationPaneOpen(state: boolean) {
     this.notificationPaneOpen = state;
   }
-
 }

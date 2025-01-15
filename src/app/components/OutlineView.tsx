@@ -2,6 +2,7 @@
 import { observer } from "mobx-react-lite";
 import { useEffect } from "react";
 
+import appStyles from "@/app/app.module.css";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import OutlineContent from "@/app/components/OutlineContent";
@@ -10,7 +11,7 @@ import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import appStyles from "@/app/app.module.css";
+import GraphContainer from "@/app/components/GraphView/GraphContainer";
 
 import s from "./OutlineView.module.css";
 
@@ -48,10 +49,14 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
           <Breadcrumbs treeNode={treeRoot} />
           <ControlsBar tree={tree} />
         </div>
-        <div className={s.MainAndSidebarContainer}>
-          <OutlineContent tree={tree} />
-          <RightSidebar />
-        </div>
+        {viewStore.graphMode ? (
+          <GraphContainer tree={tree} />
+        ) : (
+          <div className={s.MainAndSidebarContainer}>
+            <OutlineContent tree={tree} />
+            <RightSidebar />
+          </div>
+        )}
       </div>
     </TreeContext.Provider>
   );

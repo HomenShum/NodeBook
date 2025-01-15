@@ -4,7 +4,6 @@ import React, { ChangeEvent, useCallback, useState } from "react";
 
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
-import { GraphViewModal } from "@/app/components/Modals/GraphViewModal";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -59,7 +58,6 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
 
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [ideapadLink, setIdeapadLink] = useState(ideapadLinkManager.get(tree.rootObjectId));
-  const [isGraphViewOpen, setIsGraphViewOpen] = useState(false);
 
   const handleLinkChange = (event: ChangeEvent<HTMLInputElement>) => {
     const element = event.target as HTMLInputElement;
@@ -256,8 +254,8 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
         {settingsStore.showGraphViewButton && (
           <Button
             size="sm"
-            variant="default"
-            onClick={() => setIsGraphViewOpen(true)}
+            variant={viewStore.graphMode ? "active" : "default"}
+            onClick={() => viewStore.setGraphMode(!viewStore.graphMode)}
             className={cn(s.ShowTooltip, s.BottomAlign)}
             data-tooltip="View Graph"
           >
@@ -266,7 +264,6 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           </Button>
         )}
       </div>
-      {isGraphViewOpen && <GraphViewModal isOpen={isGraphViewOpen} onClose={() => setIsGraphViewOpen(false)} />}
     </div>
   );
 });

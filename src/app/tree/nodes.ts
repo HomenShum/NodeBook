@@ -47,6 +47,7 @@ export class PathToRootNode {
 }
 
 export abstract class BaseTreeNode {
+  id: string = "";
   tree: Tree;
   object: GraphObject;
   lexicalEditor: LexicalEditor | null = null;
@@ -136,7 +137,6 @@ export abstract class BaseTreeNode {
 }
 
 export class RootTreeNode extends BaseTreeNode {
-  id: string = "";
   path: string = "";
   depth: number = 0;
   childrenGroups: ChildrenGroups;
@@ -243,7 +243,6 @@ export class DescendantTreeNode extends BaseTreeNode {
   searchMatchInDescendants: boolean;
   path: string;
   depth: number;
-  id: string;
   //Todo: Remove this, just a temporary workaround for sublist view,
   constructor({
     object,

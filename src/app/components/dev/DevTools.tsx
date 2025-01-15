@@ -213,7 +213,7 @@ export const DevTools = observer(function DevTools() {
             checked={settingsStore.showGraphViewButton}
             onChange={(e) => settingsStore.setShowGraphViewButton(e.target.checked)}
           />
-          Show Graph View Button (Scrappy Demo)
+          Show Graph View Button
         </label>
         <label className={styles.LabelSetting}>
           <input
