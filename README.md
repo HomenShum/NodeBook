@@ -55,15 +55,18 @@ _Note: This is only necessary for changes that modify the existing database sche
 
 ## Restoring database backups
 
-- Every 12 hours (12AM/12PM UTC) backups are stored in mew-vercel-backup (us-west-1).
-- Download the backup and run `pg_restore -v -d <database-connection-string> <path-to-backup>`
-  - Make sure `database-connection-string` ends with a database name.
-  - Example: `pg_restore -v -d postgres://user:pass@host:port/db_name /home/username/dump-2024-10-02-18-28.bak`
-- Please make sure your `pg_restore` version is 16 (Vercel currently uses 16).
-- Please do not run `db:reset`, it will run migrations and hydrate the database, causing conflicts
-  with the database.
-  - Drop the database before running `pg_restore` or run it with `--clean`/`-c` flags.
-    - Example: `pg_restore -c -v -d <connectiom-string> <backup-path>`
+Every 12 hours (12AM/12PM UTC) backups are stored in mew-vercel-backup (us-west-1).
+
+Here are the steps to restore a backup:
+
+1. Download the backup from s3: https://us-west-1.console.aws.amazon.com/s3/buckets/mew-vercel-backup
+2. Clear the database and restore using `pg_restore -c -v --no-acl -d <database-connection-string> <path-to-backup>`
+   - The `pg_restore` version must be 16 (Vercel currently uses 16).
+   - Make sure `database-connection-string` ends with a database name.
+   - Example: `pg_restore -c -v --no-acl -d postgres://user:pass@host:port/db_name /home/username/dump-2024-10-02-18-28.bak`
+3. (Optional) If the tables aren't showing up, it may be that the search path wasn't restored correctly. You can set the search path manually by running `SET search_path TO "$user", public;`
+
+The database should now be restored.
 
 ## VSCode Debugging
 
