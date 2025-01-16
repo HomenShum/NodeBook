@@ -3,11 +3,12 @@ import { NextResponse } from "next/server";
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { broadcastSyncSuccess } from "@/app/api/sync/pusher";
 import { UNLOGGED_USER } from "@/app/auth/MewUser";
-import { AddNode, AddRelation } from "@/app/graph/GraphUpdate";
+import { AddNode, AddRelation, AddRelationType } from "@/app/graph/GraphUpdate";
 import { ImportChunkDataSchema } from "@/app/graph/SyncData";
 import { getDb } from "@/db";
 import { createNodes } from "@/db/graphNodes";
 import { createRelations } from "@/db/graphRelations";
+import { createRelationTypes } from "@/db/relationTypes";
 
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
@@ -22,6 +23,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
   const parsedData = ImportChunkDataSchema.safeParse(await req.json());
 
   if (!parsedData.success) {
+    console.log(parsedData.error);
     return NextResponse.json(
       {
         status: "error",
@@ -54,13 +56,13 @@ async function postHandler(req: NextAuthenticatedRequest) {
             relUpdates.map((update) => update.relation),
           );
           break;
-        // case "addRelationType":
-        //   const relTypeUpdates = updates as AddRelationType[];
-        //   await createRelationTypes(
-        //     tx,
-        //     relTypeUpdates.map((update) => update.relationType),
-        //   );
-        //   break;
+        case "addRelationType":
+          const relTypeUpdates = updates as AddRelationType[];
+          await createRelationTypes(
+            tx,
+            relTypeUpdates.map((update) => update.relationType),
+          );
+          break;
         case "updateRelationList":
           return NextResponse.json(
             { status: "error", message: "importing updateRelationLists not implemented" },

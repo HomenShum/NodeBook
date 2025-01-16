@@ -41,7 +41,7 @@ const SerializedUserSettingsSchema = z.object({
   showGraphViewButton: z.boolean().optional(),
   parseWithAiLinkingOption: ParseWithAiLinkingOptionEnum.optional(),
   showBulletForEmptyNode: z.boolean().optional(),
-  showNotifications: z.boolean().optional(),
+  showNotifications: z.boolean().optional()
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 

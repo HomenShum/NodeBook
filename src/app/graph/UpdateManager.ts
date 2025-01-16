@@ -23,7 +23,6 @@ export class UpdateManager {
 
   private undoStack: GraphUpdate[][] = [];
   private redoStack: GraphUpdate[][] = [];
-
   syncQueue: SyncData[] = [];
 
   private authedFetch?: typeof fetch;

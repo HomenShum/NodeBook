@@ -51,7 +51,7 @@ describe("getMatches", () => {
     ];
     const mockRelationTypes = [
       {
-        id: "ABC",
+        id: "relTypeA",
         label: `${SEARCH_TERM} forward`,
         reverseLabel: `${SEARCH_TERM} reverse`,
         createdAt: new Date(2023, 0, 4),
@@ -67,7 +67,7 @@ describe("getMatches", () => {
     const matches = getMatches(mockGraphStore as unknown as GraphStore, SEARCH_TERM, SEARCH_TYPES_FILTER, maxResults);
 
     expect(matches).toHaveLength(7);
-    const expectedMatchIds = ["ABC-rel-type", "ABC-rel-type-rev", "relYZ", "nodeB", "nodeC", "nodeA", "relAB"];
+    const expectedMatchIds = ["relTypeA", "relTypeA-rev", "relYZ", "nodeB", "nodeC", "nodeA", "relAB"];
     expect(matches.map((match) => match.key)).toEqual(expectedMatchIds);
   });
 

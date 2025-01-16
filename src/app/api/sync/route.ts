@@ -10,6 +10,7 @@ import { getDb } from "@/db";
 import { createNodes, deleteNode, updateNode } from "@/db/graphNodes";
 import { createRelations, deleteRelation, updateRelation } from "@/db/graphRelations";
 import { upsertRelationList } from "@/db/relationLists";
+import { createRelationTypes, deleteRelationType, updateRelationType } from "@/db/relationTypes";
 import { formatSyncErrorForLog, SyncError } from "@/db/SyncError";
 
 export const GET = withAuth(getHandler);
@@ -34,6 +35,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
   const parsedData = SyncDataSchema.safeParse(await req.json());
 
   if (!parsedData.success) {
+    console.error(parsedData.error);
     captureException(parsedData.error, { extra: { message: "Invalid sync data request" } });
     return NextResponse.json({ status: "error", message: "Invalid sync data request" }, { status: 400 });
   }
@@ -57,15 +59,15 @@ async function postHandler(req: NextAuthenticatedRequest) {
           case "deleteNode":
             await deleteNode(tx, update.node);
             break;
-          // case "addRelationType":
-          //   await createRelationTypes(tx, [update.relationType]);
-          //   break;
-          // case "updateRelationType":
-          //   await updateRelationType(tx, update.oldProps, update.newProps);
-          //   break;
-          // case "deleteRelationType":
-          //   await deleteRelationType(tx, update.relationType);
-          //   break;
+          case "addRelationType":
+            await createRelationTypes(tx, [update.relationType]);
+            break;
+          case "updateRelationType":
+            await updateRelationType(tx, update.oldProps, update.newProps);
+            break;
+          case "deleteRelationType":
+            await deleteRelationType(tx, update.relationType);
+            break;
           case "addRelation":
             await createRelations(tx, [update.relation]);
             break;

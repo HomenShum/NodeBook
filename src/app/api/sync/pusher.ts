@@ -38,12 +38,12 @@ const updateIsPublic = (update: GraphUpdate): boolean => {
       return update.oldProps.isPublic || update.newProps.isPublic;
     case "deleteNode":
       return update.node.isPublic;
-    // case "addRelationType":
-    //   return update.relationType.isPublic;
-    // case "updateRelationType":
-    //   return update.oldProps.isPublic || update.newProps.isPublic;
-    // case "deleteRelationType":
-    //   return update.relationType.isPublic;
+    case "addRelationType":
+      return update.relationType.isPublic;
+    case "updateRelationType":
+      return update.oldProps.isPublic || update.newProps.isPublic;
+    case "deleteRelationType":
+      return update.relationType.isPublic;
     case "addRelation":
       return update.relation.isPublic;
     case "updateRelation":

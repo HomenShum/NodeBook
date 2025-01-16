@@ -30,11 +30,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
   const isForward = relation.to.id === treeNode.object.id;
   const graphStore = useGraphStore();
   const [search, setSearch] = useState(
-    relation.relationType.id === "child" && !isForward
-      ? "parent"
-      : isForward
-      ? relation.relationType.label
-      : relation.relationType.reverseLabel,
+    relation.relationType.id === "child" && !isForward ? "parent" : relation.relationType.label,
   );
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const itemWasSelectedRef = useRef(false);
