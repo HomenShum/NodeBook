@@ -125,7 +125,12 @@ const CommandBar = observer(() => {
       {
         type: "create" as const,
         id: "create",
-        name: search.text === "" ? "Create blank node" : `Create new node: "${search.text}" ( Ctrl / Cmd + Enter )`,
+        name:
+          search.text === ""
+            ? "Create blank node"
+            : `Create new node: "${search.text}" ( ${
+                navigator.userAgent.toLowerCase().includes("Mac") ? "Cmd" : "Ctrl"
+              } + Enter )`,
         perform: async () => {
           const { node } = await graphStore.addChildNode({
             parentId: graphStore.userRoot.id,

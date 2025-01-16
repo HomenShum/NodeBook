@@ -17,10 +17,10 @@ import {
   TreeNode,
 } from "@/app/tree/nodes";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
+import { SearchTree } from "@/app/tree/SearchTree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import {SearchTree} from "@/app/tree/SearchTree";
 
 import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./styles/ChildGroups.module.css";
@@ -70,7 +70,17 @@ export const NoteContentSection = observer(function NoteContentSection({ parentN
     <div>
       {group.nodes.map((treeNode, i) => {
         return (
-          <div key={treeNode.path} style={{ marginLeft: topLevelNote || rootNote ? "0px" : "-20px" }}>
+          <div
+            key={treeNode.path}
+            style={{
+              marginLeft: topLevelNote || rootNote ? "0px" : "-20px",
+              paddingBottom:
+                i === group.nodes.length - 1 &&
+                treeNode.childrenGroupsById.all.nodes[0]?.childrenGroupsById.noteContent?.nodes.length > 0
+                  ? "20px"
+                  : "1px",
+            }}
+          >
             <RelatedObjectView treeNode={treeNode} />
           </div>
         );
@@ -96,7 +106,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
       : viewStore.viewType;
   const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
 
-  if ((tree instanceof SearchTree) || (isEmpty && !group.isExpanded && !isRoot)) {
+  if (tree instanceof SearchTree || (isEmpty && !group.isExpanded && !isRoot)) {
     return null;
   }
 
