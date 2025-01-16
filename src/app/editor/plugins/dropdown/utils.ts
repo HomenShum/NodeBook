@@ -55,7 +55,7 @@ export function getMatches(
         const reverseLabel = relationType.reverseLabel.toLocaleLowerCase();
         if (label.includes(text)) {
           res.push({
-            key: relationType.id,
+            key: relationType.id + "-rel-type",
             type: "relationType" as const,
             object: relationType,
             score,
@@ -64,7 +64,7 @@ export function getMatches(
         }
         if (label !== reverseLabel && reverseLabel.includes(text)) {
           res.push({
-            key: relationType.id + "-rev",
+            key: relationType.id + "-rel-type-rev",
             type: "relationType" as const,
             object: relationType,
             score,

@@ -39,6 +39,7 @@ export const BackspaceMergeNodesPlugin = () => {
   const { treeNode } = useTreeNode();
   const tree = useTree();
   const { mergeNodes, addSiblingAboveIntoNote } = useMergers(treeNode.tree);
+  const graphStore = useGraphStore();
 
   useEffect(() => {
     return editor.registerCommand(
@@ -59,7 +60,17 @@ export const BackspaceMergeNodesPlugin = () => {
           return false;
         }
         let handled = false;
-        if (
+        if (event.metaKey || event.ctrlKey) {
+          if (treeNode.object.text === "" && treeNode.relationWithParent.relationType !== defaultRelationTypes.child) {
+            // set the relationType to child
+            graphStore.updateRelation({
+              relationId: treeNode.relationWithParent.id,
+              relationProps: { relationType: defaultRelationTypes.child },
+              reverse: false,
+            });
+            handled = true;
+          }
+        } else if (
           // We're at the start of the first child of a note
           treeNode.parentGroup.id === "noteContent" &&
           treeNode.parentGroup.nodes[0] === treeNode &&

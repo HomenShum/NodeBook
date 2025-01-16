@@ -6,7 +6,6 @@ import {
   PositionSchema,
   SerializedNodeSchema,
   SerializedRelationSchema,
-  SerializedRelationTypeSchema,
 } from "@/app/persistence/SerializedData";
 
 export const AddNodeSchema = z.object({
@@ -28,24 +27,24 @@ const DeleteNodeSchema = z.object({
 });
 export type DeleteNode = z.infer<typeof DeleteNodeSchema>;
 
-export const AddRelationTypeSchema = z.object({
-  operation: z.literal("addRelationType"),
-  relationType: SerializedRelationTypeSchema,
-});
-export type AddRelationType = z.infer<typeof AddRelationTypeSchema>;
+// export const AddRelationTypeSchema = z.object({
+//   operation: z.literal("addRelationType"),
+//   relationType: SerializedRelationTypeSchema,
+// });
+// export type AddRelationType = z.infer<typeof AddRelationTypeSchema>;
 
-const UpdateRelationTypeSchema = z.object({
-  operation: z.literal("updateRelationType"),
-  oldProps: SerializedRelationTypeSchema,
-  newProps: SerializedRelationTypeSchema,
-});
-export type UpdateRelationType = z.infer<typeof UpdateRelationTypeSchema>;
+// const UpdateRelationTypeSchema = z.object({
+//   operation: z.literal("updateRelationType"),
+//   oldProps: SerializedRelationTypeSchema,
+//   newProps: SerializedRelationTypeSchema,
+// });
+// export type UpdateRelationType = z.infer<typeof UpdateRelationTypeSchema>;
 
-const DeleteRelationTypeSchema = z.object({
-  operation: z.literal("deleteRelationType"),
-  relationType: SerializedRelationTypeSchema,
-});
-export type DeleteRelationType = z.infer<typeof DeleteRelationTypeSchema>;
+// const DeleteRelationTypeSchema = z.object({
+//   operation: z.literal("deleteRelationType"),
+//   relationType: SerializedRelationTypeSchema,
+// });
+// export type DeleteRelationType = z.infer<typeof DeleteRelationTypeSchema>;
 
 export const AddRelationSchema = z.object({
   operation: z.literal("addRelation"),
@@ -91,9 +90,9 @@ export const GraphUpdateSchema = z.discriminatedUnion("operation", [
   AddNodeSchema,
   UpdateNodeSchema,
   DeleteNodeSchema,
-  AddRelationTypeSchema,
-  UpdateRelationTypeSchema,
-  DeleteRelationTypeSchema,
+  // AddRelationTypeSchema,
+  // UpdateRelationTypeSchema,
+  // DeleteRelationTypeSchema,
   AddRelationSchema,
   UpdateRelationSchema,
   DeleteRelationSchema,
@@ -128,27 +127,27 @@ export const generateInverseUpdates = (updates: GraphUpdate[]): GraphUpdate[] =>
         });
         break;
 
-      case "addRelationType":
-        inverseUpdates.push({
-          operation: "deleteRelationType",
-          relationType: update.relationType,
-        });
-        break;
+      // case "addRelationType":
+      //   inverseUpdates.push({
+      //     operation: "deleteRelationType",
+      //     relationType: update.relationType,
+      //   });
+      //   break;
 
-      case "updateRelationType":
-        inverseUpdates.push({
-          operation: "updateRelationType",
-          oldProps: update.newProps,
-          newProps: update.oldProps,
-        });
-        break;
+      // case "updateRelationType":
+      //   inverseUpdates.push({
+      //     operation: "updateRelationType",
+      //     oldProps: update.newProps,
+      //     newProps: update.oldProps,
+      //   });
+      //   break;
 
-      case "deleteRelationType":
-        inverseUpdates.push({
-          operation: "addRelationType",
-          relationType: update.relationType,
-        });
-        break;
+      // case "deleteRelationType":
+      //   inverseUpdates.push({
+      //     operation: "addRelationType",
+      //     relationType: update.relationType,
+      //   });
+      //   break;
 
       case "addRelation":
         inverseUpdates.push({

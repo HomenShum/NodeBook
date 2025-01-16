@@ -4,6 +4,7 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 import { defaultRelationTypes } from "@/app/graph/constants";
+import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 
 import { MIN_NUM_RELATIONS } from "./helpers";
 
@@ -74,7 +75,7 @@ describe("GraphStore.updateRelation", () => {
 
     const newRelationType = {
       ...defaultRelationTypes.author,
-      authorId: MOCK_MEW_USER.id,
+      authorId: GLOBAL_ADMIN_USER_ID,
     };
     expect(newRelationType).toBeDefined();
     expect(relation.relationType).not.toBe(newRelationType);
