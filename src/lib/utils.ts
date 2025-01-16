@@ -7,6 +7,10 @@ export function cn(...inputs: ClassValue[]) {
   return clsx(inputs);
 }
 
+/** **Warning**: this flag can be true on iPads too (Safari and Chrome sometimes pretend to be running on a Mac) */
+export const isMac =
+  (typeof navigator !== "undefined" && !!navigator.platform.match("Mac")) || process.platform === "darwin"; // We also check process.platform since `navigator` is not available in TestCafe tests' backend environment
+
 /**
  * Calculates a similarity score (0-1) between a text and a query string.
  *

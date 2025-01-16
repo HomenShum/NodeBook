@@ -16,7 +16,7 @@ import { useToast } from "@/app/hooks/useToast";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
-import { cn } from "@/lib/utils";
+import { cn, isMac } from "@/lib/utils";
 
 import styles from "./CommandBar.module.css";
 
@@ -128,9 +128,7 @@ const CommandBar = observer(() => {
         name:
           search.text === ""
             ? "Create blank node"
-            : `Create new node: "${search.text}" ( ${
-                navigator.userAgent.toLowerCase().includes("Mac") ? "Cmd" : "Ctrl"
-              } + Enter )`,
+            : `Create new node: "${search.text}" ( ${isMac ? "Cmd" : "Ctrl"} + Enter )`,
         perform: async () => {
           const { node } = await graphStore.addChildNode({
             parentId: graphStore.userRoot.id,
