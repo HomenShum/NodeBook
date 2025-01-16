@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   AddNodeSchema,
   AddRelationSchema,
-  AddRelationTypeSchema,
+  // AddRelationTypeSchema,
   GraphUpdate,
   GraphUpdateSchema,
   UpdateRelationListSchema,
@@ -25,7 +25,7 @@ export const ImportChunkDataSchema = z.object({
   updates: z.union([
     AddNodeSchema.array(),
     AddRelationSchema.array(),
-    AddRelationTypeSchema.array(),
+    // AddRelationTypeSchema.array(),
     UpdateRelationListSchema.array(),
   ]),
 });

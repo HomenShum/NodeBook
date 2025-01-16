@@ -30,6 +30,7 @@ import {
   GLOBAL_USERS_NODE_ID,
   GLOBAL_USERS_RELATION_ID,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
+  USER_RELATION_TYPES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
   USERS_TO_USER_RELATION_ID_PREFIX,
 } from "@/lib/constants";
@@ -77,7 +78,9 @@ export class GraphStore {
   usersById: Map<string, MewUserPublic> = new Map();
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
-  relationTypesById: Record<string, GraphRelationType> = {};
+
+  // This object is ONLY for the default relationtypes
+  relationTypesById: Record<string, GraphRelationType> = defaultRelationTypes;
 
   cappedKeywordIndex: CappedKeywordIndex;
 
@@ -111,6 +114,8 @@ export class GraphStore {
         addRelation: action,
         removeRelation: action,
         replaceRelationLink: action,
+        deleteFromRelationsById: action,
+        setRelationsById: action,
         // relation type
         addRelationType: action,
         // misc
@@ -158,6 +163,18 @@ export class GraphStore {
     const node = this.nodesById.get(this.myHashtagsNodeId);
     if (!node) {
       throw new Error("My hashtags node not found");
+    }
+    return node;
+  }
+
+  get relationTypesNodeId(): string {
+    return USER_RELATION_TYPES_NODE_ID_PREFIX + this.user.id;
+  }
+
+  get relationTypesNode(): GraphNode {
+    const node = this.nodesById.get(this.relationTypesNodeId);
+    if (!node) {
+      throw new Error("Relation types node not found");
     }
     return node;
   }
@@ -226,15 +243,6 @@ export class GraphStore {
           break;
         case "deleteNode":
           this._removeNode({ nodeId: update.node.id });
-          break;
-        case "addRelationType":
-          this._addRelationType(update.relationType);
-          break;
-        case "updateRelationType":
-          this._updateRelationType(update.oldProps.id, update.newProps);
-          break;
-        case "deleteRelationType":
-          this._deleteRelationType(update.relationType.id);
           break;
         case "addRelation":
           const { relation } = this._addRelation(update.relation);
@@ -582,11 +590,8 @@ export class GraphStore {
         // First set the value on the relation itself
         const { updates: relUpdates } = this._setObjectIsPublic(rel, isPublic);
         updates.push(...relUpdates);
-        // Set the relation type as well
-        const { updates: relTypeUpdates } = this._updateRelationType(rel.relationType.id, {
-          isPublic: isPublic,
-        });
-        updates.push(...relTypeUpdates);
+        // Relation types are set by default since the relation types are just relations connected to nodes.
+
         // ...then set the value for the other object in the relation
         const otherObject = rel.from.id === object.id ? rel.to : rel.from;
         const { updates: otherObjectUpdates } = this._setObjectIsPublic(otherObject, isPublic);
@@ -664,13 +669,7 @@ export class GraphStore {
           oldProps: relAtStart,
           newProps: object.serialize(),
         });
-        // If relation type is private and we're making the relation public, update the relation type too
-        if (!object.relationType.isPublic && isPublic) {
-          const { updates: relTypeUpdates } = this._updateRelationType(object.relationType.id, {
-            isPublic: true,
-          });
-          updates.push(...relTypeUpdates);
-        }
+        // If relation type is private and we're making the relation public, the relation type
         break;
       case "placeholder":
         // Do nothing
@@ -692,72 +691,208 @@ export class GraphStore {
     props: { id?: string; version?: number; label: string; reverseLabel?: string; isPublic?: boolean },
     fromServer = false,
   ): { relationType: GraphRelationType; updates: GraphUpdate[] } {
+    // if (props.id && props.id in defaultRelationTypes) {
+    //   const id = props.id ?? uuid();
+    //   if (this.relationTypesById[id] && !fromServer) {
+    //     throw new Error(`Relation type with id ${props.id} already exists`);
+    //   }
+    //   const version = props.version ?? 1;
+    //   let label = props.label.trim().replace(/\s*\n\s*/g, " ");
+    //   let reverseLabel = props.reverseLabel?.trim().replace(/\s*\n\s*/g, " ");
+    //   if (!reverseLabel) {
+    //     reverseLabel = getInverseRelation(label);
+    //   }
+
+    //   const newRelationType = {
+    //     version,
+    //     id,
+    //     authorId: this.user.id,
+    //     label,
+    //     reverseLabel,
+    //     isPublic: props.isPublic ?? true,
+    //   };
+    //   this.relationTypesById[id] = newRelationType;
+    //   this.cappedKeywordIndex.add(newRelationType.id, () => newRelationType.label + " " + newRelationType.reverseLabel);
+    //   const updates: GraphUpdate[] = [
+    //     {
+    //       operation: "addRelationType",
+    //       relationType: newRelationType,
+    //     },
+    //   ];
+    //   return { relationType: newRelationType, updates };
+    // } else {
+    const updates: GraphUpdate[] = [];
+    // If it's not a default relationtype, then we instead add a child to the relationTypesNode
     const id = props.id ?? uuid();
-    if (this.relationTypesById[id] && !fromServer) {
-      throw new Error(`Relation type with id ${props.id} already exists`);
-    }
-    const version = props.version ?? 1;
+    const relId = uuid();
+    const authorId = this.user.id;
+
     let label = props.label.trim().replace(/\s*\n\s*/g, " ");
     let reverseLabel = props.reverseLabel?.trim().replace(/\s*\n\s*/g, " ");
     if (!reverseLabel) {
       reverseLabel = getInverseRelation(label);
     }
-
-    const newRelationType = {
-      version,
-      id,
-      authorId: this.user.id,
-      label,
-      reverseLabel,
-      isPublic: props.isPublic ?? false,
-    };
-    this.relationTypesById[id] = newRelationType;
-    this.cappedKeywordIndex.add(newRelationType.id, () => newRelationType.label + " " + newRelationType.reverseLabel);
-    const updates: GraphUpdate[] = [
-      {
-        operation: "addRelationType",
-        relationType: newRelationType,
+    let { updates: relTypeUpdates } = this._addChildNode({
+      parentId: this.relationTypesNodeId,
+      nodeProps: {
+        id,
+        content: [{ type: "text", value: props.label }],
+        isPublic: props.isPublic ?? true,
       },
-    ];
-    return { relationType: newRelationType, updates };
+      relationProps: {
+        id: relId,
+        relationTypeId: defaultRelationTypes.sublist.id,
+        isPublic: props.isPublic ?? true,
+      },
+    });
+    updates.push(...relTypeUpdates);
+    let { updates: revTypeUpdates } = this._addChildNode({
+      parentId: id,
+      relationProps: {
+        relationTypeId: defaultRelationTypes.__reverse__.id,
+        isPublic: props.isPublic ?? true,
+      },
+      nodeProps: {
+        content: [{ type: "text", value: reverseLabel }],
+        isPublic: props.isPublic ?? true,
+      },
+    });
+    updates.push(...revTypeUpdates);
+    this.relationTypesById[id] = {
+      id: id,
+      version: 1,
+      authorId: authorId,
+      label: label,
+      reverseLabel: reverseLabel,
+      isPublic: props.isPublic ?? true,
+    };
+
+    return { relationType: this.relationTypesById[id], updates };
+    // }
+  }
+
+  getRelationTypeFacing(direction: "forward" | "reverse", id?: string, node?: GraphNode) {
+    const relTypeNode = id ? this.getNode(id) : node;
+    if (relTypeNode) {
+      const reverseRelations = relTypeNode.relations.filter(
+        (relation) => relation.relationTypeId === defaultRelationTypes.__reverse__.id,
+      );
+      if (reverseRelations.length != 1) {
+        throw new Error(`Relation type node with id ${id} has 0 or multiple reverse labelled relations`);
+      }
+      const reverseRelation = reverseRelations[0];
+      if (direction === "forward") {
+        return reverseRelation.from.id;
+      } else {
+        return reverseRelation.to.id;
+      }
+    } else {
+      throw new Error(`Cannot find relation type node with id ${id}`);
+    }
   }
 
   private _updateRelationType(
     id: string,
     props: { label?: string; reverseLabel?: string; isPublic?: boolean },
   ): { relationType: GraphRelationType; updates: GraphUpdate[] } {
-    if (!this.relationTypesById[id]) {
-      throw new Error(`Relation type with id ${id} does not exist`);
+    const maybeGraphNode = this.getNode(id);
+    // if (!(maybeGraphNode && graphNodeIsCustomRelType(maybeGraphNode)) && id in defaultRelationTypes) {
+    //   if (!this.relationTypesById[id]) {
+    //     throw new Error(`Relation type with id ${id} does not exist`);
+    //   }
+    //   const oldProps = { ...this.relationTypesById[id] };
+    //   const newProps = { ...oldProps, ...props, version: oldProps.version + 1 };
+    //   this.relationTypesById[id] = newProps;
+    //   this.cappedKeywordIndex.add(newProps.id, () => newProps.label + " " + newProps.reverseLabel);
+    //   const updates: GraphUpdate[] = [
+    //     {
+    //       operation: "updateRelationType",
+    //       oldProps,
+    //       newProps,
+    //     },
+    //   ];
+    //   return { relationType: this.relationTypesById[id], updates };
+    // } else
+    if (maybeGraphNode) {
+      // id is the node id of the custom relation type
+      const updates: GraphUpdate[] = [];
+      const fwNodeId = this.getRelationTypeFacing("forward", id);
+      const revNodeId = this.getRelationTypeFacing("reverse", id);
+
+      if (props.label) {
+        const { updates: labelNodeUpdates } = this._updateNode({
+          nodeId: fwNodeId,
+          nodeProps: {
+            content: [{ type: "text", value: props.label }],
+          },
+        });
+        updates.push(...labelNodeUpdates);
+      }
+      if (props.reverseLabel) {
+        const { updates: revLabelNodeUpdates } = this._updateNode({
+          nodeId: revNodeId,
+          nodeProps: {
+            content: [{ type: "text", value: props.reverseLabel }],
+          },
+        });
+        updates.push(...revLabelNodeUpdates);
+      }
+      if (props.isPublic) {
+        const { updates: publicFwUpdates } = this._updateNode({
+          nodeId: fwNodeId,
+          nodeProps: {
+            isPublic: props.isPublic,
+          },
+        });
+        const { updates: publicRevUpdates } = this._updateNode({
+          nodeId: revNodeId,
+          nodeProps: {
+            isPublic: props.isPublic,
+          },
+        });
+        updates.push(...publicFwUpdates);
+        updates.push(...publicRevUpdates);
+      }
+
+      const origFwNode = this.getNodeOrThrow(fwNodeId);
+      const origLabel = origFwNode.content[0].value;
+      const origRevNode = this.getNodeOrThrow(revNodeId);
+      const origRevLabel = origRevNode.content[0].value;
+      const origPublic = origFwNode.isPublic;
+
+      const relationType: GraphRelationType = {
+        isPublic: props.isPublic !== undefined ? props.isPublic : origPublic,
+        label: props.label ? props.label : origLabel,
+        reverseLabel: props.reverseLabel ? props.reverseLabel : origRevLabel,
+        authorId: origFwNode.authorId,
+        version: origFwNode.version,
+        id: id,
+      };
+      return { relationType, updates };
+    } else {
+      throw new Error("Unhandled case");
     }
-    const oldProps = { ...this.relationTypesById[id] };
-    const newProps = { ...oldProps, ...props, version: oldProps.version + 1 };
-    this.relationTypesById[id] = newProps;
-    this.cappedKeywordIndex.add(newProps.id, () => newProps.label + " " + newProps.reverseLabel);
-    const updates: GraphUpdate[] = [
-      {
-        operation: "updateRelationType",
-        oldProps,
-        newProps,
-      },
-    ];
-    return { relationType: this.relationTypesById[id], updates };
   }
 
-  private _deleteRelationType(id: string): GraphUpdate[] {
-    const updates: GraphUpdate[] = [];
-    // find all relations with this type and set them to a default type
-    for (const rel of this.relationsById.values()) {
-      if (rel.relationType.id !== id) continue;
-      updates.push(...this.setRelationType(rel, this.relationTypesById.child));
-    }
-    updates.push({
-      operation: "deleteRelationType",
-      relationType: { ...this.relationTypesById[id] },
-    });
-    delete this.relationTypesById[id];
-    this.cappedKeywordIndex.delete(id);
-    return updates;
-  }
+  // private _deleteRelationType(id: string): GraphUpdate[] {
+  //   const updates: GraphUpdate[] = [];
+  //   // find all relations with this type and set them to a default type
+  //   for (const rel of this.relationsById.values()) {
+  //     if (rel.relationType.id !== id) continue;
+  //     updates.push(...this.setRelationType(rel, this.relationTypesById.child));
+  //     if (rel.hasCustomTypeRelation && rel.customTypeRelation) {
+  //       const { updates: removalUpdates } = this._removeRelation({ relationId: rel.customTypeRelation.id });
+  //       updates.push(...removalUpdates);
+  //     }
+  //   }
+  //   updates.push({
+  //     operation: "deleteRelationType",
+  //     relationType: { ...this.relationTypesById[id] },
+  //   });
+  //   delete this.relationTypesById[id];
+  //   this.cappedKeywordIndex.delete(id);
+  //   return updates;
+  // }
 
   /**
    * Create a new relation between two existing objects.
@@ -813,10 +948,31 @@ export class GraphStore {
 
     const updates: GraphUpdate[] = [];
     const oldProps = relation.serialize();
+
+    let oldRelationTypeId;
+    if (relation.hasCustomTypeRelation) {
+      oldRelationTypeId = relation.customTypeRelation?.to.id;
+    } else {
+      oldRelationTypeId = oldProps.relationTypeId;
+    }
+
+    if (oldRelationTypeId) {
+      oldProps.relationTypeId = oldRelationTypeId;
+    }
+
+    let newRelationTypeId;
+    if (tx.relationProps?.relationType?.id !== undefined) {
+      newRelationTypeId = tx.relationProps?.relationType?.id;
+    } else if (oldRelationTypeId) {
+      newRelationTypeId = oldRelationTypeId;
+    } else {
+      newRelationTypeId = oldProps.relationTypeId;
+    }
+
     const newProps = {
       ...oldProps,
       isPublic: tx.relationProps?.isPublic ?? oldProps.isPublic,
-      relationTypeId: tx.relationProps?.relationType?.id ?? oldProps.relationTypeId,
+      relationTypeId: newRelationTypeId, //tx.relationProps?.relationType?.id ?? oldProps.relationTypeId,
       version: oldProps.version + 1,
     };
 
@@ -829,7 +985,7 @@ export class GraphStore {
       if (!relTypeAndDirection) {
         const { relationType, updates: relTypeUpdates } = this._addRelationType({
           label: tx.relationProps.relationTypeLabel,
-          isPublic: tx.relationProps.isPublic,
+          isPublic: true,
         });
         updates.push(...relTypeUpdates);
         newProps.relationTypeId = relationType.id;
@@ -897,7 +1053,40 @@ export class GraphStore {
       propsForUpdate.to = newTo;
     }
 
-    if (oldProps.relationTypeId !== newProps.relationTypeId) {
+    const updates: GraphUpdate[] = [];
+    const isReversal = oldFrom && oldTo && newFrom && newTo && oldFrom.id === newTo.id && oldTo.id === newFrom.id;
+
+    const newRelTypeIsDefault = newProps.relationTypeId in defaultRelationTypes;
+    const oldRelTypeWasDefault = oldProps.relationTypeId in defaultRelationTypes;
+    if (newRelTypeIsDefault && oldRelTypeWasDefault) {
+      const newRelationType = this.relationTypesById[newProps.relationTypeId];
+      if (!newRelationType) {
+        throw new Error(
+          `Error setting "relationTypeId" property of ${relation.id}: relation type with id ${newProps.relationTypeId} does not exist`,
+        );
+      }
+
+      propsForUpdate.relationType = newRelationType;
+    } else if (!newRelTypeIsDefault && oldRelTypeWasDefault) {
+      // Create a new relation from the relation to-be-updated to the relationType node
+      const relationTypeNode = this.getNodeOrThrow(newProps.relationTypeId);
+      const { updates: newRelationUpdates } = this._addRelation({
+        fromId: newProps.id,
+        toId: relationTypeNode.id,
+        relationTypeId: defaultRelationTypes.__type__.id,
+      });
+      propsForUpdate.relationType = this.relationTypesById["child"];
+
+      updates.push(...newRelationUpdates);
+    } else if (newRelTypeIsDefault && !oldRelTypeWasDefault) {
+      // Remove the __type__ relation
+      const typeRelation = relation.customTypeRelation;
+      if (!typeRelation) {
+        throw new Error("customTypeRelation not found");
+      }
+      const { updates: removeRelUpdates } = this._removeRelation({ relationId: typeRelation.id });
+      updates.push(...removeRelUpdates);
+      // Business as usual
       const newRelationType = this.relationTypesById[newProps.relationTypeId];
       if (!newRelationType) {
         throw new Error(
@@ -905,21 +1094,37 @@ export class GraphStore {
         );
       }
       propsForUpdate.relationType = newRelationType;
+    } else if (!newRelTypeIsDefault && !oldRelTypeWasDefault) {
+      // Update the __type__ relation to point to the new relationType node
+
+      if (newProps.relationTypeId !== oldProps.relationTypeId) {
+        const typeRelation = relation.customTypeRelation;
+        if (!typeRelation) {
+          throw new Error("customTypeRelation not found");
+        }
+        const newTypeNode = this.getNodeOrThrow(newProps.relationTypeId);
+        const { updates: relationTypeUpdates } = this._replaceRelationLink({
+          direction: "to",
+          relationId: typeRelation.id,
+          replaceWith: { type: "existing-object", id: newTypeNode.id },
+        });
+
+        updates.push(...relationTypeUpdates);
+      }
     }
 
-    const updates: GraphUpdate[] = [
-      {
+    if (isReversal || (newRelTypeIsDefault && oldRelTypeWasDefault)) {
+      updates.push({
         operation: "updateRelation",
         oldProps,
         newProps,
-      },
-    ];
+      });
+    }
+
     relation.update(propsForUpdate);
 
     // In case we're calling this method from `undo` or `redo` (but probably better to rewrite this)
     if (noUpdatesNeeded) return [];
-
-    const isReversal = oldFrom && oldTo && newFrom && newTo && oldFrom.id === newTo.id && oldTo.id === newFrom.id;
 
     if (newFrom && !isReversal) {
       if (!oldFrom || !oldFromPositionBefore) throw new Error("oldFrom should be defined if newFrom is defined");
@@ -1121,7 +1326,7 @@ export class GraphStore {
         isPublic,
         authorId,
       });
-      this.relationsById.set(relation.id, relation);
+      this.setRelationsById(relation.id, relation);
       this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
 
       // Update from node canonical relation and list
@@ -1199,6 +1404,14 @@ export class GraphStore {
     }
   }
 
+  deleteFromRelationsById(id: string): boolean {
+    return this.relationsById.delete(id);
+  }
+
+  setRelationsById(id: string, relation: GraphRelation) {
+    this.relationsById.set(id, relation);
+  }
+
   private deleteRelation(relationOrId: GraphRelation | string): {
     updates: GraphUpdate[];
     deleted: DeletedRelationData;
@@ -1249,7 +1462,7 @@ export class GraphStore {
       toNode.noteContentRelationsList.delete(relation.id);
 
       // Delete the relation itself
-      this.relationsById.delete(relation.id);
+      this.deleteFromRelationsById(relation.id);
       this.cappedKeywordIndex.delete(relation.id);
     } catch (e) {
       if (!this.relationsById.has(relation.id)) {
@@ -1280,7 +1493,7 @@ export class GraphStore {
     relationsList,
   }: DeletedRelationData) {
     const relation = this.loadSerializedRelation(serializedRelation);
-    this.relationsById.set(relation.id, relation);
+    this.setRelationsById(relation.id, relation);
     this.cappedKeywordIndex.add(relation.id, () => relation.searchText);
     this.setRelationPositions(relation, {
       fromPos,
@@ -1491,7 +1704,7 @@ export class GraphStore {
         relation.from.pinnedRelationsList.delete(relation.id);
         relation.from.noteContentRelationsList.delete(relation.id);
       }
-      relation.update({ from: newFrom });
+      relation.update({ from: newFrom, version: relation.version });
       relation.from.allRelationsList.add(relation, after);
       if (!relation.from.canonicalRelation) {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.from, relation);
@@ -1559,7 +1772,7 @@ export class GraphStore {
         relation.to.pinnedRelationsList.delete(relation.id);
         relation.to.noteContentRelationsList.delete(relation.id);
       }
-      relation.to = newTo;
+      relation.update({ to: newTo, version: relation.version });
       relation.to.allRelationsList.add(relation, after);
       if (!relation.to.canonicalRelation) {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.to, relation);
@@ -1764,7 +1977,7 @@ export class GraphStore {
       throw new Error(`Relation with id ${relation.id} does not exist on object ${object.id}`);
     }
     const oldCanonicalRelationId = object.canonicalRelation?.id ?? null;
-    object.canonicalRelation = relation ?? getNextCanonicalRelation(object);
+    object.update({ canonicalRelation: relation ?? getNextCanonicalRelation(object), version: object.version });
     if (object instanceof GraphNode) {
       const serializedObject = object.serialize();
       return {
@@ -1793,9 +2006,6 @@ export class GraphStore {
   cleanup() {
     this.nodesById.clear();
     this.relationsById.clear();
-    Object.keys(this.relationTypesById).forEach((key) => {
-      delete this.relationTypesById[key];
-    });
     this.updateManager.cleanup();
     this.cappedKeywordIndex.clear();
 
@@ -1813,9 +2023,6 @@ export class GraphStore {
     this.usersById.clear();
     this.nodesById.clear();
     this.relationsById.clear();
-    Object.keys(this.relationTypesById).forEach((key) => {
-      delete this.relationTypesById[key];
-    });
     this.updateManager.cleanup();
     this.cappedKeywordIndex.clear();
 
@@ -1837,13 +2044,6 @@ export class GraphStore {
    */
   private ensureDefaultObjectsCreated() {
     const updates: GraphUpdate[] = [];
-
-    for (const rt of Object.values(defaultRelationTypes)) {
-      if (!this.relationTypesById[rt.id]) {
-        const { updates: rtUpdates } = this._addRelationType(rt, true);
-        updates.push(...rtUpdates);
-      }
-    }
 
     // Global root node
     let globalRoot = this.nodesById.get(GLOBAL_ROOT_ID);
@@ -1937,6 +2137,22 @@ export class GraphStore {
       updates.push(...newRelationUpdates);
       const { updates: pinUpdates } = this._pinRelations(userRoot.id, [userToMyHashtagsRelation.id]);
       updates.push(...pinUpdates);
+    }
+
+    let relationTypesNode = userRoot?.children.find((n) => n.id === this.relationTypesNodeId);
+    if (!relationTypesNode) {
+      const { node, updates: relationTypesNodeUpdates } = this._addNode({
+        id: this.relationTypesNodeId,
+        content: [{ type: "text", value: "__user_relation_types__" }],
+        authorId: this.user.id,
+      });
+      const { updates: newRelationUpdates } = this.createRelation({
+        from: userRoot ? userRoot : usersNode,
+        to: node,
+      });
+      relationTypesNode = node;
+      updates.push(...relationTypesNodeUpdates);
+      updates.push(...newRelationUpdates);
     }
 
     if (!this.user.isAnonymous && updates.length > 0) {
@@ -2096,7 +2312,15 @@ export class GraphStore {
     // Relation Types
     for (const props of Object.values(data.relationTypesById)) {
       try {
-        this._addRelationType(props);
+        this.cappedKeywordIndex.add(props.id, () => props.label + " " + props.reverseLabel);
+      } catch (error) {
+        logger.error(`Error adding relation type`, error);
+      }
+    }
+
+    for (const props of Object.values(defaultRelationTypes)) {
+      try {
+        this.cappedKeywordIndex.add(props.id, () => props.label + " " + props.reverseLabel);
       } catch (error) {
         logger.error(`Error adding relation type`, error);
       }
@@ -2104,9 +2328,11 @@ export class GraphStore {
 
     // Relations
     const loadedWithPlaceholders: GraphRelation[] = [];
+
     for (const props of Object.values(data.relationsById)) {
       try {
         const rel = this.loadSerializedRelation(props);
+
         if (rel.from instanceof PlaceholderGraphObject || rel.to instanceof PlaceholderGraphObject) {
           loadedWithPlaceholders.push(rel);
         }
@@ -2171,6 +2397,21 @@ export class GraphStore {
         }
       }
     }
+    // Update relationTypesById with custom relation types.
+    for (const [id, rel] of this.relationsById) {
+      if (rel.relationTypeId === defaultRelationTypes.__reverse__.id) {
+        if (rel.from instanceof GraphNode) {
+          this.relationTypesById[rel.from.id] = {
+            version: rel.from.version,
+            id: rel.from.id,
+            label: rel.from.text,
+            reverseLabel: rel.to.text,
+            authorId: rel.from.authorId,
+            isPublic: rel.from.isPublic,
+          };
+        }
+      }
+    }
   }
 
   /**
@@ -2201,26 +2442,6 @@ export class GraphStore {
       ),
     );
 
-    // cut out into its own load serialized relationtype function?
-    let allRelationTypeUpdates: GraphUpdate[] = [];
-    for (const [key, value] of Object.entries(data.relationTypesById)) {
-      // check if it exists, if it does, don't push it to the array
-      if (!this.relationTypesById[key]) {
-        this.relationTypesById[key] = value;
-        allRelationTypeUpdates.push({
-          operation: "addRelationType",
-          relationType: {
-            version: value.version ?? 1,
-            id: value.id ?? uuid(),
-            authorId: value.authorId ?? this.user.id,
-            isPublic: value.isPublic ?? this.settings?.publicMode ?? false,
-            label: value.label ?? "",
-            reverseLabel: value.reverseLabel ?? `is ${value.label} of`,
-          },
-        });
-      }
-    }
-
     const allRelationUpdates = this.loadBatchedSerializedRelation(data.relationsById);
 
     // Because the nodes and loaded before relations, the canonical relations are not set yet.
@@ -2236,7 +2457,7 @@ export class GraphStore {
       allNodeUpdates.push(...updates);
     }
 
-    return this.updateManager.syncImportUpdates(allNodeUpdates.concat(allRelationUpdates, allRelationTypeUpdates));
+    return this.updateManager.syncImportUpdates(allNodeUpdates.concat(allRelationUpdates));
   }
 
   /**
@@ -2423,12 +2644,29 @@ export class GraphStore {
         if (keywords.every((kw) => searchText.includes(kw))) {
           results.relations.push({ relation, score: scoreMatch(searchText, procText) });
         }
-      } else if (include.relationTypes && isGraphRelationType(object)) {
-        const relationType = object;
-        const label = relationType.label.toLocaleLowerCase();
-        const reverseLabel = getRelationTypeReverseLabel(relationType);
-        if (keywords.every((kw) => label.includes(kw)) || keywords.every((kw) => reverseLabel.includes(kw))) {
-          results.relationTypes.push({ relationType, score: scoreMatch(text, procText) });
+      }
+      if (include.relationTypes && isGraphRelationType(object)) {
+        if (object instanceof GraphNode) {
+          const relationType = object;
+          const label = relationType.text;
+          const reverseLabel = getRelationTypeReverseLabel(relationType);
+          if (keywords.some((kw) => label.includes(kw)) || keywords.some((kw) => reverseLabel.includes(kw))) {
+            results.relationTypes.push({
+              relationType: {
+                label,
+                reverseLabel,
+                ...object,
+              },
+              score: scoreMatch(text, procText),
+            });
+          }
+        } else if (!(object instanceof GraphRelation) && object) {
+          const relationType = object;
+          const label = relationType.label.toLocaleLowerCase();
+          const reverseLabel = getRelationTypeReverseLabel(relationType);
+          if (keywords.every((kw) => label.includes(kw)) || keywords.every((kw) => reverseLabel.includes(kw))) {
+            results.relationTypes.push({ relationType, score: scoreMatch(text, procText) });
+          }
         }
       }
     }

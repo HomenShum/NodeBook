@@ -26,7 +26,7 @@ export const SerializedNodeSchema = z.object({
   isPublic: z.boolean().default(false),
   isNewRelatedObjectsPublic: z.boolean().default(false),
   canonicalRelationId: z.string().nullable().default(null),
-  isChecked: z.boolean().nullable().default(null)
+  isChecked: z.boolean().nullable().default(null),
 });
 export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
 

@@ -1,6 +1,5 @@
 import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
-import { defaultRelationTypes } from "@/app/graph/constants";
 
 import { MIN_NUM_CREATED_NODES, MIN_NUM_CREATED_RELATIONS, MIN_NUM_NODES } from "./helpers";
 
@@ -19,14 +18,10 @@ describe("GraphStore initialization", () => {
 
     expect(graphStore.updateManager.pendingUpdates).toHaveLength(1);
 
-    let addRelationTypeUpdates = 0;
     let addRelationUpdates = 0;
     let addNodeUpdates = 0;
     for (const update of graphStore.updateManager.pendingUpdates[0].updates) {
-      if (update.operation === "addRelationType") {
-        addRelationTypeUpdates += 1;
-        expect(update.relationType.authorId).toBe(MOCK_MEW_USER.id);
-      } else if (update.operation === "addRelation") {
+      if (update.operation === "addRelation") {
         addRelationUpdates += 1;
         expect(update.relation.authorId).toBe(MOCK_MEW_USER.id);
       } else if (update.operation === "addNode") {
@@ -35,7 +30,6 @@ describe("GraphStore initialization", () => {
       }
     }
 
-    expect(addRelationTypeUpdates).toBe(Object.keys(defaultRelationTypes).length);
     expect(addRelationUpdates).toBe(MIN_NUM_CREATED_RELATIONS);
     expect(addNodeUpdates).toBe(MIN_NUM_CREATED_NODES);
   });

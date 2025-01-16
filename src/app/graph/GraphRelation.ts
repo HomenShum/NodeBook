@@ -1,5 +1,6 @@
 import { action, computed, isObservable, makeObservable, observable } from "mobx";
 
+import { GraphNode } from "@/app/graph/GraphNode";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
@@ -10,12 +11,16 @@ import { BaseGraphObject } from "./BaseGraphObject";
 import { GraphObject } from "./GraphObject";
 import { GraphStore } from "./GraphStore";
 
-export function isGraphRelationType(obj: any): obj is GraphRelationType {
+export function isGraphRelationType(obj: GraphObject | GraphRelationType | undefined): boolean {
   return (
-    typeof obj === "object" &&
-    obj.hasOwnProperty("id") &&
-    obj.hasOwnProperty("label") &&
-    obj.hasOwnProperty("reverseLabel")
+    (typeof obj === "object" &&
+      obj.hasOwnProperty("id") &&
+      obj.hasOwnProperty("label") &&
+      obj.hasOwnProperty("reverseLabel")) ||
+    (obj instanceof GraphNode &&
+      obj.relations.filter((relation) => {
+        return relation.relationTypeId === defaultRelationTypes.__reverse__.id && relation.from.id === obj.id;
+      }).length >= 1)
   );
 }
 
@@ -82,6 +87,8 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       isPublic: observable,
       relationTypeId: observable,
       relationType: computed,
+      hasCustomTypeRelation: computed,
+      customTypeRelation: computed,
       from: observable.ref,
       to: observable.ref,
       canonicalRelation: observable,
@@ -158,7 +165,72 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     return this.from.noteContentRelationsList.get(this.id)?.position;
   }
 
+  get hasCustomTypeRelation(): boolean {
+    const typeRelations = this.relations.filter(
+      (relation) => relation.relationTypeId == defaultRelationTypes.__type__.id,
+    );
+    return typeRelations.length !== 0;
+  }
+
+  get customTypeRelation(): GraphRelation | null {
+    const typeRelations = this.relations.filter(
+      (relation) => relation.relationTypeId === defaultRelationTypes.__type__.id,
+    );
+    if (typeRelations && typeRelations.length === 1) {
+      return typeRelations[0];
+    } else if (typeRelations.length === 0) {
+      return null;
+    } else {
+      throw new Error("There can only be one __type__ relation");
+    }
+  }
+
+  /*
+   * Graph relation types can be either a default relationType or a custom relationType. The custom relationTypes are types that are
+   * assigned via a relation of type '__type__' pointing from that relation to another node
+   */
   get relationType(): GraphRelationType {
+    // Look for a relation type with type id '__type__'
+
+    const typeRelations = this.relations.filter(
+      (relation) => relation.relationTypeId == defaultRelationTypes.__type__.id,
+    );
+    if (typeRelations.length > 0) {
+      if (typeRelations.length > 1) {
+        console.warn(`Found multiple type relations for relation ${this.id}`);
+      }
+      const typeRelation = typeRelations[0];
+
+      const fwTypeNode = typeRelation.to;
+
+      const reverseRelations = typeRelation.to.relations.filter(
+        (relation) => relation.relationTypeId == defaultRelationTypes.__reverse__.id,
+      );
+      let reverseLabel = fwTypeNode.text;
+
+      if (reverseRelations.length > 0) {
+        const reverseRelation = reverseRelations[0];
+        reverseLabel = reverseRelation.to.text;
+      }
+
+      if (fwTypeNode) {
+        const foundType = this.store.relationTypesById[fwTypeNode.id];
+        if (foundType) {
+          return foundType;
+        }
+        return {
+          id: fwTypeNode.id,
+          label: fwTypeNode.text,
+          reverseLabel: reverseLabel,
+          authorId: typeRelation.authorId,
+          version: typeRelation.version,
+          isPublic: typeRelation.isPublic || typeRelation.to.isPublic || typeRelation.from.isPublic,
+        };
+      }
+    }
+    if (!this.store.relationTypesById[this.relationTypeId]) {
+      throw new Error("AHAAHAHAH!!");
+    }
     return this.store.relationTypesById[this.relationTypeId];
   }
 

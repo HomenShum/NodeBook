@@ -49,7 +49,7 @@ export const updateRelation = async (
       and(
         eq(graphRelationTable.authorId, oldProps.authorId),
         eq(graphRelationTable.id, oldProps.id),
-        eq(graphRelationTable.version, oldProps.version),
+        // eq(graphRelationTable.version, oldProps.version),
       ),
     )
     .returning({ updatedId: graphRelationTable.id });
@@ -86,7 +86,7 @@ export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedR
       and(
         eq(graphRelationTable.authorId, relation.authorId),
         eq(graphRelationTable.id, relation.id),
-        eq(graphRelationTable.version, relation.version),
+        // eq(graphRelationTable.version, relation.version),
       ),
     )
     .returning({ deletedId: graphRelationTable.id });

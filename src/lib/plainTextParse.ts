@@ -182,7 +182,7 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
         isPublic: false,
         isNewRelatedObjectsPublic: false,
         canonicalRelationId: relId,
-        isChecked: null
+        isChecked: null,
       };
       snapshot.nodesById[nodeId] = node;
       nodeIdsByText[nodeText] = nodeId;

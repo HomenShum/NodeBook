@@ -99,7 +99,7 @@ describe("GraphStore.load", () => {
     expect(loadedRelation).toBeDefined();
     expect(loadedRelation?.from.id).toEqual("a");
     expect(loadedRelation?.to.id).toEqual("b");
-    expect(loadedRelation?.relationType.id).toEqual("test-rt");
+    expect(loadedRelation?.relationType.id).toEqual("child");
     expect(new Set(graphStore.getNode("a")?.noteContentRelationsList.keys)).toEqual(new Set(["a-test-rt-b"]));
   });
 
