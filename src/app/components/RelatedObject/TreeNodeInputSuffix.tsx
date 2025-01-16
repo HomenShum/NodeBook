@@ -50,9 +50,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
     <input
       className={styles.RelatedObjectInputSuffix}
       onFocus={() => {
-        if (!tree.isNodeFocused(treeNode.id)) {
-          tree.setFocusedNode(treeNode.path);
-        }
+        tree.setFocusedNode(treeNode.path);
       }}
       onKeyDown={async (e: React.KeyboardEvent) => {
         const isMod = e.metaKey || e.ctrlKey;
