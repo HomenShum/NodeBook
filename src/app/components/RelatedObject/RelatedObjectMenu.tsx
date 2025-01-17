@@ -1,6 +1,5 @@
 import {
   Beaker,
-  ClipboardCopy,
   Delete,
   Download,
   Edit,
@@ -15,6 +14,7 @@ import {
   PinOff,
   Plus,
   RefreshCcwDot,
+  SendToBack,
   User,
 } from "lucide-react";
 import { action } from "mobx";
@@ -165,7 +165,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
           await navigator.clipboard.writeText(`${domain}${path}`);
         })}
       >
-        <ClipboardCopy size={14} />
+        <Link size={14} />
         Copy URL
       </DropdownMenuItem>
       <DropdownMenuItem
@@ -211,8 +211,8 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
             tree.setRoot(tree.rootObject);
           }}
         >
-          <Link size={14} />
-          Make current path canonical
+          <SendToBack size={14} />
+          Make default path
         </DropdownMenuItem>
       )}
       <DropdownMenuSeparator />
