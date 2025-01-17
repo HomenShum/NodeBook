@@ -404,6 +404,26 @@ export class Tree {
     this.selection = { type: "node", anchorNodeId, headNodeId };
   }
 
+  deletedRelationTypeOfEmptySelection() {
+    if (this.selection?.type !== "editor") {
+      return false;
+    }
+    const selectedNode = this.getNode(this.selection.treeNodeId);
+    if (!selectedNode || selectedNode.object.text !== "") {
+      return false;
+    }
+    if (selectedNode.relationWithParent.relationType.id === defaultRelationTypes.child.id) {
+      return false;
+    }
+    this.graphStore.updateRelation({
+      relationId: selectedNode.relationWithParent.id,
+      relationProps: {
+        relationType: defaultRelationTypes.child,
+      },
+    });
+    return true;
+  }
+
   /**
    * Set the root of the tree.
    *

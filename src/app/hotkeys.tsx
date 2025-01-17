@@ -14,6 +14,7 @@ export const isMoveSelectionHeadDownHotkey = isHotkey("shift+ArrowDown");
 export const isMoveSelectedNodesUpHotkey = isHotkey("mod+shift+ArrowUp");
 export const isMoveSelectedNodesDownHotkey = isHotkey("mod+shift+ArrowDown");
 export const isDeleteSelectionHotkey = isHotkey(["delete", "backspace"]);
+export const isDeleteRelationTypeHotkey = isHotkey("mod+shift+backspace");
 export const isIndentSelectionHotkey = isHotkey("tab");
 export const isDedentSelectionHotkey = isHotkey("shift+tab");
 export const isEscapeSelectionHotkey = isHotkey("esc");
@@ -48,6 +49,12 @@ export const treeHotkeyMapping: {
     predicate: (event, tree?: Tree) => tree?.selection?.type === "node" && isMoveRightHotKey(event),
     action: (tree: Tree) => tree.setAnchorToEditorSelection("end"),
   },
+  // {
+  //   predicate: (event, tree?: Tree) => tree?.selection?.type === "editor" && isDeleteRelationTypeHotkey(event),
+  //   action: (tree: Tree) => {
+  //     return tree.deletedRelationTypeOfEmptySelection();
+  //   },
+  // },
   { predicate: isMoveSelectionHeadUpHotkey, action: (tree: Tree) => tree.moveNodeSelectionHeadUp() },
   { predicate: isMoveSelectionHeadDownHotkey, action: (tree: Tree) => tree.moveNodeSelectionHeadDown() },
   { predicate: isMoveSelectedNodesUpHotkey, action: (tree: Tree) => tree.moveSelectedNodesUp() },

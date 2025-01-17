@@ -1,11 +1,13 @@
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { observer } from "mobx-react-lite";
-import { RefObject } from "react";
+import { RefObject, useEffect } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
 import { ArrowKeyPlugin } from "@/app/editor/plugins/ArrowKeyPlugin";
@@ -28,6 +30,7 @@ import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
+import { useTree } from "@/app/tree/TreeContext";
 
 import styles from "./Editor.module.css";
 
@@ -40,6 +43,29 @@ interface Props {
 export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEditable, editorRef }: Props) {
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
+  }
+
+  function PreventCommandBackspace() {
+    const [editor] = useLexicalComposerContext();
+    const tree = useTree();
+    useEffect(() => {
+      return editor.registerCommand(
+        KEY_DOWN_COMMAND,
+        (event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key === "Backspace") {
+            const res = tree.deletedRelationTypeOfEmptySelection();
+            if (res) {
+              event.stopPropagation();
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }
+          }
+          return false;
+        },
+        COMMAND_PRIORITY_NORMAL,
+      );
+    }, [editor, tree]);
+    return null;
   }
 
   const tree = treeNode.tree;
@@ -75,8 +101,10 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <RelationPlugin />}
         {isEditorEditable && <IgnoreModShiftAPlugin />}
         {isEditorEditable && <AtKeyPlugin treeNode={treeNode} />}
+        {isEditorEditable && <PreventCommandBackspace />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />
+
         <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
         <LogCollapsedEditorPlugin />
       </LexicalComposer>
