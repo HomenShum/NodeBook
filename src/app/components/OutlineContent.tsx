@@ -37,22 +37,29 @@ interface Props {
 
 const RelationHeader = observer(function RelationHeader({ relation }: { relation: GraphRelation }) {
   const setRoot = useSetMainRoot();
+  const customTypeRelation = relation.customTypeRelation;
 
   return (
     <div className={s.RelationHeader}>
       <div className={s.RelationObjects}>
         From:
         <span className={s.RelationObject} onClick={() => setRoot(relation.from)}>
-          {relation.from.id}
+          {relation.from.text.length < 14 ? relation.from.text : `${relation.from.text.slice(0, 10)}(...)`}
         </span>
         To:
         <span className={s.RelationObject} onClick={() => setRoot(relation.to)}>
-          {relation.to.id}
+          {relation.to.text.length < 14 ? relation.to.text : `${relation.to.text.slice(0, 10)}(...)`}
         </span>
       </div>
       <div className={s.RelationObjects}>
         Relation Type:
-        <div className={s.RelationType}>{relation.relationType.label}</div>
+        <div
+          className={s.RelationType}
+          style={{ cursor: customTypeRelation ? "pointer" : "default" }}
+          onClick={() => (customTypeRelation ? setRoot(customTypeRelation.to) : null)}
+        >
+          {relation.relationType.label}
+        </div>
       </div>
     </div>
   );

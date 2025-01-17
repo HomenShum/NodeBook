@@ -157,4 +157,5 @@
 
 .RelationType:hover {
   color: var(--teal-10);
+  text-decoration: underline;
 }
