@@ -5,7 +5,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
+import { COMMAND_PRIORITY_HIGH, KEY_DOWN_COMMAND } from "lexical";
 import { observer } from "mobx-react-lite";
 import { RefObject, useEffect } from "react";
 
@@ -62,7 +62,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
           }
           return false;
         },
-        COMMAND_PRIORITY_NORMAL,
+        COMMAND_PRIORITY_HIGH,
       );
     }, [editor, tree]);
     return null;
