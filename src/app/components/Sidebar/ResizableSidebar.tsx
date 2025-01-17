@@ -40,7 +40,7 @@ import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
-import { useSetMainRoot } from "@/app/tree/utils";
+import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -73,6 +73,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const settingsStore = useSettingsStore();
   const viewStore = useViewStore();
   const setRoot = useSetMainRoot();
+  const openNewTab = useOpenNewTab();
   const router = useRouter();
 
   const handleOpenDevTools = () => {
@@ -249,6 +250,8 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               onClick={(e) => {
                 if (e.shiftKey) {
                   viewStore.createSidebarTree(graphStore.globalRoot);
+                } else if (e.metaKey) {
+                  openNewTab(graphStore.globalRoot);
                 } else {
                   handleNavigation(() => {
                     setRoot(graphStore.globalRoot);
@@ -270,6 +273,8 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 onClick={(e) => {
                   if (e.shiftKey) {
                     viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
+                  } else if (e.metaKey) {
+                    openNewTab(graphStore.getDefaultRootForUser());
                   } else {
                     handleNavigation(() => {
                       setRoot(graphStore.getDefaultRootForUser());
@@ -292,6 +297,8 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 onClick={(e) => {
                   if (e.shiftKey) {
                     viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
+                  } else if (e.metaKey) {
+                    openNewTab(graphStore.getDefaultRootForUser());
                   } else {
                     handleNavigation(() => {
                       setRoot(graphStore.getDefaultRootForUser());
@@ -310,8 +317,12 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               variant="ghost"
               className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
               data-tooltip="Go to Query Interface"
-              onClick={() => {
-                handleNavigation(() => router.push("/query"));
+              onClick={(e) => {
+                if (e.metaKey) {
+                  window.open("/query", "_blank");
+                } else {
+                  handleNavigation(() => router.push("/query"));
+                }
               }}
             >
               <span>
@@ -326,9 +337,17 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   variant="ghost"
                   className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                   data-tooltip="Go to your news feed"
-                  onClick={() => {
-                    handleNavigation(() => setRoot(graphStore.globalRoot));
-                    viewStore.setFlattenSublists(true);
+                  onClick={(e) => {
+                    if (e.shiftKey) {
+                      viewStore.createSidebarTree(graphStore.globalRoot);
+                    } else if (e.metaKey) {
+                      openNewTab(graphStore.globalRoot);
+                    } else {
+                      handleNavigation(() => {
+                        setRoot(graphStore.globalRoot);
+                        viewStore.setFlattenSublists(true);
+                      });
+                    }
                   }}
                 >
                   <span>
@@ -343,8 +362,14 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                 data-tooltip="See recently created notes"
-                onClick={() => {
-                  handleNavigation(() => router.push("/all-nodes"));
+                onClick={(e) => {
+                  if (e.shiftKey) {
+                    viewStore.createSidebarTree(graphStore.globalRoot);
+                  } else if (e.metaKey) {
+                    openNewTab(graphStore.globalRoot);
+                  } else {
+                    handleNavigation(() => router.push("/all-nodes"));
+                  }
                 }}
               >
                 <span>

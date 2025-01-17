@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
-import { useSetMainRoot } from "@/app/tree/utils";
+import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,7 @@ interface TreeElementProps {
 const TreeElement = observer(function TreeElement({ object }: TreeElementProps) {
   const viewStore = useViewStore();
   const setRoot = useSetMainRoot();
+  const openNewTab = useOpenNewTab();
   const [isExpanded, setIsExpanded] = useState(true);
   const uniqueChildren = [...new Set(object.children)];
 
@@ -32,27 +33,45 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
     [viewStore],
   );
 
+  const handleMainClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      if (e.shiftKey) {
+        viewStore.createSidebarTree(object);
+      } else if (e.metaKey) {
+        openNewTab(object);
+      } else {
+        setIsExpanded(!isExpanded);
+      }
+    },
+    [uniqueChildren.length, setRoot, object, isExpanded],
+  );
+
+  const handleChildClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => {
+      if (e.shiftKey) {
+        viewStore.createSidebarTree(child);
+      } else if (e.metaKey) {
+        openNewTab(child);
+      } else {
+        handleNavigation(() => setRoot(child));
+      }
+    },
+    [uniqueChildren.length, setRoot, object, viewStore],
+  );
+
   return (
     <>
-      <div className={styles.SidebarTreeBlock}>
-        <div className={styles1.SidebarSectionHeader}>
-          <span>{object.text}</span>
-        </div>
-        <div className={styles.IconBox} onClick={() => uniqueChildren.length > 0 && setIsExpanded(!isExpanded)}>
+      <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)} onPointerDown={handleMainClick}>
+        <span>{object.text}</span>
+        <div className={styles.IconBox}>
           <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
         </div>
       </div>
       <div className={styles.SidebarTreeChildren}>
         {isExpanded &&
           uniqueChildren.map((o) => (
-            <Button
-              variant="ghost"
-              className={cn(styles.Button)}
-              onClick={() => {
-                handleNavigation(() => setRoot(o));
-              }}
-              key={o.id}
-            >
+            <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)} key={o.id}>
               {o.text}
             </Button>
           ))}

@@ -210,6 +210,13 @@ export function useSetMainRoot() {
   );
 }
 
+export function useOpenNewTab() {
+  return useCallback((obj: ObjectPath | GraphObject) => {
+    const objectPath = isGraphObject(obj) ? getCanonicalPath(obj) : obj;
+    window.open(createRouteUrl(objectPath), "_blank");
+  }, []);
+}
+
 export function useSetAuthorRoot() {
   const setRoot = useSetMainRoot();
   const graphStore = useGraphStore();
