@@ -2,9 +2,9 @@ import {
   BellDotIcon,
   FileSpreadsheet,
   Globe,
+  HelpCircle,
   Home,
   Key,
-  KeyboardIcon,
   ListIcon,
   LogIn,
   LogOut,
@@ -193,7 +193,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               className={cn(styles.ShowTooltip, styles.BottomAlign)}
               data-tooltip="Help"
             >
-              <KeyboardIcon size={16} strokeWidth={1.5} />
+              <HelpCircle size={16} strokeWidth={1.5} />
             </Button>
             <Button
               variant="ghost"

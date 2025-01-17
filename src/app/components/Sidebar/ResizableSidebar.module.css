@@ -101,10 +101,6 @@
   cursor: pointer;
 }
 
-.Nav > button:nth-child(1) > svg circle {
-  color: red;
-}
-
 .TopContent {
   display: flex;
   gap: 2px;
@@ -253,4 +249,8 @@
   .Sidebar {
     width: 100% !important;
   }
+}
+
+.HelpIcon circle {
+  stroke: inherit;
 }
