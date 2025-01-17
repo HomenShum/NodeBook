@@ -2,7 +2,25 @@
   position: relative;
   line-height: 1;
   height: 14px;
-  width: 14px;
+  width: 20px;
+  padding-left: 5px;
+  padding-right: 5px;
+  align-items: center;
+}
+
+.SyncStatusIndicator .Ok {
+  stroke: #08a46c;
+  fill: #08a46c;
+}
+
+.SyncStatusIndicator .Offline {
+  stroke: #c94a2e;
+  fill: #c94a2e;
+}
+
+.SyncStatusIndicator .Syncing {
+  fill: #eabd5d;
+  stroke: #eabd5d;
 }
 
 .ShowTooltip::after {

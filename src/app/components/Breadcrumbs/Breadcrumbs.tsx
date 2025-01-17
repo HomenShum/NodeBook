@@ -19,15 +19,15 @@ import {
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
+import { modKeyName, optionKeyName } from "@/app/hotkeys";
 import { TreeNode } from "@/app/tree/nodes";
 import { Ancestor, getAncestorsAsArray, useSetMainRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { GraphNode } from "@/app/graph/GraphNode";
-import {modKeyName, optionKeyName} from "@/app/hotkeys";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -228,7 +228,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
                 alsoSetRelatedObjects: false,
                 alsoSetChildrenAndDescendants: false,
                 isNewRelatedObjectsPublic: false,
-                isChecked: object instanceof GraphNode ? object.isChecked : null
+                isChecked: object instanceof GraphNode ? object.isChecked : null,
               },
             })),
           );
@@ -273,7 +273,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
               style={{ position: "relative" }}
               variant="default"
               className={cn(s.ShowTooltip, s.BottomAlign)}
-              data-tooltip={`Command bar · ` + [`${modKeyName}`,"⇧","K"].join("+")}
+              data-tooltip={`Command bar · ` + [`${modKeyName}`, "⇧", "K"].join("+")}
               size="icon"
               onClick={() => viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen)}
             >
@@ -292,26 +292,32 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
             <Button
               style={{ position: "relative" }}
               className={cn(s.ShowTooltip, s.RightAlign)}
-              data-tooltip={viewStore.quickCaptureOpen ? `Close Quick Capture` : (`Open Quick Capture · ` + [`${modKeyName}`,`${optionKeyName}`,"K"].join('+'))}
+              data-tooltip={
+                viewStore.quickCaptureOpen
+                  ? `Close Quick Capture`
+                  : `Open Quick Capture · ` + [`${modKeyName}`, `${optionKeyName}`, "K"].join("+")
+              }
               variant={"default"}
               size="icon"
-              onClick={() => viewStore.quickCaptureOpen ? viewStore.closeQuickCapture(): viewStore.openQuickCaptureAndCreateNode()}
+              onClick={() =>
+                viewStore.quickCaptureOpen ? viewStore.closeQuickCapture() : viewStore.openQuickCaptureAndCreateNode()
+              }
             >
               {viewStore.quickCaptureOpen ? <X size={14} /> : <QuickCaptureIcon />}
             </Button>
             <Button
               style={{ position: "relative" }}
               className={cn(s.ShowTooltip, s.RightAlign)}
-              data-tooltip={(viewStore.rightSidebarOpen ? "Close Side Tree View" : "Open Side Tree View") + ` · ` +[`${modKeyName}`,`${optionKeyName}`,"S"].join('+')}
+              data-tooltip={
+                (viewStore.rightSidebarOpen ? "Close Side Tree View" : "Open Side Tree View") +
+                ` · ` +
+                [`${modKeyName}`, `${optionKeyName}`, "S"].join("+")
+              }
               variant={viewStore.rightSidebarOpen ? "active" : "default"}
               size="icon"
               onClick={() => viewStore.toggleRightSidebar()}
             >
-              {viewStore.rightSidebarOpen ? (
-                <SquareSplitHorizontal size={14} strokeWidth={1.5} />
-              ) : (
-                <SquareSplitHorizontal strokeWidth={1.5} size={14} />
-              )}
+              <SquareSplitHorizontal size={14} strokeWidth={1.5} />
             </Button>
             <SyncStatusIndicator />
           </div>

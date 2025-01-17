@@ -1,4 +1,4 @@
-import { CircleCheckBig, CircleEllipsis, CircleOff } from "lucide-react";
+import { Circle } from "lucide-react";
 import { observer } from "mobx-react-lite";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -33,13 +33,17 @@ export const SyncStatusIndicator = observer(function SyncStatusIndicator() {
 
   return (
     <span className={cn(styles.SyncStatusIndicator, styles.ShowTooltip, styles.RightAlign)} data-tooltip={tooltip}>
-      {graphStore.updateManager.offlineSince !== null ? (
-        <CircleOff size={14} strokeWidth={1.5} />
-      ) : graphStore.updateManager.numPendingUpdates > 0 ? (
-        <CircleEllipsis size={14} strokeWidth={1.5} />
-      ) : (
-        <CircleCheckBig size={14} strokeWidth={1.5} />
-      )}
+      <Circle
+        className={
+          graphStore.updateManager.offlineSince !== null
+            ? styles.Offline
+            : graphStore.updateManager.numPendingUpdates > 0
+            ? styles.Syncing
+            : styles.Ok
+        }
+        size={10}
+        strokeWidth={1.5}
+      />
     </span>
   );
 });
