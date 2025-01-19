@@ -131,7 +131,7 @@ export const CmdEditor = ({ dropdownContainerRef, onChange, initialValue }: Prop
       />
       <HistoryPlugin />
       <OnChangePlugin onChange={onChange} />
-      <CommandBarMentionDropdown dropdownContainerRef={dropdownContainerRef} />
+      {!graphStore.user.isAnonymous && <CommandBarMentionDropdown dropdownContainerRef={dropdownContainerRef} />}
       <PreventDefaultPlugin />
       <ReplacementPlugin treeNode={null} />
     </LexicalComposer>

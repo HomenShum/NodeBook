@@ -69,19 +69,45 @@ const CommandBar = observer(() => {
   const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, graphStore.userRoot.id);
 
   const filteredCommands = useMemo<Command[]>(() => {
-    return [
-      ...(search.text === ""
-        ? getRecentNodes().map(({ object }) => {
-            const path = getCanonicalPath(object);
+    const commands: Command[] = [];
+    if (search.text === "") {
+      commands.push(
+        ...getRecentNodes().map(({ object }) => {
+          const path = getCanonicalPath(object);
+          return {
+            type: "navigate" as const,
+            id: object.id,
+            name: object.text,
+            object,
+            path,
+            perform: (event?: React.MouseEvent<HTMLDivElement>) => {
+              if (event?.shiftKey) {
+                viewStore.createSidebarTree(object);
+              } else {
+                close();
+                resetSearch();
+                setRoot(path);
+              }
+            },
+          };
+        }),
+      );
+    } else {
+      commands.push(
+        ...graphStore
+          .search({ text: search.text, filters: { types: ["node"] }, sort: { by: "score" } })
+          .nodes.slice(0, MAX_DROPDOWN_RESULTS)
+          .map(({ node }) => {
+            const path = getCanonicalPath(node);
             return {
               type: "navigate" as const,
-              id: object.id,
-              name: object.text,
-              object,
+              id: node.id,
+              name: node.text,
+              object: node,
               path,
               perform: (event?: React.MouseEvent<HTMLDivElement>) => {
                 if (event?.shiftKey) {
-                  viewStore.createSidebarTree(object);
+                  viewStore.createSidebarTree(node);
                 } else {
                   close();
                   resetSearch();
@@ -89,40 +115,11 @@ const CommandBar = observer(() => {
                 }
               },
             };
-          })
-        : graphStore
-            .search({ text: search.text, filters: { types: ["node"] }, sort: { by: "score" } })
-            .nodes.sort((a, b) => {
-              if (a.score === b.score) {
-                // If scores are the same, prefer non-notes over notes
-                const aIsNote = a.node.noteContentRelationsList.size > 0;
-                const bIsNote = b.node.noteContentRelationsList.size > 0;
-                if (aIsNote && !bIsNote) return 1;
-                if (!aIsNote && bIsNote) return -1;
-              }
-              return 0;
-            })
-            .slice(0, MAX_DROPDOWN_RESULTS)
-            .map(({ node }) => {
-              const path = getCanonicalPath(node);
-              return {
-                type: "navigate" as const,
-                id: node.id,
-                name: node.text,
-                object: node,
-                path,
-                perform: (event?: React.MouseEvent<HTMLDivElement>) => {
-                  if (event?.shiftKey) {
-                    viewStore.createSidebarTree(node);
-                  } else {
-                    close();
-                    resetSearch();
-                    setRoot(path);
-                  }
-                },
-              };
-            })),
-      {
+          }),
+      );
+    }
+    if (!graphStore.user.isAnonymous) {
+      commands.push({
         type: "create" as const,
         id: "create",
         name:
@@ -160,8 +157,9 @@ const CommandBar = observer(() => {
 
           return node.id;
         },
-      },
-    ];
+      });
+    }
+    return commands;
   }, [graphStore, setRoot, search, close, addToast, handleZoomToNode, getRecentNodes]);
 
   useEffect(() => {
@@ -232,38 +230,36 @@ const CommandBar = observer(() => {
   }, [viewStore.isCommandBarOpen, close]);
 
   return (
-    !user.isAnonymous && (
-      <Dialog.Root open={viewStore.isCommandBarOpen} onOpenChange={viewStore.setCommandBarOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay className={styles.Overlay}>
-            <div ref={dropdownContainerRef} className={styles.DropdownContainer} />
-            <Dialog.Content className={styles.Content} onKeyDown={handleKeyDown} onInteractOutside={close}>
-              <VisuallyHidden asChild>
-                <Dialog.DialogTitle>Command Bar</Dialog.DialogTitle>
-              </VisuallyHidden>
-              <VisuallyHidden asChild>
-                <Dialog.DialogDescription>
-                  Search for nodes or create a new one. Use arrow keys to navigate and Enter to select.
-                </Dialog.DialogDescription>
-              </VisuallyHidden>
-              <CmdEditor dropdownContainerRef={dropdownContainerRef} onChange={setSearch} initialValue={search} />
-              <div className={styles.List} ref={listRef}>
-                {filteredCommands.map((command, index) => (
-                  <div
-                    key={command.id}
-                    className={cn(styles.Item, selectedIndex === index && styles.Selected)}
-                    onClick={(e) => command.perform(e)}
-                  >
-                    <span>{command.name}</span>
-                    {command.type !== "create" && <Path path={command.path} />}
-                  </div>
-                ))}
-              </div>
-            </Dialog.Content>
-          </Dialog.Overlay>
-        </Dialog.Portal>
-      </Dialog.Root>
-    )
+    <Dialog.Root open={viewStore.isCommandBarOpen} onOpenChange={viewStore.setCommandBarOpen}>
+      <Dialog.Portal>
+        <Dialog.Overlay className={styles.Overlay}>
+          <div ref={dropdownContainerRef} className={styles.DropdownContainer} />
+          <Dialog.Content className={styles.Content} onKeyDown={handleKeyDown} onInteractOutside={close}>
+            <VisuallyHidden asChild>
+              <Dialog.DialogTitle>Command Bar</Dialog.DialogTitle>
+            </VisuallyHidden>
+            <VisuallyHidden asChild>
+              <Dialog.DialogDescription>
+                Search for nodes or create a new one. Use arrow keys to navigate and Enter to select.
+              </Dialog.DialogDescription>
+            </VisuallyHidden>
+            <CmdEditor dropdownContainerRef={dropdownContainerRef} onChange={setSearch} initialValue={search} />
+            <div className={styles.List} ref={listRef}>
+              {filteredCommands.map((command, index) => (
+                <div
+                  key={command.id}
+                  className={cn(styles.Item, selectedIndex === index && styles.Selected)}
+                  onClick={(e) => command.perform(e)}
+                >
+                  <span>{command.name}</span>
+                  {command.type !== "create" && <Path path={command.path} />}
+                </div>
+              ))}
+            </div>
+          </Dialog.Content>
+        </Dialog.Overlay>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 });
 

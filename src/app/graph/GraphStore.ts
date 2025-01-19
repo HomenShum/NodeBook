@@ -36,7 +36,7 @@ import {
 } from "@/lib/constants";
 import logger from "@/lib/logger";
 import { getInverseRelation } from "@/lib/relation-inverter";
-import { CappedKeywordIndex, KeywordTrieIndex, NoopKeywordIndex } from "@/lib/trie";
+import { CappedKeywordIndex, KeywordTrieIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
@@ -93,7 +93,7 @@ export class GraphStore {
       (updates) => this.applyUpdates(updates),
       authedFetch,
     );
-    this.cappedKeywordIndex = user.isAnonymous ? new NoopKeywordIndex() : new KeywordTrieIndex(MAX_PREFIX_LENGTH);
+    this.cappedKeywordIndex = new KeywordTrieIndex(MAX_PREFIX_LENGTH);
     this.ensureDefaultObjectsCreated();
     this.makeObservable();
   }
@@ -2628,6 +2628,7 @@ export class GraphStore {
 
     // Use the keyword index to get an initial set of object ids
     const initialObjectIds = this.cappedKeywordIndex.getIds(procText);
+    console.log("initial", initialObjectIds);
 
     // Then do a full text search on the results
     for (const id of initialObjectIds) {
