@@ -9,7 +9,8 @@ import { Path } from "@/app/components/Path";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
-import { Chip } from "@/app/graph/GraphNode";
+import { graphNodeIsCustomRelType } from "@/app/graph/constants";
+import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { useToast } from "@/app/hooks/useToast";
@@ -251,7 +252,15 @@ const CommandBar = observer(() => {
                   className={cn(styles.Item, selectedIndex === index && styles.Selected)}
                   onClick={(e) => command.perform(e)}
                 >
-                  <span>{command.name}</span>
+                  <span style={{ display: "flex", position: "relative", width: "100%" }}>
+                    {command.name}{" "}
+                    {command.type === "navigate" &&
+                    command.object instanceof GraphNode &&
+                    graphNodeIsCustomRelType(command.object, true) ? (
+                      <div className={styles.RelTypeIndicator}>Type</div>
+                    ) : null}
+                  </span>
+
                   {command.type !== "create" && <Path path={command.path} />}
                 </div>
               ))}

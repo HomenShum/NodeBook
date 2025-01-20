@@ -55,6 +55,15 @@
   flex-direction: column;
 }
 
+.RelTypeIndicator {
+  padding: "0 6px";
+  background: var(--gray-2);
+  height: "18px";
+  border-radius: "4px";
+  font-size: var(--font-size-mini);
+  color: var(--gray-10);
+}
+
 .DropdownItemContent {
   display: flex;
   align-items: start;

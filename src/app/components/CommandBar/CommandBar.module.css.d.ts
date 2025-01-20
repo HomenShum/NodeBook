@@ -5,6 +5,7 @@ declare const styles: {
   readonly "Item": string;
   readonly "List": string;
   readonly "Overlay": string;
+  readonly "RelTypeIndicator": string;
   readonly "Selected": string;
 };
 export = styles;

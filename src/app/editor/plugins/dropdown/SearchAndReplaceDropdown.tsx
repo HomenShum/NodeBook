@@ -220,18 +220,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
                         <div className={styles.DropdownHelper}>Tab to select </div>
                       )}
                       {match.type === "node" && graphNodeIsCustomRelType(match.object, true) ? (
-                        <div
-                          style={{
-                            padding: "0 6px",
-                            background: "var(--gray-2)",
-                            height: "18px",
-                            borderRadius: "4px",
-                            fontSize: "var(--font-size-mini)",
-                            color: "var(--gray-10)",
-                          }}
-                        >
-                          Type
-                        </div>
+                        <div className={styles.RelTypeIndicator}>Type</div>
                       ) : null}
                       {match.type === "node" ? <RelationCounter object={match.object} showTooltip={false} /> : null}
                     </div>
