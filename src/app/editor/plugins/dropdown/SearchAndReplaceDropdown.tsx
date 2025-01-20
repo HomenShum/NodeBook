@@ -16,10 +16,10 @@ import { Path } from "@/app/components/Path";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
+import { graphNodeIsCustomRelType } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
 import { cn } from "@/lib/utils";
 
 import styles from "./DropdownPlugin.module.css";
@@ -219,6 +219,20 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
                       {index === 0 && highlightedIndex === null && (
                         <div className={styles.DropdownHelper}>Tab to select </div>
                       )}
+                      {match.type === "node" && graphNodeIsCustomRelType(match.object, true) ? (
+                        <div
+                          style={{
+                            padding: "0 6px",
+                            background: "var(--gray-2)",
+                            height: "18px",
+                            borderRadius: "4px",
+                            fontSize: "var(--font-size-mini)",
+                            color: "var(--gray-10)",
+                          }}
+                        >
+                          Type
+                        </div>
+                      ) : null}
                       {match.type === "node" ? <RelationCounter object={match.object} showTooltip={false} /> : null}
                     </div>
                   </div>

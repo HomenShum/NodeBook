@@ -19,9 +19,9 @@ export const getRelationTypeIcon = (relationType: string): (() => JSX.Element) |
   }
 };
 
-export const graphNodeIsCustomRelType = (graphNode: GraphNode): boolean => {
+export const graphNodeIsCustomRelType = (graphNode: GraphNode, reverse: boolean = false): boolean => {
   const reverseRelations = graphNode.relations.filter(
-    (relation) => relation.relationTypeId === "__reverse__" && relation.from.id === graphNode.id,
+    (relation) => relation.relationTypeId === "__reverse__" && (reverse || relation.from.id === graphNode.id),
   );
   if (reverseRelations.length === 1) {
     return true;
