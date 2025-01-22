@@ -2628,7 +2628,6 @@ export class GraphStore {
 
     // Use the keyword index to get an initial set of object ids
     const initialObjectIds = this.cappedKeywordIndex.getIds(procText);
-    console.log("initial", initialObjectIds);
 
     // Then do a full text search on the results
     for (const id of initialObjectIds) {

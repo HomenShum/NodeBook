@@ -481,7 +481,6 @@ export class Tree {
             break;
         }
       }
-      console.log(isChecked);
       return {
         type: "updateNode" as const,
         transaction: {
@@ -1023,7 +1022,6 @@ export class Tree {
       const curGroup = treeNode.parentGroup.id;
       const firstInGroup = treeNode.parent.childrenGroupsById[curGroup].nodes[0].id === treeNode.id;
       if (firstInGroup) {
-        console.log("HEREHERE");
         txs.push({
           type: "addChildNode",
           transaction: {
