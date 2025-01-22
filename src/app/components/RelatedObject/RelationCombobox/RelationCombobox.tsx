@@ -59,6 +59,8 @@ export const RelationCombobox = observer(function RelationCombobox({
       return fwTypeNode.text;
     }
     return isForward ? relation.relationType.label : relation.relationType.reverseLabel;
+    // For the below eslint error, if you don't specify the .to and .relations fields
+    //  combobox relationtypes won't update when the nodes are changed.
   }, [
     isForward,
     relation.hasCustomTypeRelation,
