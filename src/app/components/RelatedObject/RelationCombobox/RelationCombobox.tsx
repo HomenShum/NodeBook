@@ -1,4 +1,5 @@
 "use client";
+// eslint-disable-file no-use-before-define
 
 import { observer } from "mobx-react-lite";
 import * as React from "react";
@@ -9,7 +10,7 @@ import styles from "@/app/components/RelatedObject/styles/RelationCombobox.modul
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { useUser } from "@/app/contexts/UserContext";
-import { getRelationTypeIcon } from "@/app/graph/constants";
+import { defaultRelationTypes, getRelationTypeIcon } from "@/app/graph/constants";
 import { DescendantTreeNode, PointerTreeNode } from "@/app/tree/nodes";
 import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -40,6 +41,34 @@ export const RelationCombobox = observer(function RelationCombobox({
   const isMobile = useIsMobile();
   const [isHovered, setIsHovered] = React.useState(isMobile);
 
+  const label = React.useMemo(() => {
+    if (relation.hasCustomTypeRelation) {
+      const typeRelation = relation.customTypeRelation;
+      if (!typeRelation) return "";
+      const fwTypeNode = typeRelation.to;
+      if (isForward) {
+        return fwTypeNode.text;
+      }
+      const reverseRelations = fwTypeNode.relations.filter(
+        (rel) => rel.relationTypeId === defaultRelationTypes.__reverse__.id,
+      );
+      if (reverseRelations.length > 0) {
+        const reverseNode = reverseRelations[0].to;
+        return reverseNode.text;
+      }
+      return fwTypeNode.text;
+    }
+    return isForward ? relation.relationType.label : relation.relationType.reverseLabel;
+  }, [
+    isForward,
+    relation.hasCustomTypeRelation,
+    relation.customTypeRelation,
+    relation.customTypeRelation?.to,
+    relation.customTypeRelation?.to?.relations,
+    relation.relationType.label,
+    relation.relationType.reverseLabel,
+  ]);
+
   if (viewStore.flattenSublists && treeNode instanceof PointerTreeNode && !treeNode.showRelation) {
     return null;
   }
@@ -51,7 +80,6 @@ export const RelationCombobox = observer(function RelationCombobox({
     treeNode.tree.setFocusedNode(treeNode.id);
   };
 
-  const label = isForward ? relation.relationType.label : relation.relationType.reverseLabel;
   if (user.isAnonymous) {
     return (
       <Button variant="ghost" size="sm" className={styles.RelationComboboxLabel} disabled>
