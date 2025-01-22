@@ -1013,6 +1013,60 @@ export class Tree {
       return { txs, newNodePath: treeNode.parentGroup.path + "/" + relationId };
     }
 
+    function createSiblingAbove(treeNode: DescendantTreeNode) {
+      const txs: TxCombined = [];
+
+      const relationId = uuid();
+      // const nodeId = uuid();
+
+      const sibAbove = treeNode.siblingAbove;
+      const curGroup = treeNode.parentGroup.id;
+      const firstInGroup = treeNode.parent.childrenGroupsById[curGroup].nodes[0].id === treeNode.id;
+      if (firstInGroup) {
+        console.log("HEREHERE");
+        txs.push({
+          type: "addChildNode",
+          transaction: {
+            parentId: treeNode.parent.object.id,
+            after: 0,
+            relationProps: {
+              id: relationId,
+            },
+          },
+        });
+      } else {
+        txs.push({
+          type: "addChildNode",
+          transaction: {
+            parentId: treeNode.parent.object.id,
+            after: sibAbove ? sibAbove.relationWithParent : -1,
+            relationProps: {
+              id: relationId,
+            },
+          },
+        });
+      }
+
+      if (treeNode.parentGroup.id === "pinned" || treeNode.parentGroup.id === "noteContent") {
+        txs.push({
+          type: "addRelationToList",
+          transaction: {
+            objectId: treeNode.parent.object.id,
+            relationId,
+            listType: treeNode.parentGroup.id,
+            after: firstInGroup ? 0 : sibAbove ? sibAbove.relationWithParent : -1,
+          },
+        });
+      }
+
+      // where to focus
+      const newNodePath = treeNode.parentGroup.path + "/" + relationId;
+
+      // expansion updates
+      // const expansions = { [treeNode.path]: false, [newNodePath]: treeNode.isExpanded };
+      return { txs, newNodePath, expansions: undefined };
+    }
+
     function moveToNewRelationBelow(treeNode: DescendantTreeNode) {
       const txs: TxCombined = [];
 
@@ -1082,13 +1136,13 @@ export class Tree {
         treeNode.object.text.length > 0;
       if (isExpandedWithChildren) {
         if (atStartOfChildWithContent) {
-          changes = moveToNewRelationBelow(treeNode);
+          changes = createSiblingAbove(treeNode);
         } else {
           changes = splitToChild(treeNode);
         }
       } else {
         if (atStartOfLine) {
-          changes = moveToNewRelationBelow(treeNode);
+          changes = createSiblingAbove(treeNode);
         } else {
           changes = splitToSiblingBelow(treeNode);
         }
