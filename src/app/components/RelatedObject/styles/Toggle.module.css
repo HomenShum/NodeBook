@@ -1,6 +1,6 @@
 .ToggleButton {
   border: none;
-  width: 12px;
+  width: 16px;
   height: 16px;
   color: transparent;
   user-select: none;
@@ -9,25 +9,37 @@
   align-items: center;
   justify-content: center;
   border-radius: 2px;
-  margin: 0 4px;
   cursor: default;
+  fill: var(--gray-8);
 }
 
-.Hovered {
-  color: var(--gray-8);
-  fill: var(--gray-8);
-  stroke: var(--gray-8);
+.Icon {
+  transition: transform 0.15s ease;
+  will-change: transform;
+}
+
+.IconPublicNode.IconHasChildren {
+  stroke: var(--teal-10);
+  fill: var(--teal-10);
+}
+
+.IconPublicNode.IconNoChildren {
+  stroke: var(--teal-6);
+  fill: var(--teal-6);
+}
+
+.IconPrivateNode.IconHasChildren {
+  stroke: var(--gray-11);
+  fill: var(--gray-11);
+}
+
+.IconPrivateNode.IconNoChildren {
+  stroke: var(--gray-7);
+  fill: var(--gray-7);
 }
 
 .ToggleButton:hover {
   background-color: var(--gray-3);
-  color: var(--gray-10);
-}
-
-.Icon {
-  fill: currentColor;
-  transition: transform 0.15s ease;
-  will-change: transform;
 }
 
 .ToggleExpanded {
@@ -40,4 +52,14 @@
     fill: var(--gray-8);
     stroke: var(--gray-8);
   }
+}
+
+.Circle {
+  cursor: default;
+  position: absolute;
+  stroke: var(--teal-10);
+}
+
+.CirclePrivate {
+  stroke: var(--gray-10);
 }

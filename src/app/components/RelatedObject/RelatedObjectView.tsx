@@ -1,15 +1,15 @@
-import { CornerDownRight, Dot, LoaderCircle, Play } from "lucide-react";
+import { CornerDownRight, LoaderCircle, Maximize2, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useState } from "react";
 
 import { Checkbox } from "@/app/components/Checkbox/Checkbox";
-import { CyclicIcon, PinCustomIcon } from "@/app/components/CustomIcons";
+import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { NoteContentPrefix } from "@/app/components/RelatedObject/NoteContentPrefix";
 import { NoteContentSuffix } from "@/app/components/RelatedObject/NoteContentSuffix";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
+import Toggle from "@/app/components/RelatedObject/Toggle";
 import { Button } from "@/app/components/UIPrimitives/Button";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
@@ -17,7 +17,6 @@ import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { isNoteContent, isUnlabelledChild, useSetMainRoot } from "@/app/tree/utils";
 import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
-import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
@@ -27,7 +26,6 @@ import { RelatedObjectDetails } from "./RelatedObjectDetails";
 import { RelatedObjectMenu } from "./RelatedObjectMenu";
 import { RelationCombobox } from "./RelationCombobox/RelationCombobox";
 import { ReplaceRelatedNodeView } from "./ReplaceRelatedNodeView";
-import Toggle from "./Toggle";
 import styles from "./styles/RelatedObjectView.module.css";
 import stylesToggle from "./styles/Toggle.module.css";
 
@@ -42,14 +40,18 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
       ? viewStore.quickCaptureViewType
       : viewStore.viewType;
 
+  const isNoteContentRoot = treeNode.object.noteContentRelationsList.size > 0;
+
   // node is content of a note which is a direct child of the root
-  const hideBullet = viewType === "note" && isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode;
+  const hideToggle =
+    isNoteContentRoot ||
+    (viewType === "note" && isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode);
 
   return (
     <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
       <Main treeNode={treeNode}>
         <Controls />
-        {!hideBullet && <Bullet />}
+        {!hideToggle && <Toggle />}
         <Content />
       </Main>
       {viewType === "note" && treeNode.parent instanceof RootTreeNode && treeNode.childCount > 0 && (
@@ -293,108 +295,6 @@ const Content = observer(function Content() {
   );
 });
 
-const Bullet = observer(function Bullet() {
-  const graphStore = useGraphStore();
-  const settingsStore = useSettingsStore();
-  const userId = graphStore.user?.id;
-  const { treeNode } = useTreeNode();
-  const setRoot = useSetMainRoot();
-
-  const viewStore = useViewStore();
-  const handleBulletClick = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      event.nativeEvent.stopImmediatePropagation();
-      logger.debug("Clicked bullet", treeNode.path);
-
-      const isMainTree =
-        treeNode.tree.isMainTree ||
-        treeNode.tree.id === viewStore.searchView.id ||
-        treeNode.tree.id === viewStore.mainView.id;
-      const isQuickCaptureTree =
-        treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree;
-      const isSidebarTree = !isMainTree && !isQuickCaptureTree;
-
-      if (event.shiftKey && isSidebarTree) {
-        setRoot(treeNode.object);
-        return;
-      }
-
-      if (event.shiftKey && !isSidebarTree) {
-        viewStore.createSidebarTree(treeNode.object);
-        return;
-      }
-
-      if (!event.shiftKey && isSidebarTree) {
-        treeNode.tree.setRoot(treeNode.object);
-        return;
-      }
-
-      setRoot(treeNode.object);
-    },
-    [setRoot, treeNode, viewStore],
-  );
-
-  const getAuthorName = (authorId: string) => {
-    return graphStore.usersById.get(authorId)?.username || authorId;
-  };
-
-  const tooltipContent = `Node's author: ${
-    treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
-  }
-    Relation author: ${
-      treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
-    }
-    Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}
-  `;
-  const isEmpty = !treeNode.object.text.trim();
-  const hasChildren = treeNode.childCount > 0;
-  const isNoteContentRoot = isNoteContent(treeNode) && treeNode.parentGroup.id === "noteContent";
-  return (
-    <div
-      className={cn(
-        styles.RelatedObjectBulletContainer,
-        isEmpty && !hasChildren && !settingsStore.showBulletForEmptyNode && styles.Hidden,
-        isNoteContentRoot && styles.NoteContentRootBullet,
-      )}
-      data-tooltip={tooltipContent}
-    >
-      {treeNode.instanceCountInPath <= 1 ? (
-        // Default solid bullet
-        <>
-          <Dot
-            strokeWidth={5}
-            height={16}
-            className={cn(styles.Bullet, {
-              [styles.DotInsidePublic]: treeNode.object.isPublic,
-              [styles.DotInsidePrivate]: !treeNode.object.isPublic,
-            })}
-            onPointerDown={(event) => handleBulletClick(event)}
-          />
-          {hasChildren && !treeNode.isExpanded && (
-            // with a shadow around it if it has children
-            <Dot
-              height={16}
-              strokeWidth={17}
-              className={cn(styles.BulletShadow, {
-                [styles.DotOutsidePublic]: treeNode.object.isPublic,
-                [styles.DotOutsidePrivate]: !treeNode.object.isPublic,
-              })}
-            />
-          )}
-        </>
-      ) : (
-        // Hollow circle if this node has appeared in the path more than once
-        <CyclicIcon
-          className={cn(styles.Circle, { [styles.CirclePrivate]: !treeNode.object.isPublic })}
-          //@ts-ignore
-          onPointerDown={(event) => handleBulletClick(event)}
-        />
-      )}
-    </div>
-  );
-});
-
 const LoadingSpinner = () => {
   return (
     <div className={styles.LoadingSpinner}>
@@ -409,6 +309,8 @@ const Controls = observer(function Controls() {
   const isFirstChildOfNoteContent =
     treeNode.parentGroup.id === "noteContent" && treeNode.parentGroup.nodes[0].id === treeNode.id;
   const isMobile = useIsMobile();
+  const setRoot = useSetMainRoot();
+
   return (
     <>
       <div
@@ -420,8 +322,15 @@ const Controls = observer(function Controls() {
             setUpdatingRelationType={setUpdatingRelationType}
             isHovered={isMobile ? true : isHovered}
           />
+          {
+            <button
+              className={cn(styles.SetRootButton, (isMobile || isHovered) && styles.Hovered)}
+              onPointerDown={() => setRoot(treeNode.object)}
+            >
+              <Maximize2 size={16} className={styles.SetRootIcon} />
+            </button>
+          }
           {viewStore.isNodeProcessing(treeNode.object.id) && <LoadingSpinner />}
-          {treeNode.childCount > 0 && <Toggle treeNode={treeNode} isHovered={isMobile ? true : isHovered} />}
         </div>
       </div>
     </>

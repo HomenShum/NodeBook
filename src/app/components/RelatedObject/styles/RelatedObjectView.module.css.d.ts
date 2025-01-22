@@ -1,19 +1,13 @@
 declare const styles: {
   readonly "Bullet": string;
-  readonly "BulletShadow": string;
   readonly "ChildOfRootInNoteView": string;
-  readonly "Circle": string;
-  readonly "CirclePrivate": string;
   readonly "ClickToCreateNode": string;
   readonly "DotInsideClickToCreateNode": string;
-  readonly "DotInsidePrivate": string;
-  readonly "DotInsidePublic": string;
-  readonly "DotOutsidePrivate": string;
-  readonly "DotOutsidePublic": string;
   readonly "ElbowArrow": string;
   readonly "HeaderInListView": string;
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
+  readonly "Hovered": string;
   readonly "LoadingSpinner": string;
   readonly "NoteContentPrefix": string;
   readonly "NoteContentRootBullet": string;
@@ -39,6 +33,8 @@ declare const styles: {
   readonly "RelationCounter": string;
   readonly "RelationHoverCard": string;
   readonly "Selected": string;
+  readonly "SetRootButton": string;
+  readonly "SetRootIcon": string;
   readonly "Unpinned": string;
   readonly "bulletClick": string;
   readonly "showTooltip": string;
