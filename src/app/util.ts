@@ -13,6 +13,8 @@ import { getOtherObject } from "@/app/graph/utils";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import logger from "@/lib/logger";
 
+import { isGraphRelationType } from "./graph/isGraphRelationType";
+
 // TODO: what should we actually use for this?
 export const uuid = () => uuidv4().slice(0, 8);
 
@@ -361,33 +363,75 @@ export function ideapadSnapshotFromGraph(graphStore: GraphStore, userId: string)
   const attributesByNodeId = new Map<string, any>();
   const colorsByNodeId = new Map<string, number>();
 
-  for (const relation of graphStore.relationsById.values()) {
-    if (relation.relationType.label === "ideapad_show_as") {
-      if (relation.to.text === "attribute") {
-        nodesToIgnore.add(relation.to.id); // hide the "attribute" node
-        // Collect relations that have been flagged to become ideapad attributes
-        const attributeRelation = graphStore.getRelation(relation.from.id);
-        if (!attributeRelation) continue;
-        nodesToIgnore.add(attributeRelation.to.id);
-        relationsToIgnore.add(attributeRelation.id);
-        attributesByNodeId.set(attributeRelation.from.id, {
-          ...(attributesByNodeId.get(attributeRelation.from.id) || {}),
-          [attributeRelation.relationType.label]: attributeRelation.to.text,
-        });
-      } else if (relation.to.text === "none") {
-        // Collect objects that have been flagged to be ignored
-        nodesToIgnore.add(relation.from.id);
-        nodesToIgnore.add(relation.to.id);
+  // Get all relation types which are flagged to be ideapad attributes
+  const ideapadShowAsAttributeRelationTypeIds = new Set<string>();
+  const relationTypeNodes = Array.from(graphStore.nodesById.values()).filter(isGraphRelationType);
+  for (const relationTypeNode of relationTypeNodes) {
+    for (const relation of relationTypeNode.relations) {
+      if (relation.relationType.label === "ideapad_show_as" && relation.to.text === "attribute") {
+        ideapadShowAsAttributeRelationTypeIds.add(relationTypeNode.id);
+        nodesToIgnore.add(relation.to.id); // Hide the "attribute" node
+        break;
       }
-    } else if (relation.relationType.label === "ideapad_color") {
+    }
+  }
+
+  // Ignore all user nodes and connections
+  const usersNode = graphStore.usersNode;
+  for (const relation of usersNode.relations) {
+    if (relation.relationType.label === "sublist") {
+      const userNode = relation.to;
+      relationsToIgnore.add(relation.id);
+      nodesToIgnore.add(userNode.id);
+      for (const userRelation of userNode.relations) {
+        const otherSide = getOtherObject(userRelation, userNode.id);
+        if (otherSide) {
+          nodesToIgnore.add(otherSide.id);
+          relationsToIgnore.add(userRelation.id);
+        }
+      }
+    }
+  }
+
+  for (const relation of graphStore.relationsById.values()) {
+    // Relations with a type flagged to be ideapad attributes are ignored from import
+    // but included as an attribute on source node
+    if (ideapadShowAsAttributeRelationTypeIds.has(relation.relationType.id)) {
+      nodesToIgnore.add(relation.to.id);
+      relationsToIgnore.add(relation.id);
+      attributesByNodeId.set(relation.from.id, {
+        ...(attributesByNodeId.get(relation.from.id) || {}),
+        [relation.relationType.label]: relation.to.text,
+      });
+    }
+    // Hide nodes flagged to be ignored
+    if (relation.relationType.label === "ideapad_show_as" && relation.to.text === "none") {
+      nodesToIgnore.add(relation.from.id);
+      nodesToIgnore.add(relation.to.id); // Hide the "none" node
+      relationsToIgnore.add(relation.id);
+    }
+    // Note node colors specified by ideapad_color relation
+    if (relation.relationType.label === "ideapad_color") {
       try {
         const colorInt = parseInt(relation.to.text);
         colorsByNodeId.set(relation.from.id, colorInt);
-        nodesToIgnore.add(relation.to.id);
-        relationsToIgnore.add(relation.id);
+        nodesToIgnore.add(relation.to.id); // Hide color value node
+        relationsToIgnore.add(relation.id); // Hide ideapad_color relation
       } catch (e) {
         console.error(e);
       }
+    }
+    // Ignore relation type nodes and relations
+    if (relation.relationTypeId === "__type__") {
+      relationsToIgnore.add(relation.id);
+      nodesToIgnore.add(relation.to.id);
+    } else if (relation.relationTypeId === "__reverse__") {
+      relationsToIgnore.add(relation.id);
+      nodesToIgnore.add(relation.to.id);
+    }
+    // Ignore __user_relation_types__ node
+    if (relation.from.text === "__user_relation_types__") {
+      nodesToIgnore.add(relation.from.id);
     }
   }
 

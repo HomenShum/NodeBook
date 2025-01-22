@@ -42,7 +42,7 @@ import { scoreMatch } from "@/lib/utils";
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
 import { GraphNode } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
-import { GraphRelation, GraphRelationProps, isGraphRelationType } from "./GraphRelation";
+import { GraphRelation, GraphRelationProps } from "./GraphRelation";
 import {
   Positioner,
   TxAddChildNode,
@@ -60,6 +60,7 @@ import {
   TxUpdateRelation,
   TxUpdateRelationPositionsList,
 } from "./GraphTransactionTypes";
+import { isGraphRelationType } from "./isGraphRelationType";
 import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
 
 /**

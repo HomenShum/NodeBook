@@ -16,7 +16,7 @@ def name_to_id(content):
 def url_to_id(content):
     return content.split("/")[-1].lower()
 
-def add_linkedin(graph = None):
+def add_linkedin(graph: Union[Graph, None] = None):
     # Initialize graph
     graph = graph if graph else Graph()
 
@@ -39,32 +39,33 @@ def add_linkedin(graph = None):
 
 
     # Create type nodes
-    person_type_node, _ = graph.upsert_related_node(global_root_node_id, "Person", node_id=person_type_node_id)
-    company_type_node, _ = graph.upsert_related_node(global_root_node_id, "Company", node_id=company_type_node_id)
-    linkedin_users_node, _ = graph.upsert_related_node(global_root_node_id, "LinkedIn Users", node_id=linkedin_users_node_id)
+    linkedin_users_node = graph.upsert_node("LinkedIn Users", id=linkedin_users_node_id)
+    graph.upsert_relation(global_root_node_id, linkedin_users_node.id)
+    make_ideapad_none(graph, linkedin_users_node)
 
     # Create all the people nodes and connections
     for dataset in datasets:
         # Create person node for linkedin user
         linkedin_user_node = graph.upsert_node(dataset["linkedin_user_full_name"])
-        graph.upsert_relation(linkedin_users_node["id"], linkedin_user_node["id"])
-        make_person(graph, linkedin_user_node["id"])
+        graph.upsert_relation(linkedin_users_node.id, linkedin_user_node.id)
+        make_person(graph, linkedin_user_node.id)
         
         for _, row in dataset["df"].iterrows():
             # Get or create person node for contact
             full_name = clean_first_name(row['First Name'].strip()) + " " + clean_last_name(row['Last Name'].strip())
-            contact_node = graph.upsert_node(full_name, id=row["contact_id"])
-            make_person(graph, contact_node["id"])
+            contact_id = row["contact_id"]
+            contact_node = graph.upsert_node(full_name, id=contact_id)
+            make_person(graph, contact_id)
 
             # Create knows relation between linkedin user and contact
-            connection_id = "-knows-".join(sorted([linkedin_user_node["id"], contact_node["id"]]))
-            graph.upsert_relation(linkedin_user_node["id"], contact_node["id"], "knows", id=connection_id)
+            connection_id = "-knows-".join(sorted([linkedin_user_node.id, contact_node.id]))
+            graph.upsert_relation(linkedin_user_node.id, contact_node.id, "knows", id=connection_id)
 
     # Add info about people
     people_info_df = pd.concat([dataset["df"] for dataset in datasets], ignore_index=True)
     people_info_df = people_info_df.drop_duplicates(subset=['contact_id'], keep='first')
     for _, row in people_info_df.iterrows():
-        if row["contact_id"] not in graph._graph["nodesById"]:
+        if row["contact_id"] not in graph.nodes:
             continue
         [company, position, contact_id, url, email] = [str(v) if pd.notna(v) else "" for v in row[["Company", "Position", "contact_id", "URL", "Email Address"]].values]
 
@@ -76,69 +77,69 @@ def add_linkedin(graph = None):
             if company_id == contact_id:
                 continue
 
+            # Create company node
             company_node = graph.upsert_node(company, id=company_id)
-            make_company(graph, company_node["id"])
+            make_company(graph, company_node.id)
 
-            if position:
-                label_company_to_person = position.strip() # e.g. "CEO:"
-                label_person_to_company = f"is {label_company_to_person} of" # e.g. "is CEO of:"
-                position_relation_type_id = name_to_id(label_company_to_person)
-                graph.upsert_relation_type(label_person_to_company, label_company_to_person, id=position_relation_type_id)
-            else:
-                position_relation_type_id = default_relation_types.works_at.id
-
-            graph.upsert_relation(contact_id, company_node["id"], position_relation_type_id)
+            # Create works at relation
+            label_company_to_person = position.strip() if position else default_relation_types.works_at.reverse_label
+            graph.upsert_relation(company_id, contact_id, label_company_to_person)
 
         # URL
         if url:
-            _, relation, _ = graph.upsert_property(contact_id, url, key_id=default_relation_types.linkedin_url.id)
+            _, relation = graph.upsert_property(contact_id, url, default_relation_types.linkedin_url.label)
             make_ideapad_attribute(graph, relation)
 
         # Email
         if email:
-            _, relation, _ = graph.upsert_property(contact_id, email, key_id=default_relation_types.email.id)
+            _, relation = graph.upsert_property(contact_id, email, default_relation_types.email.label)
             make_ideapad_attribute(graph, relation)
 
     return graph
 
 def add_laurel_touby(graph: Graph):
     text = open(laurel_touby_path, "r").read()
-    graph = add_text_graph(text, graph=graph)
+    def callback(content, parent_stack, relation_type_label):
+        if len(parent_stack) == 0:
+            node, _ = graph.upsert_related_node(global_root_node_id, content, relation_type_label)
+            return node
+        node, _ = graph.upsert_related_node(parent_stack[-1].id, content, relation_type_label)
+        return node
+    parse_text_graph(text, callback) 
     make_person(graph, laurel_touby_id)
     return graph
 
-def filter_for_top_people(graph:Graph):
-    filtered_graph = Graph(graph.to_dict())
-    people_ids = set([n["id"] for n in graph.get_people_nodes()])
+def filter_for_top_people(graph:Graph, top_n:int=50):
+    filtered_graph = graph.copy()
+    people_ids = set([n.id for n in graph.get_people_nodes()])
     included_people_ids = set()
-    for people_id in sorted(people_ids, key=lambda id: len(graph._relations_by_from_id[id]) + len(graph._relations_by_to_id[id]), reverse=True)[:50]:
+    for people_id in sorted(people_ids, key=lambda id: len(graph._relations_by_from_id[id]) + len(graph._relations_by_to_id[id]), reverse=True)[:top_n]:
         included_people_ids.add(people_id)
 
-    # Remove people not in top 50
+    # Remove people not in top N
     for people_id in people_ids:
         if people_id not in included_people_ids:
             filtered_graph.remove_node(people_id)
 
-    # Remove companies not connected to top 50 people
-    company_node_ids = set([n["id"] for n in graph.get_companies_nodes()])
+    # Remove companies not connected to top N people
+    company_node_ids = set([n.id for n in graph.get_companies_nodes()])
     for company_node_id in company_node_ids:
         is_connected_to_top_people = False
         for _, adjacent_node, _ in graph.walk_adjacent(company_node_id, 1):
-            if adjacent_node["id"] in included_people_ids:
+            if adjacent_node.id in included_people_ids:
                 is_connected_to_top_people = True
                 break
         if not is_connected_to_top_people:
             filtered_graph.remove_node(company_node_id)
 
     # Remove all nodes that are not connected to top people or companies
-    all_node_ids = set(graph._graph["nodesById"].keys())
-    for node_id in all_node_ids:
+    for node_id in graph.nodes.keys():
         relations = graph.get_relations_with_from_id(node_id)
         relations.extend(graph.get_relations_with_to_id(node_id))
         has_connection = False
         for relation in relations:
-            if relation["fromId"] in included_people_ids or relation["toId"] in included_people_ids or \
-               relation["fromId"] in company_node_ids or relation["toId"] in company_node_ids:
+            if relation.from_id in included_people_ids or relation.to_id in included_people_ids or \
+               relation.from_id in company_node_ids or relation.to_id in company_node_ids:
                 has_connection = True
                 break
         if not has_connection:
@@ -146,17 +147,17 @@ def filter_for_top_people(graph:Graph):
 
     # Remove hanging relations
     relations_to_remove = []
-    for relation_id in filtered_graph._graph["relationsById"]:
+    for relation_id in filtered_graph.relations.keys():
         relation = filtered_graph.get_relation(relation_id)
         if not relation: continue
-        if not filtered_graph.has(relation["fromId"]) or not filtered_graph.has(relation["toId"]):
+        if not filtered_graph.has(relation.from_id) or not filtered_graph.has(relation.to_id):
             relations_to_remove.append(relation_id)
     for relation_id in relations_to_remove:
         filtered_graph.remove_relation(relation_id)
 
     # Remove nodes without connections
     nodes_to_remove = []
-    for node_id in filtered_graph._graph["nodesById"]:
+    for node_id in filtered_graph.nodes.keys():
         relations = filtered_graph.get_relations_with_from_id(node_id)
         relations.extend(filtered_graph.get_relations_with_to_id(node_id))
         if not relations:
@@ -167,17 +168,18 @@ def filter_for_top_people(graph:Graph):
     return filtered_graph
 
 if __name__ == "__main__":
+    print("Creating lidemo graph...")
     graph = Graph()
     graph = add_linkedin(graph)
-    graph = add_laurel_touby(graph)
+    # graph = add_laurel_touby(graph)
 
-    # Full version
-    graph_full = Graph(graph.to_dict())
+    # Large version
+    graph_large = filter_for_top_people(graph, top_n=3000)
     with open(os.path.join(output_dir, f"lidemo.json"), "w") as f:
-        json.dump(graph_full.to_dict(), f, indent=2)
+        json.dump(graph_large.to_dict(), f, indent=2)
 
     # Lite version
-    graph_lite = filter_for_top_people(graph)
+    graph_lite = filter_for_top_people(graph, top_n=300)
     with open(os.path.join(output_dir, f"lidemo-lite.json"), "w") as f:
         json.dump(graph_lite.to_dict(), f, indent=2)
 
