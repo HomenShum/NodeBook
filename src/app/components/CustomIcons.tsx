@@ -165,7 +165,7 @@ export const CyclicIcon = ({ className, onClick }: { className?: string; onClick
       d="M50 20 
    a 30 30 0 1 1 -20 35"
       fill="none"
-      stroke="currentColor"
+      stroke="var(--teal-9)"
       strokeWidth="8"
       height="8"
       markerEnd="url(#arrowhead)"
@@ -173,7 +173,7 @@ export const CyclicIcon = ({ className, onClick }: { className?: string; onClick
     />
     <defs>
       <marker id="arrowhead" markerWidth="6" markerHeight="10" refX="0" refY="2" orient="auto">
-        <polygon points="0 0, 3.5 2, 0 4" fill="currentColor" />
+        <polygon points="0 0, 3.5 2, 0 4" fill="var(--teal-9)" />
       </marker>
     </defs>
     <rect className="btn" x="0" y="0" width="100%" height="100%" fillOpacity="0" strokeWidth="0" onClick={onClick} />
