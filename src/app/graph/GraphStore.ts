@@ -1456,10 +1456,55 @@ export class GraphStore {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(toNode);
         updates.push(...canonicalUpdates);
       }
-      fromNode.pinnedRelationsList.delete(relation.id);
-      toNode.pinnedRelationsList.delete(relation.id);
-      fromNode.noteContentRelationsList.delete(relation.id);
-      toNode.noteContentRelationsList.delete(relation.id);
+
+      let curUpdates = fromNode.pinnedRelationsList.delete(relation.id);
+      if (curUpdates.length > 0) {
+        updates.push({
+          type: "pinned",
+          nodeId: fromNode.id,
+          authorId: relation.authorId,
+          oldIsPublic: fromNode.isPublic,
+          newIsPublic: fromNode.isPublic,
+          ...curUpdates[0],
+        });
+      }
+
+      curUpdates = toNode.pinnedRelationsList.delete(relation.id);
+      if (curUpdates.length > 0) {
+        updates.push({
+          type: "pinned",
+          nodeId: toNode.id,
+          authorId: relation.authorId,
+          oldIsPublic: toNode.isPublic,
+          newIsPublic: toNode.isPublic,
+          ...curUpdates[0],
+        });
+      }
+
+      curUpdates = fromNode.noteContentRelationsList.delete(relation.id);
+      if (curUpdates.length > 0) {
+        updates.push({
+          type: "noteContent",
+          nodeId: fromNode.id,
+          authorId: relation.authorId,
+          oldIsPublic: fromNode.isPublic,
+          newIsPublic: fromNode.isPublic,
+          ...curUpdates[0],
+        });
+      }
+
+      curUpdates = toNode.noteContentRelationsList.delete(relation.id);
+
+      if (curUpdates.length > 0) {
+        updates.push({
+          type: "noteContent",
+          nodeId: toNode.id,
+          authorId: relation.authorId,
+          oldIsPublic: toNode.isPublic,
+          newIsPublic: toNode.isPublic,
+          ...curUpdates[0],
+        });
+      }
 
       // Delete the relation itself
       this.deleteFromRelationsById(relation.id);
