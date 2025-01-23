@@ -1,4 +1,15 @@
-import { Globe, Link2, ListFilter, Map, MapPin, NetworkIcon, Sliders, WorkflowIcon, X } from "lucide-react";
+import {
+  Globe,
+  Link2,
+  ListFilter,
+  ListMinusIcon,
+  Map,
+  MapPin,
+  NetworkIcon,
+  Sliders,
+  WorkflowIcon,
+  X,
+} from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { ChangeEvent, useCallback, useState } from "react";
 
@@ -78,9 +89,17 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     tree.updateSortByOption(newSortOption);
   };
 
-  const toggleViewType = useCallback(() => {
-    viewStore.setViewType(viewStore.viewType === ViewType.Outline ? ViewType.Note : ViewType.Outline);
-  }, [viewStore]);
+  const setViewType = useCallback(
+    (viewType: ViewType) => {
+      if (viewType === ViewType.Graph) {
+        viewStore.setGraphMode(true);
+      } else {
+        viewStore.setGraphMode(false);
+        viewStore.setViewType(viewType);
+      }
+    },
+    [viewStore],
+  );
 
   return (
     <div className={s.ControlsBar}>
@@ -148,24 +167,42 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           {viewStore.flattenSublists ? <FlattenIcon /> : <NestedIcon />}
           <span>Sublists</span>
         </Button>
-        <Button
-          size="sm"
-          onClick={toggleViewType}
-          className={cn(s.ShowTooltip, s.BottomAlign)}
-          data-tooltip={viewStore.viewType === ViewType.Outline ? "Switch to Notes" : "Switch to Lists"}
-        >
-          {viewStore.viewType === ViewType.Outline ? (
-            <>
-              <NestedIcon />
-              <span>Lists</span>
-            </>
-          ) : (
-            <>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm">
+              {viewStore.graphMode ? (
+                <NetworkIcon size={14} strokeWidth={1.5} />
+              ) : viewStore.viewType === ViewType.Outline ? (
+                <ListMinusIcon size={16} strokeWidth={1.5} />
+              ) : (
+                <NotesIcon />
+              )}
+              <span>
+                {viewStore.graphMode
+                  ? "Graph View"
+                  : viewStore.viewType === ViewType.Outline
+                  ? "List View"
+                  : "Note View"}
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onSelect={() => setViewType(ViewType.Outline)}>
+              <ListMinusIcon size={17} strokeWidth={2.1} />
+              List View
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewType(ViewType.Note)}>
               <NotesIcon />
-              <span>Notes</span>
-            </>
-          )}
-        </Button>
+              Note View
+            </DropdownMenuItem>
+            {settingsStore.showGraphViewButton && (
+              <DropdownMenuItem onSelect={() => setViewType(ViewType.Graph)}>
+                <NetworkIcon size={14} strokeWidth={1.5} />
+                Graph View
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Popover>
           <PopoverTrigger asChild>
             <Button size="sm">
@@ -251,18 +288,6 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             </div>
           </PopoverContent>
         </Popover>
-        {settingsStore.showGraphViewButton && (
-          <Button
-            size="sm"
-            variant={viewStore.graphMode ? "active" : "default"}
-            onClick={() => viewStore.setGraphMode(!viewStore.graphMode)}
-            className={cn(s.ShowTooltip, s.BottomAlign)}
-            data-tooltip="View Graph"
-          >
-            <NetworkIcon size={14} strokeWidth={1.5} />
-            <span>Graph View</span>
-          </Button>
-        )}
       </div>
     </div>
   );
