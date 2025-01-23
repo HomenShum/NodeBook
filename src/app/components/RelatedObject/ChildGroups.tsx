@@ -1,7 +1,6 @@
 import { observer } from "mobx-react-lite";
 
 import { AddPinButton } from "@/app/components/Buttons/AddPinButton";
-import { ClickToCreateChildrenButton } from "@/app/components/Buttons/ClickToCreateChildrenButton";
 import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -35,11 +34,10 @@ export const ChildGroups = observer(function ChildGroups({ treeNode }: ChildGrou
   const isRoot = treeNode instanceof RootTreeNode;
 
   if (children.filter((group) => group.nodes.length > 0).length === 0) {
-    return (
-      <div className={styles.NodeIndentation}>
-        <ClickToCreateChildrenButton treeNode={treeNode} />
-      </div>
-    );
+    return null;
+    // <div className={styles.NodeIndentation}>
+    //   <ClickToCreateChildrenButton treeNode={treeNode} />
+    // </div>
   }
 
   return (
