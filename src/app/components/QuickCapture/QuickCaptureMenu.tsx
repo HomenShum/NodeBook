@@ -1,31 +1,31 @@
-import React from "react";
-import {ExpandIcon, PanelRightCloseIcon, X} from "lucide-react";
+import { ExpandIcon, PanelRightCloseIcon, X } from "lucide-react";
 
-import s from "@/app/components/QuickCapture/QuickCapture.module.css";
 import s1 from "@/app/components/Breadcrumbs/Breadcrumbs.module.css";
-import { cn } from "@/lib/utils";
+import s from "@/app/components/QuickCapture/QuickCapture.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
-import { useViewStore } from "@/app/view/useViewStore";
 import { useSetMainRoot } from "@/app/tree/utils";
+import { ViewType } from "@/app/view/types";
+import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 function QuickCaptureMenu() {
-
   const viewStore = useViewStore();
   const setMainRoot = useSetMainRoot();
 
   const handleMainViewExpand = () => {
-    if(!viewStore.quickCaptureOpen) return;
+    if (!viewStore.quickCaptureOpen) return;
     const root = viewStore.quickCaptureTree.root.object;
+    viewStore.setViewType(ViewType.Note);
     viewStore.closeQuickCapture();
     setMainRoot(root);
-  }
+  };
 
-    const handleSideViewExpand = () => {
-        if(!viewStore.quickCaptureOpen) return;
-        const root = viewStore.quickCaptureTree.root.object;
-        viewStore.closeQuickCapture();
-        viewStore.createSidebarTree(root)
-    }
+  const handleSideViewExpand = () => {
+    if (!viewStore.quickCaptureOpen) return;
+    const root = viewStore.quickCaptureTree.root.object;
+    viewStore.closeQuickCapture();
+    viewStore.createSidebarTree(root);
+  };
 
   return (
     <div className={s.QuickCaptureMenu}>
@@ -43,15 +43,15 @@ function QuickCaptureMenu() {
         size="icon"
         onClick={() => handleMainViewExpand()}
       >
-        <ExpandIcon size={14}/>
+        <ExpandIcon size={14} />
       </Button>
       <Button
-            className={cn(s1.ShowTooltip, s1.RightAlign)}
-            data-tooltip={"Open in Side View"}
-            size="icon"
-            onClick={() => handleSideViewExpand()}
+        className={cn(s1.ShowTooltip, s1.RightAlign)}
+        data-tooltip={"Open in Side View"}
+        size="icon"
+        onClick={() => handleSideViewExpand()}
       >
-         <PanelRightCloseIcon size={14}/>
+        <PanelRightCloseIcon size={14} />
       </Button>
     </div>
   );

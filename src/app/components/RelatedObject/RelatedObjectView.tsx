@@ -233,7 +233,15 @@ const Content = observer(function Content() {
           // Check for note content
           treeViewType === "outline" && treeNode.object.noteContentRelationsList.size > 0 && (
             <div
-              style={{ width: "10%", height: "100%", position: "absolute" }}
+              style={{ width: "10%", height: "100%", position: "absolute", cursor: "text" }}
+              onClick={() => {
+                const suffixInput = document.querySelector(`[data-note-suffix="${treeNode.object.id}"]`);
+                if (suffixInput && suffixInput instanceof HTMLInputElement) {
+                  suffixInput.focus();
+                } else {
+                  throw new Error("Prefix input not found");
+                }
+              }}
               // On click, set focus to noteContentSuffix
             >
               <NoteContentSuffix treeNode={treeNode} />
