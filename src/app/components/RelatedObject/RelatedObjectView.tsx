@@ -40,23 +40,26 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
       ? viewStore.quickCaptureViewType
       : viewStore.viewType;
 
-  const isNoteContentRoot = treeNode.object.noteContentRelationsList.size > 0;
+  const isNoteContentRoot =
+    treeNode.object.noteContentRelationsList.size > 0 && treeNode.childrenGroupsById.noteContent.nodes.length > 0;
 
   // node is content of a note which is a direct child of the root
   const hideToggle =
     isNoteContentRoot ||
-    (viewType === "note" && isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode);
+    (viewType === "note" && isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode) ||
+    (viewType === "note" && treeNode.parent instanceof RootTreeNode);
 
   return (
     <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
       <Main treeNode={treeNode}>
-        <Controls />
+        {!(viewType === "note" && isNoteContentRoot) && <Controls showToggle={hideToggle} />}
         {!hideToggle && <Toggle />}
         <Content />
       </Main>
-      {viewType === "note" && treeNode.parent instanceof RootTreeNode && treeNode.childCount > 0 && (
-        <RelationsToggle treeNode={treeNode} />
-      )}
+      {viewType === "note" &&
+        treeNode.parent instanceof RootTreeNode &&
+        isNoteContentRoot &&
+        treeNode.childCount > 0 && <RelationsToggle treeNode={treeNode} />}
       {treeNode.isExpanded && <ChildGroups treeNode={treeNode} />}
     </div>
   );
@@ -156,6 +159,7 @@ const Content = observer(function Content() {
       treeNode.tree.setFocusedNode(treeNode.path, "end", true);
     }
   }, [isMobile, treeNode]);
+  const isNoteContentRoot = treeNode.object.noteContentRelationsList.size > 0;
 
   return (
     <>
@@ -276,7 +280,7 @@ const Content = observer(function Content() {
           </Button>
 
           {/* I think not showing this in replace mode is a good option but feel free to change */}
-          {viewType !== "replace" && (
+          {viewType !== "replace" && !isNoteContentRoot && (
             <RelationCounter
               object={treeNode.object}
               onClick={() => tree.togglePathExpanded(treeNode.path)}
@@ -311,20 +315,18 @@ const LoadingSpinner = () => {
   );
 };
 
-const Controls = observer(function Controls() {
+const Controls = observer(function Controls({ showToggle }: { showToggle: boolean }) {
   const viewStore = useViewStore();
   const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
   const isFirstChildOfNoteContent =
     treeNode.parentGroup.id === "noteContent" && treeNode.parentGroup.nodes[0].id === treeNode.id;
   const isMobile = useIsMobile();
   const setRoot = useSetMainRoot();
+  const isNoteContentRoot = treeNode.childrenGroupsById.noteContent.nodes.length > 0;
 
   return (
     <>
-      <div
-        className={styles.RelatedObjectLeftHandler}
-        style={{ visibility: isFirstChildOfNoteContent ? "hidden" : "visible" }}
-      >
+      <div className={styles.RelatedObjectLeftHandler}>
         <div className={styles.RelatedObjectActions}>
           <RelatedObjectMenu
             setUpdatingRelationType={setUpdatingRelationType}
@@ -338,6 +340,7 @@ const Controls = observer(function Controls() {
               <Maximize2 size={16} className={styles.SetRootIcon} />
             </button>
           }
+          {showToggle && treeNode.childCount > 0 && !isNoteContentRoot && <Toggle />}
           {viewStore.isNodeProcessing(treeNode.object.id) && <LoadingSpinner />}
         </div>
       </div>

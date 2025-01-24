@@ -533,6 +533,7 @@ export class Tree {
   }
 
   toggleGroupExpanded(path: Path) {
+    console.log("toggleGroupExpanded", path, this.viewType);
     this.expansionsByPath.set(path, !this.isGroupExpanded(path));
     this.expansionLocalStorageCache.update(this.expansionsByPath);
   }

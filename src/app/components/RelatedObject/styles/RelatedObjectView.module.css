@@ -108,7 +108,7 @@ Bullet
 }
 
 .RelatedObjectContent:focus-within,
-.NoteContentSection .RelatedObjectContent:focus-within .RelatedObjectBulletContainer {
+.NoteContentSection .RelatedObjectContent .RelatedObjectBulletContainer {
   opacity: 1;
 }
 

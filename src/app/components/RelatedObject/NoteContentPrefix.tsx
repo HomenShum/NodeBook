@@ -2,6 +2,7 @@ import { observer } from "mobx-react-lite";
 import React, { useEffect, useRef } from "react";
 
 import { DescendantTreeNode } from "@/app/tree/nodes";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./styles/RelatedObjectView.module.css";
 
@@ -18,8 +19,9 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode,
   const tree = treeNode.tree;
   const inputRef = useRef<HTMLInputElement>(null);
   const [clickedBkspc, setClickedBckspc] = React.useState(false);
+  const viewStore = useViewStore();
   const handleBackspaceKey = async (e: Event) => {
-    if (clickedBkspc) {
+    if (clickedBkspc && viewStore.viewType === "outline") {
       await tree.replaceObjectAtNodeWithCopy(treeNode.id);
       tree.setFocusedNode(treeNode.id);
       setClickedBckspc(false);
