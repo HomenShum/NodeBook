@@ -101,7 +101,7 @@ export const ArrowKeyPlugin = () => {
           // Check if we're in the first node of note content
           const isFirstNoteContentNode =
             treeNode.parentGroup.id === "noteContent" && treeNode.parentGroup.nodes[0] === treeNode;
-          if (isFirstNoteContentNode) {
+          if (isFirstNoteContentNode && treeNode.tree.viewType === "outline") {
             event.preventDefault();
             // Focus the note content prefix
             const prefixInput = document.querySelector(`[data-note-prefix="${treeNode.parent?.object.id}"]`);
