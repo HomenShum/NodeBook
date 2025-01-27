@@ -21,6 +21,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
+import relationComboboxStyles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
 
 import styles from "./DropdownPlugin.module.css";
 
@@ -210,11 +211,23 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
           >
             <div className={styles.DropdownItem}>
               {match.type === "relationType" ? (
-                <div>{match.isForward ? match.object.label : match.object.reverseLabel}:</div>
+                <div className={relationComboboxStyles.RelationComboboxLabel}>
+                  {match.isForward ? match.object.label : match.object.reverseLabel}:
+                </div>
               ) : (
                 <>
                   <div className={styles.DropdownItemContent}>
-                    <div>{match.object.text}</div>
+                    <div style={{ flex: 1, overflow: "hidden" }}>
+                      {match.object instanceof GraphNode ? (
+                        match.object.text
+                      ) : (
+                        <RelationDisplay
+                          from={match.object.from.text}
+                          to={match.object.to.text}
+                          relationType={match.object.relationType.label}
+                        />
+                      )}
+                    </div>
                     <div className={styles.DropdownItemHelper}>
                       {index === 0 && highlightedIndex === null && (
                         <div className={styles.DropdownHelper}>Tab to select </div>
@@ -222,6 +235,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
                       {match.type === "node" && graphNodeIsCustomRelType(match.object, true) ? (
                         <div className={styles.RelTypeIndicator}>Type</div>
                       ) : null}
+                      {match.type === "relation" ? <div className={styles.RelTypeIndicator}>Relation</div> : null}
                       {match.type === "node" ? <RelationCounter object={match.object} showTooltip={false} /> : null}
                     </div>
                   </div>
@@ -235,3 +249,17 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
     </div>
   );
 });
+
+export function RelationDisplay({ from, to, relationType }: { from: string; to: string; relationType: string }) {
+  return (
+    <div className={styles.RelationItem}>
+      <span className={styles.RelationItemObject}>{from}</span>
+      <div className={cn(relationComboboxStyles.RelationComboboxLabel, styles.RelationItemType)}>
+        <span className={styles.RelationItemDash}>—</span>
+        <span>{relationType}</span>
+        <span className={styles.RelationItemArrow}>→</span>
+      </div>
+      <span className={styles.RelationItemObject}>{to}</span>
+    </div>
+  );
+}

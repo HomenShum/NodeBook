@@ -1,10 +1,8 @@
 {
-  "id": "c199680e-b05b-42cc-b5ff-888cfee1adbd",
-  "prevId": "455b3361-5f5e-46e6-a9f0-b8c77ec1af59",
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "data": {
+    "public.data": {
       "name": "data",
       "schema": "",
       "columns": {
@@ -24,9 +22,12 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "graph_node": {
+    "public.graph_node": {
       "name": "graph_node",
       "schema": "",
       "columns": {
@@ -113,9 +114,12 @@
           ],
           "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "graph_relation": {
+    "public.graph_relation": {
       "name": "graph_relation",
       "schema": "",
       "columns": {
@@ -195,9 +199,12 @@
           ],
           "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "relation_lists": {
+    "public.relation_lists": {
       "name": "relation_lists",
       "schema": "",
       "columns": {
@@ -265,9 +272,12 @@
           ],
           "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "relation_type": {
+    "public.relation_type": {
       "name": "relation_type",
       "schema": "",
       "columns": {
@@ -329,9 +339,12 @@
           ],
           "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "mew_user": {
+    "public.mew_user": {
       "name": "mew_user",
       "schema": "",
       "columns": {
@@ -376,14 +389,23 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     }
   },
   "enums": {},
   "schemas": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
-  }
+    "tables": {},
+    "columns": {}
+  },
+  "id": "c199680e-b05b-42cc-b5ff-888cfee1adbd",
+  "prevId": "455b3361-5f5e-46e6-a9f0-b8c77ec1af59",
+  "sequences": {},
+  "policies": {},
+  "views": {},
+  "roles": {}
 }

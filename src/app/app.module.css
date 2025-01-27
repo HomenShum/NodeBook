@@ -160,3 +160,8 @@
   border-radius: 4px;
   border: 2px solid var(--gray-2);
 }
+
+.SmallContainer {
+  width: 60%;
+  flex-grow: initial !important;
+ }

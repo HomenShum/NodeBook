@@ -169,6 +169,20 @@
       "when": 1734382834578,
       "tag": "0023_colorful_luminals",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1737287831933,
+      "tag": "0024_purple_dreaming_celestial",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1737370393151,
+      "tag": "0025_solid_prima",
+      "breakpoints": true
     }
   ]
 }

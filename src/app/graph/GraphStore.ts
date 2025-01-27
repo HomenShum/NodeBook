@@ -1,4 +1,4 @@
-import { action, isObservable, makeObservable, observable, toJS } from "mobx";
+import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { NodeType } from "@/app/editor/plugins/dropdown/utils";
@@ -14,6 +14,7 @@ import { SettingsStore } from "@/app/graph/SettingsStore";
 import { GraphRelationType } from "@/app/graph/types";
 import { UpdateManager } from "@/app/graph/UpdateManager";
 import { getCanonicalPath, getNextCanonicalRelation } from "@/app/graph/utils";
+import { LayerManager } from "@/app/persistence/loadGraphData";
 import { serializeMap } from "@/app/persistence/serialization";
 import {
   DeletedRelationData,
@@ -75,6 +76,7 @@ export class GraphStore {
 
   user: MewUser;
   updateManager: UpdateManager;
+  layerManager: LayerManager;
 
   usersById: Map<string, MewUserPublic> = new Map();
   nodesById: Map<string, GraphNode> = new Map();
@@ -94,6 +96,7 @@ export class GraphStore {
       (updates) => this.applyUpdates(updates),
       authedFetch,
     );
+    this.layerManager = new LayerManager(this);
     this.cappedKeywordIndex = new KeywordTrieIndex(MAX_PREFIX_LENGTH);
     this.ensureDefaultObjectsCreated();
     this.makeObservable();
@@ -128,12 +131,17 @@ export class GraphStore {
         resetAndLoad: action,
         applyCombinedTransaction: action,
         importData: action,
+        totalNodes: computed,
       });
     }
   }
 
   get userRootId(): string {
     return USER_ROOT_ID_PREFIX + this.user.id;
+  }
+
+  get totalNodes(): number {
+    return this.nodesById.size;
   }
 
   get userRoot(): GraphNode {
@@ -2467,6 +2475,12 @@ export class GraphStore {
   private loadSerializedNode(props: SerializedNode): GraphNode {
     const existing = this.getNode(props.id);
     if (existing) {
+      //Avoid loading stale data in-case we are editing a node and sync happens
+      //after a layer is fetched. We do not want the layer to overwrite
+      //the active editor content.
+      if (existing.version > props.version || UpdateManager.isSyncing(props.id)) {
+        return existing;
+      }
       const canonicalRelation = props.canonicalRelationId ? this.getRelation(props.canonicalRelationId) : null;
       existing.update({ ...props, canonicalRelation });
       return existing;
@@ -2581,6 +2595,7 @@ export class GraphStore {
       .filter((v) => !relationsWithPositions.map((loaded) => loaded.item.id).includes(v.id));
     const updates: GraphUpdate[] = [];
     for (const rel of relationsInListButNotLoaded) {
+      return;
       logger.debug(
         `Relation ${rel.id} was present in "${listType}" list for ${objectId} but its position was missing in the data snapshot. ` +
           `Generating GraphUpdate to persist the automatically assigned position.`,
@@ -2662,6 +2677,7 @@ export class GraphStore {
 
   // TODO: We should make this async ASAP
   search(query: Query): SearchResults {
+    window !== undefined && this.layerManager.loadWithText(query.text);
     const results: SearchResults = { nodes: [], relations: [], relationTypes: [] };
     const { text, filters, sort } = query;
     const procText = text?.toLowerCase().trim();
@@ -2672,10 +2688,13 @@ export class GraphStore {
       relationTypes: !filters?.types || filters.types.includes("relationType"),
     };
 
+    // Todo: Move the search api here?
+    // Can have a local search + api search
+
     // Use the keyword index to get an initial set of object ids
     const initialObjectIds = this.cappedKeywordIndex.getIds(procText);
 
-    // Then do a full text search on the results
+    // Then do a local full text search on the results
     for (const id of initialObjectIds) {
       const object = this.getObjectOrType(id);
       if (include.nodes && object instanceof GraphNode) {

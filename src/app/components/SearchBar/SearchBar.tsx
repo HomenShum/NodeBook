@@ -7,11 +7,13 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { env } from "@/app/envFrontend";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 
 import styles from "./SearchBar.module.css";
 
 export const SearchBar = observer(function SearchBar() {
   const viewStore = useViewStore();
+  const graphStore = useGraphStore();
   const [isExpanded, setIsExpanded] = useState(!!viewStore.searchQuery);
   const [visibleInput, setVisibleInput] = useState("");
   const [lastInputTime, setLastInputTime] = useState(new Date());
@@ -49,6 +51,10 @@ export const SearchBar = observer(function SearchBar() {
     [isExpanded, viewStore],
   );
 
+  useEffect(() => {
+    viewStore.recreateSearchTrees();
+  }, [graphStore.nodesById.size, viewStore]);
+
   const handleIconClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     inputRef.current?.focus();
@@ -62,12 +68,14 @@ export const SearchBar = observer(function SearchBar() {
   useEffect(() => {
     const interval = setInterval(() => {
       if (new Date().getTime() - lastInputTime.getTime() > 400 && viewStore.searchQuery !== visibleInput) {
+        //Todo: internally this calls graphStore.search which triggers a layerManager.loadWithText call.
         viewStore.setSearchQuery(visibleInput);
+        graphStore.layerManager.loadWithBFS(viewStore.mainView.rootObjectId);
       }
     }, 100);
 
     return () => clearInterval(interval);
-  }, [viewStore, visibleInput, lastInputTime]);
+  }, [viewStore, visibleInput, lastInputTime, graphStore.layerManager]);
 
   return (
     <div
@@ -83,7 +91,9 @@ export const SearchBar = observer(function SearchBar() {
       <input
         ref={inputRef}
         type="search"
-        placeholder={isExpanded ? `Search... ${' '.repeat(20)}Create (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."}
+        placeholder={
+          isExpanded ? `Search... ${" ".repeat(20)}Create (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."
+        }
         className={styles.SearchContent}
         value={visibleInput}
         onChange={handleInputChange}

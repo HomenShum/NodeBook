@@ -5,8 +5,8 @@ import { env } from "@/envBackend";
 export default {
   schema: "./src/db/schema.ts",
   out: "./drizzle",
-  driver: "pg",
+  dialect: "postgresql",
   dbCredentials: {
-    connectionString: env.POSTGRES_CONNECTION_STRING,
+    url: env.POSTGRES_CONNECTION_STRING,
   },
 } satisfies Config;

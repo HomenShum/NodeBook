@@ -7,7 +7,6 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { CmdEditor } from "@/app/components/CommandBar/CmdEditor";
 import { Path } from "@/app/components/Path";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useUser } from "@/app/contexts/UserContext";
 import { useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
 import { graphNodeIsCustomRelType } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
@@ -42,11 +41,11 @@ type Command =
     };
 
 const CommandBar = observer(() => {
-  const user = useUser();
   const viewStore = useViewStore();
   const { addToast } = useToast();
 
   const [search, setSearch] = useState<Search>({ text: "", chips: [] });
+
   const resetSearch = () => setSearch({ text: "", chips: [] });
 
   const close = useCallback(() => {
@@ -161,7 +160,18 @@ const CommandBar = observer(() => {
       });
     }
     return commands;
-  }, [graphStore, setRoot, search, close, addToast, handleZoomToNode, getRecentNodes]);
+  }, [
+    graphStore.totalNodes, //Required to refresh the search results
+    search.text,
+    search.chips,
+    getRecentNodes,
+    graphStore,
+    viewStore,
+    close,
+    setRoot,
+    addToast,
+    handleZoomToNode,
+  ]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -261,7 +271,7 @@ const CommandBar = observer(() => {
                     ) : null}
                   </span>
 
-                  {command.type !== "create" && <Path path={command.path} />}
+                  {command.type !== "create" && <Path path={command.path} skipLast={true} />}
                 </div>
               ))}
             </div>

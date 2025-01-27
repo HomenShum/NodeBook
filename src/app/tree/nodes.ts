@@ -445,6 +445,7 @@ export abstract class BaseGroup {
   hydrate_subset(subsetRelations: Set<string>): Set<string> {
     const newlyHidden = new Set<string>();
     const nodes = [];
+    const missingIds = [];
     for (const { relation, position } of this.relationsWithPositions) {
       if (!subsetRelations.has(relation.id)) {
         newlyHidden.add(relation.id);
@@ -452,6 +453,7 @@ export abstract class BaseGroup {
       }
       const object = getOtherObject(relation, this.parent.object.id);
       if (!object) {
+        missingIds.push(relation.from.id, relation.to.id);
         const message = "Object not found for relation during hydration";
         const data = {
           relationId: relation.id,
@@ -489,15 +491,21 @@ export abstract class BaseGroup {
       }
       nodes.push(node);
     }
+    if (missingIds.length > 0) {
+      logger.debug("Loading missing ids", missingIds);
+      this.tree.loadMissingIdsDuringHydration(missingIds);
+    }
     this.nodes = nodes;
     return newlyHidden;
   }
 
   hydrate() {
     const nodes = [];
+    const missingIds = [];
     for (const { relation, position } of this.relationsWithPositions) {
       const object = getOtherObject(relation, this.parent.object.id);
       if (!object) {
+        missingIds.push(relation.from.id, relation.to.id);
         const message = "Object not found for relation during hydration";
         const data = {
           relationId: relation.id,
@@ -534,6 +542,10 @@ export abstract class BaseGroup {
         node.hydrate();
       }
       nodes.push(node);
+    }
+    if (missingIds.length > 0) {
+      logger.debug("Loading missing ids", missingIds);
+      this.tree.loadMissingIdsDuringHydration(missingIds);
     }
     this.nodes = nodes;
   }

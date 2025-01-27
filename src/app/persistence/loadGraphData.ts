@@ -6,8 +6,9 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { SerializedGraphStoreSchema, SerializedStores } from "@/app/persistence/SerializedData";
 import { PersistedUser } from "@/db/schema";
 import logger from "@/lib/logger";
+import { getAuthFetch } from "@/app/util";
 
-const localLocalData = (graphStore: GraphStore) => {
+export const localLocalData = (graphStore: GraphStore) => {
   logger.debug("Loading data from local storage");
   const dataString = localStorage.getItem("data");
   if (!dataString) return;
@@ -20,26 +21,86 @@ const localLocalData = (graphStore: GraphStore) => {
   logger.debug(`Successfully loaded data from ${env.persistTo}`);
 };
 
-const loadRemoteData = async (graphStore: GraphStore, userFetch: typeof fetch) => {
-  logger.debug("Loading data from server");
+export class LayerManager {
+  private static loadedIds = new Set<string>();
+  //We load just 1 load, loading 2 layers for canonical can be expensive.
+  //Take a look at this later.
+  private static loadedIdsForCanonical = new Set<string>();
+  private searchedText = new Map<string, boolean>();
+  private debounceTimer: NodeJS.Timeout | null = null;
+  private readonly graphStore: GraphStore;
 
-  const syncData = await userFetch("/api/sync").then((res) => res.json());
-  const parsed = SerializedGraphStoreSchema.safeParse(syncData.data);
-  if (parsed.success) {
-    graphStore.resetAndLoad(parsed.data);
-    logger.debug("Graph data loaded");
-  } else {
-    logger.error("Failed to parse graph store data from server", parsed.error);
+  public clear() {
+    LayerManager.loadedIds.clear();
+    this.searchedText.clear();
+    clearTimeout(this.debounceTimer || -1);
   }
-};
 
-export async function loadGraphData(graphStore: GraphStore, userFetch: typeof fetch) {
-  if (env.persistTo === "local") {
-    localLocalData(graphStore);
-  } else if (env.persistTo === "server") {
-    await loadRemoteData(graphStore, userFetch);
+  constructor(graphStore: GraphStore) {
+    this.graphStore = graphStore;
+  }
+
+  loadWithText(text: string): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+    if (text.length < 3 || this.searchedText.has(text)) return;
+    this.debounceTimer = setTimeout(async () => {
+      this.searchedText.set(text, true);
+      const nodeIds = await this.fetchAndLoad(`/api/search?query=${text}`);
+      this.loadCanonicalWithIds(nodeIds);
+    }, 80);
+  }
+
+  async loadWithBFS(objectId: string): Promise<void> {
+    //Todo: Debounce this too, maybe make a debounce method instead of
+    //cloning debounce from above
+    await this.fetchAndLoad(`/api/layer/bfs?objectId=${objectId}`);
+  }
+
+  //Todo: Maybe add another method for lazy loading since we try to load an object
+  //on hover. But a user can hover around and it dispatches multiple api calls.
+
+  public async loadWithIds(objectIds: string[], withReset = false) {
+    const ids = objectIds
+      .filter((id) => !LayerManager.loadedIds.has(id))
+      .map((id) => (id === "home" ? this.graphStore.userRootId : id));
+    if (ids.length <= 0) return;
+    ids.forEach((id) => LayerManager.loadedIds.add(id));
+    const url = `/api/layer?objectId=`.concat(ids.join("&objectId="));
+    return this.fetchAndLoad(url, withReset);
+  }
+
+  public async loadCanonicalWithIds(objectIds: string[]) {
+    const ids = objectIds
+      .filter((id) => !LayerManager.loadedIdsForCanonical.has(id))
+      .map((id) => (id === "home" ? this.graphStore.userRootId : id));
+    if (ids.length <= 0) return;
+    ids.forEach((id) => LayerManager.loadedIdsForCanonical.add(id));
+    const url = `/api/layer/canonical?objectId=`.concat(ids.join("&objectId="));
+    return this.fetchAndLoad(url);
+  }
+
+  public async loadRelationTypes() {
+    const url = `/api/layer/relations`;
+    return this.fetchAndLoad(url);
+  }
+
+  private async fetchAndLoad(url: string, withReset: boolean = false) {
+    const authFetch = getAuthFetch();
+    const syncData = await authFetch(url).then((res) => res.json());
+    const parsed = SerializedGraphStoreSchema.safeParse(syncData.data);
+    if (parsed.success) {
+      withReset ? this.graphStore.resetAndLoad(parsed.data) : this.graphStore.load(parsed.data);
+      logger.debug("Graph layer loaded");
+      return Object.keys(parsed.data.nodesById);
+    } else {
+      logger.error("Failed to parse graph store data from server", parsed.error);
+      return [];
+    }
   }
 }
+
 export const fetchGetOrCreateUser = async (user: User, userFetch: typeof fetch): Promise<PersistedUser | undefined> => {
   if (!user?.sub) throw new TypeError("This function must be called with a User that has the `sub` property");
   const response = await userFetch("/api/user", {

@@ -1,10 +1,8 @@
 {
-  "id": "bb808632-418e-4193-934c-e365b28ef935",
-  "prevId": "b53aec0c-f3e2-4646-879d-86d7f4dcddc9",
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "data": {
+    "public.data": {
       "name": "data",
       "schema": "",
       "columns": {
@@ -24,9 +22,12 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "graph_node": {
+    "public.graph_node": {
       "name": "graph_node",
       "schema": "",
       "columns": {
@@ -77,9 +78,12 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "graph_relation": {
+    "public.graph_relation": {
       "name": "graph_relation",
       "schema": "",
       "columns": {
@@ -124,9 +128,12 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "relation_lists": {
+    "public.relation_lists": {
       "name": "relation_lists",
       "schema": "",
       "columns": {
@@ -174,16 +181,19 @@
       "uniqueConstraints": {
         "relation_lists_node_id_relation_id_pinned_unique": {
           "name": "relation_lists_node_id_relation_id_pinned_unique",
-          "nullsNotDistinct": false,
           "columns": [
             "node_id",
             "relation_id",
             "pinned"
-          ]
+          ],
+          "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "relation_type": {
+    "public.relation_type": {
       "name": "relation_type",
       "schema": "",
       "columns": {
@@ -216,14 +226,23 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     }
   },
   "enums": {},
   "schemas": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
-  }
+    "tables": {},
+    "columns": {}
+  },
+  "id": "bb808632-418e-4193-934c-e365b28ef935",
+  "prevId": "b53aec0c-f3e2-4646-879d-86d7f4dcddc9",
+  "sequences": {},
+  "policies": {},
+  "views": {},
+  "roles": {}
 }

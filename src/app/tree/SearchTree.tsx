@@ -49,6 +49,7 @@ export class SearchTree extends Tree {
       this.rootObject,
       Array.from(results.nodes, (n) => n.node),
     );
+
     let end = Date.now();
     console.log("Time taken to get all paths", end - start);
     start = Date.now();

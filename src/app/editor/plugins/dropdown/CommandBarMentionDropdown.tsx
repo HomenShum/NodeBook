@@ -65,7 +65,7 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
 
       return null;
     },
-    [getMatches, getRecentNodes, textChanged],
+    [getMatches, getRecentNodes, textChanged, graphStore.totalNodes],
   );
 
   const onSelectOption = useCallback(

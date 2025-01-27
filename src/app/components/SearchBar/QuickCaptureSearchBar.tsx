@@ -7,11 +7,13 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { env } from "@/app/envFrontend";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 
 import styles from "./SearchBar.module.css";
 
 export const QuickCaptureSearchBar = observer(function SearchBar() {
   const viewStore = useViewStore();
+  const graphStore = useGraphStore();
   const [isExpanded, setIsExpanded] = useState(!!viewStore.quickCaptureSearchQuery);
   const [visibleInput, setVisibleInput] = useState("");
   const [lastInputTime, setLastInputTime] = useState(new Date());
@@ -49,6 +51,10 @@ export const QuickCaptureSearchBar = observer(function SearchBar() {
     [isExpanded, viewStore],
   );
 
+  useEffect(() => {
+    viewStore.recreateSearchTrees();
+  }, [graphStore.nodesById.size, viewStore]);
+
   const handleIconClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     inputRef.current?.focus();
@@ -83,7 +89,9 @@ export const QuickCaptureSearchBar = observer(function SearchBar() {
       <input
         ref={inputRef}
         type="search"
-        placeholder={isExpanded ? `Search...${' '.repeat(20)}Create (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."}
+        placeholder={
+          isExpanded ? `Search...${" ".repeat(20)}Create (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."
+        }
         className={styles.SearchContent}
         value={visibleInput}
         onChange={handleInputChange}

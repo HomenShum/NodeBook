@@ -22,6 +22,6 @@ export class PlaceholderGraphObject extends BaseGraphObject {
     this.createdAt = new Date();
     this.updatedAt = new Date(this.createdAt.getTime());
   }
-  text = "PLACEHOLDER";
-  searchText = "PLACEHOLDER";
+  text = "Unloaded Node";
+  searchText = "Unloaded Node";
 }

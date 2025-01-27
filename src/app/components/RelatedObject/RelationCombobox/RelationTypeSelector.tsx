@@ -1,4 +1,4 @@
-import { Delete, Plus, Search } from "lucide-react";
+import { Delete, MessageCircle, Plus, Search } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { ParentRelationIcon } from "@/app/components/CustomIcons";
@@ -9,6 +9,8 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { defaultRelationTypes, getRelationTypeIcon } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { DescendantTreeNode } from "@/app/tree/nodes";
+import { useSetMainRoot } from "@/app/tree/utils";
+import { useViewStore } from "@/app/view/useViewStore";
 
 const getCreationLabel = (search: string) => `Create "${search}" relation type`;
 
@@ -38,6 +40,8 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
   );
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const itemWasSelectedRef = useRef(false);
+  const viewStore = useViewStore();
+  const setRoot = useSetMainRoot();
 
   const handleSelect = useCallback(
     async (relationType: GraphRelationType, wantDirection: "forward" | "reverse") => {
@@ -210,14 +214,30 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
         }
       }}
     >
-      <div className={styles.RelationComboboxInput}>
-        <Search size={14} />
-        <input
-          placeholder="Search relation types..."
-          className={styles.RelationComboboxInputContent}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
+        <div className={styles.RelationComboboxInput}>
+          <Search size={14} />
+          <input
+            placeholder="Search relation types..."
+            className={styles.RelationComboboxInputContent}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <button
+          style={{ padding: "5px", display: "flex", alignItems: "center" }}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (event.shiftKey) {
+              viewStore.createSidebarTree(treeNode.relationWithParent);
+            } else {
+              setRoot(treeNode.relationWithParent);
+            }
+          }}
+        >
+          <MessageCircle size={18} />
+        </button>
       </div>
       <div className={styles.RelationComboboxGroup}>
         {items.map(({ key, label, onSelect, icon }, index) => (

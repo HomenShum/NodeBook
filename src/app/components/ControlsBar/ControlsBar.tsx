@@ -1,15 +1,4 @@
-import {
-  Globe,
-  Link2,
-  ListFilter,
-  ListMinusIcon,
-  Map,
-  MapPin,
-  NetworkIcon,
-  Sliders,
-  WorkflowIcon,
-  X,
-} from "lucide-react";
+import { Globe, Link2, ListFilter, ListIcon, Map, MapPin, NetworkIcon, Sliders, WorkflowIcon, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { ChangeEvent, useCallback, useState } from "react";
 
@@ -173,7 +162,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
               {viewStore.graphMode ? (
                 <NetworkIcon size={14} strokeWidth={1.5} />
               ) : viewStore.viewType === ViewType.Outline ? (
-                <ListMinusIcon size={16} strokeWidth={1.5} />
+                <ListIcon size={17} strokeWidth={1.8} />
               ) : (
                 <NotesIcon />
               )}
@@ -188,7 +177,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuItem onSelect={() => setViewType(ViewType.Outline)}>
-              <ListMinusIcon size={17} strokeWidth={2.1} />
+              <ListIcon size={17} strokeWidth={1.7} />
               List View
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setViewType(ViewType.Note)}>

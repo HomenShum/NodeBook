@@ -12,6 +12,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { getOtherObject } from "@/app/graph/utils";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import logger from "@/lib/logger";
+import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 
 import { isGraphRelationType } from "./graph/isGraphRelationType";
 
@@ -474,6 +475,16 @@ export function ideapadSnapshotFromGraph(graphStore: GraphStore, userId: string)
   }
 
   return { nodes, edges };
+}
+
+export function getAuthFetch(): typeof fetch {
+  const token = localStorage.getItem(JWT_LOCAL_STORAGE_KEY);
+  if (token) {
+    return async (input, init) => {
+      return fetch(input, { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } });
+    };
+  }
+  return fetch;
 }
 
 export function exportSubtreeToIdeapad(graphStore: GraphStore, rootNode: GraphObject, userId: string) {

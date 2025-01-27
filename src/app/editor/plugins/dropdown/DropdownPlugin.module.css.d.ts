@@ -6,6 +6,12 @@ declare const styles: {
   readonly "DropdownItemHelper": string;
   readonly "ForCommandBar": string;
   readonly "RelTypeIndicator": string;
+  readonly "RelationItem": string;
+  readonly "RelationItemArrow": string;
+  readonly "RelationItemDash": string;
+  readonly "RelationItemObject": string;
+  readonly "RelationItemRelationType": string;
+  readonly "RelationItemType": string;
   readonly "SearchAndReplace": string;
   readonly "Selected": string;
   readonly "TypeaheadPopover": string;

@@ -31,7 +31,6 @@
   display: none;
   cursor: pointer;
   margin-left: auto;
-  padding: 12px 12px 0 0;
   transition: opacity ease-in-out 10ms;
   z-index: 1;
 }
@@ -40,6 +39,8 @@
   opacity: 0.8;
 }
 
-.RightSidebar > [class*="ContentContainer"] > .CloseTreeButton {
-  display: block;
+.RightSidebar .CloseTreeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

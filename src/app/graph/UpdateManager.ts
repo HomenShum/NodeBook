@@ -1,5 +1,5 @@
 import { captureException } from "@sentry/nextjs";
-import { action, computed, isObservable, makeObservable, observable, runInAction } from "mobx";
+import { computed, makeObservable, observable, runInAction } from "mobx";
 import Pusher from "pusher-js";
 
 import { env } from "@/app/envFrontend";
@@ -19,20 +19,43 @@ export class UpdateManager {
   private userId: string;
 
   private isSyncing = false;
+  private static pendingNodeSyncCounts = new Map<string, number>();
   private nextSyncId: ReturnType<typeof setTimeout> | number = 0;
 
+  @observable.shallow
   private undoStack: GraphUpdate[][] = [];
+  @observable.shallow
   private redoStack: GraphUpdate[][] = [];
 
   syncQueue: SyncData[] = [];
 
   private authedFetch?: typeof fetch;
 
+  @observable
   offlineSince: Date | null = null;
+  @observable
   lastSuccessfulSync: Date = new Date();
 
   private refetchCallback: (data: SerializedGraphStore) => void;
   private applyGraphUpdates: (updates: GraphUpdate[]) => void;
+
+  static incrementSyncCount(nodeId: string): void {
+    const currentCount = UpdateManager.pendingNodeSyncCounts.get(nodeId) || 0;
+    UpdateManager.pendingNodeSyncCounts.set(nodeId, currentCount + 1);
+  }
+
+  static decrementSyncCount(nodeId: string): void {
+    const currentCount = UpdateManager.pendingNodeSyncCounts.get(nodeId) || 1;
+    if (currentCount - 1 <= 0) {
+      UpdateManager.pendingNodeSyncCounts.delete(nodeId);
+    } else {
+      UpdateManager.pendingNodeSyncCounts.set(nodeId, currentCount - 1);
+    }
+  }
+
+  static isSyncing(nodeId: string): boolean {
+    return (UpdateManager.pendingNodeSyncCounts.get(nodeId) || 0) > 0;
+  }
 
   constructor(
     userId: string,
@@ -45,25 +68,15 @@ export class UpdateManager {
     this.authedFetch = authedFetch;
     this.refetchCallback = refetchCallback;
     this.applyGraphUpdates = applyUpdatesFn;
-    this.makeObservable();
+    makeObservable(this);
   }
 
-  makeObservable() {
-    if (isObservable(this)) {
-      return;
-    }
-    makeObservable(this, {
-      queueUpdates: action,
-      undo: action,
-      redo: action,
-      revertAllPending: action,
-      cleanup: action,
-      syncLocalUpdates: action,
-      syncQueue: observable.shallow,
-      numPendingUpdates: computed,
-      offlineSince: observable,
-      lastSuccessfulSync: observable,
-    });
+  /**
+   * Get all updates in the current session's history.
+   */
+  @computed
+  get sessionUpdates() {
+    return this.undoStack;
   }
 
   // TODO not sure about these
@@ -304,10 +317,15 @@ export class UpdateManager {
     }
 
     const syncDataBatch = condenseSyncDataBatch(this.syncQueue);
+
     this.syncQueue = [];
     let syncData = syncDataBatch.shift();
     try {
       while (syncData) {
+        syncData.updates.forEach((update) => {
+          if (update.operation !== "updateNode") return;
+          UpdateManager.incrementSyncCount(update.oldProps.id);
+        });
         logger.debug("Sending sync data", syncData);
         let endpoint = "/api/sync";
 
@@ -340,6 +358,11 @@ export class UpdateManager {
           await this.fetchLatestDataSnapshot();
           return;
         }
+        syncData.updates.forEach((update) => {
+          if (update.operation !== "updateNode") return;
+          UpdateManager.decrementSyncCount(update.oldProps.id);
+        });
+        console.log("Sync map", UpdateManager.pendingNodeSyncCounts);
         syncData = syncDataBatch.shift();
       }
     } catch (e) {

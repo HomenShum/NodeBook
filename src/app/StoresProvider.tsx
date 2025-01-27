@@ -11,11 +11,13 @@ import { UserContext } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { fetchGetOrCreateUser, fetchGetUser, loadGraphData } from "@/app/persistence/loadGraphData";
-import { toast } from "@/app/util";
+import { fetchGetOrCreateUser, fetchGetUser, LayerManager, localLocalData } from "@/app/persistence/loadGraphData";
+import { getAuthFetch, toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
 import rootLogger from "@/lib/logger";
+import { GLOBAL_USERS_NODE_ID, GLOBAL_USERS_RELATION_ID } from "@/lib/constants";
+import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 
 export const logger = rootLogger.child({ service: "store-provider" });
 
@@ -32,6 +34,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
   const [settingsStore, setSettingsStore] = useState<SettingsStore>(new SettingsStore());
   const [graphStore, setGraphStore] = useState<GraphStore>(new GraphStore(UNLOGGED_USER, settingsStore));
   const [viewStore, setViewStore] = useState<ViewStore>(new ViewStore(settingsStore, graphStore));
+
   // expose stores to window for debugging
   if (env.env !== "production" && typeof window !== "undefined") {
     window.mew = {
@@ -44,23 +47,22 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       rootLogger,
     };
   }
-
   // when auth changes, clean up current stores and setup up new ones
   useEffect(() => {
     let ignore = false;
     async function setupStores() {
+      const objectId = (window && window.location.pathname.split("/").pop()) || "home";
       if (!auth && !envAllowsMockAuth()) return logger.debug("Skip loading stores while auth is not enabled");
       if (auth?.isLoading) return logger.debug("Skip loading stores while auth is loading");
 
       logger.debug("Starting to setup stores", auth);
       setIsLoading(true);
 
-      const authedFetch: typeof fetch = auth?.user
-        ? async (input, init) => {
-            const token = await auth?.getAccessTokenSilently();
-            return fetch(input, { ...init, headers: { ...init?.headers, Authorization: `Bearer ${token}` } });
-          }
-        : fetch;
+      if (auth && auth.user) {
+        localStorage.setItem(JWT_LOCAL_STORAGE_KEY, await auth.getAccessTokenSilently());
+      }
+
+      const authedFetch = getAuthFetch();
 
       // load user
       logger.debug("Loading user");
@@ -107,8 +109,22 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       let syncCleanup = () => {};
       try {
         if (env.isPersistenceEnabled) {
-          logger.debug("Loading data", user.id);
-          await loadGraphData(graph, authedFetch);
+          if (env.persistTo === "server") {
+            const objectIds = [
+              objectId,
+              graph.relationTypesNodeId,
+              GLOBAL_USERS_NODE_ID,
+              GLOBAL_USERS_RELATION_ID,
+              graph.userRootId,
+              graph.usersToUserRelationId,
+              graph.myHashtagsNodeId,
+            ];
+            graph.layerManager.clear();
+            await graph.layerManager.loadWithIds(objectIds, true);
+            await graph.layerManager.loadRelationTypes();
+          } else if (env.persistTo === "local") {
+            localLocalData(graph);
+          }
         }
       } catch (e) {
         toast("Failed to load data from server. Starting with an empty graph.");

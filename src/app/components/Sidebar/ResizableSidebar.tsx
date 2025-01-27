@@ -3,6 +3,7 @@ import {
   FileSpreadsheet,
   Globe,
   HelpCircle,
+  History,
   Home,
   Key,
   ListIcon,
@@ -44,6 +45,7 @@ import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { GLOBAL_ROOT_ID } from "@/lib/constants";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -247,6 +249,9 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               variant="ghost"
               className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
               data-tooltip="Go to Global Root"
+              onMouseEnter={() => {
+                graphStore.layerManager.loadWithIds([GLOBAL_ROOT_ID]);
+              }}
               onClick={(e) => {
                 if (e.shiftKey) {
                   viewStore.createSidebarTree(graphStore.globalRoot);
@@ -270,6 +275,9 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                 data-tooltip="Go to your stream"
+                onMouseEnter={() => {
+                  graphStore.layerManager.loadWithIds([graphStore.userRoot.id]);
+                }}
                 onClick={(e) => {
                   if (e.shiftKey) {
                     viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
@@ -294,6 +302,9 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                 data-tooltip="Go to your list"
+                onMouseEnter={() => {
+                  graphStore.layerManager.loadWithIds([graphStore.userRoot.id]);
+                }}
                 onClick={(e) => {
                   if (e.shiftKey) {
                     viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
@@ -376,6 +387,25 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   <FileSpreadsheet size={16} strokeWidth={1.5} />
                 </span>
                 <span className={styles.ButtonText}>Recently Created Notes</span>
+              </Button>
+            )}
+            {!user.isAnonymous && (
+              <Button
+                variant="ghost"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                data-tooltip="See graph updates"
+                onClick={(e) => {
+                  if (e.metaKey) {
+                    window.open("/updates", "_blank");
+                  } else {
+                    handleNavigation(() => router.push("/updates"));
+                  }
+                }}
+              >
+                <span>
+                  <History size={16} strokeWidth={1.5} />
+                </span>
+                <span className={styles.ButtonText}>Updates Feed</span>
               </Button>
             )}
             {!user.isAnonymous && <MyHashtagsTree />}

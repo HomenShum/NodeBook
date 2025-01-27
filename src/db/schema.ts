@@ -1,11 +1,32 @@
-import { bigint, boolean, integer, pgEnum, pgTable, serial, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  boolean,
+  integer,
+  pgEnum,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  unique,
+  uuid,
+  customType,
+  index,
+} from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
+import { sql } from "drizzle-orm";
 
 export const dataTable = pgTable("data", {
   id: serial("id").primaryKey(),
   json: text("json"),
 });
+
+const tsvector = customType({
+  dataType() {
+    return "tsvector";
+  },
+});
+
 export const PersistedDataSchema = createSelectSchema(dataTable);
 export type PersistedData = z.infer<typeof PersistedDataSchema>;
 
@@ -74,9 +95,11 @@ export const graphNodeTable = pgTable(
     isNewRelatedObjectsPublic: boolean("is_new_related_objects_public").default(false),
     canonicalRelationId: text("canonical_relation_id"),
     isChecked: boolean("is_checked"),
+    contentTsvector: tsvector("content_tsvector"),
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),
+    contentSearchIndex: index("content_search_index").using("gin", t.contentTsvector),
   }),
 );
 export const GraphNodeSchema = createSelectSchema(graphNodeTable);

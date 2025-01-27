@@ -162,11 +162,15 @@ function OutlineContent({ tree }: Props) {
       viewStore.quickCaptureViewType === ViewType.Note);
 
   return (
-    <div id={tree.id} tabIndex={-1} className={appStyles.ContentContainer} ref={elementRef}>
-      <span className={s1.CloseTreeButton} onClick={() => viewStore.deleteSidebarTree(tree.id)}>
-        <X />
-      </span>
-
+    <div
+      id={tree.id}
+      tabIndex={-1}
+      className={cn(
+        appStyles.ContentContainer,
+        tree.isMainTree && viewStore.quickCaptureOpen && !viewStore.rightSidebarOpen ? appStyles.SmallContainer : "",
+      )}
+      ref={elementRef}
+    >
       {!hideHeader && (
         <div className={s.HeadingContainer}>
           <div className={s.TitleContainer}>
@@ -202,6 +206,9 @@ function OutlineContent({ tree }: Props) {
                 >
                   <Link size={16} strokeWidth={1.7} />
                 </Button>
+                <div className={s1.CloseTreeButton} onClick={() => viewStore.deleteSidebarTree(tree.id)}>
+                  <X />
+                </div>
                 {tooltipContent && (
                   <TooltipContent side="top" align="start" sideOffset={5}>
                     {tooltipContent}

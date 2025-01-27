@@ -45,7 +45,11 @@ const RenderMenuItemContent = (text: string) => (
 
 const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: RenderBreadcrumbsProps) => {
   const isMobile = useIsMobile();
+  const graphStore = useGraphStore();
   const totalItems = ancestors.length;
+
+  const layerObjectIds = ancestors.map((a) => a.object.id);
+  graphStore.layerManager.loadWithIds(layerObjectIds);
 
   if (isMobile) {
     // Mobile view (unchanged)

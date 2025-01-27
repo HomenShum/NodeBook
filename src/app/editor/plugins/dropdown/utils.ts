@@ -172,10 +172,14 @@ export const useGetRecentNodes = (maxResults: number, toFilterByNodeId?: string)
       recentNodes = recentNodes.filter((node) => toFilterByNodeId !== node.id);
     }
 
-    return recentNodes
+    const results = recentNodes
       .filter((node) => node.text.length > 0)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, maxResults)
       .map((node) => ({ key: node.id, type: "node" as const, object: node, score: 0 }));
+
+    graphStore.layerManager.loadWithIds(results.map((node) => node.object.id));
+
+    return results;
   }, [graphStore, maxResults, toFilterByNodeId]);
 };

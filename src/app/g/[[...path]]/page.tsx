@@ -20,7 +20,15 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
     // Otherwise, we redirect to the specified object or the default root
     if (path) {
       viewStore.setRoot(path.objectPath);
+      if (path.objectPath.object.id) {
+        graphStore.layerManager.loadCanonicalWithIds([path.objectPath.object.id]);
+        graphStore.layerManager.loadWithIds([path.objectPath.object.id]);
+      }
     } else {
+      if (pathArray) {
+        graphStore.layerManager.loadCanonicalWithIds([pathArray[pathArray.length - 1]]);
+        graphStore.layerManager.loadWithIds([pathArray[pathArray.length - 1]]);
+      }
       const object = pathArray ? graphStore.getNode(pathArray[pathArray.length - 1]) : false;
       if (object) {
         setRoot(object);

@@ -1,10 +1,8 @@
 {
-  "id": "ae9e7ee2-e912-4b56-aa62-2294cfb17400",
-  "prevId": "c199680e-b05b-42cc-b5ff-888cfee1adbd",
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "data": {
+    "public.data": {
       "name": "data",
       "schema": "",
       "columns": {
@@ -24,9 +22,12 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "graph_node": {
+    "public.graph_node": {
       "name": "graph_node",
       "schema": "",
       "columns": {
@@ -107,12 +108,18 @@
       "uniqueConstraints": {
         "graph_node_id_author_id_unique": {
           "name": "graph_node_id_author_id_unique",
-          "columns": ["id", "author_id"],
+          "columns": [
+            "id",
+            "author_id"
+          ],
           "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "graph_relation": {
+    "public.graph_relation": {
       "name": "graph_relation",
       "schema": "",
       "columns": {
@@ -186,12 +193,18 @@
       "uniqueConstraints": {
         "graph_relation_id_author_id_unique": {
           "name": "graph_relation_id_author_id_unique",
-          "columns": ["id", "author_id"],
+          "columns": [
+            "id",
+            "author_id"
+          ],
           "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "relation_lists": {
+    "public.relation_lists": {
       "name": "relation_lists",
       "schema": "",
       "columns": {
@@ -252,12 +265,19 @@
       "uniqueConstraints": {
         "relation_lists_node_id_relation_id_pinned_unique": {
           "name": "relation_lists_node_id_relation_id_pinned_unique",
-          "columns": ["node_id", "relation_id", "pinned"],
+          "columns": [
+            "node_id",
+            "relation_id",
+            "pinned"
+          ],
           "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "relation_type": {
+    "public.relation_type": {
       "name": "relation_type",
       "schema": "",
       "columns": {
@@ -313,12 +333,18 @@
       "uniqueConstraints": {
         "relation_type_id_author_id_unique": {
           "name": "relation_type_id_author_id_unique",
-          "columns": ["id", "author_id"],
+          "columns": [
+            "id",
+            "author_id"
+          ],
           "nullsNotDistinct": false
         }
-      }
+      },
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     },
-    "mew_user": {
+    "public.mew_user": {
       "name": "mew_user",
       "schema": "",
       "columns": {
@@ -363,14 +389,23 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {}
+      "uniqueConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false,
+      "checkConstraints": {}
     }
   },
   "enums": {},
   "schemas": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
-  }
+    "tables": {},
+    "columns": {}
+  },
+  "id": "ae9e7ee2-e912-4b56-aa62-2294cfb17400",
+  "prevId": "c199680e-b05b-42cc-b5ff-888cfee1adbd",
+  "sequences": {},
+  "policies": {},
+  "views": {},
+  "roles": {}
 }

@@ -95,6 +95,7 @@ export class Tree {
       },
       isMainTree = false,
       viewType = ViewType.Outline,
+      remoteHydrationEnabled = true,
     }: {
       id?: string;
       search?: string;
@@ -104,6 +105,7 @@ export class Tree {
       sortOption?: SortOption;
       isMainTree?: boolean;
       viewType?: ViewType;
+      remoteHydrationEnabled?: boolean;
     } = {},
   ) {
     this.id = id;
@@ -122,6 +124,7 @@ export class Tree {
     this.selectionStack = new SelectionStack();
     this.isMainTree = isMainTree;
     this.viewType = viewType;
+    this.remoteHydrationEnabled = remoteHydrationEnabled;
     this.makeObservable();
   }
 
@@ -176,6 +179,9 @@ export class Tree {
 
   protected settingsStore: SettingsStore;
 
+  /** Whether to do remote hydration. */
+  remoteHydrationEnabled: boolean;
+
   /** The current selection in the tree. This can be a node selection or an editor selection. */
   selection: TreeSelection | null;
 
@@ -195,6 +201,12 @@ export class Tree {
       relation: this.graphStore.getRelation(relationId),
       childGroupId,
     }));
+  }
+
+  public loadMissingIdsDuringHydration(objectIds: string[]) {
+    if (this.remoteHydrationEnabled) {
+      this.graphStore.layerManager.loadWithIds(objectIds);
+    }
   }
 
   public search: string = "";
@@ -516,6 +528,9 @@ export class Tree {
         const expand = confirm(`Are you sure you want to expand this node? It has ${numChildren} children.`);
         if (!expand) return;
       }
+      const layerIds: string[] = [];
+      node.childrenGroups.forEach((group) => group.nodes.forEach((n) => layerIds.push(n.object.id)));
+      this.graphStore.layerManager.loadWithIds([node.object.id, node.relationWithParent.id, ...layerIds]);
     }
 
     this.expansionsByPath.set(path, !currentStatus);

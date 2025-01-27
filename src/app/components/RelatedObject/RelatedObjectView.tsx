@@ -10,6 +10,7 @@ import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelat
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import Toggle from "@/app/components/RelatedObject/Toggle";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
@@ -317,10 +318,15 @@ const LoadingSpinner = () => {
 
 const Controls = observer(function Controls({ showToggle }: { showToggle: boolean }) {
   const viewStore = useViewStore();
+  const graphStore = useGraphStore();
   const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
   const isFirstChildOfNoteContent =
     treeNode.parentGroup.id === "noteContent" && treeNode.parentGroup.nodes[0].id === treeNode.id;
   const isMobile = useIsMobile();
+
+  if (isHovered) {
+    graphStore.layerManager.loadWithIds([treeNode.object.id]);
+  }
   const setRoot = useSetMainRoot();
   const isNoteContentRoot = treeNode.childrenGroupsById.noteContent.nodes.length > 0;
 

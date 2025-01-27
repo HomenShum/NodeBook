@@ -19,7 +19,7 @@ Install dependencies:
 yarn
 ```
 
-Link the vercel project then pull the `.env` file from vercel:
+Link the vercel project then pull our `.env` file from vercel:
 
 ```bash
 yarn vercel:link

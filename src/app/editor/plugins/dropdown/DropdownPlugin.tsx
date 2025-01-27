@@ -2,17 +2,19 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { mergeRegister } from "@lexical/utils";
 import { $getRoot, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { observer } from "mobx-react-lite";
 
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
-import { Dropdown } from "@/app/editor/plugins/dropdown/types";
+import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
 import { useGetMatchesForTreeNode, useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
 import { $getText } from "@/app/editor/utils/content";
 import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
 import { checkForMentionMatch } from "@/lib/utils";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 
 const MAX_DROPDOWN_RESULTS = 20;
 
@@ -37,10 +39,17 @@ const MAX_DROPDOWN_RESULTS = 20;
  *   dropdown will be shown instead.
  *
  */
-export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Element | null {
+export const DropdownPlugin = observer(function DropdownPlugin({
+  treeNode,
+}: {
+  treeNode: TreeNode;
+}): JSX.Element | null {
   const [dropdown, setDropdown] = useState<Dropdown>(null);
+  const dropdownRef = useRef<Dropdown>(null);
+
   const [editor] = useLexicalComposerContext();
   const settingsStore = useSettingsStore();
+  const graphStore = useGraphStore();
   const getMatches = useGetMatchesForTreeNode(MAX_DROPDOWN_RESULTS, treeNode);
   const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, treeNode.object.id);
 
@@ -155,6 +164,29 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
     ],
   );
 
+  useEffect(() => {
+    dropdownRef.current = dropdown;
+  }, [dropdown]);
+
+  useEffect(() => {
+    setDropdown((prevState) => {
+      if (!prevState) return null;
+      let matches: Match[] = [];
+      if (prevState.search.length === 0) {
+        matches = getRecentNodes();
+      } else if (passiveAutocompleteActive || prevState.type === "searchAndReplace") {
+        matches = getMatches(
+          prevState.search,
+          labelledRelation ? ["node", "relation"] : ["node", "relation", "relationType"],
+        );
+      } else if (prevState.type === "mention") {
+        matches = getMatches(prevState.search, ["node"]);
+      }
+
+      return { ...prevState, matches };
+    });
+  }, [getMatches, getRecentNodes, graphStore.nodesById.size, labelledRelation, passiveAutocompleteActive]);
+
   // Handle state transitions which {@link triggerFn} can't handle
   useEffect(() => {
     return mergeRegister(
@@ -205,4 +237,4 @@ export function DropdownPlugin({ treeNode }: { treeNode: TreeNode }): JSX.Elemen
       <MentionDropdown treeNode={treeNode} dropdown={dropdown} triggerFn={triggerFn} />
     </>
   );
-}
+});

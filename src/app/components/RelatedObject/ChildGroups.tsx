@@ -1,4 +1,5 @@
 import { observer } from "mobx-react-lite";
+import { useState } from "react";
 
 import { AddPinButton } from "@/app/components/Buttons/AddPinButton";
 import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
@@ -114,7 +115,10 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
       : viewStore.viewType;
   const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
 
-  if (tree instanceof SearchTree || (isEmpty && !group.isExpanded && !isRoot)) {
+  const defaultExpanded = tree instanceof QuickCaptureTree ? false : true;
+  const isExpanded = tree.expansionsByPath.get(group.path) ?? defaultExpanded;
+
+  if (tree instanceof SearchTree || (isEmpty && !isExpanded && !isRoot)) {
     return null;
   }
 
@@ -129,7 +133,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
               size="xs"
               onClick={() => tree.toggleGroupExpanded(group.path)}
             >
-              <span className={`${styles.PinIcon} ${group.isExpanded && styles.PinIcon_PinnedVisible}`}>
+              <span className={`${styles.PinIcon} ${isExpanded && styles.PinIcon_PinnedVisible}`}>
                 <PinCustomIcon />
               </span>
               Pinned
@@ -140,7 +144,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
         )}
       </div>
 
-      {group.isExpanded && !isEmpty && (
+      {isExpanded && !isEmpty && (
         <>
           {group.nodes.map((treeNode, i) => (
             <div key={treeNode.path}>
@@ -165,6 +169,7 @@ interface AllSectionProps {
 }
 
 const AllSection = observer(function AllSection({ parentNode, group }: AllSectionProps) {
+  const [limit, setLimit] = useState(50);
   const settingsStore = useSettingsStore();
   const viewStore = useViewStore();
   const viewType =
@@ -176,6 +181,7 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
   return (
     <div>
       {group.nodes
+        .slice(0, limit)
         .filter((childTreeNode) => {
           return (
             !settingsStore.hidePinnedItems ||
@@ -190,6 +196,9 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
             </div>
           );
         })}
+      <div style={{ marginTop: "20px" }}>
+        {limit < group.nodes.length && <Button onClick={() => setLimit(limit + 30)}>Load more</Button>}
+      </div>
     </div>
   );
 });

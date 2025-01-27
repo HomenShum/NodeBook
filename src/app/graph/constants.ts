@@ -108,4 +108,5 @@ export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType
 };
 
 export const MAX_PREFIX_LENGTH = 3;
-export const DELETED_NODE_TEXT = "Deleted Node";
+export const DELETED_NODE_TEXT = "Unloaded Node";
+export const JWT_LOCAL_STORAGE_KEY = "jwtToken";
