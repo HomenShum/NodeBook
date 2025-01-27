@@ -48,6 +48,7 @@ export class SearchTree extends Tree {
     const paths = this.graphStore.getAllPaths(
       this.rootObject,
       Array.from(results.nodes, (n) => n.node),
+      true,
     );
 
     let end = Date.now();

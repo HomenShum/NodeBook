@@ -2748,7 +2748,7 @@ export class GraphStore {
     return Array.from(this.relationsById.values()).filter((r) => r.from.id === node.id);
   }
 
-  getAllPaths(from: GraphNode, to: GraphNode[]): Array<Array<string>> {
+  getAllPaths(from: GraphNode, to: GraphNode[], noParent: boolean = false): Array<Array<string>> {
     // BFS from the one "from" node to find all shortest paths to the target "to" nodes
     // Caches current shortest paths so that we can use dynamic programming to find longer paths.
     // We only implement this for paths from nodes to nodes, so we must check that nextNode is a node.
@@ -2782,6 +2782,10 @@ export class GraphStore {
       }
 
       for (const { item: relation } of node.allRelationsList.values()) {
+        // Only walk down forward relations
+        if (noParent && relation.to.id === node.id && relation.relationType.label === "child") {
+          continue;
+        }
         const nextNode = relation.to.id === node.id ? relation.from : relation.to;
 
         if (
