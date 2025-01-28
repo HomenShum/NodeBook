@@ -196,9 +196,11 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
             </div>
           );
         })}
-      <div style={{ marginTop: "20px" }}>
-        {limit < group.nodes.length && <Button onClick={() => setLimit(limit + 30)}>Load more</Button>}
-      </div>
+      {limit < group.nodes.length && (
+        <div style={{ marginTop: "20px" }}>
+          <Button onClick={() => setLimit(limit + 30)}>Load more</Button>
+        </div>
+      )}
     </div>
   );
 });
