@@ -2,10 +2,12 @@
 
 ## Getting Started
 
-Prerequisites
+### Prerequisites
 
 - [Node.js](https://nodejs.org/en/download)
 - [Yarn](https://yarnpkg.com/getting-started/install)
+
+### Install
 
 (Optional) Install recommended VSCode extensions:
 
@@ -29,13 +31,15 @@ yarn vercel env pull --environment=development .env.local
 
 (Optional) By default, persistence is disabled. To enable persistence, set the `NEXT_PUBLIC_PERSISTENCE_ENABLED` environment variable to `true` and `NEXT_PUBLIC_IS_AUTH_ENABLED` to `true` in `.env.local`.
 
+### Start
+
 Start the development server:
 
 ```bash
 yarn dev
 ```
 
-## Set up a database for testing
+### (Optional) Set up a database for testing
 
 _Note: This is only necessary for changes that modify the existing database schema_
 
@@ -44,6 +48,12 @@ _Note: This is only necessary for changes that modify the existing database sche
 - Update the `POSTGRES_CUSTOM_URL` in `.env.local` with the new database name. For example, if the current url ends with `/development`, change it to `/<db-name>`
 - Run `yarn db:migrate` to create the tables in the new database
 - When you're done, you can delete the database by running `drop database <db-name>` in the [vercel data tab](https://vercel.com/ideaflowco/mew/stores/postgres/store_lxFSgFAtApzk0tud/data)
+
+## App instances
+
+Our application runs across multiple instances, each serving different purposes in our development pipeline. The diagram below illustrates how our branches map to different deployments and their corresponding databases. This setup allows us to maintain stable environments for development and testing while keeping historical snapshots of key architectural transitions.
+
+![App instances](./app-instance-layout.png)
 
 ## Migrate the database
 
