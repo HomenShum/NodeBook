@@ -1,0 +1,30 @@
+name: Fast forward stable on main
+
+on:
+  schedule:
+    # Runs at 12 AM UTC every Monday
+    - cron: "0 0 * * 1"
+  # Allows manual triggering
+  workflow_dispatch:
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Fast forward stable on main
+        run: |
+          git checkout stable
+          git merge main
+          git push origin stable
