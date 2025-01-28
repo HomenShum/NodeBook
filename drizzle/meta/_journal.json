@@ -183,6 +183,13 @@
       "when": 1737370393151,
       "tag": "0025_solid_prima",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1738067111778,
+      "tag": "0026_powerful_mimic",
+      "breakpoints": true
     }
   ]
 }
