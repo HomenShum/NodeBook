@@ -170,7 +170,11 @@ export function getNextSubtreeBelow(treeNode: DescendantTreeNode): DescendantTre
  */
 
 export function getSubtreesBetween(top: DescendantTreeNode, bottom: DescendantTreeNode) {
-  if (top.parentGroup.id !== bottom.parentGroup.id) return [];
+  if (
+    top.parentGroup.id !== bottom.parentGroup.id &&
+    !(top.parentGroup.id === "noteContent" || bottom.parentGroup.id === "noteContent")
+  )
+    return [];
 
   const subtrees: DescendantTreeNode[] = [];
   if (top.isAncestorOf(bottom)) {
