@@ -183,6 +183,23 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
         <Delete size={14} />
         Delete relation
       </DropdownMenuItem>
+      {object instanceof GraphNode && (
+        <DropdownMenuItem
+          onSelect={action(async () => {
+            try {
+              await graphStore.removeNode({ nodeId: object.id });
+              if (treeNode.siblingAbove) {
+                tree.setFocusedNode(treeNode.siblingAbove.path);
+              }
+            } catch (e) {
+              alert(e instanceof Error ? e.message : "Failed to delete node");
+            }
+          })}
+        >
+          <Delete size={14} />
+          Delete node
+        </DropdownMenuItem>
+      )}
       <DropdownMenuItem onSelect={() => setViewType("replace")}>
         <GitCompare size={14} />
         Replace related object
