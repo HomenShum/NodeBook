@@ -80,11 +80,11 @@ export function getMatches(
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
 
-      // node before relation before relationType
-      if (a.type === "node" && b.type !== "node") return -1;
-      if (b.type === "node" && a.type !== "node") return 1;
-      if (a.type === "relation" && b.type === "relationType") return -1;
-      if (b.type === "relation" && a.type === "relationType") return 1;
+      // relationType before node before relation
+      if (a.type === "relationType" && b.type !== "relationType") return -1;
+      if (b.type === "relationType" && a.type !== "relationType") return 1;
+      if (a.type === "node" && b.type === "relation") return -1;
+      if (b.type === "node" && a.type === "relation") return 1;
       // forward relationType should come before reverse relationType
       if (a.type === "relationType" && b.type === "relationType") {
         return a.isForward ? -1 : 1;
