@@ -43,13 +43,24 @@ export class SearchTree extends Tree {
       logger.warn("Root is not a node, this case isn't handled yet. Cancelling search.");
       return;
     }
-    // PATHFINDING code start. This is the heavy lifting.
-    // Start is always the root ID, so we know its path is just "rootId"
-    const paths = this.graphStore.getAllPaths(
-      this.rootObject,
-      Array.from(results.nodes, (n) => n.node),
-      true,
-    );
+
+    const relWithParentId = this.root.relationWithParent?.id;
+    let paths: Array<Array<string>> = [];
+    if (relWithParentId) {
+      const exclude = new Set([relWithParentId]);
+      // PATHFINDING code start. This is the heavy lifting.
+      // Start is always the root ID, so we know its path is just "rootId"
+      paths = this.graphStore.getAllPaths(
+        this.rootObject,
+        Array.from(results.nodes, (n) => n.node),
+        exclude,
+      );
+    } else {
+      paths = this.graphStore.getAllPaths(
+        this.rootObject,
+        Array.from(results.nodes, (n) => n.node),
+      );
+    }
 
     let end = Date.now();
     console.log("Time taken to get all paths", end - start);
