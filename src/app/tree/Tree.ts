@@ -475,7 +475,7 @@ export class Tree {
     return { rootObjectId: this.rootObjectId, pathToRootIds: this.pathToRootIds };
   }
 
-  toggleTodo() {
+  toggleNodeSelectionTodo() {
     const selection = this.selectionWithNodes;
     if (!selection || selection.type !== "node") return;
     const txs = selection.nodes.map((node) => {
@@ -504,6 +504,44 @@ export class Tree {
       };
     });
     this.graphStore.applyCombinedTransaction(txs);
+  }
+
+  toggleEditorSelectionTodo() {
+    if (!this.selection) return null;
+
+    const { descendantTreeNodesById } = this.state;
+
+    if (this.selection.type === "editor") {
+      const node = descendantTreeNodesById.get(this.selection.treeNodeId);
+      if (!node || !(node.object instanceof GraphNode)) {
+        return null;
+      }
+
+      let isChecked = null;
+      switch (node.object.isChecked) {
+        case null:
+          isChecked = false;
+          break;
+        case true:
+          isChecked = null;
+          break;
+        case false:
+          isChecked = true;
+          break;
+      }
+
+      this.graphStore.applyCombinedTransaction([
+        {
+          type: "updateNode" as const,
+          transaction: {
+            nodeId: node.object.id,
+            nodeProps: {
+              isChecked,
+            },
+          },
+        },
+      ]);
+    }
   }
 
   // For objects, we default to collapsed.
