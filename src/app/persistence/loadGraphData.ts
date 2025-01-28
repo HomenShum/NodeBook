@@ -87,6 +87,7 @@ export class LayerManager {
   }
 
   private async fetchAndLoad(url: string, withReset: boolean = false) {
+    if (!env.isPersistenceEnabled || env.persistTo !== "server") return [];
     const authFetch = getAuthFetch();
     const syncData = await authFetch(url).then((res) => res.json());
     const parsed = SerializedGraphStoreSchema.safeParse(syncData.data);
