@@ -1,6 +1,6 @@
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -21,6 +21,13 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
   const setRoot = useSetMainRoot();
   const openNewTab = useOpenNewTab();
   const [isExpanded, setIsExpanded] = useState(true);
+  const pinnedUniqueChildren = Array.from(
+    new Set(
+      [...object.pinnedRelationsWithPositions]
+        .filter(({ relation }) => relation.from.id === object.id)
+        .map(({ relation }) => relation.to),
+    ),
+  );
   const uniqueChildren = [...new Set(object.children)];
 
   const handleNavigation = useCallback(
@@ -44,7 +51,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
         setIsExpanded(!isExpanded);
       }
     },
-    [uniqueChildren.length, setRoot, object, isExpanded],
+    [viewStore, object, openNewTab, isExpanded],
   );
 
   const handleChildClick = useCallback(
@@ -57,7 +64,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
         handleNavigation(() => setRoot(child));
       }
     },
-    [uniqueChildren.length, setRoot, object, viewStore],
+    [viewStore, openNewTab, handleNavigation, setRoot],
   );
 
   return (
@@ -68,6 +75,15 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
         </div>
       </div>
+      <div className={styles.SidebarTreeChildren}>
+        {isExpanded &&
+          pinnedUniqueChildren.map((o) => (
+            <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)} key={o.id}>
+              {o.text}
+            </Button>
+          ))}
+      </div>
+      {isExpanded && pinnedUniqueChildren.length > 0 && <hr style={{ width: "80%", opacity: "0.3" }} />}
       <div className={styles.SidebarTreeChildren}>
         {isExpanded &&
           uniqueChildren.map((o) => (
