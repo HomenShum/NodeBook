@@ -6,7 +6,9 @@ import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { createRouteUrl, ObjectPath } from "@/app/util";
+import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
+import { GLOBAL_ROOT_ID } from "@/lib/constants";
 
 import { DescendantTreeNode, GroupId, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 
@@ -204,7 +206,11 @@ export function useSetMainRoot() {
     (obj: ObjectPath | GraphObject) => {
       const objectPath = isGraphObject(obj) ? getCanonicalPath(obj) : obj;
       viewStore.setRoot(objectPath);
-      router.push(createRouteUrl(objectPath));
+      const url = createRouteUrl(objectPath);
+      if (url === `/g/${GLOBAL_ROOT_ID}`) {
+        viewStore.setViewType(ViewType.Outline);
+      }
+      router.push(url);
     },
     [viewStore, router],
   );
