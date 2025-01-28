@@ -115,10 +115,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
       : viewStore.viewType;
   const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
 
-  const defaultExpanded = tree instanceof QuickCaptureTree ? false : true;
-  const isExpanded = tree.expansionsByPath.get(group.path) ?? defaultExpanded;
-
-  if (tree instanceof SearchTree || (isEmpty && !isExpanded && !isRoot)) {
+  if (tree instanceof SearchTree || (isEmpty && !group.isExpanded && !isRoot)) {
     return null;
   }
 
@@ -133,7 +130,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
               size="xs"
               onClick={() => tree.toggleGroupExpanded(group.path)}
             >
-              <span className={`${styles.PinIcon} ${isExpanded && styles.PinIcon_PinnedVisible}`}>
+              <span className={`${styles.PinIcon} ${group.isExpanded && styles.PinIcon_PinnedVisible}`}>
                 <PinCustomIcon />
               </span>
               Pinned
@@ -144,7 +141,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
         )}
       </div>
 
-      {isExpanded && !isEmpty && (
+      {group.isExpanded && !isEmpty && (
         <>
           {group.nodes.map((treeNode, i) => (
             <div key={treeNode.path}>
