@@ -79,7 +79,7 @@ export const RelationPlugin = observer(function RelationPlugin() {
 
           // Set the relation type to the text before the cursor
           const graphStoreTransaction: TxCombined = [];
-          let relationTypeText = textBefore.trim().replace(/:+$/, ""); //trim all colon from end
+          let relationTypeText = textBefore.trim().replace(/[:\s]+$/, ""); // Trim trailing spaces and colons
           const relationType = matchDefaultRelationType(relationTypeText);
           if (relationType) {
             graphStoreTransaction.push({
@@ -199,6 +199,18 @@ export const RelationPlugin = observer(function RelationPlugin() {
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [tree, graphStore, settingsStore, settingsStore.triggerRelationOnSingleColon, editor, object, relation, treeNode.path, treeNode.id, treeNode.relationWithParent.relationType.id, treeNode.relationWithParent.to]);
+  }, [
+    tree,
+    graphStore,
+    settingsStore,
+    settingsStore.triggerRelationOnSingleColon,
+    editor,
+    object,
+    relation,
+    treeNode.path,
+    treeNode.id,
+    treeNode.relationWithParent.relationType.id,
+    treeNode.relationWithParent.to,
+  ]);
   return null;
 });
