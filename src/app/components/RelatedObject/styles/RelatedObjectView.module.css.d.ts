@@ -2,6 +2,8 @@ declare const styles: {
   readonly "Bullet": string;
   readonly "ChildOfRootInNoteView": string;
   readonly "ClickToCreateNode": string;
+  readonly "CopyURLButton": string;
+  readonly "CopyURLIcon": string;
   readonly "DotInsideClickToCreateNode": string;
   readonly "ElbowArrow": string;
   readonly "HeaderInListView": string;
@@ -14,8 +16,8 @@ declare const styles: {
   readonly "NoteContentSection": string;
   readonly "NoteContentSectionHeader": string;
   readonly "NoteContentSuffix": string;
+  readonly "ObjectRightToggle": string;
   readonly "PinIcon": string;
-  readonly "PinToggle": string;
   readonly "Pinned": string;
   readonly "Placeholder": string;
   readonly "RelatedObjectActions": string;

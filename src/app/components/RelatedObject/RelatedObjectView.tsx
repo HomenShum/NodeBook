@@ -1,4 +1,4 @@
-import { CornerDownRight, LoaderCircle, Maximize2, Play } from "lucide-react";
+import { CornerDownRight, Link, LoaderCircle, Maximize2, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useState } from "react";
 
@@ -15,8 +15,8 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { isNoteContent, isUnlabelledChild, useSetMainRoot } from "@/app/tree/utils";
-import { useIsMobile } from "@/app/util";
+import { isNoteContent, isUnlabelledChild, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
+import { copyObjectUrlToClipboard, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
@@ -254,6 +254,19 @@ const Content = observer(function Content() {
           )
         }
         <div className={styles.RelatedObjectRightArea}>
+          <Button
+            size="state"
+            variant="ghost"
+            data-tooltip="Copy URL"
+            className={cn(styles.ObjectRightToggle, styles.CopyURLButton)}
+            onPointerDown={() => {
+              copyObjectUrlToClipboard(treeNodeToObjectPath(treeNode));
+            }}
+          >
+            <div className={styles.CopyURLIcon}>
+              <Link size={14} />
+            </div>
+          </Button>
           {/* Show pinned icon when rendering a pinned relation outside the pinned section */}
           <Button
             size="state"
@@ -262,7 +275,7 @@ const Content = observer(function Content() {
               treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? "Unpin node" : "Pin node"
             }
             className={cn(
-              styles.PinToggle,
+              styles.ObjectRightToggle,
               treeNode.parentGroup.id === "pinned" && styles.Hidden,
               treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? styles.Pinned : styles.Unpinned,
             )}

@@ -292,11 +292,12 @@ Right Area
 }
 
 /* Pin Icon of each bullet */
-.PinToggle {
+.ObjectRightToggle {
   position: relative;
+  transition: opacity 0.3s;
 }
 
-.PinToggle::before {
+.ObjectRightToggle::after {
   content: attr(data-tooltip);
   position: absolute;
   bottom: 0;
@@ -311,21 +312,14 @@ Right Area
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s 0.5s, visibility 0.3s 0.5s;
-  z-index: 1;
+  z-index: 5;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
   pointer-events: none;
 }
 
-.PinToggle {
-  transition: opacity 0.3s;
-}
-
-.PinToggle:hover::before {
+.ObjectRightToggle:hover::after {
   transition-delay: 0.5s;
-}
-
-.PinToggle:hover::before {
   opacity: 1;
   visibility: visible;
 }
@@ -336,31 +330,59 @@ Right Area
   transform: scaleX(-1) scale(0.8) translate(-1px, 1px);
 }
 
-.RelatedObjectContent:hover .PinToggle {
+.CopyURLIcon {
+  z-index: 3;
+  transform: scaleX(-1) scale(0.8) translate(-1px, 1px);
+}
+
+.CopyURLIcon svg {
+  stroke: var(--gray-9);
+}
+
+.CopyURLIcon svg {
+  stroke: var(--gray-9);
+}
+
+.ObjectRightToggle:hover svg {
+  stroke: var(--teal-9);
+}
+
+.RelatedObjectContent:hover .ObjectRightToggle {
   opacity: 1;
 }
 
-.PinToggle.Pinned {
+.ObjectRightToggle.Pinned {
   color: var(--teal-8);
 }
 
-.PinToggle.Unpinned {
+.CopyURLButton {
   color: var(--gray-8);
   opacity: 0;
   transition: opacity 0.1s ease-in-out;
 }
 
-.PinToggle.Hidden {
+.ObjectRightToggle.CopyURLButton:hover {
+  color: var(--teal-9);
+  background-color: var(--teal-2);
+}
+
+.ObjectRightToggle.Unpinned {
+  color: var(--gray-8);
+  opacity: 0;
+  transition: opacity 0.1s ease-in-out;
+}
+
+.ObjectRightToggle.Hidden {
   transition: opacity 0.1s ease-in-out;
   opacity: 0;
 }
 
-.PinToggle.Pinned:hover {
+.ObjectRightToggle.Pinned:hover {
   color: var(--tomato-9);
   background-color: var(--tomato-2);
 }
 
-.PinToggle.Unpinned:hover {
+.ObjectRightToggle.Unpinned:hover {
   color: var(--teal-9);
   background-color: var(--teal-2);
 }
@@ -388,7 +410,7 @@ Right Area
   margin: 6px 0 8px -1px;
 }
 
-.NoteContentSection .PinToggle {
+.NoteContentSection .ObjectRightToggle {
   visibility: hidden;
 }
 
@@ -490,7 +512,7 @@ Right Area
   content: attr(data-tooltip);
   position: absolute;
   top: -2px;
-  left: -75px;
+  left: -45px;
   background-color: var(--gray-1);
   padding: 4px 8px;
   border-radius: 4px;
