@@ -20,12 +20,11 @@ export type MentionDropdown = {
   matches: Match[];
 };
 
-export type Dropdown =
-  | MentionDropdown
-  | {
-      type: "searchAndReplace";
-      search: string;
-      matches: Match[];
-      initiatedManually: boolean;
-    }
-  | null;
+export type SearchAndReplaceDropdown = {
+  type: "searchAndReplace";
+  search: string;
+  matches: Match[];
+  initiatedManually: boolean;
+};
+
+export type Dropdown = MentionDropdown | SearchAndReplaceDropdown | null;
