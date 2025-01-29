@@ -848,8 +848,10 @@ export class Tree {
 
       this.graphStore.applyCombinedTransaction(
         selection.nodes.map((treeNode) => ({
-          type: "removeRelation",
-          transaction: { relationId: treeNode.relationWithParent.id },
+          type: "removeNode",
+          transaction: {
+            nodeId: treeNode.object.id,
+          },
         })),
       );
 
