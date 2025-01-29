@@ -5,6 +5,7 @@ import { GraphRelationType } from "@/app/graph/types";
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { Position, uuid } from "@/app/util";
+import logger from "@/lib/logger";
 
 import { BaseGraphObject } from "./BaseGraphObject";
 import { GraphObject } from "./GraphObject";
@@ -162,12 +163,16 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     const typeRelations = this.relations.filter(
       (relation) => relation.relationTypeId === defaultRelationTypes.__type__.id,
     );
-    if (typeRelations && typeRelations.length === 1) {
-      return typeRelations[0];
-    } else if (typeRelations.length === 0) {
+    if (typeRelations.length === 0) {
       return null;
+    } else if (typeRelations.length === 1) {
+      return typeRelations[0];
     } else {
-      throw new Error("There can only be one __type__ relation");
+      logger.error("There can only be one __type__ relation", {
+        relationId: this.id,
+        count: typeRelations.length,
+      });
+      return typeRelations[0];
     }
   }
 
