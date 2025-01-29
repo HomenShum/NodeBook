@@ -1,4 +1,4 @@
-import { ExpandIcon, PanelRightCloseIcon, X } from "lucide-react";
+import { AppWindowIcon, ExpandIcon, PanelRightCloseIcon, X } from "lucide-react";
 
 import s1 from "@/app/components/Breadcrumbs/Breadcrumbs.module.css";
 import s from "@/app/components/QuickCapture/QuickCapture.module.css";
@@ -27,6 +27,13 @@ function QuickCaptureMenu() {
     viewStore.createSidebarTree(root);
   };
 
+  const handleOpenInNewWindow = () => {
+    if (!viewStore.quickCaptureOpen) return;
+    const protocol = window.location.host.includes("localhost") ? "http://" : "https://";
+    // @ts-ignore
+    window.open(protocol + window.location.host, "_blank").focus();
+  };
+
   return (
     <div className={s.QuickCaptureMenu}>
       <Button
@@ -52,6 +59,14 @@ function QuickCaptureMenu() {
         onClick={() => handleSideViewExpand()}
       >
         <PanelRightCloseIcon size={14} />
+      </Button>
+      <Button
+        className={cn(s1.ShowTooltip, s1.RightAlign)}
+        data-tooltip={"Open in New View"}
+        size="icon"
+        onClick={() => handleOpenInNewWindow()}
+      >
+        <AppWindowIcon size={14} />
       </Button>
     </div>
   );

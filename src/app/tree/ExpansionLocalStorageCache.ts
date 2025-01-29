@@ -7,9 +7,8 @@ export class ExpansionLocalStorageCache {
    * return an empty map.
    */
   load(): Map<string, boolean> {
-    return new Map<string, boolean>();
-    // const cache = env.isFrontend ? localStorage.getItem(ExpansionLocalStorageCache.LOCAL_STORAGE_KEY) : null;
-    // return cache ? new Map(JSON.parse(cache)) : new Map<string, boolean>();
+    const cache = env.isFrontend ? localStorage.getItem(ExpansionLocalStorageCache.LOCAL_STORAGE_KEY) : null;
+    return cache ? new Map(JSON.parse(cache)) : new Map<string, boolean>();
   }
 
   /**
