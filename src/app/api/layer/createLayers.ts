@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNotNull, like, or } from "drizzle-orm";
+import { and, desc, eq, inArray, like, or } from "drizzle-orm";
 
 import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { MewUserPublic, SerializedGraphStore, SerializedNode } from "@/app/persistence/SerializedData";
@@ -371,6 +371,68 @@ export const createLayers = async (
       }
 
       row.relationTypeId && relationTypeIds.add(row.relationTypeId);
+    }
+
+    if (currentLayer === 0) {
+      const rtRelationIds = new Array<string>();
+
+      // We have to check for __type__ relations attached to any of our existing relations.
+      // If there is a __type__ relation attached to it, we must load the relation type node.
+      // That is, we load the relation type node, the __type__ relation, and if it exists,
+      // the relation attached to the __type__ relation node with id __reverse__.
+
+      const typeRelationRows = await db
+        .select()
+        .from(graphRelationTable)
+        .where(
+          and(
+            inArray(graphRelationTable.fromId, Array.from(relationIds)),
+            eq(graphRelationTable.relationTypeId, "__type__"),
+          ),
+        );
+
+      const customTypeNodeIds = new Set<string>(typeRelationRows.filter((row) => row.fromId).map((row) => row.toId!));
+      customTypeNodeIds.forEach((id) => nodeIds.add(id));
+      rtRelationIds.push(...typeRelationRows.map((row) => row.id!));
+
+      const reverseRelationRows = await db
+        .select()
+        .from(graphRelationTable)
+        .where(
+          and(
+            inArray(graphRelationTable.fromId, Array.from(customTypeNodeIds)),
+            eq(graphRelationTable.relationTypeId, "__reverse__"),
+          ),
+        );
+
+      reverseRelationRows.forEach((row) => {
+        rtRelationIds.push(row.id);
+        row.toId && nodeIds.add(row.toId);
+      });
+
+      const rtRelationRows = await db
+        .select()
+        .from(graphRelationTable)
+        .where(inArray(graphRelationTable.id, rtRelationIds));
+
+      rtRelationRows.forEach((row) => {
+        row.authorId && authorIds.add(row.authorId);
+        row.id && relationIds.add(row.id);
+
+        // Add the relation to our snapshot
+        snapshot.relationsById[row.id] = {
+          version: row.version,
+          id: row.id,
+          authorId: row.authorId ?? UNLOGGED_USER.id,
+          createdAt: row.createdAt ?? new Date(),
+          updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
+          fromId: row.fromId ?? "",
+          toId: row.toId ?? "",
+          relationTypeId: row.relationTypeId ?? "",
+          isPublic: !!row.isPublic,
+          canonicalRelationId: row.canonicalRelationId ?? null,
+        };
+      });
     }
 
     // For all new objects we're going to load in the next layer,
