@@ -20,53 +20,53 @@ describe("PastePlugin", () => {
 
   it("should normalize depth correctly", () => {
     const lines = [
-      { depth: 0, chips: [] },
-      { depth: 1, chips: [] },
-      { depth: 2, chips: [] },
-      { depth: 1, chips: [] },
-      { depth: 0, chips: [] },
+      { depth: 0, chips: [], isChecked: null },
+      { depth: 1, chips: [], isChecked: null },
+      { depth: 2, chips: [], isChecked: null },
+      { depth: 1, chips: [], isChecked: null },
+      { depth: 0, chips: [], isChecked: null },
     ];
     const normalized = normalizeDepth(lines);
     expect(normalized).toEqual([
-      { depth: 0, chips: [] },
-      { depth: 1, chips: [] },
-      { depth: 2, chips: [] },
-      { depth: 1, chips: [] },
-      { depth: 0, chips: [] },
+      { depth: 0, chips: [], isChecked: null },
+      { depth: 1, chips: [], isChecked: null },
+      { depth: 2, chips: [], isChecked: null },
+      { depth: 1, chips: [], isChecked: null },
+      { depth: 0, chips: [], isChecked: null },
     ]);
   });
   it("should normalize depth correctly", () => {
     const lines = [
-      { depth: 0, chips: [] },
-      { depth: 2, chips: [] },
-      { depth: 4, chips: [] },
-      { depth: 2, chips: [] },
-      { depth: 0, chips: [] },
+      { depth: 0, chips: [], isChecked: null },
+      { depth: 2, chips: [], isChecked: null },
+      { depth: 4, chips: [], isChecked: null },
+      { depth: 2, chips: [], isChecked: null },
+      { depth: 0, chips: [], isChecked: null },
     ];
     const normalized = normalizeDepth(lines);
     expect(normalized).toEqual([
-      { depth: 0, chips: [] },
-      { depth: 1, chips: [] },
-      { depth: 2, chips: [] },
-      { depth: 1, chips: [] },
-      { depth: 0, chips: [] },
+      { depth: 0, chips: [], isChecked: null },
+      { depth: 1, chips: [], isChecked: null },
+      { depth: 2, chips: [], isChecked: null },
+      { depth: 1, chips: [], isChecked: null },
+      { depth: 0, chips: [], isChecked: null },
     ]);
   });
   it("should normalize depth correctly", () => {
     const lines = [
-      { depth: 0, chips: [] },
-      { depth: 4, chips: [] },
-      { depth: 4, chips: [] },
-      { depth: 0, chips: [] },
-      { depth: 0, chips: [] },
+      { depth: 0, chips: [], isChecked: null },
+      { depth: 4, chips: [], isChecked: null },
+      { depth: 4, chips: [], isChecked: null },
+      { depth: 0, chips: [], isChecked: null },
+      { depth: 0, chips: [], isChecked: null },
     ];
     const normalized = normalizeDepth(lines);
     expect(normalized).toEqual([
-      { depth: 0, chips: [] },
-      { depth: 1, chips: [] },
-      { depth: 1, chips: [] },
-      { depth: 0, chips: [] },
-      { depth: 0, chips: [] },
+      { depth: 0, chips: [], isChecked: null },
+      { depth: 1, chips: [], isChecked: null },
+      { depth: 1, chips: [], isChecked: null },
+      { depth: 0, chips: [], isChecked: null },
+      { depth: 0, chips: [], isChecked: null },
     ]);
   });
 
@@ -74,11 +74,11 @@ describe("PastePlugin", () => {
     const lines = getLinesFromPlainText(INDENTED_TEXT, false);
     const normalized = normalizeDepth(lines);
     expect(normalized).toEqual([
-      { chips: [{ type: "text", value: "1" }], depth: 0 },
-      { chips: [{ type: "text", value: "2" }], depth: 1 },
-      { chips: [{ type: "text", value: "3" }], depth: 2 },
-      { chips: [{ type: "text", value: "4" }], depth: 1 },
-      { chips: [{ type: "text", value: "5" }], depth: 0 },
+      { chips: [{ type: "text", value: "1" }], depth: 0, isChecked: null },
+      { chips: [{ type: "text", value: "2" }], depth: 1, isChecked: null },
+      { chips: [{ type: "text", value: "3" }], depth: 2, isChecked: null },
+      { chips: [{ type: "text", value: "4" }], depth: 1, isChecked: null },
+      { chips: [{ type: "text", value: "5" }], depth: 0, isChecked: null },
     ]);
   });
 });

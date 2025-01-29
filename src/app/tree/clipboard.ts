@@ -1,12 +1,13 @@
 import { $createRangeSelection, $getRoot, $setSelection } from "lexical";
 
 import { $getChips } from "@/app/editor/utils/content";
-import { Chip } from "@/app/graph/GraphNode";
+import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 
 export type ChipsWithContext = {
   chips: Chip[];
   depth: number;
+  isChecked?: boolean | null;
 };
 
 export const MEW_CLIPBOARD_MIMETYPE = "application/x-mew-graphstore";
@@ -27,7 +28,7 @@ export const copyContentFromLexicalNodes = (addToEvent: ClipboardEvent, nodes: D
 
   const minDepth = Math.min(...nodes.map(({ depth }) => depth));
 
-  nodes.forEach(({ depth, lexicalEditor }) => {
+  nodes.forEach(({ depth, lexicalEditor, object }) => {
     if (!lexicalEditor) return;
     lexicalEditor.update(() => {
       const fullSelection = $createRangeSelection();
@@ -40,8 +41,14 @@ export const copyContentFromLexicalNodes = (addToEvent: ClipboardEvent, nodes: D
       $setSelection(fullSelection);
 
       const nTabs = depth - minDepth;
-      plainTextParts.push(TEXT_TAB.repeat(nTabs) + fullSelection.getTextContent());
-      chipParts.push({ chips: $getChips(), depth: nTabs });
+      const prefix =
+        object instanceof GraphNode && object.isChecked !== null ? (object.isChecked ? "[x] " : "[ ] ") : "";
+      plainTextParts.push(TEXT_TAB.repeat(nTabs) + prefix + fullSelection.getTextContent());
+      chipParts.push({
+        chips: $getChips(),
+        depth: nTabs,
+        isChecked: object instanceof GraphNode ? object.isChecked : null,
+      });
 
       $setSelection(null);
     });

@@ -57,7 +57,6 @@ export const PastePlugin = () => {
             ? getLinesFromMewData(mewData, shiftKey)
             : getLinesFromPlainText(event.clipboardData.getData("text/plain"), shiftKey),
         );
-
         let txs: TxCombined = [];
         let convertToNote = false;
         const newRootId = uuid();
@@ -123,7 +122,16 @@ export const PastePlugin = () => {
             }
 
             // Depth is ignored for the first line, since we just add it to the current node
-            txs.push({ type: "updateNode", transaction: { nodeId: object.id, nodeProps: { content: newChips } } });
+            txs.push({
+              type: "updateNode",
+              transaction: {
+                nodeId: object.id,
+                nodeProps: {
+                  content: newChips,
+                  isChecked: firstLine.isChecked !== undefined ? firstLine.isChecked : null,
+                },
+              },
+            });
 
             txs.push(...getLinkAdditionTxs(newChips, object.id, settingsStore.pasteLinksDropdown));
           }
@@ -137,7 +145,7 @@ export const PastePlugin = () => {
           let createSiblingUnder = lines.length > 0;
 
           // Then for the remaining lines, create children positioned after the correct parent
-          lines.forEach(({ chips, depth }) => {
+          lines.forEach(({ chips, depth, isChecked }) => {
             const newNodeId = uuid();
             const relationId = uuid();
             allNewRelationIds.push(relationId);
@@ -160,7 +168,7 @@ export const PastePlugin = () => {
               type: "addChildNode",
               transaction: {
                 parentId: objectsAtDepth[depth],
-                nodeProps: { id: newNodeId, content: chips },
+                nodeProps: { id: newNodeId, content: chips, isChecked },
                 relationProps: {
                   id: relationId,
                   relationTypeId: existingRelType
@@ -199,7 +207,6 @@ export const PastePlugin = () => {
 
           let siblingRelId = uuid();
           if (createSiblingUnder) {
-            console.log(`Relations at depth: ${relationsAtDepth}`);
             txs.push({
               type: "addChildNode",
               transaction: {
@@ -366,6 +373,17 @@ const getLinkAdditionTxs = (chips: Chip[], parentId: string, mode: PasteLinksOpt
   return txs;
 };
 
+const getTodoStatus = (text: string): { isChecked: boolean | null; remainingText: string } => {
+  const trimmedText = text.trimStart();
+  if (trimmedText.startsWith("[x] ") || trimmedText.startsWith("[X] ")) {
+    return { isChecked: true, remainingText: trimmedText.substring(4) };
+  }
+  if (trimmedText.startsWith("[ ] ")) {
+    return { isChecked: false, remainingText: trimmedText.substring(4) };
+  }
+  return { isChecked: null, remainingText: text };
+};
+
 const getLinesFromMewData = (mewData: string, shiftKey: boolean): ChipsWithContext[] => {
   const chipParts = JSON.parse(mewData) as ChipsWithContext[];
   return shiftKey
@@ -391,8 +409,9 @@ export const getLinesFromPlainText = (text: string, shiftKey: boolean): ChipsWit
         .split("\n")
         .filter((l) => l.length > 0)
         .map((value) => {
-          const { remainingText, depth } = getDepthFromTextOffset(value);
-          return { chips: transformTextToChips(remainingText), depth };
+          const { remainingText: textAfterDepth, depth } = getDepthFromTextOffset(value);
+          const { isChecked, remainingText } = getTodoStatus(textAfterDepth);
+          return { chips: transformTextToChips(remainingText), depth, isChecked: isChecked ?? null };
         }) ?? [];
 };
 
@@ -426,7 +445,7 @@ export const normalizeDepth = (lines: ChipsWithContext[]): ChipsWithContext[] =>
   const depthsMap = new Map<number, number>();
   let lastDepth = 0;
 
-  return lines.map(({ chips, depth }) => {
+  return lines.map(({ chips, depth, isChecked }) => {
     let newDepth: number;
 
     if (depth - lastDepth > 1 && !depthsMap.has(depth)) {
@@ -437,6 +456,6 @@ export const normalizeDepth = (lines: ChipsWithContext[]): ChipsWithContext[] =>
     }
 
     lastDepth = newDepth;
-    return { chips, depth: newDepth };
+    return { chips, depth: newDepth, isChecked: isChecked ?? null };
   });
 };
