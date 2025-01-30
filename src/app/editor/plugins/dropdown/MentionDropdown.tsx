@@ -10,9 +10,9 @@ import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
-import {RootTreeNode, TreeNode} from "@/app/tree/nodes";
+import { RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { uuid } from "@/app/util";
-import { MenuTextMatch, cn } from "@/lib/utils";
+import { MenuTextMatch, cn, isMac } from "@/lib/utils";
 
 import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
 
@@ -55,9 +55,9 @@ export function MentionDropdown({
       editor.update(async () => {
         const mentionNode = $createMentionNode(graphNodeId, text);
         const currentNodeId = editor.getRootElement()?.getAttribute("data-nodeid");
-        if(!currentNodeId) return;
+        if (!currentNodeId) return;
         const currentObject = graphStore.getNode(currentNodeId);
-        if(!currentObject) return;
+        if (!currentObject) return;
         nodeToReplace.replace(mentionNode);
         mentionNode.selectEnd();
         if (opt.value.type === "new") {
@@ -66,8 +66,12 @@ export function MentionDropdown({
           const parentId = newNodeIsHashtag ? graphStore.myHashtagsNodeId : graphStore.userRootId;
           await graphStore.addChildNode({
             parentId: parentId,
-            nodeProps: { id: graphNodeId, content: newNodeText},
-            after: newNodeIsHashtag ? -1 : (treeNode.parent instanceof RootTreeNode ? (treeNode.relationWithParent ?? -1) : -1)
+            nodeProps: { id: graphNodeId, content: newNodeText },
+            after: newNodeIsHashtag
+              ? -1
+              : treeNode.parent instanceof RootTreeNode
+              ? treeNode.relationWithParent ?? -1
+              : -1,
           });
         }
         closeMenu();
@@ -118,7 +122,7 @@ export class MentionTypeaheadOption extends MenuOption {
     this.value = typeof value === "string" ? { type: "new", text: value } : { type: "existing", object: value };
   }
   get name() {
-    return this.value.type === "new" ? `Create new node: ${this.value.text.trim()}` : this.value.object.text;
+    return this.value.type === "new" ? `Create new node: ${this.value.text.trim()} ` : this.value.object.text;
   }
 }
 
@@ -152,7 +156,8 @@ export function getMenuRenderFn(
               }}
             >
               <div className={styles.DropdownItem}>
-                <div>{option.name}</div>
+                {option.name}
+                {option.value.type === "new" && `(${isMac ? "⌘" : "Ctrl"} + Enter )`}
                 {option.value.type === "existing" && <Path path={getCanonicalPath(option.value.object)} />}
               </div>
             </li>
