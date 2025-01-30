@@ -46,7 +46,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
           [appStyles.ViewContainerFull]: !viewStore.leftSidebarOpen,
         })}
       >
-        {viewStore.quickCaptureOpen && <QuickCapture />}
+        <QuickCapture />
         <div className={s.WindowNav}>
           <Breadcrumbs treeNode={treeRoot} />
           <ControlsBar tree={tree} />

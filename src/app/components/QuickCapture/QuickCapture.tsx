@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 import { Globe, Link2, ListFilter, Map, MapPin } from "lucide-react";
 
 import s from "@/app/components/QuickCapture/QuickCapture.module.css";
-import s1 from "@/app/components/ControlsBar/ControlsBar.module.css"
+import s1 from "@/app/components/ControlsBar/ControlsBar.module.css";
 import { useViewStore } from "@/app/view/useViewStore";
 import OutlineContent from "@/app/components/OutlineContent";
 import {
@@ -22,9 +22,11 @@ import { NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { QuickCaptureSearchBar } from "@/app/components/SearchBar/QuickCaptureSearchBar";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import QuickCaptureMenu from "@/app/components/QuickCapture/QuickCaptureMenu";
+import { useUser } from "@/app/contexts/UserContext";
 
 function QuickCapture() {
   const viewStore = useViewStore();
+  const user = useUser();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
   const toggleFilter = useCallback((filter: string) => {
@@ -32,7 +34,7 @@ function QuickCapture() {
   }, []);
 
   const updateSortOption = (partialSortOption: Partial<SortOption>) => {
-    if(!viewStore.quickCaptureOpen) return;
+    if (!viewStore.quickCaptureOpen) return;
     const newSortOption: SortOption = {
       ...viewStore.quickCaptureTree.sortOption,
       ...partialSortOption,
@@ -41,14 +43,23 @@ function QuickCapture() {
   };
 
   const toggleViewType = useCallback(() => {
-    viewStore.setQuickCaptureViewType(viewStore.quickCaptureViewType === ViewType.Outline ? ViewType.Note : ViewType.Outline);
+    viewStore.setQuickCaptureViewType(
+      viewStore.quickCaptureViewType === ViewType.Outline ? ViewType.Note : ViewType.Outline,
+    );
   }, [viewStore]);
 
-  if (!viewStore.quickCaptureView) return <></>;
+  if (!viewStore.quickCaptureView || !viewStore.quickCaptureOpen) return <></>;
+
+  if (user.isAnonymous)
+    return (
+      <div className={s.QuickCaptureContainer}>
+        <QuickCaptureMenu />
+      </div>
+    );
 
   return (
     <div className={s.QuickCaptureContainer}>
-      <QuickCaptureMenu/>
+      <QuickCaptureMenu />
       <div className={s1.ControlsBar}>
         <div className={s1.ControlsBarWrapper}>
           <div className={s1.ControlsBarWrapper}>
@@ -89,7 +100,10 @@ function QuickCapture() {
               </DropdownMenu>
             </div>
             <div className={s1.SortOptionDropdown}>
-              <SortOptionDropdown sortOption={viewStore.quickCaptureView.sortOption} updateSortOption={updateSortOption} />
+              <SortOptionDropdown
+                sortOption={viewStore.quickCaptureView.sortOption}
+                updateSortOption={updateSortOption}
+              />
             </div>
             <Button
               size="sm"

@@ -277,7 +277,7 @@ export class ViewStore {
     this.mainView.selection = null;
     this.quickCaptureTree.selection = null;
     this.quickCaptureOpen = true;
-    this.quickCaptureTree.createChildOfRootAndFocus();
+    !this.graphStore.user.isAnonymous && this.quickCaptureTree.createChildOfRootAndFocus();
   }
 
   closeQuickCapture() {

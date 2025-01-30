@@ -8,10 +8,12 @@ import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 import BreadcrumbMenu from "@/app/components/Breadcrumbs/BreadcrumbMenu";
+import { useUser } from "@/app/contexts/UserContext";
 
 function QuickCaptureMenu() {
   const viewStore = useViewStore();
   const setMainRoot = useSetMainRoot();
+  const user = useUser();
 
   const handleMainViewExpand = () => {
     if (!viewStore.quickCaptureOpen) return;
@@ -47,30 +49,36 @@ function QuickCaptureMenu() {
         >
           <X size={14} />
         </Button>
-        <Button
-          className={cn(s1.ShowTooltip, s1.RightAlign)}
-          data-tooltip={"Open in Main View"}
-          size="icon"
-          onClick={() => handleMainViewExpand()}
-        >
-          <ExpandIcon size={14} />
-        </Button>
-        <Button
-          className={cn(s1.ShowTooltip, s1.RightAlign)}
-          data-tooltip={"Open in Side View"}
-          size="icon"
-          onClick={() => handleSideViewExpand()}
-        >
-          <PanelRightCloseIcon size={14} />
-        </Button>
-        <Button
-          className={cn(s1.ShowTooltip, s1.RightAlign)}
-          data-tooltip={"Open in New View"}
-          size="icon"
-          onClick={() => handleOpenInNewWindow()}
-        >
-          <AppWindowIcon size={14} />
-        </Button>
+        {!user.isAnonymous && (
+          <Button
+            className={cn(s1.ShowTooltip, s1.RightAlign)}
+            data-tooltip={"Open in Main View"}
+            size="icon"
+            onClick={() => handleMainViewExpand()}
+          >
+            <ExpandIcon size={14} />
+          </Button>
+        )}
+        {!user.isAnonymous && (
+          <Button
+            className={cn(s1.ShowTooltip, s1.RightAlign)}
+            data-tooltip={"Open in Side View"}
+            size="icon"
+            onClick={() => handleSideViewExpand()}
+          >
+            <PanelRightCloseIcon size={14} />
+          </Button>
+        )}
+        {!user.isAnonymous && (
+          <Button
+            className={cn(s1.ShowTooltip, s1.RightAlign)}
+            data-tooltip={"Open in New View"}
+            size="icon"
+            onClick={() => handleOpenInNewWindow()}
+          >
+            <AppWindowIcon size={14} />
+          </Button>
+        )}
       </div>
       <div>
         <BreadcrumbMenu />
