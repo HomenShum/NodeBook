@@ -1,6 +1,6 @@
 import { Globe, Link2, ListFilter, ListIcon, Map, MapPin, NetworkIcon, Sliders, WorkflowIcon, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { ChangeEvent, useCallback, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
@@ -58,12 +58,41 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
 
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [ideapadLink, setIdeapadLink] = useState(ideapadLinkManager.get(tree.rootObjectId));
+  const [savedSlug, setSavedSlug] = useState("");
+  const [slug, setSlug] = useState("");
+
+  useEffect(() => {
+    fetch(`/api/slug?nodeId=${tree.rootObjectId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setSlug(data.slug);
+        setSavedSlug(data.slug);
+      });
+  }, [tree.rootObjectId]);
 
   const handleLinkChange = (event: ChangeEvent<HTMLInputElement>) => {
     const element = event.target as HTMLInputElement;
     if (!element.value) return;
     ideapadLinkManager.set(tree.rootObjectId, element.value);
     setIdeapadLink(element.value);
+  };
+
+  const saveSlug = async () => {
+    if (savedSlug === slug) return;
+    const response = await fetch("/api/slug", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ nodeId: tree.rootObjectId, slug: slug }),
+    });
+
+    if (response.ok) {
+      setSavedSlug(slug);
+    } else {
+      alert("Slug already in use.");
+      setSlug(savedSlug);
+    }
   };
 
   const toggleFilter = useCallback((filter: string) => {
@@ -274,6 +303,11 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                   <input id="set-ideapad-link" value={ideapadLink} onChange={handleLinkChange} />
                 </div>
               )}
+              <div className={cn(s.SwitchItem, s.TextInput)}>
+                <label htmlFor="set-slug">Set Slug Link</label>
+                <input id="set-slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
+                <button onClick={saveSlug}>Save</button>
+              </div>
             </div>
           </PopoverContent>
         </Popover>

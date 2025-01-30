@@ -95,6 +95,7 @@ export const graphNodeTable = pgTable(
     isNewRelatedObjectsPublic: boolean("is_new_related_objects_public").default(false),
     canonicalRelationId: text("canonical_relation_id"),
     isChecked: boolean("is_checked"),
+    slug: text("slug"),
     contentTsvector: tsvector("content_tsvector"),
   },
   (t) => ({

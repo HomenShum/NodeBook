@@ -1,0 +1,1 @@
+ALTER TABLE "graph_node" ADD COLUMN "slug" text;
