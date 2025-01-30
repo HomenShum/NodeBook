@@ -29,6 +29,12 @@
   flex-grow: 1;
 }
 
+@media (max-width: 720px) {
+  .BreadcrumbWrapper {
+    flex-grow: 0;
+  }
+}
+
 .Breadcrumb {
   cursor: default;
   display: flex;

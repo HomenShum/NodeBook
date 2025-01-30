@@ -54,11 +54,11 @@ export const BreadcrumbItem = observer(function BreadcrumbItem({
         {/* hide the GlobalRoot text on mobile when inside other paths */}
         {(isRoot || object.id !== graphStore.globalRoot.id || !isMobile) && (
           <span className={cn({ [s.BlankContent]: !object.text })}>
-            {truncateText(object.text || "(blank)", isMobile ? 15 : 32)}
+            {truncateText(object.text || "(blank)", isMobile ? 10 : 32)}
           </span>
         )}
         {/* don't show the pill when inside user and global root */}
-        {isRoot && object.id !== graphStore.globalRoot.id && object.id !== graphStore.homeRoot.id && (
+        {!isMobile && isRoot && object.id !== graphStore.globalRoot.id && object.id !== graphStore.homeRoot.id && (
           <span>
             {object.isPublic ? (
               <div className={cn(s.PublicColor, s.PublishingStatusPill)}>Public</div>
