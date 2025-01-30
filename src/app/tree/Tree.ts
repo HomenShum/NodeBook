@@ -1204,7 +1204,7 @@ export class Tree {
           changes = splitToChild(treeNode);
         }
       } else {
-        if (atStartOfLine) {
+        if (atStartOfLine && treeNode.object.text !== "") {
           changes = createSiblingAbove(treeNode);
         } else {
           changes = splitToSiblingBelow(treeNode);
