@@ -277,7 +277,10 @@ export class ViewStore {
     this.mainView.selection = null;
     this.quickCaptureTree.selection = null;
     this.quickCaptureOpen = true;
-    !this.graphStore.user.isAnonymous && this.quickCaptureTree.createChildOfRootAndFocus();
+    if (!this.graphStore.user.isAnonymous) {
+      document.getElementById(this.quickCaptureTree.id)?.scroll(0, 0);
+      this.quickCaptureTree.createChildOfRootAndFocus();
+    }
   }
 
   closeQuickCapture() {
