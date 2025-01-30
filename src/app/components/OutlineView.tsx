@@ -1,6 +1,6 @@
 "use client";
 import { observer } from "mobx-react-lite";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 
 import appStyles from "@/app/app.module.css";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
@@ -12,6 +12,7 @@ import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 import GraphContainer from "@/app/components/GraphView/GraphContainer";
+import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 
 import s from "./OutlineView.module.css";
 
@@ -45,6 +46,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
           [appStyles.ViewContainerFull]: !viewStore.leftSidebarOpen,
         })}
       >
+        {viewStore.quickCaptureOpen && <QuickCapture />}
         <div className={s.WindowNav}>
           <Breadcrumbs treeNode={treeRoot} />
           <ControlsBar tree={tree} />

@@ -1,14 +1,10 @@
 "use client";
-import { ArrowLeft, ChevronRight, Command, Ellipsis, Home, Lock, SquareSplitHorizontal, Unlock, X } from "lucide-react";
+import { ArrowLeft, ChevronRight, Ellipsis, Home } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import React, { useCallback } from "react";
 
-import { useAuth } from "@/app/auth/useAuth";
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
-import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
-import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
-import { SyncStatusIndicator } from "@/app/components/SyncStatus/SyncStatusIndicator";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
@@ -17,17 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
-import { useUser } from "@/app/contexts/UserContext";
-import { GraphNode } from "@/app/graph/GraphNode";
-import { GraphObject } from "@/app/graph/GraphObject";
-import { GraphRelation } from "@/app/graph/GraphRelation";
-import { modKeyName, optionKeyName } from "@/app/hotkeys";
 import { TreeNode } from "@/app/tree/nodes";
 import { Ancestor, getAncestorsAsArray, useSetMainRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
-import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import BreadcrumbMenu from "@/app/components/Breadcrumbs/BreadcrumbMenu";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -182,13 +172,8 @@ interface BreadcrumbsProps {
 }
 
 export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: BreadcrumbsProps) {
-  const settingsStore = useSettingsStore();
   const setRoot = useSetMainRoot();
-  const viewStore = useViewStore();
   const graphStore = useGraphStore();
-  const user = useUser();
-  const auth = useAuth();
-  const tree = treeNode.tree;
   const ancestors = getAncestorsAsArray(treeNode);
   const router = useRouter();
 
@@ -199,51 +184,6 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
       setRoot(object);
     },
     [treeNode, ancestors, setRoot],
-  );
-
-  const handlePublicModeChange = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      const newIsPublic = !settingsStore.publicMode;
-      settingsStore.setPublicMode(newIsPublic);
-
-      if (tree.selection) {
-        const selection = tree.selectionWithNodes;
-        const candidates: { object: GraphObject; relationWithParent: GraphRelation }[] = [];
-
-        // Resolving the list of graph objects in currently focused tree nodes
-        if (selection?.type === "node") {
-          candidates.push(...selection.nodes.map(({ object, relationWithParent }) => ({ object, relationWithParent })));
-        } else if (selection?.type === "editor") {
-          candidates.push({
-            object: selection.treeNode.object,
-            relationWithParent: selection.treeNode.relationWithParent,
-          });
-        }
-
-        if (candidates.length > 0) {
-          graphStore.applyCombinedTransaction(
-            candidates.map(({ object, relationWithParent }) => ({
-              type: "setIsPublic",
-              transaction: {
-                objectId: object.id,
-                relationId: relationWithParent?.id,
-                isPublic: newIsPublic,
-                alsoSetRelatedObjects: false,
-                alsoSetChildrenAndDescendants: false,
-                isNewRelatedObjectsPublic: false,
-                isChecked: object instanceof GraphNode ? object.isChecked : null,
-              },
-            })),
-          );
-        }
-
-        if (selection?.type === "editor") {
-          tree.setFocusedNode(selection.treeNodeId, selection.position, selection.editMode);
-        }
-      }
-    },
-    [graphStore, settingsStore, tree],
   );
 
   return (
@@ -270,66 +210,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
         <div className={s.BreadcrumbWrapper}>
           <RenderBreadcrumbs treeNode={treeNode} ancestors={ancestors} handleNavigation={handleNavigation} />
         </div>
-        {viewStore.quickCaptureOpen && <QuickCapture />}
-        {!user.isAnonymous ? (
-          <div className={s.BreadcrumbRightArea}>
-            <Button
-              style={{ position: "relative" }}
-              variant="default"
-              className={cn(s.ShowTooltip, s.BottomAlign)}
-              data-tooltip={`Command bar · ` + [`${modKeyName}`, "⇧", "K"].join("+")}
-              size="icon"
-              onClick={() => viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen)}
-            >
-              <Command size={14} strokeWidth={1.5} />
-            </Button>
-            <Button
-              style={{ position: "relative" }}
-              className={cn(s.ShowTooltip, s.RightAlign)}
-              data-tooltip={settingsStore.publicMode ? "Public mode" : "Private mode"}
-              variant={settingsStore.publicMode ? "active" : "default"}
-              size="icon"
-              onClick={(event) => handlePublicModeChange(event)}
-            >
-              {settingsStore.publicMode ? <Unlock size={14} strokeWidth={1.5} /> : <Lock size={14} strokeWidth={1.5} />}
-            </Button>
-            <Button
-              style={{ position: "relative" }}
-              className={cn(s.ShowTooltip, s.RightAlign)}
-              data-tooltip={
-                viewStore.quickCaptureOpen
-                  ? `Close Quick Capture`
-                  : `Open Quick Capture · ` + [`${modKeyName}`, `${optionKeyName}`, "K"].join("+")
-              }
-              variant={"default"}
-              size="icon"
-              onClick={() =>
-                viewStore.quickCaptureOpen ? viewStore.closeQuickCapture() : viewStore.openQuickCaptureAndCreateNode()
-              }
-            >
-              {viewStore.quickCaptureOpen ? <X size={14} /> : <QuickCaptureIcon />}
-            </Button>
-            <Button
-              style={{ position: "relative" }}
-              className={cn(s.ShowTooltip, s.RightAlign)}
-              data-tooltip={
-                (viewStore.rightSidebarOpen ? "Close Side Tree View" : "Open Side Tree View") +
-                ` · ` +
-                [`${modKeyName}`, `${optionKeyName}`, "S"].join("+")
-              }
-              variant={viewStore.rightSidebarOpen ? "active" : "default"}
-              size="icon"
-              onClick={() => viewStore.toggleRightSidebar()}
-            >
-              <SquareSplitHorizontal size={14} strokeWidth={1.5} />
-            </Button>
-            <SyncStatusIndicator />
-          </div>
-        ) : (
-          <Button variant="active" size="sm" onClick={() => auth?.loginWithRedirect()}>
-            Sign in
-          </Button>
-        )}
+        <BreadcrumbMenu />
       </nav>
     </>
   );

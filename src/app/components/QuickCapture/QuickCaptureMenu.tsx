@@ -7,6 +7,7 @@ import { useSetMainRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import BreadcrumbMenu from "@/app/components/Breadcrumbs/BreadcrumbMenu";
 
 function QuickCaptureMenu() {
   const viewStore = useViewStore();
@@ -36,38 +37,44 @@ function QuickCaptureMenu() {
 
   return (
     <div className={s.QuickCaptureMenu}>
-      <Button
-        className={cn(s1.ShowTooltip, s1.RightAlign)}
-        data-tooltip={"Close Quick Capture"}
-        size="icon"
-        onClick={() => viewStore.closeQuickCapture()}
-      >
-        <X size={14} />
-      </Button>
-      <Button
-        className={cn(s1.ShowTooltip, s1.RightAlign)}
-        data-tooltip={"Open in Main View"}
-        size="icon"
-        onClick={() => handleMainViewExpand()}
-      >
-        <ExpandIcon size={14} />
-      </Button>
-      <Button
-        className={cn(s1.ShowTooltip, s1.RightAlign)}
-        data-tooltip={"Open in Side View"}
-        size="icon"
-        onClick={() => handleSideViewExpand()}
-      >
-        <PanelRightCloseIcon size={14} />
-      </Button>
-      <Button
-        className={cn(s1.ShowTooltip, s1.RightAlign)}
-        data-tooltip={"Open in New View"}
-        size="icon"
-        onClick={() => handleOpenInNewWindow()}
-      >
-        <AppWindowIcon size={14} />
-      </Button>
+      <div>
+        {" "}
+        <Button
+          className={cn(s1.ShowTooltip, s1.RightAlign)}
+          data-tooltip={"Close Quick Capture"}
+          size="icon"
+          onClick={() => viewStore.closeQuickCapture()}
+        >
+          <X size={14} />
+        </Button>
+        <Button
+          className={cn(s1.ShowTooltip, s1.RightAlign)}
+          data-tooltip={"Open in Main View"}
+          size="icon"
+          onClick={() => handleMainViewExpand()}
+        >
+          <ExpandIcon size={14} />
+        </Button>
+        <Button
+          className={cn(s1.ShowTooltip, s1.RightAlign)}
+          data-tooltip={"Open in Side View"}
+          size="icon"
+          onClick={() => handleSideViewExpand()}
+        >
+          <PanelRightCloseIcon size={14} />
+        </Button>
+        <Button
+          className={cn(s1.ShowTooltip, s1.RightAlign)}
+          data-tooltip={"Open in New View"}
+          size="icon"
+          onClick={() => handleOpenInNewWindow()}
+        >
+          <AppWindowIcon size={14} />
+        </Button>
+      </div>
+      <div>
+        <BreadcrumbMenu />
+      </div>
     </div>
   );
 }
