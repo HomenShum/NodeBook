@@ -3,7 +3,6 @@ import { Path, Tree } from "@/app/tree/Tree";
 
 export class QuickCaptureTree extends Tree {
   isGroupExpanded(path: Path): boolean {
-    console.log(path, this.expansionsByPath.get(path) ?? !path.endsWith("pinned"));
     return this.expansionsByPath.get(path) ?? !path.endsWith("pinned");
   }
 }

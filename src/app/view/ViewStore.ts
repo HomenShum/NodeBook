@@ -272,6 +272,10 @@ export class ViewStore {
   }
 
   openQuickCaptureAndCreateNode() {
+    //Since quickCaptureTree is stored in memory, it keeps track of a stale selection state
+    //delete stale selection state before rendering it.
+    this.mainView.selection = null;
+    this.quickCaptureTree.selection = null;
     this.quickCaptureOpen = true;
     this.quickCaptureTree.createChildOfRootAndFocus();
   }
