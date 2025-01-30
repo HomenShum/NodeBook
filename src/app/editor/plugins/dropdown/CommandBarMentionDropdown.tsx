@@ -77,7 +77,9 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
       editor.update(async () => {
         const mentionNode = $createMentionNode(graphNodeId, text);
         nodeToReplace.replace(mentionNode);
-        mentionNode.selectEnd();
+        const spaceAfter = new TextNode(" ");
+        mentionNode.insertAfter(spaceAfter);
+        spaceAfter.selectEnd();
         if (opt.value.type === "new") {
           const newNodeText = opt.name.slice("Create new node: ".length);
           const newNodeIsHashtag = newNodeText.startsWith("#");
