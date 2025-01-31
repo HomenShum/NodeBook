@@ -1,13 +1,23 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { createLayerWithCanonical } from "@/app/api/layer/createLayers";
 
-export const GET = withAuth(getHandler);
-async function getHandler(req: NextAuthenticatedRequest) {
+const bodySchema = z.object({
+  objectIds: z.array(z.string()),
+});
+
+export const POST = withAuth(postHandler);
+async function postHandler(req: NextAuthenticatedRequest) {
   const userId = req.userId;
 
-  const objectIds = req.nextUrl.searchParams.getAll("objectId");
+  const body = bodySchema.safeParse(await req.json());
+  if (!body.success) {
+    return NextResponse.json({ error: body.error.message }, { status: 400 });
+  }
+
+  const objectIds = body.data.objectIds;
 
   if (!objectIds || objectIds.length <= 0) {
     throw Error("Missing objects");
