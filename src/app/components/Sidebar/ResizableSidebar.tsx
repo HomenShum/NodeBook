@@ -251,7 +251,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
               data-tooltip="Go to Global Root"
               onMouseEnter={() => {
-                graphStore.layerManager.loadWithIds([GLOBAL_ROOT_ID]);
+                graphStore.layerManager.lazyLoadWithIds([GLOBAL_ROOT_ID]);
               }}
               onClick={(e) => {
                 if (e.shiftKey) {
@@ -277,7 +277,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                 data-tooltip="Go to your stream"
                 onMouseEnter={() => {
-                  graphStore.layerManager.loadWithIds([graphStore.userRoot.id]);
+                  graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
                 }}
                 onClick={(e) => {
                   if (e.shiftKey) {
@@ -304,7 +304,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                 data-tooltip="Go to your list"
                 onMouseEnter={() => {
-                  graphStore.layerManager.loadWithIds([graphStore.userRoot.id]);
+                  graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
                 }}
                 onClick={(e) => {
                   if (e.shiftKey) {

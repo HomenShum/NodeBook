@@ -338,7 +338,7 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
   const isMobile = useIsMobile();
 
   if (isHovered) {
-    graphStore.layerManager.loadWithIds([treeNode.object.id]);
+    graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
   }
   const setRoot = useSetMainRoot();
   const isNoteContentRoot = treeNode.childrenGroupsById.noteContent.nodes.length > 0;

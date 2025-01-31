@@ -23,17 +23,20 @@ export const localLocalData = (graphStore: GraphStore) => {
 
 export class LayerManager {
   private static loadedIds = new Set<string>();
+  private lazyQueuedIds = new Set<string>();
   //We load just 1 load, loading 2 layers for canonical can be expensive.
   //Take a look at this later.
   private static loadedIdsForCanonical = new Set<string>();
   private searchedText = new Map<string, boolean>();
-  private debounceTimer: NodeJS.Timeout | null = null;
+  private searchDebounceTimer: NodeJS.Timeout | null = null;
+  private lazyLoadTimer: NodeJS.Timeout | null = null;
   private readonly graphStore: GraphStore;
 
   public clear() {
     LayerManager.loadedIds.clear();
     this.searchedText.clear();
-    clearTimeout(this.debounceTimer || -1);
+    clearTimeout(this.searchDebounceTimer || -1);
+    clearTimeout(this.lazyLoadTimer || -1);
   }
 
   constructor(graphStore: GraphStore) {
@@ -41,11 +44,11 @@ export class LayerManager {
   }
 
   loadWithText(text: string): void {
-    if (this.debounceTimer) {
-      clearTimeout(this.debounceTimer);
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
     }
     if (text.length < 3 || this.searchedText.has(text)) return;
-    this.debounceTimer = setTimeout(async () => {
+    this.searchDebounceTimer = setTimeout(async () => {
       this.searchedText.set(text, true);
       const nodeIds = await this.fetchAndLoad(`/api/search?query=${text}`);
       this.loadCanonicalWithIds(nodeIds);
@@ -69,6 +72,18 @@ export class LayerManager {
     ids.forEach((id) => LayerManager.loadedIds.add(id));
     const url = `/api/layer?objectId=`.concat(ids.join("&objectId="));
     return this.fetchAndLoad(url, withReset);
+  }
+
+  public async lazyLoadWithIds(objectIds: string[]) {
+    if (this.lazyLoadTimer) {
+      clearTimeout(this.lazyLoadTimer);
+    }
+    objectIds.forEach((id) => !LayerManager.loadedIds.has(id) && this.lazyQueuedIds.add(id));
+    if (this.lazyQueuedIds.size <= 0) return;
+    this.lazyLoadTimer = setTimeout(() => {
+      this.loadWithIds(Array.from(this.lazyQueuedIds));
+      this.lazyQueuedIds.clear();
+    }, 400);
   }
 
   public async loadCanonicalWithIds(objectIds: string[]) {

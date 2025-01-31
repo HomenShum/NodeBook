@@ -178,7 +178,7 @@ export const useGetRecentNodes = (maxResults: number, toFilterByNodeId?: string)
       .slice(0, maxResults)
       .map((node) => ({ key: node.id, type: "node" as const, object: node, score: 0 }));
 
-    graphStore.layerManager.loadWithIds(results.map((node) => node.object.id));
+    graphStore.layerManager.lazyLoadWithIds(results.map((node) => node.object.id));
 
     return results;
   }, [graphStore, maxResults, toFilterByNodeId]);
