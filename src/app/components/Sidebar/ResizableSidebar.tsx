@@ -1,5 +1,4 @@
 import {
-  BellDotIcon,
   BellIcon,
   FileSpreadsheet,
   Globe,
@@ -41,6 +40,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { DevTools } from "@/app/components/dev/DevTools";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useNotifications } from "@/app/contexts/NotificationContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
@@ -48,7 +48,6 @@ import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { useNotifications } from "@/app/contexts/NotificationContext";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -265,7 +264,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 } else {
                   handleNavigation(() => {
                     setRoot(graphStore.globalRoot);
-                    viewStore.setViewType(ViewType.Note);
                   });
                 }
               }}
