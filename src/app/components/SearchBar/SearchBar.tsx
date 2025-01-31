@@ -4,10 +4,10 @@ import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { env } from "@/app/envFrontend";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 
 import styles from "./SearchBar.module.css";
 
@@ -92,7 +92,9 @@ export const SearchBar = observer(function SearchBar() {
         ref={inputRef}
         type="search"
         placeholder={
-          isExpanded ? `Search... ${" ".repeat(20)}Create (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})` : "Search..."
+          isExpanded
+            ? `Search... ${" ".repeat(20)}Create (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})`
+            : `Search... ( ${env.isMac ? "⌘+/" : "Ctrl+/"} )`
         }
         className={styles.SearchContent}
         value={visibleInput}
