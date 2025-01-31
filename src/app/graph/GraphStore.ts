@@ -27,7 +27,10 @@ import {
 import { ObjectPath, Position, uuid } from "@/app/util";
 import {
   GLOBAL_ADMIN_USER_ID,
+  GLOBAL_RELATION_TYPES_NODE_ID,
   GLOBAL_ROOT_ID,
+  GLOBAL_ROOT_TO_GLOBAL_TYPES_RELATION_ID,
+  GLOBAL_TO_USER_TYPES_RELATION_ID_PREFIX,
   GLOBAL_USERS_NODE_ID,
   GLOBAL_USERS_RELATION_ID,
   USER_MY_FAVORITES_NODE_ID_PREFIX,
@@ -2244,6 +2247,45 @@ export class GraphStore {
       });
       relationTypesNode = node;
       updates.push(...relationTypesNodeUpdates);
+      updates.push(...newRelationUpdates);
+    }
+
+    // Global relation types node
+    let globalRelationTypesNode = this.nodesById.get(GLOBAL_RELATION_TYPES_NODE_ID);
+    if (!globalRelationTypesNode) {
+      const { node, updates: newNodeUpdates } = this._addNode({
+        id: GLOBAL_RELATION_TYPES_NODE_ID,
+        content: [{ type: "text", value: "__global_relation_types__" }],
+        isPublic: true,
+        authorId: this.user.id,
+      });
+      // Add relation from global root to global relation types node
+      const { relation, updates: newRelationUpdates } = this.createRelation({
+        id: GLOBAL_ROOT_TO_GLOBAL_TYPES_RELATION_ID,
+        from: globalRoot,
+        isPublic: true,
+        to: node,
+      });
+
+      globalRelationTypesNode = node;
+      updates.push(...newNodeUpdates);
+      updates.push(...newRelationUpdates);
+    }
+
+    // Global Relation Types-[sublist]->User Relation Types
+    let globalRelationTypesToUserRelationTypesRelation = this.relationsById.get(
+      GLOBAL_TO_USER_TYPES_RELATION_ID_PREFIX + this.user.id,
+    );
+    if (!globalRelationTypesToUserRelationTypesRelation) {
+      const { relation, updates: newRelationUpdates } = this.createRelation({
+        id: GLOBAL_TO_USER_TYPES_RELATION_ID_PREFIX + this.user.id,
+        from: globalRelationTypesNode,
+        to: relationTypesNode,
+        relationType: defaultRelationTypes.sublist,
+        isPublic: true,
+        authorId: this.user.id,
+      });
+      globalRelationTypesToUserRelationTypesRelation = relation;
       updates.push(...newRelationUpdates);
     }
 

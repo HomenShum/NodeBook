@@ -18,6 +18,7 @@ import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { isNoteContent, isUnlabelledChild, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
+import { GLOBAL_RELATION_TYPES_NODE_ID, USER_RELATION_TYPES_NODE_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
@@ -294,11 +295,12 @@ const Content = observer(function Content() {
           </Button>
           {
             // If the node is a relation type node, show a "Type" indicator
-            treeNode.object.objectType === "node" &&
-            treeNode.object.relations.some((r) => r.relationTypeId === "__reverse__") ? (
-              <div className={styles.RelatedObjectIndicator}>Type</div>
-            ) : treeNode.object.id.startsWith("user-relation-types-node-id-") ? (
+            treeNode.object.id.startsWith(USER_RELATION_TYPES_NODE_ID_PREFIX) ||
+            treeNode.object.id.startsWith(GLOBAL_RELATION_TYPES_NODE_ID) ? (
               <div className={styles.RelatedObjectIndicator}>System</div>
+            ) : treeNode.object.objectType === "node" &&
+              treeNode.object.relations.some((r) => r.relationTypeId === "__reverse__") ? (
+              <div className={styles.RelatedObjectIndicator}>Type</div>
             ) : null
           }
           {/* I think not showing this in replace mode is a good option but feel free to change */}
