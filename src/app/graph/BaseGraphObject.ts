@@ -1,4 +1,3 @@
-import { defaultRelationTypes } from "@/app/graph/constants";
 import { FractionalPositionedList } from "@/app/graph/FractionalPositionedList";
 import { PositionedRelation } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
@@ -120,42 +119,6 @@ export abstract class BaseGraphObject {
       return true;
     }
     return false;
-  }
-
-  /**
-   * Loosely speaking, locality is a property that tells you whether an object
-   * appears in one or many places in the graph. This is used to determine
-   * whether we render an object to the user as an editable value (like a string
-   * or number) or as a reference (like a link or a mention).
-   */
-  get locality(): "local" | "global" {
-    if (this.id === this.store.userRootId || this.id === this.store.globalRoot.id) {
-      return "global";
-    }
-
-    // As soon as you have more than one relation pointing to you, you're global
-    const nonChildRelations = this.relations.filter(
-      (r) => !(r.relationType.id === defaultRelationTypes.child.id && r.from.id === this.id),
-    );
-    if (nonChildRelations.length > 1) {
-      return "global";
-    }
-
-    return "local";
-  }
-
-  /**
-   * See {@link locality}.
-   */
-  get isLocal() {
-    return this.locality === "local";
-  }
-
-  /**
-   * See {@link locality}.
-   */
-  get isGlobal() {
-    return this.locality === "global";
   }
 
   pinChildRelation(childRelation: GraphRelation | GraphRelation[], after?: Positioner<GraphRelation>) {

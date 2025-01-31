@@ -52,7 +52,7 @@ export const getOtherSideOrThrow = (relation: GraphRelation, id: string): "from"
   return getSideOrThrow(relation, id) === "from" ? "to" : "from";
 };
 
-export const getOtherObject = (relation: GraphRelation, id: string) => {
+export const getOtherObject = (relation: GraphRelation, id: string): GraphObject | undefined => {
   const side = getOtherSide(relation, id);
   return side ? relation[side] : undefined;
 };

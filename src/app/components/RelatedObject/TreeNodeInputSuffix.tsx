@@ -59,7 +59,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
             return handleEnterKey(e.nativeEvent);
           }
           case "Backspace":
-            if (!treeNode.object.isLocal) {
+            if (!treeNode.isAtCanonicalPath) {
               try {
                 e.preventDefault();
                 await tree.replaceObjectAtNodeWithCopy(treeNode.id);

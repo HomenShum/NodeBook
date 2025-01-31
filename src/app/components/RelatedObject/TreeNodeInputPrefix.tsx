@@ -75,7 +75,7 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
             }
             break;
           case "Backspace":
-            if (!treeNode.object.isLocal) {
+            if (!treeNode.isAtCanonicalPath) {
               const object = treeNode.object;
               const relation = treeNode.relationWithParent;
               try {

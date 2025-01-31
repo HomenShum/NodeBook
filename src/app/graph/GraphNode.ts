@@ -97,7 +97,6 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       content: observable.shallow,
       update: action,
       text: computed,
-      isLocal: computed,
       relationsWithPositions: computed,
       contentOnlyAsText: computed,
     });
