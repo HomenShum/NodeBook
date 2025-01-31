@@ -11,10 +11,10 @@ import {
   uuid,
   customType,
   index,
+  json,
 } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
-import { sql } from "drizzle-orm";
 
 export const dataTable = pgTable("data", {
   id: serial("id").primaryKey(),
@@ -166,3 +166,16 @@ export const relationListsTable = pgTable(
 );
 export const RelationListsSchema = createSelectSchema(relationListsTable);
 export type PersistedRelationLists = z.infer<typeof RelationListsSchema>;
+
+export type NotificationMessageContent = {
+  mentionedById: string;
+  nodeId: string;
+};
+export const notificationTable = pgTable("notification", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull(),
+  messageContent: json("message_content").notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  createdAt: timestamp("created_at"),
+});
+export const NotificationTableSchema = createSelectSchema(notificationTable);

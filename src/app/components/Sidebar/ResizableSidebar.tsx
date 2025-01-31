@@ -1,5 +1,6 @@
 import {
   BellDotIcon,
+  BellIcon,
   FileSpreadsheet,
   Globe,
   HelpCircle,
@@ -47,6 +48,7 @@ import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useNotifications } from "@/app/contexts/NotificationContext";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -67,6 +69,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
 }: Props) {
   const auth = useAuth();
   const user = useUser();
+  const { unreadCount } = useNotifications();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
@@ -183,10 +186,11 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 variant="ghost"
                 size="icon"
                 onClick={toggleNotificationsPane}
-                className={cn(styles.ShowTooltip, styles.BottomAlign)}
+                className={cn(styles.ShowTooltip, styles.BottomAlign, unreadCount ? styles.UnreadNotification : "")}
                 data-tooltip="Notifications"
               >
-                <BellDotIcon size={16} strokeWidth={1.5} />
+                <BellIcon size={16} strokeWidth={1.5} />
+                {unreadCount > 0 && <span>{unreadCount}</span>}
               </Button>
             )}
             <Button

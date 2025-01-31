@@ -12,8 +12,9 @@ import Loader from "@/app/components/UIPrimitives/Loader";
 import { useLoading } from "@/app/contexts/LoadingContext";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
-import {isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey} from "@/app/hotkeys";
+import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
 import useServiceWorker from "@/app/hooks/useServiceWorker";
+import { NotificationProvider } from "@/app/contexts/NotificationContext";
 
 import styles from "./app.module.css";
 
@@ -42,32 +43,32 @@ export default observer(function App({ children }: Props) {
   }, [viewStore.isDarkMode]);
 
   useEffect(() => {
-    if(!viewStore) return;
+    if (!viewStore) return;
     const handleKeyDown = async (event: KeyboardEvent) => {
-      if(isCommandBarHotKey(event)){
+      if (isCommandBarHotKey(event)) {
         event.preventDefault();
         viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen);
       }
-      if(isQuickCaptureHotkey(event)){
+      if (isQuickCaptureHotkey(event)) {
         event.preventDefault();
         viewStore.openQuickCaptureAndCreateNode();
       }
-      if(isRightSidebarHotkey(event)){
+      if (isRightSidebarHotkey(event)) {
         event.preventDefault();
         viewStore.toggleRightSidebar();
       }
-      if(isFocusSearchHotkey(event)){
+      if (isFocusSearchHotkey(event)) {
         event.preventDefault();
         const searchInputs = document.querySelectorAll('input[type="search"]');
-        if(searchInputs.length <= 0) return;
+        if (searchInputs.length <= 0) return;
         (searchInputs[0] as HTMLElement).focus();
       }
-    }
+    };
     document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [viewStore])
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [viewStore]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--sidebar-width", `${viewStore.sidebarWidth}px`);
@@ -99,7 +100,9 @@ export default observer(function App({ children }: Props) {
     return (
       <div className={styles.App}>
         <div className={styles.AppContainer}>
-          <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
+          <NotificationProvider>
+            <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
+          </NotificationProvider>
           <CommandBar />
           <div className={styles.Container}>
             <Button

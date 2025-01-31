@@ -24,6 +24,7 @@ declare const styles: {
   readonly "SidebarSectionHeader": string;
   readonly "TopAlign": string;
   readonly "TopContent": string;
+  readonly "UnreadNotification": string;
   readonly "UserInfo": string;
 };
 export = styles;

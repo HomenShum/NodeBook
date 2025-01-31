@@ -13,6 +13,7 @@ import { getOtherObject } from "@/app/graph/utils";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import logger from "@/lib/logger";
 import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
+import { NotificationMessageContent } from "@/db/schema";
 
 import { isGraphRelationType } from "./graph/isGraphRelationType";
 
@@ -534,4 +535,61 @@ export function exportToIdeapad({ nodes, edges }: { nodes: Map<string, any>; edg
   link.download = `ideapad_export_${timestamp}.json`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+export type Notification = {
+  id: string;
+  userId: string;
+  messageContent: NotificationMessageContent;
+  isRead: boolean;
+  createdAt: string;
+};
+
+export class NotificationManager {
+  private static instance: NotificationManager;
+  private API_URL = "/api/notifications";
+  //Todo: In future, use lastFetchedAt so we don't end up fetching all notifications
+  // just fetch new unloaded notification;
+  private lastFetchedAt: string | null = null;
+
+  async fetchNotifications(): Promise<Notification[]> {
+    try {
+      const authFetch = getAuthFetch();
+      const response = await authFetch(this.API_URL);
+      return response.json();
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      return [];
+    }
+  }
+
+  async markAsRead(notificationId: string): Promise<void> {
+    const authFetch = getAuthFetch();
+    await authFetch(this.API_URL, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notificationId }),
+    });
+  }
+
+  async markAllAsRead(): Promise<void> {
+    const authFetch = getAuthFetch();
+    await authFetch(this.API_URL, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+  }
+
+  async create({ nodeId, userId }: { nodeId: string; userId: string }): Promise<void> {
+    const authFetch = getAuthFetch();
+    await authFetch(this.API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nodeId,
+        userId,
+      }),
+    });
+  }
 }
