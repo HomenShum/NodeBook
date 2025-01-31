@@ -15,6 +15,7 @@ import {
   Plus,
   RefreshCcwDot,
   SendToBack,
+  Star,
   User,
 } from "lucide-react";
 import { action } from "mobx";
@@ -32,6 +33,7 @@ import {
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { addToFavorites, isFavorited, removeFromFavorites } from "@/app/graph/favorites";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useParseWithAi } from "@/app/llm/useParseWithAi";
 import { getAncestorsAsArray, useSetAuthorRoot, useSetMainRoot } from "@/app/tree/utils";
@@ -69,6 +71,8 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
   if (!isHovered && !menuOpen) {
     return <Ellipsis size={16} className={styles.Transparent} />;
   }
+
+  const isFavorite = isFavorited(graphStore, object);
 
   const dropdownMenuItems = user.isAnonymous ? (
     <>
@@ -136,6 +140,17 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
         <DropdownMenuItem onSelect={() => parent.pinChildRelation(relation)}>
           <Pin size={14} />
           Pin
+        </DropdownMenuItem>
+      )}
+      {isFavorited(graphStore, object) ? (
+        <DropdownMenuItem onSelect={() => removeFromFavorites(graphStore, object)}>
+          <Star size={14} fill="currentColor" />
+          Remove from favorites
+        </DropdownMenuItem>
+      ) : (
+        <DropdownMenuItem onSelect={() => addToFavorites(graphStore, object)}>
+          <Star size={14} />
+          Add to favorites
         </DropdownMenuItem>
       )}
       <DropdownMenuItem onSelect={() => setPublicDialogOpen(true)}>

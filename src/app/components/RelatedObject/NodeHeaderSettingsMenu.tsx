@@ -1,4 +1,4 @@
-import { ClipboardCopy, Download, Ellipsis, Globe, List, Lock, Plus, Trash2 } from "lucide-react";
+import { ClipboardCopy, Download, Ellipsis, Globe, List, Lock, Plus, Star, Trash2 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,7 @@ import {
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { addToFavorites, isFavorited, removeFromFavorites } from "@/app/graph/favorites";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard, downloadSubtree, exportSubtreeToIdeapad } from "@/app/util";
@@ -52,7 +53,17 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
               <Plus size={14} />
               Add child
             </DropdownMenuItem>
-
+            {isFavorited(graphStore, treeNode.object) ? (
+              <DropdownMenuItem onSelect={() => removeFromFavorites(graphStore, treeNode.object)}>
+                <Star size={14} fill="currentColor" />
+                Remove from favorites
+              </DropdownMenuItem>
+            ) : (
+              <DropdownMenuItem onSelect={() => addToFavorites(graphStore, treeNode.object)}>
+                <Star size={14} />
+                Add to favorites
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onSelect={() => setPublicDialogOpen(true)}>
               {treeNode.object.isPublic ? <Lock size={14} /> : <Globe size={14} />}
               {treeNode.object.isPublic ? "Make private" : "Make public"}

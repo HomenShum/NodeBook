@@ -4,7 +4,12 @@ import { SerializedNode } from "@/app/persistence/SerializedData";
 import { graphNodeTable, relationListsTable } from "@/db/schema";
 import { SyncError } from "@/db/SyncError";
 import { MewDbTransaction } from "@/db/types";
-import { GLOBAL_ROOT_ID, USER_MY_HASHTAGS_NODE_ID_PREFIX, USER_ROOT_ID_PREFIX } from "@/lib/constants";
+import {
+  GLOBAL_ROOT_ID,
+  USER_MY_FAVORITES_NODE_ID_PREFIX,
+  USER_MY_HASHTAGS_NODE_ID_PREFIX,
+  USER_ROOT_ID_PREFIX,
+} from "@/lib/constants";
 
 export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[]) => {
   const newNodes = await tx
@@ -38,6 +43,12 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
   }
   if (oldProps.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
     throw new SyncError('Cannot update content of user\'s "My Hashtags" node', {
+      actionName: "updateNode",
+      data: { oldProps, newProps },
+    });
+  }
+  if (oldProps.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
+    throw new SyncError('Cannot update content of user\'s "My Favorites" node', {
       actionName: "updateNode",
       data: { oldProps, newProps },
     });

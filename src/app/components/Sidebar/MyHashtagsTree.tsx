@@ -9,8 +9,8 @@ import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
-import styles from "./MyHashtagsTree.module.css";
 import styles1 from "./ResizableSidebar.module.css";
+import styles from "./SidebarTree.module.css";
 
 interface TreeElementProps {
   object: GraphObject;
@@ -85,12 +85,16 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
       </div>
       {isExpanded && pinnedUniqueChildren.length > 0 && <hr style={{ width: "80%", opacity: "0.3" }} />}
       <div className={styles.SidebarTreeChildren}>
-        {isExpanded &&
+        {isExpanded && uniqueChildren.length === 0 ? (
+          <div className={styles.EmptyMessage}>No hashtags yet</div>
+        ) : (
+          isExpanded &&
           uniqueChildren.map((o) => (
             <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)} key={o.id}>
               {o.text}
             </Button>
-          ))}
+          ))
+        )}
       </div>
     </>
   );

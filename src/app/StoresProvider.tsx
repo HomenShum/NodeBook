@@ -11,7 +11,7 @@ import { UserContext } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { fetchGetOrCreateUser, fetchGetUser, LayerManager, localLocalData } from "@/app/persistence/loadGraphData";
+import { fetchGetOrCreateUser, fetchGetUser, localLocalData } from "@/app/persistence/loadGraphData";
 import { getAuthFetch, toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
@@ -118,6 +118,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
               graph.userRootId,
               graph.usersToUserRelationId,
               graph.myHashtagsNodeId,
+              graph.myFavoritesNodeId,
             ];
             graph.layerManager.clear();
             await graph.layerManager.loadWithIds(objectIds, true);

@@ -27,6 +27,7 @@ import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import { HelpModal } from "@/app/components/HelpModal/HelpModal";
 import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
+import { MyFavoritesList } from "@/app/components/Sidebar/MyFavoritesTree";
 import { MyHashtagsTree } from "@/app/components/Sidebar/MyHashtagsTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -44,8 +45,8 @@ import { useUser } from "@/app/contexts/UserContext";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
-import { cn } from "@/lib/utils";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -409,6 +410,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </Button>
             )}
             {!user.isAnonymous && <MyHashtagsTree />}
+            {!user.isAnonymous && <MyFavoritesList />}
           </div>
           <div className={styles.BottomNav}>
             <Button

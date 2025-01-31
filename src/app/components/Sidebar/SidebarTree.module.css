@@ -81,3 +81,11 @@
 .Button.Selected .ButtonIcon {
   color: var(--teal-11);
 }
+
+.EmptyMessage {
+  text-align: left;
+  padding: 8px 8px;
+  color: var(--gray-10);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}

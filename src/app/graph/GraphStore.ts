@@ -30,6 +30,7 @@ import {
   GLOBAL_ROOT_ID,
   GLOBAL_USERS_NODE_ID,
   GLOBAL_USERS_RELATION_ID,
+  USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
   USER_RELATION_TYPES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
@@ -172,6 +173,18 @@ export class GraphStore {
     const node = this.nodesById.get(this.myHashtagsNodeId);
     if (!node) {
       throw new Error("My hashtags node not found");
+    }
+    return node;
+  }
+
+  get myFavoritesNodeId(): string {
+    return USER_MY_FAVORITES_NODE_ID_PREFIX + this.user.id;
+  }
+
+  get myFavoritesNode(): GraphNode {
+    const node = this.nodesById.get(this.myFavoritesNodeId);
+    if (!node) {
+      throw new Error("My favorites node not found");
     }
     return node;
   }
@@ -2190,6 +2203,31 @@ export class GraphStore {
       userToMyHashtagsRelation = relation;
       updates.push(...newRelationUpdates);
       const { updates: pinUpdates } = this._pinRelations(userRoot.id, [userToMyHashtagsRelation.id]);
+      updates.push(...pinUpdates);
+    }
+
+    // My Favorites node for user
+    let myFavoritesNode = this.nodesById.get(this.myFavoritesNodeId);
+    if (!myFavoritesNode) {
+      const { node, updates: myFavoritesNodeUpdates } = this._addNode({
+        id: this.myFavoritesNodeId,
+        content: [{ type: "text", value: "My Favorites" }],
+        authorId: this.user.id,
+      });
+      myFavoritesNode = node;
+      updates.push(...myFavoritesNodeUpdates);
+    }
+
+    // User->My Favorites
+    let userToMyFavoritesRelation = userRoot?.relations.find((r) => r.to.id === this.myFavoritesNodeId);
+    if (!userToMyFavoritesRelation && userRoot && myFavoritesNode) {
+      const { relation, updates: newRelationUpdates } = this.createRelation({
+        from: userRoot,
+        to: myFavoritesNode,
+      });
+      userToMyFavoritesRelation = relation;
+      updates.push(...newRelationUpdates);
+      const { updates: pinUpdates } = this._pinRelations(userRoot.id, [userToMyFavoritesRelation.id]);
       updates.push(...pinUpdates);
     }
 
