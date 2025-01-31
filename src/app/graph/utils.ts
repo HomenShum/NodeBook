@@ -68,7 +68,20 @@ export const extractPointedAtObjectId = (node: DescendantTreeNode): string => {
 };
 
 export const getNextCanonicalRelation = (object: GraphObject) => {
-  return object.relations.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0] || null;
+  const relationsByCreatedAt = object.relations.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  for (const relation of relationsByCreatedAt) {
+    const otherObject = getOtherObject(relation, object.id);
+    if (!otherObject) continue;
+    // Prevent cycles. If the object is in the canonical path of this relation,
+    // then it would create a cycle.
+    if (otherObject.id === object.id) continue;
+    const relationsPath = getCanonicalPath(otherObject, 10).relations;
+    if (relationsPath?.some((r) => r.from.id === object.id || r.to.id === object.id)) {
+      continue;
+    }
+    return relation;
+  }
+  return null;
 };
 
 export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath => {

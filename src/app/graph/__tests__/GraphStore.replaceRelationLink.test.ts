@@ -94,7 +94,7 @@ describe("GraphStore.replaceRelationLink", () => {
         {
           operation: "updateNode",
           oldProps: { ...nodeA.serialize(), canonicalRelationId: relationAB.id },
-          newProps: { ...nodeA.serialize(), canonicalRelationId: relationAC.id },
+          newProps: { ...nodeA.serialize(), canonicalRelationId: null },
         },
         {
           operation: "updateRelation",
@@ -197,7 +197,7 @@ describe("GraphStore.replaceRelationLink", () => {
         {
           operation: "updateNode",
           oldProps: { ...nodeA.serialize(), canonicalRelationId: relationAB.id },
-          newProps: { ...nodeA.serialize(), canonicalRelationId: relationAC.id },
+          newProps: { ...nodeA.serialize(), canonicalRelationId: null },
         },
         {
           operation: "updateNode",
