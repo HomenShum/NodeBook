@@ -5,15 +5,15 @@ import { autorun, toJS } from "mobx";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
+import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { getOtherObject } from "@/app/graph/utils";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
-import logger from "@/lib/logger";
-import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 import { NotificationMessageContent } from "@/db/schema";
+import logger from "@/lib/logger";
 
 import { isGraphRelationType } from "./graph/isGraphRelationType";
 
@@ -96,7 +96,11 @@ export const relationsPathToParentChild = (relations: GraphRelation[]): PathLink
 /**
  * Specifies an object and optionally a path of relations to reach it
  */
-export type ObjectPath = { object: GraphObject; relations?: GraphRelation[] };
+export type ObjectPath = {
+  object: GraphObject;
+  relations?: GraphRelation[];
+  endState?: "cycle" | "max-depth" | "root" | "not-loaded";
+};
 
 export const isPathContinuous = (path: ObjectPath): boolean => {
   let current: GraphObject = path.object;

@@ -21,13 +21,7 @@ export abstract class BaseGraphObject {
   pinnedRelationsList: FractionalPositionedList<GraphRelation>;
   pointerRelationsList: FractionalPositionedList<GraphRelation>;
   noteContentRelationsList: FractionalPositionedList<GraphRelation>;
-  /**
-   * The canonical relation for this object.
-   *
-   * This is the relation that is used to determine the path to this object.
-   * It's analogous to the parent directory in a file system.
-   */
-  canonicalRelation: GraphRelation | null = null;
+  canonicalRelationId: string | null = null;
 
   protected constructor(store: GraphStore) {
     this.store = store;
@@ -35,6 +29,23 @@ export abstract class BaseGraphObject {
     this.pinnedRelationsList = new FractionalPositionedList();
     this.pointerRelationsList = new FractionalPositionedList();
     this.noteContentRelationsList = new FractionalPositionedList();
+  }
+
+  /**
+   * The canonical relation for this object.
+   *
+   * This is the relation that is used to determine the path to this object.
+   * It's analogous to the parent directory in a file system.
+   *
+   * When undefined, it means the object has an assigned canonical relation id,
+   * but we don't have the relation in the graph right now (e.g. we're lazy loading
+   * it or it's private).
+   */
+  get canonicalRelation(): GraphRelation | null | undefined {
+    if (this.canonicalRelationId) {
+      return this.store.getRelation(this.canonicalRelationId);
+    }
+    return undefined;
   }
 
   get children(): GraphObject[] {

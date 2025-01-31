@@ -31,7 +31,7 @@ export type GraphNodeProps = {
   isPublic?: boolean;
   isNewRelatedObjectsPublic?: boolean;
   isChecked?: boolean | null;
-  canonicalRelation?: GraphRelation | null;
+  canonicalRelationId?: string | null;
 };
 
 export type PositionedRelation = {
@@ -62,7 +62,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       updatedAt = new Date(createdAt.getTime()),
       isPublic = false,
       isNewRelatedObjectsPublic = false,
-      canonicalRelation = null,
+      canonicalRelationId = null,
       isChecked = null,
     }: GraphNodeProps & { authorId: string },
   ) {
@@ -79,7 +79,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     this.updatedAt = updatedAt;
     this.isPublic = isPublic;
     this.isNewRelatedObjectsPublic = isNewRelatedObjectsPublic;
-    this.canonicalRelation = canonicalRelation;
+    this.canonicalRelationId = canonicalRelationId;
     this.isChecked = isChecked;
     this.makeObservable();
   }
@@ -93,7 +93,8 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isPublic: observable,
       isNewRelatedObjectsPublic: observable,
       isChecked: observable,
-      canonicalRelation: observable,
+      canonicalRelationId: observable,
+      canonicalRelation: computed,
       content: observable.shallow,
       update: action,
       text: computed,
@@ -133,9 +134,9 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     } else {
       this.updatedAt = new Date();
     }
-    if (newProps.canonicalRelation !== undefined) {
-      oldValues.canonicalRelation = this.canonicalRelation;
-      this.canonicalRelation = newProps.canonicalRelation;
+    if (newProps.canonicalRelationId !== undefined) {
+      oldValues.canonicalRelationId = this.canonicalRelationId;
+      this.canonicalRelationId = newProps.canonicalRelationId;
     }
 
     return oldValues;
@@ -226,7 +227,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       content: toJS(this.content),
       isPublic: this.isPublic,
       isNewRelatedObjectsPublic: this.isNewRelatedObjectsPublic,
-      canonicalRelationId: this.canonicalRelation?.id ?? null,
+      canonicalRelationId: this.canonicalRelationId ?? null,
       isChecked: this.isChecked ?? null,
     };
   }

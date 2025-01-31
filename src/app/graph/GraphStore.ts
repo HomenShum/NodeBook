@@ -404,19 +404,6 @@ export class GraphStore {
   private _addNode(props: TxAddNode["nodeProps"] = {}): { node: GraphNode; updates: GraphUpdate[] } {
     let node: GraphNode | undefined;
 
-    // Get the canonical relation if it exists
-    let canonicalRelation: GraphRelation | null = null;
-    if (props.canonicalRelationId) {
-      const relation = this.getRelation(props.canonicalRelationId);
-      if (relation) {
-        canonicalRelation = relation;
-      } else {
-        logger.warn(`Node add includes canonical relation id that does not exist`, {
-          canonicalRelationId: props.canonicalRelationId,
-        });
-      }
-    }
-
     try {
       node = new GraphNode(this, {
         version: props.version ?? 1,
@@ -428,7 +415,7 @@ export class GraphStore {
         isChecked: props.isChecked ?? null,
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
-        canonicalRelation,
+        canonicalRelationId: props.canonicalRelationId,
       });
 
       this.nodesById.set(node.id, node);
@@ -530,19 +517,8 @@ export class GraphStore {
     }
 
     const oldProps = node.serialize();
-    let canonicalRelation: GraphRelation | null = node.canonicalRelation;
-    if (tx.nodeProps.canonicalRelationId) {
-      const relation = this.getRelation(tx.nodeProps.canonicalRelationId);
-      if (relation) {
-        canonicalRelation = relation;
-      } else {
-        logger.warn(`Node update includes canonical relation id that does not exist`, {
-          nodeId: tx.nodeId,
-          canonicalRelationId: tx.nodeProps.canonicalRelationId,
-        });
-      }
-    }
-    node.update({ ...tx.nodeProps, canonicalRelation });
+    const canonicalRelationId = tx.nodeProps.canonicalRelationId ?? node.canonicalRelationId;
+    node.update({ ...tx.nodeProps, canonicalRelationId });
 
     return {
       updates: [
@@ -1354,23 +1330,25 @@ export class GraphStore {
       this.setRelationsById(relation.id, relation);
       this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
 
-      // Update from node canonical relation and list
+      // Add relation to the `from` node's relation list
       const commonUpdatePart = { authorId, type: "all" as const, oldIsPublic: false, newIsPublic: relation.isPublic };
       const fromId = relation.from.id;
       const partialFromUpdates = relation.from.allRelationsList.add(relation);
       updates.push(...partialFromUpdates.map((update) => ({ ...update, ...commonUpdatePart, nodeId: fromId })));
-      if (!relation.from.canonicalRelation) {
+      // Assign the relation as the canonical relation for the `from` node
+      if (relation.from.canonicalRelationId === null) {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.from, relation);
         updates.push(...canonicalUpdates);
       }
 
-      // Update to node canonical relation and list
       const toId = relation.to.id;
       let partialToUpdates: PartialUpdateRelationList[] = [];
       if (fromId !== toId) {
+        // Add relation to the `to` node's relation list
         partialToUpdates = relation.to.allRelationsList.add(relation);
         updates.push(...partialToUpdates.map((update) => ({ ...update, ...commonUpdatePart, nodeId: toId })));
-        if (!relation.to.canonicalRelation) {
+        // Assign the relation as the canonical relation for the `to` node
+        if (relation.to.canonicalRelationId === null) {
           const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.to, relation);
           updates.push(...canonicalUpdates);
         }
@@ -1472,12 +1450,12 @@ export class GraphStore {
 
       // Remove the relation from the nodes
       fromNode.allRelationsList.delete(relation.id);
-      if (fromNode.canonicalRelation === relation) {
+      if (fromNode.canonicalRelationId === relation.id) {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(fromNode);
         updates.push(...canonicalUpdates);
       }
       toNode.allRelationsList.delete(relation.id);
-      if (toNode.canonicalRelation === relation) {
+      if (toNode.canonicalRelationId === relation.id) {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(toNode);
         updates.push(...canonicalUpdates);
       }
@@ -1767,7 +1745,7 @@ export class GraphStore {
       // remove this relation from the current "from" node's relation list, unless it's a circular relation
       if (relation.to.id != relation.from.id) {
         relation.from.allRelationsList.delete(relation.id);
-        if (relation.from.canonicalRelation === relation) {
+        if (relation.from.canonicalRelationId === relation.id) {
           const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.from);
           updates.push(...canonicalUpdates);
         }
@@ -1776,7 +1754,7 @@ export class GraphStore {
       }
       relation.update({ from: newFrom, version: relation.version });
       relation.from.allRelationsList.add(relation, after);
-      if (!relation.from.canonicalRelation) {
+      if (relation.from.canonicalRelationId === null) {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.from, relation);
         updates.push(...canonicalUpdates);
       }
@@ -1835,7 +1813,7 @@ export class GraphStore {
       // remove this relation from the current "to" node's relation list, unless it's a circular relation
       if (relation.from.id != relation.to.id) {
         relation.to.allRelationsList.delete(relation.id);
-        if (relation.to.canonicalRelation === relation) {
+        if (relation.to.canonicalRelationId === relation.id) {
           const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.to);
           updates.push(...canonicalUpdates);
         }
@@ -1844,7 +1822,7 @@ export class GraphStore {
       }
       relation.update({ to: newTo, version: relation.version });
       relation.to.allRelationsList.add(relation, after);
-      if (!relation.to.canonicalRelation) {
+      if (relation.to.canonicalRelationId === null) {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.to, relation);
         updates.push(...canonicalUpdates);
       }
@@ -2046,8 +2024,11 @@ export class GraphStore {
     if (relation && !object.allRelationsList.keys.includes(relation.id)) {
       throw new Error(`Relation with id ${relation.id} does not exist on object ${object.id}`);
     }
-    const oldCanonicalRelationId = object.canonicalRelation?.id ?? null;
-    object.update({ canonicalRelation: relation ?? getNextCanonicalRelation(object), version: object.version });
+    const oldCanonicalRelationId = object.canonicalRelationId;
+    object.update({
+      canonicalRelationId: relation?.id ?? getNextCanonicalRelation(object)?.id ?? null,
+      version: object.version,
+    });
     if (object instanceof GraphNode) {
       const serializedObject = object.serialize();
       return {
@@ -2435,9 +2416,7 @@ export class GraphStore {
     // Nodes
     for (const props of Object.values(data.nodesById)) {
       try {
-        // We initialize the graph node with a null canonical relation, because we haven't
-        // loaded the relations yet. We'll set the canonical relation later.
-        this.loadSerializedNode({ ...props, canonicalRelationId: null });
+        this.loadSerializedNode({ ...props });
       } catch (error) {
         logger.error(`Error loading serialized node`, error);
       }
@@ -2521,16 +2500,6 @@ export class GraphStore {
       }
     }
 
-    // Now that relations are loaded, we can set the canonical relations
-    for (const props of Object.values(data.nodesById)) {
-      if (props.canonicalRelationId) {
-        const canonicalRelation = this.getRelation(props.canonicalRelationId);
-        const node = this.getNode(props.id);
-        if (node) {
-          node.update({ canonicalRelation });
-        }
-      }
-    }
     // Update relationTypesById with custom relation types.
     for (const [id, rel] of this.relationsById) {
       if (rel.relationTypeId === defaultRelationTypes.__reverse__.id) {
@@ -2561,8 +2530,7 @@ export class GraphStore {
       if (existing.version > props.version || UpdateManager.isSyncing(props.id)) {
         return existing;
       }
-      const canonicalRelation = props.canonicalRelationId ? this.getRelation(props.canonicalRelationId) : null;
-      existing.update({ ...props, canonicalRelation });
+      existing.update({ ...props, canonicalRelationId: props.canonicalRelationId });
       return existing;
     } else {
       const { node } = this._addNode({ ...props, canonicalRelationId: props.canonicalRelationId });
@@ -2644,14 +2612,13 @@ export class GraphStore {
   private loadSerializedRelation(props: SerializedRelation): GraphRelation {
     const from = this.getObject(props.fromId) ?? new PlaceholderGraphObject(this, props.fromId, this.user.id);
     const to = this.getObject(props.toId) ?? new PlaceholderGraphObject(this, props.toId, this.user.id);
-    const canonicalRelation = props.canonicalRelationId ? this.getRelation(props.canonicalRelationId) : null;
     const existing = this.getRelation(props.id);
     const relationType = this.relationTypesById[props.relationTypeId] ?? defaultRelationTypes.child;
     if (existing) {
-      existing.update({ ...props, relationType, canonicalRelation });
+      existing.update({ ...props, relationType });
       return existing;
     } else {
-      const { relation } = this.createRelation({ ...props, from, to, relationType, canonicalRelation });
+      const { relation } = this.createRelation({ ...props, from, to, relationType });
       return relation;
     }
   }

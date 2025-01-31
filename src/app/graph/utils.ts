@@ -92,7 +92,9 @@ export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath
   let depth = 0;
   const relationIds = new Set<string>();
 
-  while (depth <= maxDepth && relation && relatedObject && current.id !== GLOBAL_ROOT_ID) {
+  let endState: ObjectPath["endState"] = undefined;
+
+  while (relation && relatedObject && current.id !== GLOBAL_ROOT_ID) {
     relations.push(relation);
     relationIds.add(relation.id);
 
@@ -101,24 +103,45 @@ export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath
     relation = current.canonicalRelation;
     relatedObject = relation ? getOtherObject(relation, current.id) : null;
 
+    // There is a next canonical relation but it is not loaded
+    if (current.canonicalRelationId && !relation) {
+      endState = "not-loaded";
+      break;
+    }
+
+    // There is a next object but it is not loaded
+    if (relatedObject?.objectType === "placeholder") {
+      endState = "not-loaded";
+      break;
+    }
+
     // Break if a cycle is detected
     if (relation && relationIds.has(relation.id)) {
+      endState = "cycle";
       break;
     }
 
     depth++;
+
+    // Break if the max depth is reached
+    if (depth > maxDepth) {
+      logger.error("Max depth reached while getting canonical path", {
+        objectId: object.id,
+        objectType: object.objectType,
+      });
+      endState = "max-depth";
+      break;
+    }
   }
 
-  if (depth > maxDepth) {
-    logger.error("Max depth reached while getting canonical path", {
-      objectId: object.id,
-      objectType: object.objectType,
-    });
+  if (current.id === GLOBAL_ROOT_ID) {
+    endState = "root";
   }
 
   return {
     object,
     relations: relations.reverse(),
+    endState,
   };
 };
 

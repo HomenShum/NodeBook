@@ -94,9 +94,9 @@ export class LayerManager {
     }, 400);
   }
 
-  public async loadCanonicalWithIds(objectIds: string[]) {
+  public async loadCanonicalWithIds(objectIds: string[], reload = false) {
     const ids = objectIds
-      .filter((id) => !LayerManager.loadedIdsForCanonical.has(id))
+      .filter((id) => (reload ? true : !LayerManager.loadedIdsForCanonical.has(id)))
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => LayerManager.loadedIdsForCanonical.add(id));

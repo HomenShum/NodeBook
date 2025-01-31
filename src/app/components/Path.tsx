@@ -1,14 +1,16 @@
+import { objectPathToBreadcrumb } from "@/app/graph/utils";
 import { ObjectPath, truncateText } from "@/app/util";
 import { cn } from "@/lib/utils";
-import { objectPathToBreadcrumb } from "@/app/graph/utils";
 
 import styles from "./Path.module.css";
 
 export const Path = ({ path, skipLast = false }: { path: ObjectPath; skipLast?: boolean }) => {
+  const { endState } = path;
   const breadcrumbs = objectPathToBreadcrumb(path);
   if (!breadcrumbs.length) return null;
   return (
     <div className={styles.Path}>
+      {endState !== "root" && <span>... /</span>}
       {breadcrumbs.map((crumb, index) => {
         const isLast = index === breadcrumbs.length - 1;
         if (isLast && skipLast) return;

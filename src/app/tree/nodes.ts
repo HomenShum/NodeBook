@@ -295,7 +295,7 @@ export class DescendantTreeNode extends BaseTreeNode {
 
   get isAtCanonicalPath() {
     const object = this.object;
-    let canonicalPath: GraphRelation | null = object.canonicalRelation;
+    let canonicalPath = object.canonicalRelation;
     let treePath: GraphRelation | null = this.relationWithParent;
 
     // Avoid max depth
@@ -311,7 +311,7 @@ export class DescendantTreeNode extends BaseTreeNode {
         return false;
       }
 
-      if (canonicalPath.id !== treePath.id) {
+      if (canonicalPath?.id !== treePath.id) {
         return false;
       }
 

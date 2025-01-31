@@ -80,13 +80,19 @@ const CommandBar = observer(() => {
             name: object.text,
             object,
             path,
-            perform: (event?: React.MouseEvent<HTMLDivElement>) => {
+            perform: async (event?: React.MouseEvent<HTMLDivElement>) => {
               if (event?.shiftKey) {
                 viewStore.createSidebarTree(object);
               } else {
                 close();
                 resetSearch();
-                setRoot(path);
+                if (path.endState === "not-loaded") {
+                  await graphStore.layerManager.loadCanonicalWithIds([object.id], true);
+                  const updatedPath = getCanonicalPath(object);
+                  setRoot(updatedPath);
+                } else {
+                  setRoot(path);
+                }
               }
             },
           };
@@ -105,13 +111,19 @@ const CommandBar = observer(() => {
               name: node.text,
               object: node,
               path,
-              perform: (event?: React.MouseEvent<HTMLDivElement>) => {
+              perform: async (event?: React.MouseEvent<HTMLDivElement>) => {
                 if (event?.shiftKey) {
                   viewStore.createSidebarTree(node);
                 } else {
                   close();
                   resetSearch();
-                  setRoot(path);
+                  if (path.endState === "not-loaded") {
+                    await graphStore.layerManager.loadCanonicalWithIds([node.id], true);
+                    const updatedPath = getCanonicalPath(node);
+                    setRoot(updatedPath);
+                  } else {
+                    setRoot(path);
+                  }
                 }
               },
             };
@@ -159,6 +171,10 @@ const CommandBar = observer(() => {
         },
       });
     }
+    // The graphStore.search call above also loads canonical paths but it has a limit so
+    // we don't always get the full paths. Here we call it again with only the first 5 commands
+    // so we're more likely to get the full paths.
+    graphStore.layerManager.loadCanonicalWithIds(commands.slice(0, 5).map(({ id }) => id));
     return commands;
   }, [
     graphStore.totalNodes, //Required to refresh the search results
