@@ -292,7 +292,15 @@ const Content = observer(function Content() {
               <PinCustomIcon />
             </div>
           </Button>
-
+          {
+            // If the node is a relation type node, show a "Type" indicator
+            treeNode.object.objectType === "node" &&
+            treeNode.object.relations.some((r) => r.relationTypeId === "__reverse__") ? (
+              <div className={styles.RelatedObjectIndicator}>Type</div>
+            ) : treeNode.object.id.startsWith("user-relation-types-node-id-") ? (
+              <div className={styles.RelatedObjectIndicator}>System</div>
+            ) : null
+          }
           {/* I think not showing this in replace mode is a good option but feel free to change */}
           {viewType !== "replace" && !isNoteContentRoot && (
             <RelationCounter
