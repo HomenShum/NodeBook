@@ -14,6 +14,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Both nodeId and slug are required." }, { status: 400 });
     }
 
+    if (slug.includes("/") || slug === "home") {
+      return NextResponse.json({ error: "Slug cannot include / or be home" }, { status: 400 });
+    }
+
     const nodes = await db
       .select({ id: graphNodeTable.id })
       .from(graphNodeTable)
