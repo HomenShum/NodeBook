@@ -3,6 +3,7 @@ import { z } from "zod";
 import { GroupId } from "@/app/tree/nodes";
 import { Position } from "@/app/util";
 import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
+import { CONNECTION_SYMBOL, MENTION_SYMBOL, PLUS_SYMBOL } from "@/lib/utils";
 
 const SerializedChipSchema = z.discriminatedUnion("type", [
   z.object({
@@ -11,7 +12,12 @@ const SerializedChipSchema = z.discriminatedUnion("type", [
     styles: z.number().default(0).optional(),
   }),
   z.object({
-    type: z.enum(["mention", "linebreak"]),
+    type: z.literal("mention"),
+    value: z.string(),
+    mentionTrigger: z.enum([MENTION_SYMBOL, CONNECTION_SYMBOL, PLUS_SYMBOL]).default(MENTION_SYMBOL).optional(),
+  }),
+  z.object({
+    type: z.literal("linebreak"),
     value: z.string(),
   }),
   z.object({

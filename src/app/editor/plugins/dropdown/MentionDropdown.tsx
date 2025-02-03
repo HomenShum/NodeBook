@@ -5,15 +5,15 @@ import * as ReactDOM from "react-dom";
 
 import { Path } from "@/app/components/Path";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { Dropdown } from "@/app/editor/plugins/dropdown/types";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { NotificationManager, uuid } from "@/app/util";
-import { MenuTextMatch, cn, isMac } from "@/lib/utils";
+import { MENTION_SYMBOL, MenuTextMatch, cn, isMac } from "@/lib/utils";
 
+import { Dropdown } from "./types";
 import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
 
 import styles from "./DropdownPlugin.module.css";
@@ -53,7 +53,11 @@ export function MentionDropdown({
       const graphNodeId = opt.value.type === "new" ? uuid() : opt.value.object.id;
       const text = opt.value.type === "new" ? opt.value.text : opt.value.object.text;
       editor.update(async () => {
-        const mentionNode = $createMentionNode(graphNodeId, text);
+        const mentionNode = $createMentionNode(
+          graphNodeId,
+          text,
+          dropdown?.type === "mention" ? dropdown.mentionTrigger : MENTION_SYMBOL,
+        );
         const currentNodeId = editor.getRootElement()?.getAttribute("data-nodeid");
         if (!currentNodeId) return;
         const currentObject = graphStore.getNode(currentNodeId);

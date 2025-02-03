@@ -4,12 +4,12 @@ import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { MentionTypeaheadOption, getMenuRenderFn } from "@/app/editor/plugins/dropdown/MentionDropdown";
+import { getMenuRenderFn, MentionTypeaheadOption } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/types";
 import { useGetMatchesForCommandBar, useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { uuid } from "@/app/util";
-import { checkForMentionMatch } from "@/lib/utils";
+import { checkForMentionMatch, MENTION_SYMBOL } from "@/lib/utils";
 
 const MAX_COMMAND_BAR_DROPDOWN_RESULTS = 5;
 
@@ -52,12 +52,14 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
             type: "mention",
             search: queryString,
             matches: getRecentNodes(),
+            mentionTrigger: MENTION_SYMBOL,
           });
         } else {
           setDropdown({
             type: "mention",
             search: queryString,
             matches: getMatches(queryString, ["node"]),
+            mentionTrigger: MENTION_SYMBOL,
           });
         }
         return match;
@@ -75,7 +77,7 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
       const graphNodeId = opt.value.type === "new" ? uuid() : opt.value.object.id;
       const text = opt.value.type === "new" ? opt.value.text : opt.value.object.text;
       editor.update(async () => {
-        const mentionNode = $createMentionNode(graphNodeId, text);
+        const mentionNode = $createMentionNode(graphNodeId, text, MENTION_SYMBOL);
         nodeToReplace.replace(mentionNode);
         const spaceAfter = new TextNode(" ");
         mentionNode.insertAfter(spaceAfter);

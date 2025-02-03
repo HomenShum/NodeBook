@@ -17,6 +17,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { $createLinkNode, $isLinkNode, LinkNode } from "@/app/graph/LinkNode";
 import { $createMentionNode, $isMentionNode, MentionNode } from "@/app/graph/MentionNode";
 import { GraphRelationType } from "@/app/graph/types";
+import { MENTION_SYMBOL } from "@/lib/utils";
 
 /**
  * The content of graph nodes is a flat list of text and mention nodes.
@@ -97,7 +98,11 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
         if (from.offset === 0) {
           chips.push(nodeToChip(node));
         } else if (from.offset < text.length) {
-          chips.push({ type: "text", value: text.slice(from.offset), styles: node.getFormat() });
+          chips.push({
+            type: "text",
+            value: text.slice(from.offset),
+            styles: node.getFormat(),
+          });
         } else {
           // skip the mention node
         }
@@ -142,7 +147,6 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
         }
       } else if ($isTextNode(node)) {
         const text = node.getTextContent();
-        console.log("styles", node.getFormat());
         if (toDefined.offset > 0) {
           chips.push({ type: "text", value: text.slice(0, toDefined.offset), styles: node.getFormat() });
         } else {
@@ -179,7 +183,11 @@ export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphN
       if (!$isMentionNode(lexicalNode)) return false;
       const referencedNode = graphStore.getNode(chip.value);
       if (!referencedNode && lexicalNode.mentionedGraphNodeText === `[${DELETED_NODE_TEXT}]`) return true;
-      return referencedNode !== undefined && referencedNode.text === lexicalNode.mentionedGraphNodeText;
+      return (
+        referencedNode !== undefined &&
+        referencedNode.text === lexicalNode.mentionedGraphNodeText &&
+        chip.mentionTrigger === lexicalNode.mentionTrigger
+      );
     } else if (chip.type === "link") {
       if (!$isLinkNode(lexicalNode)) return false;
       return chip.url === lexicalNode.getURL() && chip.value === lexicalNode.getTextContent();
@@ -197,7 +205,7 @@ export const getChipToNodeFn = (graphStore: GraphStore) => {
   return (chip: Chip): LexicalNode => {
     if (chip.type === "mention") {
       const mentionNodeText = graphStore.getNode(chip.value)?.text ?? `[${DELETED_NODE_TEXT}]`;
-      return $createMentionNode(chip.value, mentionNodeText);
+      return $createMentionNode(chip.value, mentionNodeText, chip.mentionTrigger ?? MENTION_SYMBOL);
     } else if (chip.type === "link") {
       return $createLinkNode(chip.url, chip.value);
     } else if (chip.type === "text") {
@@ -222,7 +230,7 @@ export const $createParagraphMatchingGraphNode = (node: GraphNode, graphStore: G
 export function nodeToChip(node: LexicalNode): Chip {
   // For future reference, all classes extending TextNode should be processed before TextNode
   if (node instanceof MentionNode) {
-    return { type: "mention", value: node.mentionedGraphNodeId };
+    return { type: "mention", value: node.mentionedGraphNodeId, mentionTrigger: node.mentionTrigger };
   } else if (node instanceof LinkNode) {
     return { type: "link", value: node.getTextContent(), url: node.getURL() };
   } else if (node instanceof TextNode) {

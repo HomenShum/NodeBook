@@ -11,7 +11,7 @@ import {
 } from "lexical";
 
 import styles from "@/app/editor/Editor.module.css";
-
+import { MENTION_SYMBOL, MentionTrigger } from "@/lib/utils";
 // Much of this implementation is copied from:
 // https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/nodes/MentionNode.ts
 
@@ -19,6 +19,7 @@ type SerializedMentionNode = Spread<
   {
     mentionedGraphNodeId: string;
     mentionedGraphNodeText: string;
+    mentionTrigger: MentionTrigger;
   },
   SerializedTextNode
 >;
@@ -27,7 +28,11 @@ function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null
   const textContent = domNode.textContent;
   const mentionedGraphNodeId = domNode.getAttribute("data-lexical-mentioned-graph-node-id");
   if (textContent !== null && mentionedGraphNodeId !== null) {
-    const node = $createMentionNode(mentionedGraphNodeId, textContent);
+    const node = $createMentionNode(
+      mentionedGraphNodeId,
+      textContent,
+      domNode.getAttribute("data-lexical-mention-trigger") as MentionTrigger,
+    );
     return { node };
   }
   return null;
@@ -36,17 +41,22 @@ function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null
 export class MentionNode extends TextNode {
   mentionedGraphNodeId: string;
   mentionedGraphNodeText: string;
+  mentionTrigger: MentionTrigger;
 
   static getType(): string {
     return "mention";
   }
 
   static clone(node: MentionNode): MentionNode {
-    return new MentionNode(node.mentionedGraphNodeId, node.mentionedGraphNodeText, node.__key);
+    return new MentionNode(node.mentionedGraphNodeId, node.mentionedGraphNodeText, node.mentionTrigger, node.__key);
   }
 
   static importJSON(serializedNode: SerializedMentionNode): MentionNode {
-    const node = $createMentionNode(serializedNode.mentionedGraphNodeId, serializedNode.mentionedGraphNodeText);
+    const node = $createMentionNode(
+      serializedNode.mentionedGraphNodeId,
+      serializedNode.mentionedGraphNodeText,
+      serializedNode.mentionTrigger,
+    );
     node.setTextContent(serializedNode.text);
     node.setFormat(serializedNode.format);
     node.setDetail(serializedNode.detail);
@@ -55,11 +65,17 @@ export class MentionNode extends TextNode {
     return node;
   }
 
-  constructor(mentionedGraphNodeId: string, mentionedGraphNodeText: string, __key?: NodeKey) {
+  constructor(
+    mentionedGraphNodeId: string,
+    mentionedGraphNodeText: string,
+    mentionTrigger: MentionTrigger,
+    __key?: NodeKey,
+  ) {
     // The __key parameter is required when cloning a node
-    super("@" + mentionedGraphNodeText, __key);
+    super(mentionTrigger === MENTION_SYMBOL ? "@" + mentionedGraphNodeText : mentionedGraphNodeText, __key);
     this.mentionedGraphNodeId = mentionedGraphNodeId;
     this.mentionedGraphNodeText = mentionedGraphNodeText;
+    this.mentionTrigger = mentionTrigger;
   }
 
   exportJSON(): SerializedMentionNode {
@@ -67,6 +83,7 @@ export class MentionNode extends TextNode {
       ...super.exportJSON(),
       mentionedGraphNodeId: this.mentionedGraphNodeId,
       mentionedGraphNodeText: this.mentionedGraphNodeText,
+      mentionTrigger: this.mentionTrigger,
       type: "mention",
       version: 1,
     };
@@ -77,6 +94,7 @@ export class MentionNode extends TextNode {
     dom.className = styles.MentionNode;
     dom.setAttribute("data-lexical-mention", "true");
     dom.setAttribute("data-lexical-mentioned-graph-node-id", this.mentionedGraphNodeId);
+    dom.setAttribute("data-lexical-mention-trigger", this.mentionTrigger);
     return dom;
   }
 
@@ -84,6 +102,7 @@ export class MentionNode extends TextNode {
     const element = document.createElement("span");
     element.setAttribute("data-lexical-mention", "true");
     element.setAttribute("data-lexical-mentioned-graph-node-id", this.mentionedGraphNodeId);
+    element.setAttribute("data-lexical-mention-trigger", this.mentionTrigger);
     element.textContent = this.__text;
     return { element };
   }
@@ -125,8 +144,12 @@ export class MentionNode extends TextNode {
   }
 }
 
-export function $createMentionNode(mentionedGraphNodeId: string, mentionedGraphNodeText: string): MentionNode {
-  const mentionNode = new MentionNode(mentionedGraphNodeId, mentionedGraphNodeText);
+export function $createMentionNode(
+  mentionedGraphNodeId: string,
+  mentionedGraphNodeText: string,
+  mentionTrigger: MentionTrigger,
+): MentionNode {
+  const mentionNode = new MentionNode(mentionedGraphNodeId, mentionedGraphNodeText, mentionTrigger);
   mentionNode.setMode("token").toggleDirectionless();
   return $applyNodeReplacement(mentionNode);
 }

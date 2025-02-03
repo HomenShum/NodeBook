@@ -1,9 +1,10 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import { $getRoot, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react-lite";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
@@ -14,7 +15,6 @@ import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
 import { checkForMentionMatch } from "@/lib/utils";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 
 const MAX_DROPDOWN_RESULTS = 20;
 
@@ -113,12 +113,14 @@ export const DropdownPlugin = observer(function DropdownPlugin({
             type: "mention",
             search: queryString,
             matches: getRecentNodes(),
+            mentionTrigger: match.mentionTrigger,
           });
         } else {
           setDropdown({
             type: "mention",
             search: queryString,
             matches: getMatches(queryString, ["node"]),
+            mentionTrigger: match.mentionTrigger,
           });
         }
         // ENT-4247: If leadOffset is 0 (for example, when typing @ directly after another

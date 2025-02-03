@@ -5,6 +5,7 @@ import { getOtherObject } from "@/app/graph/utils";
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { Serializable } from "@/app/persistence/serialization";
 import { comparePositions, Position, uuid } from "@/app/util";
+import { MentionTrigger } from "@/lib/utils";
 
 import { BaseGraphObject } from "./BaseGraphObject";
 import { GraphRelation } from "./GraphRelation";
@@ -17,7 +18,12 @@ export type Chip =
       styles?: number;
     }
   | {
-      type: "mention" | "linebreak";
+      type: "mention";
+      value: string;
+      mentionTrigger?: MentionTrigger;
+    }
+  | {
+      type: "linebreak";
       value: string;
     }
   | {

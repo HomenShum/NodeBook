@@ -52,15 +52,18 @@ export function scoreMatch(text: string, query: string) {
 
 export const HASHTAG_SYMBOL = "#";
 export const MENTION_SYMBOL = "@";
+export const CONNECTION_SYMBOL = "<>";
+export const PLUS_SYMBOL = "+";
+export type MentionTrigger = typeof MENTION_SYMBOL | typeof CONNECTION_SYMBOL | typeof PLUS_SYMBOL;
 
 // Common constants for text matching
 export const REGEX_CONSTANTS = {
   VALID_CHARS: ".",
   MAX_LENGTH: 75,
   MAX_ALIAS_LENGTH: 50,
-  PUNCTUATION: "\\.,\\+\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;",
-  VALID_JOINS: "(?:\\.[ |$]| |[\\.,\\+\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=<>_:;]|)",
-  MENTION_TRIGGER: `${MENTION_SYMBOL}|\+`,
+  PUNCTUATION: "\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;",
+  VALID_JOINS: "(?:\\.[ |$]| |[\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;]|)",
+  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|\\${PLUS_SYMBOL}`,
 };
 
 // Interface for text match results
@@ -136,24 +139,27 @@ function checkForSearchAndReplaceMatchAny(text: string): MenuTextMatch | null {
 }
 
 // Check for a mention match in the text (starting with '@')
-const VALID_MENTION_CHARS = `[^${REGEX_CONSTANTS.MENTION_TRIGGER}${REGEX_CONSTANTS.PUNCTUATION}\\s]`;
+const VALID_MENTION_CHARS = `[^@${REGEX_CONSTANTS.PUNCTUATION}\\s]`;
 
 const mentionRegex = new RegExp(
-  `(^|\\s|\\()([${REGEX_CONSTANTS.MENTION_TRIGGER}]((?:${VALID_MENTION_CHARS}${REGEX_CONSTANTS.VALID_JOINS}){0,${REGEX_CONSTANTS.MAX_LENGTH}}))$`,
+  `(^|\\s|\\()((${REGEX_CONSTANTS.MENTION_TRIGGER})((?:${VALID_MENTION_CHARS}${REGEX_CONSTANTS.VALID_JOINS}){0,${REGEX_CONSTANTS.MAX_LENGTH}}))$`,
 );
 
 const aliasRegex = new RegExp(
-  `(^|\\s|\\()([${REGEX_CONSTANTS.MENTION_TRIGGER}]((?:${VALID_MENTION_CHARS}){0,${REGEX_CONSTANTS.MAX_ALIAS_LENGTH}}))$`,
+  `(^|\\s|\\()((${REGEX_CONSTANTS.MENTION_TRIGGER})((?:${VALID_MENTION_CHARS}){0,${REGEX_CONSTANTS.MAX_ALIAS_LENGTH}}))$`,
 );
-export function checkForMentionMatch(text: string): MenuTextMatch | null {
+export function checkForMentionMatch(text: string): (MenuTextMatch & { mentionTrigger: MentionTrigger }) | null {
   let match = mentionRegex.exec(text) || aliasRegex.exec(text);
   if (!match) return null;
   const leadingWhitespace = match[1];
-  const matchingString = match[3];
+  const trigger = match[3] as MentionTrigger;
+  const matchingString = match[4];
+
   return {
     leadOffset: match.index + leadingWhitespace.length,
     matchingString,
-    replaceableString: match[2],
+    replaceableString: trigger === MENTION_SYMBOL ? match[2] : match[4],
+    mentionTrigger: trigger,
   };
 }
 
