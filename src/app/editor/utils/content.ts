@@ -85,7 +85,11 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
       return;
     }
     if (i === from.index && i === toDefined.index) {
-      chips.push({ type: "text", value: node.getTextContent().slice(from.offset, toDefined.offset) });
+      chips.push({
+        type: "text",
+        value: node.getTextContent().slice(from.offset, toDefined.offset),
+        styles: node instanceof TextNode ? node.getFormat() : undefined,
+      });
     } else if (i === from.index) {
       // handle start
       if ($isMentionNode(node)) {
@@ -93,7 +97,7 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
         if (from.offset === 0) {
           chips.push(nodeToChip(node));
         } else if (from.offset < text.length) {
-          chips.push({ type: "text", value: text.slice(from.offset) });
+          chips.push({ type: "text", value: text.slice(from.offset), styles: node.getFormat() });
         } else {
           // skip the mention node
         }
@@ -109,7 +113,7 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
       } else if ($isTextNode(node)) {
         const text = node.getTextContent();
         if (from.offset < text.length) {
-          chips.push({ type: "text", value: text.slice(from.offset) });
+          chips.push({ type: "text", value: text.slice(from.offset), styles: node.getFormat() });
         } else {
           // skip the text node
         }
@@ -123,7 +127,7 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
         if (toDefined.offset >= text.length) {
           chips.push(nodeToChip(node));
         } else if (toDefined.offset > 0) {
-          chips.push({ type: "text", value: text.slice(0, toDefined.offset) });
+          chips.push({ type: "text", value: text.slice(0, toDefined.offset), styles: node.getFormat() });
         } else {
           console.error("Unexpected offset", toDefined);
         }
@@ -138,8 +142,9 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
         }
       } else if ($isTextNode(node)) {
         const text = node.getTextContent();
+        console.log("styles", node.getFormat());
         if (toDefined.offset > 0) {
-          chips.push({ type: "text", value: text.slice(0, toDefined.offset) });
+          chips.push({ type: "text", value: text.slice(0, toDefined.offset), styles: node.getFormat() });
         } else {
           // skip the text node
         }
@@ -178,6 +183,8 @@ export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphN
     } else if (chip.type === "link") {
       if (!$isLinkNode(lexicalNode)) return false;
       return chip.url === lexicalNode.getURL() && chip.value === lexicalNode.getTextContent();
+    } else if (lexicalNode instanceof TextNode && chip.type === "text") {
+      return chip.value === lexicalNode.getTextContent() && (!chip.styles || chip.styles === lexicalNode.getFormat());
     } else {
       return chip.value === lexicalNode.getTextContent();
     }
@@ -193,6 +200,12 @@ export const getChipToNodeFn = (graphStore: GraphStore) => {
       return $createMentionNode(chip.value, mentionNodeText);
     } else if (chip.type === "link") {
       return $createLinkNode(chip.url, chip.value);
+    } else if (chip.type === "text") {
+      const node = $createTextNode(chip.value);
+      if (chip.styles) {
+        node.setFormat(chip.styles);
+      }
+      return node;
     } else {
       return $createTextNode(chip.value);
     }
@@ -213,7 +226,7 @@ export function nodeToChip(node: LexicalNode): Chip {
   } else if (node instanceof LinkNode) {
     return { type: "link", value: node.getTextContent(), url: node.getURL() };
   } else if (node instanceof TextNode) {
-    return { type: "text", value: node.getTextContent() };
+    return { type: "text", value: node.getTextContent(), styles: node.getFormat() };
   } else if (node instanceof LineBreakNode) {
     return { type: "linebreak", value: node.getTextContent() };
   } else {

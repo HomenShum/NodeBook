@@ -12,7 +12,12 @@ import { GraphStore } from "./GraphStore";
 
 export type Chip =
   | {
-      type: "text" | "mention" | "linebreak";
+      type: "text";
+      value: string;
+      styles?: number;
+    }
+  | {
+      type: "mention" | "linebreak";
       value: string;
     }
   | {
@@ -75,6 +80,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       Array.isArray(content) && content.length > 0
         ? content
         : [{ type: "text", value: typeof content === "string" ? content : "" }];
+
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
     this.isPublic = isPublic;

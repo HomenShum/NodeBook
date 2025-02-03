@@ -113,6 +113,16 @@ export class MentionNode extends TextNode {
   canInsertTextAfter(): boolean {
     return false;
   }
+
+  // This disable saving format when serialized to backend
+  canHaveFormat(): boolean {
+    return false;
+  }
+
+  // This disable formatting behaviour on the DOM node
+  setFormat(format: number): this {
+    return this;
+  }
 }
 
 export function $createMentionNode(mentionedGraphNodeId: string, mentionedGraphNodeText: string): MentionNode {

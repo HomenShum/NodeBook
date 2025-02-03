@@ -4,7 +4,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
-import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { COMMAND_PRIORITY_HIGH, KEY_DOWN_COMMAND } from "lexical";
 import { observer } from "mobx-react-lite";
 import { RefObject, useEffect } from "react";
@@ -15,6 +15,7 @@ import { AtKeyPlugin } from "@/app/editor/plugins/AtKeyPlugin";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
+import { FormatKeyPlugin } from "@/app/editor/plugins/FormatKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { LogCollapsedEditorPlugin } from "@/app/editor/plugins/LogGhostBulletStatePlugin";
@@ -76,7 +77,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
       <LexicalComposer
         initialConfig={createConfig({ namespace: "descendant-editor", treeNode, editable: isEditorEditable })}
       >
-        <PlainTextPlugin
+        <RichTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
           contentEditable={
             <ContentEditable
@@ -88,20 +89,21 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
           placeholder={<span className={styles.PlaceholderNode}>Start writing...</span>}
         />
         <SyncWithModelsPlugin node={treeNode.object} treeNode={treeNode} />
-        {isEditorEditable && <LinkPlugin />}
-        {isEditorEditable && <ReplacementPlugin treeNode={treeNode} />}
+        {isEditorEditable && <ArrowKeyPlugin />}
+        {isEditorEditable && <AtKeyPlugin treeNode={treeNode} />}
+        {isEditorEditable && <BackspaceMergeNodesPlugin />}
         {isEditorEditable && <ClearEditorPlugin />}
         {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
-        {isEditorEditable && <MinusKeyPlugin treeNode={treeNode} />}
-        {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
-        {isEditorEditable && <ArrowKeyPlugin />}
-        {isEditorEditable && <TodoPlugin treeNode={treeNode} />}
-        {isEditorEditable && <BackspaceMergeNodesPlugin />}
-        {isEditorEditable && <PastePlugin />}
-        {isEditorEditable && <RelationPlugin />}
+        {isEditorEditable && <FormatKeyPlugin />}
         {isEditorEditable && <IgnoreModShiftAPlugin />}
-        {isEditorEditable && <AtKeyPlugin treeNode={treeNode} />}
+        {isEditorEditable && <LinkPlugin />}
+        {isEditorEditable && <MinusKeyPlugin treeNode={treeNode} />}
+        {isEditorEditable && <PastePlugin />}
         {isEditorEditable && <PreventCommandBackspace />}
+        {isEditorEditable && <RelationPlugin />}
+        {isEditorEditable && <ReplacementPlugin treeNode={treeNode} />}
+        {isEditorEditable && <TodoPlugin treeNode={treeNode} />}
+        {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />
 

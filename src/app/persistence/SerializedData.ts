@@ -6,7 +6,12 @@ import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 
 const SerializedChipSchema = z.discriminatedUnion("type", [
   z.object({
-    type: z.enum(["text", "mention", "linebreak"]),
+    type: z.literal("text"),
+    value: z.string(),
+    styles: z.number().default(0).optional(),
+  }),
+  z.object({
+    type: z.enum(["mention", "linebreak"]),
     value: z.string(),
   }),
   z.object({
