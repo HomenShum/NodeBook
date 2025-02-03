@@ -2786,7 +2786,12 @@ export class GraphStore {
     return Array.from(this.relationsById.values()).filter((r) => r.from.id === node.id);
   }
 
-  getAllPaths(from: GraphNode, to: GraphNode[], exclude: Set<string> = new Set()): Array<Array<string>> {
+  getAllPaths(
+    from: GraphNode,
+    to: GraphNode[],
+    exclude: Set<string> = new Set(),
+    walkOnly: Set<string> = new Set(),
+  ): Array<Array<string>> {
     // BFS from the one "from" node to find all shortest paths to the target "to" nodes
     // Caches current shortest paths so that we can use dynamic programming to find longer paths.
     // We only implement this for paths from nodes to nodes, so we must check that nextNode is a node.
@@ -2801,12 +2806,12 @@ export class GraphStore {
     const userId = this.user.id;
 
     const paths: Array<Array<string>> = [];
-    const queue: Array<[GraphNode, number, Array<string>, Array<string>]> = [[from, 0, [from.id], []]];
+    const queue: Array<[GraphNode, number, Array<string>, Array<string>, boolean]> = [[from, 0, [from.id], [], true]];
     const visited = new Set<string>();
     const lookupSet = new Set(to.map((node) => node.id));
 
     while (queue.length > 0) {
-      const [node, depth, path, relationPath] = queue.shift()!;
+      const [node, depth, path, relationPath, walk] = queue.shift()!;
       if (visited.has(node.id) || depth > 10) continue;
       visited.add(node.id);
 
@@ -2814,11 +2819,16 @@ export class GraphStore {
       if (lookupSet.has(node.id) && relationPath.length > 0) {
         paths.push(relationPath);
 
-        if (paths.length > 30) {
+        if (paths.length > 40) {
           break;
         }
       }
 
+      if (!walk) {
+        continue;
+      }
+
+      const sz = walkOnly.size;
       for (const { item: relation } of node.allRelationsList.values()) {
         // Only walk down forward relations
         if (exclude && exclude.has(relation.id)) {
@@ -2826,16 +2836,23 @@ export class GraphStore {
         }
         const nextNode = relation.to.id === node.id ? relation.from : relation.to;
 
+        const walk =
+          sz === 0 ||
+          (walkOnly.has("child") && relation.relationType.id === "child" && relation.from.id === node.id) ||
+          (walkOnly.has("canonical") &&
+            relation.id === nextNode.canonicalRelation?.id &&
+            nextNode.canonicalRelation?.from.id === node.id);
+
         if (
           nextNode instanceof GraphNode &&
           !visited.has(nextNode.id) &&
           (nextNode.isPublic || nextNode.authorId === userId)
         ) {
-          queue.push([nextNode, depth + 1, [...path, nextNode.id], [...relationPath, relation.id]]);
+          queue.push([nextNode, depth + 1, [...path, nextNode.id], [...relationPath, relation.id], walk]);
         }
       }
     }
-
+    console.log("PATHS", paths);
     return paths;
   }
 }

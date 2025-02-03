@@ -44,8 +44,9 @@ export class SearchTree extends Tree {
       return;
     }
 
-    const relWithParentId = this.root.relationWithParent?.id;
+    const relWithParentId = this.root.object.canonicalRelation?.id;
     let paths: Array<Array<string>> = [];
+    const walkOnly = new Set(["canonical", "child"]);
     if (relWithParentId) {
       const exclude = new Set([relWithParentId]);
       // PATHFINDING code start. This is the heavy lifting.
@@ -54,6 +55,7 @@ export class SearchTree extends Tree {
         this.rootObject,
         Array.from(results.nodes, (n) => n.node),
         exclude,
+        walkOnly,
       );
     } else {
       paths = this.graphStore.getAllPaths(
