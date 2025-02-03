@@ -11,6 +11,7 @@ import { getOtherObject, getOtherObjectOrThrow } from "@/app/graph/utils";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Tree } from "@/app/tree/Tree";
 import { comparePositions, createRouteUrl, Position } from "@/app/util";
+import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import logger from "@/lib/logger";
 
 export class PathToRootNode {
@@ -290,6 +291,46 @@ export class DescendantTreeNode extends BaseTreeNode {
 
   get isExpanded() {
     return this.tree.isPathExpanded(this.path);
+  }
+
+  get isAtCanonicalPath() {
+    const object = this.object;
+    let canonicalPath = object.canonicalRelation;
+    let treePath: GraphRelation | null = this.relationWithParent;
+
+    // Avoid max depth
+    let depth = 0;
+    const maxDepth = 40;
+
+    while (depth <= maxDepth) {
+      // Have to terminate at same time
+      if (canonicalPath === null || treePath === null) {
+        if (canonicalPath === treePath) {
+          return true;
+        }
+        return false;
+      }
+
+      if (canonicalPath?.id !== treePath.id) {
+        return false;
+      }
+
+      // Traverse
+      const canonicalObject = getOtherObject(canonicalPath, object.id);
+      const treeObject = getOtherObject(treePath, object.id);
+
+      if (canonicalObject?.id === GLOBAL_ROOT_ID || treeObject?.id === GLOBAL_ROOT_ID) {
+        if (canonicalObject?.id === treeObject?.id) {
+          return true;
+        }
+        return false;
+      }
+
+      canonicalPath = canonicalObject?.canonicalRelation || null;
+      treePath = treeObject?.canonicalRelation || null;
+      depth++;
+    }
+    return true;
   }
 
   get instanceCountInPath() {

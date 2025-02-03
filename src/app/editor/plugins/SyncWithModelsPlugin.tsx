@@ -7,8 +7,8 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $createParagraphMatchingGraphNode, $getChips, graphNodeMatchesParagraph } from "@/app/editor/utils/content";
 import { $getSelectionPosition, $setSelectionFromTree, sameSelectionPositions } from "@/app/editor/utils/selection";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { useViewStore } from "@/app/view/useViewStore";
 import { TreeNode } from "@/app/tree/nodes";
+import { useViewStore } from "@/app/view/useViewStore";
 
 interface Props {
   node: GraphNode;

@@ -52,7 +52,7 @@ export const getOtherSideOrThrow = (relation: GraphRelation, id: string): "from"
   return getSideOrThrow(relation, id) === "from" ? "to" : "from";
 };
 
-export const getOtherObject = (relation: GraphRelation, id: string) => {
+export const getOtherObject = (relation: GraphRelation, id: string): GraphObject | undefined => {
   const side = getOtherSide(relation, id);
   return side ? relation[side] : undefined;
 };
@@ -68,7 +68,20 @@ export const extractPointedAtObjectId = (node: DescendantTreeNode): string => {
 };
 
 export const getNextCanonicalRelation = (object: GraphObject) => {
-  return object.relations.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())[0] || null;
+  const relationsByCreatedAt = object.relations.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  for (const relation of relationsByCreatedAt) {
+    const otherObject = getOtherObject(relation, object.id);
+    if (!otherObject) continue;
+    // Prevent cycles. If the object is in the canonical path of this relation,
+    // then it would create a cycle.
+    if (otherObject.id === object.id) continue;
+    const relationsPath = getCanonicalPath(otherObject, 10).relations;
+    if (relationsPath?.some((r) => r.from.id === object.id || r.to.id === object.id)) {
+      continue;
+    }
+    return relation;
+  }
+  return null;
 };
 
 export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath => {
@@ -79,7 +92,9 @@ export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath
   let depth = 0;
   const relationIds = new Set<string>();
 
-  while (depth <= maxDepth && relation && relatedObject && current.id !== GLOBAL_ROOT_ID) {
+  let endState: ObjectPath["endState"] = undefined;
+
+  while (relation && relatedObject && current.id !== GLOBAL_ROOT_ID) {
     relations.push(relation);
     relationIds.add(relation.id);
 
@@ -88,24 +103,45 @@ export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath
     relation = current.canonicalRelation;
     relatedObject = relation ? getOtherObject(relation, current.id) : null;
 
+    // There is a next canonical relation but it is not loaded
+    if (current.canonicalRelationId && !relation) {
+      endState = "not-loaded";
+      break;
+    }
+
+    // There is a next object but it is not loaded
+    if (relatedObject?.objectType === "placeholder") {
+      endState = "not-loaded";
+      break;
+    }
+
     // Break if a cycle is detected
     if (relation && relationIds.has(relation.id)) {
+      endState = "cycle";
       break;
     }
 
     depth++;
+
+    // Break if the max depth is reached
+    if (depth > maxDepth) {
+      logger.error("Max depth reached while getting canonical path", {
+        objectId: object.id,
+        objectType: object.objectType,
+      });
+      endState = "max-depth";
+      break;
+    }
   }
 
-  if (depth > maxDepth) {
-    logger.error("Max depth reached while getting canonical path", {
-      objectId: object.id,
-      objectType: object.objectType,
-    });
+  if (current.id === GLOBAL_ROOT_ID) {
+    endState = "root";
   }
 
   return {
     object,
     relations: relations.reverse(),
+    endState,
   };
 };
 

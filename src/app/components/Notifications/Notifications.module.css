@@ -22,6 +22,15 @@
   flex-direction: column;
   margin: 8px;
   gap: 8px;
+  cursor: pointer;
+}
+
+.isRead {
+  opacity: 0.5;
+}
+
+.NotificationItemsContainer:hover {
+  opacity: 0.8;
 }
 
 .NotificationHeader {

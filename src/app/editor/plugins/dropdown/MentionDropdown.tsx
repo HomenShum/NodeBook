@@ -11,7 +11,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { RootTreeNode, TreeNode } from "@/app/tree/nodes";
-import { uuid } from "@/app/util";
+import { NotificationManager, uuid } from "@/app/util";
 import { MenuTextMatch, cn, isMac } from "@/lib/utils";
 
 import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
@@ -75,6 +75,14 @@ export function MentionDropdown({
               ? treeNode.relationWithParent ?? -1
               : -1,
           });
+        } else {
+          if (opt.value.object.isUserNode) {
+            const notificationManager = new NotificationManager();
+            notificationManager.create({
+              userId: opt.value.object.authorId,
+              nodeId: currentNodeId,
+            });
+          }
         }
         closeMenu();
         // add relation

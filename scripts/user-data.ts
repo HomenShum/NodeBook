@@ -76,7 +76,12 @@ export const defaultRelationTypes = {
 
 export type Chip =
   | {
-      type: "text" | "mention" | "linebreak";
+      type: "text";
+      value: string;
+      styles: number;
+    }
+  | {
+      type: "mention" | "linebreak";
       value: string;
     }
   | {

@@ -6,6 +6,7 @@ declare const styles: {
   readonly "NotificationPane": string;
   readonly "NotificationPaneActive": string;
   readonly "NotificationTextContainer": string;
+  readonly "isRead": string;
 };
 export = styles;
 

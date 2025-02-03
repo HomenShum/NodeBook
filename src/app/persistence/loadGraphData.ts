@@ -4,9 +4,9 @@ import { GetUserResponseSchema, PostUserResponseSchema } from "@/app/api/types";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SerializedGraphStoreSchema, SerializedStores } from "@/app/persistence/SerializedData";
+import { getAuthFetch } from "@/app/util";
 import { PersistedUser } from "@/db/schema";
 import logger from "@/lib/logger";
-import { getAuthFetch } from "@/app/util";
 
 export const localLocalData = (graphStore: GraphStore) => {
   logger.debug("Loading data from local storage");
@@ -70,8 +70,16 @@ export class LayerManager {
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => LayerManager.loadedIds.add(id));
-    const url = `/api/layer?objectId=`.concat(ids.join("&objectId="));
-    return this.fetchAndLoad(url, withReset);
+    return this.fetchAndLoad(
+      `/api/layer`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          objectIds: ids,
+        }),
+      },
+      withReset,
+    );
   }
 
   public async lazyLoadWithIds(objectIds: string[]) {
@@ -86,14 +94,18 @@ export class LayerManager {
     }, 400);
   }
 
-  public async loadCanonicalWithIds(objectIds: string[]) {
+  public async loadCanonicalWithIds(objectIds: string[], reload = false) {
     const ids = objectIds
-      .filter((id) => !LayerManager.loadedIdsForCanonical.has(id))
+      .filter((id) => (reload ? true : !LayerManager.loadedIdsForCanonical.has(id)))
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => LayerManager.loadedIdsForCanonical.add(id));
-    const url = `/api/layer/canonical?objectId=`.concat(ids.join("&objectId="));
-    return this.fetchAndLoad(url);
+    return this.fetchAndLoad(`/api/layer/canonical`, {
+      method: "POST",
+      body: JSON.stringify({
+        objectIds: ids,
+      }),
+    });
   }
 
   public async loadRelationTypes() {
@@ -101,10 +113,10 @@ export class LayerManager {
     return this.fetchAndLoad(url);
   }
 
-  private async fetchAndLoad(url: string, withReset: boolean = false) {
+  private async fetchAndLoad(url: string, init: RequestInit = {}, withReset: boolean = false) {
     if (!env.isPersistenceEnabled || env.persistTo !== "server") return [];
     const authFetch = getAuthFetch();
-    const syncData = await authFetch(url).then((res) => res.json());
+    const syncData = await authFetch(url, init).then((res) => res.json());
     const parsed = SerializedGraphStoreSchema.safeParse(syncData.data);
     if (parsed.success) {
       withReset ? this.graphStore.resetAndLoad(parsed.data) : this.graphStore.load(parsed.data);

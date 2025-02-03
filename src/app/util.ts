@@ -5,14 +5,15 @@ import { autorun, toJS } from "mobx";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
+import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { getOtherObject } from "@/app/graph/utils";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
+import { NotificationMessageContent } from "@/db/schema";
 import logger from "@/lib/logger";
-import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 
 import { isGraphRelationType } from "./graph/isGraphRelationType";
 
@@ -95,7 +96,11 @@ export const relationsPathToParentChild = (relations: GraphRelation[]): PathLink
 /**
  * Specifies an object and optionally a path of relations to reach it
  */
-export type ObjectPath = { object: GraphObject; relations?: GraphRelation[] };
+export type ObjectPath = {
+  object: GraphObject;
+  relations?: GraphRelation[];
+  endState?: "cycle" | "max-depth" | "root" | "not-loaded";
+};
 
 export const isPathContinuous = (path: ObjectPath): boolean => {
   let current: GraphObject = path.object;
@@ -534,4 +539,61 @@ export function exportToIdeapad({ nodes, edges }: { nodes: Map<string, any>; edg
   link.download = `ideapad_export_${timestamp}.json`;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+export type Notification = {
+  id: string;
+  userId: string;
+  messageContent: NotificationMessageContent;
+  isRead: boolean;
+  createdAt: string;
+};
+
+export class NotificationManager {
+  private static instance: NotificationManager;
+  private API_URL = "/api/notifications";
+  //Todo: In future, use lastFetchedAt so we don't end up fetching all notifications
+  // just fetch new unloaded notification;
+  private lastFetchedAt: string | null = null;
+
+  async fetchNotifications(): Promise<Notification[]> {
+    try {
+      const authFetch = getAuthFetch();
+      const response = await authFetch(this.API_URL);
+      return response.json();
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      return [];
+    }
+  }
+
+  async markAsRead(notificationId: string): Promise<void> {
+    const authFetch = getAuthFetch();
+    await authFetch(this.API_URL, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notificationId }),
+    });
+  }
+
+  async markAllAsRead(): Promise<void> {
+    const authFetch = getAuthFetch();
+    await authFetch(this.API_URL, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+  }
+
+  async create({ nodeId, userId }: { nodeId: string; userId: string }): Promise<void> {
+    const authFetch = getAuthFetch();
+    await authFetch(this.API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nodeId,
+        userId,
+      }),
+    });
+  }
 }

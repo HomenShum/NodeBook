@@ -26,31 +26,32 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   const tree = treeNode.tree;
   const editorRef = useRef<HTMLDivElement>(null);
 
-  const isLocal = treeNode.object.isLocal;
-  const isGlobal = treeNode.object.isGlobal;
+  const isAtCanonicalPath = treeNode.isAtCanonicalPath;
+
   const isExpanded = tree.isPathExpanded(treeNode.path);
 
   const isEditMode =
     tree.selection?.type === "editor" ? tree.selection.treeNodeId === treeNode.id && !!tree.selection.editMode : false;
-  const isReadOnlyReference = isGlobal && !isEditMode;
+  const isReadOnlyReference = !treeNode.isAtCanonicalPath && !isEditMode;
   const objectIsGraphNode = treeNode.object instanceof GraphNode;
   const objectIsEditRestricted = treeNode.object.isEditRestricted;
-  const editableEditor = !user.isAnonymous && objectIsGraphNode && (isLocal || isEditMode) && !objectIsEditRestricted;
+  const editableEditor =
+    !user.isAnonymous && objectIsGraphNode && (isAtCanonicalPath || isEditMode) && !objectIsEditRestricted;
 
-  const outerShouldBeColumn = isLocal && !objectIsEditRestricted;
+  const outerShouldBeColumn = isAtCanonicalPath && !objectIsEditRestricted;
   const cnOuterContainer = cn(
     outerShouldBeColumn && styles.ColumnContainer,
     !outerShouldBeColumn && styles.TreeNodeReference,
     isReadOnlyReference && styles.PillContainer,
   );
 
-  const cnInnerContainer = cn(
-    styles.FlexContainer,
-    isLocal ? "" : isEditMode ? cn(styles.Pill, styles.Editor) : cn(isExpanded && styles.Expanded, styles.Pill),
-    treeNode.isTodoItem && treeNode.object instanceof GraphNode && treeNode.object.isChecked
-      ? cn(styles.StrikeThrough)
-      : "",
-  );
+  const cnInnerContainer = cn({
+    [styles.FlexContainer]: true,
+    [styles.Pill]: !isAtCanonicalPath,
+    [styles.Editor]: !isAtCanonicalPath && isEditMode,
+    [styles.Expanded]: !isAtCanonicalPath && !isEditMode && isExpanded,
+    [styles.StrikeThrough]: treeNode.isTodoItem && treeNode.object instanceof GraphNode && treeNode.object.isChecked,
+  });
 
   const path = getCanonicalPath(treeNode.object);
   const breadcrumbs = objectPathToBreadcrumb(path);
@@ -86,7 +87,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   return (
     <div className={styles.Container}>
       <div className={cnOuterContainer}>
-        {(isGlobal || objectIsEditRestricted) && !user.isAnonymous && (
+        {(!isAtCanonicalPath || objectIsEditRestricted) && !user.isAnonymous && (
           <TreeNodeInputPrefix treeNode={treeNode} isEditorEditable={editableEditor} />
         )}
         <div
@@ -120,7 +121,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
             </Button>
           )}
         </div>
-        {(isGlobal || objectIsEditRestricted) && !user.isAnonymous && (
+        {(!isAtCanonicalPath || objectIsEditRestricted) && !user.isAnonymous && (
           <TreeNodeInputSuffix treeNode={treeNode} isEditorEditable={editableEditor} />
         )}
       </div>
