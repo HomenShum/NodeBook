@@ -2848,9 +2848,7 @@ export class GraphStore {
         const walk =
           sz === 0 ||
           (walkOnly.has("child") && relation.relationType.id === "child" && relation.from.id === node.id) ||
-          (walkOnly.has("canonical") &&
-            relation.id === nextNode.canonicalRelation?.id &&
-            nextNode.canonicalRelation?.from.id === node.id);
+          (walkOnly.has("canonical") && relation.id === nextNode.canonicalRelation?.id && relation.from.id === node.id);
 
         if (
           nextNode instanceof GraphNode &&

@@ -8,7 +8,7 @@ export const RelationCounter = ({
   showTooltip = true,
 }: {
   object: GraphObject;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent) => void;
   showTooltip?: boolean;
 }) => {
   const relationCount = object.relations.length - 1;
@@ -25,7 +25,7 @@ export const RelationCounter = ({
         onClick
           ? (e) => {
               e.stopPropagation();
-              onClick();
+              onClick(e);
             }
           : undefined
       }

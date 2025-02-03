@@ -364,7 +364,14 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
           {
             <button
               className={cn(styles.SetRootButton, (isMobile || isHovered) && styles.Hovered)}
-              onPointerDown={() => setRoot(treeNode.object)}
+              onPointerDown={(e) => {
+                if (e.shiftKey) {
+                  // open in sidebar
+                  viewStore.createSidebarTree(treeNode.object);
+                } else {
+                  setRoot(treeNode.object);
+                }
+              }}
             >
               <Maximize2 size={16} className={styles.SetRootIcon} />
             </button>

@@ -61,6 +61,8 @@ export class SearchTree extends Tree {
       paths = this.graphStore.getAllPaths(
         this.rootObject,
         Array.from(results.nodes, (n) => n.node),
+        new Set(),
+        walkOnly,
       );
     }
 
