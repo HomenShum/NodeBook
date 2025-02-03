@@ -100,9 +100,9 @@ export const DropdownPlugin = observer(function DropdownPlugin({
   const triggerFn = useCallback(
     (textBeforeCursor: string) => {
       // Don't open any dropdowns until the text has changed after focus
-      if (!textChanged.current) {
-        return null;
-      }
+      // if (!textChanged.current) {
+      // return null;
+      // }
 
       // Open mention dropdown after @ match
       const match = checkForMentionMatch(textBeforeCursor);

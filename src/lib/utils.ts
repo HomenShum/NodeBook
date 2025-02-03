@@ -61,8 +61,8 @@ export const REGEX_CONSTANTS = {
   VALID_CHARS: ".",
   MAX_LENGTH: 75,
   MAX_ALIAS_LENGTH: 50,
-  PUNCTUATION: "\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;",
-  VALID_JOINS: "(?:\\.[ |$]| |[\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;]|)",
+  PUNCTUATION: "", // "\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;",
+  VALID_JOINS: "", //"(?:\\.[ |$]| |[\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;]|)",
   MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|\\${PLUS_SYMBOL}`,
 };
 
@@ -158,7 +158,7 @@ export function checkForMentionMatch(text: string): (MenuTextMatch & { mentionTr
   return {
     leadOffset: match.index + leadingWhitespace.length,
     matchingString,
-    replaceableString: trigger === MENTION_SYMBOL ? match[2] : match[4],
+    replaceableString: match[2],
     mentionTrigger: trigger,
   };
 }

@@ -11,10 +11,10 @@ import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { NotificationManager, uuid } from "@/app/util";
-import { MENTION_SYMBOL, MenuTextMatch, cn, isMac } from "@/lib/utils";
+import { CONNECTION_SYMBOL, MenuTextMatch, cn, isMac } from "@/lib/utils";
 
-import { Dropdown } from "./types";
 import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
+import { Dropdown } from "./types";
 
 import styles from "./DropdownPlugin.module.css";
 
@@ -48,24 +48,25 @@ export function MentionDropdown({
 
   const onSelectOption = useCallback(
     async (opt: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
-      if (!nodeToReplace) return;
+      if (!nodeToReplace || !dropdown || dropdown.type !== "mention") return;
       // update editor
       const graphNodeId = opt.value.type === "new" ? uuid() : opt.value.object.id;
       const text = opt.value.type === "new" ? opt.value.text : opt.value.object.text;
       editor.update(async () => {
-        const mentionNode = $createMentionNode(
-          graphNodeId,
-          text,
-          dropdown?.type === "mention" ? dropdown.mentionTrigger : MENTION_SYMBOL,
-        );
+        const mentionNode = $createMentionNode(graphNodeId, text, dropdown.mentionTrigger);
         const currentNodeId = editor.getRootElement()?.getAttribute("data-nodeid");
         if (!currentNodeId) return;
         const currentObject = graphStore.getNode(currentNodeId);
         if (!currentObject) return;
+
         nodeToReplace.replace(mentionNode);
         const spaceAfter = new TextNode(" ");
         mentionNode.insertAfter(spaceAfter);
-        spaceAfter.selectEnd();
+        if (dropdown.mentionTrigger === CONNECTION_SYMBOL) {
+          const connectionBefore = new TextNode(CONNECTION_SYMBOL);
+          mentionNode.insertBefore(connectionBefore);
+        }
+        mentionNode.selectEnd();
         if (opt.value.type === "new") {
           const newNodeText = opt.name.slice("Create new node: ".length);
           const newNodeIsHashtag = newNodeText.startsWith("#");
@@ -113,7 +114,7 @@ export function MentionDropdown({
         tree.setFocusedNode(treeNode.path, "end", true);
       });
     },
-    [editor, tree, treeNode, graphStore],
+    [editor, tree, treeNode, graphStore, dropdown],
   );
 
   return (
