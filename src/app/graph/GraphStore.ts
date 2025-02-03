@@ -2861,7 +2861,6 @@ export class GraphStore {
         }
       }
     }
-    console.log("PATHS", paths);
     return paths;
   }
 }

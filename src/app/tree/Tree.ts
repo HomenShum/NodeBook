@@ -1127,7 +1127,12 @@ export class Tree {
 
       // expansion updates
       // const expansions = { [treeNode.path]: false, [newNodePath]: treeNode.isExpanded };
-      return { txs, newNodePath, expansions: undefined };
+      // console.log(treeNode.relationWithParent.relationType.id);
+      return {
+        txs,
+        newNodePath: newNodePath,
+        expansions: undefined,
+      };
     }
 
     function moveToNewRelationBelow(treeNode: DescendantTreeNode) {
@@ -1204,7 +1209,7 @@ export class Tree {
           changes = splitToChild(treeNode);
         }
       } else {
-        if (atStartOfLine && treeNode.object.text !== "") {
+        if (atStartOfLine && treeNode.object.text !== "" && treeNode.relationWithParent.relationType.id === "child") {
           changes = createSiblingAbove(treeNode);
         } else {
           changes = splitToSiblingBelow(treeNode);
