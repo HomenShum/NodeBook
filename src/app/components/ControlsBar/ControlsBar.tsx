@@ -20,6 +20,7 @@ import { ideapadLinkManager } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/app/hooks/useToast";
 
 import { default as s, default as styles } from "./ControlsBar.module.css";
 
@@ -55,6 +56,7 @@ interface Props {
 export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
+  const { addToast } = useToast();
 
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [ideapadLink, setIdeapadLink] = useState(ideapadLinkManager.get(tree.rootObjectId));
@@ -77,6 +79,11 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     setIdeapadLink(element.value);
   };
 
+  const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value.replace(/[^a-z0-9-]/g, "");
+    setSlug(newValue);
+  };
+
   const saveSlug = async () => {
     if (savedSlug === slug) return;
     const response = await fetch("/api/slug", {
@@ -94,6 +101,17 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
       setSlug(savedSlug);
     }
   };
+
+  function copySlug(): void {
+    if (!savedSlug || savedSlug.length <= 0) return;
+    const baseUrl = window.location.origin;
+    navigator.clipboard.writeText(`${baseUrl}/${savedSlug}`).then(() => {
+      addToast({
+        title: "Link copied to clipboard",
+        duration: 4000,
+      });
+    });
+  }
 
   const toggleFilter = useCallback((filter: string) => {
     setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
@@ -305,8 +323,9 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
               )}
               <div className={cn(s.SwitchItem, s.TextInput)}>
                 <label htmlFor="set-slug">Set Slug Link</label>
-                <input id="set-slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
+                <input id="set-slug" value={slug} onChange={handleOnChange} />
                 <button onClick={saveSlug}>Save</button>
+                <button onClick={copySlug}>Copy</button>
               </div>
             </div>
           </PopoverContent>
