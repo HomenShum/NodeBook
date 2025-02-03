@@ -8,10 +8,10 @@ async function getHandler(req: NextAuthenticatedRequest) {
   const userId = req.userId;
   const query = req.nextUrl.searchParams.get("query");
 
-  if (!query) {
-    throw Error("Missing search query");
+  if (!query || decodeURIComponent(query).length < 3) {
+    throw Error("Missing search query or query too short");
   }
 
-  const data = await answerQuery(userId, query);
+  const data = await answerQuery(userId, decodeURIComponent(query));
   return NextResponse.json({ data });
 }

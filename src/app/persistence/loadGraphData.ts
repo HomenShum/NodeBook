@@ -47,10 +47,10 @@ export class LayerManager {
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
     }
-    if (text.length < 3 || this.searchedText.has(text)) return;
+    if (!text || text.length < 3 || this.searchedText.has(text)) return;
     this.searchDebounceTimer = setTimeout(async () => {
       this.searchedText.set(text, true);
-      const nodeIds = await this.fetchAndLoad(`/api/search?query=${text}`);
+      const nodeIds = await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`);
       this.loadCanonicalWithIds(nodeIds);
     }, 80);
   }
