@@ -7,6 +7,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $atEditorStart } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
+import { GraphRelation } from "@/app/graph/GraphRelation";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
@@ -102,6 +103,27 @@ export const BackspaceMergeNodesPlugin = () => {
           // Merge into parent
           handled = mergeNodes(treeNode, treeNode.parent);
         }
+
+        // If the node above is has a treeNodeInputSuffix and the current node is empty, destroy the node
+        //   and focus on the input suffix
+        if (
+          treeNode.siblingAbove &&
+          (treeNode.siblingAbove.object instanceof GraphRelation ||
+            treeNode.siblingAbove.object.canonicalRelationId !== treeNode.siblingAbove.relationWithParent.id) &&
+          treeNode.object.text === ""
+        ) {
+          if (treeNode.siblingAbove.object instanceof GraphRelation) {
+            graphStore.removeNode({
+              nodeId: treeNode.object.id,
+            });
+          }
+          const element = document.querySelector(`[data-object-suffix="${treeNode.siblingAbove.object.id}"]`);
+          if (element && element instanceof HTMLInputElement) {
+            element.focus();
+          }
+        }
+        console.log(treeNode.siblingAbove?.object.text);
+        console.log("Handled", handled);
         if (handled) {
           const destroyMLNote =
             treeNode.parentGroup.id === "noteContent" &&

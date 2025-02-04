@@ -52,6 +52,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
       onFocus={() => {
         tree.setFocusedNode(treeNode.path);
       }}
+      data-object-suffix={treeNode.object.id}
       onKeyDown={async (e: React.KeyboardEvent) => {
         const isMod = e.metaKey || e.ctrlKey;
         switch (e.key) {
