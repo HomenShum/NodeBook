@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useHandleEnterKey } from "@/app/editor/plugins/EnterKeyPlugin";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphRelation } from "@/app/graph/GraphRelation";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -60,7 +61,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
             return handleEnterKey(e.nativeEvent);
           }
           case "Backspace":
-            if (!treeNode.isAtCanonicalPath) {
+            if (!treeNode.isAtCanonicalPath || treeNode.object instanceof GraphRelation) {
               try {
                 e.preventDefault();
                 await tree.replaceObjectAtNodeWithCopy(treeNode.id);

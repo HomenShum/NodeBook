@@ -1900,7 +1900,13 @@ export class GraphStore {
     nodeOrId: GraphObject | string,
     relationListType: ListType = "all",
   ): FractionalPositionedList<GraphRelation> {
-    const node = typeof nodeOrId === "string" ? this.getNodeOrThrow(nodeOrId) : nodeOrId;
+    let node = typeof nodeOrId === "string" ? this.getNode(nodeOrId) : nodeOrId;
+    if (!node) {
+      node = this.getRelation(typeof nodeOrId === "string" ? nodeOrId : nodeOrId.id);
+    }
+    if (!node) {
+      throw new Error(`Node or relation with id ${nodeOrId} does not exist`);
+    }
     switch (relationListType) {
       case "pinned":
         return node.pinnedRelationsList;

@@ -143,7 +143,7 @@ export const BackspaceMergeNodesPlugin = () => {
       },
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, mergeNodes, addSiblingAboveIntoNote, treeNode, tree]);
+  }, [editor, mergeNodes, addSiblingAboveIntoNote, treeNode, tree, graphStore]);
 
   return null;
 };
