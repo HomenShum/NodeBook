@@ -1,4 +1,4 @@
-import { Play, X } from "lucide-react";
+import { Maximize2, Play, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useState } from "react";
 
@@ -21,6 +21,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
   const openNewTab = useOpenNewTab();
+  const setRoot = useSetMainRoot();
 
   const [isExpanded, setIsExpanded] = useState(true);
 
@@ -29,22 +30,15 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
 
   return (
     <div className={styles.SidebarTreeContainer}>
-      <div
-        className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}
-        // Toggle list on click or open on shift/meta+click
-        onPointerDown={(e) => {
-          if (e.shiftKey) {
-            viewStore.createSidebarTree(object);
-          } else if (e.metaKey) {
-            openNewTab(object);
-          } else {
-            setIsExpanded(!isExpanded);
-          }
-        }}
-      >
+      <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
         <span>My Favorites</span>
-        <div className={styles.IconBox}>
-          <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+        <div className={styles.HeaderControls}>
+          <Button variant="ghost" className={styles.HeaderButton} onClick={() => setIsExpanded(!isExpanded)}>
+            <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+          </Button>
+          <Button variant="ghost" className={styles.HeaderButton} onClick={() => setRoot(object)}>
+            <Maximize2 size={16} />
+          </Button>
         </div>
       </div>
       <div className={styles.SidebarTreeChildren}>
@@ -72,6 +66,8 @@ const FavoriteItem = observer(function FavoriteItem({ object }: TreeElementProps
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
+        width: "100%",
+        minWidth: 0,
       }}
       onPointerEnter={() => setIsHovered(true)}
       onPointerLeave={() => setIsHovered(false)}
@@ -79,6 +75,7 @@ const FavoriteItem = observer(function FavoriteItem({ object }: TreeElementProps
       <Button
         variant="ghost"
         className={cn(styles.Button)}
+        title={object.text}
         onClick={(e) => {
           if (e.shiftKey) {
             viewStore.createSidebarTree(object);

@@ -1,6 +1,7 @@
 "use client";
 import * as Dialog from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { Star } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -9,6 +10,7 @@ import { Path } from "@/app/components/Path";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
 import { graphNodeIsCustomRelType } from "@/app/graph/constants";
+import { isFavorited } from "@/app/graph/favorites";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { getCanonicalPath } from "@/app/graph/utils";
@@ -37,6 +39,7 @@ type Command =
       name: string;
       object: GraphObject;
       path: ObjectPath;
+      isFavorited?: boolean;
       perform: (event?: React.MouseEvent<HTMLDivElement>) => void;
     };
 
@@ -102,14 +105,17 @@ const CommandBar = observer(() => {
       commands.push(
         ...graphStore
           .search({ text: search.text, filters: { types: ["node"] }, sort: { by: "score" } })
-          .nodes.slice(0, MAX_DROPDOWN_RESULTS)
-          .map(({ node }) => {
+          .nodes.map(({ node }) => ({ node, isFavorited: isFavorited(graphStore, node) }))
+          .sort((a, b) => (b.isFavorited && !a.isFavorited ? 1 : a.isFavorited && !b.isFavorited ? -1 : 0))
+          .slice(0, MAX_DROPDOWN_RESULTS)
+          .map(({ node, isFavorited }) => {
             const path = getCanonicalPath(node);
             return {
               type: "navigate" as const,
               id: node.id,
               name: node.text,
               object: node,
+              isFavorited,
               path,
               perform: async (event?: React.MouseEvent<HTMLDivElement>) => {
                 if (event?.shiftKey) {
@@ -278,15 +284,19 @@ const CommandBar = observer(() => {
                   className={cn(styles.Item, selectedIndex === index && styles.Selected)}
                   onClick={(e) => command.perform(e)}
                 >
-                  <span style={{ display: "flex", position: "relative", width: "100%" }}>
-                    {command.name}{" "}
+                  <span style={{ display: "flex", gap: 8, alignItems: "center", width: "100%" }}>
+                    <span style={{ marginRight: "auto" }}>{command.name}</span>
                     {command.type === "navigate" &&
                     command.object instanceof GraphNode &&
                     graphNodeIsCustomRelType(command.object, true) ? (
-                      <div className={styles.RelTypeIndicator}>Type</div>
+                      <span className={styles.RelTypeIndicator}>Type</span>
                     ) : null}
+                    {command.type === "navigate" && command.isFavorited && (
+                      <span style={{ display: "flex", alignItems: "center" }}>
+                        <Star size={16} />
+                      </span>
+                    )}
                   </span>
-
                   {command.type !== "create" && <Path path={command.path} skipLast={true} />}
                 </div>
               ))}

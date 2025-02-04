@@ -411,8 +411,8 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <span className={styles.ButtonText}>Updates Feed</span>
               </Button>
             )}
-            {!user.isAnonymous && <MyHashtagsTree />}
             {!user.isAnonymous && <MyFavoritesList />}
+            {!user.isAnonymous && <MyHashtagsTree />}
           </div>
           <div className={styles.BottomNav}>
             <Button

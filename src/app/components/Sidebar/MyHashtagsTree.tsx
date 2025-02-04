@@ -1,4 +1,4 @@
-import { Play } from "lucide-react";
+import { Maximize2, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
@@ -41,7 +41,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
   );
 
   const handleMainClick = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+    (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
       if (e.shiftKey) {
         viewStore.createSidebarTree(object);
@@ -69,11 +69,14 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
 
   return (
     <>
-      <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)} onPointerDown={handleMainClick}>
+      <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
         <span>{object.text}</span>
-        <div className={styles.IconBox}>
+        <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
           <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
-        </div>
+        </Button>
+        <Button variant="ghost" className={styles.HeaderButton} onClick={() => setRoot(object)}>
+          <Maximize2 size={16} />
+        </Button>
       </div>
       <div className={styles.SidebarTreeChildren}>
         {isExpanded &&

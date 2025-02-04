@@ -2,6 +2,8 @@ declare const styles: {
   readonly "Button": string;
   readonly "ButtonIcon": string;
   readonly "EmptyMessage": string;
+  readonly "HeaderButton": string;
+  readonly "HeaderControls": string;
   readonly "IconBox": string;
   readonly "IconExpanded": string;
   readonly "Selected": string;
