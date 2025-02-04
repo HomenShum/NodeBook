@@ -122,8 +122,6 @@ export const BackspaceMergeNodesPlugin = () => {
             element.focus();
           }
         }
-        console.log(treeNode.siblingAbove?.object.text);
-        console.log("Handled", handled);
         if (handled) {
           const destroyMLNote =
             treeNode.parentGroup.id === "noteContent" &&
