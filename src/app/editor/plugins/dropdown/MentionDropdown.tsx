@@ -11,7 +11,7 @@ import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { NotificationManager, uuid } from "@/app/util";
-import { CONNECTION_SYMBOL, MenuTextMatch, cn, isMac } from "@/lib/utils";
+import { CONNECTION_SYMBOL, CONNECTION_SYMBOL_WITH_SPACE, MenuTextMatch, cn, isMac } from "@/lib/utils";
 
 import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
 import { Dropdown } from "./types";
@@ -62,8 +62,8 @@ export function MentionDropdown({
         nodeToReplace.replace(mentionNode);
         const spaceAfter = new TextNode(" ");
         mentionNode.insertAfter(spaceAfter);
-        if (dropdown.mentionTrigger === CONNECTION_SYMBOL) {
-          const connectionBefore = new TextNode(CONNECTION_SYMBOL);
+        if (dropdown.mentionTrigger === CONNECTION_SYMBOL || dropdown.mentionTrigger === CONNECTION_SYMBOL_WITH_SPACE) {
+          const connectionBefore = new TextNode(dropdown.mentionTrigger);
           mentionNode.insertBefore(connectionBefore);
         }
         mentionNode.selectEnd();
