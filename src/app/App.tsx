@@ -14,12 +14,12 @@ import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
 import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
 import useServiceWorker from "@/app/hooks/useServiceWorker";
+import OfflineWarning from "@/app/components/OfflineWarning/OfflineWarning";
 import { NotificationProvider } from "@/app/contexts/NotificationContext";
 
 import styles from "./app.module.css";
 
 import "./global.css";
-
 interface Props {
   children: React.ReactNode;
 }
@@ -100,6 +100,7 @@ export default observer(function App({ children }: Props) {
     return (
       <div className={styles.App}>
         <div className={styles.AppContainer}>
+          <OfflineWarning />
           <NotificationProvider>
             <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
           </NotificationProvider>

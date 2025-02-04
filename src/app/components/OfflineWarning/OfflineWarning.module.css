@@ -1,0 +1,13 @@
+.OfflineWarning {
+  position: fixed;
+  width: 100vw;
+  overflow: hidden;
+  height: fit-content;
+  top: 0;
+  left: 0;
+  background-color: var(--teal-3);
+  color: var(--teal-11);
+  display: flex;
+  z-index: 50;
+  padding: 10px;
+}
