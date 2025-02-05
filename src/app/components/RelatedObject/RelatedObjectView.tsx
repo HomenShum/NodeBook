@@ -18,7 +18,14 @@ import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { isNoteContent, isUnlabelledChild, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
-import { GLOBAL_RELATION_TYPES_NODE_ID, USER_RELATION_TYPES_NODE_ID_PREFIX } from "@/lib/constants";
+// import all constants
+import {
+  GLOBAL_RELATION_TYPES_NODE_ID,
+  GLOBAL_ROOT_ID,
+  GLOBAL_USERS_NODE_ID,
+  USER_RELATION_TYPES_NODE_ID_PREFIX,
+  USER_ROOT_ID_PREFIX,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
@@ -123,6 +130,13 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
 });
 
 const Content = observer(function Content() {
+  const allConstants = [
+    GLOBAL_RELATION_TYPES_NODE_ID,
+    GLOBAL_ROOT_ID,
+    GLOBAL_USERS_NODE_ID,
+    USER_ROOT_ID_PREFIX,
+    USER_RELATION_TYPES_NODE_ID_PREFIX,
+  ];
   const settingsStore = useSettingsStore();
   const {
     treeNode,
@@ -295,8 +309,7 @@ const Content = observer(function Content() {
           </Button>
           {
             // If the node is a relation type node, show a "Type" indicator
-            treeNode.object.id.startsWith(USER_RELATION_TYPES_NODE_ID_PREFIX) ||
-            treeNode.object.id.startsWith(GLOBAL_RELATION_TYPES_NODE_ID) ? (
+            allConstants.some((constant) => treeNode.object.id.startsWith(constant)) ? (
               <div className={styles.RelatedObjectIndicator}>System</div>
             ) : treeNode.object.objectType === "node" &&
               treeNode.object.relations.some((r) => r.relationTypeId === "__reverse__") ? (
