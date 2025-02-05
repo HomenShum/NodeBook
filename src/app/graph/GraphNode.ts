@@ -182,7 +182,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
                 return "";
               } else {
                 const text = referencedNode._dfsText(visitedMap);
-                return `@[${text}]`;
+                return `@${text}`;
               }
             } catch (error) {
               console.error("Error accessing referencedNode.text:", error);
