@@ -27,6 +27,20 @@
   padding: 18px 52px 4px 20px;
 }
 
+.CloseIconContainer {
+  display: flex;
+  justify-content: start;
+  width: 100%;
+  overflow: hidden;
+  padding: 10px;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.CloseIconContainer:hover {
+  opacity: 1;
+}
+
 .CloseTreeButton {
   display: none;
   cursor: pointer;

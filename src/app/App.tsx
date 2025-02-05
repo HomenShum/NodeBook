@@ -51,7 +51,7 @@ export default observer(function App({ children }: Props) {
       }
       if (isQuickCaptureHotkey(event)) {
         event.preventDefault();
-        viewStore.openQuickCaptureAndCreateNode();
+        viewStore.openQuickCapture(true);
       }
       if (isRightSidebarHotkey(event)) {
         event.preventDefault();

@@ -44,6 +44,10 @@
   color: var(--gray-12);
 }
 
+.NotOwned {
+  background: #ededed;
+}
+
 .Dropdown ul li.Selected {
   background: var(--teal-2);
 }

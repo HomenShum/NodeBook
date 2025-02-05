@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import { NotificationManager, Notification } from "@/app/util";
+import { useUser } from "@/app/contexts/UserContext";
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -14,10 +15,11 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const notificationManager = useMemo(() => new NotificationManager(), []);
-
+  const user = useUser();
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   useEffect(() => {
+    if (user.isAnonymous) return;
     async function loadNotifications() {
       const data = await notificationManager.fetchNotifications();
       setNotifications(data);
@@ -26,7 +28,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     loadNotifications();
     const interval = setInterval(loadNotifications, 30000);
     return () => clearInterval(interval);
-  }, [notificationManager]);
+  }, [notificationManager, user.isAnonymous]);
 
   async function markAsRead(id: string) {
     await notificationManager.markAsRead(id);

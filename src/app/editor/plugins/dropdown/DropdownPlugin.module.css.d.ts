@@ -5,6 +5,7 @@ declare const styles: {
   readonly "DropdownItemContent": string;
   readonly "DropdownItemHelper": string;
   readonly "ForCommandBar": string;
+  readonly "NotOwned": string;
   readonly "RelTypeIndicator": string;
   readonly "RelationItem": string;
   readonly "RelationItemArrow": string;

@@ -1,5 +1,6 @@
 import React from "react";
 import { observer } from "mobx-react-lite";
+import { PanelRightCloseIcon } from "lucide-react";
 
 import { useViewStore } from "@/app/view/useViewStore";
 import OutlineContent from "@/app/components/OutlineContent";
@@ -12,6 +13,9 @@ const RightSidebar = observer(function RightSidebar() {
 
   return (
     <div className={s.RightSidebar}>
+      <div className={s.CloseIconContainer} onClick={() => viewStore.toggleRightSidebar()} title={"Close sidebar"}>
+        <PanelRightCloseIcon size={20} />
+      </div>
       {viewStore.sidebarTrees.map((tree) => (
         <OutlineContent key={tree.id} tree={tree} />
       ))}

@@ -205,7 +205,10 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
         {state.matches.map((match, index) => (
           <li
             key={match.key}
-            className={highlightedIndex === index ? styles.Selected : ""}
+            className={cn(
+              highlightedIndex === index ? styles.Selected : "",
+              match.object.authorId !== graphStore.user.id ? styles.NotOwned : "",
+            )}
             onMouseEnter={() => mouseMoveSinceStateChange.current && setHighlightedIndex(index)}
             onClick={() => selectMatch(match)}
           >

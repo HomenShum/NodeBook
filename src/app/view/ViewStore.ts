@@ -135,7 +135,7 @@ export class ViewStore {
         isQuickCaptureDeepSearching: computed,
         createSidebarTree: action,
         deleteSidebarTree: action,
-        openQuickCaptureAndCreateNode: action,
+        openQuickCapture: action,
         closeQuickCapture: action,
         setActiveTree: action,
         toggleRightSidebar: action,
@@ -271,16 +271,17 @@ export class ViewStore {
     this.quickCaptureOpen = !this.quickCaptureOpen;
   }
 
-  openQuickCaptureAndCreateNode() {
+  openQuickCapture(createNode = false) {
     //Since quickCaptureTree is stored in memory, it keeps track of a stale selection state
     //delete stale selection state before rendering it.
     this.mainView.selection = null;
     this.quickCaptureTree.selection = null;
     this.quickCaptureOpen = true;
-    if (!this.graphStore.user.isAnonymous) {
-      document.getElementById(this.quickCaptureTree.id)?.scroll(0, 0);
-      this.quickCaptureTree.createChildOfRootAndFocus();
+    if (this.graphStore.user.isAnonymous) {
+      return;
     }
+    document.getElementById(this.quickCaptureTree.id)?.scroll(0, 0);
+    createNode ? this.quickCaptureTree.createChildOfRootAndFocus() : this.quickCaptureTree.focus();
   }
 
   closeQuickCapture() {

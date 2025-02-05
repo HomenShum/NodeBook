@@ -112,9 +112,7 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
         }
         variant={"default"}
         size="icon"
-        onClick={() =>
-          viewStore.quickCaptureOpen ? viewStore.closeQuickCapture() : viewStore.openQuickCaptureAndCreateNode()
-        }
+        onClick={() => (viewStore.quickCaptureOpen ? viewStore.closeQuickCapture() : viewStore.openQuickCapture())}
       >
         {viewStore.quickCaptureOpen ? <X size={14} /> : <QuickCaptureIcon />}
       </Button>

@@ -1,4 +1,4 @@
-import { AppWindowIcon, ExpandIcon, PanelRightCloseIcon, X } from "lucide-react";
+import { AppWindowIcon, ExpandIcon, PanelRightCloseIcon, PanelRightIcon, X } from "lucide-react";
 
 import s1 from "@/app/components/Breadcrumbs/Breadcrumbs.module.css";
 import s from "@/app/components/QuickCapture/QuickCapture.module.css";
@@ -66,7 +66,7 @@ function QuickCaptureMenu() {
             size="icon"
             onClick={() => handleSideViewExpand()}
           >
-            <PanelRightCloseIcon size={14} />
+            <PanelRightIcon size={14} />
           </Button>
         )}
         {!user.isAnonymous && (
