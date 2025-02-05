@@ -1,16 +1,17 @@
 .TrailMenuTrigger {
   display: flex;
   align-items: center;
-  height: 16px;
+  height: 24px;
+  width: 20px;
   cursor: default;
-  margin: 0 4px;
 }
 
 .TrailMenuIcon {
   color: var(--gray-8);
-  height: 16px;
+  height: 24px;
+  width: 18px;
   background-color: var(--gray-1);
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 .TrailMenuIcon:hover {

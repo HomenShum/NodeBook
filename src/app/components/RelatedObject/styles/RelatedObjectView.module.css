@@ -32,6 +32,7 @@ Left Area
   position: absolute;
   right: 100%;
   height: 24px;
+  padding-right: 2px;
 }
 
 .RelatedObjectActions {
@@ -192,15 +193,16 @@ Set root button
 
 .SetRootButton {
   border: none;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 24px;
   color: transparent;
   user-select: none;
   position: relative;
+  margin-right: 1px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  border-radius: 4px;
   cursor: default;
 }
 
@@ -215,8 +217,8 @@ Set root button
 }
 
 .SetRootIcon {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
 }
 
 .SetRootButton:hover .SetRootIcon {

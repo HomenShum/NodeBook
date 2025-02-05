@@ -1,45 +1,74 @@
 .ToggleButton {
   border: none;
-  width: 16px;
-  height: 16px;
+  width: 21px;
+  height: 24px;
+  margin-left: 0;
   color: transparent;
   user-select: none;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  border-radius: 4px;
   cursor: default;
   fill: var(--gray-8);
+}
+
+.ToggleButton::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 21px;
+  height: 100%;
+  z-index: 1;
+  border-radius: 4px;
 }
 
 .Icon {
   transition: transform 0.15s ease;
   will-change: transform;
+  position: relative;
+  z-index: 2;
 }
 
 .IconPublicNode.IconHasChildren {
   stroke: var(--teal-10);
   fill: var(--teal-10);
+  width: 11px;
+  height: 9px;
 }
 
 .IconPublicNode.IconNoChildren {
   stroke: var(--teal-6);
   fill: var(--teal-6);
+  width: 9px;
+  height: 7px;
 }
 
 .IconPrivateNode.IconHasChildren {
   stroke: var(--gray-11);
   fill: var(--gray-11);
+  width: 11px;
+  height: 9px;
 }
 
 .IconPrivateNode.IconNoChildren {
   stroke: var(--gray-7);
   fill: var(--gray-7);
+  width: 9px;
+  height: 7px;
 }
 
 .ToggleButton:hover {
   background-color: var(--gray-3);
+  border-radius: 4px;
+}
+
+.ToggleButton:hover::before {
+  background-color: var(--gray-3);
+  border-radius: 2px;
+  z-index: 1;
+  border-radius: 4px;
 }
 
 .ToggleExpanded {

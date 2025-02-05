@@ -262,7 +262,7 @@ const Content = observer(function Content() {
                   throw new Error("Prefix input not found");
                 }
               }}
-              // On click, set focus to noteContentSuffix
+            // On click, set focus to noteContentSuffix
             >
               <NoteContentSuffix treeNode={treeNode} />
             </div>
@@ -386,7 +386,7 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
                 }
               }}
             >
-              <Maximize2 size={16} className={styles.SetRootIcon} />
+              <Maximize2 size={11} className={styles.SetRootIcon} />
             </button>
           }
           {showToggle && treeNode.childCount > 0 && !isNoteContentRoot && <Toggle />}

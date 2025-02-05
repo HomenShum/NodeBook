@@ -60,11 +60,9 @@ const Toggle = observer(function Toggle() {
     return graphStore.usersById.get(authorId)?.username || authorId;
   };
 
-  const tooltipContent = `Node's author: ${
-    treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
-  }
-    Relation author: ${
-      treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
+  const tooltipContent = `Node's author: ${treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
+    }
+    Relation author: ${treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
     }
     Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}
   `;
@@ -84,7 +82,6 @@ const Toggle = observer(function Toggle() {
         // Default toggle button
         <button className={styles.ToggleButton} onPointerDown={(e) => handleToggleClick(e)}>
           <Play
-            size={7}
             className={`${cn(styles.Icon, {
               [styles.IconNoChildren]: !hasChildren,
               [styles.IconHasChildren]: hasChildren,
