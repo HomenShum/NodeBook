@@ -119,6 +119,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
               graph.usersToUserRelationId,
               graph.myHashtagsNodeId,
               graph.myFavoritesNodeId,
+              graph.myStreamNodeId,
             ];
             graph.layerManager.clear();
             await graph.layerManager.loadWithIds(objectIds, true);

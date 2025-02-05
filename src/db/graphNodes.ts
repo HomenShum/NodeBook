@@ -8,6 +8,7 @@ import {
   GLOBAL_ROOT_ID,
   USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
+  USER_MY_STREAM_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
 } from "@/lib/constants";
 
@@ -49,6 +50,12 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
   }
   if (oldProps.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
     throw new SyncError('Cannot update content of user\'s "My Favorites" node', {
+      actionName: "updateNode",
+      data: { oldProps, newProps },
+    });
+  }
+  if (oldProps.id.startsWith(USER_MY_STREAM_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
+    throw new SyncError('Cannot update content of user\'s "My Stream" node', {
       actionName: "updateNode",
       data: { oldProps, newProps },
     });

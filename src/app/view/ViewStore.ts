@@ -78,14 +78,9 @@ export class ViewStore {
       graphStore.getDefaultRootForUser(),
     );
     this.activeTree = this.treeView;
-    this.quickCaptureTree = new QuickCaptureTree(
-      this.graphStore,
-      this.settingsStore,
-      this.graphStore.getDefaultRootForUser(),
-      {
-        viewType: this.quickCaptureViewType,
-      },
-    );
+    this.quickCaptureTree = new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.myStreamNode, {
+      viewType: this.quickCaptureViewType,
+    });
   }
   /**
    * Return state associated with the main view.

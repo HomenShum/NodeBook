@@ -35,6 +35,7 @@ import {
   GLOBAL_USERS_RELATION_ID,
   USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
+  USER_MY_STREAM_NODE_ID_PREFIX,
   USER_RELATION_TYPES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
   USERS_TO_USER_RELATION_ID_PREFIX,
@@ -188,6 +189,18 @@ export class GraphStore {
     const node = this.nodesById.get(this.myFavoritesNodeId);
     if (!node) {
       throw new Error("My favorites node not found");
+    }
+    return node;
+  }
+
+  get myStreamNodeId(): string {
+    return USER_MY_STREAM_NODE_ID_PREFIX + this.user.id;
+  }
+
+  get myStreamNode(): GraphNode {
+    const node = this.nodesById.get(this.myStreamNodeId);
+    if (!node) {
+      throw new Error("My stream node not found");
     }
     return node;
   }
@@ -2221,6 +2234,31 @@ export class GraphStore {
       updates.push(...pinUpdates);
     }
 
+    // My Stream node for user
+    let myStreamNode = this.nodesById.get(this.myStreamNodeId);
+    if (!myStreamNode) {
+      const { node, updates: myStreamNodeUpdates } = this._addNode({
+        id: this.myStreamNodeId,
+        content: [{ type: "text", value: "My Stream" }],
+        authorId: this.user.id,
+      });
+      myStreamNode = node;
+      updates.push(...myStreamNodeUpdates);
+    }
+
+    // User->My Stream
+    let userToMyStreamRelation = userRoot?.relations.find((r) => r.to.id === this.myStreamNodeId);
+    if (!userToMyStreamRelation && userRoot && myStreamNode) {
+      const { relation, updates: newRelationUpdates } = this.createRelation({
+        from: userRoot,
+        to: myStreamNode,
+      });
+      userToMyStreamRelation = relation;
+      updates.push(...newRelationUpdates);
+      const { updates: pinUpdates } = this._pinRelations(userRoot.id, [userToMyStreamRelation.id]);
+      updates.push(...pinUpdates);
+    }
+
     let relationTypesNode = userRoot?.children.find((n) => n.id === this.relationTypesNodeId);
     if (!relationTypesNode) {
       const { node, updates: relationTypesNodeUpdates } = this._addNode({
@@ -2386,18 +2424,27 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.allRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.pinnedRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.noteContentRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.allRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.pinnedRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.noteContentRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
 
     return {
       usersById,
