@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull, ne } from "drizzle-orm";
 
 import { getDb } from "@/db";
 import { graphNodeTable } from "@/db/schema";
@@ -41,22 +41,47 @@ export async function POST(req: NextRequest) {
   }
 }
 
+export async function DELETE(req: NextRequest) {
+  try {
+    const db = getDb();
+    const { nodeId } = await req.json();
+
+    if (!nodeId) {
+      return NextResponse.json({ error: "Missing nodeId" }, { status: 400 });
+    }
+
+    await db.update(graphNodeTable).set({ slug: null }).where(eq(graphNodeTable.id, nodeId));
+
+    return NextResponse.json({ message: "Deleted slug successfully." }, { status: 200 });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+  }
+}
+
 export async function GET(req: NextRequest) {
   try {
     const db = getDb();
     const nodeId = req.nextUrl.searchParams.get("nodeId");
 
-    if (!nodeId) {
-      return NextResponse.json({ error: "nodeId is required." }, { status: 404 });
+    let nodes = [];
+
+    if (nodeId) {
+      nodes = await db
+        .select({ slug: graphNodeTable.slug, id: graphNodeTable.id })
+        .from(graphNodeTable)
+        .where(eq(graphNodeTable.id, nodeId))
+        .limit(1);
+    } else {
+      nodes = await db
+        .select({ slug: graphNodeTable.slug, id: graphNodeTable.id })
+        .from(graphNodeTable)
+        .where(and(isNotNull(graphNodeTable.slug), ne(graphNodeTable.slug, "")));
     }
 
-    const nodes = await db
-      .select({ slug: graphNodeTable.slug, id: graphNodeTable.id })
-      .from(graphNodeTable)
-      .where(eq(graphNodeTable.id, nodeId))
-      .limit(1);
-
-    return NextResponse.json({ slug: nodes.length > 0 ? nodes[0].slug : null, id: nodes[0].id });
+    return NextResponse.json({
+      nodes,
+    });
   } catch (error) {
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }

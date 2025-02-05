@@ -1,6 +1,6 @@
 import { Globe, Link2, ListFilter, ListIcon, Map, MapPin, NetworkIcon, Sliders, WorkflowIcon, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
+import React, { ChangeEvent, useCallback, useState } from "react";
 
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
@@ -21,6 +21,7 @@ import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/app/hooks/useToast";
+import { useSlugs } from "@/app/contexts/SlugContext";
 
 import { default as s, default as styles } from "./ControlsBar.module.css";
 
@@ -57,20 +58,13 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
   const { addToast } = useToast();
+  const { updateSlugByNodeId, slugs, deleteSlugByNodeId } = useSlugs();
 
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [ideapadLink, setIdeapadLink] = useState(ideapadLinkManager.get(tree.rootObjectId));
-  const [savedSlug, setSavedSlug] = useState("");
-  const [slug, setSlug] = useState("");
 
-  useEffect(() => {
-    fetch(`/api/slug?nodeId=${tree.rootObjectId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setSlug(data.slug);
-        setSavedSlug(data.slug);
-      });
-  }, [tree.rootObjectId]);
+  const savedSlug = slugs[tree.rootObjectId] || "";
+  const [slug, setSlug] = useState(savedSlug);
 
   const handleLinkChange = (event: ChangeEvent<HTMLInputElement>) => {
     const element = event.target as HTMLInputElement;
@@ -86,26 +80,34 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
 
   const saveSlug = async () => {
     if (savedSlug === slug) return;
-    const response = await fetch("/api/slug", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ nodeId: tree.rootObjectId, slug: slug }),
-    });
 
-    if (response.ok) {
-      setSavedSlug(slug);
-    } else {
-      alert("Slug already in use.");
+    if (slug.length === 0) {
+      await deleteSlugByNodeId(tree.rootObjectId);
+      setSlug("");
+      return;
+    }
+
+    const ownerNodeId = Object.keys(slugs).find((nodeId) => slugs[nodeId] === slug);
+
+    if (ownerNodeId) {
+      const shouldDelete = confirm("A node is already using this slug. Assign the slug to this node?");
+      if (!shouldDelete) {
+        setSlug(savedSlug);
+        return;
+      }
+      await deleteSlugByNodeId(ownerNodeId);
+    }
+
+    const wasSuccess = await updateSlugByNodeId(tree.rootObjectId, slug);
+    if (!wasSuccess) {
+      alert("Something went wrong");
       setSlug(savedSlug);
     }
   };
 
   function copySlug(): void {
     if (!savedSlug || savedSlug.length <= 0) return;
-    const baseUrl = window.location.origin;
-    navigator.clipboard.writeText(`${baseUrl}/${savedSlug}`).then(() => {
+    navigator.clipboard.writeText(`${window.location.origin}/${savedSlug}`).then(() => {
       addToast({
         title: "Link copied to clipboard",
         duration: 4000,
@@ -322,7 +324,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 </div>
               )}
               <div className={cn(s.SwitchItem, s.TextInput)}>
-                <label htmlFor="set-slug">Set Slug Link</label>
+                <label htmlFor="set-slug">Short URL</label>
                 <input id="set-slug" value={slug} onChange={handleOnChange} />
                 <button onClick={saveSlug}>Save</button>
                 <button onClick={copySlug}>Copy</button>

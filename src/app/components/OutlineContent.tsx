@@ -28,6 +28,7 @@ import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import { useSlugs } from "@/app/contexts/SlugContext";
 
 import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 
@@ -73,6 +74,7 @@ function OutlineContent({ tree }: Props) {
   const settingsStore = useSettingsStore();
   const { addToast } = useToast();
   const setRoot = useSetMainRoot();
+  const { slugs } = useSlugs();
   const elementRef = useRef<HTMLDivElement>(null);
 
   const userId = graphStore.user?.id;
@@ -198,7 +200,11 @@ function OutlineContent({ tree }: Props) {
                   data-tooltip="Copy URL"
                   size="icon"
                   onClick={() => {
-                    copyObjectUrlToClipboard(treeNodeToObjectPath(treeRoot));
+                    if (slugs[treeRoot.object.id]) {
+                      navigator.clipboard.writeText(`${window.location.origin}/${slugs[treeRoot.object.id]}`);
+                    } else {
+                      copyObjectUrlToClipboard(treeNodeToObjectPath(treeRoot));
+                    }
                     addToast({
                       title: "Copied URL to clipboard",
                     });

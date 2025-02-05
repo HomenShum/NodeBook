@@ -13,6 +13,7 @@ import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 import GraphContainer from "@/app/components/GraphView/GraphContainer";
 import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
+import { SlugProvider } from "@/app/contexts/SlugContext";
 
 import s from "./OutlineView.module.css";
 

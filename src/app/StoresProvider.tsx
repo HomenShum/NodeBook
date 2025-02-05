@@ -18,6 +18,7 @@ import { ViewStore } from "@/app/view/ViewStore";
 import rootLogger from "@/lib/logger";
 import { GLOBAL_USERS_NODE_ID, GLOBAL_USERS_RELATION_ID } from "@/lib/constants";
 import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
+import { SlugProvider } from "@/app/contexts/SlugContext";
 
 export const logger = rootLogger.child({ service: "store-provider" });
 
@@ -171,7 +172,9 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       <UserContext.Provider value={user}>
         <SettingsStoreContext.Provider value={settingsStore}>
           <GraphStoreProvider value={graphStore}>
-            <ViewStoreProvider value={viewStore}>{children} </ViewStoreProvider>
+            <ViewStoreProvider value={viewStore}>
+              <SlugProvider>{children}</SlugProvider>
+            </ViewStoreProvider>
           </GraphStoreProvider>
         </SettingsStoreContext.Provider>
       </UserContext.Provider>

@@ -48,6 +48,7 @@ import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { MyShortlinksTree } from "@/app/components/Sidebar/MyShortlinksTree";
 
 import styles from "./ResizableSidebar.module.css";
 
@@ -283,12 +284,12 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 }}
                 onClick={(e) => {
                   if (e.shiftKey) {
-                    viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
+                    viewStore.createSidebarTree(graphStore.myStreamNode);
                   } else if (e.metaKey) {
-                    openNewTab(graphStore.getDefaultRootForUser());
+                    openNewTab(graphStore.myStreamNode);
                   } else {
                     handleNavigation(() => {
-                      setRoot(graphStore.getDefaultRootForUser());
+                      setRoot(graphStore.myStreamNode);
                       viewStore.setViewType(ViewType.Note);
                     });
                   }
@@ -413,6 +414,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             )}
             {!user.isAnonymous && <MyFavoritesList />}
             {!user.isAnonymous && <MyHashtagsTree />}
+            {!user.isAnonymous && <MyShortlinksTree />}
           </div>
           <div className={styles.BottomNav}>
             <Button
