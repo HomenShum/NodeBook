@@ -561,11 +561,6 @@ export class Tree {
     if (shouldExpand) {
       // If the node has more than 50 children, warn the user.
       const node = this.getNodeOrThrow(path);
-      const numChildren = node.childCount;
-      if (numChildren > 100) {
-        const expand = confirm(`Are you sure you want to expand this node? It has ${numChildren} children.`);
-        if (!expand) return;
-      }
       const layerIds: string[] = [];
       node.childrenGroups.forEach((group) => group.nodes.forEach((n) => layerIds.push(n.object.id)));
       this.graphStore.layerManager.loadWithIds([node.object.id, node.relationWithParent.id, ...layerIds]);
