@@ -123,8 +123,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
               graph.myStreamNodeId,
             ];
             graph.layerManager.clear();
-            await graph.layerManager.loadWithIds(objectIds, true);
-            await graph.layerManager.loadRelationTypes();
+            await graph.layerManager.initialize(objectIds);
           } else if (env.persistTo === "local") {
             localLocalData(graph);
           }

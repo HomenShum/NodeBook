@@ -1007,7 +1007,11 @@ export class Tree {
       return;
     }
     let isChecked: boolean | undefined = undefined;
-    if (treeNode.object instanceof GraphNode && typeof treeNode.object.isChecked === "boolean") {
+    if (
+      treeNode.object instanceof GraphNode &&
+      treeNode.object.text.length > 0 &&
+      typeof treeNode.object.isChecked === "boolean"
+    ) {
       isChecked = false;
     }
 

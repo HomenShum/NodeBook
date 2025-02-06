@@ -52,6 +52,9 @@
   user-select: none;
   width: 100%;
   letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .Nodes {

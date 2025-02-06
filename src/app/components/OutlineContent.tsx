@@ -1,6 +1,6 @@
 import { Globe, HomeIcon, Link, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 
 import appStyles from "@/app/app.module.css";
 import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
@@ -29,6 +29,7 @@ import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useSlugs } from "@/app/contexts/SlugContext";
+import { Checkbox } from "@/app/components/Checkbox/Checkbox";
 
 import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 
@@ -188,6 +189,7 @@ function OutlineContent({ tree }: Props) {
                   <TooltipTrigger asChild>
                     <div style={{ width: "100%" }}>
                       <h1 className={s.TitleText}>
+                        {treeRoot.isTodoItem && <Checkbox node={treeRoot} />}
                         <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
                       </h1>
                       {settingsStore.showNodeDetails && <RootObjectDetails object={treeRoot.object} />}

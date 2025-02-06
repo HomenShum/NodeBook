@@ -24,8 +24,8 @@ export const localLocalData = (graphStore: GraphStore) => {
 export class LayerManager {
   private static loadedIds = new Set<string>();
   private lazyQueuedIds = new Set<string>();
-  //We load just 1 load, loading 2 layers for canonical can be expensive.
-  //Take a look at this later.
+  //We load just 1 layer, loading 2 layers for canonical can be expensive.
+  //Hence a separate Set(). Take a look at this later.
   private static loadedIdsForCanonical = new Set<string>();
   private searchedText = new Map<string, boolean>();
   private searchDebounceTimer: NodeJS.Timeout | null = null;
@@ -60,9 +60,6 @@ export class LayerManager {
     //cloning debounce from above
     await this.fetchAndLoad(`/api/layer/bfs?objectId=${objectId}`);
   }
-
-  //Todo: Maybe add another method for lazy loading since we try to load an object
-  //on hover. But a user can hover around and it dispatches multiple api calls.
 
   public async loadWithIds(objectIds: string[], withReset = false) {
     const ids = objectIds
@@ -106,6 +103,36 @@ export class LayerManager {
         objectIds: ids,
       }),
     });
+  }
+
+  //Todo: I don't like this method and this class can be improved.
+  // Maybe at some point, use server side rendering.
+  // Adding this so we can do load the first layer and relation types in parallel
+  public async initialize(objectIds: string[]): Promise<void> {
+    if (!env.isPersistenceEnabled || env.persistTo !== "server") return;
+    const authFetch = getAuthFetch();
+    const ids = objectIds
+      .filter((id) => !LayerManager.loadedIds.has(id))
+      .map((id) => (id === "home" ? this.graphStore.userRootId : id));
+    if (ids.length <= 0) return;
+    ids.forEach((id) => LayerManager.loadedIds.add(id));
+    const layers = await Promise.all([
+      authFetch(`/api/layer`, {
+        method: "POST",
+        body: JSON.stringify({
+          objectIds: ids,
+        }),
+      }).then((res) => res.json()),
+      authFetch(`/api/layer/relations`).then((res) => res.json()),
+    ]);
+    let parsed = SerializedGraphStoreSchema.safeParse(layers[0].data);
+    if (parsed.success) {
+      this.graphStore.resetAndLoad(parsed.data);
+    }
+    parsed = SerializedGraphStoreSchema.safeParse(layers[1].data);
+    if (parsed.success) {
+      this.graphStore.load(parsed.data);
+    }
   }
 
   public async loadRelationTypes() {

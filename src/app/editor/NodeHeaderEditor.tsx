@@ -18,6 +18,7 @@ import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
+import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
 
 import styles from "./Editor.module.css";
 
@@ -54,7 +55,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
         <DropdownPlugin treeNode={treeNode} />
         <EnterKeyPlugin treeNode={treeNode} />
         <IgnoreModShiftAPlugin />
-
+        <TodoPlugin treeNode={treeNode} />
         <ReplacementPlugin treeNode={treeNode} />
         <ClearEditorPlugin />
         <LinkPlugin />

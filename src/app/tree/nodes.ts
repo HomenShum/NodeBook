@@ -135,6 +135,10 @@ export abstract class BaseTreeNode {
   registerLexicalEditor(editor: LexicalEditor) {
     this.lexicalEditor = editor;
   }
+
+  get isTodoItem(): boolean {
+    return this.object instanceof GraphNode && typeof this.object.isChecked === "boolean";
+  }
 }
 
 export class RootTreeNode extends BaseTreeNode {
@@ -283,10 +287,6 @@ export class DescendantTreeNode extends BaseTreeNode {
 
   get parent() {
     return this.parentGroup.parent;
-  }
-
-  get isTodoItem(): boolean {
-    return typeof DescendantTreeNode && this.object instanceof GraphNode && typeof this.object.isChecked === "boolean";
   }
 
   get isExpanded() {

@@ -5,7 +5,7 @@ import { useEffect } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $atEditorStart } from "@/app/editor/utils/selection";
-import { RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import { TreeNode } from "@/app/tree/nodes";
 
 /**
  * Plugin to create and delete todo state for a node.
@@ -21,8 +21,7 @@ export const TodoPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
       action((event) => {
         if (!event) return false;
         const selection = $getSelection();
-        if (treeNode instanceof RootTreeNode || !selection || !$isRangeSelection(selection) || !selection.isCollapsed())
-          return false;
+        if (!selection || !$isRangeSelection(selection) || !selection.isCollapsed()) return false;
         if ((event.key === "Backspace" || event.key === "Delete") && treeNode.isTodoItem && $atEditorStart()) {
           graphStore.updateNode({
             nodeId: treeNode.object.id,
