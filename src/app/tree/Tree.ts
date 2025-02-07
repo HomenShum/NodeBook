@@ -387,8 +387,13 @@ export class Tree {
   /**
    * Sets the focused node in the editor.
    */
-  setFocusedNode(treeNodeId: string | null, position: TreeNodeContentSelectionPosition = "end", editMode?: boolean) {
-    this.selection = treeNodeId ? { type: "editor", treeNodeId, position, editMode } : null;
+  setFocusedNode(
+    treeNodeId: string | null,
+    position: TreeNodeContentSelectionPosition = "end",
+    editMode?: boolean,
+    scrollToCenter?: boolean,
+  ) {
+    this.selection = treeNodeId ? { type: "editor", treeNodeId, position, editMode, scrollToCenter } : null;
   }
 
   /** Returns true if the given node's editor is focused. */

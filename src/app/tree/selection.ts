@@ -49,6 +49,7 @@ export type TreeNodeContentSelection = {
   treeNodeId: string;
   position: TreeNodeContentSelectionPosition;
   editMode?: boolean;
+  scrollToCenter?: boolean;
 };
 
 export type TreeNodeSelection = {

@@ -17,10 +17,15 @@ function QuickCaptureMenu() {
 
   const handleMainViewExpand = () => {
     if (!viewStore.quickCaptureOpen) return;
+    //Copy QC's selection because it's lost when closing QC.
+    const selection = viewStore.quickCaptureTree.selection;
     const root = viewStore.quickCaptureTree.root.object;
     viewStore.setViewType(ViewType.Note);
     viewStore.closeQuickCapture();
     setMainRoot(root);
+    if (selection?.type === "editor") {
+      viewStore.mainView.setFocusedNode(selection.treeNodeId, selection.position, selection.editMode, true);
+    }
   };
 
   const handleSideViewExpand = () => {
