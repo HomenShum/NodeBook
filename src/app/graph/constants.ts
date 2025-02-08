@@ -6,7 +6,17 @@ import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 
 export const ALL_LIST_TYPES = ["pinned", "noteContent", "all"] as const;
 export type ListType = (typeof ALL_LIST_TYPES)[number];
-export type DefaultRelationType = "child" | "relatedTo" | "author" | "sublist" | "empty" | "__type__" | "__reverse__";
+export type DefaultRelationType =
+  | "child"
+  | "relatedTo"
+  | "author"
+  | "sublist"
+  | "empty"
+  | "__type__"
+  | "__reverse__"
+  | "__liked_by__"
+  | "__comment__"
+  | "__status__";
 
 export const getRelationTypeIcon = (relationType: string): (() => JSX.Element) | undefined => {
   switch (relationType) {
@@ -102,6 +112,30 @@ export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType
     authorId: GLOBAL_ADMIN_USER_ID,
     label: "__reverse__",
     reverseLabel: "__forward__",
+    isPublic: false,
+  },
+  __liked_by__: {
+    version: 1,
+    id: "__liked_by__",
+    authorId: GLOBAL_ADMIN_USER_ID,
+    label: "liked by",
+    reverseLabel: "liked",
+    isPublic: false,
+  },
+  __comment__: {
+    version: 1,
+    id: "__comment__",
+    authorId: GLOBAL_ADMIN_USER_ID,
+    label: "comment",
+    reverseLabel: "comment on",
+    isPublic: false,
+  },
+  __status__: {
+    version: 1,
+    id: "__status__",
+    authorId: GLOBAL_ADMIN_USER_ID,
+    label: "status",
+    reverseLabel: "status of",
     isPublic: false,
   },
   empty: { version: 1, id: "empty", authorId: GLOBAL_ADMIN_USER_ID, label: "", reverseLabel: "", isPublic: false },

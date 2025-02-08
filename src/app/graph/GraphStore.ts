@@ -38,7 +38,9 @@ import {
   USER_MY_STREAM_NODE_ID_PREFIX,
   USER_RELATION_TYPES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
+  USER_CARD_STATUSES_NODE_ID,
   USERS_TO_USER_RELATION_ID_PREFIX,
+  DEFAULT_CARD_STATUSES,
 } from "@/lib/constants";
 import logger from "@/lib/logger";
 import { getInverseRelation } from "@/lib/relation-inverter";
@@ -213,6 +215,18 @@ export class GraphStore {
     const node = this.nodesById.get(this.relationTypesNodeId);
     if (!node) {
       throw new Error("Relation types node not found");
+    }
+    return node;
+  }
+
+  get cardStatusesNodeId(): string {
+    return USER_CARD_STATUSES_NODE_ID + this.user.id;
+  }
+
+  get cardStatusesNode(): GraphNode {
+    const node = this.nodesById.get(this.cardStatusesNodeId);
+    if (!node) {
+      throw new Error("Card statuses node not found");
     }
     return node;
   }
@@ -2275,6 +2289,38 @@ export class GraphStore {
       updates.push(...newRelationUpdates);
     }
 
+    // Add __card_status__
+    let cardStatusNode = userRoot?.children.find((n) => n.id === this.cardStatusesNodeId);
+
+    if (!cardStatusNode) {
+      const { node: typesNode, updates: typesNodeUpdates } = this._addNode({
+        id: this.cardStatusesNodeId,
+        content: [{ type: "text", value: "__card_statuses__" }],
+        authorId: this.user.id,
+      });
+      const { updates: newRelationUpdates } = this.createRelation({
+        from: userRoot ? userRoot : usersNode,
+        to: typesNode,
+      });
+      updates.push(...typesNodeUpdates);
+      updates.push(...newRelationUpdates);
+
+      for (const status of DEFAULT_CARD_STATUSES) {
+        const { node: statusValueNode, updates: statusValueNodeUpdates } = this._addNode({
+          content: [{ type: "text", value: status }],
+          authorId: this.user.id,
+        });
+
+        const { updates: statusValueRelationUpdates } = this.createRelation({
+          from: typesNode,
+          to: statusValueNode,
+        });
+
+        updates.push(...statusValueNodeUpdates);
+        updates.push(...statusValueRelationUpdates);
+      }
+    }
+
     // Global relation types node
     let globalRelationTypesNode = this.nodesById.get(GLOBAL_RELATION_TYPES_NODE_ID);
     if (!globalRelationTypesNode) {
@@ -2424,18 +2470,27 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.allRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.pinnedRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.noteContentRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.allRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.pinnedRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.noteContentRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
 
     return {
       usersById,

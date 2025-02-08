@@ -1,0 +1,35 @@
+declare const styles: {
+  readonly "active": string;
+  readonly "addRelatedField": string;
+  readonly "addRelatedIcon": string;
+  readonly "authorInfo": string;
+  readonly "authorName": string;
+  readonly "avatar": string;
+  readonly "card": string;
+  readonly "cardEnd": string;
+  readonly "cardFooter": string;
+  readonly "cardText": string;
+  readonly "clampText": string;
+  readonly "commentAuthor": string;
+  readonly "commentForm": string;
+  readonly "commentHeader": string;
+  readonly "commentInput": string;
+  readonly "commentItem": string;
+  readonly "commentLike": string;
+  readonly "commentTime": string;
+  readonly "commentsSection": string;
+  readonly "contentWrapper": string;
+  readonly "engagement": string;
+  readonly "engagementItem": string;
+  readonly "engagementText": string;
+  readonly "footerRight": string;
+  readonly "menuButton": string;
+  readonly "relation": string;
+  readonly "relations": string;
+  readonly "showMore": string;
+  readonly "status": string;
+  readonly "statusDot": string;
+  readonly "submitButton": string;
+};
+export = styles;
+

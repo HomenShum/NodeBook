@@ -221,8 +221,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 {viewStore.graphMode
                   ? "Graph View"
                   : viewStore.viewType === ViewType.Outline
-                  ? "List View"
-                  : "Note View"}
+                    ? "List View"
+                    : viewStore.viewType === ViewType.Note
+                      ? "Note View"
+                      : "Card View"}
               </span>
             </Button>
           </DropdownMenuTrigger>
@@ -234,6 +236,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             <DropdownMenuItem onSelect={() => setViewType(ViewType.Note)}>
               <NotesIcon />
               Note View
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewType(ViewType.Card)}>
+              <NotesIcon />
+              Card View
             </DropdownMenuItem>
             {settingsStore.showGraphViewButton && (
               <DropdownMenuItem onSelect={() => setViewType(ViewType.Graph)}>

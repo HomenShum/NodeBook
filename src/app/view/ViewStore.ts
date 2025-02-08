@@ -18,6 +18,7 @@ export class ViewStore {
   public quickCaptureSearchQuery: string = "";
   public flattenSublists: boolean = false;
   public graphMode: boolean = false;
+  public cardMode: boolean = false;
 
   public viewType = ViewType.Outline;
   public quickCaptureViewType = ViewType.Note;
@@ -63,6 +64,7 @@ export class ViewStore {
       sidebarWidth: true,
       activeModal: true,
       graphMode: true,
+      cardMode: true,
       sidebarTrees: false,
       quickCaptureViewType: true,
       quickCaptureOpen: true,
@@ -176,6 +178,10 @@ export class ViewStore {
 
   setGraphMode(graphMode: boolean) {
     this.graphMode = graphMode;
+  }
+
+  toggleCardMode() {
+    this.cardMode = !this.cardMode;
   }
 
   setSearchQuery(query: string) {
