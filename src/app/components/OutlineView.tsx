@@ -1,19 +1,18 @@
 "use client";
 import { observer } from "mobx-react-lite";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
 import appStyles from "@/app/app.module.css";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
+import GraphContainer from "@/app/components/GraphView/GraphContainer";
 import OutlineContent from "@/app/components/OutlineContent";
+import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 import RightSidebar from "@/app/components/RightSidebar/RightSidebar";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import GraphContainer from "@/app/components/GraphView/GraphContainer";
-import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
-import { SlugProvider } from "@/app/contexts/SlugContext";
 
 import s from "./OutlineView.module.css";
 
@@ -57,7 +56,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
         ) : (
           <div className={s.MainAndSidebarContainer}>
             <OutlineContent tree={tree} />
-            <RightSidebar />
+            <RightSidebar minWidth={300} maxWidth={600} />
           </div>
         )}
       </div>

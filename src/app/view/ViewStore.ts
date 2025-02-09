@@ -45,6 +45,7 @@ export class ViewStore {
   public quickCaptureOpen = false;
   public isDarkMode = false;
   public sidebarWidth = 268;
+  public rightSidebarWidth = 500; // Percentage of screen width
   public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | "help" | null = null;
   public isCommandBarOpen: boolean = false;
   private deepSearching: boolean = false;
@@ -250,6 +251,10 @@ export class ViewStore {
 
   setSidebarWidth(width: number) {
     this.sidebarWidth = width;
+  }
+
+  setRightSidebarWidth(width: number) {
+    this.rightSidebarWidth = width;
   }
 
   setCommandBarOpen(open: boolean) {

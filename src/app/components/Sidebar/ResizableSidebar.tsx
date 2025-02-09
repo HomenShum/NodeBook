@@ -29,6 +29,7 @@ import { HelpModal } from "@/app/components/HelpModal/HelpModal";
 import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
 import { MyFavoritesList } from "@/app/components/Sidebar/MyFavoritesTree";
 import { MyHashtagsTree } from "@/app/components/Sidebar/MyHashtagsTree";
+import { MyShortlinksTree } from "@/app/components/Sidebar/MyShortlinksTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
@@ -48,7 +49,6 @@ import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { MyShortlinksTree } from "@/app/components/Sidebar/MyShortlinksTree";
 
 import styles from "./ResizableSidebar.module.css";
 
