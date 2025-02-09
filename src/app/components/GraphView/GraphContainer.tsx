@@ -9,7 +9,6 @@ export default function GraphContainer({ tree }: { tree: Tree }) {
 
     renderGraph("graph-container", tree, (node) => {
       // TODO: editing and other cool stuffs
-      console.log("clicked", node);
     }).then((cleanup) => {
       cleanupFn = cleanup;
     });
