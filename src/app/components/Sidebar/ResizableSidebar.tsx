@@ -417,8 +417,8 @@ export const ResizableSidebar = observer(function ResizableSidebar({
           <div className={styles.ScrollableArea}>
             {!user.isAnonymous && <MyFavoritesList />}
             {!user.isAnonymous && <MyHashtagsTree />}
-            {!user.isAnonymous && <LocalHashtagsTree />}
             {!user.isAnonymous && <MyShortlinksTree />}
+            {!user.isAnonymous && <LocalHashtagsTree />}
           </div>
           <div className={styles.BottomNav}>
             <Button
