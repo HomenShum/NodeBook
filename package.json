@@ -38,6 +38,7 @@
     "@radix-ui/react-toast": "^1.2.2",
     "@radix-ui/react-tooltip": "^1.1.2",
     "@sentry/nextjs": "^8",
+    "@tanstack/react-virtual": "^3.13.0",
     "@tweenjs/tween.js": "^25.0.0",
     "@vercel/postgres": "^0.8.0",
     "class-variance-authority": "^0.7.0",

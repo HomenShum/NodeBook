@@ -17,6 +17,7 @@ declare const styles: {
   readonly "ResizerHandle": string;
   readonly "Resizing": string;
   readonly "RightAlign": string;
+  readonly "ScrollableArea": string;
   readonly "Selected": string;
   readonly "ShowTooltip": string;
   readonly "Sidebar": string;
