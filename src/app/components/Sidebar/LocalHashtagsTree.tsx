@@ -10,6 +10,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
+import { USER_MY_HASHTAGS_NODE_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import styles1 from "./ResizableSidebar.module.css";
@@ -49,10 +50,15 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     for (const relation of forwardRelations) {
       const targetNode = relation.to;
       if (targetNode instanceof GraphNode) {
-        // If the node is a hashtag (starts with #), add it
-        if (targetNode.text.startsWith("#")) {
+        // Check if the node is connected to the myHashtagsNode
+        const isHashtagNode = Array.from(targetNode.relationsWithPositions.values())
+          .map(({ relation }) => relation)
+          .some((r) => r.from.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX) && r.to.id === targetNode.id);
+
+        if (isHashtagNode) {
           hashtags.push(targetNode);
         }
+
         // Recursively traverse child and sublist relations
         if (
           relation.relationType.id === defaultRelationTypes.child.id ||
@@ -106,10 +112,29 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
       } else if (e.metaKey) {
         openNewTab(child);
       } else {
-        handleNavigation(() => setRoot(child));
+        handleNavigation(() => {
+          // Focus and update the search input first
+          const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
+          if (searchInput) {
+            // Focus the input
+            searchInput.focus();
+            // Trigger a change event with the hashtag text
+            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+              window.HTMLInputElement.prototype,
+              "value",
+            )?.set;
+            if (nativeInputValueSetter) {
+              nativeInputValueSetter.call(searchInput, child.text);
+              searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+              searchInput.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+          }
+          // Enable deep searching
+          viewStore.setDeepSearching(true);
+        });
       }
     },
-    [viewStore, openNewTab, handleNavigation, setRoot],
+    [viewStore, openNewTab, handleNavigation],
   );
 
   return (

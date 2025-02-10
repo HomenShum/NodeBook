@@ -190,6 +190,11 @@ export class ViewStore {
     this.searchQuery = query;
     this.searchView.clearSearch(this.treeView.root);
     this.searchView.deepSearch(query);
+
+    // Trigger a custom event that the SearchBar can listen to
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("update-search-input", { detail: query }));
+    }
   }
 
   setQuickCaptureSearchQuery(query: string) {
