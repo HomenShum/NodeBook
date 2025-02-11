@@ -1,13 +1,22 @@
 # Mew demo datasets
 
-This repository contains the code for creating the demo datasets for the following demo instances:
+This repository contains the code for creating the following demo datasets:
 
-- Linkedin: https://lidemo.ideaflow.app/
-- Linkedin lite: https://lidemo-lite.ideaflow.app/
-- Linkedin++: https://lippdemo.ideaflow.app/
-- Linkedin++ lite: https://lippdemo-lite.ideaflow.app/
-- Scrapedemo: https://scrapedemo.ideaflow.app/
-- Scrapedemo lite: https://scrapedemo-lite.ideaflow.app/
+Linkedin:
+- Mew full: https://lidemo.ideaflow.app/
+- Mew lite: https://lidemo-lite.ideaflow.app/
+- Ideapad full: https://ideapad.io/lidemo-2025-01-22-4/
+- Ideapad lite: https://ideapad.io/lidemo-lite-2025-02-11-1/
+
+Linkedin++:
+- Mew full: https://lippdemo.ideaflow.app/
+- Mew lite: https://lippdemo-lite.ideaflow.app/
+- Ideapad full: https://ideapad.io/lippdemo-2025-01-22-1/
+- Ideapad lite: https://ideapad.io/lippdemo-lite-2025-01-22-2/
+
+Scrapedemo:
+- Mew full: https://scrapedemo.ideaflow.app/
+- Mew lite: https://scrapedemo-lite.ideaflow.app/
 
 ## Setup
 
@@ -50,5 +59,17 @@ You'll find the datasets in the `data/output` folder.
 
 ## Upload datasets
 
-Upload the datasets to the following demo instances (links above). Make sure to clear the old dataset before uploading a new one (there's a button for that in the settings).
+### Mew
 
+- **Go to mew demo instance** you want to update (links above)
+- **Clear old dataset:** In settings, click "Clear all data"
+- **Import new dataset:** Click "Import Data" in settings and wait for import to complete before closing
+
+### Ideapad
+
+- **Uploading to Mew** first is necessary to create an ideapad compatible dataset. So make sure you've done the [above](#mew) already.
+- **Click "Export to Ideapad"** in the mew demo instance settings to download the full dataset as a json file
+- **Go to ideapad** and **create new board** in list view (naming convention example: "lidemo-2025-02-11.1")
+- **Click "Go into board"** then **"Graph"** in the header
+- **Upload via settings:** Open right sidebar settings, click "Upload a .json file..." and select your downloaded json
+- **Wait ~5s** for upload to complete (check network tab), then refresh the page
