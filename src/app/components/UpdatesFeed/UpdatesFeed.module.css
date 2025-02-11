@@ -155,3 +155,10 @@
 .UndoButton:hover {
   opacity: 1;
 }
+
+.NodeId {
+  color: var(--color-primary);
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
