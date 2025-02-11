@@ -107,8 +107,10 @@ export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => 
     )
     .returning({ deletedId: graphNodeTable.id });
 
-  // If there was no row for the node in the main table, log an error and rollback the transaction
+  // If there was no row for the node in the main table, return false instead of throwing
   if (deletedNode.length === 0) {
-    throw new SyncError("Node to delete not found", { actionName: "deleteNode", data: { node } });
+    return false;
   }
+
+  return true;
 };

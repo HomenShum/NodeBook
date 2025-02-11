@@ -44,7 +44,6 @@ async function postHandler(req: NextAuthenticatedRequest) {
 
   try {
     console.log(`[sync][${userId}] Applying ${updates.length} updates`, updates);
-    // TODO: Probably use multi-select queries instead of this for loop stuff
     await db.transaction(async (tx) => {
       for (const update of updates) {
         switch (update.operation) {
@@ -55,7 +54,11 @@ async function postHandler(req: NextAuthenticatedRequest) {
             await updateNode(tx, update.oldProps, update.newProps);
             break;
           case "deleteNode":
-            await deleteNode(tx, update.node);
+            const wasDeleted = await deleteNode(tx, update.node);
+            if (!wasDeleted) {
+              console.log(`Node ${update.node.id} not found for deletion, skipping`);
+              continue;
+            }
             break;
           // case "addRelationType":
           //   await createRelationTypes(tx, [update.relationType]);
