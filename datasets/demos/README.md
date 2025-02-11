@@ -3,18 +3,21 @@
 This repository contains the code for creating the following demo datasets:
 
 Linkedin:
+
 - Mew full: https://lidemo.ideaflow.app/
 - Mew lite: https://lidemo-lite.ideaflow.app/
 - Ideapad full: https://ideapad.io/lidemo-2025-01-22-4/
 - Ideapad lite: https://ideapad.io/lidemo-lite-2025-02-11-1/
 
 Linkedin++:
+
 - Mew full: https://lippdemo.ideaflow.app/
 - Mew lite: https://lippdemo-lite.ideaflow.app/
 - Ideapad full: https://ideapad.io/lippdemo-2025-01-22-1/
 - Ideapad lite: https://ideapad.io/lippdemo-lite-2025-01-22-2/
 
 Scrapedemo:
+
 - Mew full: https://scrapedemo.ideaflow.app/
 - Mew lite: https://scrapedemo-lite.ideaflow.app/
 
@@ -22,7 +25,10 @@ Scrapedemo:
 
 Install dependencies:
 
+Ensure you have python 3.9.7 installed
+
 ```
+cd ./datasets/demos
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -39,16 +45,19 @@ Download and unzip the input data from [here](https://drive.google.com/drive/u/1
 ## Create datasets
 
 Linkedin:
+
 ```
 python src/lidemo.py
 ```
 
 Linkedin++:
+
 ```
 python src/lippdemo.py
 ```
 
 Scrapedemo:
+
 ```
 python src/scrapedemo.py
 ```

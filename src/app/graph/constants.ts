@@ -2,6 +2,7 @@ import { ParentRelationIcon, SublistIcon } from "@/app/components/CustomIcons";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphRelationType } from "@/app/graph/types";
+import { logger } from "@/app/StoresProvider";
 import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 
 export const ALL_LIST_TYPES = ["pinned", "noteContent", "all"] as const;
@@ -36,26 +37,28 @@ export const graphNodeIsCustomRelType = (graphNode: GraphNode, reverse: boolean 
   if (reverseRelations.length === 1) {
     return true;
   } else if (reverseRelations.length > 1) {
-    throw new Error(`Invalid number of reverse relations on graphNode ${graphNode.id} : ${reverseRelations.length}`);
+    logger.error(`Invalid number of reverse relations on graphNode ${graphNode.id} : ${reverseRelations.length}`);
+    return false;
   } else {
     return false;
   }
 };
 
-export const getReverseRelationOrThrow = (graphNode: GraphNode, from: boolean = false): GraphRelation => {
+export const getReverseRelation = (graphNode: GraphNode, from: boolean = false): GraphRelation | undefined => {
   const reverseRelations = graphNode.relations.filter(
     (relation) => relation.relationTypeId === "__reverse__" && (from ? relation.from.id === graphNode.id : true),
   );
   if (reverseRelations.length !== 1) {
-    throw new Error(`Invalid number of reverse relations on graphNode ${graphNode.id} : ${reverseRelations.length}`);
+    logger.error(`Invalid number of reverse relations on graphNode ${graphNode.id} : ${reverseRelations.length}`);
+    return undefined;
   }
   return reverseRelations[0];
 };
 
 export const getRelationTypeReverseLabel = (relationType: GraphNode | GraphRelationType): string => {
   if (relationType instanceof GraphNode) {
-    if (graphNodeIsCustomRelType(relationType)) {
-      const reverseRelation = getReverseRelationOrThrow(relationType, true);
+    const reverseRelation = getReverseRelation(relationType, true);
+    if (reverseRelation) {
       return reverseRelation.to.text;
     } else {
       return relationType.text;
