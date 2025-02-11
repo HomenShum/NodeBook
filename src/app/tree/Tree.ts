@@ -905,16 +905,16 @@ export class Tree {
 
       selection.nodes.forEach((treeNode) => {
         const relationId = treeNode.relationWithParent.id;
-        if (relationId === treeNode.object.canonicalRelation?.id) {
-          nodesToRemove.push({
-            type: "removeNode",
-            transaction: {
-              nodeId: treeNode.object.id,
-            },
-          });
-        } else {
-          relationsToRemove.push({ type: "removeRelation", transaction: { relationId } });
-        }
+        // if (relationId === treeNode.object.canonicalRelation?.id) {
+        //   nodesToRemove.push({
+        //     type: "removeNode",
+        //     transaction: {
+        //       nodeId: treeNode.object.id,
+        //     },
+        //   });
+        // } else {
+        relationsToRemove.push({ type: "removeRelation", transaction: { relationId } });
+        //}
       });
 
       this.graphStore.applyCombinedTransaction([...relationsToRemove, ...nodesToRemove]);
