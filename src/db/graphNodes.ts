@@ -91,6 +91,9 @@ export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => 
   if (node.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
     throw new SyncError('Cannot delete user\'s "My Hashtags" node', { actionName: "deleteNode", data: { node } });
   }
+  if (node.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX)) {
+    throw new SyncError('Cannot delete user\'s "My Favorites" node', { actionName: "deleteNode", data: { node } });
+  }
 
   // Delete all relationLists entries that reference this node
   await tx.delete(relationListsTable).where(eq(relationListsTable.nodeId, node.id));
