@@ -565,6 +565,14 @@ export abstract class BaseGroup {
         continue;
       }
 
+      // Check for mentions in the object's content that need to be loaded
+      if (object instanceof GraphNode && object.content) {
+        const mentionIds = object.content.filter((block) => block.type === "mention").map((block) => block.value);
+        if (mentionIds.length > 0) {
+          missingIds.push(...mentionIds);
+        }
+      }
+
       const node = new DescendantTreeNode({
         object,
         position,
