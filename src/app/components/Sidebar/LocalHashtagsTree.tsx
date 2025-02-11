@@ -1,5 +1,5 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Play } from "lucide-react";
+import { Play, Search } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useRef, useState } from "react";
 
@@ -182,6 +182,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
                     }}
                   >
                     {hashtag.text}
+                    <Search size={14} className={styles.SearchIcon} />
                   </Button>
                 );
               })}

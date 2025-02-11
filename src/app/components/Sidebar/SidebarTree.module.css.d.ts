@@ -6,6 +6,7 @@ declare const styles: {
   readonly "HeaderControls": string;
   readonly "IconBox": string;
   readonly "IconExpanded": string;
+  readonly "SearchIcon": string;
   readonly "Selected": string;
   readonly "SidebarTreeBlock": string;
   readonly "SidebarTreeChildren": string;
