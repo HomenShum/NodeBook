@@ -111,6 +111,15 @@ export const ArrowKeyPlugin = () => {
             }
           }
 
+          // If the current node has a custom relation type, focus on the relation type prefix
+          const relationType = treeNode.relationWithParent.relationType;
+          if (!(relationType.id === "child" && treeNode.relationWithParent.from === treeNode.object)) {
+            const prefixInput = document.querySelector(`[data-node-prefix="${treeNode.object.id}"]`);
+            if (prefixInput instanceof HTMLElement) {
+              prefixInput.focus();
+              return true;
+            }
+          }
           // If the previous node is note content, focus on the suffix
           const prevNode = treeNode.siblingAbove;
           if (prevNode !== null && prevNode.childrenGroupsById["noteContent"].nodes.length > 0) {

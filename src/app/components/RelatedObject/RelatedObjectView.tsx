@@ -22,6 +22,7 @@ import { isNoteContent, isUnlabelledChild, treeNodeToObjectPath, useSetMainRoot 
 import { copyObjectUrlToClipboard, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 // import all constants
+import { RelationTypePrefix } from "@/app/components/RelatedObject/RelationTypePrefix";
 import {
   GLOBAL_RELATION_TYPES_NODE_ID,
   GLOBAL_ROOT_ID,
@@ -205,6 +206,7 @@ const Content = observer(function Content() {
                 }
               }}
             >
+              <RelationTypePrefix treeNode={treeNode} openRelComboBox={openRelComboBox} />
               {treeViewType === "note" &&
                 treeNode.object.noteContentRelationsList.size === 0 && // Notecontent is empty
                 treeNode.parent instanceof RootTreeNode &&
@@ -275,7 +277,7 @@ const Content = observer(function Content() {
                   throw new Error("Prefix input not found");
                 }
               }}
-            // On click, set focus to noteContentSuffix
+              // On click, set focus to noteContentSuffix
             >
               <NoteContentSuffix treeNode={treeNode} />
             </div>
