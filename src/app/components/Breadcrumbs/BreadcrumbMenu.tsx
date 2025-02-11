@@ -1,21 +1,21 @@
-import React, { useCallback } from "react";
+import { Command, Lock, SquareSplitHorizontal, Unlock } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { Command, Lock, SquareSplitHorizontal, Unlock, X } from "lucide-react";
+import React, { useCallback } from "react";
 
-import { useUser } from "@/app/contexts/UserContext";
-import { Button } from "@/app/components/UIPrimitives/Button";
-import { cn } from "@/lib/utils";
-import { modKeyName, optionKeyName } from "@/app/hotkeys";
+import { useAuth } from "@/app/auth/useAuth";
 import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
 import { SyncStatusIndicator } from "@/app/components/SyncStatus/SyncStatusIndicator";
-import { useViewStore } from "@/app/view/useViewStore";
+import { Button } from "@/app/components/UIPrimitives/Button";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
-import { GraphNode } from "@/app/graph/GraphNode";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useAuth } from "@/app/auth/useAuth";
+import { modKeyName, optionKeyName } from "@/app/hotkeys";
 import { useTree } from "@/app/tree/TreeContext";
+import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -110,11 +110,11 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
             ? `Close Quick Capture`
             : `Open Quick Capture · ` + [`${modKeyName}`, `${optionKeyName}`, "K"].join("+")
         }
-        variant={"default"}
+        variant={viewStore.quickCaptureOpen ? "active" : "default"}
         size="icon"
         onClick={() => (viewStore.quickCaptureOpen ? viewStore.closeQuickCapture() : viewStore.openQuickCapture())}
       >
-        {viewStore.quickCaptureOpen ? <X size={14} /> : <QuickCaptureIcon />}
+        <QuickCaptureIcon />
       </Button>
       <Button
         style={{ position: "relative" }}
