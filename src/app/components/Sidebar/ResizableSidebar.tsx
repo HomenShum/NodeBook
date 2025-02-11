@@ -22,6 +22,7 @@ import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
+import appStyles from "@/app/app.module.css";
 import { useAuth } from "@/app/auth/useAuth";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
@@ -52,7 +53,6 @@ import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import styles from "./ResizableSidebar.module.css";
-
 interface Props {
   isOpen: boolean;
   minWidth?: number;
@@ -187,7 +187,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 variant="ghost"
                 size="icon"
                 onClick={toggleNotificationsPane}
-                className={cn(styles.ShowTooltip, styles.BottomAlign, unreadCount ? styles.UnreadNotification : "")}
+                className={cn(styles.ShowTooltip, styles.BottomAlign, unreadCount ? appStyles.UnreadNotification : "")}
                 data-tooltip="Notifications"
               >
                 <BellIcon size={16} strokeWidth={1.5} />

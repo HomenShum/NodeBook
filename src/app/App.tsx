@@ -6,19 +6,19 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/app/auth/useAuth";
 import CommandBar from "@/app/components/CommandBar/CommandBar";
 import { SidebarIcon } from "@/app/components/CustomIcons";
+import OfflineWarning from "@/app/components/OfflineWarning/OfflineWarning";
 import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import Loader from "@/app/components/UIPrimitives/Loader";
 import { useLoading } from "@/app/contexts/LoadingContext";
+import { useNotifications } from "@/app/contexts/NotificationContext";
+import useServiceWorker from "@/app/hooks/useServiceWorker";
+import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
-import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
-import useServiceWorker from "@/app/hooks/useServiceWorker";
-import OfflineWarning from "@/app/components/OfflineWarning/OfflineWarning";
-import { NotificationProvider } from "@/app/contexts/NotificationContext";
+import { cn } from "@/lib/utils";
 
 import styles from "./app.module.css";
-
 import "./global.css";
 interface Props {
   children: React.ReactNode;
@@ -28,6 +28,7 @@ export default observer(function App({ children }: Props) {
   const [isResizing, setIsResizing] = useState(false);
   const auth = useAuth();
   const isLoading = useLoading();
+  const { unreadCount } = useNotifications();
 
   const viewStore = useViewStore();
   useKeyboardShortcuts();
@@ -101,19 +102,18 @@ export default observer(function App({ children }: Props) {
       <div className={styles.App}>
         <div className={styles.AppContainer}>
           <OfflineWarning />
-          <NotificationProvider>
-            <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
-          </NotificationProvider>
+          <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
           <CommandBar />
           <div className={styles.Container}>
             <Button
               data-tooltip="Toggle sidebar · ⌘⇧B"
-              className={styles.SidebarToggle}
+              className={cn(styles.SidebarToggle, unreadCount ? styles.UnreadNotification : "")}
               variant="default"
               size="icon"
               onClick={() => viewStore.toggleLeftSidebar()}
             >
               <SidebarIcon />
+              {unreadCount > 0 && !viewStore.leftSidebarOpen && <span>{unreadCount}</span>}
             </Button>
             <div className={styles.MainContainer}>
               <main

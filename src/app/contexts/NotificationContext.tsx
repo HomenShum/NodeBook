@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { NotificationManager, Notification } from "@/app/util";
 import { useUser } from "@/app/contexts/UserContext";
+import { Notification, NotificationManager } from "@/app/util";
 
 interface NotificationContextType {
   notifications: Notification[];
