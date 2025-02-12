@@ -55,11 +55,14 @@ export const MENTION_SYMBOL = "@";
 export const CONNECTION_SYMBOL = "<>";
 export const CONNECTION_SYMBOL_WITH_SPACE = `${CONNECTION_SYMBOL} `;
 export const PLUS_SYMBOL = "+";
+export const TILDE_SYMBOL = "~";
+
 export type MentionTrigger =
   | typeof MENTION_SYMBOL
   | typeof CONNECTION_SYMBOL
   | typeof PLUS_SYMBOL
-  | typeof CONNECTION_SYMBOL_WITH_SPACE;
+  | typeof CONNECTION_SYMBOL_WITH_SPACE
+  | typeof TILDE_SYMBOL;
 
 // Common constants for text matching
 export const REGEX_CONSTANTS = {
@@ -68,7 +71,7 @@ export const REGEX_CONSTANTS = {
   MAX_ALIAS_LENGTH: 50,
   PUNCTUATION: "", // "\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;",
   VALID_JOINS: "", //"(?:\\.[ |$]| |[\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;]|)",
-  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|${CONNECTION_SYMBOL}\\s|\\${PLUS_SYMBOL}`,
+  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|${CONNECTION_SYMBOL}\\s|\\${PLUS_SYMBOL}|${TILDE_SYMBOL}`,
 };
 
 // Interface for text match results
