@@ -10,6 +10,7 @@ import { NodeEditor } from "@/app/editor/NodeContentEditor";
 import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 import { getCanonicalPath, objectPathToBreadcrumb } from "@/app/graph/utils";
 import { useDoubleClick } from "@/app/hooks/useDoubleClick";
+import { useHoverIntent } from "@/app/hooks/useHoverIntent";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,8 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   const user = useUser();
   const tree = treeNode.tree;
   const editorRef = useRef<HTMLDivElement>(null);
+
+  const { isHovering, hoverProps } = useHoverIntent({ delay: 200, sensitivity: 5 });
 
   const isAtCanonicalPath = treeNode.isAtCanonicalPath;
 
@@ -99,7 +102,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
           <TreeNodeInputPrefix treeNode={treeNode} isEditorEditable={editableEditor} />
         )}
         <div
-          className={cnInnerContainer}
+          className={cn(cnInnerContainer, isHovering && styles.ShowTooltip)}
           onClick={(e) => {
             if (isReadOnlyReference) {
               e.stopPropagation();
@@ -112,6 +115,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
             }
           }}
           data-tooltip={tooltipContent}
+          {...hoverProps}
         >
           <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} editorRef={editorRef} />
           {isReadOnlyReference && !user.isAnonymous && (
