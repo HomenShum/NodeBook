@@ -27,6 +27,7 @@
 .ContentEditable {
   outline: 2px solid transparent;
   outline-offset: 2px;
+  width: 100%;
 }
 
 .LinkNode {
