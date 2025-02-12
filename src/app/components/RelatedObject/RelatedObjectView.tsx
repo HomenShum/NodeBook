@@ -130,11 +130,10 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
 });
 
 const Content = observer(function Content() {
-  const allConstants = [
+  const allSystemPrefixes = [
     GLOBAL_RELATION_TYPES_NODE_ID,
     GLOBAL_ROOT_ID,
     GLOBAL_USERS_NODE_ID,
-    USER_ROOT_ID_PREFIX,
     USER_RELATION_TYPES_NODE_ID_PREFIX,
   ];
   const settingsStore = useSettingsStore();
@@ -262,7 +261,7 @@ const Content = observer(function Content() {
                   throw new Error("Prefix input not found");
                 }
               }}
-            // On click, set focus to noteContentSuffix
+              // On click, set focus to noteContentSuffix
             >
               <NoteContentSuffix treeNode={treeNode} />
             </div>
@@ -309,11 +308,13 @@ const Content = observer(function Content() {
           </Button>
           {
             // If the node is a relation type node, show a "Type" indicator
-            allConstants.some((constant) => treeNode.object.id.startsWith(constant)) ? (
+            allSystemPrefixes.some((prefix) => treeNode.object.id.startsWith(prefix)) ? (
               <div className={styles.RelatedObjectIndicator}>System</div>
             ) : treeNode.object.objectType === "node" &&
               treeNode.object.relations.some((r) => r.relationTypeId === "__reverse__") ? (
               <div className={styles.RelatedObjectIndicator}>Type</div>
+            ) : treeNode.object.id.startsWith(USER_ROOT_ID_PREFIX) ? (
+              <div className={styles.RelatedObjectIndicator}>User</div>
             ) : null
           }
           {/* I think not showing this in replace mode is a good option but feel free to change */}
