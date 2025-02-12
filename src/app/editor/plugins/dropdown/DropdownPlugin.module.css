@@ -45,7 +45,7 @@
 }
 
 .NotOwned {
-  background: #ededed;
+  background: var(--gray-2);
 }
 
 .Dropdown ul li.Selected {
