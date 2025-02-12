@@ -46,6 +46,7 @@ export const createSnapshotFromDb = async (userId: string): Promise<SerializedGr
       isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
       canonicalRelationId: row.canonicalRelationId ?? null,
       isChecked: row.isChecked,
+      accessMode: row.accessMode,
     };
     snapshot.nodesById[node.id] = node;
   }

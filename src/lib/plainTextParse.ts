@@ -1,6 +1,7 @@
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SerializedGraphStore, SerializedNode } from "@/app/persistence/SerializedData";
 import { uuid } from "@/app/util";
+import { AccessMode } from "@/app/graph/GraphNode";
 
 export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent: string): SerializedGraphStore => {
   // In the plain text file uploads, content looks like this:
@@ -52,6 +53,7 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
     isNewRelatedObjectsPublic: false,
     canonicalRelationId: null,
     isChecked: null,
+    accessMode: AccessMode.READ,
   };
   curNodeIdsByDepth[-1] = rootForImportId;
   snapshot.relationsByNodeId[rootForImportId] = {};
@@ -183,6 +185,7 @@ export const parsePlainTextUpload = (existingGraphStore: GraphStore, fileContent
         isNewRelatedObjectsPublic: false,
         canonicalRelationId: relId,
         isChecked: null,
+        accessMode: AccessMode.READ,
       };
       snapshot.nodesById[nodeId] = node;
       nodeIdsByText[nodeText] = nodeId;

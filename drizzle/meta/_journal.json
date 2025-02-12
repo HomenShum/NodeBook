@@ -211,6 +211,13 @@
       "when": 1739337423872,
       "tag": "0029_confused_captain_america",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1739372999268,
+      "tag": "0030_groovy_stryfe",
+      "breakpoints": true
     }
   ]
 }

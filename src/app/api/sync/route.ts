@@ -22,12 +22,6 @@ async function getHandler(req: NextAuthenticatedRequest) {
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
   const userId = req.userId;
-  if (userId === UNLOGGED_USER.id) {
-    return NextResponse.json(
-      { status: "error", message: "Cannot update data as unauthenticated user" },
-      { status: 401 },
-    );
-  }
 
   console.log("Sync data request for user", userId);
 
@@ -39,6 +33,19 @@ async function postHandler(req: NextAuthenticatedRequest) {
   }
 
   const { clientId, transactionId, updates } = parsedData.data;
+
+  const hasDestructiveOperation = updates.some((update) => {
+    if (update.operation === "deleteNode" || update.operation === "deleteRelation") return true;
+    if (update.operation === "updateNode" && update.oldProps.authorId !== UNLOGGED_USER.id) return true;
+    return false;
+  });
+
+  if (userId === UNLOGGED_USER.id && hasDestructiveOperation) {
+    return NextResponse.json(
+      { status: "error", message: "Cannot modify data as unauthenticated user" },
+      { status: 401 },
+    );
+  }
 
   const db = getDb();
 

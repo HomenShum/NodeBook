@@ -13,6 +13,7 @@ import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes"
 import { Tree } from "@/app/tree/Tree";
 import { useTree } from "@/app/tree/TreeContext";
 import { getNextAbove } from "@/app/tree/utils";
+import { useUser } from "@/app/contexts/UserContext";
 
 /**
  * Concat two arrays of Chips into one.
@@ -41,6 +42,8 @@ export const BackspaceMergeNodesPlugin = () => {
   const tree = useTree();
   const { mergeNodes, addSiblingAboveIntoNote } = useMergers(treeNode.tree);
   const graphStore = useGraphStore();
+  const user = useUser();
+  const ignoreMergeCommand = user.isAnonymous;
 
   useEffect(() => {
     return editor.registerCommand(
@@ -54,7 +57,7 @@ export const BackspaceMergeNodesPlugin = () => {
           return false;
         }
         // Only merge while at the start of the node
-        if (!$atEditorStart()) {
+        if (!$atEditorStart() || ignoreMergeCommand) {
           return false;
         }
         if (treeNode instanceof PointerTreeNode) {
