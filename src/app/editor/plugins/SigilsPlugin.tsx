@@ -81,7 +81,6 @@ export const SigilsPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
     return editor.registerCommand(
       KEY_DOWN_COMMAND,
       action((event) => {
-        console.log("event.key", event.key);
         if (event.key !== MENTION_SYMBOL && event.key !== PLUS_SYMBOL && event.key !== TILDE_SYMBOL) return false;
         const selection = $getSelection();
         if (!selection || !selection.getNodes() || !selection.getStartEndPoints() || selection.getNodes().length > 1)

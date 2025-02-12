@@ -38,7 +38,7 @@ export class SettingsStore {
   public showGraphViewButton = false;
   public parseWithAiLinkingOption: ParseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   public showBulletForEmptyNode: boolean = false;
-  public showNotifications: boolean = false;
+  public showNotifications: boolean = true;
   private stopAutosave: () => void;
 
   constructor(
@@ -80,7 +80,7 @@ export class SettingsStore {
     this.showGraphViewButton = false;
     this.parseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
     this.showBulletForEmptyNode = false;
-    this.showNotifications = false;
+    this.showNotifications = true;
   }
 
   private async syncToServer() {
@@ -116,7 +116,7 @@ export class SettingsStore {
       showGraphViewButton: this.showGraphViewButton,
       parseWithAiLinkingOption: this.parseWithAiLinkingOption,
       showBulletForEmptyNode: this.showBulletForEmptyNode,
-      showNotifications: this.showNotifications
+      showNotifications: this.showNotifications,
     };
   }
 
@@ -143,7 +143,7 @@ export class SettingsStore {
     this.showExportSubtreeToIdeapad = data.showExportSubtreeToIdeapad ?? this.showExportSubtreeToIdeapad;
     this.showGraphViewButton = data.showGraphViewButton ?? this.showGraphViewButton;
     this.parseWithAiLinkingOption = data.parseWithAiLinkingOption ?? this.parseWithAiLinkingOption;
-    this.showBulletForEmptyNode = data.showBulletForEmptyNode ?? this.showBulletForEmptyNode
+    this.showBulletForEmptyNode = data.showBulletForEmptyNode ?? this.showBulletForEmptyNode;
     this.showNotifications = data.showNotifications ?? this.showNotifications;
   }
 

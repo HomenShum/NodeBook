@@ -16,9 +16,11 @@ import useServiceWorker from "@/app/hooks/useServiceWorker";
 import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
+import useTrackMemory from "@/app/hooks/useTrackMemory";
 import { cn } from "@/lib/utils";
 
 import styles from "./app.module.css";
+
 import "./global.css";
 interface Props {
   children: React.ReactNode;
@@ -33,6 +35,7 @@ export default observer(function App({ children }: Props) {
   const viewStore = useViewStore();
   useKeyboardShortcuts();
   useServiceWorker();
+  useTrackMemory();
 
   useEffect(() => {
     const htmlElement = document.documentElement;

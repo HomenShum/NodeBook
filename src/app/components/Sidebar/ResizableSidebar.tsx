@@ -1,12 +1,12 @@
 import {
   BellIcon,
   FileSpreadsheet,
+  FileStackIcon,
   Globe,
   HelpCircle,
   History,
   Home,
   Key,
-  ListIcon,
   LogIn,
   LogOut,
   Mail,
@@ -279,33 +279,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <Button
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Go to your stream"
-                onMouseEnter={() => {
-                  graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
-                }}
-                onClick={(e) => {
-                  if (e.shiftKey) {
-                    viewStore.createSidebarTree(graphStore.myStreamNode);
-                  } else if (e.metaKey) {
-                    openNewTab(graphStore.myStreamNode);
-                  } else {
-                    handleNavigation(() => {
-                      setRoot(graphStore.myStreamNode);
-                      viewStore.setViewType(ViewType.Note);
-                    });
-                  }
-                }}
-              >
-                <span>
-                  <Home size={16} strokeWidth={1.5} />
-                </span>
-                <span className={styles.ButtonText}>Your Stream</span>
-              </Button>
-            )}
-            {!user.isAnonymous && (
-              <Button
-                variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                 data-tooltip="Go to your list"
                 onMouseEnter={() => {
                   graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
@@ -324,9 +297,36 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 }}
               >
                 <span>
-                  <ListIcon size={16} strokeWidth={1.5} />
+                  <Home size={16} strokeWidth={1.5} />
                 </span>
-                <span className={styles.ButtonText}>Your List</span>
+                <span className={styles.ButtonText}>Your Root</span>
+              </Button>
+            )}
+            {!user.isAnonymous && (
+              <Button
+                variant="ghost"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                data-tooltip="Go to your stream"
+                onMouseEnter={() => {
+                  graphStore.layerManager.lazyLoadWithIds([graphStore.myStreamNodeId]);
+                }}
+                onClick={(e) => {
+                  if (e.shiftKey) {
+                    viewStore.createSidebarTree(graphStore.myStreamNode);
+                  } else if (e.metaKey) {
+                    openNewTab(graphStore.myStreamNode);
+                  } else {
+                    handleNavigation(() => {
+                      setRoot(graphStore.myStreamNode);
+                      viewStore.setViewType(ViewType.Note);
+                    });
+                  }
+                }}
+              >
+                <span>
+                  <FileStackIcon size={16} strokeWidth={1.5} />
+                </span>
+                <span className={styles.ButtonText}>Your Stream</span>
               </Button>
             )}
             <Button

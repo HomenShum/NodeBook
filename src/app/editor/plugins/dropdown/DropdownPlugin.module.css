@@ -1,7 +1,7 @@
 .Dropdown {
   background: var(--gray-1);
   border: solid 0.5px var(--teal-4);
-  padding: 2px;
+  padding: 0px;
   border-radius: 4px;
   max-width: 50vw;
   z-index: 30;
@@ -21,7 +21,7 @@
 }
 
 .Dropdown ul {
-  padding: 2px;
+  padding: 0;
   list-style: none;
   margin: 0;
   overflow-y: auto;
