@@ -8,8 +8,9 @@ import { Chip } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
+import { MENTION_SYMBOL, MentionTrigger, PLUS_SYMBOL, TILDE_SYMBOL } from "@/lib/utils";
 
-export function useHandleAtKey(tree: Tree, treeNode: TreeNode) {
+export function useHandleSigilsKey(tree: Tree, treeNode: TreeNode) {
   const graphStore = useGraphStore();
 
   /*
@@ -29,14 +30,14 @@ export function useHandleAtKey(tree: Tree, treeNode: TreeNode) {
     return [-1, -1];
   }
   return useCallback(
-    (e: KeyboardEvent) => {
+    (e: KeyboardEvent, sigil: MentionTrigger) => {
       // Convert selected chips to a mention
       const treeSelection = tree.selection;
       if (!treeSelection || treeSelection.type !== "editor") return false;
       const posn = treeSelection.position;
       if (posn === "start" || posn === "end" || posn.anchorOffset === posn.focusOffset) return false;
 
-      // Update the text content to have an "@" at the start of the selection
+      // Update the text content to have the sigil at the start of the selection
       const node = graphStore.getNode(treeNode.object.id);
       if (!node) return false;
       const lesserPosn = Math.min(posn.anchorOffset, posn.focusOffset);
@@ -51,7 +52,7 @@ export function useHandleAtKey(tree: Tree, treeNode: TreeNode) {
       e.preventDefault();
       e.stopPropagation();
 
-      const newValue = chip.value.slice(0, valueIndex) + "@" + chip.value.slice(valueIndex);
+      const newValue = chip.value.slice(0, valueIndex) + sigil + chip.value.slice(valueIndex);
       const newContent: Chip[] = [...node.content];
       newContent[chipIndex] = { type: "text", value: newValue };
       const txs: TxCombined = [];
@@ -71,24 +72,25 @@ export function useHandleAtKey(tree: Tree, treeNode: TreeNode) {
 /**
  * Plugin to split nodes when enter is pressed. Also handles exiting temporary edit mode.
  */
-export const AtKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
+export const SigilsPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
   const [editor] = useLexicalComposerContext();
   const tree = treeNode.tree;
-  const handleAtKey = useHandleAtKey(tree, treeNode);
+  const handleSigilKey = useHandleSigilsKey(tree, treeNode);
 
   useEffect(() => {
     return editor.registerCommand(
       KEY_DOWN_COMMAND,
       action((event) => {
-        if (event.key !== "@") return false;
+        console.log("event.key", event.key);
+        if (event.key !== MENTION_SYMBOL && event.key !== PLUS_SYMBOL && event.key !== TILDE_SYMBOL) return false;
         const selection = $getSelection();
         if (!selection || !selection.getNodes() || !selection.getStartEndPoints() || selection.getNodes().length > 1)
           return false;
-        return handleAtKey(event);
+        return handleSigilKey(event, event.key);
       }),
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, handleAtKey]);
+  }, [editor, handleSigilKey]);
 
   return null;
 };
