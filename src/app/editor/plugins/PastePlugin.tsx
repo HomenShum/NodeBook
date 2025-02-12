@@ -1,6 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, COMMAND_PRIORITY_LOW, KEY_DOWN_COMMAND, PASTE_COMMAND } from "lexical";
 import { useEffect, useRef } from "react";
+import Promise from "lie";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -11,7 +12,7 @@ import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
-import { uuid } from "@/app/util";
+import { getAuthFetch, uuid } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { PasteLinksOption } from "@/db/schema";
 
@@ -51,12 +52,17 @@ export const PastePlugin = () => {
         shiftWasPressed.current = false;
         if (!(object instanceof GraphNode) || !event.clipboardData) return false;
 
+        // Collect all the new node IDs created during pasting
+        // and the ID of the first existing node in-which the paste event occurs
+        const pastedNodeIds = [object.id];
+
         const mewData = event.clipboardData.getData(MEW_CLIPBOARD_MIMETYPE);
         const lines = normalizeDepth(
           mewData
             ? getLinesFromMewData(mewData, shiftKey)
             : getLinesFromPlainText(event.clipboardData.getData("text/plain"), shiftKey),
         );
+
         let txs: TxCombined = [];
         let convertToNote = false;
         const newRootId = uuid();
@@ -147,6 +153,7 @@ export const PastePlugin = () => {
           // Then for the remaining lines, create children positioned after the correct parent
           lines.forEach(({ chips, depth, isChecked }) => {
             const newNodeId = uuid();
+            pastedNodeIds.push(newNodeId);
             const relationId = uuid();
             allNewRelationIds.push(relationId);
 
@@ -231,6 +238,7 @@ export const PastePlugin = () => {
           for (const path of newPaths) {
             tree.setPathExpanded(path, true);
           }
+          unfurlLinks(pastedNodeIds, graphStore);
           return true;
         }
         return false;
@@ -250,6 +258,48 @@ export const PastePlugin = () => {
     settingsStore,
   ]);
   return null;
+};
+
+const unfurlLinks = async (nodeIds: string[], graphStore: GraphStore) => {
+  const titleByNodeIds: Record<string, Promise<Response>> = {};
+  const authFetch = getAuthFetch();
+
+  nodeIds.forEach((id) => {
+    const node = graphStore.getNode(id);
+    if (!node) return;
+    if (node.content[0].type === "link") {
+      titleByNodeIds[node.id] = authFetch("/api/link", {
+        method: "POST",
+        body: JSON.stringify({
+          url: node.content[0].value,
+        }),
+      });
+    }
+  });
+
+  await Promise.all(Object.values(titleByNodeIds));
+
+  const txs: TxCombined = [];
+
+  for (const id of Object.keys(titleByNodeIds)) {
+    const node = graphStore.getNode(id);
+    const response = await titleByNodeIds[id];
+    if (!response.ok || !node) continue;
+    const { title } = (await response.json()) as { title: string };
+    if (!title || title.length < 1) continue;
+
+    txs.push({
+      type: "updateNode",
+      transaction: {
+        nodeId: id,
+        nodeProps: {
+          content: [{ type: "text", value: `${title} — ` }, ...node.content],
+        },
+      },
+    });
+  }
+
+  graphStore.applyCombinedTransaction(txs);
 };
 
 const getRelationTypeLabel = (chips: Chip[]) => {

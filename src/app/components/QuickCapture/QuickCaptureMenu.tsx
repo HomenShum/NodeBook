@@ -1,14 +1,14 @@
-import { AppWindowIcon, ExpandIcon, PanelRightCloseIcon, PanelRightIcon, X } from "lucide-react";
+import { AppWindowIcon, ExpandIcon, PanelRightIcon, X } from "lucide-react";
 
+import BreadcrumbMenu from "@/app/components/Breadcrumbs/BreadcrumbMenu";
 import s1 from "@/app/components/Breadcrumbs/Breadcrumbs.module.css";
 import s from "@/app/components/QuickCapture/QuickCapture.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { useUser } from "@/app/contexts/UserContext";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import BreadcrumbMenu from "@/app/components/Breadcrumbs/BreadcrumbMenu";
-import { useUser } from "@/app/contexts/UserContext";
 
 function QuickCaptureMenu() {
   const viewStore = useViewStore();
@@ -17,10 +17,15 @@ function QuickCaptureMenu() {
 
   const handleMainViewExpand = () => {
     if (!viewStore.quickCaptureOpen) return;
+    //Copy QC's selection because it's lost when closing QC.
+    const selection = viewStore.quickCaptureTree.selection;
     const root = viewStore.quickCaptureTree.root.object;
     viewStore.setViewType(ViewType.Note);
     viewStore.closeQuickCapture();
     setMainRoot(root);
+    if (selection?.type === "editor") {
+      viewStore.mainView.setFocusedNode(selection.treeNodeId, selection.position, selection.editMode, true);
+    }
   };
 
   const handleSideViewExpand = () => {

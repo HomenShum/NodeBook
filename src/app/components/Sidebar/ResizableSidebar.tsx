@@ -1,12 +1,12 @@
 import {
   BellIcon,
   FileSpreadsheet,
+  FileStackIcon,
   Globe,
   HelpCircle,
   History,
   Home,
   Key,
-  ListIcon,
   LogIn,
   LogOut,
   Mail,
@@ -22,13 +22,16 @@ import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
+import appStyles from "@/app/app.module.css";
 import { useAuth } from "@/app/auth/useAuth";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import { HelpModal } from "@/app/components/HelpModal/HelpModal";
 import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
+import { LocalHashtagsTree } from "@/app/components/Sidebar/LocalHashtagsTree";
 import { MyFavoritesList } from "@/app/components/Sidebar/MyFavoritesTree";
 import { MyHashtagsTree } from "@/app/components/Sidebar/MyHashtagsTree";
+import { MyShortlinksTree } from "@/app/components/Sidebar/MyShortlinksTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
@@ -48,10 +51,8 @@ import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { MyShortlinksTree } from "@/app/components/Sidebar/MyShortlinksTree";
 
 import styles from "./ResizableSidebar.module.css";
-
 interface Props {
   isOpen: boolean;
   minWidth?: number;
@@ -186,7 +187,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 variant="ghost"
                 size="icon"
                 onClick={toggleNotificationsPane}
-                className={cn(styles.ShowTooltip, styles.BottomAlign, unreadCount ? styles.UnreadNotification : "")}
+                className={cn(styles.ShowTooltip, styles.BottomAlign, unreadCount ? appStyles.UnreadNotification : "")}
                 data-tooltip="Notifications"
               >
                 <BellIcon size={16} strokeWidth={1.5} />
@@ -278,33 +279,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <Button
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Go to your stream"
-                onMouseEnter={() => {
-                  graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
-                }}
-                onClick={(e) => {
-                  if (e.shiftKey) {
-                    viewStore.createSidebarTree(graphStore.myStreamNode);
-                  } else if (e.metaKey) {
-                    openNewTab(graphStore.myStreamNode);
-                  } else {
-                    handleNavigation(() => {
-                      setRoot(graphStore.myStreamNode);
-                      viewStore.setViewType(ViewType.Note);
-                    });
-                  }
-                }}
-              >
-                <span>
-                  <Home size={16} strokeWidth={1.5} />
-                </span>
-                <span className={styles.ButtonText}>Your Stream</span>
-              </Button>
-            )}
-            {!user.isAnonymous && (
-              <Button
-                variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
                 data-tooltip="Go to your list"
                 onMouseEnter={() => {
                   graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
@@ -323,9 +297,36 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 }}
               >
                 <span>
-                  <ListIcon size={16} strokeWidth={1.5} />
+                  <Home size={16} strokeWidth={1.5} />
                 </span>
-                <span className={styles.ButtonText}>Your List</span>
+                <span className={styles.ButtonText}>Your Root</span>
+              </Button>
+            )}
+            {!user.isAnonymous && (
+              <Button
+                variant="ghost"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                data-tooltip="Go to your stream"
+                onMouseEnter={() => {
+                  graphStore.layerManager.lazyLoadWithIds([graphStore.myStreamNodeId]);
+                }}
+                onClick={(e) => {
+                  if (e.shiftKey) {
+                    viewStore.createSidebarTree(graphStore.myStreamNode);
+                  } else if (e.metaKey) {
+                    openNewTab(graphStore.myStreamNode);
+                  } else {
+                    handleNavigation(() => {
+                      setRoot(graphStore.myStreamNode);
+                      viewStore.setViewType(ViewType.Note);
+                    });
+                  }
+                }}
+              >
+                <span>
+                  <FileStackIcon size={16} strokeWidth={1.5} />
+                </span>
+                <span className={styles.ButtonText}>Your Stream</span>
               </Button>
             )}
             <Button
@@ -412,9 +413,12 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <span className={styles.ButtonText}>Updates Feed</span>
               </Button>
             )}
+          </div>
+          <div className={styles.ScrollableArea}>
             {!user.isAnonymous && <MyFavoritesList />}
             {!user.isAnonymous && <MyHashtagsTree />}
             {!user.isAnonymous && <MyShortlinksTree />}
+            {!user.isAnonymous && <LocalHashtagsTree />}
           </div>
           <div className={styles.BottomNav}>
             <Button

@@ -140,10 +140,20 @@ export class LayerManager {
     return this.fetchAndLoad(url);
   }
 
-  private async fetchAndLoad(url: string, init: RequestInit = {}, withReset: boolean = false) {
+  /**
+   * Fetches and loads graph store data from the server IF persistence is enabled.
+   *
+   * @param url - The endpoint URL to fetch data from.
+   * @param init - Fetch request options.
+   * @param withReset - Whether to reset the graph store before loading the data.
+   * @returns A promise that resolves to an array of node IDs successfully loaded i the graph store, or an empty array if fetching or parsing fails.
+   */
+  private async fetchAndLoad(url: string, init: RequestInit = {}, withReset: boolean = false): Promise<string[]> {
     if (!env.isPersistenceEnabled || env.persistTo !== "server") return [];
     const authFetch = getAuthFetch();
-    const syncData = await authFetch(url, init).then((res) => res.json());
+    const response = await authFetch(url, init);
+    if (!response.ok) return [];
+    const syncData = await response.json();
     const parsed = SerializedGraphStoreSchema.safeParse(syncData.data);
     if (parsed.success) {
       withReset ? this.graphStore.resetAndLoad(parsed.data) : this.graphStore.load(parsed.data);

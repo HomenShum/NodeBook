@@ -11,7 +11,7 @@ import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { NotificationManager, uuid } from "@/app/util";
-import { CONNECTION_SYMBOL, CONNECTION_SYMBOL_WITH_SPACE, MenuTextMatch, cn, isMac } from "@/lib/utils";
+import { CONNECTION_SYMBOL, CONNECTION_SYMBOL_WITH_SPACE, MENTION_SYMBOL, MenuTextMatch, cn, isMac } from "@/lib/utils";
 
 import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
 import { Dropdown } from "./types";
@@ -79,6 +79,10 @@ export function MentionDropdown({
               : treeNode.parent instanceof RootTreeNode
               ? treeNode.relationWithParent ?? -1
               : -1,
+            relationProps:
+              dropdown.mentionTrigger !== MENTION_SYMBOL
+                ? graphStore.relationTypesById.relatedTo
+                : graphStore.relationTypesById.child,
           });
         } else {
           if (opt.value.object.isUserNode) {
@@ -105,6 +109,10 @@ export function MentionDropdown({
           await graphStore.addRelation({
             fromId: graphNodeId,
             toId: treeNode.object.id,
+            relationTypeId:
+              dropdown.mentionTrigger !== MENTION_SYMBOL
+                ? graphStore.relationTypesById.relatedTo.id
+                : graphStore.relationTypesById.child.id,
           });
         } else {
           //NOOP - The mention node isn't rendered without this.

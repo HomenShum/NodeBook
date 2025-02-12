@@ -192,7 +192,10 @@ export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphN
       if (!$isLinkNode(lexicalNode)) return false;
       return chip.url === lexicalNode.getURL() && chip.value === lexicalNode.getTextContent();
     } else if (lexicalNode instanceof TextNode && chip.type === "text") {
-      return chip.value === lexicalNode.getTextContent() && (!chip.styles || chip.styles === lexicalNode.getFormat());
+      return (
+        chip.value === lexicalNode.getTextContent() &&
+        (chip.styles === undefined || chip.styles === lexicalNode.getFormat())
+      );
     } else {
       return chip.value === lexicalNode.getTextContent();
     }

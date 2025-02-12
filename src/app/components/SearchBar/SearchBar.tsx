@@ -55,6 +55,19 @@ export const SearchBar = observer(function SearchBar() {
     viewStore.recreateSearchTrees();
   }, [graphStore.nodesById.size, viewStore]);
 
+  // Listen for search input updates
+  useEffect(() => {
+    const handleSearchUpdate = (e: CustomEvent<string>) => {
+      setVisibleInput(e.detail);
+      setIsExpanded(true);
+    };
+
+    window.addEventListener("update-search-input", handleSearchUpdate as EventListener);
+    return () => {
+      window.removeEventListener("update-search-input", handleSearchUpdate as EventListener);
+    };
+  }, []);
+
   const handleIconClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     inputRef.current?.focus();

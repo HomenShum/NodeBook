@@ -54,7 +54,7 @@
   font-size: 14px;
 }
 
-.NotificationHeader > div:nth-child(2) > svg {
+.NotificationHeader > div:nth-child(2) > button {
   box-sizing: content-box;
   padding: 4px;
   border-radius: 6px;
@@ -67,11 +67,7 @@
   height: 16px;
 }
 
-.NotificationHeader > div:nth-child(2) > svg:nth-child(1) {
-  opacity: 0.5;
-}
-
-.NotificationHeader > div:nth-child(2) > svg:hover {
+.NotificationHeader > div:nth-child(2) > button:hover {
   background-color: var(--gray-4);
   color: var(--gray-12);
 }

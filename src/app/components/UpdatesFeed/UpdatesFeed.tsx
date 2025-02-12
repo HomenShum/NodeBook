@@ -7,30 +7,85 @@ import { VariableSizeList as List } from "react-window";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
+import { SerializedNode } from "@/app/persistence/SerializedData";
 
 import s from "./UpdatesFeed.module.css";
 
-const getUpdateDescription = (update: GraphUpdate): string => {
+interface NodeIdWithTooltipProps {
+  nodeId: string;
+  nodeContent?: SerializedNode;
+}
+
+const NodeIdWithTooltip = ({ nodeId, nodeContent }: NodeIdWithTooltipProps) => {
+  const graphStore = useGraphStore();
+  const node = graphStore.nodesById.get(nodeId);
+  const content =
+    node?.content.map((c) => c.value).join("") ||
+    nodeContent?.content.map((c) => c.value).join("") ||
+    "Node no longer exists";
+
+  return (
+    <span className={s.NodeId} title={content}>
+      {nodeId}
+    </span>
+  );
+};
+
+const getUpdateDescription = (update: GraphUpdate): JSX.Element => {
   switch (update.operation) {
     case "addNode":
-      return `Added node: ${update.node.id} with content "${update.node.content.map((c) => c.value).join("")}"`;
+      return (
+        <>
+          Added node: <NodeIdWithTooltip nodeId={update.node.id} nodeContent={update.node} /> with content &ldquo;
+          {update.node.content.map((c) => c.value).join("")}&rdquo;
+        </>
+      );
     case "updateNode":
-      return `Updated node: ${update.oldProps.id} with content "${update.newProps.content
-        .map((c) => c.value)
-        .join("")}"`;
+      return (
+        <>
+          Updated node: <NodeIdWithTooltip nodeId={update.oldProps.id} nodeContent={update.newProps} /> with content
+          &ldquo;
+          {update.newProps.content.map((c) => c.value).join("")}&rdquo;
+        </>
+      );
     case "deleteNode":
-      return `Deleted node: ${update.node.id} with content "${update.node.content.map((c) => c.value).join("")}"`;
+      return (
+        <>
+          Deleted node: <NodeIdWithTooltip nodeId={update.node.id} nodeContent={update.node} /> with content &ldquo;
+          {update.node.content.map((c) => c.value).join("")}&rdquo;
+        </>
+      );
     case "addRelation":
-      return `Added relation: ${update.relation.id} between ${update.relation.fromId} and ${update.relation.toId}`;
+      return (
+        <>
+          Added relation: {update.relation.id} between <NodeIdWithTooltip nodeId={update.relation.fromId} /> and{" "}
+          <NodeIdWithTooltip nodeId={update.relation.toId} />
+        </>
+      );
     case "updateRelation":
-      return `Updated relation: ${update.oldProps.id} between ${update.oldProps.fromId} and ${update.oldProps.toId}`;
+      return (
+        <>
+          Updated relation: {update.oldProps.id} between <NodeIdWithTooltip nodeId={update.oldProps.fromId} /> and{" "}
+          <NodeIdWithTooltip nodeId={update.oldProps.toId} />
+        </>
+      );
     case "deleteRelation":
-      return `Deleted relation: ${update.deleted.relation.id} between ${update.deleted.relation.fromId} and ${update.deleted.relation.toId} `;
+      return (
+        <>
+          Deleted relation: {update.deleted.relation.id} between{" "}
+          <NodeIdWithTooltip nodeId={update.deleted.relation.fromId} /> and{" "}
+          <NodeIdWithTooltip nodeId={update.deleted.relation.toId} />
+        </>
+      );
     case "updateRelationList":
-      return `Reordered relations in ${update.nodeId}`;
+      return (
+        <>
+          Reordered relations in <NodeIdWithTooltip nodeId={update.nodeId} />
+        </>
+      );
     default:
       const _exhaustiveCheck: never = update;
-      return `Unknown update`;
+      return <>Unknown update</>;
   }
 };
 

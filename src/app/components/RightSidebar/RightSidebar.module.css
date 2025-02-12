@@ -5,11 +5,9 @@
   justify-content: start;
   min-height: 99vh;
   height: 99vh;
+  width: 100%;
   background: none;
   margin-top: 1px;
-  max-width: 50vw;
-  min-width: 50vw;
-  width: 50vw;
   overflow-y: auto;
 }
 
@@ -23,8 +21,41 @@
   border-radius: 0;
 }
 
+.RightSidebarContainer {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+}
+
 .RightSidebar > [class*="ContentContainer"] > .HeadingContainer {
   padding: 18px 52px 4px 20px;
+}
+
+.Resizer {
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: calc(100vh - 16px);
+  cursor: col-resize;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.ResizerHandle {
+  width: 4px;
+  height: 100%;
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+.Resizer:hover .ResizerHandle {
+  background-color: var(--gray-a3);
+}
+
+.Resizer:active .ResizerHandle {
+  background-color: var(--teal-a4);
 }
 
 .CloseIconContainer {

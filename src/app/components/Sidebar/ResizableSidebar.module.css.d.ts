@@ -17,6 +17,7 @@ declare const styles: {
   readonly "ResizerHandle": string;
   readonly "Resizing": string;
   readonly "RightAlign": string;
+  readonly "ScrollableArea": string;
   readonly "Selected": string;
   readonly "ShowTooltip": string;
   readonly "Sidebar": string;
@@ -24,7 +25,6 @@ declare const styles: {
   readonly "SidebarSectionHeader": string;
   readonly "TopAlign": string;
   readonly "TopContent": string;
-  readonly "UnreadNotification": string;
   readonly "UserInfo": string;
 };
 export = styles;

@@ -25,25 +25,6 @@
   }
 }
 
-.UnreadNotification {
-  position: relative;
-}
-
-.UnreadNotification span {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: red;
-  border-radius: 100%;
-  height: 10px;
-  width: 10px;
-  color: #fff;
-  font-size: 10px;
-  line-height: 10px;
-  padding: 1px;
-  box-sizing: content-box;
-}
-
 .Backdrop {
   display: none;
   position: fixed;
@@ -67,6 +48,36 @@
   height: 100%;
   flex-direction: column;
   flex-grow: 1;
+  overflow: hidden; /* Prevent content from spilling out */
+}
+
+.ScrollableArea {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 0 -12px; /* Compensate for parent padding */
+  padding: 0 12px; /* Add padding back inside scrollable area */
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: var(--gray-7) transparent; /* For Firefox */
+}
+
+/* Webkit scrollbar styling */
+.ScrollableArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ScrollableArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ScrollableArea::-webkit-scrollbar-thumb {
+  background-color: var(--gray-7);
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+.ScrollableArea::-webkit-scrollbar-thumb:hover {
+  background-color: var(--gray-8);
 }
 
 .SidebarContent.Resizing {

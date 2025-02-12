@@ -20,6 +20,8 @@ export const isDedentSelectionHotkey = isHotkey("shift+tab");
 export const isEscapeSelectionHotkey = isHotkey("esc");
 export const isToggleTodoHotkey = isHotkey("[");
 export const isLegacyToggleTodoHotkey = isHotkey("mod+shift+y");
+export const isToggleBoldHotkey = isHotkey("mod+b");
+export const isToggleItalicHotkey = isHotkey("mod+i");
 export const isZoomInHotkey = isHotkey("mod+.");
 export const isZoomOutHotkey = isHotkey("mod+,");
 export const isCopyHotkey = isHotkey("mod+c");
@@ -71,6 +73,8 @@ export const treeHotkeyMapping: {
   { predicate: isCollapseAtSelectionHotKey, action: (tree: Tree) => tree.collapseAtSelection() },
   { predicate: isToggleTodoHotkey, action: (tree: Tree) => tree.toggleNodeSelectionTodo() },
   { predicate: isLegacyToggleTodoHotkey, action: (tree: Tree) => tree.toggleNodeSelectionTodo() },
+  { predicate: isToggleBoldHotkey, action: (tree: Tree) => tree.toggleNodeSelectionBold() },
+  { predicate: isToggleItalicHotkey, action: (tree: Tree) => tree.toggleNodeSelectionItalic() },
 ];
 
 export const handleTreeHotkeys = (event: KeyboardEvent, tree: Tree): boolean => {

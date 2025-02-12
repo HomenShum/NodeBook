@@ -1,6 +1,6 @@
 import { Globe, Link2, ListFilter, ListIcon, Map, MapPin, NetworkIcon, Sliders, WorkflowIcon, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { ChangeEvent, useCallback, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
@@ -78,12 +78,15 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     setSlug(newValue);
   };
 
+  useEffect(() => {
+    setSlug(savedSlug);
+  }, [savedSlug]);
+
   const saveSlug = async () => {
     if (savedSlug === slug) return;
 
     if (slug.length === 0) {
       await deleteSlugByNodeId(tree.rootObjectId);
-      setSlug("");
       return;
     }
 
@@ -92,7 +95,6 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     if (ownerNodeId) {
       const shouldDelete = confirm("A node is already using this slug. Assign the slug to this node?");
       if (!shouldDelete) {
-        setSlug(savedSlug);
         return;
       }
       await deleteSlugByNodeId(ownerNodeId);
@@ -219,8 +221,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 {viewStore.graphMode
                   ? "Graph View"
                   : viewStore.viewType === ViewType.Outline
-                  ? "List View"
-                  : "Note View"}
+                    ? "List View"
+                    : viewStore.viewType === ViewType.Note
+                      ? "Note View"
+                      : "Card View"}
               </span>
             </Button>
           </DropdownMenuTrigger>
@@ -232,6 +236,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             <DropdownMenuItem onSelect={() => setViewType(ViewType.Note)}>
               <NotesIcon />
               Note View
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewType(ViewType.Card)}>
+              <NotesIcon />
+              Card View
             </DropdownMenuItem>
             {settingsStore.showGraphViewButton && (
               <DropdownMenuItem onSelect={() => setViewType(ViewType.Graph)}>

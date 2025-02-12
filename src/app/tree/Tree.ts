@@ -387,8 +387,13 @@ export class Tree {
   /**
    * Sets the focused node in the editor.
    */
-  setFocusedNode(treeNodeId: string | null, position: TreeNodeContentSelectionPosition = "end", editMode?: boolean) {
-    this.selection = treeNodeId ? { type: "editor", treeNodeId, position, editMode } : null;
+  setFocusedNode(
+    treeNodeId: string | null,
+    position: TreeNodeContentSelectionPosition = "end",
+    editMode?: boolean,
+    scrollToCenter?: boolean,
+  ) {
+    this.selection = treeNodeId ? { type: "editor", treeNodeId, position, editMode, scrollToCenter } : null;
   }
 
   /** Returns true if the given node's editor is focused. */
@@ -506,6 +511,60 @@ export class Tree {
     this.graphStore.applyCombinedTransaction(txs);
   }
 
+  toggleNodeSelectionStyles(styles: number) {
+    // Lexical styles are represented as a binary number, each bit represents a style
+    // 0001 = bold
+    // 0010 = italic
+    // Toggling the styles is done by XORing the current styles with the styles to toggle
+    // ex: if the current styles are 0001 and we apply styles 1 to it, the result is 0000 and the bold style is toggled off
+    const selection = this.selectionWithNodes;
+    if (!selection || selection.type !== "node") return;
+    const txs = selection.nodes.map((node) => {
+      let firstStylesOfNode: number = 0;
+
+      if (!(node.object instanceof GraphNode)) {
+        return null;
+      }
+
+      // At each node we take the first chip's style and apply it to the entire node
+      for (const chip of node.object.content) {
+        if (chip.type === "text") {
+          firstStylesOfNode = chip.styles === undefined ? 0 : chip.styles;
+          break;
+        }
+      }
+
+      const newContent: Chip[] = node.object.content.map((chip) => {
+        if (chip.type === "text") {
+          return { ...chip, styles: firstStylesOfNode ^ styles };
+        }
+        return chip;
+      });
+
+      return {
+        type: "updateNode" as const,
+        transaction: {
+          nodeId: node.object.id,
+          nodeProps: {
+            ...node.object,
+            content: newContent,
+          },
+        },
+      };
+    });
+    this.graphStore.applyCombinedTransaction(txs.filter((tx) => tx !== null));
+  }
+
+  toggleNodeSelectionBold() {
+    // bold format number is 1 (binary 01)
+    this.toggleNodeSelectionStyles(1);
+  }
+
+  toggleNodeSelectionItalic() {
+    // italic format number is 2 (binary 10)
+    this.toggleNodeSelectionStyles(2);
+  }
+
   toggleEditorSelectionTodo() {
     if (!this.selection) return null;
 
@@ -561,11 +620,6 @@ export class Tree {
     if (shouldExpand) {
       // If the node has more than 50 children, warn the user.
       const node = this.getNodeOrThrow(path);
-      const numChildren = node.childCount;
-      if (numChildren > 100) {
-        const expand = confirm(`Are you sure you want to expand this node? It has ${numChildren} children.`);
-        if (!expand) return;
-      }
       const layerIds: string[] = [];
       node.childrenGroups.forEach((group) => group.nodes.forEach((n) => layerIds.push(n.object.id)));
       this.graphStore.layerManager.loadWithIds([node.object.id, node.relationWithParent.id, ...layerIds]);
@@ -851,16 +905,16 @@ export class Tree {
 
       selection.nodes.forEach((treeNode) => {
         const relationId = treeNode.relationWithParent.id;
-        if (relationId === treeNode.object.canonicalRelation?.id) {
-          nodesToRemove.push({
-            type: "removeNode",
-            transaction: {
-              nodeId: treeNode.object.id,
-            },
-          });
-        } else {
-          relationsToRemove.push({ type: "removeRelation", transaction: { relationId } });
-        }
+        // if (relationId === treeNode.object.canonicalRelation?.id) {
+        //   nodesToRemove.push({
+        //     type: "removeNode",
+        //     transaction: {
+        //       nodeId: treeNode.object.id,
+        //     },
+        //   });
+        // } else {
+        relationsToRemove.push({ type: "removeRelation", transaction: { relationId } });
+        //}
       });
 
       this.graphStore.applyCombinedTransaction([...relationsToRemove, ...nodesToRemove]);

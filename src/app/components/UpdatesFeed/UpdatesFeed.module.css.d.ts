@@ -3,6 +3,7 @@ declare const styles: {
   readonly "GlobalActions": string;
   readonly "GlobalButton": string;
   readonly "HeadingContainer": string;
+  readonly "NodeId": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
   readonly "UndoButton": string;

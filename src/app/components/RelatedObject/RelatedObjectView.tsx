@@ -2,6 +2,7 @@ import { CornerDownRight, Link, LoaderCircle, Maximize2, Play } from "lucide-rea
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useState } from "react";
 
+import { Card } from "@/app/components/Card";
 import { Checkbox } from "@/app/components/Checkbox/Checkbox";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { NoteContentPrefix } from "@/app/components/RelatedObject/NoteContentPrefix";
@@ -13,12 +14,15 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { env } from "@/app/envFrontend";
+import { defaultRelationTypes } from "@/app/graph/constants";
+import { GraphRelationType } from "@/app/graph/types";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { isNoteContent, isUnlabelledChild, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 // import all constants
+import { RelationTypePrefix } from "@/app/components/RelatedObject/RelationTypePrefix";
 import {
   GLOBAL_RELATION_TYPES_NODE_ID,
   GLOBAL_ROOT_ID,
@@ -57,6 +61,16 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
     isNoteContentRoot ||
     (viewType === "note" && isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode) ||
     (viewType === "note" && treeNode.parent instanceof RootTreeNode);
+
+  if (viewType === "card") {
+    return (
+      <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
+        <Main treeNode={treeNode}>
+          <CardWrapper />
+        </Main>
+      </div>
+    );
+  }
 
   return (
     <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
@@ -191,6 +205,7 @@ const Content = observer(function Content() {
                 }
               }}
             >
+              <RelationTypePrefix treeNode={treeNode} openRelComboBox={openRelComboBox} />
               {treeViewType === "note" &&
                 treeNode.object.noteContentRelationsList.size === 0 && // Notecontent is empty
                 treeNode.parent instanceof RootTreeNode &&
@@ -395,5 +410,215 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
         </div>
       </div>
     </>
+  );
+});
+
+const CardWrapper = observer(() => {
+  const { treeNode } = useTreeNode();
+  const graphStore = useGraphStore();
+  const graphObject = treeNode.object;
+  const setRoot = useSetMainRoot();
+
+  const getAuthorName = (authorId: string) => {
+    if (graphObject.authorId === userId) {
+      return "You";
+    }
+
+    return graphStore.usersById.get(authorId)?.username || authorId;
+  };
+
+  const countChildrenOfType = (relationType: GraphRelationType) => {
+    return graphObject.allRelationsList
+      .values()
+      .filter(({ item }) => item.relationType.id === relationType.id && item.from.id === graphObject.id).length;
+  };
+
+  const userId = graphStore.user?.id;
+  const userHomeNodeId = graphStore.homeRoot.id;
+
+  const nodeRelations = graphObject.allRelationsList
+    .values()
+    .filter(({ item }) => {
+      const relationTypeId = item.relationType.id;
+      return (
+        item.from.id === graphObject.id &&
+        relationTypeId !== defaultRelationTypes.__comment__.id &&
+        relationTypeId !== defaultRelationTypes.__liked_by__.id &&
+        relationTypeId !== defaultRelationTypes.__status__.id
+      );
+    })
+    .map(({ item }) => ({
+      id: item.to.id,
+      text: item.to.text,
+    }));
+
+  const statusRelation = graphObject.allRelationsList
+    .values()
+    .find(({ item }) => item.relationType.id === defaultRelationTypes.__status__.id);
+
+  const { cardStatusesNode } = graphStore;
+
+  const configuredStatusTypes = cardStatusesNode.children.map((item) => item.text);
+
+  const currentStatusIndex = statusRelation
+    ? configuredStatusTypes.findIndex((type) => type === statusRelation.item.to.text)
+    : 0;
+
+  const cycleStatus = async () => {
+    const newIndex = (currentStatusIndex + 1) % configuredStatusTypes.length;
+
+    const newStatusNode = cardStatusesNode.children.find(
+      (relation) => relation.text === configuredStatusTypes[newIndex],
+    );
+
+    if (!newStatusNode) {
+      console.error("Could not find status node for text:", configuredStatusTypes[newIndex]);
+      return;
+    }
+
+    if (statusRelation) {
+      graphStore.replaceRelationLink({
+        relationId: statusRelation.item.id,
+        direction: "to",
+        replaceWith: { type: "existing-object", id: newStatusNode.id },
+      });
+    } else {
+      graphStore.addRelation({
+        fromId: graphObject.id,
+        toId: newStatusNode.id,
+        relationTypeId: defaultRelationTypes.__status__.id,
+      });
+    }
+  };
+
+  const likeCount = countChildrenOfType(defaultRelationTypes.__liked_by__);
+
+  const userLikeRelation = graphObject.allRelationsList
+    .values()
+    .find(
+      ({ item }) =>
+        item.relationType.id === defaultRelationTypes.__liked_by__.id &&
+        item.from.id === graphObject.id &&
+        item.to.id === userHomeNodeId,
+    );
+
+  const toggleLike = () => {
+    if (userLikeRelation) {
+      graphStore.removeRelation({ relationId: userLikeRelation.item.id });
+    } else {
+      graphStore.addRelation({
+        fromId: graphObject.id,
+        toId: userHomeNodeId,
+        relationTypeId: defaultRelationTypes.__liked_by__.id,
+      });
+    }
+  };
+
+  const handleCommentSubmit = async (text: string) => {
+    const commentNode = await graphStore.addNode({
+      nodeProps: {
+        content: [{ type: "text", value: text }],
+      },
+    });
+
+    graphStore.addRelation({
+      fromId: graphObject.id,
+      toId: commentNode.id,
+      relationTypeId: defaultRelationTypes.__comment__.id,
+    });
+  };
+
+  const handleTextChange = async (text: string) => {
+    graphStore.updateNode({
+      nodeId: graphObject.id,
+      nodeProps: {
+        content: [{ type: "text", value: text }],
+      },
+    });
+  };
+
+  const handleAddRelation = async (text: string) => {
+    const newNode = await graphStore.addNode({
+      nodeProps: {
+        content: [{ type: "text", value: text }],
+      },
+    });
+
+    graphStore.addRelation({
+      fromId: graphObject.id,
+      toId: newNode.id,
+      relationTypeId: defaultRelationTypes.empty.id,
+    });
+  };
+
+  const commentsList = graphObject.allRelationsList
+    .values()
+    .filter(
+      ({ item }) => item.relationType.id === defaultRelationTypes.__comment__.id && item.from.id === graphObject.id,
+    )
+    .map(({ item }) => {
+      const commentLikeRelations = item.to.allRelationsList
+        .values()
+        .filter(
+          ({ item: likeItem }) =>
+            likeItem.relationType.id === defaultRelationTypes.__liked_by__.id && likeItem.from.id === item.to.id,
+        );
+
+      const userLikeRelation = commentLikeRelations.find(({ item: likeItem }) => likeItem.to.id === userHomeNodeId);
+
+      const toggleCommentLike = () => {
+        if (userLikeRelation) {
+          graphStore.removeRelation({ relationId: userLikeRelation.item.id });
+        } else {
+          graphStore.addRelation({
+            fromId: item.to.id,
+            toId: userHomeNodeId,
+            relationTypeId: defaultRelationTypes.__liked_by__.id,
+          });
+        }
+      };
+
+      return {
+        id: item.to.id,
+        text: item.to.text,
+        author: {
+          id: item.to.authorId,
+          name: getAuthorName(item.to.authorId),
+        },
+        time: item.createdAt,
+        likes: commentLikeRelations.length,
+        isLiked: userLikeRelation != null,
+        onLikeClicked: toggleCommentLike,
+      };
+    });
+
+  const handleRelationClick = (id: string) => {
+    const node = graphStore.nodesById.get(id);
+    if (node) {
+      setRoot(node);
+    }
+  };
+
+  return (
+    <Card
+      author={{
+        id: graphObject.authorId,
+        name: getAuthorName(graphObject.authorId),
+      }}
+      status={configuredStatusTypes[currentStatusIndex]}
+      onStatusClicked={cycleStatus}
+      relations={nodeRelations}
+      likes={likeCount}
+      isLiked={userLikeRelation != null}
+      onLikeClicked={toggleLike}
+      onCommentSubmit={handleCommentSubmit}
+      onTextChange={handleTextChange}
+      onAddRelation={handleAddRelation}
+      onRelationClick={handleRelationClick}
+      commentsList={commentsList}
+      initialIsEditing={graphObject.text === ""}
+    >
+      {graphObject.text}
+    </Card>
   );
 });

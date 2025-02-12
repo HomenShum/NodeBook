@@ -31,13 +31,14 @@ export const TodoPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
         }
 
         //If object is already a to-do, do not perform any operation.
-        if (!(event.key === " ") || treeNode.object.objectType !== "node" || treeNode.isTodoItem) {
+        if (!(event.key === "]") || treeNode.object.objectType !== "node" || treeNode.isTodoItem) {
           return false;
         }
-        const shouldCreateEmptyTodo = editor.getRootElement()?.textContent?.startsWith("[]") || false;
-        const shouldCreateCheckedTodo = editor.getRootElement()?.textContent?.toLowerCase()?.startsWith("[x]") || false;
+        const shouldCreateCheckedTodo = editor.getRootElement()?.textContent?.toLowerCase()?.startsWith("[x") || false;
+        const shouldCreateEmptyTodo =
+          (!shouldCreateCheckedTodo && editor.getRootElement()?.textContent?.startsWith("[")) || false;
         if (!shouldCreateEmptyTodo && !shouldCreateCheckedTodo) return false;
-        const prefixSize = shouldCreateEmptyTodo ? 2 : 3;
+        const prefixSize = shouldCreateEmptyTodo ? 1 : 2;
         const points = selection.getStartEndPoints();
         if (!points || points[0].offset !== prefixSize) return false;
         event.preventDefault();

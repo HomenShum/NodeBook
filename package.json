@@ -38,6 +38,7 @@
     "@radix-ui/react-toast": "^1.2.2",
     "@radix-ui/react-tooltip": "^1.1.2",
     "@sentry/nextjs": "^8",
+    "@tanstack/react-virtual": "^3.13.0",
     "@tweenjs/tween.js": "^25.0.0",
     "@vercel/postgres": "^0.8.0",
     "class-variance-authority": "^0.7.0",
@@ -64,6 +65,7 @@
     "react-dom": "^18",
     "react-virtualized-auto-sizer": "^1.0.24",
     "react-window": "^1.8.10",
+    "unfurl.js": "^6.4.0",
     "uuid": "^9.0.1",
     "wink-pos-tagger": "^2.2.2",
     "zod": "^3.22.4"

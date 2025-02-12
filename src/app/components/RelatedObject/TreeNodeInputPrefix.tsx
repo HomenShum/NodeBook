@@ -115,6 +115,15 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
             tree.setFocusedNode(treeNode.id, "end");
             break;
           case "ArrowLeft":
+            // If the node has a custom relation type, focus on the relation type prefix
+            const relationType = treeNode.relationWithParent.relationType;
+            if (!(relationType.id === "child" && treeNode.relationWithParent.to === treeNode.object)) {
+              const prefixInput = document.querySelector(`[data-node-prefix="${treeNode.object.id}"]`);
+              if (prefixInput instanceof HTMLElement) {
+                prefixInput.focus();
+                return true;
+              }
+            }
           case "ArrowUp":
             e.preventDefault();
             e.stopPropagation();

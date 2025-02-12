@@ -56,7 +56,7 @@
   width: 100%;
   text-align: left;
   padding: 8px 8px;
-  justify-content: left;
+  justify-content: space-between;
   align-items: center;
   gap: 8px;
   color: var(--gray-12);
@@ -67,6 +67,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  position: relative;
 }
 
 .Button:hover {
@@ -110,4 +111,16 @@
 .HeaderButton:hover {
   color: var(--gray-11);
   background-color: var(--gray-4);
+}
+
+.SearchIcon {
+  opacity: 0;
+  color: var(--gray-8);
+  transition: opacity 0.2s ease;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.Button:hover .SearchIcon {
+  opacity: 1;
 }

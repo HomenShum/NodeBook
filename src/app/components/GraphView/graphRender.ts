@@ -344,11 +344,11 @@ export async function renderGraph(graphContainerId: string, tree: Tree, navigate
       interactive: false,
       eventMode: "none",
       text: getDisplayText(n.object.text),
-      alpha: 1, // Changed from 0 to 1
-      anchor: { x: 0.5, y: 0.5 }, // Center text
+      alpha: 1,
+      anchor: { x: 0.5, y: 0.5 },
       style: {
         fontSize: FONT_SIZE,
-        fill: computedStyleMap.getPropertyValue("--gray-12"),
+        fill: computedStyleMap.getPropertyValue("--gray-1"),
       },
       resolution: window.devicePixelRatio * 4,
     });
@@ -360,9 +360,8 @@ export async function renderGraph(graphContainerId: string, tree: Tree, navigate
       hitArea: new Rectangle(-bounds.width / 2, -bounds.height / 2, bounds.width, bounds.height),
       cursor: "pointer",
     })
-      .rect(-bounds.width / 2, -bounds.height / 2, bounds.width, bounds.height)
+      .roundRect(-bounds.width / 2, -bounds.height / 2, bounds.width, bounds.height, 4)
       .fill({ color: color(n) })
-      // .stroke({ width: 1, color: color(n) });
       .stroke({ width: 0, color: color(n) })
       .on("pointerover", (e) => {
         updateHoverInfo(n.object.id);

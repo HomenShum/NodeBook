@@ -18,6 +18,7 @@ export class ViewStore {
   public quickCaptureSearchQuery: string = "";
   public flattenSublists: boolean = false;
   public graphMode: boolean = false;
+  public cardMode: boolean = false;
 
   public viewType = ViewType.Outline;
   public quickCaptureViewType = ViewType.Note;
@@ -44,6 +45,7 @@ export class ViewStore {
   public quickCaptureOpen = false;
   public isDarkMode = false;
   public sidebarWidth = 268;
+  public rightSidebarWidth = 500; // Percentage of screen width
   public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | "help" | null = null;
   public isCommandBarOpen: boolean = false;
   private deepSearching: boolean = false;
@@ -63,6 +65,7 @@ export class ViewStore {
       sidebarWidth: true,
       activeModal: true,
       graphMode: true,
+      cardMode: true,
       sidebarTrees: false,
       quickCaptureViewType: true,
       quickCaptureOpen: true,
@@ -178,11 +181,20 @@ export class ViewStore {
     this.graphMode = graphMode;
   }
 
+  toggleCardMode() {
+    this.cardMode = !this.cardMode;
+  }
+
   setSearchQuery(query: string) {
     // We modify the search bar selectively with logic encoded in the SearchBar class.
     this.searchQuery = query;
     this.searchView.clearSearch(this.treeView.root);
     this.searchView.deepSearch(query);
+
+    // Trigger a custom event that the SearchBar can listen to
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("update-search-input", { detail: query }));
+    }
   }
 
   setQuickCaptureSearchQuery(query: string) {
@@ -244,6 +256,10 @@ export class ViewStore {
 
   setSidebarWidth(width: number) {
     this.sidebarWidth = width;
+  }
+
+  setRightSidebarWidth(width: number) {
+    this.rightSidebarWidth = width;
   }
 
   setCommandBarOpen(open: boolean) {

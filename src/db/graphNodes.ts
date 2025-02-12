@@ -91,6 +91,9 @@ export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => 
   if (node.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
     throw new SyncError('Cannot delete user\'s "My Hashtags" node', { actionName: "deleteNode", data: { node } });
   }
+  if (node.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX)) {
+    throw new SyncError('Cannot delete user\'s "My Favorites" node', { actionName: "deleteNode", data: { node } });
+  }
 
   // Delete all relationLists entries that reference this node
   await tx.delete(relationListsTable).where(eq(relationListsTable.nodeId, node.id));
@@ -107,8 +110,10 @@ export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => 
     )
     .returning({ deletedId: graphNodeTable.id });
 
-  // If there was no row for the node in the main table, log an error and rollback the transaction
+  // If there was no row for the node in the main table, return false instead of throwing
   if (deletedNode.length === 0) {
-    throw new SyncError("Node to delete not found", { actionName: "deleteNode", data: { node } });
+    return false;
   }
+
+  return true;
 };
