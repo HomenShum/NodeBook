@@ -6,6 +6,7 @@ import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 import {
   CONNECTION_SYMBOL,
   CONNECTION_SYMBOL_WITH_SPACE,
+  HASHTAG_SYMBOL,
   MENTION_SYMBOL,
   PLUS_SYMBOL,
   TILDE_SYMBOL,
@@ -21,7 +22,14 @@ const SerializedChipSchema = z.discriminatedUnion("type", [
     type: z.literal("mention"),
     value: z.string(),
     mentionTrigger: z
-      .enum([MENTION_SYMBOL, CONNECTION_SYMBOL, CONNECTION_SYMBOL_WITH_SPACE, PLUS_SYMBOL, TILDE_SYMBOL])
+      .enum([
+        MENTION_SYMBOL,
+        CONNECTION_SYMBOL,
+        CONNECTION_SYMBOL_WITH_SPACE,
+        PLUS_SYMBOL,
+        TILDE_SYMBOL,
+        HASHTAG_SYMBOL,
+      ])
       .default(MENTION_SYMBOL)
       .optional(),
   }),
