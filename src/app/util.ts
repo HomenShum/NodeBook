@@ -560,7 +560,13 @@ export class NotificationManager {
     try {
       const authFetch = getAuthFetch();
       const response = await authFetch(this.API_URL);
-      return response.json();
+      const data = await response.json();
+      if (data.status === "success") {
+        return data.data;
+      } else {
+        console.error("Error fetching notifications:", data.message);
+        return [];
+      }
     } catch (error) {
       console.error("Error fetching notifications:", error);
       return [];

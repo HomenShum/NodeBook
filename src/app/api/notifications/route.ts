@@ -1,9 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
-import { notificationTable } from "@/db/schema";
-import { getDb } from "@/db";
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
+import { getDb } from "@/db";
+import { notificationTable } from "@/db/schema";
 
 export const GET = withAuth(getHandler);
 async function getHandler(request: NextAuthenticatedRequest) {
@@ -12,7 +12,7 @@ async function getHandler(request: NextAuthenticatedRequest) {
     .select()
     .from(notificationTable)
     .where(eq(notificationTable.userId, request.userId));
-  return NextResponse.json(userNotifications);
+  return NextResponse.json({ status: "success", data: userNotifications });
 }
 
 export const POST = withAuth(postHandler);
