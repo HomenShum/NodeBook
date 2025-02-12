@@ -7,7 +7,7 @@ import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInpu
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useUser } from "@/app/contexts/UserContext";
 import { NodeEditor } from "@/app/editor/NodeContentEditor";
-import { GraphNode } from "@/app/graph/GraphNode";
+import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 import { getCanonicalPath, objectPathToBreadcrumb } from "@/app/graph/utils";
 import { useDoubleClick } from "@/app/hooks/useDoubleClick";
 import { DescendantTreeNode } from "@/app/tree/nodes";
@@ -35,8 +35,16 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   const isReadOnlyReference = !treeNode.isAtCanonicalPath && !isEditMode;
   const objectIsGraphNode = treeNode.object instanceof GraphNode;
   const objectIsEditRestricted = treeNode.object.isEditRestricted;
+  const allowAnonymousAppend =
+    treeNode.tree.rootObject instanceof GraphNode &&
+    treeNode.tree.rootObject.accessMode === AccessMode.APPEND &&
+    treeNode.object.authorId === user.id;
+
   const editableEditor =
-    !user.isAnonymous && objectIsGraphNode && (isAtCanonicalPath || isEditMode) && !objectIsEditRestricted;
+    (!user.isAnonymous || allowAnonymousAppend) &&
+    objectIsGraphNode &&
+    (isAtCanonicalPath || isEditMode) &&
+    !objectIsEditRestricted;
 
   const outerShouldBeColumn = isAtCanonicalPath && !objectIsEditRestricted;
   const cnOuterContainer = cn(

@@ -97,6 +97,7 @@ export const graphNodeTable = pgTable(
     isChecked: boolean("is_checked"),
     slug: text("slug"),
     contentTsvector: tsvector("content_tsvector"),
+    accessMode: integer("access_mode").notNull().default(0),
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),

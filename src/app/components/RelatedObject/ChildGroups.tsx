@@ -22,6 +22,7 @@ import { SearchTree } from "@/app/tree/SearchTree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 
 import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./styles/ChildGroups.module.css";
@@ -114,6 +115,8 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
       ? viewStore.quickCaptureViewType
       : viewStore.viewType;
   const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
+  const allowAnonymousAppend =
+    parentNode.object instanceof GraphNode && parentNode.object.accessMode === AccessMode.APPEND;
 
   if (tree instanceof SearchTree || (isEmpty && !group.isExpanded && !isRoot)) {
     return null;
@@ -122,7 +125,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
   return (
     <>
       <div className={cn(styles.TopHeader, isRoot && styles.TopHeaderRoot)}>
-        {isRoot && !user.isAnonymous && <CreateNewButton tree={tree} />}
+        {isRoot && (!user.isAnonymous || allowAnonymousAppend) && <CreateNewButton tree={tree} />}
         {!isEmpty && (
           <div className={styles.PinnedHeader}>
             <Button

@@ -129,6 +129,7 @@ export const createLayerWithRelation = async (userId: string): Promise<Serialize
       isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
       canonicalRelationId: row.canonicalRelationId ?? null,
       isChecked: row.isChecked,
+      accessMode: row.accessMode,
     };
     snapshot.nodesById[node.id] = node;
   }
@@ -497,6 +498,7 @@ export const createLayers = async (
       isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
       canonicalRelationId: row.canonicalRelationId ?? null,
       isChecked: row.isChecked,
+      accessMode: row.accessMode,
     };
     snapshot.nodesById[node.id] = node;
   }

@@ -1,0 +1,1 @@
+ALTER TABLE "graph_node" ADD COLUMN "access_mode" integer DEFAULT 0 NOT NULL;

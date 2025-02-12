@@ -43,12 +43,19 @@ export type GraphNodeProps = {
   isNewRelatedObjectsPublic?: boolean;
   isChecked?: boolean | null;
   canonicalRelationId?: string | null;
+  accessMode?: AccessMode;
 };
 
 export type PositionedRelation = {
   position: Position;
   relation: GraphRelation;
 };
+
+export enum AccessMode {
+  READ = 0,
+  APPEND = 1,
+  EDIT = 2,
+}
 
 export class GraphNode extends BaseGraphObject implements Serializable {
   readonly objectType = "node";
@@ -61,7 +68,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   isPublic: boolean = true;
   isNewRelatedObjectsPublic: boolean;
   isChecked: boolean | null = null;
-
+  accessMode: AccessMode = AccessMode.READ;
   constructor(
     store: GraphStore,
     {
@@ -75,6 +82,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isNewRelatedObjectsPublic = false,
       canonicalRelationId = null,
       isChecked = null,
+      accessMode = AccessMode.READ,
     }: GraphNodeProps & { authorId: string },
   ) {
     super(store);
@@ -93,6 +101,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     this.isNewRelatedObjectsPublic = isNewRelatedObjectsPublic;
     this.canonicalRelationId = canonicalRelationId;
     this.isChecked = isChecked;
+    this.accessMode = accessMode;
     this.makeObservable();
   }
 
@@ -105,6 +114,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isPublic: observable,
       isNewRelatedObjectsPublic: observable,
       isChecked: observable,
+      accessMode: observable,
       canonicalRelationId: observable,
       canonicalRelation: computed,
       content: observable.shallow,
@@ -133,6 +143,10 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     if (newProps.isChecked !== undefined) {
       oldValues.isChecked = this.isChecked;
       this.isChecked = newProps.isChecked;
+    }
+    if (newProps.accessMode !== undefined) {
+      oldValues.accessMode = this.accessMode;
+      this.accessMode = newProps.accessMode;
     }
     oldValues.version = this.version;
     if (newProps.version !== undefined) {
@@ -241,6 +255,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isNewRelatedObjectsPublic: this.isNewRelatedObjectsPublic,
       canonicalRelationId: this.canonicalRelationId ?? null,
       isChecked: this.isChecked ?? null,
+      accessMode: this.accessMode,
     };
   }
 }

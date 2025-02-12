@@ -30,6 +30,7 @@ import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 import { useSlugs } from "@/app/contexts/SlugContext";
 import { Checkbox } from "@/app/components/Checkbox/Checkbox";
+import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 
 import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 
@@ -77,6 +78,7 @@ function OutlineContent({ tree }: Props) {
   const setRoot = useSetMainRoot();
   const { slugs } = useSlugs();
   const elementRef = useRef<HTMLDivElement>(null);
+  const allowAnonymousAppend = treeRoot.object instanceof GraphNode && treeRoot.object.accessMode === AccessMode.APPEND;
 
   const userId = graphStore.user?.id;
   const isGlobalRoot = treeRoot.object.id === graphStore.globalRoot.id;
@@ -235,7 +237,7 @@ function OutlineContent({ tree }: Props) {
       )}
       <div className={s.Nodes}>
         <ChildGroups treeNode={treeRoot} />
-        {!user.isAnonymous && treeRoot.childCount === 0 && (
+        {(!user.isAnonymous || allowAnonymousAppend) && treeRoot.childCount === 0 && (
           <ClickToCreateNodeButton
             onClick={(e) => {
               e.preventDefault();
@@ -245,7 +247,7 @@ function OutlineContent({ tree }: Props) {
           />
         )}
       </div>
-      {!user.isAnonymous && (
+      {(!user.isAnonymous || allowAnonymousAppend) && (
         <div
           className={s.EmptySpaceClickArea}
           onClick={(e) => {

@@ -2,6 +2,7 @@ import { MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
+import { AccessMode } from "@/app/graph/GraphNode";
 
 import { MIN_NUM_NODES, MIN_NUM_RELATIONS } from "./helpers";
 
@@ -36,6 +37,7 @@ describe("GraphStore.load", () => {
           isNewRelatedObjectsPublic: false,
           canonicalRelationId: null,
           isChecked: null,
+          accessMode: AccessMode.READ,
         },
         b: {
           id: "b",
@@ -48,6 +50,7 @@ describe("GraphStore.load", () => {
           isNewRelatedObjectsPublic: false,
           canonicalRelationId: null,
           isChecked: null,
+          accessMode: AccessMode.READ,
         },
       },
       relationTypesById: {

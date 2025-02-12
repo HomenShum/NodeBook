@@ -22,6 +22,8 @@ import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/app/hooks/useToast";
 import { useSlugs } from "@/app/contexts/SlugContext";
+import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 
 import { default as s, default as styles } from "./ControlsBar.module.css";
 
@@ -57,6 +59,7 @@ interface Props {
 export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
+  const graphStore = useGraphStore();
   const { addToast } = useToast();
   const { updateSlugByNodeId, slugs, deleteSlugByNodeId } = useSlugs();
 
@@ -221,10 +224,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 {viewStore.graphMode
                   ? "Graph View"
                   : viewStore.viewType === ViewType.Outline
-                    ? "List View"
-                    : viewStore.viewType === ViewType.Note
-                      ? "Note View"
-                      : "Card View"}
+                  ? "List View"
+                  : viewStore.viewType === ViewType.Note
+                  ? "Note View"
+                  : "Card View"}
               </span>
             </Button>
           </DropdownMenuTrigger>
@@ -325,6 +328,21 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                   onCheckedChange={(checked: boolean) => settingsStore.setHidePinnedItems(checked)}
                 />
               </div>
+              {tree.rootObject instanceof GraphNode && tree.rootObject.isPublic && (
+                <div className={s.SwitchItem}>
+                  <label htmlFor="access-mode">Allow unlogged users to append</label>
+                  <Switch
+                    id="access-mode"
+                    checked={tree.rootObject.accessMode === AccessMode.APPEND}
+                    onCheckedChange={(checked: boolean) =>
+                      graphStore.setAppendMode({
+                        objectId: tree.rootObjectId,
+                        accessMode: checked ? AccessMode.APPEND : AccessMode.READ,
+                      })
+                    }
+                  />
+                </div>
+              )}
               {settingsStore.showIdeapadLinkButton && (
                 <div className={cn(s.SwitchItem, s.TextInput)}>
                   <label htmlFor="set-ideapad-link">Set Ideapad Link</label>
