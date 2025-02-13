@@ -55,11 +55,15 @@ export const MENTION_SYMBOL = "@";
 export const CONNECTION_SYMBOL = "<>";
 export const CONNECTION_SYMBOL_WITH_SPACE = `${CONNECTION_SYMBOL} `;
 export const PLUS_SYMBOL = "+";
+export const TILDE_SYMBOL = "~";
+
 export type MentionTrigger =
   | typeof MENTION_SYMBOL
   | typeof CONNECTION_SYMBOL
   | typeof PLUS_SYMBOL
-  | typeof CONNECTION_SYMBOL_WITH_SPACE;
+  | typeof CONNECTION_SYMBOL_WITH_SPACE
+  | typeof TILDE_SYMBOL
+  | typeof HASHTAG_SYMBOL;
 
 // Common constants for text matching
 export const REGEX_CONSTANTS = {
@@ -68,7 +72,7 @@ export const REGEX_CONSTANTS = {
   MAX_ALIAS_LENGTH: 50,
   PUNCTUATION: "", // "\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;",
   VALID_JOINS: "", //"(?:\\.[ |$]| |[\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;]|)",
-  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|${CONNECTION_SYMBOL}\\s|\\${PLUS_SYMBOL}`,
+  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|${CONNECTION_SYMBOL}\\s|\\${PLUS_SYMBOL}|${TILDE_SYMBOL}`,
 };
 
 // Interface for text match results
@@ -143,11 +147,12 @@ function checkForSearchAndReplaceMatchAny(text: string): MenuTextMatch | null {
   return checkForMatch({ text, triggers: "" });
 }
 
-// Check for a mention match in the text (starting with '@')
-const VALID_MENTION_CHARS = `[^@${REGEX_CONSTANTS.PUNCTUATION}\\s]`;
+// Any character that is not a mention trigger. We don't use MENTION_TRIGGER
+// because it includes whitespace which we don't want to exclude.
+const VALID_MENTION_CHARS = `[^${HASHTAG_SYMBOL}${MENTION_SYMBOL}${CONNECTION_SYMBOL}${PLUS_SYMBOL}${TILDE_SYMBOL}]`;
 
 const mentionRegex = new RegExp(
-  `(^|\\s|\\()((${REGEX_CONSTANTS.MENTION_TRIGGER})((?:${VALID_MENTION_CHARS}${REGEX_CONSTANTS.VALID_JOINS}){0,${REGEX_CONSTANTS.MAX_LENGTH}}))$`,
+  `(^|\\s|\\()((${REGEX_CONSTANTS.MENTION_TRIGGER})((?:${VALID_MENTION_CHARS}){0,${REGEX_CONSTANTS.MAX_LENGTH}}))$`,
 );
 
 const aliasRegex = new RegExp(
@@ -167,6 +172,22 @@ export function checkForMentionMatch(text: string): (MenuTextMatch & { mentionTr
     matchingString,
     replaceableString: match[2],
     mentionTrigger: trigger,
+  };
+}
+
+const hashtagRegex = new RegExp(
+  `(^|\\s|\\()((${HASHTAG_SYMBOL})((?:${VALID_MENTION_CHARS}${REGEX_CONSTANTS.VALID_JOINS}){0,${REGEX_CONSTANTS.MAX_LENGTH}}))$`,
+);
+
+export function checkForHashtagMatch(text: string): MenuTextMatch | null {
+  const match = hashtagRegex.exec(text);
+  if (!match) return null;
+  const leadingWhitespace = match[1];
+  const matchingString = match[2];
+  return {
+    leadOffset: match.index + leadingWhitespace.length,
+    matchingString,
+    replaceableString: match[2],
   };
 }
 

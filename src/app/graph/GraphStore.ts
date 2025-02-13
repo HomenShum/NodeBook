@@ -48,7 +48,7 @@ import { CappedKeywordIndex, KeywordTrieIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
-import { GraphNode } from "./GraphNode";
+import { AccessMode, GraphNode } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps } from "./GraphRelation";
 import {
@@ -63,6 +63,7 @@ import {
   TxRemoveRelation,
   TxRemoveRelationFromList,
   TxReplaceRelationLink,
+  TxSetAccessMode,
   TxSetIsPublic,
   TxUpdateNode,
   TxUpdateRelation,
@@ -443,6 +444,7 @@ export class GraphStore {
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
         canonicalRelationId: props.canonicalRelationId,
+        accessMode: props.accessMode ?? AccessMode.READ,
       });
 
       this.nodesById.set(node.id, node);
@@ -572,6 +574,33 @@ export class GraphStore {
     }
 
     return { updates: this.deleteNode(node) };
+  }
+
+  async setAppendMode(tx: TxSetAccessMode): Promise<void> {
+    const { updates } = this._setAppendMode(tx);
+    this.updateManager.queueUpdates(updates);
+  }
+
+  private _setAppendMode({ objectId, accessMode }: TxSetAccessMode): { updates: GraphUpdate[] } {
+    const object = this.getObject(objectId);
+    if (!object) {
+      throw new Error(`Object with id ${objectId} does not exist`);
+    }
+    // Don't try to set access mode for other people's objects
+    if (object.authorId !== this.user.id) return { updates: [] };
+
+    // Only update for GraphNode or when accessMode changes
+    if (!(object instanceof GraphNode) || accessMode === object.accessMode) return { updates: [] };
+
+    const updates: GraphUpdate[] = [];
+    object.update({ accessMode });
+    updates.push({
+      operation: "updateNode",
+      oldProps: object.serialize(),
+      newProps: { ...object.serialize(), accessMode },
+    });
+
+    return { updates };
   }
 
   async setIsPublic(tx: TxSetIsPublic) {

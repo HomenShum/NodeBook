@@ -5,7 +5,12 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { comparePositions } from "@/app/util";
-import { GLOBAL_ROOT_ID, USER_MY_HASHTAGS_NODE_ID_PREFIX, USER_ROOT_ID_PREFIX } from "@/lib/constants";
+import {
+  GLOBAL_ROOT_ID,
+  USER_MY_FAVORITES_NODE_ID_PREFIX,
+  USER_MY_HASHTAGS_NODE_ID_PREFIX,
+  USER_ROOT_ID_PREFIX,
+} from "@/lib/constants";
 
 export abstract class BaseGraphObject {
   abstract readonly objectType: string;
@@ -111,6 +116,9 @@ export abstract class BaseGraphObject {
     if (this.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
       return true;
     }
+    if (this.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX)) {
+      return true;
+    }
     return false;
   }
 
@@ -127,6 +135,9 @@ export abstract class BaseGraphObject {
       return true;
     }
     if (this.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
+      return true;
+    }
+    if (this.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX)) {
       return true;
     }
     return false;

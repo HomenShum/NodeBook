@@ -14,11 +14,11 @@ import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugi
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
+import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
 import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
 
 import styles from "./Editor.module.css";
 
@@ -35,33 +35,31 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
   const isNote = treeNode.object.noteContentRelationsList.size > 0;
 
   return (
-    <div>
-      <LexicalComposer
-        initialConfig={createConfig({
-          namespace: "header-editor",
-          treeNode,
-          editable,
-        })}
-      >
-        <PlainTextPlugin
-          ErrorBoundary={LexicalErrorBoundary}
-          contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
-          placeholder={
-            <span className={styles.PlaceholderTitle}>
-              {isNote ? <em style={{ marginRight: 3 }}>Multiline Note - Untitled</em> : "Untitled"}
-            </span>
-          }
-        />
-        <DropdownPlugin treeNode={treeNode} />
-        <EnterKeyPlugin treeNode={treeNode} />
-        <IgnoreModShiftAPlugin />
-        <TodoPlugin treeNode={treeNode} />
-        <ReplacementPlugin treeNode={treeNode} />
-        <ClearEditorPlugin />
-        <LinkPlugin />
-        <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
-        {treeNode.object instanceof GraphNode && <SyncWithModelsPlugin node={treeNode.object} treeNode={treeNode} />}
-      </LexicalComposer>
-    </div>
+    <LexicalComposer
+      initialConfig={createConfig({
+        namespace: "header-editor",
+        treeNode,
+        editable,
+      })}
+    >
+      <PlainTextPlugin
+        ErrorBoundary={LexicalErrorBoundary}
+        contentEditable={<ContentEditable className={styles.ContentEditable} data-nodeid={treeNode.object.id} />}
+        placeholder={
+          <span className={styles.PlaceholderTitle}>
+            {isNote ? <em style={{ marginRight: 3 }}>Multiline Note - Untitled</em> : "Untitled"}
+          </span>
+        }
+      />
+      <DropdownPlugin treeNode={treeNode} />
+      <EnterKeyPlugin treeNode={treeNode} />
+      <IgnoreModShiftAPlugin />
+      <TodoPlugin treeNode={treeNode} />
+      <ReplacementPlugin treeNode={treeNode} />
+      <ClearEditorPlugin />
+      <LinkPlugin />
+      <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
+      {treeNode.object instanceof GraphNode && <SyncWithModelsPlugin node={treeNode.object} treeNode={treeNode} />}
+    </LexicalComposer>
   );
 });

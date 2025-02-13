@@ -1,7 +1,7 @@
 import { reaction } from "mobx";
 
 const SEP = /[\s/]+/;
-const PRE = new RegExp(/^["'({[@#]+/, "");
+const PRE = new RegExp(/^["'~({[@#]+/, "");
 
 export interface CappedKeywordIndex {
   add(id: string, getText: () => string): void;

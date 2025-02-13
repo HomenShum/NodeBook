@@ -11,11 +11,11 @@ import { RefObject, useEffect } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
 import { ArrowKeyPlugin } from "@/app/editor/plugins/ArrowKeyPlugin";
-import { AtKeyPlugin } from "@/app/editor/plugins/AtKeyPlugin";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { FormatKeyPlugin } from "@/app/editor/plugins/FormatKeyPlugin";
+import { HashtagPlugin } from "@/app/editor/plugins/HashtagPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { LogCollapsedEditorPlugin } from "@/app/editor/plugins/LogGhostBulletStatePlugin";
@@ -23,6 +23,7 @@ import { MinusKeyPlugin } from "@/app/editor/plugins/MinusKeyPlugin";
 import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
 import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
+import { SigilsPlugin } from "@/app/editor/plugins/SigilsPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
 import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin";
@@ -90,7 +91,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         />
         <SyncWithModelsPlugin node={treeNode.object} treeNode={treeNode} />
         {isEditorEditable && <ArrowKeyPlugin />}
-        {isEditorEditable && <AtKeyPlugin treeNode={treeNode} />}
+        {isEditorEditable && <SigilsPlugin treeNode={treeNode} />}
         {isEditorEditable && <BackspaceMergeNodesPlugin />}
         {isEditorEditable && <ClearEditorPlugin />}
         {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
@@ -103,6 +104,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <RelationPlugin />}
         {isEditorEditable && <ReplacementPlugin treeNode={treeNode} />}
         {isEditorEditable && <TodoPlugin treeNode={treeNode} />}
+        {isEditorEditable && <HashtagPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />

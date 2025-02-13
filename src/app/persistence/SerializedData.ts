@@ -3,7 +3,14 @@ import { z } from "zod";
 import { GroupId } from "@/app/tree/nodes";
 import { Position } from "@/app/util";
 import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
-import { CONNECTION_SYMBOL, CONNECTION_SYMBOL_WITH_SPACE, MENTION_SYMBOL, PLUS_SYMBOL } from "@/lib/utils";
+import {
+  CONNECTION_SYMBOL,
+  CONNECTION_SYMBOL_WITH_SPACE,
+  HASHTAG_SYMBOL,
+  MENTION_SYMBOL,
+  PLUS_SYMBOL,
+  TILDE_SYMBOL,
+} from "@/lib/utils";
 
 const SerializedChipSchema = z.discriminatedUnion("type", [
   z.object({
@@ -15,7 +22,14 @@ const SerializedChipSchema = z.discriminatedUnion("type", [
     type: z.literal("mention"),
     value: z.string(),
     mentionTrigger: z
-      .enum([MENTION_SYMBOL, CONNECTION_SYMBOL, CONNECTION_SYMBOL_WITH_SPACE, PLUS_SYMBOL])
+      .enum([
+        MENTION_SYMBOL,
+        CONNECTION_SYMBOL,
+        CONNECTION_SYMBOL_WITH_SPACE,
+        PLUS_SYMBOL,
+        TILDE_SYMBOL,
+        HASHTAG_SYMBOL,
+      ])
       .default(MENTION_SYMBOL)
       .optional(),
   }),
@@ -41,6 +55,7 @@ export const SerializedNodeSchema = z.object({
   isNewRelatedObjectsPublic: z.boolean().default(false),
   canonicalRelationId: z.string().nullable().default(null),
   isChecked: z.boolean().nullable().default(null),
+  accessMode: z.number().default(0),
 });
 export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
 

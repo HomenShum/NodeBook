@@ -3,6 +3,9 @@ import { BellIcon, CheckCheckIcon, ListFilterIcon, SettingsIcon, XIcon } from "l
 
 import { useViewStore } from "@/app/view/useViewStore";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { Button } from "@/app/components/UIPrimitives/Button";
+import { cn } from "@/lib/utils";
+import breadcrumbStyles from "@/app/components/Breadcrumbs/Breadcrumbs.module.css";
 
 import styles from "./Notifications.module.css";
 
@@ -21,10 +24,32 @@ function NotificationHeader() {
         <span>Notifications</span>
       </div>
       <div>
-        <CheckCheckIcon width={16} onClick={markAllAsRead} />
-        <ListFilterIcon width={16} />
-        <SettingsIcon width={16} />
-        <XIcon width={16} onClick={closeNotificationsPane} />
+        <Button
+          className={cn(breadcrumbStyles.ShowTooltip, breadcrumbStyles.RightAlign)}
+          onClick={markAllAsRead}
+          data-tooltip={"Mark all as read"}
+        >
+          <CheckCheckIcon width={16} />
+        </Button>
+        <Button
+          className={cn(breadcrumbStyles.ShowTooltip, breadcrumbStyles.RightAlign)}
+          data-tooltip={"Sort by oldest"}
+        >
+          <ListFilterIcon width={16} />
+        </Button>
+        <Button
+          className={cn(breadcrumbStyles.ShowTooltip, breadcrumbStyles.RightAlign)}
+          data-tooltip={"Notification settings"}
+        >
+          <SettingsIcon width={16} />
+        </Button>
+        <Button
+          className={cn(breadcrumbStyles.ShowTooltip, breadcrumbStyles.RightAlign)}
+          data-tooltip={"Close notifications"}
+          onClick={closeNotificationsPane}
+        >
+          <XIcon width={16} />
+        </Button>
       </div>
     </div>
   );

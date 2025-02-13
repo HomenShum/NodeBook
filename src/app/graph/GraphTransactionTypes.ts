@@ -2,7 +2,7 @@ import { ListType } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { GroupId } from "@/app/tree/nodes";
 
-import { GraphNodeProps } from "./GraphNode";
+import { AccessMode, GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationPropsWithoutTargets } from "./GraphRelation";
 
 /**
@@ -85,6 +85,11 @@ export type TxSetIsPublic = {
   alsoSetChildrenAndDescendants: boolean;
   isNewRelatedObjectsPublic: boolean;
   isChecked: boolean | null;
+};
+
+export type TxSetAccessMode = {
+  objectId: string;
+  accessMode: AccessMode;
 };
 
 export type TxPinRelation = {

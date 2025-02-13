@@ -10,6 +10,7 @@ declare const styles: {
   readonly "ShiftMain": string;
   readonly "SidebarToggle": string;
   readonly "SmallContainer": string;
+  readonly "UnreadNotification": string;
   readonly "ViewContainer": string;
   readonly "ViewContainerFull": string;
 };

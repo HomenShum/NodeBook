@@ -27,6 +27,7 @@ export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[])
         isNewRelatedObjectsPublic: node.isNewRelatedObjectsPublic,
         isChecked: node.isChecked ?? null,
         canonicalRelationId: node.canonicalRelationId,
+        accessMode: node.accessMode,
       })),
     )
     .returning({ createdId: graphNodeTable.id });
@@ -73,6 +74,7 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
       isNewRelatedObjectsPublic: newProps.isNewRelatedObjectsPublic,
       isChecked: newProps.isChecked ?? null,
       canonicalRelationId: newProps.canonicalRelationId,
+      accessMode: newProps.accessMode,
     })
     .where(and(eq(graphNodeTable.authorId, oldProps.authorId), eq(graphNodeTable.id, oldProps.id)))
     .returning({ updatedId: graphNodeTable.id });
@@ -90,6 +92,9 @@ export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => 
   }
   if (node.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
     throw new SyncError('Cannot delete user\'s "My Hashtags" node', { actionName: "deleteNode", data: { node } });
+  }
+  if (node.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX)) {
+    throw new SyncError('Cannot delete user\'s "My Favorites" node', { actionName: "deleteNode", data: { node } });
   }
 
   // Delete all relationLists entries that reference this node

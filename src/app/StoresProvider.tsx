@@ -6,19 +6,20 @@ import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { useAuth } from "@/app/auth/useAuth";
 import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
 import { LoadingContext } from "@/app/contexts/LoadingContext";
+import { NotificationProvider } from "@/app/contexts/NotificationContext";
 import { SettingsStoreContext } from "@/app/contexts/SettingsStoreContext";
+import { SlugProvider } from "@/app/contexts/SlugContext";
 import { UserContext } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
+import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { fetchGetOrCreateUser, fetchGetUser, localLocalData } from "@/app/persistence/loadGraphData";
 import { getAuthFetch, toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
-import rootLogger from "@/lib/logger";
 import { GLOBAL_USERS_NODE_ID, GLOBAL_USERS_RELATION_ID } from "@/lib/constants";
-import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
-import { SlugProvider } from "@/app/contexts/SlugContext";
+import rootLogger from "@/lib/logger";
 
 export const logger = rootLogger.child({ service: "store-provider" });
 
@@ -172,7 +173,9 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
         <SettingsStoreContext.Provider value={settingsStore}>
           <GraphStoreProvider value={graphStore}>
             <ViewStoreProvider value={viewStore}>
-              <SlugProvider>{children}</SlugProvider>
+              <SlugProvider>
+                <NotificationProvider>{children}</NotificationProvider>
+              </SlugProvider>
             </ViewStoreProvider>
           </GraphStoreProvider>
         </SettingsStoreContext.Provider>

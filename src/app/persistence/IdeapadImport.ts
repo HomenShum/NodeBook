@@ -1,4 +1,5 @@
 import { uuid } from "@/app/util";
+import { AccessMode } from "@/app/graph/GraphNode";
 
 import { SerializedGraphStore } from "./SerializedData";
 
@@ -47,6 +48,7 @@ export function parseIdeapadData(data: IdeapadSnapshot, userId: string): Seriali
       isNewRelatedObjectsPublic: false,
       canonicalRelationId: null,
       isChecked: null,
+      accessMode: AccessMode.READ,
     };
     snapshot.relationsByNodeId[nodeId] = {};
     snapshot.pinnedRelationsByNodeId[nodeId] = {};
