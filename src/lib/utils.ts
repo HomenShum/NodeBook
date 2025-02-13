@@ -147,11 +147,12 @@ function checkForSearchAndReplaceMatchAny(text: string): MenuTextMatch | null {
   return checkForMatch({ text, triggers: "" });
 }
 
-// Check for a mention match in the text (starting with '@')
-const VALID_MENTION_CHARS = `[^@${REGEX_CONSTANTS.PUNCTUATION}\\s]`;
+// Any character that is not a mention trigger. We don't use MENTION_TRIGGER
+// because it includes whitespace which we don't want to exclude.
+const VALID_MENTION_CHARS = `[^${HASHTAG_SYMBOL}${MENTION_SYMBOL}${CONNECTION_SYMBOL}${PLUS_SYMBOL}${TILDE_SYMBOL}]`;
 
 const mentionRegex = new RegExp(
-  `(^|\\s|\\()((${REGEX_CONSTANTS.MENTION_TRIGGER})((?:${VALID_MENTION_CHARS}${REGEX_CONSTANTS.VALID_JOINS}){0,${REGEX_CONSTANTS.MAX_LENGTH}}))$`,
+  `(^|\\s|\\()((${REGEX_CONSTANTS.MENTION_TRIGGER})((?:${VALID_MENTION_CHARS}){0,${REGEX_CONSTANTS.MAX_LENGTH}}))$`,
 );
 
 const aliasRegex = new RegExp(
