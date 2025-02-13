@@ -82,3 +82,4 @@ You'll find the datasets in the `data/output` folder.
 - **Click "Go into board"** then **"Graph"** in the header
 - **Upload via settings:** Open right sidebar settings, click "Upload a .json file..." and select your downloaded json
 - **Wait ~5s** for upload to complete (check network tab), then refresh the page
+- Note the naming convention of the board
