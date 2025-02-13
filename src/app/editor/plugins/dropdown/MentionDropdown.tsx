@@ -60,7 +60,7 @@ export function MentionDropdown({
         if (!currentObject) return;
 
         nodeToReplace.replace(mentionNode);
-        const spaceAfter = new TextNode(" ");
+        const spaceAfter = new TextNode("");
         mentionNode.insertAfter(spaceAfter);
         if (dropdown.mentionTrigger === CONNECTION_SYMBOL || dropdown.mentionTrigger === CONNECTION_SYMBOL_WITH_SPACE) {
           const connectionBefore = new TextNode(dropdown.mentionTrigger);
