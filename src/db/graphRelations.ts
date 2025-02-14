@@ -93,6 +93,8 @@ export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedR
 
   // If there was no row for the relation in the main table, log an error and rollback the transaction
   if (deletedRelation.length === 0) {
-    throw new SyncError("Relation to delete not found", { actionName: "deleteRelation", data: { relation } });
+    // throw new SyncError("Relation to delete not found", { actionName: "deleteRelation", data: { relation } });
+    return false;
   }
+  return true;
 };

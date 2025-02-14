@@ -26,6 +26,7 @@ import {
 } from "@/app/persistence/SerializedData";
 import { ObjectPath, Position, uuid } from "@/app/util";
 import {
+  DEFAULT_CARD_STATUSES,
   GLOBAL_ADMIN_USER_ID,
   GLOBAL_RELATION_TYPES_NODE_ID,
   GLOBAL_ROOT_ID,
@@ -33,14 +34,13 @@ import {
   GLOBAL_TO_USER_TYPES_RELATION_ID_PREFIX,
   GLOBAL_USERS_NODE_ID,
   GLOBAL_USERS_RELATION_ID,
+  USER_CARD_STATUSES_NODE_ID,
   USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
   USER_MY_STREAM_NODE_ID_PREFIX,
   USER_RELATION_TYPES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
-  USER_CARD_STATUSES_NODE_ID,
   USERS_TO_USER_RELATION_ID_PREFIX,
-  DEFAULT_CARD_STATUSES,
 } from "@/lib/constants";
 import logger from "@/lib/logger";
 import { getInverseRelation } from "@/lib/relation-inverter";
@@ -48,7 +48,7 @@ import { CappedKeywordIndex, KeywordTrieIndex } from "@/lib/trie";
 import { scoreMatch } from "@/lib/utils";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
-import { AccessMode, GraphNode } from "./GraphNode";
+import { AccessMode, Chip, GraphNode } from "./GraphNode";
 import { GraphObject } from "./GraphObject";
 import { GraphRelation, GraphRelationProps } from "./GraphRelation";
 import {
@@ -745,7 +745,7 @@ export class GraphStore {
   }
 
   private _addRelationType(
-    props: { id?: string; version?: number; label: string; reverseLabel?: string; isPublic?: boolean },
+    props: { id?: string; version?: number; label: string | Chip[]; reverseLabel?: string; isPublic?: boolean },
     fromServer = false,
   ): { relationType: GraphRelationType; updates: GraphUpdate[] } {
     // if (props.id && props.id in defaultRelationTypes) {
@@ -784,8 +784,8 @@ export class GraphStore {
     const relId = uuid();
     const authorId = this.user.id;
 
-    let label = props.label.trim().replace(/\s*\n\s*/g, " ");
-    let reverseLabel = props.reverseLabel?.trim().replace(/\s*\n\s*/g, " ");
+    let label = typeof props.label === "string" ? props.label.trim().replace(/\s*\n\s*/g, " ") : props.label;
+    let reverseLabel: string | Chip[] | undefined = props.reverseLabel?.trim().replace(/\s*\n\s*/g, " ");
     if (!reverseLabel) {
       reverseLabel = getInverseRelation(label);
     }
@@ -793,7 +793,7 @@ export class GraphStore {
       parentId: this.relationTypesNodeId,
       nodeProps: {
         id,
-        content: [{ type: "text", value: props.label }],
+        content: typeof label === "string" ? [{ type: "text", value: label }] : label,
         isPublic: props.isPublic ?? true,
       },
       relationProps: {
@@ -810,7 +810,7 @@ export class GraphStore {
         isPublic: props.isPublic ?? true,
       },
       nodeProps: {
-        content: [{ type: "text", value: reverseLabel }],
+        content: typeof reverseLabel === "string" ? [{ type: "text", value: reverseLabel }] : reverseLabel,
         isPublic: props.isPublic ?? true,
       },
     });
@@ -819,8 +819,8 @@ export class GraphStore {
       id: id,
       version: 1,
       authorId: authorId,
-      label: label,
-      reverseLabel: reverseLabel,
+      label: typeof label === "string" ? label : label.map((chip) => chip.value).join(" "),
+      reverseLabel: typeof reverseLabel === "string" ? reverseLabel : reverseLabel.map((chip) => chip.value).join(" "),
       isPublic: props.isPublic ?? true,
     };
 
@@ -1041,7 +1041,9 @@ export class GraphStore {
       const relTypeAndDirection = this.getRelationTypeByLabel(tx.relationProps.relationTypeLabel);
       if (!relTypeAndDirection) {
         const { relationType, updates: relTypeUpdates } = this._addRelationType({
-          label: tx.relationProps.relationTypeLabel,
+          label: tx.relationProps.relationTypeChips
+            ? tx.relationProps.relationTypeChips
+            : tx.relationProps.relationTypeLabel,
           isPublic: true,
         });
         updates.push(...relTypeUpdates);
@@ -2499,27 +2501,18 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.allRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.pinnedRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
-    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.noteContentRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.allRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.pinnedRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.noteContentRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
 
     return {
       usersById,

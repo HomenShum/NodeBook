@@ -1,3 +1,5 @@
+import { Chip } from "@/app/graph/GraphNode";
+
 import defaultDictionary from "./dictionary.json";
 import { guessInverse } from "./morphology";
 
@@ -13,13 +15,19 @@ for (const [key, value] of Object.entries(defaultDictionary)) {
 }
 
 export function getInverseRelation(
-  relation: string,
+  relation: string | Chip[],
   dictionary: Record<string, string> = bidirectionalDictionary,
-): string {
-  const trimmedRelation = relation.trim();
+): string | Chip[] {
+  if (typeof relation === "string") {
+    const trimmedRelation = relation.trim();
 
-  if (dictionary[trimmedRelation]) {
-    return dictionary[trimmedRelation];
+    if (dictionary[trimmedRelation]) {
+      return dictionary[trimmedRelation];
+    }
+    return guessInverse(trimmedRelation);
+  } else {
+    const relationCopy = relation.slice();
+    relationCopy.push({ type: "text", value: " of" });
+    return relationCopy;
   }
-  return guessInverse(trimmedRelation);
 }

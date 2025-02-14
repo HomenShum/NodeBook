@@ -58,13 +58,15 @@ async function postHandler(req: NextAuthenticatedRequest) {
             await createNodes(tx, [update.node]);
             break;
           case "updateNode":
-            await updateNode(tx, update.oldProps, update.newProps);
+            const nodeWasUpdated = await updateNode(tx, update.oldProps, update.newProps);
+            if (!nodeWasUpdated) {
+              console.log(`Node ${update.oldProps.id} not found for update, skipping`);
+            }
             break;
           case "deleteNode":
-            const wasDeleted = await deleteNode(tx, update.node);
-            if (!wasDeleted) {
+            const nodeWasDeleted = await deleteNode(tx, update.node);
+            if (!nodeWasDeleted) {
               console.log(`Node ${update.node.id} not found for deletion, skipping`);
-              continue;
             }
             break;
           // case "addRelationType":
@@ -83,7 +85,10 @@ async function postHandler(req: NextAuthenticatedRequest) {
             await updateRelation(tx, update.oldProps, update.newProps);
             break;
           case "deleteRelation":
-            await deleteRelation(tx, update.deleted.relation);
+            const relationWasDeleted = await deleteRelation(tx, update.deleted.relation);
+            if (!relationWasDeleted) {
+              console.log(`Relation ${update.deleted.relation.id} not found for deletion, skipping`);
+            }
             break;
           case "updateRelationList":
             await upsertRelationList(
@@ -108,9 +113,9 @@ async function postHandler(req: NextAuthenticatedRequest) {
       captureException(e, { user: { id: userId }, extra: { data: e.data } });
     } else {
       console.error(e);
-      captureException(e, { user: { id: userId }, extra: { message: "Error saving sync data" } });
+      captureException(e, { user: { id: userId }, extra: { message: "Error saving sync data: " + e } });
     }
-    return NextResponse.json({ status: "error", message: "Error saving sync data" }, { status: 400 });
+    return NextResponse.json({ status: "error", message: "Error saving sync data: " + e }, { status: 400 });
   }
 
   console.log(`[sync][${userId}] All updates applied successfully`);

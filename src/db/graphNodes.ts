@@ -79,8 +79,9 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
     .where(and(eq(graphNodeTable.authorId, oldProps.authorId), eq(graphNodeTable.id, oldProps.id)))
     .returning({ updatedId: graphNodeTable.id });
   if (updated.length === 0) {
-    throw new SyncError("Node to update not found", { actionName: "updateNode", data: { oldProps, newProps } });
+    return false;
   }
+  return true;
 };
 
 export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => {

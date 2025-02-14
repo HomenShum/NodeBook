@@ -2,7 +2,7 @@ import { ListType } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { GroupId } from "@/app/tree/nodes";
 
-import { AccessMode, GraphNodeProps } from "./GraphNode";
+import { AccessMode, Chip, GraphNodeProps } from "./GraphNode";
 import { GraphRelation, GraphRelationPropsWithoutTargets } from "./GraphRelation";
 
 /**
@@ -51,6 +51,7 @@ export type TxUpdateRelation = {
     isPublic?: boolean;
     relationType?: GraphRelationType;
     relationTypeLabel?: string;
+    relationTypeChips?: Chip[];
     isInitiallyReversed?: boolean;
     canonicalRelationId?: string | null;
   };

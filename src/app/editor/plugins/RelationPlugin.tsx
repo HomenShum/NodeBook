@@ -71,12 +71,20 @@ export const RelationPlugin = observer(function RelationPlugin() {
           }
           const [selectionLeft, selectionRight] = getLexicalSelectionPosition(editor);
           let textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft });
+          let chipsBefore = $getChips({ index: 0, offset: 0 }, selectionLeft);
+          // Remove trailing colon from chipsBefore
+          if (
+            chipsBefore.length &&
+            chipsBefore[chipsBefore.length - 1].type === "text" &&
+            chipsBefore[chipsBefore.length - 1].value.endsWith(":")
+          ) {
+            chipsBefore[chipsBefore.length - 1].value = chipsBefore[chipsBefore.length - 1].value.slice(0, -1);
+          }
           if (!settingsStore.triggerRelationOnSingleColon && !textBefore.endsWith(":")) {
             return false;
           }
           event.preventDefault();
           event.stopPropagation();
-
           // Set the relation type to the text before the cursor
           const graphStoreTransaction: TxCombined = [];
           let relationTypeText = textBefore.trim().replace(/[:\s]+$/, ""); // Trim trailing spaces and colons
@@ -94,7 +102,11 @@ export const RelationPlugin = observer(function RelationPlugin() {
               type: "updateRelation",
               transaction: {
                 relationId: relation.id,
-                relationProps: { relationTypeLabel: relationTypeText, isPublic: object.isPublic },
+                relationProps: {
+                  relationTypeLabel: relationTypeText,
+                  relationTypeChips: chipsBefore.some((chip) => chip.type !== "text") ? chipsBefore : undefined,
+                  isPublic: object.isPublic,
+                },
               },
             });
           }
@@ -199,18 +211,6 @@ export const RelationPlugin = observer(function RelationPlugin() {
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [
-    tree,
-    graphStore,
-    settingsStore,
-    settingsStore.triggerRelationOnSingleColon,
-    editor,
-    object,
-    relation,
-    treeNode.path,
-    treeNode.id,
-    treeNode.relationWithParent.relationType.id,
-    treeNode.relationWithParent.to,
-  ]);
+  }, [tree, graphStore, settingsStore, settingsStore.triggerRelationOnSingleColon, editor, object, relation, treeNode.path, treeNode.id, treeNode.relationWithParent.relationType.id, treeNode.relationWithParent.to]);
   return null;
 });
