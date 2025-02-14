@@ -2743,6 +2743,9 @@ export class GraphStore {
     const existing = this.getRelation(props.id);
     const relationType = this.relationTypesById[props.relationTypeId] ?? defaultRelationTypes.child;
     if (existing) {
+      if (existing.version > props.version || UpdateManager.isSyncing(props.id)) {
+        return existing;
+      }
       existing.update({ ...props, relationType });
       return existing;
     } else {
@@ -2762,6 +2765,11 @@ export class GraphStore {
   ) {
     const { object, relationsWithPositions } = this.resolveRelationListReferences(objectId, positionsByRelationId);
     const list = this.getRelationList(object, listType);
+
+    if (UpdateManager.isSyncing(objectId)) {
+      return;
+    }
+
     list.load(relationsWithPositions);
 
     const relationsInListButNotLoaded = list

@@ -495,15 +495,12 @@ export abstract class BaseGroup {
       const object = getOtherObject(relation, this.parent.object.id);
       if (!object) {
         missingIds.push(relation.from.id, relation.to.id);
-        const message = "Object not found for relation during hydration";
         const data = {
           relationId: relation.id,
           fromId: relation.from.id,
           toId: relation.to.id,
           parentId: this.parent.object.id,
         };
-        logger.debug(message, data);
-        captureMessage(message, { extra: data, level: "info" });
         continue;
       }
 
@@ -533,7 +530,7 @@ export abstract class BaseGroup {
       nodes.push(node);
     }
     if (missingIds.length > 0) {
-      logger.debug("Loading missing ids", missingIds);
+      // logger.debug("Loading missing ids", missingIds);
       this.tree.loadMissingIdsDuringHydration(missingIds);
     }
     this.nodes = nodes;
@@ -547,15 +544,12 @@ export abstract class BaseGroup {
       const object = getOtherObject(relation, this.parent.object.id);
       if (!object) {
         missingIds.push(relation.from.id, relation.to.id);
-        const message = "Object not found for relation during hydration";
         const data = {
           relationId: relation.id,
           fromId: relation.from.id,
           toId: relation.to.id,
           parentId: this.parent.object.id,
         };
-        logger.debug(message, data);
-        captureMessage(message, { extra: data, level: "info" });
         continue;
       }
 
@@ -593,7 +587,7 @@ export abstract class BaseGroup {
       nodes.push(node);
     }
     if (missingIds.length > 0) {
-      logger.debug("Loading missing ids", missingIds);
+      // logger.debug("Loading missing ids", missingIds);
       this.tree.loadMissingIdsDuringHydration(missingIds);
     }
     this.nodes = nodes;

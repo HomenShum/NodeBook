@@ -455,7 +455,7 @@ export class Tree {
    * TODO: do we actually need this path string?
    */
   setRoot(root: Root) {
-    logger.debug("Setting tree root", root);
+    logger.debug("Setting tree root");
     if (root instanceof DescendantTreeNode) {
       this.rootObjectId = root.object.id;
       this.pathToRootIds = getAncestorsAsArray(root).map((node) => ({

@@ -14,6 +14,43 @@ const logger = appLogger.child({ service: "UpdateManager" });
 
 const pusher = new Pusher(env.pusherKey, { cluster: env.pusherCluster });
 
+const getEntityIdsFromUpdates = (syncData: SyncData): string[] => {
+  const entityIds: string[] = [];
+
+  syncData.updates.forEach((update) => {
+    switch (update.operation) {
+      case "addNode":
+        entityIds.push(update.node.id);
+        break;
+      case "addRelation":
+        entityIds.push(update.relation.fromId, update.relation.toId, update.relation.id);
+        break;
+      case "deleteNode":
+        entityIds.push(update.node.id);
+        break;
+      case "deleteRelation":
+        entityIds.push(update.deleted.relation.id, update.deleted.relation.fromId, update.deleted.relation.toId);
+        break;
+      case "updateNode":
+        entityIds.push(update.oldProps.id);
+        break;
+      case "updateRelation":
+        entityIds.push(
+          update.oldProps.id,
+          update.oldProps.fromId,
+          update.oldProps.toId,
+          update.newProps.toId,
+          update.newProps.fromId,
+        );
+        break;
+      case "updateRelationList":
+        entityIds.push(update.nodeId, update.relationId);
+    }
+  });
+
+  return entityIds;
+};
+
 export class UpdateManager {
   private clientId = uuid();
   private userId: string;
@@ -39,17 +76,17 @@ export class UpdateManager {
   private refetchCallback: (data: SerializedGraphStore) => void;
   private applyGraphUpdates: (updates: GraphUpdate[]) => void;
 
-  static incrementSyncCount(nodeId: string): void {
-    const currentCount = UpdateManager.pendingNodeSyncCounts.get(nodeId) || 0;
-    UpdateManager.pendingNodeSyncCounts.set(nodeId, currentCount + 1);
+  static incrementSyncCount(entityId: string): void {
+    const currentCount = UpdateManager.pendingNodeSyncCounts.get(entityId) || 0;
+    UpdateManager.pendingNodeSyncCounts.set(entityId, currentCount + 1);
   }
 
-  static decrementSyncCount(nodeId: string): void {
-    const currentCount = UpdateManager.pendingNodeSyncCounts.get(nodeId) || 1;
+  static decrementSyncCount(entityId: string): void {
+    const currentCount = UpdateManager.pendingNodeSyncCounts.get(entityId) || 1;
     if (currentCount - 1 <= 0) {
-      UpdateManager.pendingNodeSyncCounts.delete(nodeId);
+      UpdateManager.pendingNodeSyncCounts.delete(entityId);
     } else {
-      UpdateManager.pendingNodeSyncCounts.set(nodeId, currentCount - 1);
+      UpdateManager.pendingNodeSyncCounts.set(entityId, currentCount - 1);
     }
   }
 
@@ -322,10 +359,9 @@ export class UpdateManager {
     let syncData = syncDataBatch.shift();
     try {
       while (syncData) {
-        syncData.updates.forEach((update) => {
-          if (update.operation !== "updateNode") return;
-          UpdateManager.incrementSyncCount(update.oldProps.id);
-        });
+        const outgoingEntityIds = getEntityIdsFromUpdates(syncData);
+        outgoingEntityIds.forEach((id) => UpdateManager.incrementSyncCount(id));
+
         logger.debug("Sending sync data", syncData);
         let endpoint = "/api/sync";
 
@@ -358,10 +394,8 @@ export class UpdateManager {
           await this.fetchLatestDataSnapshot();
           return;
         }
-        syncData.updates.forEach((update) => {
-          if (update.operation !== "updateNode") return;
-          UpdateManager.decrementSyncCount(update.oldProps.id);
-        });
+        const settledEntityIds = getEntityIdsFromUpdates(syncData);
+        settledEntityIds.forEach((id) => UpdateManager.decrementSyncCount(id));
         console.log("Sync map", UpdateManager.pendingNodeSyncCounts);
         syncData = syncDataBatch.shift();
       }

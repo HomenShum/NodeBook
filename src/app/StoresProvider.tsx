@@ -57,7 +57,7 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       if (!auth && !envAllowsMockAuth()) return logger.debug("Skip loading stores while auth is not enabled");
       if (auth?.isLoading) return logger.debug("Skip loading stores while auth is loading");
 
-      logger.debug("Starting to setup stores", auth);
+      logger.debug("Starting to setup stores", { ...auth });
       setIsLoading(true);
 
       if (auth && auth.user) {
