@@ -51,7 +51,7 @@ _Note: This is only necessary for changes that modify the existing database sche
 
 ## App instances
 
-Our application runs across multiple instances, each serving different purposes in our development pipeline. The diagram below illustrates how our branches map to different deployments and their corresponding databases. This setup allows us to maintain stable environments for development and testing while keeping historical snapshots of key architectural transitions.
+Our application runs across multiple instances, each serving different purposes in our development pipeline. The diagram below illustrates how our branches map to different deployments and their corresponding databases. This setup allows us to maintain stable environments for development and testing while keeping historical snapshots of key past architectural transitions.
 
 ![App instances](./app-instance-layout.png)
 
