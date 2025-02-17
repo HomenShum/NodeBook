@@ -10,7 +10,7 @@ import { getDb } from "@/db";
 import { createNodes, deleteNode, updateNode } from "@/db/graphNodes";
 import { createRelations, deleteRelation, updateRelation } from "@/db/graphRelations";
 import { upsertRelationList } from "@/db/relationLists";
-import { formatSyncErrorForLog, SyncError } from "@/db/SyncError";
+import { SyncError, formatSyncErrorForLog } from "@/db/SyncError";
 
 export const GET = withAuth(getHandler);
 async function getHandler(req: NextAuthenticatedRequest) {

@@ -6,11 +6,13 @@ declare const styles: {
   readonly "CopyURLIcon": string;
   readonly "DotInsideClickToCreateNode": string;
   readonly "ElbowArrow": string;
+  readonly "HasChildren": string;
   readonly "HeaderInListView": string;
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
   readonly "Hovered": string;
   readonly "LoadingSpinner": string;
+  readonly "NoteContentBullet": string;
   readonly "NoteContentPrefix": string;
   readonly "NoteContentRootBullet": string;
   readonly "NoteContentSection": string;

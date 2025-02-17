@@ -60,21 +60,32 @@ const Toggle = observer(function Toggle() {
     return graphStore.usersById.get(authorId)?.username || authorId;
   };
 
-  const tooltipContent = `Node's author: ${treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
-    }
-    Relation author: ${treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
+  const tooltipContent = `Node's author: ${
+    treeNode.object.authorId === userId ? "You" : getAuthorName(treeNode.object.authorId)
+  }
+    Relation author: ${
+      treeNode.relationWithParent.authorId === userId ? "You" : getAuthorName(treeNode.relationWithParent.authorId)
     }
     Created: ${new Date(treeNode.object.createdAt).toLocaleDateString()}
   `;
   const isEmpty = !treeNode.object.text.trim();
   const hasChildren = treeNode.childCount > 0;
-  const isNoteContentRoot = isNoteContent(treeNode) && treeNode.parentGroup.id === "noteContent";
+  const isNoteContentRoot =
+    isNoteContent(treeNode) &&
+    treeNode.parentGroup.id === "noteContent" &&
+    treeNode.parentGroup.nodes[0].id === treeNode.id;
   return (
     <div
       className={cn(
+        isNoteContent(treeNode) && !isNoteContentRoot && objectViewStyles.NoteContentBullet,
         objectViewStyles.RelatedObjectBulletContainer,
-        isEmpty && !hasChildren && !settingsStore.showBulletForEmptyNode && objectViewStyles.Hidden,
+        isEmpty &&
+          !isNoteContent(treeNode) &&
+          !hasChildren &&
+          !settingsStore.showBulletForEmptyNode &&
+          objectViewStyles.Hidden,
         isNoteContentRoot && objectViewStyles.NoteContentRootBullet,
+        hasChildren && objectViewStyles.HasChildren,
       )}
       data-tooltip={tooltipContent}
     >

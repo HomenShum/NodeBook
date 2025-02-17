@@ -108,17 +108,17 @@ Bullet
   opacity: 1;
 }
 
-.RelatedObjectContent:focus-within,
+/* .RelatedObjectContent:focus-within,
 .NoteContentSection .RelatedObjectContent .RelatedObjectBulletContainer {
   opacity: 1;
-}
+} */
 
-.NoteContentSection:focus-within
+/* .NoteContentSection:focus-within
   .NoteContentSection
   .RelatedObjectContent:focus-within
   .RelatedObjectBulletContainer.Hidden {
   opacity: 0;
-}
+} */
 
 /* 
 Tooltip
@@ -554,4 +554,23 @@ Right Area
   position: absolute;
   left: -40px;
   top: 2px;
+}
+
+.NoteContentBullet {
+  opacity: 0;
+}
+
+.RelatedObjectContent .NoteContentRootBullet {
+  opacity: 1;
+}
+
+.RelatedObjectContent .RelatedObjectBulletContainer.HasChildren {
+  opacity: 1;
+}
+
+.RelatedObjectContent:hover .NoteContentBullet:has(+ .RelatedObjectNode:has(.RelatedObjectContainer)),
+.RelatedObjectContent:hover .NoteContentRootBullet,
+.RelatedObjectContent:focus-within .NoteContentBullet:has(+ .RelatedObjectNode:has(.RelatedObjectContainer)),
+.RelatedObjectContent:focus-within .NoteContentRootBullet {
+  opacity: 1;
 }
