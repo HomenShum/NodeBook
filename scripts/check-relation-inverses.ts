@@ -27,7 +27,7 @@ async function checkRelationInverses(dryRun = true) {
         if (!dryRun) {
           await db
             .update(relationTypeTable)
-            .set({ reverseLabel: computedReverseLabel })
+            .set({ reverseLabel: computedReverseLabel?.toString() })
             .where(eq(relationTypeTable.id, relationType.id));
           console.log("Updated reverse label");
         }
