@@ -1,4 +1,6 @@
 {
+  "parent": "child",
+  "child": "parent",
   "since": "start time of",
   "start time of": "since",
   "due to": "reason for",
@@ -179,7 +181,6 @@
   "idolizes": "idolized by",
   "roomed with": "roomed with",
   "friend of": "friend of",
-  "child": "the child of",
   "author": "authored by",
   "inventor": "invented by",
   "employee": "employed by",
