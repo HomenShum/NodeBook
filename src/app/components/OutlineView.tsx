@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
 import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import GraphContainer from "@/app/components/GraphView/GraphContainer";
 import OutlineContent from "@/app/components/OutlineContent";
+import { PageTitleUpdater } from "@/app/components/PageTitleUpdater";
 import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 import RightSidebar from "@/app/components/RightSidebar/RightSidebar";
 import { Tree } from "@/app/tree/Tree";
@@ -46,6 +47,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
           [appStyles.ViewContainerFull]: !viewStore.leftSidebarOpen,
         })}
       >
+        <PageTitleUpdater tree={tree} />
         <QuickCapture />
         <div className={s.WindowNav}>
           <Breadcrumbs treeNode={treeRoot} />
