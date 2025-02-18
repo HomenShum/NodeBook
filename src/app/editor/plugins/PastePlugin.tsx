@@ -1,7 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, COMMAND_PRIORITY_LOW, KEY_DOWN_COMMAND, PASTE_COMMAND } from "lexical";
-import { useEffect, useRef } from "react";
 import Promise from "lie";
+import { useEffect, useRef } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -232,12 +232,12 @@ export const PastePlugin = () => {
 
           // Retreive all new node paths from tree.state using the list of all new relations.
           // We require that treeNode's path is a prefix.
-          const allPaths = tree.state.descendantTreeNodesById.keys();
-          const prefix = treeNode.path;
-          const newPaths = Array.from(allPaths).filter((path) => path.startsWith(prefix));
-          for (const path of newPaths) {
-            tree.setPathExpanded(path, true);
-          }
+          // const allPaths = tree.state.descendantTreeNodesById.keys();
+          // const prefix = treeNode.path;
+          // const newPaths = Array.from(allPaths).filter((path) => path.startsWith(prefix));
+          // for (const path of newPaths) {
+          //   tree.setPathExpanded(path, true);
+          // }
           unfurlLinks(pastedNodeIds, graphStore);
           return true;
         }
