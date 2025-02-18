@@ -811,7 +811,12 @@ export class Tree {
    * to the new parent. If `after` is provided, the node will be positioned
    * after the given node in the new parent's children.
    */
-  async setParentOfNode(treeNodeId: string, newParentObjectId: string, after?: Positioner<DescendantTreeNode>) {
+  async setParentOfNode(
+    treeNodeId: string,
+    newParentObjectId: string,
+    after?: Positioner<DescendantTreeNode>,
+    groupId?: GroupId,
+  ) {
     const treeNode = this.getNodeOrThrow(treeNodeId);
     const txs: TxCombined = [];
     txs.push({
@@ -823,6 +828,17 @@ export class Tree {
         after: after instanceof DescendantTreeNode ? after.relationWithParent : after,
       },
     });
+    if (groupId === "noteContent" && treeNode.parent.relationWithParent) {
+      txs.push({
+        type: "addRelationToList",
+        transaction: {
+          objectId: newParentObjectId,
+          relationId: treeNode.relationWithParent.id,
+          listType: "noteContent",
+          after: treeNode.parent.relationWithParent,
+        },
+      });
+    }
     this.graphStore.applyCombinedTransaction(txs);
   }
 
@@ -1015,7 +1031,8 @@ export class Tree {
       if (nodes.length === 0) continue;
       const parent = nodes[0].parent;
       if (parent instanceof RootTreeNode) continue; // can't dedent past the root
-      parent.parentGroup.add(nodes, parent);
+
+      await parent.parentGroup.add(nodes, parent);
     }
     return true;
   }
