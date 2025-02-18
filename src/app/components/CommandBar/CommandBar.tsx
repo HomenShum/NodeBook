@@ -18,6 +18,7 @@ import { useToast } from "@/app/hooks/useToast";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
+import { USER_ROOT_ID_PREFIX } from "@/lib/constants";
 import { cn, isMac } from "@/lib/utils";
 
 import styles from "./CommandBar.module.css";
@@ -296,6 +297,11 @@ const CommandBar = observer(() => {
                         <Star size={16} />
                       </span>
                     )}
+                    {command.type === "navigate" &&
+                      command.object instanceof GraphNode &&
+                      command.object.id.startsWith(USER_ROOT_ID_PREFIX) && (
+                        <span className={styles.RelTypeIndicator}>User</span>
+                      )}
                   </span>
                   {command.type !== "create" && <Path path={command.path} skipLast={true} />}
                 </div>
