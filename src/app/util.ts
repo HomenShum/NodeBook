@@ -143,6 +143,10 @@ export function createRouteUrl(path?: ObjectPath | GraphRelation[] | string): st
   if (!path) {
     return pathPrefix;
   } else if (typeof path === "string") {
+    // If path doesn't start with a slash, add it
+    if (!path.startsWith("/")) {
+      path = "/" + path;
+    }
     return pathPrefix + path;
   } else {
     const objectPath = Array.isArray(path) ? relationsToObjectPath(path) : path;
