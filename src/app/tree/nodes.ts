@@ -1,4 +1,3 @@
-import { captureMessage } from "@sentry/nextjs";
 import { LexicalEditor } from "lexical";
 
 import { env } from "@/app/envFrontend";
@@ -394,9 +393,9 @@ export class DescendantTreeNode extends BaseTreeNode {
     return node?.parentGroup === this.parentGroup ? node : null;
   }
 
-  async setParent(parent: BaseTreeNode, after?: Positioner<DescendantTreeNode>) {
+  async setParent(parent: BaseTreeNode, after?: Positioner<DescendantTreeNode>, groupId?: GroupId) {
     if (this.parent.object === parent.object) return;
-    await this.tree.setParentOfNode(this.id, parent.object.id, after);
+    await this.tree.setParentOfNode(this.id, parent.object.id, after, groupId);
   }
 
   /**
@@ -683,7 +682,7 @@ export class NoteContentGroup extends BaseGroup {
    */
   async add(nodes: DescendantTreeNode[], after?: Positioner<DescendantTreeNode>) {
     for (const node of nodes) {
-      await node.setParent(this.parent, after);
+      await node.setParent(this.parent, after, "noteContent");
       this.parent.object.addRelationToNoteContent(
         node.relationWithParent,
         after instanceof DescendantTreeNode ? after.relationWithParent : after,
