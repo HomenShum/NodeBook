@@ -2,6 +2,7 @@ import { Maximize2, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
+import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
@@ -9,6 +10,7 @@ import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
+import hashtagSidebarStyles from "./HashtagTree.module.css";
 import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
 
@@ -67,6 +69,21 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
     [viewStore, openNewTab, handleNavigation, setRoot],
   );
 
+  const handlePinClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => {
+      e.stopPropagation();
+      const relation = object.relations.find((r) => r.from.id === object.id && r.to.id === child.id);
+      if (!relation) return;
+
+      if (object.isRelationPinned(relation)) {
+        object.unpinChildRelation(relation);
+      } else {
+        object.pinChildRelation(relation);
+      }
+    },
+    [object],
+  );
+
   return (
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
@@ -81,9 +98,20 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
       <div className={styles.SidebarTreeChildren}>
         {isExpanded &&
           pinnedUniqueChildren.map((o) => (
-            <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)} key={o.id}>
-              {o.text}
-            </Button>
+            <div key={o.id} className={hashtagSidebarStyles.HashtagRow}>
+              <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)}>
+                {o.text}
+              </Button>
+              <Button
+                variant="ghostSmooth"
+                className={cn(hashtagSidebarStyles.PinButton, hashtagSidebarStyles.Pinned)}
+                onClick={(e) => handlePinClick(e, o)}
+              >
+                <div className={hashtagSidebarStyles.PinIcon}>
+                  <PinCustomIcon />
+                </div>
+              </Button>
+            </div>
           ))}
       </div>
       {isExpanded && pinnedUniqueChildren.length > 0 && <hr style={{ width: "80%", opacity: "0.3" }} />}
@@ -92,11 +120,28 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           <div className={styles.EmptyMessage}>No hashtags yet</div>
         ) : (
           isExpanded &&
-          uniqueChildren.map((o) => (
-            <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)} key={o.id}>
-              {o.text}
-            </Button>
-          ))
+          uniqueChildren.map((o) => {
+            const relation = object.relations.find((r) => r.from.id === object.id && r.to.id === o.id);
+            return (
+              <div key={o.id} className={hashtagSidebarStyles.HashtagRow}>
+                <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)}>
+                  {o.text}
+                </Button>
+                <Button
+                  variant="ghostSmooth"
+                  className={cn(hashtagSidebarStyles.PinButton, {
+                    [hashtagSidebarStyles.Pinned]: relation && object.isRelationPinned(relation),
+                    [hashtagSidebarStyles.Unpinned]: !relation || !object.isRelationPinned(relation),
+                  })}
+                  onClick={(e) => handlePinClick(e, o)}
+                >
+                  <div className={hashtagSidebarStyles.PinIcon}>
+                    <PinCustomIcon />
+                  </div>
+                </Button>
+              </div>
+            );
+          })
         )}
       </div>
     </>

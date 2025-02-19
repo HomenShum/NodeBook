@@ -124,3 +124,45 @@
 .Button:hover .SearchIcon {
   opacity: 1;
 }
+
+.ButtonContainer {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.PinButton {
+  opacity: 0;
+  padding: 4px;
+  margin-left: 4px;
+}
+
+.ButtonContainer:hover .PinButton {
+  opacity: 0.5;
+}
+
+.PinButton:hover {
+  opacity: 1 !important;
+}
+
+.PinButton.Pinned {
+  opacity: 1;
+}
+
+.PinIcon {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.PinButtonHover {
+  opacity: 0;
+  padding: 4px;
+  margin-left: 4px;
+}
+
+.PinButtonHover:hover {
+  opacity: 1 !important;
+}

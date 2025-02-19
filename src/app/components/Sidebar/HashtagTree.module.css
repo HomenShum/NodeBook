@@ -1,0 +1,56 @@
+.HashtagRow {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.PinButton {
+  position: relative;
+  transition: opacity 0.3s;
+  color: var(--gray-8);
+  opacity: 0;
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  margin-left: 4px;
+  margin-right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.HashtagRow:hover .PinButton {
+  opacity: 0.5;
+}
+
+.PinButton:hover {
+  opacity: 1 !important;
+  background-color: var(--gray-3);
+}
+
+.PinButton.Pinned {
+  color: var(--teal-8);
+  opacity: 1;
+}
+
+.PinButton.Unpinned:hover {
+  color: var(--teal-9);
+  background-color: var(--teal-2);
+}
+
+.PinButton.Pinned:hover {
+  color: var(--tomato-9);
+  background-color: var(--tomato-2);
+}
+
+.PinIcon {
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scaleX(-1) scale(0.8) translate(-1px, 1px);
+}

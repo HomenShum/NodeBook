@@ -1,7 +1,10 @@
 import {
   bigint,
   boolean,
+  customType,
+  index,
   integer,
+  json,
   pgEnum,
   pgTable,
   serial,
@@ -9,9 +12,6 @@ import {
   timestamp,
   unique,
   uuid,
-  customType,
-  index,
-  json,
 } from "drizzle-orm/pg-core";
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
