@@ -1,6 +1,6 @@
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -41,11 +41,13 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
   return (
     <div className={styles.SidebarTreeContainer}>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
-        <span>My Shortlinks</span>
-        <div className={styles.HeaderControls}>
-          <Button variant="ghost" className={styles.HeaderButton} onClick={() => setIsExpanded(!isExpanded)}>
-            <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
-          </Button>
+        <div className={styles.HeaderLeft}>
+          <span>My Shortlinks</span>
+          <div className={styles.HeaderControls}>
+            <Button variant="ghost" className={styles.HeaderButton} onClick={() => setIsExpanded(!isExpanded)}>
+              <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+            </Button>
+          </div>
         </div>
       </div>
       {isExpanded && (

@@ -94,15 +94,10 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   const handleMainClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
-      if (e.shiftKey) {
-        viewStore.createSidebarTree(object);
-      } else if (e.metaKey) {
-        openNewTab(object);
-      } else {
-        setIsExpanded(!isExpanded);
-      }
+
+      setIsExpanded(!isExpanded);
     },
-    [viewStore, object, openNewTab, isExpanded],
+    [isExpanded],
   );
 
   const handleChildClick = useCallback(
@@ -140,10 +135,14 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   return (
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
-        <span>Local Hashtags</span>
-        <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
-          <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
-        </Button>
+        <div className={styles.HeaderLeft}>
+          <span>Local Hashtags</span>
+          <div className={styles.HeaderControls}>
+            <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
+              <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+            </Button>
+          </div>
+        </div>
       </div>
       <div
         ref={scrollParentRef}

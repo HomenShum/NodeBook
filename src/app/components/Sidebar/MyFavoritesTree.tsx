@@ -31,14 +31,20 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
   return (
     <div className={styles.SidebarTreeContainer}>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
-        <span>My Favorites</span>
-        <div className={styles.HeaderControls}>
-          <Button variant="ghost" className={styles.HeaderButton} onClick={() => setIsExpanded(!isExpanded)}>
-            <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
-          </Button>
-          <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => viewStore.createSidebarTree(object)}>
-            <Maximize2 size={16} />
-          </Button>
+        <div className={styles.HeaderLeft}>
+          <span>My Favorites</span>
+          <div className={styles.HeaderControls}>
+            <Button variant="ghost" className={styles.HeaderButton} onClick={() => setIsExpanded(!isExpanded)}>
+              <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+            </Button>
+            <Button
+              variant="ghost"
+              className={styles.HeaderButton}
+              onClick={(e) => viewStore.createSidebarTree(object)}
+            >
+              <Maximize2 size={16} />
+            </Button>
+          </div>
         </div>
       </div>
       <div className={styles.SidebarTreeChildren}>

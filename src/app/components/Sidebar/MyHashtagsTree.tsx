@@ -1,4 +1,4 @@
-import { Maximize2, Play } from "lucide-react";
+import { Clock, Maximize2, Play, SortAsc } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
@@ -14,6 +14,8 @@ import hashtagSidebarStyles from "./HashtagTree.module.css";
 import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
 
+type SortType = "alphanumeric" | "created";
+
 interface TreeElementProps {
   object: GraphObject;
 }
@@ -23,6 +25,8 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
   const setRoot = useSetMainRoot();
   const openNewTab = useOpenNewTab();
   const [isExpanded, setIsExpanded] = useState(true);
+  const [sortType, setSortType] = useState<SortType>("alphanumeric");
+
   const pinnedUniqueChildren = Array.from(
     new Set(
       [...object.pinnedRelationsWithPositions]
@@ -30,7 +34,23 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
         .map(({ relation }) => relation.to),
     ),
   );
-  const uniqueChildren = [...new Set(object.children)];
+
+  const sortNodes = (nodes: GraphObject[]) => {
+    return [...nodes].sort((a, b) => {
+      if (sortType === "alphanumeric") {
+        return a.text.localeCompare(b.text);
+      } else {
+        return (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0);
+      }
+    });
+  };
+
+  const uniqueChildren = sortNodes([...new Set(object.children)]);
+  const sortedPinnedChildren = sortNodes(pinnedUniqueChildren);
+
+  const toggleSort = useCallback(() => {
+    setSortType((current) => (current === "alphanumeric" ? "created" : "alphanumeric"));
+  }, []);
 
   const handleNavigation = useCallback(
     (action: () => void) => {
@@ -101,19 +121,32 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
   return (
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
-        <span>{object.text}</span>
+        <div className={styles.HeaderLeft}>
+          <span>{object.text}</span>
+          <span className={styles.NodeCount}>{uniqueChildren.length}</span>
 
-        <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
-          <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+          <div className={styles.HeaderControls}>
+            <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
+              <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+            </Button>
+            <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMaximizeClick(e)}>
+              <Maximize2 size={16} />
+            </Button>
+          </div>
+        </div>
+
+        <Button
+          variant="ghost"
+          className={styles.HeaderButton}
+          onClick={toggleSort}
+          title={`Sort by ${sortType === "alphanumeric" ? "creation date" : "name"}`}
+        >
+          {sortType === "alphanumeric" ? <SortAsc size={14} /> : <Clock size={14} />}
         </Button>
-        <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMaximizeClick(e)}>
-          <Maximize2 size={16} />
-        </Button>
-        <span className={styles.NodeCount}>{uniqueChildren.length}</span>
       </div>
       <div className={styles.SidebarTreeChildren}>
         {isExpanded &&
-          pinnedUniqueChildren.map((o) => (
+          sortedPinnedChildren.map((o) => (
             <div key={o.id} className={hashtagSidebarStyles.HashtagRow}>
               <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)}>
                 {o.text}
@@ -130,7 +163,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
             </div>
           ))}
       </div>
-      {isExpanded && pinnedUniqueChildren.length > 0 && <hr style={{ width: "80%", opacity: "0.3" }} />}
+      {isExpanded && sortedPinnedChildren.length > 0 && <hr style={{ width: "80%", opacity: "0.3" }} />}
       <div className={styles.SidebarTreeChildren}>
         {isExpanded && uniqueChildren.length === 0 ? (
           <div className={styles.EmptyMessage}>No hashtags yet</div>

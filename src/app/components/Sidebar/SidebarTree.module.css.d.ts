@@ -5,8 +5,10 @@ declare const styles: {
   readonly "EmptyMessage": string;
   readonly "HeaderButton": string;
   readonly "HeaderControls": string;
+  readonly "HeaderLeft": string;
   readonly "IconBox": string;
   readonly "IconExpanded": string;
+  readonly "IconRotated": string;
   readonly "NodeCount": string;
   readonly "PinButton": string;
   readonly "PinButtonHover": string;
