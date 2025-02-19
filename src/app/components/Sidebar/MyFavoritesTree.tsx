@@ -1,6 +1,6 @@
 import { Maximize2, Play, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -28,6 +28,20 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
   const object = graphStore.myFavoritesNode;
   const uniqueChildren = [...new Set(object.children)];
 
+  const handleMaximizeClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      if (e.shiftKey) {
+        viewStore.createSidebarTree(object);
+      } else if (e.metaKey) {
+        openNewTab(object);
+      } else {
+        setRoot(object);
+      }
+    },
+    [viewStore, object, openNewTab, isExpanded],
+  );
+
   return (
     <div className={styles.SidebarTreeContainer}>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
@@ -37,11 +51,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
             <Button variant="ghost" className={styles.HeaderButton} onClick={() => setIsExpanded(!isExpanded)}>
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
-            <Button
-              variant="ghost"
-              className={styles.HeaderButton}
-              onClick={(e) => viewStore.createSidebarTree(object)}
-            >
+            <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMaximizeClick(e)}>
               <Maximize2 size={16} />
             </Button>
           </div>
