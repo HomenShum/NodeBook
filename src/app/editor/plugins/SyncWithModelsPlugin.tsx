@@ -110,12 +110,12 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
         case "editor": {
           if (tree.selection.treeNodeId === treeNodeId) {
             if (!isFocused) {
-              tree.selection.scrollToCenter &&
-                editor.getRootElement()?.scrollIntoView({
-                  behavior: "instant", //scrollIntoView with "smooth" causes a reflow in mew
-                  block: "center",
-                });
-              console.log("scrolled");
+              // tree.selection.scrollToCenter &&
+              //   editor.getRootElement()?.scrollIntoView({
+              //     behavior: "instant", //scrollIntoView with "smooth" causes a reflow in mew
+              //     block: "center",
+              //   });
+              // console.log("scrolled");
               editor.focus();
             }
             const editorSelectionPosition = editor.getEditorState().read($getSelectionPosition);
