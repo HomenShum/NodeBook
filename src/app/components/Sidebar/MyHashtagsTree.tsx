@@ -88,12 +88,14 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
         <span>{object.text}</span>
+
         <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
           <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
         </Button>
         <Button variant="ghost" className={styles.HeaderButton} onClick={() => setRoot(object)}>
           <Maximize2 size={16} />
         </Button>
+        <span className={styles.NodeCount}>{uniqueChildren.length}</span>
       </div>
       <div className={styles.SidebarTreeChildren}>
         {isExpanded &&
