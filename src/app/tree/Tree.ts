@@ -1791,9 +1791,18 @@ export class Tree {
               this.selection.headNodeId = latestUp.headId;
               return true;
             }
+            const headIsLastMultiLineNoteNode =
+              head.parentGroup.id === "noteContent" && head.siblingBelowInSameGroup === null;
+            if (headIsLastMultiLineNoteNode) {
+              // selection head is now the multiline note root node
+              const rootNode = head.parent;
+              this.selectionStack.push(dir, rootNode.path);
+              this.selection = { type: "node", anchorNodeId: rootNode.path, headNodeId: rootNode.path };
+              return true;
+            }
             //If anchor is a descendant of head, move head towards anchor instead of subtree.
             //Example: 1 <-H        Output: 1
-            //           2 <-A                2 <-A,H
+            //           2 <-A                2 <-A
             //         3                    3
             //Example: 1 <-H,A        Output: 1 <-A
             //           2                      2
