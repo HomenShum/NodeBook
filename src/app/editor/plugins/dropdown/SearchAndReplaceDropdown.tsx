@@ -14,14 +14,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Path } from "@/app/components/Path";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
+import relationComboboxStyles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
 import { graphNodeIsCustomRelType } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { DescendantTreeNode } from "@/app/tree/nodes";
+import { USER_MY_HASHTAGS_NODE_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import relationComboboxStyles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
 
 import styles from "./DropdownPlugin.module.css";
 
@@ -237,7 +238,13 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
                       )}
                       {match.type === "node" && graphNodeIsCustomRelType(match.object, true) ? (
                         <div className={styles.RelTypeIndicator}>Type</div>
+                      ) : match.object.relations.some((r) => {
+                          console.log(r.from.id);
+                          return r.from.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX);
+                        }) ? (
+                        <div className={styles.RelTypeIndicator}> # </div>
                       ) : null}
+
                       {match.type === "relation" ? <div className={styles.RelTypeIndicator}>Relation</div> : null}
                       {match.type === "node" ? <RelationCounter object={match.object} showTooltip={false} /> : null}
                     </div>
