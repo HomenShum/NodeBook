@@ -238,7 +238,7 @@ export const PastePlugin = () => {
           // for (const path of newPaths) {
           //   tree.setPathExpanded(path, true);
           // }
-          unfurlLinks(pastedNodeIds, graphStore);
+          !shiftKey && unfurlLinks(pastedNodeIds, graphStore);
           return true;
         }
         return false;
