@@ -36,7 +36,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
           <Button variant="ghost" className={styles.HeaderButton} onClick={() => setIsExpanded(!isExpanded)}>
             <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
           </Button>
-          <Button variant="ghost" className={styles.HeaderButton} onClick={() => setRoot(object)}>
+          <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => viewStore.createSidebarTree(object)}>
             <Maximize2 size={16} />
           </Button>
         </div>

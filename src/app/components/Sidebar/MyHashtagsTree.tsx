@@ -92,7 +92,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
         <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
           <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
         </Button>
-        <Button variant="ghost" className={styles.HeaderButton} onClick={() => setRoot(object)}>
+        <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMainClick(e)}>
           <Maximize2 size={16} />
         </Button>
         <span className={styles.NodeCount}>{uniqueChildren.length}</span>
