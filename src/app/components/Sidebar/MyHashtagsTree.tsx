@@ -56,6 +56,20 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
     [viewStore, object, openNewTab, isExpanded],
   );
 
+  const handleMaximizeClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      if (e.shiftKey) {
+        viewStore.createSidebarTree(object);
+      } else if (e.metaKey) {
+        openNewTab(object);
+      } else {
+        setRoot(object);
+      }
+    },
+    [viewStore, object],
+  );
+
   const handleChildClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => {
       if (e.shiftKey) {
@@ -92,7 +106,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
         <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
           <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
         </Button>
-        <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMainClick(e)}>
+        <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMaximizeClick(e)}>
           <Maximize2 size={16} />
         </Button>
         <span className={styles.NodeCount}>{uniqueChildren.length}</span>

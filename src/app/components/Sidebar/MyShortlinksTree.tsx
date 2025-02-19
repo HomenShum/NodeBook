@@ -1,13 +1,13 @@
 import { Play } from "lucide-react";
-import { useEffect, useState } from "react";
-import React from "react";
 import { observer } from "mobx-react-lite";
+import React, { useEffect, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
-import { cn } from "@/lib/utils";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSlugs } from "@/app/contexts/SlugContext";
 import { useSetMainRoot } from "@/app/tree/utils";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { cn } from "@/lib/utils";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
@@ -17,7 +17,7 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
   const { slugs, fetchAllSlugs } = useSlugs();
   const setRoot = useSetMainRoot();
   const graphStore = useGraphStore();
-
+  const viewStore = useViewStore();
   useEffect(() => {
     fetchAllSlugs();
   }, []);
@@ -26,13 +26,16 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
     graphStore.layerManager.loadWithIds(Object.keys(slugs));
   }, [graphStore.layerManager, slugs]);
 
-  const handleOnClick = (nodeId: string) => {
+  const handleOnClick = (e: React.MouseEvent<HTMLButtonElement>, nodeId: string) => {
+    e.stopPropagation();
     const node = graphStore.nodesById.get(nodeId);
-    if (node) {
+    if (!node) return;
+    if (e.shiftKey) {
+      viewStore.createSidebarTree(node);
+    } else {
       setRoot(node);
-      return;
+      window.location.href = "/" + slugs[nodeId];
     }
-    window.location.href = "/" + slugs[nodeId];
   };
 
   return (
@@ -51,7 +54,12 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
             <div className={styles.EmptyMessage}>No links yet</div>
           ) : (
             Array.from(Object.keys(slugs)).map((nodeId) => (
-              <Button onClick={() => handleOnClick(nodeId)} key={nodeId} variant="ghost" className={cn(styles.Button)}>
+              <Button
+                onClick={(e) => handleOnClick(e, nodeId)}
+                key={nodeId}
+                variant="ghost"
+                className={cn(styles.Button)}
+              >
                 /{slugs[nodeId]}
               </Button>
             ))
