@@ -1,6 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, COMMAND_PRIORITY_LOW, KEY_DOWN_COMMAND, PASTE_COMMAND } from "lexical";
-import Promise from "lie";
 import { useEffect, useRef } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
@@ -11,10 +10,212 @@ import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
+import { useToast } from "@/app/hooks/useToast";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
 import { getAuthFetch, uuid } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { PasteLinksOption } from "@/db/schema";
+import { HASHTAG_SYMBOL } from "@/lib/utils";
+
+// Helper function to extract hashtags from text content
+const extractHashtags = (chips: Chip[]): string[] => {
+  const hashtags: string[] = [];
+  let currentHashtag = "";
+  let isInHashtag = false;
+
+  for (const chip of chips) {
+    if (chip.type !== "text") continue;
+
+    const text = chip.value;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+
+      if (char === HASHTAG_SYMBOL) {
+        if (currentHashtag) hashtags.push(currentHashtag);
+        currentHashtag = "";
+        isInHashtag = true;
+        continue;
+      }
+
+      if (isInHashtag) {
+        if (/[a-zA-Z0-9_-]/.test(char)) {
+          currentHashtag += char;
+        } else {
+          if (currentHashtag) hashtags.push(currentHashtag);
+          currentHashtag = "";
+          isInHashtag = false;
+        }
+      }
+    }
+
+    if (isInHashtag && currentHashtag) {
+      hashtags.push(currentHashtag);
+    }
+  }
+
+  return hashtags;
+};
+
+type HashtagProcessingResult = {
+  linkedCount: number;
+  createdCount: number;
+};
+
+// Helper function to process hashtags after paste
+const processHashtags = async (
+  pastedNodeIds: string[],
+  graphStore: GraphStore,
+): globalThis.Promise<HashtagProcessingResult> => {
+  const txs: TxCombined = [];
+  const hashtagsByText = new Map<string, string>(); // text -> nodeId
+  let linkedCount = 0;
+  let createdCount = 0;
+
+  // First pass: collect all hashtags and create/find nodes for them
+  for (const nodeId of pastedNodeIds) {
+    const node = graphStore.getNode(nodeId);
+    if (!node) continue;
+
+    const hashtags = extractHashtags(node.content);
+    for (const hashtagText of hashtags) {
+      if (hashtagsByText.has(hashtagText)) continue;
+
+      // Check if hashtag exists in myHashtags
+      const existingHashtag = Array.from(graphStore.getNode(graphStore.myHashtagsNodeId)?.children ?? []).find(
+        (node) => node.text === `#${hashtagText}`,
+      );
+
+      if (existingHashtag) {
+        hashtagsByText.set(hashtagText, existingHashtag.id);
+      } else {
+        const newNodeId = uuid();
+        hashtagsByText.set(hashtagText, newNodeId);
+
+        // Create new hashtag node
+        txs.push({
+          type: "addChildNode",
+          transaction: {
+            parentId: graphStore.myHashtagsNodeId,
+            nodeProps: {
+              id: newNodeId,
+              content: [{ type: "text", value: `#${hashtagText}` }],
+            },
+            after: -1,
+          },
+        });
+        createdCount++;
+      }
+    }
+  }
+
+  // Second pass: create relations and convert hashtags to mention chips
+  for (const nodeId of pastedNodeIds) {
+    const node = graphStore.getNode(nodeId);
+    if (!node) continue;
+
+    const newContent: Chip[] = [];
+    let currentText = "";
+    let isInHashtag = false;
+    let currentHashtag = "";
+
+    // Process each chip and convert hashtags to mention chips
+    for (const chip of node.content) {
+      if (chip.type !== "text") {
+        if (currentText) {
+          newContent.push({ type: "text", value: currentText });
+          currentText = "";
+        }
+        newContent.push(chip);
+        continue;
+      }
+
+      const text = chip.value;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+
+        if (char === HASHTAG_SYMBOL) {
+          if (currentText) {
+            newContent.push({ type: "text", value: currentText });
+            currentText = "";
+          }
+          if (currentHashtag) {
+            const hashtagNodeId = hashtagsByText.get(currentHashtag);
+            if (hashtagNodeId) {
+              newContent.push({ type: "mention", value: hashtagNodeId, mentionTrigger: HASHTAG_SYMBOL });
+              linkedCount++;
+            }
+          }
+          currentHashtag = "";
+          isInHashtag = true;
+          continue;
+        }
+
+        if (isInHashtag) {
+          if (/[a-zA-Z0-9_-]/.test(char)) {
+            currentHashtag += char;
+          } else {
+            if (currentHashtag) {
+              const hashtagNodeId = hashtagsByText.get(currentHashtag);
+              if (hashtagNodeId) {
+                newContent.push({ type: "mention", value: hashtagNodeId, mentionTrigger: HASHTAG_SYMBOL });
+                linkedCount++;
+              }
+            }
+            currentHashtag = "";
+            isInHashtag = false;
+            currentText += char;
+          }
+        } else {
+          currentText += char;
+        }
+      }
+    }
+
+    // Handle any remaining text or hashtag
+    if (currentText) {
+      newContent.push({ type: "text", value: currentText });
+    }
+    if (currentHashtag) {
+      const hashtagNodeId = hashtagsByText.get(currentHashtag);
+      if (hashtagNodeId) {
+        newContent.push({ type: "mention", value: hashtagNodeId, mentionTrigger: HASHTAG_SYMBOL });
+        linkedCount++;
+      }
+    }
+
+    // Update node content with new chips
+    txs.push({
+      type: "updateNode",
+      transaction: {
+        nodeId: node.id,
+        nodeProps: {
+          content: newContent,
+        },
+      },
+    });
+
+    // Create relations between the node and hashtags
+    for (const hashtagText of extractHashtags(node.content)) {
+      const hashtagNodeId = hashtagsByText.get(hashtagText);
+      if (!hashtagNodeId) continue;
+
+      txs.push({
+        type: "addRelation",
+        transaction: {
+          fromId: nodeId,
+          toId: hashtagNodeId,
+          relationTypeId: graphStore.relationTypesById.relatedTo.id,
+        },
+      });
+    }
+  }
+
+  if (txs.length > 0) {
+    await graphStore.applyCombinedTransaction(txs);
+  }
+
+  return { linkedCount, createdCount };
+};
 
 /**
  * Plugin that allows pasting multiple lines of text into a node.
@@ -25,6 +226,7 @@ export const PastePlugin = () => {
   const viewStore = useViewStore();
   const [editor] = useLexicalComposerContext();
   const { treeNode } = useTreeNode();
+  const { addToast } = useToast();
   const tree = treeNode.tree;
   const { object, relationWithParent, path } = treeNode;
   const shiftWasPressed = useRef<boolean>(false);
@@ -52,196 +254,214 @@ export const PastePlugin = () => {
         shiftWasPressed.current = false;
         if (!(object instanceof GraphNode) || !event.clipboardData) return false;
 
-        // Collect all the new node IDs created during pasting
-        // and the ID of the first existing node in-which the paste event occurs
-        const pastedNodeIds = [object.id];
+        const clipboardData = event.clipboardData;
 
-        const mewData = event.clipboardData.getData(MEW_CLIPBOARD_MIMETYPE);
-        const lines = normalizeDepth(
-          mewData
-            ? getLinesFromMewData(mewData, shiftKey)
-            : getLinesFromPlainText(event.clipboardData.getData("text/plain"), shiftKey),
-        );
+        // Handle the paste operation in an async IIFE
+        (async () => {
+          // Collect all the new node IDs created during pasting
+          // and the ID of the first existing node in-which the paste event occurs
+          const pastedNodeIds = [object.id];
 
-        let txs: TxCombined = [];
-        let convertToNote = false;
-        const newRootId = uuid();
-        // If there are multiple lines and viewType is note, convert the node to note
-        if (lines.length > 1 && viewStore.viewType === "note" && treeNode.parentGroup.id !== "noteContent") {
-          let noteConversion = tree.convertToNote(treeNode, false, true, newRootId);
-          if (noteConversion instanceof Array) {
-            txs.push(...noteConversion);
-            convertToNote = true;
-          }
-        }
+          const mewData = clipboardData.getData(MEW_CLIPBOARD_MIMETYPE);
+          const lines = normalizeDepth(
+            mewData
+              ? getLinesFromMewData(mewData, shiftKey)
+              : getLinesFromPlainText(clipboardData.getData("text/plain"), shiftKey),
+          );
 
-        // Get current relation types and create a map of relation type labels to ids so that we can easily
-        // check if a relation type already exists and get the id of a relation type by its label to set a child node's
-        // relation id.
-
-        const newRelTypeIdByLabel = new Map();
-
-        let allNewRelationIds: string[] = [];
-        if (lines.length > 0) {
-          // Insert the first line into the current node
-          const firstLine = lines.shift();
-          let groupId = treeNode.parentGroup.id;
-          if (convertToNote) {
-            groupId = "noteContent";
-          }
-          if (firstLine) {
-            const selection = $getSelection();
-            let newContent: Chip[];
-            if (selection) {
-              const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
-              newContent = [...chipsBefore, ...firstLine.chips, ...chipsAfter];
-            } else {
-              // There *should* be a selection in the case where we're handling a paste, but if somehow
-              // there isn't, we'll just append the first line to the current content.
-              newContent = [...object.content, ...firstLine.chips];
+          let txs: TxCombined = [];
+          let convertToNote = false;
+          const newRootId = uuid();
+          // If there are multiple lines and viewType is note, convert the node to note
+          if (lines.length > 1 && viewStore.viewType === "note" && treeNode.parentGroup.id !== "noteContent") {
+            let noteConversion = tree.convertToNote(treeNode, false, true, newRootId);
+            if (noteConversion instanceof Array) {
+              txs.push(...noteConversion);
+              convertToNote = true;
             }
+          }
 
-            // If the first line has a relation type, handle it accordingly.
-            let {
-              chips: newChips,
-              relationTypeLabel,
-              newRelationTypeId,
-              txs: newTxs,
-            } = getNewRelationType(graphStore, newContent, newRelTypeIdByLabel);
+          // Get current relation types and create a map of relation type labels to ids so that we can easily
+          // check if a relation type already exists and get the id of a relation type by its label to set a child node's
+          // relation id.
 
-            txs.push(...newTxs);
-            if (newRelationTypeId !== undefined) {
-              // if there's a new relation Type id, add it to the map and set
-              newRelTypeIdByLabel.set(relationTypeLabel, newRelationTypeId);
+          const newRelTypeIdByLabel = new Map();
+
+          let allNewRelationIds: string[] = [];
+          if (lines.length > 0) {
+            // Insert the first line into the current node
+            const firstLine = lines.shift();
+            let groupId = treeNode.parentGroup.id;
+            if (convertToNote) {
+              groupId = "noteContent";
             }
-            if (relationTypeLabel !== "child") {
-              // If the relation type is child, we don't need to update the relation
+            if (firstLine) {
+              const selection = $getSelection();
+              let newContent: Chip[];
+              if (selection) {
+                const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
+                newContent = [...chipsBefore, ...firstLine.chips, ...chipsAfter];
+              } else {
+                // There *should* be a selection in the case where we're handling a paste, but if somehow
+                // there isn't, we'll just append the first line to the current content.
+                newContent = [...object.content, ...firstLine.chips];
+              }
+
+              // If the first line has a relation type, handle it accordingly.
+              let {
+                chips: newChips,
+                relationTypeLabel,
+                newRelationTypeId,
+                txs: newTxs,
+              } = getNewRelationType(graphStore, newContent, newRelTypeIdByLabel);
+
+              txs.push(...newTxs);
+              if (newRelationTypeId !== undefined) {
+                // if there's a new relation Type id, add it to the map and set
+                newRelTypeIdByLabel.set(relationTypeLabel, newRelationTypeId);
+              }
+              if (relationTypeLabel !== "child") {
+                // If the relation type is child, we don't need to update the relation
+                txs.push({
+                  type: "updateRelation",
+                  transaction: {
+                    relationId: relationWithParent.id,
+                    relationProps: {
+                      relationTypeLabel: relationTypeLabel,
+                    },
+                  },
+                });
+              }
+
+              // Depth is ignored for the first line, since we just add it to the current node
               txs.push({
-                type: "updateRelation",
+                type: "updateNode",
                 transaction: {
-                  relationId: relationWithParent.id,
+                  nodeId: object.id,
+                  nodeProps: {
+                    content: newChips,
+                    isChecked: firstLine.isChecked !== undefined ? firstLine.isChecked : null,
+                  },
+                },
+              });
+
+              txs.push(...getLinkAdditionTxs(newChips, object.id, settingsStore.pasteLinksDropdown));
+            }
+
+            // Add to this arrays as depth increases during iterating over lines, remove as it decreases
+            const rootParent = convertToNote ? newRootId : treeNode.parent.object.id;
+            const objectsAtDepth: string[] = [rootParent, object.id];
+            const relationsAtDepth: string[] = ["UNUSED", relationWithParent.id];
+            let lastDepth = 0;
+
+            let createSiblingUnder = lines.length > 0;
+
+            // Then for the remaining lines, create children positioned after the correct parent
+            lines.forEach(({ chips, depth, isChecked }) => {
+              const newNodeId = uuid();
+              pastedNodeIds.push(newNodeId);
+              const relationId = uuid();
+              allNewRelationIds.push(relationId);
+
+              let {
+                chips: newChips,
+                relationTypeLabel,
+                newRelationTypeId,
+                txs: newTxs,
+              } = getNewRelationType(graphStore, chips, newRelTypeIdByLabel);
+
+              chips = newChips;
+              txs.push(...newTxs);
+              if (newRelationTypeId !== undefined) {
+                // if there's a new relation Type id, add it to the map and set
+                newRelTypeIdByLabel.set(relationTypeLabel, newRelationTypeId);
+              }
+              const existingRelType = graphStore.getRelationTypeByLabel(relationTypeLabel);
+              txs.push({
+                type: "addChildNode",
+                transaction: {
+                  parentId: objectsAtDepth[depth],
+                  nodeProps: { id: newNodeId, content: chips, isChecked },
                   relationProps: {
-                    relationTypeLabel: relationTypeLabel,
+                    id: relationId,
+                    relationTypeId: existingRelType
+                      ? existingRelType.relationType.id
+                      : newRelTypeIdByLabel.get(relationTypeLabel),
+                  },
+                  after: relationsAtDepth[depth + 1],
+                },
+              });
+
+              txs.push(...getLinkAdditionTxs(chips, newNodeId, settingsStore.pasteLinksDropdown));
+
+              // Add the newly created relations to the same group as this node's parent
+              if (groupId === "pinned" || (groupId === "noteContent" && depth === 0)) {
+                txs.push({
+                  type: "addRelationToList",
+                  transaction: {
+                    objectId: objectsAtDepth[depth],
+                    relationId: relationId,
+                    listType: groupId,
+                    after: relationsAtDepth[depth + 1],
+                  },
+                });
+              }
+
+              // When we go a level more shallow, remove the objects and relations up of the current level
+              if (depth < lastDepth) {
+                objectsAtDepth.splice(depth + 1);
+                relationsAtDepth.splice(depth + 1);
+              }
+              lastDepth = depth;
+
+              objectsAtDepth[depth + 1] = newNodeId;
+              relationsAtDepth[depth + 1] = relationId;
+            });
+
+            let siblingRelId = uuid();
+            if (createSiblingUnder) {
+              txs.push({
+                type: "addChildNode",
+                transaction: {
+                  parentId: treeNode.parent.object.id,
+                  relationProps: {
+                    id: siblingRelId,
+                  },
+                  after: relationsAtDepth[0] === "UNUSED" ? relationsAtDepth[1] : relationsAtDepth[0],
+                },
+              });
+            }
+
+            await graphStore.applyCombinedTransaction(txs);
+
+            // Process hashtags after the paste transaction completes
+            const { linkedCount, createdCount } = await processHashtags(pastedNodeIds, graphStore);
+
+            if (linkedCount > 0 || createdCount > 0) {
+              addToast({
+                title: "Hashtags processed",
+                description: `${linkedCount} hashtag${
+                  linkedCount !== 1 ? "s" : ""
+                } linked, ${createdCount} new hashtag${createdCount !== 1 ? "s" : ""} created.`,
+                action: {
+                  label: "Undo",
+                  onClick: () => {
+                    graphStore.updateManager.undo();
                   },
                 },
               });
             }
 
-            // Depth is ignored for the first line, since we just add it to the current node
-            txs.push({
-              type: "updateNode",
-              transaction: {
-                nodeId: object.id,
-                nodeProps: {
-                  content: newChips,
-                  isChecked: firstLine.isChecked !== undefined ? firstLine.isChecked : null,
-                },
-              },
-            });
+            tree.setFocusedNode(
+              createSiblingUnder ? treeNode.parent.path + `/${groupId}/` + siblingRelId : path,
+              "end",
+            );
 
-            txs.push(...getLinkAdditionTxs(newChips, object.id, settingsStore.pasteLinksDropdown));
+            !shiftKey && unfurlLinks(pastedNodeIds, graphStore);
           }
+        })().catch(console.error); // Handle any async errors
 
-          // Add to this arrays as depth increases during iterating over lines, remove as it decreases
-          const rootParent = convertToNote ? newRootId : treeNode.parent.object.id;
-          const objectsAtDepth: string[] = [rootParent, object.id];
-          const relationsAtDepth: string[] = ["UNUSED", relationWithParent.id];
-          let lastDepth = 0;
-
-          let createSiblingUnder = lines.length > 0;
-
-          // Then for the remaining lines, create children positioned after the correct parent
-          lines.forEach(({ chips, depth, isChecked }) => {
-            const newNodeId = uuid();
-            pastedNodeIds.push(newNodeId);
-            const relationId = uuid();
-            allNewRelationIds.push(relationId);
-
-            let {
-              chips: newChips,
-              relationTypeLabel,
-              newRelationTypeId,
-              txs: newTxs,
-            } = getNewRelationType(graphStore, chips, newRelTypeIdByLabel);
-
-            chips = newChips;
-            txs.push(...newTxs);
-            if (newRelationTypeId !== undefined) {
-              // if there's a new relation Type id, add it to the map and set
-              newRelTypeIdByLabel.set(relationTypeLabel, newRelationTypeId);
-            }
-            const existingRelType = graphStore.getRelationTypeByLabel(relationTypeLabel);
-            txs.push({
-              type: "addChildNode",
-              transaction: {
-                parentId: objectsAtDepth[depth],
-                nodeProps: { id: newNodeId, content: chips, isChecked },
-                relationProps: {
-                  id: relationId,
-                  relationTypeId: existingRelType
-                    ? existingRelType.relationType.id
-                    : newRelTypeIdByLabel.get(relationTypeLabel),
-                },
-                after: relationsAtDepth[depth + 1],
-              },
-            });
-
-            txs.push(...getLinkAdditionTxs(chips, newNodeId, settingsStore.pasteLinksDropdown));
-
-            // Add the newly created relations to the same group as this node's parent
-            if (groupId === "pinned" || (groupId === "noteContent" && depth === 0)) {
-              txs.push({
-                type: "addRelationToList",
-                transaction: {
-                  objectId: objectsAtDepth[depth],
-                  relationId: relationId,
-                  listType: groupId,
-                  after: relationsAtDepth[depth + 1],
-                },
-              });
-            }
-
-            // When we go a level more shallow, remove the objects and relations up of the current level
-            if (depth < lastDepth) {
-              objectsAtDepth.splice(depth + 1);
-              relationsAtDepth.splice(depth + 1);
-            }
-            lastDepth = depth;
-
-            objectsAtDepth[depth + 1] = newNodeId;
-            relationsAtDepth[depth + 1] = relationId;
-          });
-
-          let siblingRelId = uuid();
-          if (createSiblingUnder) {
-            txs.push({
-              type: "addChildNode",
-              transaction: {
-                parentId: treeNode.parent.object.id,
-                relationProps: {
-                  id: siblingRelId,
-                },
-                after: relationsAtDepth[0] === "UNUSED" ? relationsAtDepth[1] : relationsAtDepth[0],
-              },
-            });
-          }
-
-          graphStore.applyCombinedTransaction(txs);
-
-          tree.setFocusedNode(createSiblingUnder ? treeNode.parent.path + `/${groupId}/` + siblingRelId : path, "end");
-
-          // Retreive all new node paths from tree.state using the list of all new relations.
-          // We require that treeNode's path is a prefix.
-          // const allPaths = tree.state.descendantTreeNodesById.keys();
-          // const prefix = treeNode.path;
-          // const newPaths = Array.from(allPaths).filter((path) => path.startsWith(prefix));
-          // for (const path of newPaths) {
-          //   tree.setPathExpanded(path, true);
-          // }
-          !shiftKey && unfurlLinks(pastedNodeIds, graphStore);
-          return true;
-        }
-        return false;
+        return true;
       },
       COMMAND_PRIORITY_LOW,
     );
@@ -299,7 +519,9 @@ const unfurlLinks = async (nodeIds: string[], graphStore: GraphStore) => {
     });
   }
 
-  graphStore.applyCombinedTransaction(txs);
+  if (txs.length > 0) {
+    graphStore.applyCombinedTransaction(txs);
+  }
 };
 
 const getRelationTypeLabel = (chips: Chip[]) => {
