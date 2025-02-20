@@ -239,7 +239,6 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
                       {match.type === "node" && graphNodeIsCustomRelType(match.object, true) ? (
                         <div className={styles.RelTypeIndicator}>Type</div>
                       ) : match.object.relations.some((r) => {
-                          console.log(r.from.id);
                           return r.from.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX);
                         }) ? (
                         <div className={styles.RelTypeIndicator}> # </div>

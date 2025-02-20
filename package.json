@@ -41,6 +41,7 @@
     "@tanstack/react-virtual": "^3.13.0",
     "@tweenjs/tween.js": "^25.0.0",
     "@vercel/postgres": "^0.8.0",
+    "ahooks": "^3.8.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "d3": "^7.9.0",

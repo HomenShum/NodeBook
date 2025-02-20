@@ -1,10 +1,10 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
+import { useDebounce } from "ahooks";
 import { $getRoot, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
@@ -45,11 +45,11 @@ export const DropdownPlugin = observer(function DropdownPlugin({
   treeNode: TreeNode;
 }): JSX.Element | null {
   const [dropdown, setDropdown] = useState<Dropdown>(null);
-  const dropdownRef = useRef<Dropdown>(null);
 
   const [editor] = useLexicalComposerContext();
   const settingsStore = useSettingsStore();
-  const graphStore = useGraphStore();
+  const [searchText, setSearchText] = useState("");
+  const debouncedSearchText = useDebounce(searchText, { wait: 150 });
   const getMatches = useGetMatchesForTreeNode(MAX_DROPDOWN_RESULTS, treeNode);
   const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, treeNode.object.id);
 
@@ -108,20 +108,21 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       const match = checkForMentionMatch(textBeforeCursor);
       if (match) {
         const queryString = match.matchingString;
+        setSearchText(queryString);
         if (queryString.length === 0) {
-          setDropdown({
+          setDropdown((prev) => ({
             type: "mention",
             search: queryString,
-            matches: getRecentNodes(),
+            matches: prev?.matches ?? [],
             mentionTrigger: match.mentionTrigger,
-          });
+          }));
         } else {
-          setDropdown({
+          setDropdown((prev) => ({
             type: "mention",
             search: queryString,
-            matches: getMatches(queryString, ["node"]),
+            matches: prev?.matches ?? [],
             mentionTrigger: match.mentionTrigger,
-          });
+          }));
         }
         // ENT-4247: If leadOffset is 0 (for example, when typing @ directly after another
         // mention), lexical fails to position the dropdown correctly (not sure why).
@@ -131,23 +132,16 @@ export const DropdownPlugin = observer(function DropdownPlugin({
 
       // Open or update search-and-replace dropdown
       const editorText = editor.getEditorState().read(() => $getRoot().getTextContent());
+      setSearchText(editorText);
       if (passiveAutocompleteActive || dropdown?.type === "searchAndReplace") {
-        const matches = getMatches(
-          editorText,
-          labelledRelation ? ["node", "relation"] : ["node", "relation", "relationType"],
-        );
-        if (matches.length > 0) {
-          setDropdown((prev) => {
-            return {
-              type: "searchAndReplace",
-              search: editorText,
-              matches,
-              // If already open, keep the `initiatedManually` flag as-is.
-              initiatedManually: prev?.type === "searchAndReplace" ? prev.initiatedManually : false,
-            };
-          });
-          return null;
-        }
+        setDropdown((prev) => ({
+          type: "searchAndReplace",
+          search: editorText,
+          // If already open, keep the `initiatedManually` flag as-is.
+          matches: prev?.matches ?? [],
+          initiatedManually: prev?.type === "searchAndReplace" ? prev.initiatedManually : false,
+        }));
+        return null;
       }
 
       // Clear
@@ -157,37 +151,39 @@ export const DropdownPlugin = observer(function DropdownPlugin({
     [
       dropdown?.type,
       editor,
-      getMatches,
       getRecentNodes,
       passiveAutocompleteActive,
       textChanged,
       labelledRelation,
       clearDropdown,
+      debouncedSearchText,
     ],
   );
 
+  // Debounce dropdown matches to prevent spamming search requests
   useEffect(() => {
-    dropdownRef.current = dropdown;
-  }, [dropdown]);
+    let matches: Match[] = [];
+    if (debouncedSearchText.length === 0) {
+      matches = getRecentNodes();
+    } else if (passiveAutocompleteActive || dropdown?.type === "searchAndReplace") {
+      matches = getMatches(
+        debouncedSearchText,
+        labelledRelation ? ["node", "relation"] : ["node", "relation", "relationType"],
+      );
+    } else if (dropdown?.type === "mention") {
+      matches = getMatches(debouncedSearchText, ["node"]);
+    }
 
-  useEffect(() => {
-    setDropdown((prevState) => {
-      if (!prevState) return null;
-      let matches: Match[] = [];
-      if (prevState.search.length === 0) {
-        matches = getRecentNodes();
-      } else if (passiveAutocompleteActive || prevState.type === "searchAndReplace") {
-        matches = getMatches(
-          prevState.search,
-          labelledRelation ? ["node", "relation"] : ["node", "relation", "relationType"],
-        );
-      } else if (prevState.type === "mention") {
-        matches = getMatches(prevState.search, ["node"]);
+    setDropdown((prev: Dropdown) => {
+      if (!prev) {
+        return null;
       }
-
-      return { ...prevState, matches };
+      return {
+        ...prev,
+        matches,
+      };
     });
-  }, [getMatches, getRecentNodes, graphStore.nodesById.size, labelledRelation, passiveAutocompleteActive]);
+  }, [debouncedSearchText, passiveAutocompleteActive, labelledRelation, getMatches, getRecentNodes]);
 
   // Handle state transitions which {@link triggerFn} can't handle
   useEffect(() => {
@@ -209,12 +205,13 @@ export const DropdownPlugin = observer(function DropdownPlugin({
             (dropdown === null || treeNode.object.text === "")
           ) {
             event.preventDefault();
-            setDropdown({
+            setSearchText(treeNode.object.text);
+            setDropdown((prev) => ({
               type: "searchAndReplace",
-              search: treeNode.object.text,
-              matches: treeNode.object.text === "" ? getRecentNodes() : getMatches(treeNode.object.text),
+              search: debouncedSearchText,
+              matches: getRecentNodes(),
               initiatedManually: true,
-            });
+            }));
             return true;
           }
           return false;
@@ -229,7 +226,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
         }
       }),
     );
-  }, [editor, setDropdown, dropdown, treeNode, getMatches, getRecentNodes, clearDropdown]);
+  }, [editor, setDropdown, dropdown, treeNode, getMatches, getRecentNodes, clearDropdown, debouncedSearchText]);
 
   return (
     <>
