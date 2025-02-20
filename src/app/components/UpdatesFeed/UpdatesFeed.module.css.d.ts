@@ -4,6 +4,8 @@ declare const styles: {
   readonly "GlobalButton": string;
   readonly "HeadingContainer": string;
   readonly "NodeId": string;
+  readonly "RightAlign": string;
+  readonly "ShowTooltip": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
   readonly "UndoButton": string;

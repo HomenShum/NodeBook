@@ -14,6 +14,8 @@ declare const styles: {
   readonly "NodeText": string;
   readonly "NodeTextContainer": string;
   readonly "NodesTable": string;
+  readonly "RightAlign": string;
+  readonly "ShowTooltip": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
 };

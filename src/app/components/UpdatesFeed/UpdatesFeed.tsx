@@ -4,10 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { VariableSizeList as List } from "react-window";
 
+import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
+import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 import { SerializedNode } from "@/app/persistence/SerializedData";
+import { TreeContext } from "@/app/tree/TreeContext";
+import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import s from "./UpdatesFeed.module.css";
 
@@ -91,6 +97,8 @@ const getUpdateDescription = (update: GraphUpdate): JSX.Element => {
 
 export const UpdatesFeed = observer(function UpdatesFeed() {
   const graphStore = useGraphStore();
+  const viewStore = useViewStore();
+  const user = useUser();
   // Get updates in reverse chronological order
   const updates = [...graphStore.updateManager.sessionUpdates].reverse();
   const listRef = useRef<List>(null);
@@ -180,13 +188,25 @@ export const UpdatesFeed = observer(function UpdatesFeed() {
 
   return (
     <div className={s.UpdatesFeed}>
-      {/* Hidden element to measure line height */}
-      <div ref={measureRef} className={s.UpdateDescription} style={{ position: "absolute", visibility: "hidden" }}>
-        Test text
-      </div>
+      <TreeContext.Provider value={viewStore.quickCaptureTree}>
+        <QuickCapture />
+      </TreeContext.Provider>
       <div className={s.HeadingContainer}>
         <div className={s.TitleContainer}>
           <h1 className={s.TitleText}>Updates Feed</h1>
+          {!user.isAnonymous && (
+            <Button
+              className={cn(s.ShowTooltip, s.RightAlign)}
+              data-tooltip={viewStore.quickCaptureOpen ? `Close Quick Capture` : `Open Quick Capture`}
+              variant={viewStore.quickCaptureOpen ? "active" : "default"}
+              size="icon"
+              onClick={() =>
+                viewStore.quickCaptureOpen ? viewStore.closeQuickCapture() : viewStore.openQuickCapture()
+              }
+            >
+              <QuickCaptureIcon />
+            </Button>
+          )}
           <div className={s.GlobalActions}>
             <Button
               style={{ cursor: "pointer" }}

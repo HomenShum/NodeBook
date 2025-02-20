@@ -6,11 +6,18 @@ import { useMemo, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList as List } from "react-window";
 
+import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
+import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
+import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { getOtherObject } from "@/app/graph/utils";
+import { TreeContext } from "@/app/tree/TreeContext";
 import { useSetMainRoot } from "@/app/tree/utils";
+import { useViewStore } from "@/app/view/useViewStore";
 import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 import s from "./AllNodesView.module.css";
 
@@ -19,6 +26,8 @@ export const AllNodesView = observer(function AllNodesView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const setRoot = useSetMainRoot();
+  const viewStore = useViewStore();
+  const user = useUser();
 
   const selectedAuthorId = searchParams.get("authorId") || "all";
   const [hideHomepageNodes, setHideHomepageNodes] = useState(false);
@@ -71,9 +80,25 @@ export const AllNodesView = observer(function AllNodesView() {
 
   return (
     <div className={s.AllNodesView}>
+      <TreeContext.Provider value={viewStore.quickCaptureTree}>
+        <QuickCapture />
+      </TreeContext.Provider>
       <div className={s.HeadingContainer}>
         <div className={s.TitleContainer}>
           <h1 className={s.TitleText}>All Nodes</h1>
+          {!user.isAnonymous && (
+            <Button
+              className={cn(s.ShowTooltip, s.RightAlign)}
+              data-tooltip={viewStore.quickCaptureOpen ? `Close Quick Capture` : `Open Quick Capture`}
+              variant={viewStore.quickCaptureOpen ? "active" : "default"}
+              size="icon"
+              onClick={() =>
+                viewStore.quickCaptureOpen ? viewStore.closeQuickCapture() : viewStore.openQuickCapture()
+              }
+            >
+              <QuickCaptureIcon />
+            </Button>
+          )}
         </div>
         <div className={s.AuthorFilterContainer}>
           <span className={s.FilterLabel}>Filters</span>
