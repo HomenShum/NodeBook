@@ -75,7 +75,8 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
        * selected node.
        * ```
        */
-      if (tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNodeId) {
+      const isFocused = editor.getRootElement()?.contains(document.activeElement);
+      if (tree.selection?.type === "editor" && tree.selection.treeNodeId === treeNodeId && isFocused) {
         $setSelectionFromTree(tree.selection);
         editor.focus();
       } else {
