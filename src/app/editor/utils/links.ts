@@ -9,6 +9,7 @@ export type Match = {
   length: number;
   url: string;
   text: string;
+  isEmail: boolean;
 };
 
 const COMMON_TLDS = [
@@ -69,6 +70,20 @@ export const findUrlMatches = (text: string): Match[] => {
         length: fullMatch.length,
         url: fullMatch.startsWith("http") ? fullMatch : `https://${fullMatch}`,
         text: fullMatch,
+        isEmail: false,
+      });
+    } else {
+      const beforeMatch = text.slice(0, currentMatch.index);
+      const emailStart = beforeMatch.search(/\S+$/);
+      const localPart = beforeMatch.slice(emailStart);
+      const fullEmail = localPart + fullMatch;
+
+      matches.push({
+        index: currentMatch.index - localPart.length,
+        length: fullEmail.length,
+        url: `mailto:${fullEmail}`,
+        text: fullEmail,
+        isEmail: true,
       });
     }
     currentMatch = URL_REGEX.exec(text);
@@ -88,7 +103,10 @@ export const matchesToNodes = (text: string, matches: Match[]): LexicalNode[] =>
     }
 
     const url = match.text;
-    const linkNode = $createLinkNode(url.startsWith("http") ? url : `https://${url}`, url);
+    const linkNode = $createLinkNode(
+      match.isEmail ? `mailto:${url}` : url.startsWith("http") ? url : `https://${url}`,
+      url,
+    );
     acc.push(linkNode);
 
     currentOffset = match.index + match.length;
