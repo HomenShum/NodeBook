@@ -1538,6 +1538,17 @@ export class Tree {
         replaceWith: { type: "existing-object", id: treeNode.object.id },
       },
     });
+    // Persist isChecked of the note content root node, but don't override it if it's already set
+    if (
+      treeNode.parent.object instanceof GraphNode &&
+      treeNode.object instanceof GraphNode &&
+      typeof treeNode.object.isChecked !== "boolean"
+    ) {
+      txs.push({
+        type: "updateNode",
+        transaction: { nodeId: treeNode.object.id, nodeProps: { isChecked: treeNode.parent.object.isChecked } },
+      });
+    }
     // Delete the note content root node
     txs.push({
       type: "removeNode",
