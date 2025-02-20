@@ -51,6 +51,12 @@ export const HashtagPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
 
           $createMentionNode(newNodeId, "#", HASHTAG_SYMBOL);
 
+          graphStore.addRelation({
+            fromId: treeNode.object.id,
+            toId: newNodeId,
+            relationTypeId: graphStore.relationTypesById.relatedTo.id,
+          });
+
           const { chipsAfter } = $getChipsAroundSelection(selection);
           const newContent: Chip[] = [
             ...chipsBefore,
