@@ -13,12 +13,15 @@ export class SearchTree extends Tree {
   private searchExpansions = new Set<string>();
   private searchRelations = new Set<string>();
   private hiddenRelations = new Set<string>();
+  isMainSearchTree: boolean;
   constructor(
     graphStore: GraphStore,
     settingsStore: SettingsStore,
     root: DescendantTreeNode | ObjectPath | GraphObject,
+    isMainSearchTree?: boolean,
   ) {
     super(graphStore, settingsStore, root);
+    this.isMainSearchTree = isMainSearchTree ?? false;
   }
 
   deepSearch(query: string) {

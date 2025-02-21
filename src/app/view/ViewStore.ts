@@ -74,7 +74,7 @@ export class ViewStore {
     this.graphStore = graphStore;
     this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser(), { isMainTree: true });
     this.sublistView = new SublistTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
-    this.searchView = new SearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
+    this.searchView = new SearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser(), true);
     this.quickCaptureSearchView = new QuickCaptureSearchTree(
       graphStore,
       this.settingsStore,

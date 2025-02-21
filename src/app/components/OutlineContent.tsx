@@ -172,7 +172,9 @@ function OutlineContent({ tree }: Props) {
       tabIndex={-1}
       className={cn(
         appStyles.ContentContainer,
-        (tree.isMainTree || viewStore.isDeepSearching) && viewStore.quickCaptureOpen && !viewStore.rightSidebarOpen
+        (tree.isMainTree || (tree instanceof SearchTree && tree.isMainSearchTree)) &&
+          viewStore.quickCaptureOpen &&
+          !viewStore.rightSidebarOpen
           ? appStyles.SmallContainer
           : "",
       )}
