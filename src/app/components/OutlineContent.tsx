@@ -1,9 +1,10 @@
 import { Globe, HomeIcon, Link, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import appStyles from "@/app/app.module.css";
 import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
+import { Checkbox } from "@/app/components/Checkbox/Checkbox";
 import s from "@/app/components/OutlineView.module.css";
 import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
@@ -13,8 +14,10 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { useSlugs } from "@/app/contexts/SlugContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { NodeHeaderEditor } from "@/app/editor/NodeHeaderEditor";
+import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { getCanonicalPath, objectPathToBreadcrumb } from "@/app/graph/utils";
 import { useToast } from "@/app/hooks/useToast";
@@ -28,9 +31,6 @@ import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
-import { useSlugs } from "@/app/contexts/SlugContext";
-import { Checkbox } from "@/app/components/Checkbox/Checkbox";
-import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 
 import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
 
@@ -172,7 +172,9 @@ function OutlineContent({ tree }: Props) {
       tabIndex={-1}
       className={cn(
         appStyles.ContentContainer,
-        tree.isMainTree && viewStore.quickCaptureOpen && !viewStore.rightSidebarOpen ? appStyles.SmallContainer : "",
+        (tree.isMainTree || viewStore.isDeepSearching) && viewStore.quickCaptureOpen && !viewStore.rightSidebarOpen
+          ? appStyles.SmallContainer
+          : "",
       )}
       ref={elementRef}
     >
