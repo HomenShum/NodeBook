@@ -91,6 +91,7 @@ const FavoriteItem = observer(function FavoriteItem({ object }: TreeElementProps
       <Button
         variant="ghost"
         className={cn(styles.Button)}
+        style={{ justifyContent: "flex-start" }}
         title={object.text}
         onClick={(e) => {
           if (e.shiftKey) {
