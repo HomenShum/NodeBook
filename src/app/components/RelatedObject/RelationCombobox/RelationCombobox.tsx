@@ -90,7 +90,9 @@ export const RelationCombobox = observer(function RelationCombobox({
     );
   }
 
-  const relationChildrenCount = treeNode.relationWithParent.children.length;
+  const relationChildrenCount = treeNode.relationWithParent.relations.filter(
+    (r) => r.relationType.id !== "__type__" && r.relationType.id !== "__reverse__",
+  ).length;
 
   const button = (
     <Button

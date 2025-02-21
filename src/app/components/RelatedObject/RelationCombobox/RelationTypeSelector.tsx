@@ -164,7 +164,10 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     }
   }, [items, search]);
 
-  const relationChildrenCount = treeNode.relationWithParent.children.length;
+  // We don't want to count relations connected with __type__ or __reverse__ relation types
+  const relationChildrenCount = treeNode.relationWithParent.relations.filter(
+    (r) => r.relationType.id !== "__type__" && r.relationType.id !== "__reverse__",
+  ).length;
 
   return (
     <PopoverContent
