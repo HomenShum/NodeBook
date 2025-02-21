@@ -217,7 +217,12 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
             const relation = object.relations.find((r) => r.from.id === object.id && r.to.id === o.id);
             return (
               <div key={o.id} className={hashtagSidebarStyles.HashtagRow}>
-                <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)}>
+                <Button
+                  variant="ghost"
+                  style={{ justifyContent: "flex-start" }}
+                  className={cn(styles.Button)}
+                  onClick={(e) => handleChildClick(e, o)}
+                >
                   {o.text}
                 </Button>
 
