@@ -1,4 +1,4 @@
-import { Clock, Maximize2, Play, SortAsc } from "lucide-react";
+import { Clock, List, Maximize2, Play, SortAsc } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
@@ -7,6 +7,7 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
+import { comparePositions } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +15,7 @@ import hashtagSidebarStyles from "./HashtagTree.module.css";
 import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
 
-type SortType = "alphanumeric" | "created";
+type SortType = "alphanumeric" | "created" | "tree";
 
 interface TreeElementProps {
   object: GraphObject;
@@ -36,6 +37,23 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
   );
 
   const sortNodes = (nodes: GraphObject[]) => {
+    if (sortType === "tree") {
+      // Convert to array with original indices for stable sorting
+      return nodes
+        .map((node, index) => ({ node, index }))
+        .sort((a, b) => {
+          const relationWithPosA = [...object.relationsWithPositions].find(
+            ({ relation }) => relation.from.id === object.id && relation.to.id === a.node.id,
+          );
+          const relationWithPosB = [...object.relationsWithPositions].find(
+            ({ relation }) => relation.from.id === object.id && relation.to.id === b.node.id,
+          );
+
+          // Compare positions using the utility function
+          return comparePositions(relationWithPosA?.position ?? null, relationWithPosB?.position ?? null);
+        })
+        .map(({ node }) => node);
+    }
     return [...nodes].sort((a, b) => {
       if (sortType === "alphanumeric") {
         return a.text.localeCompare(b.text);
@@ -45,11 +63,15 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
     });
   };
 
-  const uniqueChildren = sortNodes([...new Set(object.children)]);
+  const uniqueChildren = sortNodes(object.children);
   const sortedPinnedChildren = sortNodes(pinnedUniqueChildren);
 
   const toggleSort = useCallback(() => {
-    setSortType((current) => (current === "alphanumeric" ? "created" : "alphanumeric"));
+    setSortType((current) => {
+      if (current === "alphanumeric") return "created";
+      if (current === "created") return "tree";
+      return "alphanumeric";
+    });
   }, []);
 
   const handleNavigation = useCallback(
@@ -123,7 +145,6 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
         <div className={styles.HeaderLeft}>
           <span>{object.text}</span>
-          <span className={styles.NodeCount}>{uniqueChildren.length}</span>
 
           <div className={styles.HeaderControls}>
             <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
@@ -139,9 +160,17 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           variant="ghost"
           className={styles.HeaderButton}
           onClick={toggleSort}
-          title={`Sort by ${sortType === "alphanumeric" ? "creation date" : "name"}`}
+          title={`Sort by ${
+            sortType === "alphanumeric" ? "creation date" : sortType === "created" ? "tree view order" : "name"
+          }`}
         >
-          {sortType === "alphanumeric" ? <SortAsc size={14} /> : <Clock size={14} />}
+          {sortType === "alphanumeric" ? (
+            <SortAsc size={14} />
+          ) : sortType === "created" ? (
+            <Clock size={14} />
+          ) : (
+            <List size={14} />
+          )}
         </Button>
       </div>
       <div className={styles.SidebarTreeChildren}>
@@ -151,6 +180,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
               <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)}>
                 {o.text}
               </Button>
+
               <Button
                 variant="ghostSmooth"
                 className={cn(hashtagSidebarStyles.PinButton, hashtagSidebarStyles.Pinned)}
@@ -160,6 +190,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
                   <PinCustomIcon />
                 </div>
               </Button>
+              <span className={styles.NodeCount}>{o.relations.length - 1}</span>
             </div>
           ))}
       </div>
@@ -176,6 +207,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
                 <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)}>
                   {o.text}
                 </Button>
+
                 <Button
                   variant="ghostSmooth"
                   className={cn(hashtagSidebarStyles.PinButton, {
@@ -188,6 +220,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
                     <PinCustomIcon />
                   </div>
                 </Button>
+                <span className={styles.NodeCount}>{o.relations.length - 1}</span>
               </div>
             );
           })

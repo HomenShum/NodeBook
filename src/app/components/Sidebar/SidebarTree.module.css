@@ -39,9 +39,11 @@
   font-size: var(--font-size-xs);
   color: var(--gray-9);
   background-color: var(--gray-4);
-  padding: 0px 5px;
   border-radius: 3px;
-  margin-left: 6px;
+  width: 18px;
+  text-align: center;
+  height: 18px;
+  /* margin: 0 4px; */
 }
 
 .SidebarTreeChildren {
@@ -84,7 +86,7 @@
   width: 100%;
   text-align: left;
   padding: 8px 8px;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: 8px;
   color: var(--gray-12);
@@ -94,8 +96,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  min-width: 0;
+  flex: 1;
   position: relative;
+  display: flex;
 }
 
 .Button:hover {

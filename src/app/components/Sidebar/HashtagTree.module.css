@@ -3,6 +3,7 @@
   align-items: center;
   position: relative;
   width: 100%;
+  gap: 0;
 }
 
 .PinButton {
@@ -13,8 +14,6 @@
   width: 24px;
   height: 24px;
   padding: 4px;
-  margin-left: 4px;
-  margin-right: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
