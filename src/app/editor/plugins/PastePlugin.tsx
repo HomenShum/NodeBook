@@ -8,6 +8,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { transformTextToChips } from "@/app/editor/utils/links";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
+import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useToast } from "@/app/hooks/useToast";
@@ -80,10 +81,15 @@ const processHashtags = async (
     for (const hashtagText of hashtags) {
       if (hashtagsByText.has(hashtagText)) continue;
 
-      // Check if hashtag exists in myHashtags
-      const existingHashtag = Array.from(graphStore.getNode(graphStore.myHashtagsNodeId)?.children ?? []).find(
-        (node) => node.text === `#${hashtagText}`,
-      );
+      // Check if hashtag exists in myHashtags. Sort by the hashtags with the largest
+      //  number of relations to the node
+      const existingHashtag = Array.from(graphStore.getNode(graphStore.myHashtagsNodeId)?.children ?? [])
+        .sort((a: GraphObject, b: GraphObject) => {
+          const aRelations = a.relations.length;
+          const bRelations = b.relations.length;
+          return bRelations - aRelations;
+        })
+        .find((node) => node.text === `#${hashtagText}`);
 
       if (existingHashtag) {
         hashtagsByText.set(hashtagText, existingHashtag.id);
