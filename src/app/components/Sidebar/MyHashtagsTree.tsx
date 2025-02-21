@@ -7,6 +7,7 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
+import { comparePositions } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
@@ -37,29 +38,14 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
 
   const sortNodes = (nodes: GraphObject[]) => {
     if (sortType === "tree") {
-      // Convert to array with original indices for stable sorting
       return nodes
-        .map((node, index) => ({ node, index }))
-        .sort((a, b) => {
-          const relationWithPosA = [...object.relationsWithPositions].find(
-            ({ relation }) => relation.from.id === object.id && relation.to.id === a.node.id,
+        .map((node) => {
+          const relationWithPos = [...object.relationsWithPositions].find(
+            ({ relation }) => relation.from.id === object.id && relation.to.id === node.id,
           );
-          const relationWithPosB = [...object.relationsWithPositions].find(
-            ({ relation }) => relation.from.id === object.id && relation.to.id === b.node.id,
-          );
-
-          // If both have positions, compare them
-          if (relationWithPosA?.position !== undefined && relationWithPosB?.position !== undefined) {
-            return Number(relationWithPosA.position) - Number(relationWithPosB.position);
-          }
-
-          // If only one has a position, prioritize it
-          if (relationWithPosA?.position !== undefined) return -1;
-          if (relationWithPosB?.position !== undefined) return 1;
-
-          // If neither has a position, maintain original order
-          return a.index - b.index;
+          return { node, position: relationWithPos?.position ?? null };
         })
+        .sort((a, b) => comparePositions(a.position, b.position))
         .map(({ node }) => node);
     }
     return [...nodes].sort((a, b) => {
