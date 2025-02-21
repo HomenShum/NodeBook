@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { ParentRelationIcon } from "@/app/components/CustomIcons";
 import SelectionItem from "@/app/components/RelatedObject/RelationCombobox/SelectionItem";
 import styles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
+import { Button } from "@/app/components/UIPrimitives/Button";
 import { PopoverContent } from "@/app/components/UIPrimitives/Popover";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { defaultRelationTypes, getRelationTypeIcon } from "@/app/graph/constants";
@@ -163,6 +164,8 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     }
   }, [items, search]);
 
+  const relationChildrenCount = treeNode.relationWithParent.children.length;
+
   return (
     <PopoverContent
       onCloseAutoFocus={(e) => {
@@ -224,8 +227,10 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <button
+        <Button
           style={{ padding: "5px", display: "flex", alignItems: "center" }}
+          className={styles.RelationChildrenCountDisplay}
+          variant="active"
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
@@ -237,7 +242,8 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
           }}
         >
           <MessageCircle size={18} />
-        </button>
+          {relationChildrenCount > 0 && <span>{relationChildrenCount}</span>}
+        </Button>
       </div>
       <div className={styles.RelationComboboxGroup}>
         {items.map(({ key, label, onSelect, icon }, index) => (

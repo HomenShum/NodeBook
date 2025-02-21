@@ -10,7 +10,7 @@ import styles from "@/app/components/RelatedObject/styles/RelationCombobox.modul
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { useUser } from "@/app/contexts/UserContext";
-import { defaultRelationTypes, getRelationTypeIcon } from "@/app/graph/constants";
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { DescendantTreeNode, PointerTreeNode } from "@/app/tree/nodes";
 import { useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -90,7 +90,7 @@ export const RelationCombobox = observer(function RelationCombobox({
     );
   }
 
-  const icon = getRelationTypeIcon(relation.relationType.id);
+  const relationChildrenCount = treeNode.relationWithParent.children.length;
 
   const button = (
     <Button
@@ -106,6 +106,7 @@ export const RelationCombobox = observer(function RelationCombobox({
       {relation.relationType.id === "child" && relation.from === treeNode.object && <ParentRelationIcon />}
       {label}
       {!relation.relationType.label ? <UnlabeledRelationIcon empty={!relation.relationType.label} /> : ":"}
+      {relationChildrenCount > 0 && <span>{relationChildrenCount}</span>}
     </Button>
   );
 
