@@ -7,7 +7,6 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
-import { comparePositions } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
@@ -49,8 +48,17 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
             ({ relation }) => relation.from.id === object.id && relation.to.id === b.node.id,
           );
 
-          // Compare positions using the utility function
-          return comparePositions(relationWithPosA?.position ?? null, relationWithPosB?.position ?? null);
+          // If both have positions, compare them
+          if (relationWithPosA?.position !== undefined && relationWithPosB?.position !== undefined) {
+            return Number(relationWithPosA.position) - Number(relationWithPosB.position);
+          }
+
+          // If only one has a position, prioritize it
+          if (relationWithPosA?.position !== undefined) return -1;
+          if (relationWithPosB?.position !== undefined) return 1;
+
+          // If neither has a position, maintain original order
+          return a.index - b.index;
         })
         .map(({ node }) => node);
     }
