@@ -6,8 +6,8 @@ import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSlugs } from "@/app/contexts/SlugContext";
 import { useSetMainRoot } from "@/app/tree/utils";
-import { cn } from "@/lib/utils";
 import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
@@ -60,6 +60,7 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
                 onClick={(e) => handleOnClick(e, nodeId)}
                 key={nodeId}
                 variant="ghost"
+                style={{ display: "flex" }}
                 className={cn(styles.Button)}
               >
                 /{slugs[nodeId]}

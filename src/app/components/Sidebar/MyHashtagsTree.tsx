@@ -185,7 +185,12 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
         {isExpanded &&
           sortedPinnedChildren.map((o) => (
             <div key={o.id} className={hashtagSidebarStyles.HashtagRow}>
-              <Button variant="ghost" className={cn(styles.Button)} onClick={(e) => handleChildClick(e, o)}>
+              <Button
+                variant="ghost"
+                style={{ justifyContent: "flex-start" }}
+                className={cn(styles.Button)}
+                onClick={(e) => handleChildClick(e, o)}
+              >
                 {o.text}
               </Button>
 
