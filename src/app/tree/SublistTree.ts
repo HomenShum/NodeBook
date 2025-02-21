@@ -1,8 +1,8 @@
 import { Tree } from "@/app/tree/Tree";
 import { DescendantTreeNode, RootTreeNode, SublistRootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { createDescendantTreeNodesById } from "@/app/tree/utils";
-import logger from "@/lib/logger";
 import { comparePositions, compareTimestamps } from "@/app/util";
+import logger from "@/lib/logger";
 
 export class SublistTree extends Tree {
   get state() {
@@ -31,7 +31,9 @@ export class SublistTree extends Tree {
     const sortFn = (a: DescendantTreeNode, b: DescendantTreeNode) =>
       mode === "manual"
         ? comparePositions(a.position, b.position)
-        : compareTimestamps(a.object[mode], b.object[mode], a.position, b.position) * negation;
+        : mode !== "alphabetical"
+        ? compareTimestamps(a.object[mode], b.object[mode], a.position, b.position) * negation
+        : b.object.text.localeCompare(a.object.text) * negation;
 
     const walk = (node: TreeNode) => {
       node.childrenGroups.forEach((group) => {

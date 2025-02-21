@@ -64,7 +64,7 @@ export type Path = string;
 export type Root = DescendantTreeNode | ObjectPath | GraphObject;
 
 export type SortOption = {
-  mode: "createdAt" | "updatedAt" | "manual";
+  mode: "createdAt" | "updatedAt" | "manual" | "alphabetical";
   direction: "asc" | "desc";
 };
 
@@ -743,10 +743,15 @@ export class Tree {
     const { mode, direction } = this.sortOption;
     const negation = direction === "asc" ? -1 : 1;
 
-    const sortFn = (a: DescendantTreeNode, b: DescendantTreeNode) =>
-      mode === "manual"
-        ? comparePositions(a.position, b.position)
-        : compareTimestamps(a.object[mode], b.object[mode], a.position, b.position) * negation;
+    const sortFn = (a: DescendantTreeNode, b: DescendantTreeNode) => {
+      if (mode === "manual") {
+        return comparePositions(a.position, b.position);
+      } else if (mode === "alphabetical") {
+        return b.object.text.localeCompare(a.object.text) * negation;
+      } else {
+        return compareTimestamps(a.object[mode], b.object[mode], a.position, b.position) * negation;
+      }
+    };
 
     const walk = (node: TreeNode) => {
       node.childrenGroups.forEach((group) => {
