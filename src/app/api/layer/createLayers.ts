@@ -476,6 +476,7 @@ export const createLayers = async (
     }
   }
 
+  // Load nodes
   const nodeRows = await db
     .select()
     .from(graphNodeTable)
@@ -501,6 +502,27 @@ export const createLayers = async (
       accessMode: row.accessMode,
     };
     snapshot.nodesById[node.id] = node;
+  }
+
+  // Load relations of relations
+  const relationChildrenRows = await db
+    .select()
+    .from(graphRelationTable)
+    .where(inArray(graphRelationTable.fromId, Array.from(relationIds)));
+  for (const row of relationChildrenRows) {
+    relationIds.add(row.id);
+    snapshot.relationsById[row.id] = {
+      version: row.version,
+      id: row.id,
+      authorId: row.authorId ?? UNLOGGED_USER.id,
+      createdAt: row.createdAt ?? new Date(),
+      updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
+      fromId: row.fromId ?? "",
+      toId: row.toId ?? "",
+      relationTypeId: row.relationTypeId ?? "",
+      isPublic: !!row.isPublic,
+      canonicalRelationId: row.canonicalRelationId ?? null,
+    };
   }
 
   // Todo: Maybe we can do a inner join with nodes?
