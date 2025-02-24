@@ -39,6 +39,7 @@ export class SettingsStore {
   public parseWithAiLinkingOption: ParseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   public showBulletForEmptyNode: boolean = false;
   public showNotifications: boolean = true;
+  public showOnlyTodos: boolean = false;
   private stopAutosave: () => void;
 
   constructor(
@@ -81,6 +82,7 @@ export class SettingsStore {
     this.parseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
     this.showBulletForEmptyNode = false;
     this.showNotifications = true;
+    this.showOnlyTodos = false;
   }
 
   private async syncToServer() {
@@ -117,6 +119,7 @@ export class SettingsStore {
       parseWithAiLinkingOption: this.parseWithAiLinkingOption,
       showBulletForEmptyNode: this.showBulletForEmptyNode,
       showNotifications: this.showNotifications,
+      showOnlyTodos: this.showOnlyTodos,
     };
   }
 
@@ -145,6 +148,7 @@ export class SettingsStore {
     this.parseWithAiLinkingOption = data.parseWithAiLinkingOption ?? this.parseWithAiLinkingOption;
     this.showBulletForEmptyNode = data.showBulletForEmptyNode ?? this.showBulletForEmptyNode;
     this.showNotifications = data.showNotifications ?? this.showNotifications;
+    this.showOnlyTodos = data.showOnlyTodos ?? this.showOnlyTodos;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -235,6 +239,10 @@ export class SettingsStore {
   }
   setShowNotifications(value: boolean) {
     this.showNotifications = value;
+  }
+
+  setShowOnlyTodos(value: boolean) {
+    this.showOnlyTodos = value;
   }
 
   cleanup() {

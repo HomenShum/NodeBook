@@ -257,6 +257,7 @@ export class Tree {
       hideAllRootParents: this.settingsStore.hideAllRootParents,
       hideDirectParent: this.settingsStore.hideDirectParent,
       hidePinnedSection: this.settingsStore.hidePinnedItems,
+      showOnlyTodos: this.settingsStore.showOnlyTodos,
       ...this.partialFilter,
     };
   }
@@ -670,19 +671,33 @@ export class Tree {
 
   protected applyFilter(treeNode: TreeNode): boolean {
     const hidePointerSection = Object.getPrototypeOf(this).constructor.name === "Tree";
-    function walk(treeNode: TreeNode, filter: Filter) {
+    function walk(treeNode: TreeNode, filter: Filter): { visible: boolean; hasTodoDescendant: boolean } {
       if (hidePointerSection) {
         treeNode.childrenGroupsById.pointer.nodes = [];
       }
+
+      // First check children to determine if any descendants are TODOs
+      let hasTodoDescendant = false;
       treeNode.childrenGroups.forEach((group) => {
-        group.nodes = group.nodes.filter((child) => walk(child, filter));
+        const visibleNodes = group.nodes.filter((child) => {
+          const result = walk(child, filter);
+          hasTodoDescendant = hasTodoDescendant || result.hasTodoDescendant;
+          return result.visible;
+        });
+        group.nodes = visibleNodes;
+        // If any nodes remain visible in this group, they contribute to hasTodoDescendant
+        hasTodoDescendant = hasTodoDescendant || visibleNodes.length > 0;
       });
+
       if (treeNode instanceof RootTreeNode) {
-        return true;
+        return { visible: true, hasTodoDescendant };
       }
+
+      // Apply standard filters
       if (filter.hideBackrelations && treeNode.isBackrelation) {
-        return false;
+        return { visible: false, hasTodoDescendant };
       }
+
       /** Parent from the perspective of the graph, not the current tree */
       const isParentRelation =
         treeNode.isBackrelation &&
@@ -693,21 +708,29 @@ export class Tree {
         treeNode.relationWithParent.id === treeNode.parent.relationWithParent?.id;
       const grandparentNotInBreadcrumb = !(treeNode.parent.parent instanceof PathToRootNode);
       const nodeIsNoteContent = isNoteContent(treeNode);
+
       if (filter.hideAllParents && isParentRelation) {
-        return false;
+        return { visible: false, hasTodoDescendant };
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
-        return false;
+        return { visible: false, hasTodoDescendant };
       } else if (
         filter.hideDirectParent &&
         isSameRelationAsParentToGrandparent &&
         grandparentNotInBreadcrumb &&
         !nodeIsNoteContent
       ) {
-        return false;
+        return { visible: false, hasTodoDescendant };
       }
-      return true;
+
+      // Filter for TODOs
+      const isTodo = treeNode.isTodoItem;
+      if (filter.showOnlyTodos && !isTodo && !hasTodoDescendant) {
+        return { visible: false, hasTodoDescendant: false };
+      }
+
+      return { visible: true, hasTodoDescendant: hasTodoDescendant || isTodo };
     }
-    return walk(treeNode, this.filter);
+    return walk(treeNode, this.filter).visible;
   }
 
   protected applySearch(treeNode: TreeNode) {
@@ -2022,4 +2045,5 @@ export type Filter = {
   hideAllRootParents: boolean;
   hideDirectParent: boolean;
   hidePinnedSection: boolean;
+  showOnlyTodos: boolean;
 };

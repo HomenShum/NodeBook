@@ -1,4 +1,16 @@
-import { Globe, Link2, ListFilter, ListIcon, Map, MapPin, NetworkIcon, Sliders, WorkflowIcon, X } from "lucide-react";
+import {
+  CheckSquare,
+  Globe,
+  Link2,
+  ListFilter,
+  ListIcon,
+  Map,
+  MapPin,
+  NetworkIcon,
+  Sliders,
+  WorkflowIcon,
+  X,
+} from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 
@@ -14,16 +26,16 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { Switch } from "@/app/components/UIPrimitives/Switch";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { useSlugs } from "@/app/contexts/SlugContext";
+import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
+import { useToast } from "@/app/hooks/useToast";
 import { SortOption, Tree } from "@/app/tree/Tree";
 import { ideapadLinkManager } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/app/hooks/useToast";
-import { useSlugs } from "@/app/contexts/SlugContext";
-import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 
 import { default as s, default as styles } from "./ControlsBar.module.css";
 
@@ -32,6 +44,7 @@ const filterIcons: { [key: string]: React.ReactNode } = {
   Shared: <Link2 size={14} />,
   Maps: <Map size={14} />,
   Places: <MapPin size={14} />,
+  TODOs: <CheckSquare size={14} />,
 };
 
 export const FilterPill = ({ filter, onRemove }: { filter: string; onRemove: (filter: string) => void }) => {
@@ -120,9 +133,15 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     });
   }
 
-  const toggleFilter = useCallback((filter: string) => {
-    setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
-  }, []);
+  const toggleFilter = useCallback(
+    (filter: string) => {
+      if (filter === "TODOs") {
+        settingsStore.setShowOnlyTodos(!settingsStore.showOnlyTodos);
+      }
+      setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
+    },
+    [settingsStore],
+  );
 
   const updateSortOption = (partialSortOption: Partial<SortOption>) => {
     const newSortOption: SortOption = {
@@ -152,13 +171,18 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           <FilterPill
             key={filter}
             filter={filter}
-            onRemove={(filter) => setSelectedFilters((prev) => prev.filter((f) => f !== filter))}
+            onRemove={(filter) => {
+              if (filter === "TODOs") {
+                settingsStore.setShowOnlyTodos(false);
+              }
+              setSelectedFilters((prev) => prev.filter((f) => f !== filter));
+            }}
           />
         ))}
         <div className={styles.FiltersDropdown}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm" disabled>
+              <Button size="sm">
                 <ListFilter size={14} strokeWidth={1.5} />
                 <span>Filters</span>
               </Button>
@@ -168,7 +192,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 <Globe size={14} strokeWidth={1.5} />
                 Public
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => toggleFilter("Shared")}>
+              {/* <DropdownMenuItem onSelect={() => toggleFilter("Shared")}>
                 <Link2 size={14} strokeWidth={1.5} />
                 Shared
               </DropdownMenuItem>
@@ -179,6 +203,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
               <DropdownMenuItem onSelect={() => toggleFilter("Places")}>
                 <MapPin size={14} strokeWidth={1.5} />
                 Places
+              </DropdownMenuItem> */}
+              <DropdownMenuItem onSelect={() => toggleFilter("TODOs")}>
+                <CheckSquare size={14} strokeWidth={1.5} />
+                TODOs
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
