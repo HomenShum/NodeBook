@@ -72,7 +72,7 @@ export const REGEX_CONSTANTS = {
   MAX_ALIAS_LENGTH: 50,
   PUNCTUATION: "", // "\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;",
   VALID_JOINS: "", //"(?:\\.[ |$]| |[\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;]|)",
-  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|${CONNECTION_SYMBOL}\\s|\\${PLUS_SYMBOL}|${TILDE_SYMBOL}`,
+  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|${CONNECTION_SYMBOL}\\s|\\${PLUS_SYMBOL}|${TILDE_SYMBOL}|${HASHTAG_SYMBOL}`,
 };
 
 // Interface for text match results

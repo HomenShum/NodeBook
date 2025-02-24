@@ -12,6 +12,7 @@ import {
 
 import styles from "@/app/editor/Editor.module.css";
 import { MENTION_SYMBOL, MentionTrigger } from "@/lib/utils";
+
 // Much of this implementation is copied from:
 // https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/nodes/MentionNode.ts
 

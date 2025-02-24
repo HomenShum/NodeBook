@@ -8,6 +8,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphRelationType } from "@/app/graph/types";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
 import { isNoteContent } from "@/app/tree/utils";
+import { scoreMatch } from "@/lib/utils";
 
 export type NodeType = "node" | "relation" | "relationType";
 
@@ -177,6 +178,40 @@ export const useGetRecentNodes = (maxResults: number, toFilterByNodeId?: string)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, maxResults)
       .map((node) => ({ key: node.id, type: "node" as const, object: node, score: 0 }));
+
+    graphStore.layerManager.lazyLoadWithIds(results.map((node) => node.object.id));
+
+    return results;
+  }, [graphStore, maxResults, toFilterByNodeId]);
+};
+
+export const useGetMatchesForHashtags = (maxResults: number): GetMatches => {
+  const graphStore = useGraphStore();
+
+  return useCallback(
+    (text: string) => {
+      const results = graphStore.myHashtagsNode.children
+        .filter((node) => node instanceof GraphNode)
+        .filter((node) => node.text.toLocaleLowerCase().includes(text.toLocaleLowerCase()))
+        .sort((a, b) => scoreMatch(a.text, text) - scoreMatch(b.text, text))
+        .slice(0, maxResults)
+        .map((node) => ({ key: node.id, type: "node" as const, object: node as GraphNode, score: 0 }));
+
+      return results;
+    },
+    [graphStore],
+  );
+};
+
+export const useGetRecentHashtags = (maxResults: number, toFilterByNodeId?: string): (() => GraphNodeMatch[]) => {
+  const graphStore = useGraphStore();
+
+  return useCallback(() => {
+    const results = graphStore.myHashtagsNode.children
+      .filter((node) => node.id !== toFilterByNodeId && node instanceof GraphNode)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, maxResults)
+      .map((node) => ({ key: node.id, type: "node" as const, object: node as GraphNode, score: 0 }));
 
     graphStore.layerManager.lazyLoadWithIds(results.map((node) => node.object.id));
 

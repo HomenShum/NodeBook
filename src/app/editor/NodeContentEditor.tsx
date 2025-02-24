@@ -15,7 +15,6 @@ import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNo
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { FormatKeyPlugin } from "@/app/editor/plugins/FormatKeyPlugin";
-import { HashtagPlugin } from "@/app/editor/plugins/HashtagPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { LogCollapsedEditorPlugin } from "@/app/editor/plugins/LogGhostBulletStatePlugin";
@@ -104,7 +103,6 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <RelationPlugin />}
         {isEditorEditable && <ReplacementPlugin treeNode={treeNode} />}
         {isEditorEditable && <TodoPlugin treeNode={treeNode} />}
-        {isEditorEditable && <HashtagPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />

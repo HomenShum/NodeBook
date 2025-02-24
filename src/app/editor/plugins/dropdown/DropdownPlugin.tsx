@@ -9,12 +9,17 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
-import { useGetMatchesForTreeNode, useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
+import {
+  useGetMatchesForHashtags,
+  useGetMatchesForTreeNode,
+  useGetRecentHashtags,
+  useGetRecentNodes,
+} from "@/app/editor/plugins/dropdown/utils";
 import { $getText } from "@/app/editor/utils/content";
 import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
-import { checkForMentionMatch } from "@/lib/utils";
+import { checkForMentionMatch, HASHTAG_SYMBOL } from "@/lib/utils";
 
 const MAX_DROPDOWN_RESULTS = 20;
 
@@ -52,6 +57,8 @@ export const DropdownPlugin = observer(function DropdownPlugin({
   const debouncedSearchText = useDebounce(searchText, { wait: 150 });
   const getMatches = useGetMatchesForTreeNode(MAX_DROPDOWN_RESULTS, treeNode);
   const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, treeNode.object.id);
+  const getHashtagMatches = useGetMatchesForHashtags(MAX_DROPDOWN_RESULTS);
+  const getRecentHashtags = useGetRecentHashtags(MAX_DROPDOWN_RESULTS, treeNode.object.id);
 
   const textChanged = useRef(false);
   const isChild =
@@ -164,14 +171,22 @@ export const DropdownPlugin = observer(function DropdownPlugin({
   useEffect(() => {
     let matches: Match[] = [];
     if (debouncedSearchText.length === 0) {
-      matches = getRecentNodes();
+      if (dropdown?.type === "mention" && dropdown.mentionTrigger === HASHTAG_SYMBOL) {
+        matches = getRecentHashtags();
+      } else {
+        matches = getRecentNodes();
+      }
     } else if (passiveAutocompleteActive || dropdown?.type === "searchAndReplace") {
       matches = getMatches(
         debouncedSearchText,
         labelledRelation ? ["node", "relation"] : ["node", "relation", "relationType"],
       );
     } else if (dropdown?.type === "mention") {
-      matches = getMatches(debouncedSearchText, ["node"]);
+      if (dropdown.mentionTrigger === HASHTAG_SYMBOL) {
+        matches = getHashtagMatches(debouncedSearchText);
+      } else {
+        matches = getMatches(debouncedSearchText, ["node"]);
+      }
     }
 
     setDropdown((prev: Dropdown) => {
