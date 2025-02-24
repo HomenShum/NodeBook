@@ -55,7 +55,10 @@ async function postHandler(req: NextAuthenticatedRequest) {
       for (const update of updates) {
         switch (update.operation) {
           case "addNode":
-            await createNodes(tx, [update.node]);
+            const allNodesCreated = await createNodes(tx, [update.node]);
+            if (!allNodesCreated) {
+              console.log(`The node ${update.node.id} wasn't created.`);
+            }
             break;
           case "updateNode":
             const nodeWasUpdated = await updateNode(tx, update.oldProps, update.newProps);

@@ -30,10 +30,13 @@ export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[])
         accessMode: node.accessMode,
       })),
     )
-    .returning({ createdId: graphNodeTable.id });
+    .returning({ createdId: graphNodeTable.id })
+    .onConflictDoNothing();
   if (newNodes.length !== nodes.length) {
-    throw new SyncError("Unable to create all nodes", { actionName: "createNodes", data: { nodes } });
+    // throw new SyncError("Unable to create all nodes", { actionName: "createNodes", data: { nodes } });
+    return false;
   }
+  return true;
 };
 
 const contentNotEqual = (a: SerializedNode, b: SerializedNode) =>
