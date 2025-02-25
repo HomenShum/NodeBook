@@ -79,10 +79,12 @@ export function MentionDropdown({
               : treeNode.parent instanceof RootTreeNode
               ? treeNode.relationWithParent ?? -1
               : -1,
-            relationProps:
-              dropdown.mentionTrigger !== MENTION_SYMBOL
-                ? graphStore.relationTypesById.relatedTo
-                : graphStore.relationTypesById.child,
+            relationProps: {
+              relationTypeId:
+                dropdown.mentionTrigger !== MENTION_SYMBOL
+                  ? graphStore.relationTypesById.relatedTo.id
+                  : graphStore.relationTypesById.child.id,
+            },
           });
         } else {
           if (opt.value.object.isUserNode) {
