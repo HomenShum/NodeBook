@@ -28,9 +28,12 @@ import { ObjectPath, Position, uuid } from "@/app/util";
 import {
   DEFAULT_CARD_STATUSES,
   GLOBAL_ADMIN_USER_ID,
+  GLOBAL_HASHTAGS_NODE_ID,
+  GLOBAL_HASHTAGS_TO_USER_HASHTAGS_RELATION_ID_PREFIX,
   GLOBAL_RELATION_TYPES_NODE_ID,
   GLOBAL_ROOT_ID,
   GLOBAL_ROOT_TO_GLOBAL_TYPES_RELATION_ID,
+  GLOBAL_ROOT_TO_HASHTAGS_RELATION_ID,
   GLOBAL_TO_USER_TYPES_RELATION_ID_PREFIX,
   GLOBAL_USERS_NODE_ID,
   GLOBAL_USERS_RELATION_ID,
@@ -178,9 +181,7 @@ export class GraphStore {
 
   get myHashtagsNode(): GraphNode {
     const node = this.nodesById.get(this.myHashtagsNodeId);
-    if (!node) {
-      throw new Error("My hashtags node not found");
-    }
+    if (!node) throw new Error(`My hashtags node with id ${this.myHashtagsNodeId} not found`);
     return node;
   }
 
@@ -2204,6 +2205,35 @@ export class GraphStore {
       // Don't push the change. The global to users relation already exists on the server.
     }
 
+    // Global Hashtags node
+    let globalHashtagsNode = this.nodesById.get(GLOBAL_HASHTAGS_NODE_ID);
+    if (!globalHashtagsNode) {
+      const { node } = this._addNode({
+        id: GLOBAL_HASHTAGS_NODE_ID,
+        content: [{ type: "text", value: "Global Hashtags" }],
+        isPublic: true,
+        authorId: GLOBAL_ADMIN_USER_ID,
+        createdAt: new Date(0),
+      });
+      globalHashtagsNode = node;
+      // Don't push the change. The global hashtags node already exists on the server.
+    }
+
+    // Global-[sublist]->Global Hashtags
+    let globalToHashtagsRelation = this.relationsById.get(GLOBAL_ROOT_TO_HASHTAGS_RELATION_ID);
+    if (!globalToHashtagsRelation) {
+      const { relation } = this.createRelation({
+        id: GLOBAL_ROOT_TO_HASHTAGS_RELATION_ID,
+        from: globalRoot,
+        to: globalHashtagsNode,
+        relationType: defaultRelationTypes.sublist,
+        isPublic: true,
+        authorId: this.user.id,
+      });
+      globalToHashtagsRelation = relation;
+      // Don't push the change. The global to hashtags relation already exists on the server.
+    }
+
     // User node
     let userRoot = this.nodesById.get(this.userRootId);
     if (!userRoot) {
@@ -2252,6 +2282,22 @@ export class GraphStore {
       updates.push(...newRelationUpdates);
       const { updates: pinUpdates } = this._pinRelations(userRoot.id, [userToMyHashtagsRelation.id]);
       updates.push(...pinUpdates);
+    }
+
+    // Global Hashtags->My Hashtags
+    const globalHashtagsToUserHashtagsRelationId = GLOBAL_HASHTAGS_TO_USER_HASHTAGS_RELATION_ID_PREFIX + this.user.id;
+    let globalHashtagsToUserHashtagsRelation = this.relationsById.get(globalHashtagsToUserHashtagsRelationId);
+    if (!globalHashtagsToUserHashtagsRelation && globalHashtagsNode && myHashtagsNode) {
+      const { relation, updates: newRelationUpdates } = this.createRelation({
+        id: globalHashtagsToUserHashtagsRelationId,
+        from: globalHashtagsNode,
+        to: myHashtagsNode,
+        relationType: defaultRelationTypes.sublist,
+        isPublic: true,
+        authorId: this.user.id,
+      });
+      globalHashtagsToUserHashtagsRelation = relation;
+      updates.push(...newRelationUpdates);
     }
 
     // My Favorites node for user
@@ -2989,6 +3035,39 @@ export class GraphStore {
       }
     }
     return paths;
+  }
+
+  /**
+   * Get the global hashtags node ID.
+   */
+  get globalHashtagsNodeId(): string {
+    return GLOBAL_HASHTAGS_NODE_ID;
+  }
+
+  /**
+   * Get the global hashtags node.
+   */
+  get globalHashtagsNode(): GraphNode {
+    const node = this.nodesById.get(this.globalHashtagsNodeId);
+    if (!node) throw new Error(`Global hashtags node with id ${this.globalHashtagsNodeId} not found`);
+    return node;
+  }
+
+  /**
+   * Get the global hashtags to user hashtags relation ID.
+   */
+  get globalHashtagsToUserHashtagsRelationId(): string {
+    return GLOBAL_HASHTAGS_TO_USER_HASHTAGS_RELATION_ID_PREFIX + this.user.id;
+  }
+
+  get globalHashtagsToUserHashtagsRelation(): GraphRelation {
+    const relation = this.relationsById.get(this.globalHashtagsToUserHashtagsRelationId);
+    if (!relation) {
+      throw new Error(
+        `Global hashtags to user hashtags relation with id ${this.globalHashtagsToUserHashtagsRelationId} not found`,
+      );
+    }
+    return relation;
   }
 }
 

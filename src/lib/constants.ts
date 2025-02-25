@@ -13,3 +13,6 @@ export const USER_RELATION_TYPES_NODE_ID_PREFIX = "user-relation-types-node-id-"
 export const USER_MY_STREAM_NODE_ID_PREFIX = "user-stream-id-";
 export const USER_CARD_STATUSES_NODE_ID = "user-card-statuses-node-id-";
 export const DEFAULT_CARD_STATUSES = ["Not Acknowledged", "Acknowledged", "In Progress", "Done"];
+export const GLOBAL_HASHTAGS_NODE_ID = "global-hashtags-id";
+export const GLOBAL_ROOT_TO_HASHTAGS_RELATION_ID = "global-root-to-hashtags-relation-id";
+export const GLOBAL_HASHTAGS_TO_USER_HASHTAGS_RELATION_ID_PREFIX = "global-hashtags-to-user-hashtags-id-";
