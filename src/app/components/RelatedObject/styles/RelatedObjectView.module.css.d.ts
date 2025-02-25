@@ -29,6 +29,7 @@ declare const styles: {
   readonly "RelatedObjectIndicator": string;
   readonly "RelatedObjectInputSuffix": string;
   readonly "RelatedObjectLeftArea": string;
+  readonly "RelatedObjectLeftClickArea": string;
   readonly "RelatedObjectLeftHandler": string;
   readonly "RelatedObjectNode": string;
   readonly "RelatedObjectNodeContent": string;

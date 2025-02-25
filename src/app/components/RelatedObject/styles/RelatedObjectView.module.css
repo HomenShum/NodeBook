@@ -35,10 +35,21 @@ Left Area
   padding-right: 2px;
 }
 
+.RelatedObjectLeftClickArea {
+  position: absolute;
+  right: 100%;
+  width: 400px;
+  height: 100%;
+  cursor: text;
+  z-index: 1;
+}
+
 .RelatedObjectActions {
   display: flex;
   align-items: center;
   gap: 1px;
+  position: relative;
+  z-index: 2;
 }
 
 /*

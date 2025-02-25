@@ -384,10 +384,19 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
   const setRoot = useSetMainRoot();
   const isNoteContentRoot = treeNode.childrenGroupsById.noteContent.nodes.length > 0;
 
+  // Focus handler to focus at the start of the node
+  const handleLeftAreaClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    treeNode.tree.setFocusedNode(treeNode.id, "start", true);
+  };
+
   return (
     <>
       <div className={styles.RelatedObjectLeftHandler}>
-        <div className={styles.RelatedObjectActions}>
+        {/* Add clickable area to the left of the node */}
+        <div className={styles.RelatedObjectLeftClickArea} onPointerDown={handleLeftAreaClick} />
+        <div className={styles.RelatedObjectActions} style={{ position: "relative", zIndex: 2 }}>
           <RelatedObjectMenu
             setUpdatingRelationType={setUpdatingRelationType}
             isHovered={isMobile ? true : isHovered}
