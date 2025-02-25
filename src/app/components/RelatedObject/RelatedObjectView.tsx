@@ -24,6 +24,7 @@ import { useViewStore } from "@/app/view/useViewStore";
 // import all constants
 import { RelationTypePrefix } from "@/app/components/RelatedObject/RelationTypePrefix";
 import {
+  GLOBAL_HASHTAGS_NODE_ID,
   GLOBAL_RELATION_TYPES_NODE_ID,
   GLOBAL_ROOT_ID,
   GLOBAL_USERS_NODE_ID,
@@ -149,6 +150,7 @@ const Content = observer(function Content() {
     GLOBAL_ROOT_ID,
     GLOBAL_USERS_NODE_ID,
     USER_RELATION_TYPES_NODE_ID_PREFIX,
+    GLOBAL_HASHTAGS_NODE_ID,
   ];
   const settingsStore = useSettingsStore();
   const {
