@@ -24,6 +24,7 @@ export const SearchBar = observer(function SearchBar() {
     (e: React.FocusEvent) => {
       if (!containerRef.current?.contains(e.relatedTarget as Node) && !viewStore.searchQuery) {
         setIsExpanded(false);
+        // Only cancel deep search if there's no search query, which is already handled by the condition above
         viewStore.cancelDeepSearch();
       }
     },
@@ -33,6 +34,7 @@ export const SearchBar = observer(function SearchBar() {
   const handleCancelClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
+      viewStore.setDeepSearching(false);
       viewStore.cancelDeepSearch();
       setVisibleInput("");
       setIsExpanded(false);
@@ -83,6 +85,8 @@ export const SearchBar = observer(function SearchBar() {
       if (new Date().getTime() - lastInputTime.getTime() > 400 && viewStore.searchQuery !== visibleInput) {
         //Todo: internally this calls graphStore.search which triggers a layerManager.loadWithText call.
         viewStore.setSearchQuery(visibleInput);
+        // Only set deepSearching to true if there's a non-empty search query
+        viewStore.setDeepSearching(visibleInput.trim().length > 0);
         graphStore.layerManager.loadWithBFS(viewStore.mainView.rootObjectId);
       }
     }, 100);
@@ -114,13 +118,19 @@ export const SearchBar = observer(function SearchBar() {
         onChange={handleInputChange}
         onFocus={() => {
           setIsExpanded(true);
-          viewStore.setDeepSearching(true);
+          // Remove setting deepSearching on focus
+          // Only set it based on whether there's a search query
+          if (visibleInput.trim().length > 0) {
+            viewStore.setDeepSearching(true);
+          }
         }}
         onBlur={handleBlur}
         onKeyDown={action((e) => {
           if (e.key === "Escape") {
             // NOTE: Vimium will screw this up! It will override custom ESC behavior
             setIsExpanded(false);
+            // Explicitly set deepSearching to false
+            viewStore.setDeepSearching(false);
             viewStore.cancelDeepSearch();
             setVisibleInput("");
           } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
