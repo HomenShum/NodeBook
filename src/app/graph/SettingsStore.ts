@@ -40,6 +40,7 @@ export class SettingsStore {
   public showBulletForEmptyNode: boolean = false;
   public showNotifications: boolean = true;
   public showOnlyTodos: boolean = false;
+  public showOnlyTodosInQuickCapture: boolean = false;
   private stopAutosave: () => void;
 
   constructor(
@@ -83,6 +84,7 @@ export class SettingsStore {
     this.showBulletForEmptyNode = false;
     this.showNotifications = true;
     this.showOnlyTodos = false;
+    this.showOnlyTodosInQuickCapture = false;
   }
 
   private async syncToServer() {
@@ -120,6 +122,7 @@ export class SettingsStore {
       showBulletForEmptyNode: this.showBulletForEmptyNode,
       showNotifications: this.showNotifications,
       showOnlyTodos: this.showOnlyTodos,
+      showOnlyTodosInQuickCapture: this.showOnlyTodosInQuickCapture,
     };
   }
 
@@ -149,6 +152,7 @@ export class SettingsStore {
     this.showBulletForEmptyNode = data.showBulletForEmptyNode ?? this.showBulletForEmptyNode;
     this.showNotifications = data.showNotifications ?? this.showNotifications;
     this.showOnlyTodos = data.showOnlyTodos ?? this.showOnlyTodos;
+    this.showOnlyTodosInQuickCapture = data.showOnlyTodosInQuickCapture ?? this.showOnlyTodosInQuickCapture;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -243,6 +247,10 @@ export class SettingsStore {
 
   setShowOnlyTodos(value: boolean) {
     this.showOnlyTodos = value;
+  }
+
+  setShowOnlyTodosInQuickCapture(value: boolean) {
+    this.showOnlyTodosInQuickCapture = value;
   }
 
   cleanup() {

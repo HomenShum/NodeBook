@@ -1,37 +1,53 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { CheckSquare, Globe, ListFilter } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { Globe, Link2, ListFilter, Map, MapPin } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
-import s from "@/app/components/QuickCapture/QuickCapture.module.css";
+import { FilterPill } from "@/app/components/ControlsBar/ControlsBar";
 import s1 from "@/app/components/ControlsBar/ControlsBar.module.css";
-import { useViewStore } from "@/app/view/useViewStore";
+import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
+import { NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
 import OutlineContent from "@/app/components/OutlineContent";
+import s from "@/app/components/QuickCapture/QuickCapture.module.css";
+import QuickCaptureMenu from "@/app/components/QuickCapture/QuickCaptureMenu";
+import { QuickCaptureSearchBar } from "@/app/components/SearchBar/QuickCaptureSearchBar";
+import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
-import { Button } from "@/app/components/UIPrimitives/Button";
-import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { SortOption } from "@/app/tree/Tree";
 import { ViewType } from "@/app/view/types";
-import { FilterPill } from "@/app/components/ControlsBar/ControlsBar";
+import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
-import { QuickCaptureSearchBar } from "@/app/components/SearchBar/QuickCaptureSearchBar";
-import { DescendantTreeNode } from "@/app/tree/nodes";
-import QuickCaptureMenu from "@/app/components/QuickCapture/QuickCaptureMenu";
-import { useUser } from "@/app/contexts/UserContext";
 
 function QuickCapture() {
   const viewStore = useViewStore();
   const user = useUser();
+  const settingsStore = useSettingsStore();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
-  const toggleFilter = useCallback((filter: string) => {
-    setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
-  }, []);
+  // Initialize selectedFilters based on current settings
+  useEffect(() => {
+    const filters = [];
+    if (settingsStore.showOnlyTodosInQuickCapture) {
+      filters.push("TODOs");
+    }
+    setSelectedFilters(filters);
+  }, [settingsStore.showOnlyTodosInQuickCapture]);
+
+  const toggleFilter = useCallback(
+    (filter: string) => {
+      if (filter === "TODOs") {
+        settingsStore.setShowOnlyTodosInQuickCapture(!settingsStore.showOnlyTodosInQuickCapture);
+      }
+      setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
+    },
+    [settingsStore],
+  );
 
   const updateSortOption = (partialSortOption: Partial<SortOption>) => {
     if (!viewStore.quickCaptureOpen) return;
@@ -68,13 +84,18 @@ function QuickCapture() {
               <FilterPill
                 key={filter}
                 filter={filter}
-                onRemove={(filter) => setSelectedFilters((prev) => prev.filter((f) => f !== filter))}
+                onRemove={(filter) => {
+                  if (filter === "TODOs") {
+                    settingsStore.setShowOnlyTodosInQuickCapture(false);
+                  }
+                  setSelectedFilters((prev) => prev.filter((f) => f !== filter));
+                }}
               />
             ))}
             <div className={s1.FiltersDropdown}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" disabled>
+                  <Button size="sm">
                     <ListFilter size={14} strokeWidth={1.5} />
                     <span>Filters</span>
                   </Button>
@@ -84,7 +105,7 @@ function QuickCapture() {
                     <Globe size={14} strokeWidth={1.5} />
                     Public
                   </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => toggleFilter("Shared")}>
+                  {/* <DropdownMenuItem onSelect={() => toggleFilter("Shared")}>
                     <Link2 size={14} strokeWidth={1.5} />
                     Shared
                   </DropdownMenuItem>
@@ -95,6 +116,10 @@ function QuickCapture() {
                   <DropdownMenuItem onSelect={() => toggleFilter("Places")}>
                     <MapPin size={14} strokeWidth={1.5} />
                     Places
+                  </DropdownMenuItem> */}
+                  <DropdownMenuItem onSelect={() => toggleFilter("TODOs")}>
+                    <CheckSquare size={14} strokeWidth={1.5} />
+                    TODOs
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -64,6 +64,7 @@ const SerializedUserSettingsSchema = z.object({
   showBulletForEmptyNode: z.boolean().optional(),
   showNotifications: z.boolean().optional(),
   showOnlyTodos: z.boolean().optional(),
+  showOnlyTodosInQuickCapture: z.boolean().optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 
