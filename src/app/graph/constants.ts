@@ -10,6 +10,7 @@ export type ListType = (typeof ALL_LIST_TYPES)[number];
 export type DefaultRelationType =
   | "child"
   | "relatedTo"
+  | "hashtag"
   | "author"
   | "sublist"
   | "empty"
@@ -83,6 +84,14 @@ export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType
     authorId: GLOBAL_ADMIN_USER_ID,
     label: "relates to",
     reverseLabel: "relates to",
+    isPublic: false,
+  },
+  hashtag: {
+    version: 1,
+    id: "hashtag",
+    authorId: GLOBAL_ADMIN_USER_ID,
+    label: "hashtag of",
+    reverseLabel: "has hashtag",
     isPublic: false,
   },
   author: {

@@ -11,7 +11,15 @@ import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { NotificationManager, uuid } from "@/app/util";
-import { CONNECTION_SYMBOL, CONNECTION_SYMBOL_WITH_SPACE, MENTION_SYMBOL, MenuTextMatch, cn, isMac } from "@/lib/utils";
+import {
+  CONNECTION_SYMBOL,
+  CONNECTION_SYMBOL_WITH_SPACE,
+  HASHTAG_SYMBOL,
+  MENTION_SYMBOL,
+  MenuTextMatch,
+  cn,
+  isMac,
+} from "@/lib/utils";
 
 import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
 import { Dropdown } from "./types";
@@ -66,6 +74,12 @@ export function MentionDropdown({
           const connectionBefore = new TextNode(dropdown.mentionTrigger);
           mentionNode.insertBefore(connectionBefore);
         }
+        const relationTypeId =
+          dropdown.mentionTrigger === MENTION_SYMBOL
+            ? graphStore.relationTypesById.child.id
+            : dropdown.mentionTrigger === HASHTAG_SYMBOL
+            ? graphStore.relationTypesById.hashtag.id
+            : graphStore.relationTypesById.relatedTo.id;
         mentionNode.selectEnd();
         if (opt.value.type === "new") {
           const newNodeText = opt.name.slice("Create new node: ".length);
@@ -80,10 +94,7 @@ export function MentionDropdown({
               ? treeNode.relationWithParent ?? -1
               : -1,
             relationProps: {
-              relationTypeId:
-                dropdown.mentionTrigger !== MENTION_SYMBOL
-                  ? graphStore.relationTypesById.relatedTo.id
-                  : graphStore.relationTypesById.child.id,
+              relationTypeId: relationTypeId,
             },
           });
         } else {
@@ -111,10 +122,7 @@ export function MentionDropdown({
           await graphStore.addRelation({
             fromId: graphNodeId,
             toId: treeNode.object.id,
-            relationTypeId:
-              dropdown.mentionTrigger !== MENTION_SYMBOL
-                ? graphStore.relationTypesById.relatedTo.id
-                : graphStore.relationTypesById.child.id,
+            relationTypeId: relationTypeId,
           });
         } else {
           //NOOP - The mention node isn't rendered without this.
