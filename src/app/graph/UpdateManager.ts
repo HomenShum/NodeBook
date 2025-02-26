@@ -207,7 +207,9 @@ export class UpdateManager {
       transactionId: uuid(),
       updates,
     };
-    this.syncQueue.push(dataForSync);
+    if (env.persistTo === "server") {
+      this.syncQueue.push(dataForSync);
+    }
   }
   undo() {
     const updates = this.undoStack.pop();
@@ -226,7 +228,9 @@ export class UpdateManager {
       transactionId: uuid(),
       updates: inverted,
     };
-    this.syncQueue.push(dataForSync);
+    if (env.persistTo === "server") {
+      this.syncQueue.push(dataForSync);
+    }
   }
 
   redo() {
@@ -242,7 +246,9 @@ export class UpdateManager {
       transactionId: uuid(),
       updates,
     };
-    this.syncQueue.push(dataForSync);
+    if (env.persistTo === "server") {
+      this.syncQueue.push(dataForSync);
+    }
   }
 
   private async sendChunkedSyncData(syncData: SyncData) {
