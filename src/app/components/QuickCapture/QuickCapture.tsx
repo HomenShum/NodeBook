@@ -15,6 +15,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
@@ -34,17 +35,43 @@ function QuickCapture() {
   useEffect(() => {
     const filters = [];
     if (settingsStore.showOnlyTodosInQuickCapture) {
-      filters.push("TODOs");
+      if (settingsStore.todosInQuickCaptureFilterType === "all") {
+        filters.push("TODOs");
+      } else if (settingsStore.todosInQuickCaptureFilterType === "checked") {
+        filters.push("TODOs (Checked)");
+      } else if (settingsStore.todosInQuickCaptureFilterType === "unchecked") {
+        filters.push("TODOs (Unchecked)");
+      }
     }
     setSelectedFilters(filters);
-  }, [settingsStore.showOnlyTodosInQuickCapture]);
+  }, [settingsStore.showOnlyTodosInQuickCapture, settingsStore.todosInQuickCaptureFilterType]);
 
   const toggleFilter = useCallback(
-    (filter: string) => {
+    (filter: string, status?: string) => {
       if (filter === "TODOs") {
-        settingsStore.setShowOnlyTodosInQuickCapture(!settingsStore.showOnlyTodosInQuickCapture);
+        if (status) {
+          // Set the filter type
+          settingsStore.setTodosInQuickCaptureFilterType(status);
+          // Enable the filter
+          settingsStore.setShowOnlyTodosInQuickCapture(true);
+        } else {
+          // Just toggle the filter on/off without changing type
+          settingsStore.setShowOnlyTodosInQuickCapture(!settingsStore.showOnlyTodosInQuickCapture);
+        }
       }
-      setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
+
+      // Add the filter to selectedFilters with appropriate label
+      let filterLabel = filter;
+      if (filter === "TODOs" && status) {
+        if (status === "checked") filterLabel = "TODOs (Checked)";
+        else if (status === "unchecked") filterLabel = "TODOs (Unchecked)";
+      }
+
+      setSelectedFilters((prev) =>
+        prev.some((f) => f.startsWith("TODOs"))
+          ? prev.filter((f) => !f.startsWith("TODOs")).concat(filterLabel)
+          : [...prev, filterLabel],
+      );
     },
     [settingsStore],
   );
@@ -85,7 +112,7 @@ function QuickCapture() {
                 key={filter}
                 filter={filter}
                 onRemove={(filter) => {
-                  if (filter === "TODOs") {
+                  if (filter.startsWith("TODOs")) {
                     settingsStore.setShowOnlyTodosInQuickCapture(false);
                   }
                   setSelectedFilters((prev) => prev.filter((f) => f !== filter));
@@ -117,9 +144,20 @@ function QuickCapture() {
                     <MapPin size={14} strokeWidth={1.5} />
                     Places
                   </DropdownMenuItem> */}
-                  <DropdownMenuItem onSelect={() => toggleFilter("TODOs")}>
+
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled>
                     <CheckSquare size={14} strokeWidth={1.5} />
                     TODOs
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "all")} style={{ paddingLeft: "24px" }}>
+                    All TODOs
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "checked")} style={{ paddingLeft: "24px" }}>
+                    Checked TODOs
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "unchecked")} style={{ paddingLeft: "24px" }}>
+                    Unchecked TODOs
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

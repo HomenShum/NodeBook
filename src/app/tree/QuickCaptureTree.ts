@@ -12,6 +12,7 @@ export class QuickCaptureTree extends Tree {
       ...super.filter,
       // Override the showOnlyTodos to use the quick capture specific setting
       showOnlyTodos: this.settingsStore.showOnlyTodosInQuickCapture,
+      todosFilterType: this.settingsStore.todosInQuickCaptureFilterType,
     };
   }
 }
@@ -27,6 +28,7 @@ export class QuickCaptureSearchTree extends SearchTree {
       ...super.filter,
       // Override the showOnlyTodos to use the quick capture specific setting
       showOnlyTodos: this.settingsStore.showOnlyTodosInQuickCapture,
+      todosFilterType: this.settingsStore.todosInQuickCaptureFilterType,
     };
   }
 }

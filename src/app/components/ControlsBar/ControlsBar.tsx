@@ -22,6 +22,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
@@ -133,12 +134,42 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     });
   }
 
-  const toggleFilter = useCallback(
-    (filter: string) => {
-      if (filter === "TODOs") {
-        settingsStore.setShowOnlyTodos(!settingsStore.showOnlyTodos);
+  useEffect(() => {
+    const filters: string[] = [];
+    if (settingsStore.showOnlyTodos) {
+      if (settingsStore.todosFilterType === "all") {
+        filters.push("TODOs");
+      } else if (settingsStore.todosFilterType === "checked") {
+        filters.push("TODOs (Checked)");
+      } else if (settingsStore.todosFilterType === "unchecked") {
+        filters.push("TODOs (Unchecked)");
       }
-      setSelectedFilters((prev) => (prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]));
+    }
+    setSelectedFilters(filters);
+  }, [settingsStore.showOnlyTodos, settingsStore.todosFilterType]);
+
+  const toggleFilter = useCallback(
+    (filter: string, status?: string) => {
+      if (filter === "TODOs") {
+        if (status) {
+          settingsStore.setTodosFilterType(status);
+          settingsStore.setShowOnlyTodos(true);
+        } else {
+          settingsStore.setShowOnlyTodos(!settingsStore.showOnlyTodos);
+        }
+      }
+
+      let filterLabel = filter;
+      if (filter === "TODOs" && status) {
+        if (status === "checked") filterLabel = "TODOs (Checked)";
+        else if (status === "unchecked") filterLabel = "TODOs (Unchecked)";
+      }
+
+      setSelectedFilters((prev) =>
+        prev.some((f) => f.startsWith("TODOs"))
+          ? prev.filter((f) => !f.startsWith("TODOs")).concat(filterLabel)
+          : [...prev, filterLabel],
+      );
     },
     [settingsStore],
   );
@@ -172,7 +203,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             key={filter}
             filter={filter}
             onRemove={(filter) => {
-              if (filter === "TODOs") {
+              if (filter.startsWith("TODOs")) {
                 settingsStore.setShowOnlyTodos(false);
               }
               setSelectedFilters((prev) => prev.filter((f) => f !== filter));
@@ -188,7 +219,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem onSelect={() => toggleFilter("Public")}>
+              <DropdownMenuItem onSelect={() => toggleFilter("Public", "all")}>
                 <Globe size={14} strokeWidth={1.5} />
                 Public
               </DropdownMenuItem>
@@ -204,9 +235,20 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 <MapPin size={14} strokeWidth={1.5} />
                 Places
               </DropdownMenuItem> */}
-              <DropdownMenuItem onSelect={() => toggleFilter("TODOs")}>
+
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled>
                 <CheckSquare size={14} strokeWidth={1.5} />
                 TODOs
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "all")} style={{ paddingLeft: "24px" }}>
+                All TODOs
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "checked")} style={{ paddingLeft: "24px" }}>
+                Checked TODOs
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "unchecked")} style={{ paddingLeft: "24px" }}>
+                Unchecked TODOs
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

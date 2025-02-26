@@ -258,6 +258,7 @@ export class Tree {
       hideDirectParent: this.settingsStore.hideDirectParent,
       hidePinnedSection: this.settingsStore.hidePinnedItems,
       showOnlyTodos: this.settingsStore.showOnlyTodos,
+      todosFilterType: this.settingsStore.todosFilterType,
       ...this.partialFilter,
     };
   }
@@ -726,6 +727,26 @@ export class Tree {
       const isTodo = treeNode.isTodoItem;
       if (filter.showOnlyTodos && !isTodo && !hasTodoDescendant) {
         return { visible: false, hasTodoDescendant: false };
+      }
+
+      // Filter by TODO check status if specified
+      if (filter.showOnlyTodos && isTodo && filter.todosFilterType && filter.todosFilterType !== "all") {
+        // Filter checked TODOs
+        if (
+          filter.todosFilterType === "checked" &&
+          treeNode.object instanceof GraphNode &&
+          treeNode.object.isChecked !== true
+        ) {
+          return { visible: false, hasTodoDescendant };
+        }
+        // Filter unchecked TODOs
+        if (
+          filter.todosFilterType === "unchecked" &&
+          treeNode.object instanceof GraphNode &&
+          treeNode.object.isChecked !== false
+        ) {
+          return { visible: false, hasTodoDescendant };
+        }
       }
 
       return { visible: true, hasTodoDescendant: hasTodoDescendant || isTodo };
@@ -2046,4 +2067,5 @@ export type Filter = {
   hideDirectParent: boolean;
   hidePinnedSection: boolean;
   showOnlyTodos: boolean;
+  todosFilterType?: string;
 };
