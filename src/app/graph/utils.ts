@@ -5,6 +5,7 @@ import { BaseGroup, DescendantTreeNode, GroupId, NoteContentGroup, PinnedGroup }
 import { ObjectPath, objectPathToObjects } from "@/app/util";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import logger from "@/lib/logger";
+import { SyncData } from "@/app/graph/SyncData";
 
 const getSide = (relation: GraphRelation, id: string): "from" | "to" | undefined => {
   if (relation.from.id === id) {
@@ -225,4 +226,44 @@ export const sliceChips = (chips: Chip[], start: number, end?: number): Chip[] =
   }
 
   return result;
+};
+
+/**
+ * Returns an array of relation and node ids
+ */
+export const getEntityIdsFromUpdates = (syncData: SyncData): string[] => {
+  const entityIds: string[] = [];
+
+  syncData.updates.forEach((update) => {
+    switch (update.operation) {
+      case "addNode":
+        entityIds.push(update.node.id);
+        break;
+      case "addRelation":
+        entityIds.push(update.relation.fromId, update.relation.toId, update.relation.id);
+        break;
+      case "deleteNode":
+        entityIds.push(update.node.id);
+        break;
+      case "deleteRelation":
+        entityIds.push(update.deleted.relation.id, update.deleted.relation.fromId, update.deleted.relation.toId);
+        break;
+      case "updateNode":
+        entityIds.push(update.oldProps.id);
+        break;
+      case "updateRelation":
+        entityIds.push(
+          update.oldProps.id,
+          update.oldProps.fromId,
+          update.oldProps.toId,
+          update.newProps.toId,
+          update.newProps.fromId,
+        );
+        break;
+      case "updateRelationList":
+        entityIds.push(update.nodeId, update.relationId);
+    }
+  });
+
+  return entityIds;
 };

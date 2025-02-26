@@ -9,47 +9,11 @@ import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persiste
 import { uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 import { getGlobalGraphChannel, userIdToPusherChannel } from "@/lib/pusher";
+import { getEntityIdsFromUpdates } from "@/app/graph/utils";
 
 const logger = appLogger.child({ service: "UpdateManager" });
 
 const pusher = new Pusher(env.pusherKey, { cluster: env.pusherCluster });
-
-const getEntityIdsFromUpdates = (syncData: SyncData): string[] => {
-  const entityIds: string[] = [];
-
-  syncData.updates.forEach((update) => {
-    switch (update.operation) {
-      case "addNode":
-        entityIds.push(update.node.id);
-        break;
-      case "addRelation":
-        entityIds.push(update.relation.fromId, update.relation.toId, update.relation.id);
-        break;
-      case "deleteNode":
-        entityIds.push(update.node.id);
-        break;
-      case "deleteRelation":
-        entityIds.push(update.deleted.relation.id, update.deleted.relation.fromId, update.deleted.relation.toId);
-        break;
-      case "updateNode":
-        entityIds.push(update.oldProps.id);
-        break;
-      case "updateRelation":
-        entityIds.push(
-          update.oldProps.id,
-          update.oldProps.fromId,
-          update.oldProps.toId,
-          update.newProps.toId,
-          update.newProps.fromId,
-        );
-        break;
-      case "updateRelationList":
-        entityIds.push(update.nodeId, update.relationId);
-    }
-  });
-
-  return entityIds;
-};
 
 export class UpdateManager {
   private clientId = uuid();
