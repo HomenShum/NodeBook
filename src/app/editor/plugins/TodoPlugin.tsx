@@ -34,11 +34,15 @@ export const TodoPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
         if (!(event.key === "]") || treeNode.object.objectType !== "node" || treeNode.isTodoItem) {
           return false;
         }
-        const shouldCreateCheckedTodo = editor.getRootElement()?.textContent?.toLowerCase()?.startsWith("[x") || false;
+        const rootTextContent = editor.getRootElement()?.textContent?.toLowerCase() || "";
+
+        const shouldCreateCheckedTodo = rootTextContent.startsWith("[x");
         const shouldCreateEmptyTodo =
-          (!shouldCreateCheckedTodo && editor.getRootElement()?.textContent?.startsWith("[")) || false;
+          !shouldCreateCheckedTodo && (rootTextContent.startsWith("[") || rootTextContent.startsWith("[ "));
+
         if (!shouldCreateEmptyTodo && !shouldCreateCheckedTodo) return false;
-        const prefixSize = shouldCreateEmptyTodo ? 1 : 2;
+        const prefixSize = !rootTextContent.startsWith("[x") && !rootTextContent.startsWith("[ ") ? 1 : 2;
+
         const points = selection.getStartEndPoints();
         if (!points || points[0].offset !== prefixSize) return false;
         event.preventDefault();
