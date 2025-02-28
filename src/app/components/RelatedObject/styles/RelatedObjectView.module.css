@@ -304,6 +304,15 @@ Right Area
   align-items: center;
 }
 
+.RelatedObjectRightClickArea {
+  position: absolute;
+  left: 100%;
+  width: 400px;
+  height: 100%;
+  cursor: text;
+  z-index: 1;
+}
+
 /* Pin Icon of each bullet */
 .ObjectRightToggle {
   position: relative;

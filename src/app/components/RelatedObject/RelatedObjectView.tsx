@@ -193,8 +193,50 @@ const Content = observer(function Content() {
   }, [isMobile, treeNode]);
   const isNoteContentRoot = treeNode.object.noteContentRelationsList.size > 0;
 
+  // Right area click handler to focus at the end of the node
+  const handleRightAreaClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    treeNode.tree.setFocusedNode(treeNode.id, "end", true);
+  };
+
+  // Focus handler to focus at the start of the node
+  const handleLeftAreaClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    treeNode.tree.setFocusedNode(treeNode.id, "start", true);
+  };
+
+  const setRoot = useSetMainRoot();
+
   return (
     <>
+      <div className={styles.RelatedObjectLeftHandler}>
+        {/* Add clickable area to the left of the node */}
+        <div className={styles.RelatedObjectLeftClickArea} onPointerDown={handleLeftAreaClick} />
+        <div className={styles.RelatedObjectActions} style={{ position: "relative", zIndex: 2 }}>
+          <RelatedObjectMenu
+            setUpdatingRelationType={setUpdatingRelationType}
+            isHovered={isMobile ? true : isHovered}
+          />
+          {
+            <button
+              className={cn(styles.SetRootButton, (isMobile || isHovered) && styles.Hovered)}
+              onPointerDown={(e) => {
+                if (e.shiftKey) {
+                  // open in sidebar
+                  viewStore.createSidebarTree(treeNode.object);
+                } else {
+                  setRoot(treeNode.object);
+                }
+              }}
+            >
+              <Maximize2 size={11} className={styles.SetRootIcon} />
+            </button>
+          }
+          {viewStore.isNodeProcessing(treeNode.object.id) && <LoadingSpinner />}
+        </div>
+      </div>
       <div className={cn(styles.RelatedObjectNode, tree.isNodeSelected(treeNode.id) && styles.Selected)}>
         <div className={styles.RelatedObjectNodeContent}>
           {treeNode.isTodoItem && <Checkbox node={treeNode} />}
@@ -358,6 +400,8 @@ const Content = observer(function Content() {
               )}
             </>
           )}
+          {/* Add right click area for focusing at the end of the node */}
+          <div className={styles.RelatedObjectRightClickArea} onPointerDown={handleRightAreaClick} />
         </div>
       </div>
     </>
@@ -386,18 +430,15 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
   const setRoot = useSetMainRoot();
   const isNoteContentRoot = treeNode.childrenGroupsById.noteContent.nodes.length > 0;
 
-  // Focus handler to focus at the start of the node
-  const handleLeftAreaClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    treeNode.tree.setFocusedNode(treeNode.id, "start", true);
-  };
+  const handleTap = useCallback(() => {
+    if (isMobile) {
+      treeNode.tree.setFocusedNode(treeNode.path, "end", true);
+    }
+  }, [isMobile, treeNode]);
 
   return (
     <>
       <div className={styles.RelatedObjectLeftHandler}>
-        {/* Add clickable area to the left of the node */}
-        <div className={styles.RelatedObjectLeftClickArea} onPointerDown={handleLeftAreaClick} />
         <div className={styles.RelatedObjectActions} style={{ position: "relative", zIndex: 2 }}>
           <RelatedObjectMenu
             setUpdatingRelationType={setUpdatingRelationType}

@@ -36,6 +36,7 @@ declare const styles: {
   readonly "RelatedObjectPublic": string;
   readonly "RelatedObjectRelationsToggle": string;
   readonly "RelatedObjectRightArea": string;
+  readonly "RelatedObjectRightClickArea": string;
   readonly "RelationCounter": string;
   readonly "RelationHoverCard": string;
   readonly "Selected": string;
