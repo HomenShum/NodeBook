@@ -153,6 +153,7 @@ const Content = observer(function Content() {
     GLOBAL_HASHTAGS_NODE_ID,
   ];
   const settingsStore = useSettingsStore();
+  const { isHovered } = useTreeNode();
   const {
     treeNode,
     relationComboboxIsOpen,
@@ -211,7 +212,8 @@ const Content = observer(function Content() {
               {treeViewType === "note" &&
                 treeNode.object.noteContentRelationsList.size === 0 && // Notecontent is empty
                 treeNode.parent instanceof RootTreeNode &&
-                !isUnlabelledChild(treeNode) && <CornerDownRight size={16} className={styles.ElbowArrow} />}
+                !isUnlabelledChild(treeNode) &&
+                !isHovered && <CornerDownRight size={16} className={styles.ElbowArrow} />}
               <RelationCombobox
                 setUpdatingRelationType={setUpdatingRelationType}
                 treeNode={treeNode}

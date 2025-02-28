@@ -8,7 +8,6 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { isNoteContent } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
-import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 import { useTreeNode } from "./RelatedObjectContext";
@@ -26,7 +25,6 @@ const Toggle = observer(function Toggle() {
     (event: React.MouseEvent) => {
       event.stopPropagation();
       event.nativeEvent.stopImmediatePropagation();
-      logger.debug("Clicked toggle", treeNode.path);
 
       const isMainTree =
         treeNode.tree.isMainTree ||
