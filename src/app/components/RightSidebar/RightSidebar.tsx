@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import OutlineContent from "@/app/components/OutlineContent";
 import s from "@/app/components/RightSidebar/RightSidebar.module.css";
+import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 import { useViewStore } from "@/app/view/useViewStore";
 
 interface RightSidebarProps {
@@ -85,9 +86,11 @@ const RightSidebar = observer(function RightSidebar({ minWidth, maxWidth }: Righ
         <div className={s.CloseIconContainer} onClick={() => viewStore.toggleRightSidebar()} title={"Close sidebar"}>
           <PanelRightCloseIcon size={20} />
         </div>
-        {viewStore.sidebarTrees.map((tree) => (
-          <OutlineContent key={tree.id} tree={tree} />
-        ))}
+        <OutlineParentContext.Provider value="RightSidebar">
+          {viewStore.sidebarTrees.map((tree) => (
+            <OutlineContent key={tree.id} tree={tree} />
+          ))}
+        </OutlineParentContext.Provider>
       </div>
     </div>
   );

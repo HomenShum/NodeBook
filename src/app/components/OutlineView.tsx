@@ -14,6 +14,7 @@ import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 
 import s from "./OutlineView.module.css";
 
@@ -57,7 +58,9 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
           <GraphContainer tree={tree} />
         ) : (
           <div className={s.MainAndSidebarContainer}>
-            <OutlineContent tree={tree} />
+            <OutlineParentContext.Provider value="OutlineView">
+              <OutlineContent tree={tree} />
+            </OutlineParentContext.Provider>
             <RightSidebar minWidth={300} maxWidth={600} />
           </div>
         )}

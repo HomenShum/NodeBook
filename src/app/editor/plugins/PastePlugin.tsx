@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useOutlineParent } from "@/app/contexts/OutlineContentContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { transformTextToChips } from "@/app/editor/utils/links";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
@@ -237,6 +238,8 @@ export const PastePlugin = () => {
   const { object, relationWithParent, path } = treeNode;
   const shiftWasPressed = useRef<boolean>(false);
 
+  const outlineParent = useOutlineParent();
+
   useEffect(() => {
     return editor.registerCommand<KeyboardEvent>(
       KEY_DOWN_COMMAND,
@@ -279,7 +282,12 @@ export const PastePlugin = () => {
           let convertToNote = false;
           const newRootId = uuid();
           // If there are multiple lines and viewType is note, convert the node to note
-          if (lines.length > 1 && viewStore.viewType === "note" && treeNode.parentGroup.id !== "noteContent") {
+          if (
+            lines.length > 1 &&
+            ((viewStore.viewType === "note" && outlineParent === "OutlineView") ||
+              (viewStore.quickCaptureViewType === "note" && outlineParent === "QuickCapture")) &&
+            treeNode.parentGroup.id !== "noteContent"
+          ) {
             let noteConversion = tree.convertToNote(treeNode, false, true, newRootId);
             if (noteConversion instanceof Array) {
               txs.push(...noteConversion);

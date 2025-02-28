@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
+import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { SortOption } from "@/app/tree/Tree";
@@ -189,7 +190,9 @@ function QuickCapture() {
           </div>
         </div>
       </div>
-      <OutlineContent tree={viewStore.quickCaptureView} />
+      <OutlineParentContext.Provider value="QuickCapture">
+        <OutlineContent tree={viewStore.quickCaptureView} />
+      </OutlineParentContext.Provider>
     </div>
   );
 }
