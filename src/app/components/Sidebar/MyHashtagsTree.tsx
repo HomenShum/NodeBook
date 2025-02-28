@@ -177,7 +177,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
                 className={cn(styles.Button)}
                 onClick={(e) => handleChildClick(e, o)}
               >
-                #{o.text}
+                {o.text}
               </Button>
 
               <Button
@@ -209,7 +209,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
                   className={cn(styles.Button)}
                   onClick={(e) => handleChildClick(e, o)}
                 >
-                  #{o.text}
+                  {o.text}
                 </Button>
 
                 <Button

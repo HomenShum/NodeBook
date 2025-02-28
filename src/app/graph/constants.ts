@@ -90,8 +90,8 @@ export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType
     version: 1,
     id: "hashtag",
     authorId: GLOBAL_ADMIN_USER_ID,
-    label: "hashtag of",
-    reverseLabel: "has hashtag",
+    label: "has hashtag",
+    reverseLabel: "hashtag of",
     isPublic: false,
   },
   author: {

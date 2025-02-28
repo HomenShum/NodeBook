@@ -62,7 +62,8 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
         // Recursively traverse child and sublist relations
         if (
           relation.relationType.id === defaultRelationTypes.child.id ||
-          relation.relationType.id === defaultRelationTypes.sublist.id
+          relation.relationType.id === defaultRelationTypes.sublist.id ||
+          relation.relationType.id === defaultRelationTypes.hashtag.id
         ) {
           hashtags.push(...getHashtagNodes(targetNode, depth + 1, visited));
         }
@@ -119,7 +120,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
               "value",
             )?.set;
             if (nativeInputValueSetter) {
-              nativeInputValueSetter.call(searchInput, `${child.text}`);
+              nativeInputValueSetter.call(searchInput, child.text);
               searchInput.dispatchEvent(new Event("input", { bubbles: true }));
               searchInput.dispatchEvent(new Event("change", { bubbles: true }));
             }
@@ -180,7 +181,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
-                    #{hashtag.text}
+                    {hashtag.text}
                     <Search size={14} className={styles.SearchIcon} />
                   </Button>
                 );

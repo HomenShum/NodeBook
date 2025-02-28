@@ -68,29 +68,23 @@ export function MentionDropdown({
         if (!currentObject) return;
 
         nodeToReplace.replace(mentionNode);
-        const spaceAfter = new TextNode("");
+        const spaceAfter = new TextNode(" ");
         mentionNode.insertAfter(spaceAfter);
         if (dropdown.mentionTrigger === CONNECTION_SYMBOL || dropdown.mentionTrigger === CONNECTION_SYMBOL_WITH_SPACE) {
           const connectionBefore = new TextNode(dropdown.mentionTrigger);
           mentionNode.insertBefore(connectionBefore);
         }
-        const relationTypeId =
-          dropdown.mentionTrigger === MENTION_SYMBOL
-            ? graphStore.relationTypesById.child.id
-            : dropdown.mentionTrigger === HASHTAG_SYMBOL
-            ? graphStore.relationTypesById.hashtag.id
-            : graphStore.relationTypesById.relatedTo.id;
-        mentionNode.selectEnd();
+        spaceAfter.selectEnd();
         if (opt.value.type === "new") {
           const newNodeText = opt.name.slice("Create new node: ".length);
           const newNodeIsHashtag = dropdown.mentionTrigger === HASHTAG_SYMBOL;
           const parentId = newNodeIsHashtag ? graphStore.myHashtagsNodeId : graphStore.userRootId;
           await graphStore.addChildNode({
             parentId: parentId,
-            nodeProps: { id: graphNodeId, content: newNodeText },
+            nodeProps: { id: graphNodeId, content: newNodeIsHashtag ? "#" + newNodeText : newNodeText },
             after: 0,
             relationProps: {
-              relationTypeId: relationTypeId,
+              relationTypeId: graphStore.relationTypesById.child.id,
             },
           });
         } else {
@@ -104,25 +98,47 @@ export function MentionDropdown({
         }
         closeMenu();
         // add relation
-        const hasMentionOrParentRelation = treeNode.object.relations.some(
-          (r) =>
-            (r.relationType == defaultRelationTypes.relatedTo &&
-              r.from == treeNode.object &&
-              r.to.id === graphNodeId) ||
-            (r.relationType.id === defaultRelationTypes.child.id &&
-              r.to.id === treeNode.object.id &&
-              r.from.id === graphNodeId),
-        );
-
-        if (!hasMentionOrParentRelation) {
-          await graphStore.addRelation({
-            fromId: graphNodeId,
-            toId: treeNode.object.id,
-            relationTypeId: relationTypeId,
-          });
+        if (dropdown.mentionTrigger === HASHTAG_SYMBOL) {
+          const hasHashtagRelation = treeNode.object.relations.some(
+            (r) =>
+              r.relationType.id === defaultRelationTypes.hashtag.id &&
+              r.from.id === treeNode.object.id &&
+              r.to.id === graphNodeId,
+          );
+          if (!hasHashtagRelation) {
+            await graphStore.addRelation({
+              fromId: treeNode.object.id,
+              toId: graphNodeId,
+              relationTypeId: defaultRelationTypes.hashtag.id,
+            });
+          } else {
+            //NOOP - The mention node isn't rendered without this.
+            await graphStore.applyUpdates([]);
+          }
         } else {
-          //NOOP - The mention node isn't rendered without this.
-          await graphStore.applyUpdates([]);
+          const hasMentionOrParentRelation = treeNode.object.relations.some(
+            (r) =>
+              (r.relationType == defaultRelationTypes.relatedTo &&
+                r.from == treeNode.object &&
+                r.to.id === graphNodeId) ||
+              (r.relationType.id === defaultRelationTypes.child.id &&
+                r.to.id === treeNode.object.id &&
+                r.from.id === graphNodeId),
+          );
+
+          if (!hasMentionOrParentRelation) {
+            await graphStore.addRelation({
+              fromId: graphNodeId,
+              toId: treeNode.object.id,
+              relationTypeId:
+                dropdown.mentionTrigger === MENTION_SYMBOL
+                  ? graphStore.relationTypesById.child.id
+                  : graphStore.relationTypesById.relatedTo.id,
+            });
+          } else {
+            //NOOP - The mention node isn't rendered without this.
+            await graphStore.applyUpdates([]);
+          }
         }
 
         tree.setFocusedNode(treeNode.path, "end", true);
@@ -151,7 +167,7 @@ export class MentionTypeaheadOption extends MenuOption {
     this.value = typeof value === "string" ? { type: "new", text: value } : { type: "existing", object: value };
   }
   get name() {
-    return this.value.type === "new" ? `Create new node: ${this.value.text.trim()} ` : this.value.object.text;
+    return this.value.type === "new" ? `Create new node: ${this.value.text.trim()}` : this.value.object.text;
   }
 }
 
