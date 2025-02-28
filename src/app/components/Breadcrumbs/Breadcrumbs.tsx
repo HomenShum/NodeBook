@@ -202,7 +202,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
           variant="default"
           size="icon"
           className={cn(s.ShowTooltip, s.BottomAlign)}
-          data-tooltip="Home"
+          data-tooltip="Your Root"
           onClick={() => setRoot(graphStore.getDefaultRootForUser())}
         >
           <Home size={14} strokeWidth={1.5} />
