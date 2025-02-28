@@ -30,6 +30,7 @@ import { Switch } from "@/app/components/UIPrimitives/Switch";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useSlugs } from "@/app/contexts/SlugContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 import { useToast } from "@/app/hooks/useToast";
 import { SortOption, Tree } from "@/app/tree/Tree";
@@ -76,6 +77,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const graphStore = useGraphStore();
   const { addToast } = useToast();
   const { updateSlugByNodeId, slugs, deleteSlugByNodeId } = useSlugs();
+  const user = useUser();
 
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [ideapadLink, setIdeapadLink] = useState(ideapadLinkManager.get(tree.rootObjectId));
@@ -421,8 +423,16 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
               )}
               <div className={cn(s.SwitchItem, s.TextInput)}>
                 <label htmlFor="set-slug">Short URL</label>
-                <input id="set-slug" value={slug} onChange={handleOnChange} />
-                <button onClick={saveSlug}>Save</button>
+                <input
+                  id="set-slug"
+                  value={slug}
+                  onChange={handleOnChange}
+                  disabled={user.isAnonymous}
+                  className={user.isAnonymous ? s.DisabledInput : ""}
+                />
+                <button onClick={saveSlug} disabled={user.isAnonymous}>
+                  Save
+                </button>
                 <button onClick={copySlug}>Copy</button>
               </div>
             </div>

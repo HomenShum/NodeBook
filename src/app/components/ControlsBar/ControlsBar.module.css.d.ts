@@ -2,6 +2,7 @@ declare const styles: {
   readonly "BottomAlign": string;
   readonly "ControlsBar": string;
   readonly "ControlsBarWrapper": string;
+  readonly "DisabledInput": string;
   readonly "FiltersDropdown": string;
   readonly "Icon": string;
   readonly "PopoverButton": string;
