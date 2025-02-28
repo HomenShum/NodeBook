@@ -47,8 +47,14 @@ export const TodoPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
         if (!points || points[0].offset !== prefixSize) return false;
         event.preventDefault();
         event.stopPropagation();
-        const content = [...treeNode.object.content];
-        content[0].value = content[0].value.substring(prefixSize);
+
+        // Have to specifically update the content here so undo goes back to just the text
+        treeNode.object.content[0].value =
+          rootTextContent.slice(0, prefixSize) + "]" + treeNode.object.content[0].value.slice(prefixSize);
+
+        const content = treeNode.object.content.map((chip) => ({ ...chip }));
+        content[0].value = content[0].value.substring(prefixSize + 1);
+
         graphStore.updateNode({
           nodeId: treeNode.object.id,
           nodeProps: { content, isChecked: shouldCreateCheckedTodo },
