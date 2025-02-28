@@ -346,54 +346,50 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </span>
               <span className={styles.ButtonText}>AI Query</span>
             </Button>
-            {!user.isAnonymous && (
-              <>
-                <div className={styles.SidebarSectionHeader}>Feeds</div>
-                <Button
-                  variant="ghost"
-                  className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                  data-tooltip="Go to your news feed"
-                  onClick={(e) => {
-                    if (e.shiftKey) {
-                      viewStore.createSidebarTree(graphStore.globalRoot);
-                    } else if (e.metaKey) {
-                      openNewTab(graphStore.globalRoot);
-                    } else {
-                      handleNavigation(() => {
-                        setRoot(graphStore.globalRoot);
-                        viewStore.setFlattenSublists(true);
-                      });
-                    }
-                  }}
-                >
-                  <span>
-                    <Newspaper size={16} strokeWidth={1.5} />
-                  </span>
-                  <span className={styles.ButtonText}>News Feed</span>
-                </Button>
-              </>
-            )}
-            {!user.isAnonymous && (
+            <>
+              <div className={styles.SidebarSectionHeader}>Feeds</div>
               <Button
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="See recently created notes"
+                data-tooltip="Go to your news feed"
                 onClick={(e) => {
                   if (e.shiftKey) {
                     viewStore.createSidebarTree(graphStore.globalRoot);
                   } else if (e.metaKey) {
                     openNewTab(graphStore.globalRoot);
                   } else {
-                    handleNavigation(() => router.push("/all-nodes"));
+                    handleNavigation(() => {
+                      setRoot(graphStore.globalRoot);
+                      viewStore.setFlattenSublists(true);
+                    });
                   }
                 }}
               >
                 <span>
-                  <FileSpreadsheet size={16} strokeWidth={1.5} />
+                  <Newspaper size={16} strokeWidth={1.5} />
                 </span>
-                <span className={styles.ButtonText}>Recently Created Notes</span>
+                <span className={styles.ButtonText}>News Feed</span>
               </Button>
-            )}
+            </>
+            <Button
+              variant="ghost"
+              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+              data-tooltip="See recently created notes"
+              onClick={(e) => {
+                if (e.shiftKey) {
+                  viewStore.createSidebarTree(graphStore.globalRoot);
+                } else if (e.metaKey) {
+                  openNewTab(graphStore.globalRoot);
+                } else {
+                  handleNavigation(() => router.push("/all-nodes"));
+                }
+              }}
+            >
+              <span>
+                <FileSpreadsheet size={16} strokeWidth={1.5} />
+              </span>
+              <span className={styles.ButtonText}>Recently Created Notes</span>
+            </Button>
             {!user.isAnonymous && (
               <Button
                 variant="ghost"
