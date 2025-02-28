@@ -9,7 +9,7 @@ import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { getCanonicalPath } from "@/app/graph/utils";
-import { RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import { TreeNode } from "@/app/tree/nodes";
 import { NotificationManager, uuid } from "@/app/util";
 import {
   CONNECTION_SYMBOL,
@@ -83,16 +83,12 @@ export function MentionDropdown({
         mentionNode.selectEnd();
         if (opt.value.type === "new") {
           const newNodeText = opt.name.slice("Create new node: ".length);
-          const newNodeIsHashtag = newNodeText.startsWith("#");
+          const newNodeIsHashtag = dropdown.mentionTrigger === HASHTAG_SYMBOL;
           const parentId = newNodeIsHashtag ? graphStore.myHashtagsNodeId : graphStore.userRootId;
           await graphStore.addChildNode({
             parentId: parentId,
             nodeProps: { id: graphNodeId, content: newNodeText },
-            after: newNodeIsHashtag
-              ? -1
-              : treeNode.parent instanceof RootTreeNode
-              ? treeNode.relationWithParent ?? -1
-              : -1,
+            after: 0,
             relationProps: {
               relationTypeId: relationTypeId,
             },

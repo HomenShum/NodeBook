@@ -11,7 +11,7 @@ import {
 } from "lexical";
 
 import styles from "@/app/editor/Editor.module.css";
-import { MENTION_SYMBOL, MentionTrigger } from "@/lib/utils";
+import { HASHTAG_SYMBOL, MENTION_SYMBOL, MentionTrigger } from "@/lib/utils";
 
 // Much of this implementation is copied from:
 // https://github.com/facebook/lexical/blob/main/packages/lexical-playground/src/nodes/MentionNode.ts
@@ -73,7 +73,14 @@ export class MentionNode extends TextNode {
     __key?: NodeKey,
   ) {
     // The __key parameter is required when cloning a node
-    super(mentionTrigger === MENTION_SYMBOL ? "@" + mentionedGraphNodeText : mentionedGraphNodeText, __key);
+    super(
+      mentionTrigger === MENTION_SYMBOL
+        ? "@" + mentionedGraphNodeText
+        : mentionTrigger === HASHTAG_SYMBOL
+        ? "#" + mentionedGraphNodeText
+        : mentionedGraphNodeText,
+      __key,
+    );
     this.mentionedGraphNodeId = mentionedGraphNodeId;
     this.mentionedGraphNodeText = mentionedGraphNodeText;
     this.mentionTrigger = mentionTrigger;
