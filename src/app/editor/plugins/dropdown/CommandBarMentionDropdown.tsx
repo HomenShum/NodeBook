@@ -6,10 +6,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { getMenuRenderFn, MentionTypeaheadOption } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/types";
-import { useGetMatchesForCommandBar, useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
+import {
+  useGetMatchesForCommandBar,
+  useGetMatchesForHashtags,
+  useGetRecentHashtags,
+  useGetRecentNodes,
+} from "@/app/editor/plugins/dropdown/utils";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { uuid } from "@/app/util";
-import { checkForMentionMatch, MENTION_SYMBOL } from "@/lib/utils";
+import { checkForMentionMatch, HASHTAG_SYMBOL, MENTION_SYMBOL } from "@/lib/utils";
 
 const MAX_COMMAND_BAR_DROPDOWN_RESULTS = 5;
 
@@ -23,6 +28,8 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
   const graphStore = useGraphStore();
   const getMatches = useGetMatchesForCommandBar(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
   const getRecentNodes = useGetRecentNodes(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
+  const getRecentHashtags = useGetRecentHashtags(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
+  const getMatchesForHashtags = useGetMatchesForHashtags(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
   const [dropdown, setDropdown] = useState<MentionDropdown | null>(null);
   const textChanged = useRef(false);
 
@@ -51,15 +58,18 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
           setDropdown({
             type: "mention",
             search: queryString,
-            matches: getRecentNodes(),
-            mentionTrigger: MENTION_SYMBOL,
+            matches: match.mentionTrigger === HASHTAG_SYMBOL ? getRecentHashtags() : getRecentNodes(),
+            mentionTrigger: match.mentionTrigger,
           });
         } else {
           setDropdown({
             type: "mention",
             search: queryString,
-            matches: getMatches(queryString, ["node"]),
-            mentionTrigger: MENTION_SYMBOL,
+            matches:
+              match.mentionTrigger === HASHTAG_SYMBOL
+                ? getMatchesForHashtags(queryString)
+                : getMatches(queryString, ["node"]),
+            mentionTrigger: match.mentionTrigger,
           });
         }
         return match;
@@ -67,7 +77,7 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
 
       return null;
     },
-    [getMatches, getRecentNodes, textChanged, graphStore.totalNodes],
+    [getMatches, getRecentNodes, getRecentHashtags, getMatchesForHashtags, textChanged],
   );
 
   const onSelectOption = useCallback(
@@ -77,24 +87,32 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
       const graphNodeId = opt.value.type === "new" ? uuid() : opt.value.object.id;
       const text = opt.value.type === "new" ? opt.value.text : opt.value.object.text;
       editor.update(async () => {
-        const mentionNode = $createMentionNode(graphNodeId, text, MENTION_SYMBOL);
+        if (!dropdown) return;
+        const mentionNode = $createMentionNode(
+          graphNodeId,
+          dropdown.mentionTrigger === HASHTAG_SYMBOL && opt.value.type === "new" ? "#" + text : text,
+          dropdown.mentionTrigger ?? MENTION_SYMBOL,
+        );
         nodeToReplace.replace(mentionNode);
         const spaceAfter = new TextNode(" ");
         mentionNode.insertAfter(spaceAfter);
         spaceAfter.selectEnd();
+
         if (opt.value.type === "new") {
           const newNodeText = opt.name.slice("Create new node: ".length);
-          const newNodeIsHashtag = newNodeText.startsWith("#");
+          const newNodeIsHashtag = dropdown.mentionTrigger === HASHTAG_SYMBOL;
           const parentId = newNodeIsHashtag ? graphStore.myHashtagsNodeId : graphStore.userRootId;
           await graphStore.addChildNode({
             parentId: parentId,
-            nodeProps: { id: graphNodeId, content: newNodeText },
+            nodeProps: { id: graphNodeId, content: newNodeIsHashtag ? "#" + newNodeText : newNodeText },
           });
+          await graphStore.applyUpdates([]);
         }
+
         closeMenu();
       });
     },
-    [editor, graphStore],
+    [editor, graphStore, dropdown],
   );
 
   // Handle state transitions which {@link triggerFn} can't handle
