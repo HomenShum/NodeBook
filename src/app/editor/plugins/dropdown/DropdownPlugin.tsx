@@ -176,7 +176,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       } else {
         matches = getRecentNodes();
       }
-    } else if (passiveAutocompleteActive || dropdown?.type === "searchAndReplace") {
+    } else if (dropdown?.type === "searchAndReplace") {
       matches = getMatches(
         debouncedSearchText,
         labelledRelation ? ["node", "relation"] : ["node", "relation", "relationType"],
