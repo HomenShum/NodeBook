@@ -275,7 +275,7 @@ export const createLayersWithBfs = async (userId: string, objectId: string): Pro
 export const createLayers = async (
   userId: string,
   objectIds: string[],
-  layersToLoad = 2,
+  layersToLoad = 1,
 ): Promise<SerializedGraphStore> => {
   const snapshot: SerializedGraphStore = {
     usersById: {},
