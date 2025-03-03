@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { useToast } from "@/app/hooks/useToast";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -13,14 +14,26 @@ export const useKeyboardShortcuts = () => {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
+  const { addToast } = useToast();
+
   const handleKeyDown = useCallback(
     async (e: KeyboardEvent) => {
       const metaOrCtrl = e.metaKey || e.ctrlKey; // Command key on Mac, Ctrl key on Windows
       // Create note shortcut when it's not already handled by an editor
-      if (metaOrCtrl && !e.shiftKey && e.key === "k" && !e.altKey && !viewStore.isDeepSearching) {
+      if (metaOrCtrl && !e.shiftKey && e.key === "k" && !e.altKey) {
         e.preventDefault();
         e.stopPropagation();
-        await viewStore.activeTree.createChildOfRootAndFocus();
+
+        if (viewStore.isDeepSearching) {
+          // Show toast notification when in deep searching mode
+          addToast({
+            title: "Cannot see new nodes in search mode",
+            description: "Cannot see new nodes created with Cmd+K in search mode",
+            duration: 5000,
+          });
+        } else {
+          await viewStore.activeTree.createChildOfRootAndFocus();
+        }
       }
       if (metaOrCtrl && e.key.toLowerCase() === "z") {
         e.preventDefault();
@@ -40,7 +53,7 @@ export const useKeyboardShortcuts = () => {
         viewStore.setViewType(ViewType.Note);
       }
     },
-    [viewStore, graphStore, setRoot],
+    [viewStore, graphStore, setRoot, addToast],
   );
   useEffect(() => {
     if (!user.isAnonymous) {
