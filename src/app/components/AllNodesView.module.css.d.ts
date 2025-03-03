@@ -2,6 +2,7 @@ declare const styles: {
   readonly "AllNodesView": string;
   readonly "AuthorFilter": string;
   readonly "AuthorFilterContainer": string;
+  readonly "ClearSearchButton": string;
   readonly "DirectNodesCheckbox": string;
   readonly "FilterLabel": string;
   readonly "HeadingContainer": string;
@@ -15,6 +16,9 @@ declare const styles: {
   readonly "NodeTextContainer": string;
   readonly "NodesTable": string;
   readonly "RightAlign": string;
+  readonly "SearchContainer": string;
+  readonly "SearchInput": string;
+  readonly "SearchResultsInfo": string;
   readonly "ShowTooltip": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;

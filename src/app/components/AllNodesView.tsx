@@ -31,6 +31,7 @@ export const AllNodesView = observer(function AllNodesView() {
 
   const selectedAuthorId = searchParams.get("authorId") || "all";
   const [hideHomepageNodes, setHideHomepageNodes] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { nodes, users } = useMemo(() => {
     let nodes: GraphNode[] = [];
@@ -50,6 +51,10 @@ export const AllNodesView = observer(function AllNodesView() {
       if (hideHomepageNodes && selectedAuthorId !== "all" && (nodeIdsOnHomePage.has(node.id) || node.isUserNode)) {
         continue;
       }
+      // Apply search filter
+      if (searchQuery && !node.text.toLowerCase().includes(searchQuery.toLowerCase())) {
+        continue;
+      }
       nodes.push(node);
     }
     nodes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -64,7 +69,7 @@ export const AllNodesView = observer(function AllNodesView() {
     });
 
     return { nodes, users: authorOptions };
-  }, [graphStore, selectedAuthorId, hideHomepageNodes]);
+  }, [graphStore, selectedAuthorId, hideHomepageNodes, searchQuery]);
 
   const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const node = nodes[index];
@@ -127,6 +132,27 @@ export const AllNodesView = observer(function AllNodesView() {
               />
               Hide Home Page Nodes
             </label>
+          )}
+        </div>
+        <div className={s.SearchContainer}>
+          <input
+            type="text"
+            placeholder="Search node content..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={s.SearchInput}
+          />
+          {searchQuery && (
+            <button className={s.ClearSearchButton} onClick={() => setSearchQuery("")} aria-label="Clear search">
+              ×
+            </button>
+          )}
+        </div>
+        <div className={s.SearchResultsInfo}>
+          {searchQuery && (
+            <span>
+              Found {nodes.length} {nodes.length === 1 ? "node" : "nodes"}
+            </span>
           )}
         </div>
       </div>
