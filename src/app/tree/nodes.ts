@@ -730,6 +730,11 @@ export class PointerGroup extends BaseGroup {
           continue;
         }
 
+        // Ignore relations that are not related to the current node (not quite sure why this is needed)
+        if (treeNode.object.id !== relation.from.id && treeNode.object.id !== relation.to.id) {
+          continue;
+        }
+
         const childObject = getOtherObjectOrThrow(relation, treeNode.object.id);
         if (visitedMap[childObject.id]) {
           continue;

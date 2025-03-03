@@ -34,7 +34,7 @@ export const getSideOrThrow = (relation: GraphRelation, id: string): "from" | "t
   if (side) {
     return side;
   } else {
-    throw new Error("Object not connected to relation");
+    throw new Error("Object not connected to relation, relation id: " + relation.id);
   }
 };
 
