@@ -351,7 +351,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <Button
                 variant="ghost"
                 className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Go to your news feed"
+                data-tooltip="Go to your global news feed"
                 onClick={(e) => {
                   if (e.shiftKey) {
                     viewStore.createSidebarTree(graphStore.globalRoot);
@@ -368,7 +368,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <span>
                   <Newspaper size={16} strokeWidth={1.5} />
                 </span>
-                <span className={styles.ButtonText}>News Feed</span>
+                <span className={styles.ButtonText}>Global News Feed</span>
               </Button>
             </>
             <Button
