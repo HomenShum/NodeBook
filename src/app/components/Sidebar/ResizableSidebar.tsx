@@ -29,6 +29,7 @@ import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import { HelpModal } from "@/app/components/HelpModal/HelpModal";
 import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
 import { LocalHashtagsTree } from "@/app/components/Sidebar/LocalHashtagsTree";
+import { LocalMentionsTree } from "@/app/components/Sidebar/LocalMentionsTree";
 import { MyFavoritesList } from "@/app/components/Sidebar/MyFavoritesTree";
 import { MyHashtagsTree } from "@/app/components/Sidebar/MyHashtagsTree";
 import { MyShortlinksTree } from "@/app/components/Sidebar/MyShortlinksTree";
@@ -415,6 +416,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             {!user.isAnonymous && <MyHashtagsTree />}
             <MyShortlinksTree />
             {!user.isAnonymous && <LocalHashtagsTree />}
+            {!user.isAnonymous && <LocalMentionsTree />}
           </div>
           <div className={styles.BottomNav}>
             <Button
