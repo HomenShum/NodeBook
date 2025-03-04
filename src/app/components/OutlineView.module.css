@@ -54,7 +54,43 @@
   letter-spacing: -0.02em;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
+}
+
+/* Set root button */
+.SetRootButton {
+  border: none;
+  width: 15px;
+  height: 24px;
+  color: transparent;
+  user-select: none;
+  position: relative;
+  margin-right: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.HeadingContainer:hover .SetRootButton {
+  opacity: 1;
+  color: var(--gray-11);
+  fill: var(--gray-8);
+  stroke: var(--gray-8);
+}
+
+.SetRootButton:hover {
+  cursor: default;
+  color: var(--gray-12);
+  background-color: var(--gray-3);
+}
+
+.SetRootIcon {
+  width: 11px;
+  height: 11px;
 }
 
 .Nodes {

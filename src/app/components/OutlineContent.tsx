@@ -1,4 +1,4 @@
-import { Globe, HomeIcon, Link, X } from "lucide-react";
+import { Globe, HomeIcon, Link, Maximize2, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useRef } from "react";
 
@@ -184,6 +184,29 @@ function OutlineContent({ tree }: Props) {
         <div className={s.HeadingContainer}>
           <div className={s.TitleContainer}>
             <NodeHeaderSettingsMenu treeNode={treeRoot} />
+            <button
+              className={s.SetRootButton}
+              onPointerDown={(e) => {
+                if (e.shiftKey) {
+                  // open in sidebar
+                  viewStore.createSidebarTree(treeRoot.object);
+                } else {
+                  // If this is the main (non-sidebar, non-quick capture) view, output a toast
+                  if (tree.isMainTree) {
+                    addToast({
+                      title: "Already expanded in Main Tree",
+                      description:
+                        "Expanding the tree root in the main view does nothing. If you Shift-Click, you can open this in the sidebar as well.",
+                    });
+                    return;
+                  }
+                  setRoot(treeRoot.object);
+                }
+              }}
+              title="Set as root (Shift+Click to open in sidebar)"
+            >
+              <Maximize2 size={11} className={s.SetRootIcon} />
+            </button>
             <TooltipProvider>
               <Tooltip>
                 <div className={s.IconAndTitle}>
@@ -202,34 +225,32 @@ function OutlineContent({ tree }: Props) {
                     </div>
                   </TooltipTrigger>
                 </div>
-                <Button
-                  variant="default"
-                  className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
-                  data-tooltip="Copy URL"
-                  size="icon"
-                  onClick={() => {
-                    if (slugs[treeRoot.object.id]) {
-                      navigator.clipboard.writeText(`${window.location.origin}/${slugs[treeRoot.object.id]}`);
-                    } else {
-                      copyObjectUrlToClipboard(treeNodeToObjectPath(treeRoot));
-                    }
-                    addToast({
-                      title: "Copied URL to clipboard",
-                    });
-                  }}
-                >
-                  <Link size={16} strokeWidth={1.7} />
-                </Button>
-                <div className={s1.CloseTreeButton} onClick={() => viewStore.deleteSidebarTree(tree.id)}>
-                  <X />
-                </div>
-                {tooltipContent && (
-                  <TooltipContent side="top" align="start" sideOffset={5}>
-                    {tooltipContent}
-                  </TooltipContent>
-                )}
+                <TooltipContent align="start" side="bottom">
+                  {tooltipContent}
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
+            <Button
+              variant="default"
+              className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
+              data-tooltip="Copy URL"
+              size="icon"
+              onClick={() => {
+                if (slugs[treeRoot.object.id]) {
+                  navigator.clipboard.writeText(`${window.location.origin}/${slugs[treeRoot.object.id]}`);
+                } else {
+                  copyObjectUrlToClipboard(treeNodeToObjectPath(treeRoot));
+                }
+                addToast({
+                  title: "Copied URL to clipboard",
+                });
+              }}
+            >
+              <Link size={16} strokeWidth={1.7} />
+            </Button>
+            <div className={s1.CloseTreeButton} onClick={() => viewStore.deleteSidebarTree(tree.id)}>
+              <X />
+            </div>
           </div>
           {treeRoot.object.noteContentRelationsList.size > 0 && (
             <div className={s.NoteContentSection}>

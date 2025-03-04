@@ -11,6 +11,8 @@ declare const styles: {
   readonly "RelationObject": string;
   readonly "RelationObjects": string;
   readonly "RelationType": string;
+  readonly "SetRootButton": string;
+  readonly "SetRootIcon": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
   readonly "TooltipContent": string;
