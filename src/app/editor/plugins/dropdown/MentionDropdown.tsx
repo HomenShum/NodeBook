@@ -202,7 +202,7 @@ export function getMenuRenderFn(
             >
               <div className={styles.DropdownItem}>
                 {option.name}
-                {option.value.type === "new" && `(${isMac ? "⌘" : "Ctrl"} + Enter )`}
+                {option.value.type === "new" && ` (${isMac ? "⌘" : "Ctrl"} + Enter )`}
                 {option.value.type === "existing" && <Path path={getCanonicalPath(option.value.object)} />}
               </div>
             </li>
