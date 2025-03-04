@@ -18,6 +18,7 @@ import {
   HASHTAG_SYMBOL,
   MENTION_SYMBOL,
   MenuTextMatch,
+  TILDE_SYMBOL,
   cn,
   isMac,
 } from "@/lib/utils";
@@ -73,12 +74,15 @@ export function MentionDropdown({
 
         if (dropdown.mentionTrigger === DOUBLE_BRACKET) {
           spaceAfter = new TextNode("]] ");
-          const beforeMention = new TextNode("[[");
-          mentionNode.insertBefore(beforeMention);
         }
 
         mentionNode.insertAfter(spaceAfter);
-        if (dropdown.mentionTrigger === CONNECTION_SYMBOL || dropdown.mentionTrigger === CONNECTION_SYMBOL_WITH_SPACE) {
+        if (
+          dropdown.mentionTrigger === CONNECTION_SYMBOL ||
+          dropdown.mentionTrigger === CONNECTION_SYMBOL_WITH_SPACE ||
+          dropdown.mentionTrigger === TILDE_SYMBOL ||
+          dropdown.mentionTrigger === DOUBLE_BRACKET
+        ) {
           const connectionBefore = new TextNode(dropdown.mentionTrigger);
           mentionNode.insertBefore(connectionBefore);
         }
