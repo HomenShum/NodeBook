@@ -14,6 +14,7 @@ import { NotificationManager, uuid } from "@/app/util";
 import {
   CONNECTION_SYMBOL,
   CONNECTION_SYMBOL_WITH_SPACE,
+  DOUBLE_BRACKET,
   HASHTAG_SYMBOL,
   MENTION_SYMBOL,
   MenuTextMatch,
@@ -68,7 +69,14 @@ export function MentionDropdown({
         if (!currentObject) return;
 
         nodeToReplace.replace(mentionNode);
-        const spaceAfter = new TextNode(" ");
+        let spaceAfter = new TextNode(" ");
+
+        if (dropdown.mentionTrigger === DOUBLE_BRACKET) {
+          spaceAfter = new TextNode("]] ");
+          const beforeMention = new TextNode("[[");
+          mentionNode.insertBefore(beforeMention);
+        }
+
         mentionNode.insertAfter(spaceAfter);
         if (dropdown.mentionTrigger === CONNECTION_SYMBOL || dropdown.mentionTrigger === CONNECTION_SYMBOL_WITH_SPACE) {
           const connectionBefore = new TextNode(dropdown.mentionTrigger);

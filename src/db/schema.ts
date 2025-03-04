@@ -63,6 +63,7 @@ const SerializedUserSettingsSchema = z.object({
   parseWithAiLinkingOption: ParseWithAiLinkingOptionEnum.optional(),
   showBulletForEmptyNode: z.boolean().optional(),
   showNotifications: z.boolean().optional(),
+  useRoamResearchStyleMention: z.boolean().optional(),
   showOnlyTodos: z.boolean().optional(),
   showOnlyTodosInQuickCapture: z.boolean().optional(),
   todosFilterType: z.string().optional(),

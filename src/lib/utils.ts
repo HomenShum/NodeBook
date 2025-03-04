@@ -56,6 +56,7 @@ export const CONNECTION_SYMBOL = "<>";
 export const CONNECTION_SYMBOL_WITH_SPACE = `${CONNECTION_SYMBOL} `;
 export const PLUS_SYMBOL = "+";
 export const TILDE_SYMBOL = "~";
+export const DOUBLE_BRACKET = "[[";
 
 export type MentionTrigger =
   | typeof MENTION_SYMBOL
@@ -63,7 +64,8 @@ export type MentionTrigger =
   | typeof PLUS_SYMBOL
   | typeof CONNECTION_SYMBOL_WITH_SPACE
   | typeof TILDE_SYMBOL
-  | typeof HASHTAG_SYMBOL;
+  | typeof HASHTAG_SYMBOL
+  | typeof DOUBLE_BRACKET;
 
 // Common constants for text matching
 export const REGEX_CONSTANTS = {
@@ -72,7 +74,7 @@ export const REGEX_CONSTANTS = {
   MAX_ALIAS_LENGTH: 50,
   PUNCTUATION: "", // "\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;",
   VALID_JOINS: "", //"(?:\\.[ |$]| |[\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;]|)",
-  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|${CONNECTION_SYMBOL}\\s|\\${PLUS_SYMBOL}|${TILDE_SYMBOL}|${HASHTAG_SYMBOL}`,
+  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|${CONNECTION_SYMBOL}\\s|\\${PLUS_SYMBOL}|${TILDE_SYMBOL}|${HASHTAG_SYMBOL}|\\[\\[`,
 };
 
 // Interface for text match results
@@ -159,13 +161,20 @@ const aliasRegex = new RegExp(
   `(^|\\s|\\()((${REGEX_CONSTANTS.MENTION_TRIGGER})((?:${VALID_MENTION_CHARS}){0,${REGEX_CONSTANTS.MAX_ALIAS_LENGTH}}))$`,
 );
 
-export function checkForMentionMatch(text: string): (MenuTextMatch & { mentionTrigger: MentionTrigger }) | null {
+export function checkForMentionMatch(
+  text: string,
+  useRoamResearchStyleMention: boolean,
+): (MenuTextMatch & { mentionTrigger: MentionTrigger }) | null {
   let match = mentionRegex.exec(text) || aliasRegex.exec(text);
   if (!match) return null;
   const leadingWhitespace = match[1];
 
   const trigger = match[3] as MentionTrigger;
   const matchingString = match[4];
+
+  if (!useRoamResearchStyleMention && trigger === DOUBLE_BRACKET) {
+    return null;
+  }
 
   return {
     leadOffset: match.index + leadingWhitespace.length,

@@ -6,6 +6,7 @@ import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
 import {
   CONNECTION_SYMBOL,
   CONNECTION_SYMBOL_WITH_SPACE,
+  DOUBLE_BRACKET,
   HASHTAG_SYMBOL,
   MENTION_SYMBOL,
   PLUS_SYMBOL,
@@ -29,6 +30,7 @@ const SerializedChipSchema = z.discriminatedUnion("type", [
         PLUS_SYMBOL,
         TILDE_SYMBOL,
         HASHTAG_SYMBOL,
+        DOUBLE_BRACKET,
       ])
       .default(MENTION_SYMBOL)
       .optional(),

@@ -39,6 +39,7 @@ export class SettingsStore {
   public parseWithAiLinkingOption: ParseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   public showBulletForEmptyNode: boolean = false;
   public showNotifications: boolean = true;
+  public useRoamResearchStyleMention: boolean = false;
   public showOnlyTodos: boolean = false;
   public showOnlyTodosInQuickCapture: boolean = false;
   public todosFilterType: string = "all";
@@ -246,11 +247,17 @@ export class SettingsStore {
   setParseWithAiLinkingOption(value: ParseWithAiLinkingOption): void {
     this.parseWithAiLinkingOption = value;
   }
+
   setShowBulletForEmptyNode(value: boolean) {
     this.showBulletForEmptyNode = value;
   }
+
   setShowNotifications(value: boolean) {
     this.showNotifications = value;
+  }
+
+  setUseRoamResearchStyleMention(value: boolean) {
+    this.useRoamResearchStyleMention = value;
   }
 
   setShowOnlyTodos(value: boolean) {

@@ -4,6 +4,7 @@ import { COMMAND_PRIORITY_NORMAL, TextNode } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { getMenuRenderFn, MentionTypeaheadOption } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/types";
 import {
@@ -14,7 +15,7 @@ import {
 } from "@/app/editor/plugins/dropdown/utils";
 import { $createMentionNode } from "@/app/graph/MentionNode";
 import { uuid } from "@/app/util";
-import { checkForMentionMatch, HASHTAG_SYMBOL, MENTION_SYMBOL } from "@/lib/utils";
+import { checkForMentionMatch, DOUBLE_BRACKET, HASHTAG_SYMBOL, MENTION_SYMBOL } from "@/lib/utils";
 
 const MAX_COMMAND_BAR_DROPDOWN_RESULTS = 5;
 
@@ -26,6 +27,7 @@ interface Props {
 export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
   const [editor] = useLexicalComposerContext();
   const graphStore = useGraphStore();
+  const settingsStore = useSettingsStore();
   const getMatches = useGetMatchesForCommandBar(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
   const getRecentNodes = useGetRecentNodes(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
   const getRecentHashtags = useGetRecentHashtags(MAX_COMMAND_BAR_DROPDOWN_RESULTS);
@@ -51,7 +53,7 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
       }
 
       // Open mention dropdown after @ match
-      const match = checkForMentionMatch(textBeforeCursor);
+      const match = checkForMentionMatch(textBeforeCursor, settingsStore.useRoamResearchStyleMention);
       if (match) {
         const queryString = match.matchingString;
         if (queryString.length === 0) {
@@ -94,9 +96,18 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
           dropdown.mentionTrigger ?? MENTION_SYMBOL,
         );
         nodeToReplace.replace(mentionNode);
-        const spaceAfter = new TextNode(" ");
-        mentionNode.insertAfter(spaceAfter);
-        spaceAfter.selectEnd();
+
+        if (dropdown.mentionTrigger === DOUBLE_BRACKET) {
+          const beforeMention = new TextNode("[[");
+          mentionNode.insertBefore(beforeMention);
+          const spaceAfter = new TextNode("]] ");
+          mentionNode.insertAfter(spaceAfter);
+          spaceAfter.selectEnd();
+        } else {
+          const spaceAfter = new TextNode(" ");
+          mentionNode.insertAfter(spaceAfter);
+          spaceAfter.selectEnd();
+        }
 
         if (opt.value.type === "new") {
           const newNodeText = opt.name.slice("Create new node: ".length);

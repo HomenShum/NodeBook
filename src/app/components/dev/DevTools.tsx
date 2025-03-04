@@ -231,6 +231,14 @@ export const DevTools = observer(function DevTools() {
           />
           Show notifications
         </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={settingsStore.useRoamResearchStyleMention}
+            onChange={(e) => settingsStore.setUseRoamResearchStyleMention(e.target.checked)}
+          />
+          Use Roam Research style mentions
+        </label>
         <div className={styles.DevToolsDropdownContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />

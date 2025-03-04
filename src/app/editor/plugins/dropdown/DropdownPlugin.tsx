@@ -112,7 +112,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       }
 
       // Open mention dropdown after @ match
-      const match = checkForMentionMatch(textBeforeCursor);
+      const match = checkForMentionMatch(textBeforeCursor, settingsStore.useRoamResearchStyleMention);
       if (match) {
         const queryString = match.matchingString;
         setSearchText(queryString);
