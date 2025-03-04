@@ -132,9 +132,13 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   const handleExpandClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => {
       e.stopPropagation(); // Prevent button click propagation
-      setRoot(child);
+      if (e.shiftKey) {
+        viewStore.createSidebarTree(child);
+      } else {
+        setRoot(child);
+      }
     },
-    [setRoot],
+    [setRoot, viewStore],
   );
 
   return (
