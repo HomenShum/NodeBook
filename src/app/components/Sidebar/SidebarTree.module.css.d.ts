@@ -3,12 +3,14 @@ declare const styles: {
   readonly "ButtonContainer": string;
   readonly "ButtonIcon": string;
   readonly "EmptyMessage": string;
+  readonly "ExpandButton": string;
   readonly "HeaderButton": string;
   readonly "HeaderControls": string;
   readonly "HeaderLeft": string;
   readonly "IconBox": string;
   readonly "IconExpanded": string;
   readonly "IconRotated": string;
+  readonly "IconsContainer": string;
   readonly "NodeCount": string;
   readonly "PinButton": string;
   readonly "PinButtonHover": string;

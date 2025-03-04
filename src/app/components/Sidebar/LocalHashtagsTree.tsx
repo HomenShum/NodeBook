@@ -1,5 +1,5 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Play, Search } from "lucide-react";
+import { Maximize2, Play, Search } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useRef, useState } from "react";
 
@@ -133,6 +133,14 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     [viewStore, openNewTab, handleNavigation],
   );
 
+  const handleExpandClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => {
+      e.stopPropagation(); // Prevent button click propagation
+      setRoot(child);
+    },
+    [setRoot],
+  );
+
   return (
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
@@ -181,8 +189,28 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
-                    {hashtag.text}
-                    <Search size={14} className={styles.SearchIcon} />
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        width: "100%",
+                        textAlign: "left",
+                      }}
+                    >
+                      <span style={{ textAlign: "left" }}>{hashtag.text}</span>
+                      <div className={styles.IconsContainer}>
+                        <Search size={14} className={styles.SearchIcon} />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={styles.ExpandButton}
+                          onClick={(e) => handleExpandClick(e, hashtag)}
+                        >
+                          <Maximize2 size={14} />
+                        </Button>
+                      </div>
+                    </div>
                   </Button>
                 );
               })}
