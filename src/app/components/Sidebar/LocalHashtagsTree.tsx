@@ -179,11 +179,9 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
               {virtualizer.getVirtualItems().map((virtualRow) => {
                 const hashtag = localHashtags[virtualRow.index];
                 return (
-                  <Button
+                  <div
                     key={hashtag.id}
-                    variant="ghost"
                     className={cn(styles.Button)}
-                    onClick={(e) => handleChildClick(e, hashtag)}
                     style={{
                       position: "absolute",
                       top: 0,
@@ -191,31 +189,30 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
                       width: "100%",
                       height: `${virtualRow.size}px`,
                       transform: `translateY(${virtualRow.start}px)`,
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "0 8px",
                     }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        width: "100%",
-                        textAlign: "left",
-                      }}
+                    <Button
+                      variant="ghost"
+                      className="w-full h-full flex justify-between items-center"
+                      onClick={(e) => handleChildClick(e, hashtag)}
                     >
                       <span style={{ textAlign: "left" }}>{hashtag.text}</span>
                       <div className={styles.IconsContainer}>
                         <Search size={14} className={styles.SearchIcon} />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={styles.ExpandButton}
-                          onClick={(e) => handleExpandClick(e, hashtag)}
-                        >
-                          <Maximize2 size={14} />
-                        </Button>
                       </div>
-                    </div>
-                  </Button>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={styles.ExpandButton}
+                      onClick={(e) => handleExpandClick(e, hashtag)}
+                    >
+                      <Maximize2 size={14} />
+                    </Button>
+                  </div>
                 );
               })}
             </div>
