@@ -193,7 +193,7 @@ export const useGetMatchesForHashtags = (maxResults: number): GetMatches => {
       const results = graphStore.myHashtagsNode.children
         .filter((node) => node instanceof GraphNode)
         .filter((node) => node.text.toLocaleLowerCase().includes(text.toLocaleLowerCase()))
-        .sort((a, b) => scoreMatch(a.text, text) - scoreMatch(b.text, text))
+        .sort((a, b) => scoreMatch(b.text, text) - scoreMatch(a.text, text))
         .slice(0, maxResults)
         .map((node) => ({ key: node.id, type: "node" as const, object: node as GraphNode, score: 0 }));
 
