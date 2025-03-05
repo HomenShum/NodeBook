@@ -1,14 +1,16 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getRoot, $setSelection, ParagraphNode } from "lexical";
 import { observer } from "mobx-react-lite";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
+import { useDebounce, useDebounceFn } from "ahooks";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $createParagraphMatchingGraphNode, $getChips, graphNodeMatchesParagraph } from "@/app/editor/utils/content";
 import { $getSelectionPosition, $setSelectionFromTree, sameSelectionPositions } from "@/app/editor/utils/selection";
-import { GraphNode } from "@/app/graph/GraphNode";
+import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
+import { GraphStore } from "@/app/graph/GraphStore";
 
 interface Props {
   node: GraphNode;
@@ -24,6 +26,13 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
   const treeNodeId = treeNode.id;
   const tree = treeNode.tree;
   const viewStore = useViewStore();
+
+  const { run: debouncedMutateGraphStore } = useDebounceFn(
+    (chips: Chip[]) => {
+      graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
+    },
+    { wait: 500 },
+  );
 
   // Editor -> App state: update the app state to match the editor content
   useEffect(() => {
@@ -48,9 +57,9 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
       });
       if (noChange) return;
       const chips = editorState.read($getChips);
-      graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
+      debouncedMutateGraphStore(chips);
     });
-  }, [editor, graphStore, node, tree, treeNodeId]);
+  }, [debouncedMutateGraphStore, editor, graphStore, node, tree, treeNodeId]);
 
   // App state -> Editor: update the editor content to match the graph node
   useEffect(() => {
