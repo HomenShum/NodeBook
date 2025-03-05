@@ -146,16 +146,18 @@ export class UpdateManager {
   }
 
   private async fetchLatestDataSnapshot() {
-    if (!this.authedFetch) return;
-    logger.info("Fetching latest data snapshot from backend");
-    const latestData = await this.authedFetch("/api/sync").then((res) => res.json());
-    const parsed = SerializedGraphStoreSchema.safeParse(latestData.data);
-    if (parsed.success) {
-      this.refetchCallback(parsed.data);
-      this.lastSuccessfulSync = new Date();
-    } else {
-      logger.error("Failed to parse latest data snapshot", parsed.error);
-    }
+    //Preserving this method temporarily since I want to see the edge cases
+    //it's used in but we don't really want to fetch all the backend data.
+    // if (!this.authedFetch) return;
+    logger.info("Skip fetching latest data snapshot from backend");
+    // const latestData = await this.authedFetch("/api/sync").then((res) => res.json());
+    // const parsed = SerializedGraphStoreSchema.safeParse(latestData.data);
+    // if (parsed.success) {
+    //   this.refetchCallback(parsed.data);
+    //   this.lastSuccessfulSync = new Date();
+    // } else {
+    //   logger.error("Failed to parse latest data snapshot", parsed.error);
+    // }
   }
 
   async handleSyncData(data: SyncData, resetIfApplyFails: boolean) {
