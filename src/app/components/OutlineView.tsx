@@ -1,6 +1,6 @@
 "use client";
 import { observer } from "mobx-react-lite";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import appStyles from "@/app/app.module.css";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
@@ -10,11 +10,11 @@ import OutlineContent from "@/app/components/OutlineContent";
 import { PageTitleUpdater } from "@/app/components/PageTitleUpdater";
 import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 import RightSidebar from "@/app/components/RightSidebar/RightSidebar";
+import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 
 import s from "./OutlineView.module.css";
 
@@ -24,6 +24,7 @@ interface Props {
 
 export const OutlineView = observer(function OutlineView({ tree }: Props) {
   const viewStore = useViewStore();
+  const ref = useRef<HTMLDivElement>(null);
 
   const treeRoot = tree.state.root;
 
@@ -57,11 +58,11 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
         {viewStore.graphMode ? (
           <GraphContainer tree={tree} />
         ) : (
-          <div className={s.MainAndSidebarContainer}>
+          <div className={s.MainAndSidebarContainer} ref={ref}>
             <OutlineParentContext.Provider value="OutlineView">
               <OutlineContent tree={tree} />
             </OutlineParentContext.Provider>
-            <RightSidebar minWidth={300} maxWidth={600} />
+            <RightSidebar parentRef={ref} />
           </div>
         )}
       </div>

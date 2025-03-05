@@ -45,7 +45,7 @@ export class ViewStore {
   public quickCaptureOpen = false;
   public isDarkMode = false;
   public sidebarWidth = 268;
-  public rightSidebarWidth = 500; // Percentage of screen width
+  public rightSidebarWidth = 50; // Percentage of screen width
   public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | "help" | null = null;
   public isCommandBarOpen: boolean = false;
   private deepSearching: boolean = false;

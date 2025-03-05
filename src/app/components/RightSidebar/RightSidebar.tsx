@@ -7,12 +7,7 @@ import s from "@/app/components/RightSidebar/RightSidebar.module.css";
 import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 import { useViewStore } from "@/app/view/useViewStore";
 
-interface RightSidebarProps {
-  minWidth: number;
-  maxWidth: number;
-}
-
-const RightSidebar = observer(function RightSidebar({ minWidth, maxWidth }: RightSidebarProps) {
+const RightSidebar = observer(function RightSidebar({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) {
   const viewStore = useViewStore();
 
   const resizerRef = useRef<HTMLDivElement>(null);
@@ -43,14 +38,18 @@ const RightSidebar = observer(function RightSidebar({ minWidth, maxWidth }: Righ
 
   const resize = useCallback(
     (e: PointerEvent) => {
-      if (isResizing && sidebarRef.current) {
-        const newWidth = sidebarRef.current.getBoundingClientRect().right - e.clientX;
-        // if (newWidth >= minWidth && newWidth <= maxWidth) {
-        viewStore.setRightSidebarWidth(newWidth);
-        // }
+      if (isResizing && sidebarRef.current && parentRef.current) {
+        const newWidth =
+          ((sidebarRef.current.getBoundingClientRect().right - e.clientX) /
+            parentRef.current.getBoundingClientRect().width) *
+          100;
+
+        if (newWidth >= 40 && newWidth <= 60) {
+          viewStore.setRightSidebarWidth(newWidth);
+        }
       }
     },
-    [isResizing, minWidth, maxWidth, viewStore],
+    [isResizing, viewStore],
   );
 
   useEffect(() => {
@@ -78,7 +77,7 @@ const RightSidebar = observer(function RightSidebar({ minWidth, maxWidth }: Righ
   if (!viewStore.rightSidebarOpen) return <></>;
 
   return (
-    <div ref={sidebarRef} className={s.RightSidebarContainer} style={{ width: `${viewStore.rightSidebarWidth}px` }}>
+    <div ref={sidebarRef} className={s.RightSidebarContainer} style={{ width: `${viewStore.rightSidebarWidth}%` }}>
       <div ref={resizerRef} className={s.Resizer} onPointerDown={startResizing}>
         <div className={s.ResizerHandle} />
       </div>
