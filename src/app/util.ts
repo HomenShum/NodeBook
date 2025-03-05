@@ -4,6 +4,7 @@ import { generateKeyBetween } from "fractional-indexing";
 import { autorun, toJS } from "mobx";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { env } from "@/app/envFrontend";
 
 import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -562,6 +563,7 @@ export class NotificationManager {
 
   async fetchNotifications(): Promise<Notification[]> {
     try {
+      if (!env.isAuthEnabled) return [];
       const authFetch = getAuthFetch();
       const response = await authFetch(this.API_URL);
       const data = await response.json();
