@@ -89,7 +89,6 @@
   font-size: var(--font-size-xs);
   margin-top: 16px;
   padding-left: 8px;
-  padding-right: 8px;
   color: var(--gray-10);
   position: relative;
 }
