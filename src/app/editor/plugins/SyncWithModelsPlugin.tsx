@@ -27,12 +27,12 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
   const tree = treeNode.tree;
   const viewStore = useViewStore();
 
-  const { run: debouncedMutateGraphStore } = useDebounceFn(
-    (chips: Chip[]) => {
-      graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
-    },
-    { wait: 100 },
-  );
+  // const { run: debouncedMutateGraphStore } = useDebounceFn(
+  //   (chips: Chip[]) => {
+  //     graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
+  //   },
+  //   { wait: 100 },
+  // );
 
   // Editor -> App state: update the app state to match the editor content
   useEffect(() => {
@@ -57,9 +57,9 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
       });
       if (noChange) return;
       const chips = editorState.read($getChips);
-      debouncedMutateGraphStore(chips);
+      graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
     });
-  }, [debouncedMutateGraphStore, editor, graphStore, node, tree, treeNodeId]);
+  }, [editor, graphStore, node, tree, treeNodeId]);
 
   // App state -> Editor: update the editor content to match the graph node
   useEffect(() => {
