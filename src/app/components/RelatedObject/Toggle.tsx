@@ -75,7 +75,7 @@ const Toggle = observer(function Toggle() {
   return (
     <div
       className={cn(
-        isNoteContent(treeNode) && !isNoteContentRoot && objectViewStyles.NoteContentBullet,
+        !isNoteContentRoot && objectViewStyles.NoteContentBullet,
         objectViewStyles.RelatedObjectBulletContainer,
         isEmpty &&
           !isNoteContent(treeNode) &&
@@ -96,8 +96,8 @@ const Toggle = observer(function Toggle() {
               [styles.IconHasChildren]: hasChildren,
               [styles.IconPublicNode]: treeNode.object.isPublic,
               [styles.IconPrivateNode]: !treeNode.object.isPublic,
-            })}
-            ${treeNode.isExpanded ? styles.ToggleExpanded : ""}`}
+              [styles.ToggleExpanded]: treeNode.isExpanded,
+            })}`}
           />
         </button>
       ) : (

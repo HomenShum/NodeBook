@@ -63,6 +63,8 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
     (viewType === "note" && isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode) ||
     (viewType === "note" && treeNode.parent instanceof RootTreeNode);
 
+  const hasNoteContent = treeNode.childrenGroupsById.noteContent.nodes.length > 0;
+
   if (viewType === "card") {
     return (
       <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
@@ -76,7 +78,7 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
   return (
     <div id={treeNode.path} className={cn(styles.RelatedObjectContainer)}>
       <Main treeNode={treeNode}>
-        {!(viewType === "note" && isNoteContentRoot) && <Controls showToggle={hideToggle} />}
+        {!(viewType === "note" && !hasNoteContent) && <Controls showToggle={hideToggle} />}
         {!hideToggle && <Toggle />}
         <Content />
       </Main>
@@ -420,8 +422,7 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
-  const isFirstChildOfNoteContent =
-    treeNode.parentGroup.id === "noteContent" && treeNode.parentGroup.nodes[0].id === treeNode.id;
+
   const isMobile = useIsMobile();
 
   if (isHovered) {
