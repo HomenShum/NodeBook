@@ -31,7 +31,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
     (chips: Chip[]) => {
       graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
     },
-    { wait: 500 },
+    { wait: 100 },
   );
 
   // Editor -> App state: update the app state to match the editor content
