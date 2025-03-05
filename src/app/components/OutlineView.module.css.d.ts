@@ -1,5 +1,6 @@
 declare const styles: {
   readonly "EmptySpaceClickArea": string;
+  readonly "FloatingActionButton": string;
   readonly "HeadingContainer": string;
   readonly "IconAndTitle": string;
   readonly "LinkButton": string;

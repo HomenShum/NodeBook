@@ -1,4 +1,4 @@
-import { Globe, HomeIcon, Link, Maximize2, X } from "lucide-react";
+import { Globe, HomeIcon, Link, Maximize2, Plus, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useRef } from "react";
 
@@ -114,6 +114,20 @@ function OutlineContent({ tree }: Props) {
       setRoot(tree.root.parent.object);
     } else {
       tree.setRoot(tree.root.parent.object);
+    }
+  };
+
+  const createAndZoomIntoNewNode = async () => {
+    const { node: newNode } = await graphStore.addChildNode({
+      parentId: graphStore.userRootId,
+      nodeProps: {
+        content: [{ type: "text", value: "" }],
+      },
+    });
+    if (tree.isMainTree) {
+      setRoot(newNode);
+    } else {
+      tree.setRoot(newNode);
     }
   };
 
@@ -272,7 +286,7 @@ function OutlineContent({ tree }: Props) {
           />
         )}
       </div>
-      {(!user.isAnonymous || allowAnonymousAppend) && (
+      {!user.isAnonymous && (
         <div
           className={s.EmptySpaceClickArea}
           onClick={(e) => {
@@ -288,6 +302,24 @@ function OutlineContent({ tree }: Props) {
             }
           }}
         />
+      )}
+      {(!user.isAnonymous || allowAnonymousAppend) && (
+        <button
+          className={s.FloatingActionButton}
+          onClick={(e) => {
+            e.preventDefault();
+            createAndZoomIntoNewNode().catch((error) => {
+              console.error("Failed to create and zoom into new node:", error);
+              addToast({
+                title: "Error",
+                description: "Failed to create and zoom into new node",
+              });
+            });
+          }}
+          title="Create and zoom into new node"
+        >
+          <Plus size={24} />
+        </button>
       )}
     </div>
   );
