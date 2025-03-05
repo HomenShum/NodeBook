@@ -224,6 +224,84 @@ const processHashtags = async (
   return { linkedCount, createdCount };
 };
 
+// Check if pasted content contains node IDs and is only one level deep
+const hasPastedNodeIdsAndSingleLevel = (lines: ChipsWithContext[]): boolean => {
+  // Check if there are any lines
+  if (lines.length === 0) return false;
+  // Check if all lines have nodeIds
+  const allHaveNodeIds = lines.some((line) => line.nodeId !== undefined);
+  if (!allHaveNodeIds) return false;
+  // Check if all lines have the same depth (single level)
+  const firstDepth = lines[0].depth;
+  const allSameDepth = lines.every((line) => line.depth === firstDepth);
+
+  return allSameDepth;
+};
+
+// Convert pasted nodes to references to original nodes
+const convertPastedNodesToReferences = async (
+  parentNodeId: string,
+  pastedNodeIds: string[],
+  originalNodeIds: string[],
+  graphStore: GraphStore,
+): globalThis.Promise<number> => {
+  // Skip the first node as it's the target node where we're pasting
+  // and not a newly created node from the paste operation
+  if (pastedNodeIds.length < 1 || originalNodeIds.length === 0) return 0;
+
+  const txs: TxCombined = [];
+  let convertedCount = 0;
+
+  // Map original node IDs to pasted node IDs
+  const originalToPastedMap = new Map<string, string>();
+  for (let i = 0; i < originalNodeIds.length; i++) {
+    // Use i+1 for pastedNodeIds since the first pastedNodeId is the target node
+    if (i < pastedNodeIds.length) {
+      originalToPastedMap.set(originalNodeIds[i], pastedNodeIds[i]);
+    }
+  }
+
+  // Get the parent node
+  const parentNode = graphStore.getNode(parentNodeId);
+  if (!parentNode) return 0;
+
+  // Find all relations from the parent node
+  for (const relation of parentNode.relations) {
+    // Check if this relation points to one of our pasted nodes
+    const toNodeId = relation.to.id;
+    const fromNodeId = relation.from.id;
+
+    // Find the corresponding original node for this pasted node
+    // We need to find which pasted node this is, then look up its original node
+    for (const [originalId, pastedId] of originalToPastedMap.entries()) {
+      if (toNodeId === pastedId || fromNodeId === pastedId) {
+        // This relation points to one of our pasted nodes
+        // Replace it with a reference to the original node
+        txs.push({
+          type: "replaceRelationLink",
+          transaction: {
+            relationId: relation.id,
+            direction: toNodeId === pastedId ? "to" : "from", // Replace the "to" side of the relation
+            replaceWith: {
+              type: "existing-object",
+              id: originalId,
+            },
+          },
+        });
+
+        convertedCount++;
+        break;
+      }
+    }
+  }
+
+  if (txs.length > 0) {
+    await graphStore.applyCombinedTransaction(txs);
+  }
+
+  return convertedCount;
+};
+
 /**
  * Plugin that allows pasting multiple lines of text into a node.
  */
@@ -277,6 +355,14 @@ export const PastePlugin = () => {
               ? getLinesFromMewData(mewData, shiftKey)
               : getLinesFromPlainText(clipboardData.getData("text/plain"), shiftKey),
           );
+
+          // Store original node IDs if they exist
+          const originalNodeIds = lines
+            .filter((line) => line.nodeId !== undefined)
+            .map((line) => line.nodeId as string);
+
+          // Check if we have node IDs and if all nodes are at the same level
+          const canConvertToReferences = hasPastedNodeIdsAndSingleLevel(lines);
 
           let txs: TxCombined = [];
           let convertToNote = false;
@@ -451,6 +537,35 @@ export const PastePlugin = () => {
             // Process hashtags after the paste transaction completes
             const { linkedCount, createdCount } = await processHashtags(pastedNodeIds, graphStore);
 
+            // Show toast with conversion option if we have node IDs and single level
+            if (canConvertToReferences && originalNodeIds.length > 0) {
+              addToast({
+                title: `Pasted ${originalNodeIds.length} nodes with existing IDs`,
+                description: "Would you like to convert them to references to the original nodes?",
+                duration: 10000, // 10 seconds
+                action: {
+                  label: "Convert to References",
+                  onClick: async () => {
+                    const convertedCount = await convertPastedNodesToReferences(
+                      treeNode.parent.object.id,
+                      pastedNodeIds,
+                      originalNodeIds,
+                      graphStore,
+                    );
+                    if (convertedCount > 0) {
+                      setTimeout(() => {
+                        addToast({
+                          title: `Converted ${convertedCount} nodes to references`,
+                          duration: 3000,
+                        });
+                      }, 400);
+                    }
+                  },
+                },
+              });
+            }
+
+            // Show hashtags toast if we processed any
             if (linkedCount > 0 || createdCount > 0) {
               addToast({
                 title: "Hashtags processed",
@@ -490,6 +605,9 @@ export const PastePlugin = () => {
     viewStore.viewType,
     viewStore.activeTree,
     settingsStore,
+    addToast,
+    outlineParent,
+    viewStore.quickCaptureViewType,
   ]);
   return null;
 };
@@ -679,6 +797,10 @@ const getLinesFromMewData = (mewData: string, shiftKey: boolean): ChipsWithConte
           (val: ChipsWithContext, acc: ChipsWithContext, i) => {
             acc.chips.push(...val.chips);
             if (i === 0) acc.chips.push({ type: "text", value: " " });
+            // Preserve the nodeId when combining
+            if (!acc.nodeId && val.nodeId) {
+              acc.nodeId = val.nodeId;
+            }
             return acc;
           },
           // Accumulate into a single object with a depth of 0
@@ -731,7 +853,7 @@ export const normalizeDepth = (lines: ChipsWithContext[]): ChipsWithContext[] =>
   const depthsMap = new Map<number, number>();
   let lastDepth = 0;
 
-  return lines.map(({ chips, depth, isChecked }) => {
+  return lines.map(({ chips, depth, isChecked, nodeId }) => {
     let newDepth: number;
 
     if (depth - lastDepth > 1 && !depthsMap.has(depth)) {
@@ -742,6 +864,6 @@ export const normalizeDepth = (lines: ChipsWithContext[]): ChipsWithContext[] =>
     }
 
     lastDepth = newDepth;
-    return { chips, depth: newDepth, isChecked: isChecked ?? null };
+    return { chips, depth: newDepth, isChecked: isChecked ?? null, nodeId: nodeId ?? undefined };
   });
 };

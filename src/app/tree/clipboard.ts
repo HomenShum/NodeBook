@@ -8,6 +8,7 @@ export type ChipsWithContext = {
   chips: Chip[];
   depth: number;
   isChecked?: boolean | null;
+  nodeId?: string | undefined;
 };
 
 export const MEW_CLIPBOARD_MIMETYPE = "application/x-mew-graphstore";
@@ -48,6 +49,7 @@ export const copyContentFromLexicalNodes = (addToEvent: ClipboardEvent, nodes: D
         chips: $getChips(),
         depth: nTabs,
         isChecked: object instanceof GraphNode ? object.isChecked : null,
+        nodeId: object instanceof GraphNode ? object.id : undefined,
       });
 
       $setSelection(null);
@@ -56,6 +58,7 @@ export const copyContentFromLexicalNodes = (addToEvent: ClipboardEvent, nodes: D
 
   clipboardData.setData("text/plain", plainTextParts.join("\n"));
   clipboardData.setData(MEW_CLIPBOARD_MIMETYPE, JSON.stringify(chipParts));
+  console.log(chipParts);
 
   return true;
 };
