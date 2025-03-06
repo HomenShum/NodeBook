@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import { MainView } from "@/app/components/MainView";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useLoading } from "@/app/contexts/LoadingContext";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { parsePathArray } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -13,8 +14,14 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
+  const isLoading = useLoading();
 
   useEffect(() => {
+    if (isLoading) {
+      logger.debug("App is still loading, skipping root setting");
+      return;
+    }
+
     const path = parsePathArray(pathArray ?? [], graphStore);
     // If the path is valid, keep the path, and update our view state to match
     // Otherwise, we redirect to the specified object or the default root
@@ -42,7 +49,7 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
     // To match that, we only run this effect when viewStore or graphStore are instantiated
     // and specifically exclude path as a dependency here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewStore, graphStore, setRoot]);
+  }, [viewStore, graphStore, setRoot, isLoading]);
 
   return <MainView tree={viewStore.mainView}></MainView>;
 }
