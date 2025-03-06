@@ -4,8 +4,8 @@ import { generateKeyBetween } from "fractional-indexing";
 import { autorun, toJS } from "mobx";
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { env } from "@/app/envFrontend";
 
+import { env } from "@/app/envFrontend";
 import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
