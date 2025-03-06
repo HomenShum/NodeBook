@@ -185,3 +185,20 @@ export const notificationTable = pgTable("notification", {
   createdAt: timestamp("created_at"),
 });
 export const NotificationTableSchema = createSelectSchema(notificationTable);
+
+export const expansionStateTable = pgTable(
+  "expansion_state",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    authorId: text("author_id").notNull(), // Who last saved the state
+    rootObjectId: text("root_object_id").notNull(),
+    expandedObjects: text("expanded_objects").notNull(), // JSON string array of object IDs
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (t) => ({
+    unique: unique().on(t.rootObjectId), // Only unique on rootObjectId
+  }),
+);
+
+export const ExpansionStateSchema = createSelectSchema(expansionStateTable);
+export type PersistedExpansionState = z.infer<typeof ExpansionStateSchema>;

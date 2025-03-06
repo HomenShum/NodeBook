@@ -7,7 +7,9 @@ import {
   Map,
   MapPin,
   NetworkIcon,
+  Save,
   Sliders,
+  Trash2,
   WorkflowIcon,
   X,
 } from "lucide-react";
@@ -435,6 +437,57 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 </button>
                 <button onClick={copySlug}>Copy</button>
               </div>
+              {!user.isAnonymous && (
+                <div className={s.SwitchItem}>
+                  <span>Expansion State</span>
+                  <div className={s.ButtonContainer}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={s.PopoverButton}
+                      onClick={async () => {
+                        const success = await tree.saveExpansionStateForAllUsers();
+                        if (success) {
+                          addToast({
+                            title: "Expansion state saved for all users",
+                            duration: 4000,
+                          });
+                        } else {
+                          addToast({
+                            title: "Failed to save expansion state",
+                            duration: 4000,
+                          });
+                        }
+                      }}
+                    >
+                      <Save size={14} />
+                      <span>Save</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={s.PopoverButton}
+                      onClick={async () => {
+                        const success = await tree.clearExpansionStateForAllUsers();
+                        if (success) {
+                          addToast({
+                            title: "Expansion state cleared",
+                            duration: 4000,
+                          });
+                        } else {
+                          addToast({
+                            title: "Failed to clear expansion state",
+                            duration: 4000,
+                          });
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} />
+                      <span>Clear</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </PopoverContent>
         </Popover>

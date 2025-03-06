@@ -225,6 +225,13 @@
       "when": 1739877798443,
       "tag": "0031_short_bullseye",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1741282186036,
+      "tag": "0032_smiling_betty_brant",
+      "breakpoints": true
     }
   ]
 }

@@ -114,6 +114,12 @@
   cursor: default;
 }
 
+/* Button container for grouped action buttons */
+.ButtonContainer {
+  display: flex;
+  gap: 4px;
+}
+
 @media (max-width: 450px) {
   .ControlsBar {
     padding: 8px 8px;

@@ -1,5 +1,6 @@
 declare const styles: {
   readonly "BottomAlign": string;
+  readonly "ButtonContainer": string;
   readonly "ControlsBar": string;
   readonly "ControlsBarWrapper": string;
   readonly "DisabledInput": string;
