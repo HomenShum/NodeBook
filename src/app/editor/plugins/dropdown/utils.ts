@@ -218,3 +218,36 @@ export const useGetRecentHashtags = (maxResults: number, toFilterByNodeId?: stri
     return results;
   }, [graphStore, maxResults, toFilterByNodeId]);
 };
+
+export const useGetMatchesForTemplate = (maxResults: number): ((text: string) => GraphNodeMatch[]) => {
+  const graphStore = useGraphStore();
+
+  return useCallback(
+    (text: string) => {
+      const results = graphStore.myTemplatesNode.children
+        .filter((node) => node instanceof GraphNode)
+        .filter((node) => node.text.toLocaleLowerCase().includes(text.toLocaleLowerCase()))
+        .sort((a, b) => scoreMatch(b.text, text) - scoreMatch(a.text, text))
+        .slice(0, maxResults)
+        .map((node) => ({ key: node.id, type: "node" as const, object: node as GraphNode, score: 0 }));
+
+      return results;
+    },
+    [graphStore],
+  );
+};
+
+export const useGetRecentTemplates = (maxResults: number): (() => GraphNodeMatch[]) => {
+  const graphStore = useGraphStore();
+
+  return useCallback(() => {
+    const results = graphStore.myTemplatesNode.children
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, maxResults)
+      .map((node) => ({ key: node.id, type: "node" as const, object: node as GraphNode, score: 0 }));
+
+    graphStore.layerManager.lazyLoadWithIds(results.map((node) => node.object.id));
+
+    return results;
+  }, [graphStore, maxResults]);
+};

@@ -200,6 +200,21 @@ export function checkForHashtagMatch(text: string): MenuTextMatch | null {
   };
 }
 
+const templateRegex = new RegExp(`^\\/([^\\s]*)`);
+
+export function checkForTemplateMatch(text: string): MenuTextMatch | null {
+  const match = templateRegex.exec(text);
+  if (!match) return null;
+
+  console.log(match);
+
+  return {
+    leadOffset: match.index,
+    matchingString: match[1],
+    replaceableString: match[0],
+  };
+}
+
 // Check for a search and replace match based on configuration and context
 export function checkForSearchAndReplaceMatch(
   text: string,

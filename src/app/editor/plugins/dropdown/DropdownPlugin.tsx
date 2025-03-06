@@ -8,18 +8,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
+import { TemplateDropdown } from "@/app/editor/plugins/dropdown/TemplateDropdown";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
 import {
   useGetMatchesForHashtags,
+  useGetMatchesForTemplate,
   useGetMatchesForTreeNode,
   useGetRecentHashtags,
   useGetRecentNodes,
+  useGetRecentTemplates,
 } from "@/app/editor/plugins/dropdown/utils";
 import { $getText } from "@/app/editor/utils/content";
 import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
-import { checkForMentionMatch, HASHTAG_SYMBOL } from "@/lib/utils";
+import { checkForMentionMatch, checkForTemplateMatch, HASHTAG_SYMBOL } from "@/lib/utils";
 
 const MAX_DROPDOWN_RESULTS = 20;
 
@@ -59,6 +62,8 @@ export const DropdownPlugin = observer(function DropdownPlugin({
   const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, treeNode.object.id);
   const getHashtagMatches = useGetMatchesForHashtags(MAX_DROPDOWN_RESULTS);
   const getRecentHashtags = useGetRecentHashtags(MAX_DROPDOWN_RESULTS, treeNode.object.id);
+  const getTemplateMatches = useGetMatchesForTemplate(MAX_DROPDOWN_RESULTS);
+  const getRecentTemplates = useGetRecentTemplates(MAX_DROPDOWN_RESULTS);
 
   const textChanged = useRef(false);
   const isChild =
@@ -151,6 +156,18 @@ export const DropdownPlugin = observer(function DropdownPlugin({
         return null;
       }
 
+      // Template dropdown
+      const template = checkForTemplateMatch(textBeforeCursor);
+      if (template) {
+        setSearchText(template.matchingString);
+        setDropdown((prev) => ({
+          type: "template",
+          search: template.matchingString,
+          matches: prev?.matches ?? [],
+        }));
+        return null;
+      }
+
       // Clear
       clearDropdown();
       return null;
@@ -173,6 +190,8 @@ export const DropdownPlugin = observer(function DropdownPlugin({
     if (debouncedSearchText.length === 0) {
       if (dropdown?.type === "mention" && dropdown.mentionTrigger === HASHTAG_SYMBOL) {
         matches = getRecentHashtags();
+      } else if (dropdown?.type === "template") {
+        matches = getRecentTemplates();
       } else {
         matches = getRecentNodes();
       }
@@ -187,6 +206,8 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       } else {
         matches = getMatches(debouncedSearchText, ["node"]);
       }
+    } else if (dropdown?.type === "template") {
+      matches = getTemplateMatches(debouncedSearchText);
     }
 
     setDropdown((prev: Dropdown) => {
@@ -246,7 +267,11 @@ export const DropdownPlugin = observer(function DropdownPlugin({
   return (
     <>
       {treeNode instanceof DescendantTreeNode ? (
-        <SearchAndReplaceDropdown treeNode={treeNode} dropdown={dropdown} closeDropdown={() => setDropdown(null)} />
+        dropdown?.type === "searchAndReplace" ? (
+          <SearchAndReplaceDropdown treeNode={treeNode} dropdown={dropdown} closeDropdown={() => setDropdown(null)} />
+        ) : (
+          <TemplateDropdown treeNode={treeNode} dropdown={dropdown} closeDropdown={() => setDropdown(null)} />
+        )
       ) : null}
       <MentionDropdown treeNode={treeNode} dropdown={dropdown} triggerFn={triggerFn} />
     </>

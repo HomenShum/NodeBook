@@ -29,4 +29,10 @@ export type SearchAndReplaceDropdown = {
   initiatedManually: boolean;
 };
 
-export type Dropdown = MentionDropdown | SearchAndReplaceDropdown | null;
+export type TemplateDropdown = {
+  type: "template";
+  search: string;
+  matches: Match[];
+};
+
+export type Dropdown = MentionDropdown | SearchAndReplaceDropdown | TemplateDropdown | null;

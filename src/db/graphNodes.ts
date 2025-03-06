@@ -9,6 +9,7 @@ import {
   USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
   USER_MY_STREAM_NODE_ID_PREFIX,
+  USER_MY_TEMPLATES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
 } from "@/lib/constants";
 
@@ -64,6 +65,12 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
       data: { oldProps, newProps },
     });
   }
+  if (oldProps.id.startsWith(USER_MY_TEMPLATES_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
+    throw new SyncError('Cannot update content of user\'s "My Templates" node', {
+      actionName: "updateNode",
+      data: { oldProps, newProps },
+    });
+  }
   const updated = await tx
     .update(graphNodeTable)
     .set({
@@ -96,6 +103,9 @@ export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => 
   }
   if (node.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
     throw new SyncError('Cannot delete user\'s "My Hashtags" node', { actionName: "deleteNode", data: { node } });
+  }
+  if (node.id.startsWith(USER_MY_TEMPLATES_NODE_ID_PREFIX)) {
+    throw new SyncError('Cannot delete user\'s "My Templates" node', { actionName: "deleteNode", data: { node } });
   }
   if (node.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX)) {
     throw new SyncError('Cannot delete user\'s "My Favorites" node', { actionName: "deleteNode", data: { node } });

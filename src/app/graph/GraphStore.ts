@@ -41,6 +41,7 @@ import {
   USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
   USER_MY_STREAM_NODE_ID_PREFIX,
+  USER_MY_TEMPLATES_NODE_ID_PREFIX,
   USER_RELATION_TYPES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
   USERS_TO_USER_RELATION_ID_PREFIX,
@@ -182,6 +183,16 @@ export class GraphStore {
   get myHashtagsNode(): GraphNode {
     const node = this.nodesById.get(this.myHashtagsNodeId);
     if (!node) throw new Error(`My hashtags node with id ${this.myHashtagsNodeId} not found`);
+    return node;
+  }
+
+  get myTemplatesNodeId(): string {
+    return USER_MY_TEMPLATES_NODE_ID_PREFIX + this.user.id;
+  }
+
+  get myTemplatesNode(): GraphNode {
+    const node = this.nodesById.get(this.myTemplatesNodeId);
+    if (!node) throw new Error(`My templates node with id ${this.myTemplatesNodeId} not found`);
     return node;
   }
 
@@ -2347,6 +2358,31 @@ export class GraphStore {
       userToMyStreamRelation = relation;
       updates.push(...newRelationUpdates);
       const { updates: pinUpdates } = this._pinRelations(userRoot.id, [userToMyStreamRelation.id]);
+      updates.push(...pinUpdates);
+    }
+
+    // My Templates node for user
+    let myTemplatesNode = this.nodesById.get(this.myTemplatesNodeId);
+    if (!myTemplatesNode) {
+      const { node, updates: myTemplatesNodeUpdates } = this._addNode({
+        id: this.myTemplatesNodeId,
+        content: [{ type: "text", value: "My Templates" }],
+        authorId: this.user.id,
+      });
+      myTemplatesNode = node;
+      updates.push(...myTemplatesNodeUpdates);
+    }
+
+    // User->My Templates
+    let userToMyTemplatesRelation = userRoot?.relations.find((r) => r.to.id === this.myTemplatesNodeId);
+    if (!userToMyTemplatesRelation && userRoot && myTemplatesNode) {
+      const { relation, updates: newRelationUpdates } = this.createRelation({
+        from: userRoot,
+        to: myTemplatesNode,
+      });
+      userToMyTemplatesRelation = relation;
+      updates.push(...newRelationUpdates);
+      const { updates: pinUpdates } = this._pinRelations(userRoot.id, [userToMyTemplatesRelation.id]);
       updates.push(...pinUpdates);
     }
 

@@ -9,6 +9,7 @@ import {
   GLOBAL_ROOT_ID,
   USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
+  USER_MY_TEMPLATES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
 } from "@/lib/constants";
 
@@ -138,6 +139,9 @@ export abstract class BaseGraphObject {
       return true;
     }
     if (this.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX)) {
+      return true;
+    }
+    if (this.id.startsWith(USER_MY_TEMPLATES_NODE_ID_PREFIX)) {
       return true;
     }
     return false;

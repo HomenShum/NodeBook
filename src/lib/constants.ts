@@ -10,6 +10,7 @@ export const USERS_TO_USER_RELATION_ID_PREFIX = "users-to-user-relation-id-";
 export const USER_MY_HASHTAGS_NODE_ID_PREFIX = "user-hashtags-id-";
 export const USER_MY_FAVORITES_NODE_ID_PREFIX = "user-favorites-id-";
 export const USER_RELATION_TYPES_NODE_ID_PREFIX = "user-relation-types-node-id-";
+export const USER_MY_TEMPLATES_NODE_ID_PREFIX = "user-template-id-";
 export const USER_MY_STREAM_NODE_ID_PREFIX = "user-stream-id-";
 export const USER_CARD_STATUSES_NODE_ID = "user-card-statuses-node-id-";
 export const DEFAULT_CARD_STATUSES = ["Not Acknowledged", "Acknowledged", "In Progress", "Done"];
