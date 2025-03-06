@@ -98,8 +98,6 @@ export default observer(function App({ children }: Props) {
         </button>
       </div>
     );
-  } else if (isLoading) {
-    return <Loader />;
   } else {
     return (
       <div className={styles.App}>

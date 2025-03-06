@@ -15,6 +15,8 @@ import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import Loader from "@/app/components/UIPrimitives/Loader";
+import { useLoading } from "@/app/contexts/LoadingContext";
 
 import s from "./OutlineView.module.css";
 
@@ -24,6 +26,7 @@ interface Props {
 
 export const OutlineView = observer(function OutlineView({ tree }: Props) {
   const viewStore = useViewStore();
+  const isLoading = useLoading();
   const ref = useRef<HTMLDivElement>(null);
 
   const treeRoot = tree.state.root;
@@ -50,12 +53,14 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
         })}
       >
         <PageTitleUpdater tree={tree} />
-        <QuickCapture />
+        {!isLoading && <QuickCapture />}
         <div className={s.WindowNav}>
           <Breadcrumbs treeNode={treeRoot} />
           <ControlsBar tree={tree} />
         </div>
-        {viewStore.graphMode ? (
+        {isLoading ? (
+          <Loader />
+        ) : viewStore.graphMode ? (
           <GraphContainer tree={tree} />
         ) : (
           <div className={s.MainAndSidebarContainer} ref={ref}>
