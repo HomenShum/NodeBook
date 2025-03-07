@@ -7,6 +7,7 @@ import { SerializedGraphStoreSchema, SerializedStores } from "@/app/persistence/
 import { getAuthFetch } from "@/app/util";
 import { PersistedUser } from "@/db/schema";
 import logger from "@/lib/logger";
+import { ViewStore } from "@/app/view/ViewStore";
 
 export const localLocalData = (graphStore: GraphStore) => {
   logger.debug("Loading data from local storage");
@@ -49,10 +50,12 @@ export class LayerManager {
     }
     if (!text || text.length < 3 || this.searchedText.has(text)) return;
     this.searchDebounceTimer = setTimeout(async () => {
+      this.graphStore.updateInFlightSearchCount("increment");
       this.searchedText.set(text, true);
       const nodeIds = await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`);
       this.loadCanonicalWithIds(nodeIds);
-    }, 80);
+      this.graphStore.updateInFlightSearchCount("decrement");
+    }, 150);
   }
 
   async loadWithBFS(objectId: string): Promise<void> {

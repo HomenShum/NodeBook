@@ -22,6 +22,7 @@ import {
   cn,
   isMac,
 } from "@/lib/utils";
+import LineLoader from "@/app/components/LineLoader/LineLoader";
 
 import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
 import { Dropdown } from "./types";
@@ -220,6 +221,7 @@ export function getMenuRenderFn(
             </li>
           ))}
         </ul>
+        <LineLoader height={2} />
       </div>
     );
 

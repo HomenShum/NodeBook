@@ -85,7 +85,7 @@ import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
  */
 export class GraphStore {
   settings: SettingsStore | undefined;
-
+  inFlightSearchCount: number = 0;
   user: MewUser;
   updateManager: UpdateManager;
   layerManager: LayerManager;
@@ -118,6 +118,7 @@ export class GraphStore {
     if (!isObservable(this)) {
       makeObservable(this, {
         user: observable,
+        inFlightSearchCount: observable,
         usersById: observable.shallow,
         nodesById: observable.shallow,
         relationsById: observable.shallow,
@@ -144,6 +145,7 @@ export class GraphStore {
         applyCombinedTransaction: action,
         importData: action,
         totalNodes: computed,
+        updateInFlightSearchCount: action,
       });
     }
   }
@@ -2583,18 +2585,27 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.allRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.pinnedRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.noteContentRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.allRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.pinnedRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.noteContentRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
 
     return {
       usersById,
@@ -3104,6 +3115,22 @@ export class GraphStore {
       );
     }
     return relation;
+  }
+
+  /**
+   * In search components, we need to render an indicator component to
+   * indicate an "ongoing" backend search. When we send a
+   * request we increment, when the request is over, we decrement.
+   *
+   * When `inFlightSearchCount` > 0, we render the the indicator,
+   * else hide it.
+   */
+  updateInFlightSearchCount(direction: "increment" | "decrement"): void {
+    if (direction === "increment") {
+      this.inFlightSearchCount++;
+    } else {
+      this.inFlightSearchCount--;
+    }
   }
 }
 

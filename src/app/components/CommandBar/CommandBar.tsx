@@ -20,6 +20,7 @@ import { ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { USER_ROOT_ID_PREFIX } from "@/lib/constants";
 import { cn, isMac } from "@/lib/utils";
+import LineLoader from "@/app/components/LineLoader/LineLoader";
 
 import styles from "./CommandBar.module.css";
 
@@ -307,6 +308,7 @@ const CommandBar = observer(() => {
                 </div>
               ))}
             </div>
+            <LineLoader height={4} />
           </Dialog.Content>
         </Dialog.Overlay>
       </Dialog.Portal>

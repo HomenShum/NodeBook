@@ -1,0 +1,13 @@
+.Loader {
+    transform: translate(0.1px, 0);
+    width: 100%;
+    --c:no-repeat linear-gradient(var(--teal-11) 0 0);
+    background: var(--c),var(--c),var(--teal-3);
+    background-size: 60% 100%;
+    animation: animatePosition 3s infinite;
+}
+@keyframes animatePosition {
+    0%   {background-position:-150% 0,-150% 0}
+    66%  {background-position: 250% 0,-150% 0}
+    100% {background-position: 250% 0, 250% 0}
+}

@@ -23,6 +23,7 @@ import { getCanonicalPath } from "@/app/graph/utils";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { USER_MY_HASHTAGS_NODE_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import LineLoader from "@/app/components/LineLoader/LineLoader";
 
 import styles from "./DropdownPlugin.module.css";
 
@@ -255,6 +256,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
           </li>
         ))}
       </ul>
+      <LineLoader height={2} />
     </div>
   );
 });

@@ -36,10 +36,10 @@
   width: 90vw;
   max-width: 450px;
   max-height: 34vh;
-  padding: 2px;
   display: flex;
   flex-direction: column;
   outline: none;
+  padding: 2px 2px 0;
 }
 
 .List {
