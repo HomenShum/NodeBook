@@ -203,6 +203,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   }
   return (
     <div ref={ref} className={cn(styles.Dropdown, styles.SearchAndReplace)}>
+      <LineLoader height={2} />
       <ul ref={listRef}>
         {state.matches.map((match, index) => (
           <li
@@ -256,7 +257,6 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
           </li>
         ))}
       </ul>
-      <LineLoader height={2} />
     </div>
   );
 });

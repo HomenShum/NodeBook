@@ -194,6 +194,7 @@ export function getMenuRenderFn(
   ): ReactPortal | JSX.Element | null {
     const Menu = (
       <div className={cn(styles.Dropdown, styles.TypeaheadPopover, forCommandBar && styles.ForCommandBar)}>
+        <LineLoader height={2} />
         <ul>
           {options.map((option, i: number) => (
             <li
@@ -221,7 +222,6 @@ export function getMenuRenderFn(
             </li>
           ))}
         </ul>
-        <LineLoader height={2} />
       </div>
     );
 

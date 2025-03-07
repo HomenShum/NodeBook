@@ -279,6 +279,7 @@ const CommandBar = observer(() => {
               </Dialog.DialogDescription>
             </VisuallyHidden>
             <CmdEditor dropdownContainerRef={dropdownContainerRef} onChange={setSearch} initialValue={search} />
+            <LineLoader height={2} />
             <div className={styles.List} ref={listRef}>
               {filteredCommands.map((command, index) => (
                 <div
@@ -308,7 +309,6 @@ const CommandBar = observer(() => {
                 </div>
               ))}
             </div>
-            <LineLoader height={4} />
           </Dialog.Content>
         </Dialog.Overlay>
       </Dialog.Portal>
