@@ -6,21 +6,21 @@ import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CmdEditor } from "@/app/components/CommandBar/CmdEditor";
+import LineLoader from "@/app/components/LineLoader/LineLoader";
 import { Path } from "@/app/components/Path";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
-import { graphNodeIsCustomRelType } from "@/app/graph/constants";
 import { isFavorited } from "@/app/graph/favorites";
-import { Chip, GraphNode } from "@/app/graph/GraphNode";
+import { Chip } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { useToast } from "@/app/hooks/useToast";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
-import { USER_ROOT_ID_PREFIX } from "@/lib/constants";
 import { cn, isMac } from "@/lib/utils";
-import LineLoader from "@/app/components/LineLoader/LineLoader";
+import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
+import { TypeIndicator } from "@/app/editor/plugins/dropdown/DropdownItem";
 
 import styles from "./CommandBar.module.css";
 
@@ -289,21 +289,13 @@ const CommandBar = observer(() => {
                 >
                   <span style={{ display: "flex", gap: 8, alignItems: "center", width: "100%" }}>
                     <span style={{ marginRight: "auto" }}>{command.name}</span>
-                    {command.type === "navigate" &&
-                    command.object instanceof GraphNode &&
-                    graphNodeIsCustomRelType(command.object, true) ? (
-                      <span className={styles.RelTypeIndicator}>Type</span>
-                    ) : null}
-                    {command.type === "navigate" && command.isFavorited && (
-                      <span style={{ display: "flex", alignItems: "center" }}>
-                        <Star size={16} />
-                      </span>
+                    {command.type === "navigate" && (
+                      <>
+                        <TypeIndicator object={command.object} />
+                        {command.isFavorited && <Star size={16} />}
+                        <RelationCounter object={command.object} showTooltip={false} />
+                      </>
                     )}
-                    {command.type === "navigate" &&
-                      command.object instanceof GraphNode &&
-                      command.object.id.startsWith(USER_ROOT_ID_PREFIX) && (
-                        <span className={styles.RelTypeIndicator}>User</span>
-                      )}
                   </span>
                   {command.type !== "create" && <Path path={command.path} skipLast={true} />}
                 </div>

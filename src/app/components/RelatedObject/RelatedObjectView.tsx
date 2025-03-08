@@ -23,15 +23,8 @@ import { copyObjectUrlToClipboard, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 // import all constants
 import { RelationTypePrefix } from "@/app/components/RelatedObject/RelationTypePrefix";
-import {
-  GLOBAL_HASHTAGS_NODE_ID,
-  GLOBAL_RELATION_TYPES_NODE_ID,
-  GLOBAL_ROOT_ID,
-  GLOBAL_USERS_NODE_ID,
-  USER_RELATION_TYPES_NODE_ID_PREFIX,
-  USER_ROOT_ID_PREFIX,
-} from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { TypeIndicator } from "@/app/editor/plugins/dropdown/DropdownItem";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
 import { RelatedNodeView } from "./RelatedNodeView";
@@ -147,13 +140,6 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
 });
 
 const Content = observer(function Content() {
-  const allSystemPrefixes = [
-    GLOBAL_RELATION_TYPES_NODE_ID,
-    GLOBAL_ROOT_ID,
-    GLOBAL_USERS_NODE_ID,
-    USER_RELATION_TYPES_NODE_ID_PREFIX,
-    GLOBAL_HASHTAGS_NODE_ID,
-  ];
   const settingsStore = useSettingsStore();
   const { isHovered } = useTreeNode();
   const {
@@ -369,17 +355,7 @@ const Content = observer(function Content() {
               <PinCustomIcon />
             </div>
           </Button>
-          {
-            // If the node is a relation type node, show a "Type" indicator
-            allSystemPrefixes.some((prefix) => treeNode.object.id.startsWith(prefix)) ? (
-              <div className={styles.RelatedObjectIndicator}>System</div>
-            ) : treeNode.object.objectType === "node" &&
-              treeNode.object.relations.some((r) => r.relationTypeId === "__reverse__") ? (
-              <div className={styles.RelatedObjectIndicator}>Type</div>
-            ) : treeNode.object.id.startsWith(USER_ROOT_ID_PREFIX) ? (
-              <div className={styles.RelatedObjectIndicator}>User</div>
-            ) : null
-          }
+          <TypeIndicator object={treeNode.object} />
           {/* I think not showing this in replace mode is a good option but feel free to change */}
           {viewType !== "replace" && !isNoteContentRoot && (
             <RelationCounter

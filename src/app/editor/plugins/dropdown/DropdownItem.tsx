@@ -1,11 +1,19 @@
 import { Path } from "@/app/components/Path";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import relationComboboxStyles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
-import { graphNodeIsCustomRelType } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { getCanonicalPath } from "@/app/graph/utils";
-import { USER_MY_HASHTAGS_NODE_ID_PREFIX } from "@/lib/constants";
+import {
+  GLOBAL_HASHTAGS_NODE_ID,
+  GLOBAL_RELATION_TYPES_NODE_ID,
+  GLOBAL_ROOT_ID,
+  GLOBAL_USERS_NODE_ID,
+  USER_MY_HASHTAGS_NODE_ID_PREFIX,
+  USER_RELATION_TYPES_NODE_ID_PREFIX,
+  USER_ROOT_ID_PREFIX,
+} from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { GraphObject } from "@/app/graph/GraphObject";
 
 import { Match } from "./types";
 
@@ -62,16 +70,9 @@ export function DropdownItem({
               </div>
               <div className={styles.DropdownItemHelper}>
                 {showTabHelper && index === 0 && <div className={styles.DropdownHelper}>Tab to select </div>}
-                {match.type === "node" && graphNodeIsCustomRelType(match.object, true) ? (
-                  <div className={styles.RelTypeIndicator}>Type</div>
-                ) : match.object.relations?.some((r: any) => {
-                    return r.from.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX);
-                  }) ? (
-                  <div className={styles.RelTypeIndicator}> # </div>
-                ) : null}
-
-                {match.type === "relation" ? <div className={styles.RelTypeIndicator}>Relation</div> : null}
-                {match.type === "node" ? <RelationCounter object={match.object} showTooltip={false} /> : null}
+                {match.type === "node" && <TypeIndicator object={match.object} />}
+                {match.type === "relation" && <div className={styles.RelTypeIndicator}>Relation</div>}
+                {match.type === "node" && <RelationCounter object={match.object} showTooltip={false} />}
               </div>
             </div>
             {match.type === "node" ? <Path path={getCanonicalPath(match.object)} /> : null}
@@ -94,4 +95,30 @@ export function RelationDisplay({ from, to, relationType }: { from: string; to: 
       <span className={styles.RelationItemObject}>{to}</span>
     </div>
   );
+}
+
+export function TypeIndicator({ object }: { object: GraphObject }) {
+  const allSystemPrefixes = [
+    GLOBAL_RELATION_TYPES_NODE_ID,
+    GLOBAL_ROOT_ID,
+    GLOBAL_USERS_NODE_ID,
+    USER_RELATION_TYPES_NODE_ID_PREFIX,
+    GLOBAL_HASHTAGS_NODE_ID,
+  ];
+
+  // If the node is a relation type node, show a "Type" indicator
+  if (object instanceof GraphNode && allSystemPrefixes.some((prefix) => object.id.startsWith(prefix))) {
+    return <div className={styles.RelatedObjectIndicator}>System</div>;
+  } else if (object instanceof GraphNode && object.relations.some((r) => r.relationTypeId === "__reverse__")) {
+    return <div className={styles.RelatedObjectIndicator}>Type</div>;
+  } else if (object instanceof GraphNode && object.id.startsWith(USER_ROOT_ID_PREFIX)) {
+    return <div className={styles.RelatedObjectIndicator}>User</div>;
+  } else if (
+    object.relations?.some((r: any) => {
+      return r.from.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX);
+    })
+  ) {
+    return <div className={styles.RelatedObjectIndicator}> # </div>;
+  }
+  return null;
 }

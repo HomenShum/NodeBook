@@ -16,14 +16,12 @@ import { Path } from "@/app/components/Path";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { Dropdown, GraphNodeMatch } from "@/app/editor/plugins/dropdown/types";
-import { graphNodeIsCustomRelType } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { uuid } from "@/app/util";
-import { USER_MY_HASHTAGS_NODE_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import styles from "./DropdownPlugin.module.css";
@@ -263,14 +261,6 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
                     {index === 0 && highlightedIndex === null && (
                       <div className={styles.DropdownHelper}>Tab to select </div>
                     )}
-                    {match.type === "node" && graphNodeIsCustomRelType(match.object, true) ? (
-                      <div className={styles.RelTypeIndicator}>Type</div>
-                    ) : match.object.relations.some((r) => {
-                        return r.from.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX);
-                      }) ? (
-                      <div className={styles.RelTypeIndicator}> # </div>
-                    ) : null}
-
                     <RelationCounter object={match.object} showTooltip={false} />
                   </div>
                 </div>

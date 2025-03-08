@@ -428,18 +428,6 @@ Right Area
   min-height: 100%;
 }
 
-.RelatedObjectIndicator {
-  padding: 0 6px;
-  background: var(--gray-2);
-  height: 18px;
-  position: relative;
-  margin-left: 5px;
-  border-radius: 4px;
-  font-size: var(--font-size-mini);
-  color: var(--gray-10);
-  width: fit-content;
-}
-
 .RelatedObjectRelationsToggle {
   margin: 6px 0 8px -1px;
 }

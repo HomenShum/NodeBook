@@ -69,6 +69,18 @@
   color: var(--gray-10);
 }
 
+.RelatedObjectIndicator {
+  padding: 0 6px;
+  background: var(--gray-2);
+  height: 18px;
+  position: relative;
+  margin-left: 5px;
+  border-radius: 4px;
+  font-size: var(--font-size-mini);
+  color: var(--gray-10);
+  width: fit-content;
+}
+
 .DropdownItemContent {
   width: 100%;
   display: flex;
