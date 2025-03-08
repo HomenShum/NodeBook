@@ -12,18 +12,14 @@ import {
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { Path } from "@/app/components/Path";
-import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
-import relationComboboxStyles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
+import LineLoader from "@/app/components/LineLoader/LineLoader";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
-import { graphNodeIsCustomRelType } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { getCanonicalPath } from "@/app/graph/utils";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { USER_MY_HASHTAGS_NODE_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import LineLoader from "@/app/components/LineLoader/LineLoader";
+
+import { DropdownItem } from "./DropdownItem";
 
 import styles from "./DropdownPlugin.module.css";
 
@@ -206,71 +202,18 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
       <LineLoader height={2} />
       <ul ref={listRef}>
         {state.matches.map((match, index) => (
-          <li
+          <DropdownItem
             key={match.key}
-            className={cn(
-              highlightedIndex === index ? styles.Selected : "",
-              match.object.authorId !== graphStore.user.id ? styles.NotOwned : "",
-            )}
+            index={index}
+            isSelected={highlightedIndex === index}
+            isNotOwned={match.object.authorId !== graphStore.user.id}
             onMouseEnter={() => mouseMoveSinceStateChange.current && setHighlightedIndex(index)}
-            onClick={() => selectMatch(match)}
-          >
-            <div className={styles.DropdownItem}>
-              {match.type === "relationType" ? (
-                <div className={relationComboboxStyles.RelationComboboxLabel}>
-                  {match.isForward ? match.object.label : match.object.reverseLabel}:
-                </div>
-              ) : (
-                <>
-                  <div className={styles.DropdownItemContent}>
-                    <div style={{ flex: 1, overflow: "hidden" }}>
-                      {match.object instanceof GraphNode ? (
-                        match.object.text
-                      ) : (
-                        <RelationDisplay
-                          from={match.object.from.text}
-                          to={match.object.to.text}
-                          relationType={match.object.relationType.label}
-                        />
-                      )}
-                    </div>
-                    <div className={styles.DropdownItemHelper}>
-                      {index === 0 && highlightedIndex === null && (
-                        <div className={styles.DropdownHelper}>Tab to select </div>
-                      )}
-                      {match.type === "node" && graphNodeIsCustomRelType(match.object, true) ? (
-                        <div className={styles.RelTypeIndicator}>Type</div>
-                      ) : match.object.relations.some((r) => {
-                          return r.from.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX);
-                        }) ? (
-                        <div className={styles.RelTypeIndicator}> # </div>
-                      ) : null}
-
-                      {match.type === "relation" ? <div className={styles.RelTypeIndicator}>Relation</div> : null}
-                      {match.type === "node" ? <RelationCounter object={match.object} showTooltip={false} /> : null}
-                    </div>
-                  </div>
-                  {match.type === "node" ? <Path path={getCanonicalPath(match.object)} /> : null}
-                </>
-              )}
-            </div>
-          </li>
+            onClick={(e) => selectMatch(match)}
+            showTabHelper={highlightedIndex === null}
+            match={match}
+          />
         ))}
       </ul>
     </div>
   );
 });
-
-export function RelationDisplay({ from, to, relationType }: { from: string; to: string; relationType: string }) {
-  return (
-    <div className={styles.RelationItem}>
-      <span className={styles.RelationItemObject}>{from}</span>
-      <div className={cn(relationComboboxStyles.RelationComboboxLabel, styles.RelationItemType)}>
-        <span className={styles.RelationItemDash}>—</span>
-        <span>{relationType}</span>
-        <span className={styles.RelationItemArrow}>→</span>
-      </div>
-      <span className={styles.RelationItemObject}>{to}</span>
-    </div>
-  );
-}

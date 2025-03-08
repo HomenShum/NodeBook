@@ -3,12 +3,10 @@ import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
 import { ReactPortal, useCallback } from "react";
 import * as ReactDOM from "react-dom";
 
-import { Path } from "@/app/components/Path";
+import LineLoader from "@/app/components/LineLoader/LineLoader";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { defaultRelationTypes } from "@/app/graph/constants";
-import { GraphNode } from "@/app/graph/GraphNode";
 import { $createMentionNode } from "@/app/graph/MentionNode";
-import { getCanonicalPath } from "@/app/graph/utils";
 import { TreeNode } from "@/app/tree/nodes";
 import { NotificationManager, uuid } from "@/app/util";
 import {
@@ -22,10 +20,11 @@ import {
   cn,
   isMac,
 } from "@/lib/utils";
-import LineLoader from "@/app/components/LineLoader/LineLoader";
+import { GraphNode } from "@/app/graph/GraphNode";
 
 import { LexicalTypeaheadMenuPlugin, MenuOption, MenuRenderFn } from "./LexicalTypeaheadPlugin";
 import { Dropdown } from "./types";
+import { DropdownItem } from "./DropdownItem";
 
 import styles from "./DropdownPlugin.module.css";
 
@@ -196,31 +195,51 @@ export function getMenuRenderFn(
       <div className={cn(styles.Dropdown, styles.TypeaheadPopover, forCommandBar && styles.ForCommandBar)}>
         <LineLoader height={2} />
         <ul>
-          {options.map((option, i: number) => (
-            <li
-              key={option.key}
-              tabIndex={-1}
-              className={selectedIndex === i ? styles.Selected : ""}
-              ref={option.setRefElement}
-              role="option"
-              aria-selected={selectedIndex === i}
-              id={"typeahead-item-" + i}
-              onMouseEnter={() => {
-                setHighlightedIndex(i);
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setHighlightedIndex(i);
-                selectOptionAndCleanUp(option);
-              }}
-            >
-              <div className={styles.DropdownItem}>
-                {option.name}
-                {option.value.type === "new" && ` (${isMac ? "⌘" : "Ctrl"} + Enter )`}
-                {option.value.type === "existing" && <Path path={getCanonicalPath(option.value.object)} />}
-              </div>
-            </li>
-          ))}
+          {options.map((option, i: number) =>
+            option.value.type === "new" ? (
+              <li
+                key={option.key}
+                tabIndex={-1}
+                className={selectedIndex === i ? styles.Selected : ""}
+                ref={option.setRefElement}
+                id={"typeahead-item-" + i}
+                onMouseEnter={() => {
+                  setHighlightedIndex(i);
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setHighlightedIndex(i);
+                  selectOptionAndCleanUp(option);
+                }}
+              >
+                <div className={styles.DropdownItem}>
+                  {`Create new node: ${option.value.text.trim()}`}
+                  {option.value.type === "new" && ` (${isMac ? "⌘" : "Ctrl"} + Enter )`}
+                </div>
+              </li>
+            ) : (
+              <DropdownItem
+                key={option.key}
+                index={i}
+                ref={option.setRefElement}
+                isSelected={selectedIndex === i}
+                onMouseEnter={() => {
+                  setHighlightedIndex(i);
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setHighlightedIndex(i);
+                  selectOptionAndCleanUp(option);
+                }}
+                match={{
+                  key: option.key,
+                  type: "node",
+                  object: option.value.object,
+                  score: 0,
+                }}
+              />
+            ),
+          )}
         </ul>
       </div>
     );
