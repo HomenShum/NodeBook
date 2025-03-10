@@ -74,7 +74,7 @@ export const REGEX_CONSTANTS = {
   MAX_ALIAS_LENGTH: 50,
   PUNCTUATION: "", // "\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;",
   VALID_JOINS: "", //"(?:\\.[ |$]| |[\\.,\\*\\?\\$\\@\\|{}\\(\\)\\^\\-\\[\\]\\\\/!%'\"~=_:;]|)",
-  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|${CONNECTION_SYMBOL}\\s|\\${PLUS_SYMBOL}|${TILDE_SYMBOL}|${HASHTAG_SYMBOL}|\\[\\[`,
+  MENTION_TRIGGER: `${MENTION_SYMBOL}|${CONNECTION_SYMBOL}|\\${PLUS_SYMBOL}|${TILDE_SYMBOL}|${HASHTAG_SYMBOL}|\\[\\[`,
 };
 
 // Interface for text match results
@@ -176,6 +176,15 @@ export function checkForMentionMatch(
     return null;
   }
 
+  if (trigger === CONNECTION_SYMBOL && matchingString.length > 0 && matchingString[0] === " ") {
+    return {
+      leadOffset: match.index + leadingWhitespace.length,
+      matchingString: matchingString.slice(1),
+      replaceableString: match[2],
+      mentionTrigger: CONNECTION_SYMBOL_WITH_SPACE,
+    };
+  }
+
   return {
     leadOffset: match.index + leadingWhitespace.length,
     matchingString,
@@ -205,8 +214,6 @@ const templateRegex = new RegExp(`^\\/([^\\s]*)`);
 export function checkForTemplateMatch(text: string): MenuTextMatch | null {
   const match = templateRegex.exec(text);
   if (!match) return null;
-
-  console.log(match);
 
   return {
     leadOffset: match.index,
