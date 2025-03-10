@@ -2,7 +2,7 @@ import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
-import LexicalErrorBoundary from "@lexical/react/LexicalErrorBoundary";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { COMMAND_PRIORITY_HIGH, KEY_DOWN_COMMAND } from "lexical";
