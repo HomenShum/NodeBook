@@ -43,14 +43,7 @@
 .PlaceholderTitle {
   color: var(--gray-8);
   padding: 0 2px;
-
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transform: translateY(-100%);
-  user-select: none;
   position: absolute;
-  white-space: nowrap;
-  display: flex;
   pointer-events: none;
 }
 
