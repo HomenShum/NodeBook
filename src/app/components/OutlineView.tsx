@@ -1,6 +1,7 @@
 "use client";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef } from "react";
+import { Plus } from "lucide-react";
 
 import appStyles from "@/app/app.module.css";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
@@ -10,13 +11,18 @@ import OutlineContent from "@/app/components/OutlineContent";
 import { PageTitleUpdater } from "@/app/components/PageTitleUpdater";
 import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 import RightSidebar from "@/app/components/RightSidebar/RightSidebar";
+import Loader from "@/app/components/UIPrimitives/Loader";
+import { useLoading } from "@/app/contexts/LoadingContext";
 import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import Loader from "@/app/components/UIPrimitives/Loader";
-import { useLoading } from "@/app/contexts/LoadingContext";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
+import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
+import { useToast } from "@/app/hooks/useToast";
+import { useSetMainRoot } from "@/app/tree/utils";
 
 import s from "./OutlineView.module.css";
 
@@ -25,11 +31,15 @@ interface Props {
 }
 
 export const OutlineView = observer(function OutlineView({ tree }: Props) {
+  const user = useUser();
   const viewStore = useViewStore();
+  const graphStore = useGraphStore();
   const isLoading = useLoading();
   const ref = useRef<HTMLDivElement>(null);
-
   const treeRoot = tree.state.root;
+  const { addToast } = useToast();
+  const setRoot = useSetMainRoot();
+  const allowAnonymousAppend = treeRoot.object instanceof GraphNode && treeRoot.object.accessMode === AccessMode.APPEND;
 
   useEffect(() => {
     //Todo: This can be moved to hotkeys?
@@ -44,6 +54,20 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
       document.removeEventListener("copy", handleClipboardEvent);
     };
   }, [tree, viewStore.activeTree]);
+
+  const createAndZoomIntoNewNode = async () => {
+    const { node: newNode } = await graphStore.addChildNode({
+      parentId: graphStore.userRootId,
+      nodeProps: {
+        content: [{ type: "text", value: "" }],
+      },
+    });
+    if (tree.isMainTree) {
+      setRoot(newNode);
+    } else {
+      tree.setRoot(newNode);
+    }
+  };
 
   return (
     <TreeContext.Provider value={tree}>
@@ -66,6 +90,24 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
           <div className={s.MainAndSidebarContainer} ref={ref}>
             <OutlineParentContext.Provider value="OutlineView">
               <OutlineContent tree={tree} />
+              {(!user.isAnonymous || allowAnonymousAppend) && (
+                <button
+                  className={s.FloatingActionButton}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    createAndZoomIntoNewNode().catch((error) => {
+                      console.error("Failed to create and zoom into new node:", error);
+                      addToast({
+                        title: "Error",
+                        description: "Failed to create and zoom into new node",
+                      });
+                    });
+                  }}
+                  title="Create and zoom into new node"
+                >
+                  <Plus size={24} />
+                </button>
+              )}
             </OutlineParentContext.Provider>
             <RightSidebar parentRef={ref} />
           </div>

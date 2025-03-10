@@ -117,20 +117,6 @@ function OutlineContent({ tree }: Props) {
     }
   };
 
-  const createAndZoomIntoNewNode = async () => {
-    const { node: newNode } = await graphStore.addChildNode({
-      parentId: graphStore.userRootId,
-      nodeProps: {
-        content: [{ type: "text", value: "" }],
-      },
-    });
-    if (tree.isMainTree) {
-      setRoot(newNode);
-    } else {
-      tree.setRoot(newNode);
-    }
-  };
-
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       let wasEventHandled = false;
@@ -302,24 +288,6 @@ function OutlineContent({ tree }: Props) {
             }
           }}
         />
-      )}
-      {(!user.isAnonymous || allowAnonymousAppend) && (
-        <button
-          className={s.FloatingActionButton}
-          onClick={(e) => {
-            e.preventDefault();
-            createAndZoomIntoNewNode().catch((error) => {
-              console.error("Failed to create and zoom into new node:", error);
-              addToast({
-                title: "Error",
-                description: "Failed to create and zoom into new node",
-              });
-            });
-          }}
-          title="Create and zoom into new node"
-        >
-          <Plus size={24} />
-        </button>
       )}
     </div>
   );
