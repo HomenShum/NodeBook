@@ -193,7 +193,11 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
             </div>
           ))}
       </div>
-      {isExpanded && sortedPinnedChildren.length > 0 && <hr style={{ width: "80%", opacity: "0.3" }} />}
+      {isExpanded && sortedPinnedChildren.length > 0 && (
+        <div style={{ paddingLeft: "20px", width: "100%" }}>
+          <hr style={{ width: "100%", opacity: "0.3", margin: "4px 0" }} />
+        </div>
+      )}
       <div className={styles.SidebarTreeChildren}>
         {isExpanded && uniqueChildren.length === 0 ? (
           <div className={styles.EmptyMessage}>No hashtags yet</div>
