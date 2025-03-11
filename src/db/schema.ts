@@ -192,7 +192,7 @@ export const expansionStateTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     authorId: text("author_id").notNull(), // Who last saved the state
     rootObjectId: text("root_object_id").notNull(),
-    expandedObjects: text("expanded_objects").notNull(), // JSON string array of object IDs
+    expandedObjects: text("expanded_objects").notNull(), // JSON string array of tree node paths
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (t) => ({

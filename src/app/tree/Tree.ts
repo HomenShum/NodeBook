@@ -127,7 +127,6 @@ export class Tree {
     this.viewType = viewType;
     this.remoteHydrationEnabled = remoteHydrationEnabled;
     this.expansionStateManager = new ExpansionStateManager();
-    this.pendingExpansionObjectIds = new Set<string>();
     this.makeObservable();
 
     // Load expansion state from server after initialization
@@ -214,18 +213,12 @@ export class Tree {
   public loadMissingIdsDuringHydration(objectIds: string[]) {
     if (!this.remoteHydrationEnabled) return;
 
-    // Filter to only load objects we actually need
-    const objectsToLoad = objectIds.filter(
-      (id) => this.pendingExpansionObjectIds.has(id) || !this.graphStore.getObject(id),
-    );
+    // Filter to only load objects we need
+    const objectsToLoad = objectIds.filter((id) => !this.graphStore.getObject(id));
 
     if (objectsToLoad.length === 0) return;
 
     this.graphStore.layerManager.loadWithIds(objectsToLoad);
-
-    // After loading, check only the relevant objects that should be expanded
-    const objectsToExpand = objectsToLoad.filter((id) => this.pendingExpansionObjectIds.has(id));
-    objectsToExpand.forEach((id) => this.processLoadedObject(id));
   }
 
   public search: string = "";
@@ -500,7 +493,7 @@ export class Tree {
     }
 
     // If root object changed, clear pending expansion state and load new state
-    if (this.rootObjectId && !Tree.loadedExpansionStateRoots.has(this.rootObjectId)) {
+    if (this.rootObjectId) {
       this.pendingExpansionObjectIds.clear();
 
       // Load expansion state for the new root - do this asynchronously
@@ -2100,41 +2093,15 @@ export class Tree {
    * to check if it should be expanded based on the server's expansion state
    */
   public onObjectLoaded(objectId: string) {
-    if (this.pendingExpansionObjectIds.has(objectId)) {
-      // Find the node with this object ID and expand it
-      this.processLoadedObject(objectId);
-    }
+    // No longer needed - expansion state is now path-based
   }
 
   /**
    * Finds nodes with the given object ID and expands them
    */
   private processLoadedObject(objectId: string) {
-    // Only process if the object is in our pending list
-    if (!this.pendingExpansionObjectIds.has(objectId)) return;
-
-    // Skip if the object doesn't exist in the graph store
-    if (!this.graphStore.getObject(objectId)) return;
-
-    // Find all nodes in the tree that match our object ID and expand them
-    let found = false;
-    walkTree(this.root, (node) => {
-      if (node.object.id === objectId) {
-        this.setPathExpanded(node.path, true);
-        found = true;
-      }
-      return true; // continue walking
-    });
-
-    if (found) {
-      // Remove from pending list if we found and expanded it
-      this.pendingExpansionObjectIds.delete(objectId);
-      logger.debug(`Expanded loaded object: ${objectId}`);
-    }
+    // No longer needed - expansion state is now path-based
   }
-
-  // Add a static property to track roots we've already loaded expansion states for
-  private static loadedExpansionStateRoots = new Set<string>();
 
   /**
    * Loads expansion state from server and prepares to apply it as nodes are loaded
@@ -2142,34 +2109,17 @@ export class Tree {
   private async loadExpansionStateFromServer() {
     if (!this.rootObjectId) return;
 
-    // Skip if we've already loaded for this root object
-    if (Tree.loadedExpansionStateRoots.has(this.rootObjectId)) {
-      logger.debug(`Skipping expansion state load for root: ${this.rootObjectId} (already loaded)`);
-      return;
-    }
-
-    // Mark this root as loaded
-    Tree.loadedExpansionStateRoots.add(this.rootObjectId);
-
     try {
-      const expandedObjectIds = await this.expansionStateManager.loadExpansionState(this.rootObjectId);
-      if (!expandedObjectIds || expandedObjectIds.length === 0) {
+      const expandedPaths = await this.expansionStateManager.loadExpansionState(this.rootObjectId);
+      if (!expandedPaths || expandedPaths.length === 0) {
         logger.debug(`No server expansion state found for root: ${this.rootObjectId}, using local state`);
         return;
       }
 
-      logger.debug(`Loaded server expansion state for root: ${this.rootObjectId}, ${expandedObjectIds.length} objects`);
+      logger.debug(`Loaded server expansion state for root: ${this.rootObjectId}, ${expandedPaths.length} paths`);
 
-      // Store the IDs to be processed when nodes are loaded
-      expandedObjectIds.forEach((id) => this.pendingExpansionObjectIds.add(id));
-
-      // Process any nodes that are already loaded
-      this.processLoadedNodes();
-
-      // Request layer loading for these object IDs to ensure they get loaded
-      if (this.remoteHydrationEnabled) {
-        this.graphStore.layerManager.loadWithIds(expandedObjectIds);
-      }
+      // Apply the expansion state directly since we have paths
+      expandedPaths.forEach((path) => this.setPathExpanded(path, true));
     } catch (error) {
       logger.error(`Error loading expansion state from server: ${error}`);
     }
@@ -2179,20 +2129,7 @@ export class Tree {
    * Process nodes that are already loaded and should be expanded
    */
   private processLoadedNodes() {
-    if (this.pendingExpansionObjectIds.size === 0) return;
-
-    // Find all nodes in the tree that match our pending expansion IDs
-    const processedIds: string[] = [];
-    walkTree(this.root, (node) => {
-      if (this.pendingExpansionObjectIds.has(node.object.id)) {
-        this.setPathExpanded(node.path, true);
-        processedIds.push(node.object.id);
-      }
-      return true; // continue walking
-    });
-
-    // Remove processed IDs from pending list
-    processedIds.forEach((id) => this.pendingExpansionObjectIds.delete(id));
+    // No longer needed - expansion state is now path-based
   }
 
   /**
@@ -2200,28 +2137,8 @@ export class Tree {
    */
   public async saveExpansionStateForAllUsers(): Promise<boolean> {
     if (!this.rootObjectId) return false;
-
-    // Extract expanded object IDs from the expansionsByPath
-    const expandedObjectIds: string[] = [];
-    this.expansionsByPath.forEach((isExpanded, path) => {
-      if (isExpanded) {
-        const node = this.getNode(path);
-        if (node) {
-          expandedObjectIds.push(node.object.id);
-        }
-      }
-    });
-
-    logger.debug(`Saving expansion state for root: ${this.rootObjectId}, ${expandedObjectIds.length} objects`);
-
-    const success = await this.expansionStateManager.saveExpansionState(this.rootObjectId, expandedObjectIds);
-
-    // If save was successful, make sure this root is in our loaded set
-    if (success) {
-      Tree.loadedExpansionStateRoots.add(this.rootObjectId);
-    }
-
-    return success;
+    const expandedPaths = this.getExpandedPaths();
+    return this.expansionStateManager.saveExpansionState(this.rootObjectId, expandedPaths);
   }
 
   /**
@@ -2234,12 +2151,68 @@ export class Tree {
 
     const success = await this.expansionStateManager.clearExpansionState(this.rootObjectId);
 
-    // If deletion was successful, remove this root from our loaded set
-    if (success) {
-      Tree.loadedExpansionStateRoots.delete(this.rootObjectId);
-    }
-
     return success;
+  }
+
+  /**
+   * Gets all currently expanded paths in the tree
+   */
+  private getExpandedPaths(): string[] {
+    return Array.from(this.expansionsByPath.entries())
+      .filter(([_, isExpanded]) => isExpanded)
+      .map(([path, _]) => path);
+  }
+
+  /**
+   * Collapses all expanded nodes in the tree
+   */
+  public collapseAllNodes(): void {
+    // Create a new Map with all paths set to false (collapsed)
+    const newExpansions = new Map<string, boolean>();
+
+    // Only preserve group expansions, which default to expanded
+    this.expansionsByPath.forEach((isExpanded, path) => {
+      if (
+        path.includes("/all") ||
+        path.includes("/pinned") ||
+        path.includes("/noteContent") ||
+        path.includes("/pointer")
+      ) {
+        newExpansions.set(path, false);
+      }
+    });
+
+    this.expansionsByPath = newExpansions;
+    this.expansionLocalStorageCache.update(this.expansionsByPath);
+
+    logger.debug("Collapsed all nodes in tree");
+  }
+
+  /**
+   * Applies the saved expansion state from the server
+   */
+  public async applySavedExpansionState(): Promise<boolean> {
+    if (!this.rootObjectId) return false;
+
+    try {
+      const expandedPaths = await this.expansionStateManager.loadExpansionState(this.rootObjectId);
+      if (!expandedPaths || expandedPaths.length === 0) {
+        logger.debug(`No server expansion state found for root: ${this.rootObjectId}`);
+        return false;
+      }
+
+      // Clear current expansions first (collapse all)
+      this.collapseAllNodes();
+
+      // Apply the loaded expansion state
+      expandedPaths.forEach((path) => this.setPathExpanded(path, true));
+
+      logger.debug(`Applied saved expansion state for root: ${this.rootObjectId}, ${expandedPaths.length} paths`);
+      return true;
+    } catch (error) {
+      logger.error(`Error applying saved expansion state: ${error}`);
+      return false;
+    }
   }
 }
 

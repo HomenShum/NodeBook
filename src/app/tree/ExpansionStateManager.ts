@@ -7,7 +7,7 @@ export class ExpansionStateManager {
   /**
    * Saves the current expansion state to the server for all users
    */
-  async saveExpansionState(rootObjectId: string, expandedObjectIds: string[]): Promise<boolean> {
+  async saveExpansionState(rootObjectId: string, expandedPaths: string[]): Promise<boolean> {
     try {
       const authFetch = getAuthFetch();
       const response = await authFetch("/api/expansion-state", {
@@ -17,7 +17,7 @@ export class ExpansionStateManager {
         },
         body: JSON.stringify({
           rootObjectId,
-          expandedObjects: expandedObjectIds,
+          expandedObjects: expandedPaths,
         }),
       });
 

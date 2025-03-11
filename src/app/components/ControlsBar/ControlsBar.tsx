@@ -1,15 +1,16 @@
 import {
   CheckSquare,
+  Download,
   Globe,
   Link2,
   ListFilter,
   ListIcon,
   Map,
   MapPin,
+  MinusSquare,
   NetworkIcon,
   Save,
   Sliders,
-  Trash2,
   WorkflowIcon,
   X,
 } from "lucide-react";
@@ -467,23 +468,38 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                       size="sm"
                       variant="outline"
                       className={s.PopoverButton}
+                      onClick={() => {
+                        tree.collapseAllNodes();
+                        addToast({
+                          title: "All nodes collapsed",
+                          duration: 4000,
+                        });
+                      }}
+                    >
+                      <MinusSquare size={14} />
+                      <span>Collapse All</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className={s.PopoverButton}
                       onClick={async () => {
-                        const success = await tree.clearExpansionStateForAllUsers();
+                        const success = await tree.applySavedExpansionState();
                         if (success) {
                           addToast({
-                            title: "Expansion state cleared",
+                            title: "Saved expansion state applied",
                             duration: 4000,
                           });
                         } else {
                           addToast({
-                            title: "Failed to clear expansion state",
+                            title: "No saved expansion state found",
                             duration: 4000,
                           });
                         }
                       }}
                     >
-                      <Trash2 size={14} />
-                      <span>Clear</span>
+                      <Download size={14} />
+                      <span>Apply Saved State</span>
                     </Button>
                   </div>
                 </div>
