@@ -107,6 +107,9 @@ export const graphNodeTable = pgTable(
   (t) => ({
     unique: unique().on(t.id, t.authorId),
     contentSearchIndex: index("content_search_index").using("gin", t.contentTsvector),
+    authorIdIndex: index("author_id_index").on(t.authorId),
+    isPublicIndex: index("is_public_index").on(t.isPublic),
+    authorPublicCompositeIndex: index("author_public_index").on(t.authorId, t.isPublic),
   }),
 );
 export const GraphNodeSchema = createSelectSchema(graphNodeTable);
@@ -129,6 +132,9 @@ export const graphRelationTable = pgTable(
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),
+    authorIdIndex: index("relation_author_id_index").on(t.authorId),
+    isPublicIndex: index("relation_is_public_index").on(t.isPublic),
+    authorPublicCompositeIndex: index("relation_author_public_index").on(t.authorId, t.isPublic),
   }),
 );
 export const GraphRelationSchema = createSelectSchema(graphRelationTable);
@@ -168,6 +174,8 @@ export const relationListsTable = pgTable(
   },
   (t) => ({
     unique: unique().on(t.nodeId, t.relationId, t.type),
+    authorRelationCompositeIndex: index("author_relation_index").on(t.authorId, t.relationId),
+    publicRelationsIndex: index("public_relations_index").on(t.isPublic, t.relationId),
   }),
 );
 export const RelationListsSchema = createSelectSchema(relationListsTable);

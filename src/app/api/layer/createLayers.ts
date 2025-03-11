@@ -272,6 +272,37 @@ export const createLayersWithBfs = async (userId: string, objectId: string): Pro
   return createLayers(userId, Array.from(visitedNodeIds));
 };
 
+async function fetchRelationListsInBatches(
+  db: any,
+  userId: string,
+  authorIds: Set<string>,
+  relationIds: Set<string>,
+  batchSize = 250,
+): Promise<any[]> {
+  const allRelationListRows = [];
+  const relationIdsArray = Array.from(relationIds);
+
+  // Process relations in batches to avoid potential database limitations
+  for (let i = 0; i < relationIdsArray.length; i += batchSize) {
+    const relationIdsBatch = relationIdsArray.slice(i, i + batchSize);
+    const rows = await db
+      .select()
+      .from(relationListsTable)
+      .where(
+        and(
+          inArray(relationListsTable.relationId, relationIdsBatch),
+          or(
+            eq(relationListsTable.authorId, userId),
+            and(inArray(relationListsTable.authorId, Array.from(authorIds)), eq(relationListsTable.isPublic, true)),
+          ),
+        ),
+      );
+    allRelationListRows.push(...rows);
+  }
+
+  return allRelationListRows;
+}
+
 export const createLayers = async (
   userId: string,
   objectIds: string[],
@@ -540,18 +571,7 @@ export const createLayers = async (
     snapshot.usersById[user.id] = user;
   }
 
-  const relationListRows = await db
-    .select()
-    .from(relationListsTable)
-    .where(
-      and(
-        and(
-          inArray(relationListsTable.authorId, Array.from(authorIds)),
-          inArray(relationListsTable.relationId, Array.from(relationIds)),
-        ),
-        or(eq(relationListsTable.authorId, userId), eq(relationListsTable.isPublic, true)),
-      ),
-    );
+  const relationListRows = await fetchRelationListsInBatches(db, userId, authorIds, relationIds);
 
   for (const row of relationListRows) {
     const { nodeId, relationId } = row;
