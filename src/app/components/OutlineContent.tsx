@@ -1,4 +1,4 @@
-import { Globe, HomeIcon, Link, Maximize2, Plus, X } from "lucide-react";
+import { Globe, HomeIcon, Link, Maximize2, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useMemo, useRef } from "react";
 

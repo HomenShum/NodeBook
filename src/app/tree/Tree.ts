@@ -129,10 +129,7 @@ export class Tree {
     this.expansionStateManager = new ExpansionStateManager();
     this.makeObservable();
 
-    // Load expansion state from server after initialization
-    if (this.remoteHydrationEnabled) {
-      this.loadExpansionStateFromServer();
-    }
+    // Don't load expansion state in constructor anymore
   }
 
   makeObservable() {
@@ -2212,6 +2209,16 @@ export class Tree {
     } catch (error) {
       logger.error(`Error applying saved expansion state: ${error}`);
       return false;
+    }
+  }
+
+  /**
+   * Initialize the tree by loading expansion state from server.
+   * This should be called after the component is mounted.
+   */
+  public async initializeTree(): Promise<void> {
+    if (this.remoteHydrationEnabled) {
+      await this.loadExpansionStateFromServer();
     }
   }
 }

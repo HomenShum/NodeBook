@@ -488,6 +488,11 @@ export function ideapadSnapshotFromGraph(graphStore: GraphStore, userId: string)
 }
 
 export function getAuthFetch(): typeof fetch {
+  // Check if we're in a browser environment
+  if (typeof window === "undefined") {
+    return fetch;
+  }
+
   const token = localStorage.getItem(JWT_LOCAL_STORAGE_KEY);
   if (token) {
     return async (input, init) => {

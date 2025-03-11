@@ -3,7 +3,15 @@ import rootLogger from "@/lib/logger";
 
 const logger = rootLogger.child({ service: "expansion-state-manager" });
 
+type CachedExpansionState = {
+  paths: string[] | null;
+  timestamp: number;
+};
+
 export class ExpansionStateManager {
+  private cache: Map<string, CachedExpansionState> = new Map();
+  private readonly CACHE_TTL_MS = 10000; // 10 seconds
+
   /**
    * Saves the current expansion state to the server for all users
    */
@@ -27,6 +35,12 @@ export class ExpansionStateManager {
         return false;
       }
 
+      // Update cache after successful save
+      this.cache.set(rootObjectId, {
+        paths: expandedPaths,
+        timestamp: Date.now(),
+      });
+
       logger.debug(`Successfully saved expansion state for rootObjectId: ${rootObjectId}`);
       return true;
     } catch (error) {
@@ -40,6 +54,13 @@ export class ExpansionStateManager {
    */
   async loadExpansionState(rootObjectId: string): Promise<string[] | null> {
     try {
+      // Check cache first
+      const cached = this.cache.get(rootObjectId);
+      if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
+        logger.debug(`Using cached expansion state for rootObjectId: ${rootObjectId}`);
+        return cached.paths;
+      }
+
       const authFetch = getAuthFetch();
       const response = await authFetch(`/api/expansion-state?rootObjectId=${rootObjectId}`);
 
@@ -52,8 +73,19 @@ export class ExpansionStateManager {
       const result = await response.json();
       if (!result.data) {
         logger.debug(`No expansion state found for rootObjectId: ${rootObjectId}`);
+        // Cache the null result too
+        this.cache.set(rootObjectId, {
+          paths: null,
+          timestamp: Date.now(),
+        });
         return null;
       }
+
+      // Update cache with new data
+      this.cache.set(rootObjectId, {
+        paths: result.data.expandedObjects,
+        timestamp: Date.now(),
+      });
 
       logger.debug(`Loaded expansion state for rootObjectId: ${rootObjectId}`);
       return result.data.expandedObjects;
@@ -78,6 +110,9 @@ export class ExpansionStateManager {
         logger.error("Failed to clear expansion state:", errorText);
         return false;
       }
+
+      // Clear from cache after successful delete
+      this.cache.delete(rootObjectId);
 
       logger.debug(`Successfully cleared expansion state for rootObjectId: ${rootObjectId}`);
       return true;
