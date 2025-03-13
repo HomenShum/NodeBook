@@ -1,4 +1,4 @@
-import { ArrowDown10, ArrowUp01, FolderEdit, FolderSync, Hand, ListOrdered, SortAsc } from "lucide-react";
+import { ArrowDown10, ArrowUp01, ArrowUpDown, FolderEdit, FolderSync, Hand, SortAsc } from "lucide-react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -25,11 +25,11 @@ export const SortOptionDropdown = ({
       <DropdownMenuTrigger asChild>
         <Button
           size="sm"
-          variant="default"
+          variant={sortOption.mode !== "manual" ? "active" : "default"}
           className={cn(styles.ShowTooltip, styles.BottomAlign)}
           data-tooltip="Select sorting order"
         >
-          <ListOrdered size={14} />
+          <ArrowUpDown size={14} />
           <span>Sort by</span>
         </Button>
       </DropdownMenuTrigger>
@@ -52,7 +52,7 @@ export const SortOptionDropdown = ({
           data-highlighted={sortOption.mode === "createdAt" || undefined}
         >
           <FolderEdit size={14} />
-          <span>Created date</span>
+          <span>Created time</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={(e) => {
@@ -62,7 +62,7 @@ export const SortOptionDropdown = ({
           data-highlighted={sortOption.mode === "updatedAt" || undefined}
         >
           <FolderSync size={14} />
-          <span>Updated date</span>
+          <span>Updated time</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={(e) => {
@@ -86,7 +86,7 @@ export const SortOptionDropdown = ({
               data-highlighted={sortOption.direction === "asc" || undefined}
             >
               <ArrowUp01 size={14} />
-              <span>{sortOption.mode === "alphabetical" ? "A to Z" : "Oldest"}</span>
+              <span>{sortOption.mode === "alphabetical" ? "A to Z" : "Oldest first"}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               onSelect={(e) => {
@@ -96,7 +96,7 @@ export const SortOptionDropdown = ({
               data-highlighted={sortOption.direction === "desc" || undefined}
             >
               <ArrowDown10 size={14} />
-              <span>{sortOption.mode === "alphabetical" ? "Z to A" : "Newest"}</span>
+              <span>{sortOption.mode === "alphabetical" ? "Z to A" : "Newest first"}</span>
             </DropdownMenuItem>
           </>
         )}
