@@ -44,6 +44,7 @@ export class SettingsStore {
   public showOnlyTodosInQuickCapture: boolean = false;
   public todosFilterType: string = "all";
   public todosInQuickCaptureFilterType: string = "all";
+  public showHiddenRelations: boolean = false;
   private stopAutosave: () => void;
 
   constructor(
@@ -90,6 +91,7 @@ export class SettingsStore {
     this.showOnlyTodosInQuickCapture = false;
     this.todosFilterType = "all";
     this.todosInQuickCaptureFilterType = "all";
+    this.showHiddenRelations = false;
   }
 
   private async syncToServer() {
@@ -130,6 +132,7 @@ export class SettingsStore {
       showOnlyTodosInQuickCapture: this.showOnlyTodosInQuickCapture,
       todosFilterType: this.todosFilterType,
       todosInQuickCaptureFilterType: this.todosInQuickCaptureFilterType,
+      showHiddenRelations: this.showHiddenRelations,
     };
   }
 
@@ -162,6 +165,7 @@ export class SettingsStore {
     this.showOnlyTodosInQuickCapture = data.showOnlyTodosInQuickCapture ?? this.showOnlyTodosInQuickCapture;
     this.todosFilterType = data.todosFilterType ?? this.todosFilterType;
     this.todosInQuickCaptureFilterType = data.todosInQuickCaptureFilterType ?? this.todosInQuickCaptureFilterType;
+    this.showHiddenRelations = data.showHiddenRelations ?? this.showHiddenRelations;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -274,6 +278,10 @@ export class SettingsStore {
 
   setTodosInQuickCaptureFilterType(value: string) {
     this.todosInQuickCaptureFilterType = value;
+  }
+
+  setShowHiddenRelations(value: boolean) {
+    this.showHiddenRelations = value;
   }
 
   cleanup() {

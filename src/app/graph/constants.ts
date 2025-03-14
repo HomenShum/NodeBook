@@ -18,7 +18,8 @@ export type DefaultRelationType =
   | "__reverse__"
   | "__liked_by__"
   | "__comment__"
-  | "__status__";
+  | "__status__"
+  | "dataSource";
 
 export const getRelationTypeIcon = (relationType: string): (() => JSX.Element) | undefined => {
   switch (relationType) {
@@ -150,8 +151,18 @@ export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType
     reverseLabel: "status of",
     isPublic: false,
   },
+  dataSource: {
+    version: 1,
+    id: "dataSource",
+    authorId: GLOBAL_ADMIN_USER_ID,
+    label: "data source",
+    reverseLabel: "data source of",
+    isPublic: true,
+  },
   empty: { version: 1, id: "empty", authorId: GLOBAL_ADMIN_USER_ID, label: "", reverseLabel: "", isPublic: false },
 };
+
+export const hiddenRelationTypeIds = new Set([defaultRelationTypes.dataSource.id]);
 
 export const MAX_PREFIX_LENGTH = 3;
 export const DELETED_NODE_TEXT = "Unloaded Node";

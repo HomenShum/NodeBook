@@ -68,6 +68,7 @@ const SerializedUserSettingsSchema = z.object({
   showOnlyTodosInQuickCapture: z.boolean().optional(),
   todosFilterType: z.string().optional(),
   todosInQuickCaptureFilterType: z.string().optional(),
+  showHiddenRelations: z.boolean().optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 

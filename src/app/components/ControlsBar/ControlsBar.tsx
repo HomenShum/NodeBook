@@ -403,6 +403,14 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                   onCheckedChange={(checked: boolean) => settingsStore.setHidePinnedItems(checked)}
                 />
               </div>
+              <div className={s.SwitchItem}>
+                <label htmlFor="show-hidden-relations">Show hidden relations</label>
+                <Switch
+                  id="show-hidden-relations"
+                  checked={settingsStore.showHiddenRelations}
+                  onCheckedChange={(checked: boolean) => settingsStore.setShowHiddenRelations(checked)}
+                />
+              </div>
               {tree.rootObject instanceof GraphNode && tree.rootObject.isPublic && (
                 <div className={s.SwitchItem}>
                   <label htmlFor="access-mode">Allow unlogged users to append</label>

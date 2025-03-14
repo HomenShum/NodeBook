@@ -7,6 +7,8 @@ import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { hiddenRelationTypeIds } from "@/app/graph/constants";
+import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 import {
   AllGroup,
   ChildrenGroups,
@@ -22,7 +24,6 @@ import { SearchTree } from "@/app/tree/SearchTree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 
 import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./styles/ChildGroups.module.css";
@@ -183,9 +184,19 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
       {group.nodes
         .slice(0, limit)
         .filter((childTreeNode) => {
+          if (
+            !settingsStore.showHiddenRelations &&
+            childTreeNode.relationWithParent.relationTypeId in hiddenRelationTypeIds
+          ) {
+            console.log("Hiding relation id: ", childTreeNode.relationWithParent.id);
+          }
           return (
-            !settingsStore.hidePinnedItems ||
-            !childTreeNode.parent.object.isRelationPinned(childTreeNode.relationWithParent)
+            (!settingsStore.hidePinnedItems ||
+              !childTreeNode.parent.object.isRelationPinned(childTreeNode.relationWithParent)) &&
+            !(
+              !settingsStore.showHiddenRelations &&
+              hiddenRelationTypeIds.has(childTreeNode.relationWithParent.relationTypeId)
+            )
           );
         })
         .map((childTreeNode, i) => {

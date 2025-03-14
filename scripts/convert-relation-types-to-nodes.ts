@@ -72,8 +72,18 @@ const defaultRelationTypes = {
     reverseLabel: "__forward__",
     isPublic: false,
   },
+  dataSource: {
+    version: 1,
+    id: "dataSource",
+    authorId: GLOBAL_ADMIN_USER_ID,
+    label: "data source",
+    reverseLabel: "data source of",
+    isPublic: true,
+  },
   empty: { version: 1, id: "empty", authorId: GLOBAL_ADMIN_USER_ID, label: "", reverseLabel: "", isPublic: false },
 };
+
+const hiddenRelationTypeIds = new Set([defaultRelationTypes.dataSource.id]);
 
 /**
  * Helper: produce a new node ID (or you can do something else for unique IDs).
