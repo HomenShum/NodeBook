@@ -164,6 +164,7 @@
   scrollbar-width: thin;
   scrollbar-color: var(--gray-6) var(--gray-2);
   outline: 0;
+  overflow-x: hidden;
 }
 
 .ContentContainer::-webkit-scrollbar {
