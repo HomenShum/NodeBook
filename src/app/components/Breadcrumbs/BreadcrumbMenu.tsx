@@ -7,6 +7,7 @@ import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
 import { SyncStatusIndicator } from "@/app/components/SyncStatus/SyncStatusIndicator";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useLoading } from "@/app/contexts/LoadingContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { default as s } from "./Breadcrumbs.module.css";
 
 export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
+  const isLoading = useLoading();
   const user = useUser();
   const viewStore = useViewStore();
   const settingsStore = useSettingsStore();
@@ -72,7 +74,7 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
     [graphStore, settingsStore, tree],
   );
 
-  if (user.isAnonymous) {
+  if (user.isAnonymous && !isLoading) {
     return (
       <Button variant="active" size="sm" onClick={() => auth?.loginWithRedirect()}>
         Sign in

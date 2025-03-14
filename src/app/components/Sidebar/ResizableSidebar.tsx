@@ -276,60 +276,56 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </span>
               <span className={styles.ButtonText}>{graphStore.globalRoot.text}</span>
             </Button>
-            {!user.isAnonymous && (
-              <Button
-                variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Go to your list"
-                onMouseEnter={() => {
-                  graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
-                }}
-                onClick={(e) => {
-                  if (e.shiftKey) {
-                    viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
-                  } else if (e.metaKey) {
-                    openNewTab(graphStore.getDefaultRootForUser());
-                  } else {
-                    handleNavigation(() => {
-                      setRoot(graphStore.getDefaultRootForUser());
-                      viewStore.setViewType(ViewType.Outline);
-                    });
-                  }
-                }}
-              >
-                <span>
-                  <Home size={16} strokeWidth={1.5} />
-                </span>
-                <span className={styles.ButtonText}>Your Root</span>
-              </Button>
-            )}
-            {!user.isAnonymous && (
-              <Button
-                variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Go to your stream"
-                onMouseEnter={() => {
-                  graphStore.layerManager.lazyLoadWithIds([graphStore.myStreamNodeId]);
-                }}
-                onClick={(e) => {
-                  if (e.shiftKey) {
-                    viewStore.createSidebarTree(graphStore.myStreamNode);
-                  } else if (e.metaKey) {
-                    openNewTab(graphStore.myStreamNode);
-                  } else {
-                    handleNavigation(() => {
-                      setRoot(graphStore.myStreamNode);
-                      viewStore.setViewType(ViewType.Note);
-                    });
-                  }
-                }}
-              >
-                <span>
-                  <FileStackIcon size={16} strokeWidth={1.5} />
-                </span>
-                <span className={styles.ButtonText}>Your Stream</span>
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+              data-tooltip="Go to your list"
+              onMouseEnter={() => {
+                graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
+              }}
+              onClick={(e) => {
+                if (e.shiftKey) {
+                  viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
+                } else if (e.metaKey) {
+                  openNewTab(graphStore.getDefaultRootForUser());
+                } else {
+                  handleNavigation(() => {
+                    setRoot(graphStore.getDefaultRootForUser());
+                    viewStore.setViewType(ViewType.Outline);
+                  });
+                }
+              }}
+            >
+              <span>
+                <Home size={16} strokeWidth={1.5} />
+              </span>
+              <span className={styles.ButtonText}>Your Root</span>
+            </Button>
+            <Button
+              variant="ghost"
+              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+              data-tooltip="Go to your stream"
+              onMouseEnter={() => {
+                graphStore.layerManager.lazyLoadWithIds([graphStore.myStreamNodeId]);
+              }}
+              onClick={(e) => {
+                if (e.shiftKey) {
+                  viewStore.createSidebarTree(graphStore.myStreamNode);
+                } else if (e.metaKey) {
+                  openNewTab(graphStore.myStreamNode);
+                } else {
+                  handleNavigation(() => {
+                    setRoot(graphStore.myStreamNode);
+                    viewStore.setViewType(ViewType.Note);
+                  });
+                }
+              }}
+            >
+              <span>
+                <FileStackIcon size={16} strokeWidth={1.5} />
+              </span>
+              <span className={styles.ButtonText}>Your Stream</span>
+            </Button>
             <Button
               variant="ghost"
               className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
@@ -391,32 +387,30 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </span>
               <span className={styles.ButtonText}>Recently Created Notes</span>
             </Button>
-            {!user.isAnonymous && (
-              <Button
-                variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="See graph updates"
-                onClick={(e) => {
-                  if (e.metaKey) {
-                    window.open("/updates", "_blank");
-                  } else {
-                    handleNavigation(() => router.push("/updates"));
-                  }
-                }}
-              >
-                <span>
-                  <History size={16} strokeWidth={1.5} />
-                </span>
-                <span className={styles.ButtonText}>Updates Feed</span>
-              </Button>
-            )}
+            <Button
+              variant="ghost"
+              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+              data-tooltip="See graph updates"
+              onClick={(e) => {
+                if (e.metaKey) {
+                  window.open("/updates", "_blank");
+                } else {
+                  handleNavigation(() => router.push("/updates"));
+                }
+              }}
+            >
+              <span>
+                <History size={16} strokeWidth={1.5} />
+              </span>
+              <span className={styles.ButtonText}>Updates Feed</span>
+            </Button>
           </div>
           <div className={styles.ScrollableArea}>
-            {!user.isAnonymous && <MyFavoritesList />}
-            {!user.isAnonymous && <MyHashtagsTree />}
+            <MyFavoritesList />
+            <MyHashtagsTree />
             <MyShortlinksTree />
-            {!user.isAnonymous && <LocalHashtagsTree />}
-            {!user.isAnonymous && <LocalMentionsTree />}
+            <LocalHashtagsTree />
+            <LocalMentionsTree />
           </div>
           <div className={styles.BottomNav}>
             <Button
