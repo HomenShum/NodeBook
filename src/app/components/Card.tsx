@@ -170,7 +170,7 @@ export const Card = ({
             text
           )}
         </div>
-        <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} isHovered={true} />
+        <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} />
       </div>
 
       {isOverflowing && !isEditing && (

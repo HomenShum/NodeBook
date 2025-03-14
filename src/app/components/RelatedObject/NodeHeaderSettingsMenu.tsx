@@ -4,6 +4,7 @@ import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import styles from "@/app/components/OutlineView.module.css";
 import { SetPublicDialog } from "@/app/components/SetPublicDialog/SetPublicDialog";
 import {
   DropdownMenu,
@@ -19,8 +20,7 @@ import { addToFavorites, isFavorited, removeFromFavorites } from "@/app/graph/fa
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard, downloadSubtree, exportSubtreeToIdeapad } from "@/app/util";
-
-import styles from "./styles/NodeHeaderSettingsMenu.module.css";
+import { cn } from "@/lib/utils";
 
 interface Props {
   treeNode: DescendantTreeNode | RootTreeNode;
@@ -33,14 +33,15 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
   const router = useRouter();
   const setRoot = useSetMainRoot();
   const user = useUser();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);
 
   return (
     <div className={styles.MenuTrigger}>
       <div className={styles.MenuIcon}>
-        <DropdownMenu>
-          <DropdownMenuTrigger className={styles.MenuTrigger}>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger className={cn(styles.MenuTrigger, menuOpen && styles.MenuTriggerVisible)}>
             <Ellipsis size={16} className={styles.MenuIcon} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" alignOffset={-5} onCloseAutoFocus={(e) => e.preventDefault()}>

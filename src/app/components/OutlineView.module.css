@@ -25,6 +25,41 @@
   margin-left: -24px;
 }
 
+.HeadingLeftHandler {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.HeadingContainer:hover > .HeadingLeftHandler {
+  opacity: 1;
+}
+
+.TitleContainer .HeadingLeftHandler:has(.MenuTriggerVisible) {
+  opacity: 1;
+}
+
+.MenuTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.MenuIcon {
+  background-color: var(--gray-1);
+  color: var(--gray-8);
+  border-radius: 4px;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.MenuIcon:hover {
+  color: var(--gray-12);
+  background-color: var(--gray-3);
+}
+
 .TitleContainer > :first-child {
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
@@ -55,42 +90,6 @@
   display: flex;
   align-items: center;
   gap: 7px;
-}
-
-/* Set root button */
-.SetRootButton {
-  border: none;
-  width: 15px;
-  height: 24px;
-  color: transparent;
-  user-select: none;
-  position: relative;
-  margin-right: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s ease-in-out;
-}
-
-.HeadingContainer:hover .SetRootButton {
-  opacity: 1;
-  color: var(--gray-11);
-  fill: var(--gray-8);
-  stroke: var(--gray-8);
-}
-
-.SetRootButton:hover {
-  cursor: default;
-  color: var(--gray-12);
-  background-color: var(--gray-3);
-}
-
-.SetRootIcon {
-  width: 11px;
-  height: 11px;
 }
 
 .Nodes {

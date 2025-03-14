@@ -74,7 +74,7 @@ Tooltip
   border: 0.5px solid var(--gray-6);
 }
 
-.TreeNodeReference .Pill.ShowTooltip::after {
+.TreeNodeReference .Pill.ShowTooltip:hover::after {
   opacity: 1;
   visibility: visible;
 }
@@ -114,9 +114,4 @@ Tooltip
 
 .StrikeThrough {
   text-decoration: line-through;
-}
-
-.ShowTooltip::after {
-  opacity: 1 !important;
-  visibility: visible !important;
 }

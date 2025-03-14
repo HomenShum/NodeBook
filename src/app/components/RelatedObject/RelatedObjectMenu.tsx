@@ -38,16 +38,16 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { useParseWithAi } from "@/app/llm/useParseWithAi";
 import { getAncestorsAsArray, useSetAuthorRoot, useSetMainRoot } from "@/app/tree/utils";
 import { createRouteUrl, downloadSubtree, exportSubtreeToIdeapad } from "@/app/util";
+import { cn } from "@/lib/utils";
 
 import { useTreeNode } from "./RelatedObjectContext";
-import styles from "./styles/RelatedObjectMenu.module.css";
+import styles from "./styles/RelatedObjectView.module.css";
 
 interface Props {
   setUpdatingRelationType: (v: boolean) => void;
-  isHovered: boolean;
 }
 
-export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdatingRelationType, isHovered }: Props) {
+export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdatingRelationType }: Props) {
   const user = useUser();
   const graphStore = useGraphStore();
   const settingsStore = useSettingsStore();
@@ -67,12 +67,6 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);
-
-  if (!isHovered && !menuOpen) {
-    return <Ellipsis size={16} className={styles.Transparent} />;
-  }
-
-  const isFavorite = isFavorited(graphStore, object);
 
   const dropdownMenuItems = user.isAnonymous ? (
     <>
@@ -274,7 +268,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
 
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-      <DropdownMenuTrigger className={styles.TrailMenuTrigger}>
+      <DropdownMenuTrigger className={cn(styles.TrailMenuTrigger, menuOpen && styles.TrailMenuTriggerVisible)}>
         <Ellipsis size={16} className={styles.TrailMenuIcon} />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" alignOffset={-5} onCloseAutoFocus={(e) => e.preventDefault()}>

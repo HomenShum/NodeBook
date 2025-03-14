@@ -10,7 +10,6 @@ declare const styles: {
   readonly "HeaderInListView": string;
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
-  readonly "Hovered": string;
   readonly "LoadingSpinner": string;
   readonly "NoteContentBullet": string;
   readonly "NoteContentPrefix": string;
@@ -30,6 +29,7 @@ declare const styles: {
   readonly "RelatedObjectLeftArea": string;
   readonly "RelatedObjectLeftClickArea": string;
   readonly "RelatedObjectLeftHandler": string;
+  readonly "RelatedObjectMenu": string;
   readonly "RelatedObjectNode": string;
   readonly "RelatedObjectNodeContent": string;
   readonly "RelatedObjectPublic": string;
@@ -41,6 +41,9 @@ declare const styles: {
   readonly "Selected": string;
   readonly "SetRootButton": string;
   readonly "SetRootIcon": string;
+  readonly "TrailMenuIcon": string;
+  readonly "TrailMenuTrigger": string;
+  readonly "TrailMenuTriggerVisible": string;
   readonly "Unpinned": string;
   readonly "bulletClick": string;
   readonly "showTooltip": string;

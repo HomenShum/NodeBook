@@ -18,8 +18,6 @@ const TreeNodeContext = createContext<{
   setRelationComboboxIsOpen: (isOpen: boolean) => void;
   updatingRelationType: boolean;
   setUpdatingRelationType: (updating: boolean) => void;
-  isHovered: boolean;
-  setIsHovered: (isHovered: boolean) => void;
   viewType: RelatedObjectViewType;
   setViewType: (viewType: RelatedObjectViewType) => void;
 } | null>(null);

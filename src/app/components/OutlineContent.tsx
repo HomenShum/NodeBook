@@ -33,6 +33,7 @@ import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
 
 import breadcrumbs from "./Breadcrumbs/Breadcrumbs.module.css";
+import relatedObjectStyles from "./RelatedObject/styles/RelatedObjectView.module.css";
 
 interface Props {
   tree: Tree;
@@ -183,30 +184,32 @@ function OutlineContent({ tree }: Props) {
       {!hideHeader && (
         <div className={s.HeadingContainer}>
           <div className={s.TitleContainer}>
-            <NodeHeaderSettingsMenu treeNode={treeRoot} />
-            <button
-              className={s.SetRootButton}
-              onPointerDown={(e) => {
-                if (e.shiftKey) {
-                  // open in sidebar
-                  viewStore.createSidebarTree(treeRoot.object);
-                } else {
-                  // If this is the main (non-sidebar, non-quick capture) view, output a toast
-                  if (tree.isMainTree) {
-                    addToast({
-                      title: "Already expanded in Main Tree",
-                      description:
-                        "Expanding the tree root in the main view does nothing. If you Shift-Click, you can open this in the sidebar as well.",
-                    });
-                    return;
+            <div className={s.HeadingLeftHandler}>
+              <NodeHeaderSettingsMenu treeNode={treeRoot} />
+              <button
+                className={relatedObjectStyles.SetRootButton}
+                onPointerDown={(e) => {
+                  if (e.shiftKey) {
+                    // open in sidebar
+                    viewStore.createSidebarTree(treeRoot.object);
+                  } else {
+                    // If this is the main (non-sidebar, non-quick capture) view, output a toast
+                    if (tree.isMainTree) {
+                      addToast({
+                        title: "Already expanded in Main Tree",
+                        description:
+                          "Expanding the tree root in the main view does nothing. If you Shift-Click, you can open this in the sidebar as well.",
+                      });
+                      return;
+                    }
+                    setRoot(treeRoot.object);
                   }
-                  setRoot(treeRoot.object);
-                }
-              }}
-              title="Set as root (Shift+Click to open in sidebar)"
-            >
-              <Maximize2 size={11} className={s.SetRootIcon} />
-            </button>
+                }}
+                title="Set as root (Shift+Click to open in sidebar)"
+              >
+                <Maximize2 size={11} className={relatedObjectStyles.SetRootIcon} />
+              </button>
+            </div>
             <TooltipProvider>
               <Tooltip>
                 <div className={s.IconAndTitle}>

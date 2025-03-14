@@ -33,6 +33,8 @@ Left Area
   right: 100%;
   height: 24px;
   padding-right: 2px;
+  opacity: 0;
+  transition: opacity 0.15s ease-in-out;
 }
 
 .RelatedObjectLeftClickArea {
@@ -119,18 +121,39 @@ Bullet
   opacity: 1;
 }
 
-/* .RelatedObjectContent:focus-within,
-.NoteContentSection .RelatedObjectContent .RelatedObjectBulletContainer {
+.RelatedObjectContent:hover .TrailMenuTrigger {
   opacity: 1;
-} */
+  visibility: visible;
+}
 
-/* .NoteContentSection:focus-within
-  .NoteContentSection
-  .RelatedObjectContent:focus-within
-  .RelatedObjectBulletContainer.Hidden {
+.RelatedObjectContent .TrailMenuTriggerVisible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.TrailMenuTrigger {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  width: 20px;
+  cursor: default;
   opacity: 0;
-} */
+  visibility: hidden;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+}
 
+.TrailMenuIcon {
+  color: var(--gray-8);
+  height: 24px;
+  width: 18px;
+  background-color: var(--gray-1);
+  border-radius: 4px;
+}
+
+.TrailMenuIcon:hover {
+  color: var(--gray-10);
+  background-color: var(--gray-3);
+}
 /* 
 Tooltip
 */
@@ -196,44 +219,6 @@ Bullet
     transform: scale(1);
     opacity: 1;
   }
-}
-
-/*
-Set root button
-*/
-
-.SetRootButton {
-  border: none;
-  width: 15px;
-  height: 24px;
-  color: transparent;
-  user-select: none;
-  position: relative;
-  margin-right: 1px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  cursor: default;
-}
-
-.Hovered {
-  color: var(--gray-8);
-  fill: var(--gray-8);
-  stroke: var(--gray-8);
-}
-
-.SetRootButton:hover {
-  background-color: var(--gray-3);
-}
-
-.SetRootIcon {
-  width: 11px;
-  height: 11px;
-}
-
-.SetRootButton:hover .SetRootIcon {
-  stroke: var(--gray-10);
 }
 
 /* 
@@ -557,11 +542,18 @@ Right Area
   visibility: visible;
 }
 
+.RelatedObjectContent:hover .ElbowArrow {
+  opacity: 1;
+  visibility: visible;
+}
+
 .ElbowArrow {
   color: var(--gray-8);
   position: absolute;
   left: -40px;
   top: 2px;
+  opacity: 0;
+  visibility: hidden;
 }
 
 .NoteContentBullet {
@@ -581,4 +573,62 @@ Right Area
 .RelatedObjectContent:focus-within .NoteContentBullet:has(+ .RelatedObjectNode:has(.RelatedObjectContainer)),
 .RelatedObjectContent:focus-within .NoteContentRootBullet {
   opacity: 1;
+}
+
+.RelatedObjectContent:hover .RelatedObjectMenu {
+  opacity: 1;
+  visibility: visible;
+}
+
+.RelatedObjectContent:hover > .RelatedObjectLeftHandler {
+  opacity: 1;
+  visibility: visible;
+}
+
+.RelatedObjectContent .RelatedObjectLeftHandler:has(.TrailMenuTriggerVisible) {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Set root button */
+.SetRootButton {
+  border: none;
+  width: 15px;
+  height: 24px;
+  color: transparent;
+  user-select: none;
+  position: relative;
+  margin-right: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 1;
+  color: var(--gray-8);
+}
+
+.SetRootButton:hover {
+  cursor: default;
+  color: var(--gray-12);
+  background-color: var(--gray-3);
+}
+
+.SetRootIcon {
+  width: 11px;
+  height: 11px;
+}
+
+.RelatedObjectMenu {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .SetRootButton,
+  .RelatedObjectMenu {
+    opacity: 1;
+    visibility: visible;
+  }
 }

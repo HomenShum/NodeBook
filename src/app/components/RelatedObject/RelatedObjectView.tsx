@@ -23,8 +23,8 @@ import { copyObjectUrlToClipboard, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 // import all constants
 import { RelationTypePrefix } from "@/app/components/RelatedObject/RelationTypePrefix";
-import { cn } from "@/lib/utils";
 import { TypeIndicator } from "@/app/editor/plugins/dropdown/DropdownItem";
+import { cn } from "@/lib/utils";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
 import { RelatedNodeView } from "./RelatedNodeView";
@@ -110,7 +110,6 @@ interface MainProps {
 
 const Main = observer(function Main({ treeNode, children }: MainProps) {
   const [updatingRelationType, setUpdatingRelationType] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [relationComboboxIsOpen, setRelationComboboxIsOpen] = useState(false);
   const [viewType, setViewType] = useState<RelatedObjectViewType>("edit");
 
@@ -122,26 +121,17 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
         setRelationComboboxIsOpen,
         updatingRelationType,
         setUpdatingRelationType,
-        isHovered,
-        setIsHovered,
         viewType,
         setViewType,
       }}
     >
-      <div
-        className={styles.RelatedObjectContent}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {children}
-      </div>
+      <div className={styles.RelatedObjectContent}>{children}</div>
     </TreeNodeProvider>
   );
 });
 
 const Content = observer(function Content() {
   const settingsStore = useSettingsStore();
-  const { isHovered } = useTreeNode();
   const {
     treeNode,
     relationComboboxIsOpen,
@@ -203,13 +193,10 @@ const Content = observer(function Content() {
         {/* Add clickable area to the left of the node */}
         <div className={styles.RelatedObjectLeftClickArea} onPointerDown={handleLeftAreaClick} />
         <div className={styles.RelatedObjectActions} style={{ position: "relative", zIndex: 2 }}>
-          <RelatedObjectMenu
-            setUpdatingRelationType={setUpdatingRelationType}
-            isHovered={isMobile ? true : isHovered}
-          />
+          <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} />
           {
             <button
-              className={cn(styles.SetRootButton, (isMobile || isHovered) && styles.Hovered)}
+              className={styles.SetRootButton}
               onPointerDown={(e) => {
                 if (e.shiftKey) {
                   // open in sidebar
@@ -242,8 +229,7 @@ const Content = observer(function Content() {
               {treeViewType === "note" &&
                 treeNode.object.noteContentRelationsList.size === 0 && // Notecontent is empty
                 treeNode.parent instanceof RootTreeNode &&
-                !isUnlabelledChild(treeNode) &&
-                !isHovered && <CornerDownRight size={16} className={styles.ElbowArrow} />}
+                !isUnlabelledChild(treeNode) && <CornerDownRight size={16} className={styles.ElbowArrow} />}
               <RelationCombobox
                 setUpdatingRelationType={setUpdatingRelationType}
                 treeNode={treeNode}
@@ -397,11 +383,11 @@ const LoadingSpinner = () => {
 const Controls = observer(function Controls({ showToggle }: { showToggle: boolean }) {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
-  const { treeNode, isHovered, setUpdatingRelationType } = useTreeNode();
+  const { treeNode, setUpdatingRelationType } = useTreeNode();
 
   const isMobile = useIsMobile();
 
-  if (isHovered) {
+  if (isMobile) {
     graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
   }
   const setRoot = useSetMainRoot();
@@ -417,13 +403,10 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
     <>
       <div className={styles.RelatedObjectLeftHandler}>
         <div className={styles.RelatedObjectActions} style={{ position: "relative", zIndex: 2 }}>
-          <RelatedObjectMenu
-            setUpdatingRelationType={setUpdatingRelationType}
-            isHovered={isMobile ? true : isHovered}
-          />
+          <RelatedObjectMenu setUpdatingRelationType={setUpdatingRelationType} />
           {
             <button
-              className={cn(styles.SetRootButton, (isMobile || isHovered) && styles.Hovered)}
+              className={cn(styles.SetRootButton)}
               onPointerDown={(e) => {
                 if (e.shiftKey) {
                   // open in sidebar
