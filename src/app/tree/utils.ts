@@ -19,6 +19,13 @@ export type Ancestor = {
   path: string;
 };
 
+export type BreadcrumbAncestors = {
+  object: GraphObject;
+  relationToChild: GraphRelation | null;
+  childGroupId: GroupId | null;
+  path: string;
+};
+
 /**
  * Get all ancestors of a tree node as an array.
  *
@@ -51,6 +58,7 @@ export const getAncestorsAsArray = (node: TreeNode): Ancestor[] => {
     });
     pathNode = pathNode.parent;
   }
+
   // Reverse the array so it goes from furthest to closest
   return ancestors.reverse();
 };

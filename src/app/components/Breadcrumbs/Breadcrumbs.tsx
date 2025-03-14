@@ -2,9 +2,10 @@
 import { ArrowLeft, ChevronRight, Ellipsis, Home } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import React, { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
+import BreadcrumbMenu from "@/app/components/Breadcrumbs/BreadcrumbMenu";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
   DropdownMenu,
@@ -14,10 +15,10 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { TreeNode } from "@/app/tree/nodes";
-import { Ancestor, getAncestorsAsArray, useSetMainRoot } from "@/app/tree/utils";
+import { BreadcrumbAncestors, getAncestorsAsArray, useSetMainRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
+import { GLOBAL_ROOT_ID, USER_ROOT_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import BreadcrumbMenu from "@/app/components/Breadcrumbs/BreadcrumbMenu";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -25,7 +26,7 @@ const MAX_VISIBLE_ITEMS = 4; // For desktop view
 
 type RenderBreadcrumbsProps = {
   treeNode: TreeNode;
-  ancestors: Ancestor[];
+  ancestors: BreadcrumbAncestors[];
   handleNavigation: (index: number) => void;
 };
 
@@ -174,8 +175,51 @@ interface BreadcrumbsProps {
 export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: BreadcrumbsProps) {
   const setRoot = useSetMainRoot();
   const graphStore = useGraphStore();
-  const ancestors = getAncestorsAsArray(treeNode);
+  const [ancestors, setAncestors] = useState<BreadcrumbAncestors[]>(getAncestorsAsArray(treeNode));
   const router = useRouter();
+
+  useEffect(() => {
+    const hasUser =
+      ancestors.some((elem) => elem.object.id.startsWith(USER_ROOT_ID_PREFIX)) ||
+      treeNode.object.id.startsWith(USER_ROOT_ID_PREFIX);
+    const hasGlobalRoot =
+      ancestors.some((elem) => elem.object.id === GLOBAL_ROOT_ID) || treeNode.object.id === GLOBAL_ROOT_ID;
+
+    if (!hasUser && !hasGlobalRoot) {
+      const authorId = treeNode.object.authorId;
+      const userNode = graphStore.getNode(USER_ROOT_ID_PREFIX + authorId);
+      if (userNode) {
+        const newAncestors = ancestors;
+        newAncestors.unshift({
+          object: userNode,
+          relationToChild: null,
+          childGroupId: null,
+          path: "null",
+        });
+        const usersNode = graphStore.usersNode;
+        const usersToUserRel = graphStore.usersToUserRelation;
+        if (usersNode && usersToUserRel) {
+          newAncestors.unshift({
+            object: usersNode,
+            relationToChild: usersToUserRel,
+            childGroupId: null,
+            path: "null",
+          });
+        }
+        const globalRootNode = graphStore.globalRoot;
+        const globalRootToUsersRel = graphStore.globalToUsersRelation;
+        if (globalRootNode && globalRootToUsersRel) {
+          newAncestors.unshift({
+            object: globalRootNode,
+            relationToChild: globalRootToUsersRel,
+            childGroupId: null,
+            path: "null",
+          });
+        }
+        setAncestors(newAncestors);
+      }
+    }
+  }, [ancestors, setAncestors, treeNode.object.authorId, graphStore, treeNode.object.id]);
 
   const handleNavigation = useCallback(
     (index: number) => {
