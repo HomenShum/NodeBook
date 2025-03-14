@@ -1,4 +1,5 @@
 "use client";
+
 import * as Sentry from "@sentry/nextjs";
 import { observer } from "mobx-react-lite";
 import React, { useEffect, useState } from "react";
