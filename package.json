@@ -98,6 +98,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "knip": "^5.21.2",
     "postcss": "^8.4.35",
+    "react-scan": "^0.2.14",
     "ts-jest": "^29.1.4",
     "tsx": "^4.7.1",
     "typed-css-modules": "^0.9.1",

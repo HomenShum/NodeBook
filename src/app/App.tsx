@@ -9,14 +9,13 @@ import { SidebarIcon } from "@/app/components/CustomIcons";
 import OfflineWarning from "@/app/components/OfflineWarning/OfflineWarning";
 import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
-import Loader from "@/app/components/UIPrimitives/Loader";
 import { useLoading } from "@/app/contexts/LoadingContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import useServiceWorker from "@/app/hooks/useServiceWorker";
+import useTrackMemory from "@/app/hooks/useTrackMemory";
 import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
-import useTrackMemory from "@/app/hooks/useTrackMemory";
 import { cn } from "@/lib/utils";
 
 import styles from "./app.module.css";
@@ -27,6 +26,11 @@ interface Props {
 }
 
 export default observer(function App({ children }: Props) {
+  // Enable react-scan for performance debugging
+  // useEffect(() => {
+  //   scan();
+  // }, []);
+
   const [isResizing, setIsResizing] = useState(false);
   const auth = useAuth();
   const isLoading = useLoading();
