@@ -190,16 +190,18 @@ const processHashtags = async (
       }
     }
 
-    // Update node content with new chips
-    txs.push({
-      type: "updateNode",
-      transaction: {
-        nodeId: node.id,
-        nodeProps: {
-          content: newContent,
+    if (newContent.some((chip) => chip.type === "mention" && chip.mentionTrigger === HASHTAG_SYMBOL)) {
+      // Update node content with new chips
+      txs.push({
+        type: "updateNode",
+        transaction: {
+          nodeId: node.id,
+          nodeProps: {
+            content: newContent,
+          },
         },
-      },
-    });
+      });
+    }
 
     // Create relations between the node and hashtags
     for (const hashtagText of extractHashtags(node.content)) {
@@ -454,10 +456,11 @@ export const PastePlugin = () => {
             const relationsAtDepth: string[] = ["UNUSED", relationWithParent.id];
             let lastDepth = 0;
 
-            let createSiblingUnder = lines.length > 0;
+            // Track the path of the last node for cursor positioning
+            let lastNodePath = path;
 
             // Then for the remaining lines, create children positioned after the correct parent
-            lines.forEach(({ chips, depth, isChecked }) => {
+            lines.forEach(({ chips, depth, isChecked }, index) => {
               const newNodeId = uuid();
               pastedNodeIds.push(newNodeId);
               const relationId = uuid();
@@ -516,21 +519,12 @@ export const PastePlugin = () => {
 
               objectsAtDepth[depth + 1] = newNodeId;
               relationsAtDepth[depth + 1] = relationId;
-            });
 
-            let siblingRelId = uuid();
-            if (createSiblingUnder) {
-              txs.push({
-                type: "addChildNode",
-                transaction: {
-                  parentId: treeNode.parent.object.id,
-                  relationProps: {
-                    id: siblingRelId,
-                  },
-                  after: relationsAtDepth[0] === "UNUSED" ? relationsAtDepth[1] : relationsAtDepth[0],
-                },
-              });
-            }
+              // Only update the last node path for cursor positioning if we're on the first level
+              if (depth === 0) {
+                lastNodePath = `${treeNode.parent.path}/${groupId}/${relationId}`;
+              }
+            });
 
             await graphStore.applyCombinedTransaction(txs);
 
@@ -581,10 +575,8 @@ export const PastePlugin = () => {
               });
             }
 
-            tree.setFocusedNode(
-              createSiblingUnder ? treeNode.parent.path + `/${groupId}/` + siblingRelId : path,
-              "end",
-            );
+            // Set focus to the last pasted node instead of creating a new one
+            tree.setFocusedNode(lines.length > 0 ? lastNodePath : path, "end");
 
             !shiftKey && unfurlLinks(pastedNodeIds, graphStore);
           }
