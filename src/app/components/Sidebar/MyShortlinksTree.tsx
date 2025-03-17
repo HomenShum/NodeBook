@@ -1,5 +1,6 @@
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -18,23 +19,29 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
   const setRoot = useSetMainRoot();
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
+  const router = useRouter();
+
   useEffect(() => {
     fetchAllSlugs();
   }, []);
 
-  useEffect(() => {
-    graphStore.layerManager.loadWithIds(Object.keys(slugs));
-  }, [graphStore.layerManager, slugs]);
-
-  const handleOnClick = (e: React.MouseEvent<HTMLButtonElement>, nodeId: string) => {
+  const handleOnClick = async (e: React.MouseEvent<HTMLButtonElement>, nodeId: string) => {
     e.stopPropagation();
+
+    // Ensure the node is loaded
+    await graphStore.layerManager.loadWithIds([nodeId]);
+
     const node = graphStore.nodesById.get(nodeId);
-    if (!node) return;
+    if (!node) {
+      console.error("Node not found even after loading:", nodeId);
+      return;
+    }
+
     if (e.shiftKey) {
       viewStore.createSidebarTree(node);
     } else {
       setRoot(node);
-      window.location.href = "/" + slugs[nodeId];
+      router.push("/" + slugs[nodeId]);
     }
   };
 
