@@ -125,17 +125,17 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
             ];
 
             // Also try to load slug nodes during initialization
-            try {
-              const slugResponse = await authedFetch("/api/slug");
-              const slugData = await slugResponse.json();
-              if (slugData?.nodes?.length > 0) {
-                const slugNodeIds = slugData.nodes.map((node: { id: string }) => node.id);
-                objectIds.push(...slugNodeIds);
-                logger.debug(`Adding ${slugNodeIds.length} slug nodes to initial load`);
-              }
-            } catch (error) {
-              logger.error("Failed to get slug nodes for initial load:", error);
-            }
+            // try {
+            //   const slugResponse = await authedFetch("/api/slug");
+            //   const slugData = await slugResponse.json();
+            //   if (slugData?.nodes?.length > 0) {
+            //     const slugNodeIds = slugData.nodes.map((node: { id: string }) => node.id);
+            //     objectIds.push(...slugNodeIds);
+            //     logger.debug(`Adding ${slugNodeIds.length} slug nodes to initial load`);
+            //   }
+            // } catch (error) {
+            //   logger.error("Failed to get slug nodes for initial load:", error);
+            // }
 
             graph.layerManager.clear();
             await graph.layerManager.initialize(objectIds);
