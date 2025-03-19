@@ -14,6 +14,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useToast } from "@/app/hooks/useToast";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
+import { TreeNodeContentSelectionPosition } from "@/app/tree/selection";
 import { getAuthFetch, uuid } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { PasteLinksOption } from "@/db/schema";
@@ -366,6 +367,10 @@ export const PastePlugin = () => {
           // Check if we have node IDs and if all nodes are at the same level
           const canConvertToReferences = hasPastedNodeIdsAndSingleLevel(lines);
 
+          const isInlinePaste = !canConvertToReferences && lines.length === 1;
+
+          console.log(lines.length);
+
           let txs: TxCombined = [];
           let convertToNote = false;
           const newRootId = uuid();
@@ -575,8 +580,22 @@ export const PastePlugin = () => {
               });
             }
 
-            // Set focus to the last pasted node instead of creating a new one
-            tree.setFocusedNode(lines.length > 0 ? lastNodePath : path, "end");
+            if (isInlinePaste && tree.selection && tree.selection.type === "editor" && firstLine) {
+              const firstLineLength = firstLine.chips.reduce((sum, chip) => sum + chip.value.length, 0);
+              let position: TreeNodeContentSelectionPosition = "end";
+              if (tree.selection.position === "start") {
+                position = { anchorOffset: firstLineLength, focusOffset: firstLineLength };
+              } else if (tree.selection.position === "end") {
+                position = "end";
+              } else {
+                const minOffset = Math.min(tree.selection.position.anchorOffset, tree.selection.position.focusOffset);
+                position = { anchorOffset: firstLineLength + minOffset, focusOffset: firstLineLength + minOffset };
+              }
+              tree.setFocusedNode(path, position);
+            } else {
+              // Set focus to the last pasted node instead of creating a new one
+              tree.setFocusedNode(lines.length > 0 ? lastNodePath : path, "end");
+            }
 
             !shiftKey && unfurlLinks(pastedNodeIds, graphStore);
           }
