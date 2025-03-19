@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from '@/app/contexts/SettingsStoreContext';
 import { removeFromFavorites } from "@/app/graph/favorites";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
@@ -23,7 +24,8 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
   const openNewTab = useOpenNewTab();
   const setRoot = useSetMainRoot();
 
-  const [isExpanded, setIsExpanded] = useState(true);
+  const settingsStore = useSettingsStore();
+  const { sidebarExpandedMyFavorites: isExpanded } = settingsStore;
 
   const object = graphStore.myFavoritesNode;
   const uniqueChildren = [...new Set(object.children)];
@@ -39,7 +41,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
         setRoot(object);
       }
     },
-    [viewStore, object, openNewTab, isExpanded],
+    [viewStore, object, openNewTab, setRoot],
   );
 
   return (
@@ -48,7 +50,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
         <div className={styles.HeaderLeft}>
           <span>My Favorites</span>
           <div className={styles.HeaderControls}>
-            <Button variant="ghost" className={styles.HeaderButton} onClick={() => setIsExpanded(!isExpanded)}>
+            <Button variant="ghost" className={styles.HeaderButton} onClick={() => settingsStore.setSidebarExpandedMyFavorites(!isExpanded)}>
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
             <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMaximizeClick(e)}>

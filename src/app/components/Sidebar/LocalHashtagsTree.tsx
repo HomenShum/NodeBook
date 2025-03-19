@@ -1,10 +1,11 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Maximize2, Play, Search } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from '@/app/contexts/SettingsStoreContext';
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
@@ -29,7 +30,9 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
   const openNewTab = useOpenNewTab();
-  const [isExpanded, setIsExpanded] = useState(true);
+  const settingsStore = useSettingsStore();
+  const { sidebarExpandedLocalHashtags: isExpanded } = settingsStore;
+
   const scrollParentRef = useRef<HTMLDivElement>(null);
 
   // Function to get hashtag nodes from forward traversal
@@ -96,9 +99,9 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
 
-      setIsExpanded(!isExpanded);
+      settingsStore.setSidebarExpandedLocalHashtags(!isExpanded);
     },
-    [isExpanded],
+    [isExpanded, settingsStore],
   );
 
   const handleChildClick = useCallback(

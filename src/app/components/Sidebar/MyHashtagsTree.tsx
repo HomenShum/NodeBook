@@ -5,6 +5,7 @@ import React, { useCallback, useState } from "react";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from '@/app/contexts/SettingsStoreContext';
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { comparePositions } from "@/app/util";
@@ -25,7 +26,9 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
   const viewStore = useViewStore();
   const setRoot = useSetMainRoot();
   const openNewTab = useOpenNewTab();
-  const [isExpanded, setIsExpanded] = useState(true);
+  const settingsStore = useSettingsStore();
+  const { sidebarExpandedMyHashtags: isExpanded } = settingsStore;
+
   const [sortType, setSortType] = useState<SortType>("alphanumeric");
 
   const pinnedUniqueChildren = Array.from(
@@ -86,10 +89,10 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
       } else if (e.metaKey) {
         openNewTab(object);
       } else {
-        setIsExpanded(!isExpanded);
+        settingsStore.setSidebarExpandedMyHashtags(!isExpanded);
       }
     },
-    [viewStore, object, openNewTab, isExpanded],
+    [viewStore, object, openNewTab, isExpanded, settingsStore],
   );
 
   const handleMaximizeClick = useCallback(
@@ -103,7 +106,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
         setRoot(object);
       }
     },
-    [viewStore, object],
+    [viewStore, object, openNewTab, setRoot],
   );
 
   const handleChildClick = useCallback(
@@ -154,9 +157,8 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           variant="ghost"
           className={styles.HeaderButton}
           onClick={toggleSort}
-          title={`Sort by ${
-            sortType === "alphanumeric" ? "creation date" : sortType === "created" ? "tree view order" : "name"
-          }`}
+          title={`Sort by ${sortType === "alphanumeric" ? "creation date" : sortType === "created" ? "tree view order" : "name"
+            }`}
         >
           {sortType === "alphanumeric" ? (
             <SortAsc size={14} />

@@ -45,6 +45,11 @@ export class SettingsStore {
   public todosFilterType: string = "all";
   public todosInQuickCaptureFilterType: string = "all";
   public showHiddenRelations: boolean = false;
+  public sidebarExpandedMyFavorites: boolean = true;
+  public sidebarExpandedMyHashtags: boolean = true;
+  public sidebarExpandedMyShortlinks: boolean = true;
+  public sidebarExpandedLocalHashtags: boolean = true;
+  public sidebarExpandedLocalMentions: boolean = true;
   private stopAutosave: () => void;
 
   constructor(
@@ -92,6 +97,11 @@ export class SettingsStore {
     this.todosFilterType = "all";
     this.todosInQuickCaptureFilterType = "all";
     this.showHiddenRelations = false;
+    this.sidebarExpandedMyFavorites = true;
+    this.sidebarExpandedMyHashtags = true;
+    this.sidebarExpandedMyShortlinks = true;
+    this.sidebarExpandedLocalHashtags = true;
+    this.sidebarExpandedLocalMentions = true;
   }
 
   private async syncToServer() {
@@ -133,6 +143,11 @@ export class SettingsStore {
       todosFilterType: this.todosFilterType,
       todosInQuickCaptureFilterType: this.todosInQuickCaptureFilterType,
       showHiddenRelations: this.showHiddenRelations,
+      sidebarExpandedMyFavorites: this.sidebarExpandedMyFavorites,
+      sidebarExpandedMyHashtags: this.sidebarExpandedMyHashtags,
+      sidebarExpandedMyShortlinks: this.sidebarExpandedMyShortlinks,
+      sidebarExpandedLocalHashtags: this.sidebarExpandedLocalHashtags,
+      sidebarExpandedLocalMentions: this.sidebarExpandedLocalMentions,
     };
   }
 
@@ -166,6 +181,11 @@ export class SettingsStore {
     this.todosFilterType = data.todosFilterType ?? this.todosFilterType;
     this.todosInQuickCaptureFilterType = data.todosInQuickCaptureFilterType ?? this.todosInQuickCaptureFilterType;
     this.showHiddenRelations = data.showHiddenRelations ?? this.showHiddenRelations;
+    this.sidebarExpandedMyFavorites = data.sidebarExpandedMyFavorites ?? this.sidebarExpandedMyFavorites;
+    this.sidebarExpandedMyHashtags = data.sidebarExpandedMyHashtags ?? this.sidebarExpandedMyHashtags;
+    this.sidebarExpandedMyShortlinks = data.sidebarExpandedMyShortlinks ?? this.sidebarExpandedMyShortlinks;
+    this.sidebarExpandedLocalHashtags = data.sidebarExpandedLocalHashtags ?? this.sidebarExpandedLocalHashtags;
+    this.sidebarExpandedLocalMentions = data.sidebarExpandedLocalMentions ?? this.sidebarExpandedLocalMentions;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -282,6 +302,26 @@ export class SettingsStore {
 
   setShowHiddenRelations(value: boolean) {
     this.showHiddenRelations = value;
+  }
+
+  setSidebarExpandedMyFavorites(value: boolean) {
+    this.sidebarExpandedMyFavorites = value;
+  }
+
+  setSidebarExpandedMyHashtags(value: boolean) {
+    this.sidebarExpandedMyHashtags = value;
+  }
+
+  setSidebarExpandedMyShortlinks(value: boolean) {
+    this.sidebarExpandedMyShortlinks = value;
+  }
+
+  setSidebarExpandedLocalHashtags(value: boolean) {
+    this.sidebarExpandedLocalHashtags = value;
+  }
+
+  setSidebarExpandedLocalMentions(value: boolean) {
+    this.sidebarExpandedLocalMentions = value;
   }
 
   cleanup() {
