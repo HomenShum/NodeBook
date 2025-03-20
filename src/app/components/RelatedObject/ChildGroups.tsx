@@ -127,23 +127,23 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
     <>
       <div className={cn(styles.TopHeader, isRoot && styles.TopHeaderRoot)}>
         {isRoot && (!user.isAnonymous || allowAnonymousAppend) && <CreateNewButton tree={tree} />}
-        {!isEmpty && (
-          <div className={styles.PinnedHeader}>
-            <Button
-              variant={group.isExpanded ? "ghostActive" : "ghostSmooth"}
-              size="xs"
-              onClick={() => tree.toggleGroupExpanded(group.path)}
-            >
-              <span className={`${styles.PinIcon} ${group.isExpanded && styles.PinIcon_PinnedVisible}`}>
-                <PinCustomIcon />
-              </span>
-              Pinned
-              <span className={styles.PinnedCount}>{group.nodes.length}</span>
-            </Button>
-            {!user.isAnonymous && <AddPinButton parentNode={parentNode} group={group} />}
-          </div>
-        )}
       </div>
+      {!isEmpty && (
+        <div className={styles.PinnedHeader}>
+          <Button
+            variant={group.isExpanded ? "ghostActive" : "ghostSmooth"}
+            size="xs"
+            onClick={() => tree.toggleGroupExpanded(group.path)}
+          >
+            <span className={`${styles.PinIcon} ${group.isExpanded && styles.PinIcon_PinnedVisible}`}>
+              <PinCustomIcon />
+            </span>
+            Pinned
+            <span className={styles.PinnedCount}>{group.nodes.length}</span>
+          </Button>
+          {!user.isAnonymous && <AddPinButton parentNode={parentNode} group={group} />}
+        </div>
+      )}
 
       {group.isExpanded && !isEmpty && (
         <>
