@@ -2,6 +2,7 @@ import { Path } from "@/app/components/Path";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import relationComboboxStyles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { GraphObject } from "@/app/graph/GraphObject";
 import { getCanonicalPath } from "@/app/graph/utils";
 import {
   GLOBAL_HASHTAGS_NODE_ID,
@@ -13,7 +14,6 @@ import {
   USER_ROOT_ID_PREFIX,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { GraphObject } from "@/app/graph/GraphObject";
 
 import { Match } from "./types";
 
@@ -87,9 +87,9 @@ export function RelationDisplay({ from, to, relationType }: { from: string; to: 
   return (
     <div className={styles.RelationItem}>
       <span className={styles.RelationItemObject}>{from}</span>
-      <div className={cn(relationComboboxStyles.RelationComboboxLabel, styles.RelationItemType)}>
+      <div className={cn(styles.RelationItemType)}>
         <span className={styles.RelationItemDash}>—</span>
-        <span>{relationType}</span>
+        <span style={{ width: "fit-content" }}>{relationType}</span>
         <span className={styles.RelationItemArrow}>→</span>
       </div>
       <span className={styles.RelationItemObject}>{to}</span>
