@@ -1,55 +1,20 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useDebounceFn } from "ahooks";
-import { $getRoot, $setSelection, EditorState, ParagraphNode } from "lexical";
+import { $getRoot, $setSelection, ParagraphNode } from "lexical";
 import { observer } from "mobx-react-lite";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
+import { useDebounce, useDebounceFn } from "ahooks";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $createParagraphMatchingGraphNode, $getChips, graphNodeMatchesParagraph } from "@/app/editor/utils/content";
 import { $getSelectionPosition, $setSelectionFromTree, sameSelectionPositions } from "@/app/editor/utils/selection";
-import { GraphNode } from "@/app/graph/GraphNode";
+import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { TreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
+import { GraphStore } from "@/app/graph/GraphStore";
 
 interface Props {
   node: GraphNode;
   treeNode: TreeNode;
-}
-
-/**
- * Manages debounce cancellations using node ids.
- *
- * This is needed to ensure that we only cancel debounces for nodes other than the one currently active.
- *
- * Since this plugin is instantiated per node, each node ends up with its own debounce.
- * When we quickly switch between nodes (e.g. using arrow keys), like selecting the first node
- * and then immediately moving to the second, it can trigger a infinite loop where both nodes
- * continuously update their selections.
- *
- * There's still an unresolved issue: if you type in the first node and switch to the second too quickly,
- * the input may be lost. I guess that's a tradeoff for until we figure out a better solution.
- * Maybe we need separate denounces for selection and content updates. I don't know.
- *
- * Or just fix the MobX madness.
- */
-class DebounceManager {
-  static cancels: Record<string, (() => void)[]> = {};
-
-  static cancelAllExcludingSelf(nodeId: string) {
-    Object.keys(this.cancels).forEach((key) => {
-      if (key !== nodeId) {
-        this.cancels[key].forEach((cancel) => cancel());
-        this.cancels[key] = [];
-      }
-    });
-  }
-
-  static addCancel(cancel: () => void, nodeId: string) {
-    if (!this.cancels[nodeId]) {
-      this.cancels[nodeId] = [];
-    }
-    this.cancels[nodeId].push(cancel);
-  }
 }
 
 /**
@@ -62,8 +27,19 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
   const tree = treeNode.tree;
   const viewStore = useViewStore();
 
-  const { run: debouncedMutateAppState, cancel: cancelDebouncedMutateAppState } = useDebounceFn(
-    ({ editorState }: { editorState: EditorState }) => {
+  // const { run: debouncedMutateGraphStore } = useDebounceFn(
+  //   (chips: Chip[]) => {
+  //     graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
+  //   },
+  //   { wait: 100 },
+  // );
+
+  // Editor -> App state: update the app state to match the editor content
+  useEffect(() => {
+    return editor.registerUpdateListener(({ editorState }) => {
+      // We assume that if the editor is focused, the change is due to the user
+      // input. If it's not, we ignore the pushing the update to the app state.
+      if (!editor.getRootElement()?.contains(document.activeElement)) return;
       // Set the tree selection to the editor selection
       const editorSelectionPosition = editorState.read($getSelectionPosition);
       const match =
@@ -73,6 +49,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
       if (!match) {
         tree.setFocusedNode(treeNodeId, editorSelectionPosition, true);
       }
+
       // Update the graph if the editor content has changed
       const noChange = editorState.read(() => {
         const paragraph = $getRoot().getChildren()[0] as ParagraphNode;
@@ -81,23 +58,8 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
       if (noChange) return;
       const chips = editorState.read($getChips);
       graphStore.updateNode({ nodeId: node.id, nodeProps: { content: chips } });
-    },
-    { wait: 100 },
-  );
-
-  // Editor -> App state: update the app state to match the editor content
-  useEffect(() => {
-    return editor.registerUpdateListener(({ editorState }) => {
-      // We assume that if the editor is focused, the change is due to the user
-      // input. If it's not, we ignore the pushing the update to the app state.
-      if (!editor.getRootElement()?.contains(document.activeElement)) return;
-      DebounceManager.cancelAllExcludingSelf(node.id);
-      DebounceManager.addCancel(cancelDebouncedMutateAppState, node.id);
-      debouncedMutateAppState({
-        editorState,
-      });
     });
-  }, [cancelDebouncedMutateAppState, debouncedMutateAppState, editor, node.id]);
+  }, [editor, graphStore, node, tree, treeNodeId]);
 
   // App state -> Editor: update the editor content to match the graph node
   useEffect(() => {
