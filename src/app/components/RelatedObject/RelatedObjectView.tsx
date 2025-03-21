@@ -112,6 +112,12 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
   const [updatingRelationType, setUpdatingRelationType] = useState(false);
   const [relationComboboxIsOpen, setRelationComboboxIsOpen] = useState(false);
   const [viewType, setViewType] = useState<RelatedObjectViewType>("edit");
+  const isMobile = useIsMobile();
+  const graphStore = useGraphStore();
+
+  if (isMobile) {
+    graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
+  }
 
   return (
     <TreeNodeProvider
@@ -125,7 +131,14 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
         setViewType,
       }}
     >
-      <div className={styles.RelatedObjectContent}>{children}</div>
+      <div
+        className={styles.RelatedObjectContent}
+        onMouseEnter={() => {
+          graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
+        }}
+      >
+        {children}
+      </div>
     </TreeNodeProvider>
   );
 });
@@ -404,9 +417,6 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
 
   const isMobile = useIsMobile();
 
-  if (isMobile) {
-    graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
-  }
   const setRoot = useSetMainRoot();
   const isNoteContentRoot = treeNode.childrenGroupsById.noteContent.nodes.length > 0;
 
