@@ -24,15 +24,10 @@ export const useKeyboardShortcuts = () => {
         e.preventDefault();
         e.stopPropagation();
 
+        const { node, path } = await viewStore.activeTree.createChildOfRootAndFocus();
         if (viewStore.isDeepSearching) {
-          // Show toast notification when in deep searching mode
-          addToast({
-            title: "Cannot see new nodes in search mode",
-            description: "Cannot see new nodes created with Cmd+K in search mode",
-            duration: 5000,
-          });
-        } else {
-          await viewStore.activeTree.createChildOfRootAndFocus();
+          // Temporarily add it to the search view if we're in search view
+          viewStore.searchView.addTempPath(node, path);
         }
       }
       if (metaOrCtrl && e.key.toLowerCase() === "z") {

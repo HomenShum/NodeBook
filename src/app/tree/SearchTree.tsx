@@ -10,6 +10,8 @@ import { ObjectPath } from "@/app/util";
 import logger from "@/lib/logger";
 
 export class SearchTree extends Tree {
+  private tempNodes: GraphNode[] = [];
+  private tempPaths: string[] = [];
   private searchExpansions = new Set<string>();
   private searchRelations = new Set<string>();
   private hiddenRelations = new Set<string>();
@@ -24,8 +26,22 @@ export class SearchTree extends Tree {
     this.isMainSearchTree = isMainSearchTree ?? false;
   }
 
+  addTempPath(node: GraphNode, path: string) {
+    if (node.canonicalRelationId) {
+      this.hiddenRelations.delete(node.canonicalRelationId);
+    }
+    this.setPathExpanded(path, true);
+    this.tempNodes.push(node);
+    this.tempPaths.push(path);
+  }
+
   deepSearch(query: string) {
     let start = Date.now();
+    // Reset the temp nodes and paths if the query has changed
+    if (query !== this.search) {
+      this.tempNodes = [];
+      this.tempPaths = [];
+    }
     this.search = query;
     if (query === "") {
       this.clearSearch(this.root);
@@ -41,6 +57,7 @@ export class SearchTree extends Tree {
 
     // Filter out nodes that don't belong to the current user and are not public
     results.nodes = results.nodes.filter((n) => n.node.isPublic || n.node.authorId === this.graphStore.user.id);
+    const nodesToWalk = [...this.tempNodes, ...Array.from(results.nodes, (n) => n.node)];
 
     if (!(this.rootObject instanceof GraphNode)) {
       logger.warn("Root is not a node, this case isn't handled yet. Cancelling search.");
@@ -54,19 +71,9 @@ export class SearchTree extends Tree {
       const exclude = new Set([relWithParentId]);
       // PATHFINDING code start. This is the heavy lifting.
       // Start is always the root ID, so we know its path is just "rootId"
-      paths = this.graphStore.getAllPaths(
-        this.rootObject,
-        Array.from(results.nodes, (n) => n.node),
-        exclude,
-        walkOnly,
-      );
+      paths = this.graphStore.getAllPaths(this.rootObject, nodesToWalk, exclude, walkOnly);
     } else {
-      paths = this.graphStore.getAllPaths(
-        this.rootObject,
-        Array.from(results.nodes, (n) => n.node),
-        new Set(),
-        walkOnly,
-      );
+      paths = this.graphStore.getAllPaths(this.rootObject, nodesToWalk, new Set(), walkOnly);
     }
 
     let end = Date.now();
@@ -123,6 +130,10 @@ export class SearchTree extends Tree {
 
     // Walk through and remove all nodes from the tree that are not leaves nor in the path of a search result.
     walkTree(this.root, (treeNode) => {
+      if (this.tempPaths.includes(treeNode.path)) {
+        this.setPathExpanded(treeNode.path, true);
+        return;
+      }
       if (treeNode instanceof DescendantTreeNode && leafRelations.has(treeNode.relationWithParent.id)) {
         // Set to unexpanded because by default it's expanded, and don't remove the node. We want to keep it in the tree.
         this.setPathExpanded(treeNode.path, false);

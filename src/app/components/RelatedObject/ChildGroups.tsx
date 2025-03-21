@@ -20,7 +20,6 @@ import {
   TreeNode,
 } from "@/app/tree/nodes";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
-import { SearchTree } from "@/app/tree/SearchTree";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -119,7 +118,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
   const allowAnonymousAppend =
     parentNode.object instanceof GraphNode && parentNode.object.accessMode === AccessMode.APPEND;
 
-  if (tree instanceof SearchTree || (isEmpty && !group.isExpanded && !isRoot)) {
+  if (isEmpty && !group.isExpanded && !isRoot) {
     return null;
   }
 
