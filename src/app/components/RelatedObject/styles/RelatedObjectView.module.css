@@ -427,6 +427,46 @@ Right Area
   margin-left: 13px;
   border: 0.5px solid var(--gray-9);
   border-radius: 4px;
+  position: relative;
+  transition: border-color 0.15s ease;
+}
+
+/* Create four separate border click areas */
+.NoteContentSection .BorderTop,
+.NoteContentSection .BorderRight,
+.NoteContentSection .BorderBottom,
+.NoteContentSection .BorderLeft {
+  position: absolute;
+  z-index: 10;
+  cursor: pointer;
+}
+
+.NoteContentSection .BorderTop {
+  top: -5px;
+  left: 0;
+  right: 0;
+  height: 10px;
+}
+
+.NoteContentSection .BorderRight {
+  top: 0;
+  right: -5px;
+  bottom: 0;
+  width: 10px;
+}
+
+.NoteContentSection .BorderBottom {
+  bottom: -5px;
+  left: 0;
+  right: 0;
+  height: 10px;
+}
+
+.NoteContentSection .BorderLeft {
+  top: 0;
+  left: -5px;
+  bottom: 0;
+  width: 10px;
 }
 
 .NoteContentSection .RelatedObjectNode {

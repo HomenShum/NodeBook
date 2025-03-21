@@ -1,4 +1,8 @@
 declare const styles: {
+  readonly "BorderBottom": string;
+  readonly "BorderLeft": string;
+  readonly "BorderRight": string;
+  readonly "BorderTop": string;
   readonly "Bullet": string;
   readonly "ChildOfRootInNoteView": string;
   readonly "ClickToCreateNode": string;

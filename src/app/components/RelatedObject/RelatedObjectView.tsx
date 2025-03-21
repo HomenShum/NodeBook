@@ -185,6 +185,19 @@ const Content = observer(function Content() {
     treeNode.tree.setFocusedNode(treeNode.id, "start", true);
   };
 
+  const handleBorderClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (e.shiftKey) {
+      // Open in sidebar when shift-clicked
+      viewStore.createSidebarTree(treeNode.object);
+    } else {
+      // Zoom into note root node when clicked
+      setRoot(treeNode.object);
+    }
+  };
+
   const setRoot = useSetMainRoot();
 
   return (
@@ -248,14 +261,18 @@ const Content = observer(function Content() {
                 )}
                 id={treeNode.id + "-noteContent"}
               >
+                {/* Border elements for click handling */}
+                <div className={styles.BorderTop} onPointerDown={handleBorderClick} />
+                <div className={styles.BorderRight} onPointerDown={handleBorderClick} />
+                <div className={styles.BorderBottom} onPointerDown={handleBorderClick} />
+                <div className={styles.BorderLeft} onPointerDown={handleBorderClick} />
+
                 <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
                 <div
                   style={{
                     position: "absolute",
                     left: comboBoxWidth ? comboBoxWidth : -2,
                     top: 3,
-                    width: "10px",
-                    height: "20px",
                   }}
                 >
                   <NoteContentPrefix treeNode={treeNode} openRelComboBox={openRelComboBox} />
