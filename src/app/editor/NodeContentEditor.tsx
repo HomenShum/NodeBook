@@ -22,6 +22,7 @@ import { MinusKeyPlugin } from "@/app/editor/plugins/MinusKeyPlugin";
 import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
 import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
+import { SearchQueryHighlightPlugin } from "@/app/editor/plugins/SearchQueryHighlightPlugin";
 import { SigilsPlugin } from "@/app/editor/plugins/SigilsPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
@@ -106,6 +107,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />
+        <SearchQueryHighlightPlugin />
 
         <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
         <LogCollapsedEditorPlugin />

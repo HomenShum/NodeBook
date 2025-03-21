@@ -236,3 +236,7 @@ body,
   --gray-indicator: #667373;
   --gray-track: #667373;
 }
+
+::highlight(text-highlights) {
+  background-color: var(--teal-4);
+}

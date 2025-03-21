@@ -94,6 +94,13 @@ export const SearchBar = observer(function SearchBar() {
     return () => clearInterval(interval);
   }, [viewStore, visibleInput, lastInputTime, graphStore.layerManager]);
 
+  useEffect(() => {
+    // Clear any existing search highlights when the search query changes
+    if (CSS.highlights) {
+      CSS.highlights.set("text-highlights", new Highlight());
+    }
+  }, [viewStore.searchQuery]);
+
   return (
     <div
       ref={containerRef}
