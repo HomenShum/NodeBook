@@ -177,6 +177,7 @@ Tooltip
   z-index: 50;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
+  pointer-events: none;
 }
 
 .RelatedObjectBulletContainer:hover::after {
