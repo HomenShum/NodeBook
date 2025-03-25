@@ -387,14 +387,9 @@ export function LexicalMenu<TOption extends MenuOption>({
           if (options === null || selectedIndex === null || options[selectedIndex] == null || !event) {
             return false;
           }
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          if (event.ctrlKey || event.metaKey) {
-            selectOptionAndCleanUp(options[options.length - 1]);
-          } else {
-            selectOptionAndCleanUp(options[selectedIndex]);
-          }
-          return true;
+          // Close the dropdown and don't handle the event, allowing default behavior
+          close();
+          return false;
         },
         commandPriority,
       ),

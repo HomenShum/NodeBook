@@ -1,3 +1,5 @@
+import { forwardRef } from "react";
+
 import { Path } from "@/app/components/Path";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import relationComboboxStyles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
@@ -21,7 +23,6 @@ import styles from "./DropdownPlugin.module.css";
 
 interface DropdownItemProps {
   index: number;
-  ref?: (element: HTMLLIElement) => void;
   isSelected: boolean;
   isNotOwned?: boolean;
   onMouseEnter: () => void;
@@ -30,58 +31,53 @@ interface DropdownItemProps {
   match: Match;
 }
 
-export function DropdownItem({
-  index,
-  ref,
-  isSelected,
-  isNotOwned,
-  onMouseEnter,
-  onClick,
-  showTabHelper,
-  match,
-}: DropdownItemProps) {
-  return (
-    <li
-      ref={ref}
-      className={cn(isSelected ? styles.Selected : "", isNotOwned ? styles.NotOwned : "")}
-      onMouseEnter={onMouseEnter}
-      onClick={onClick}
-      aria-selected={isSelected}
-      role="option"
-    >
-      <div className={styles.DropdownItem}>
-        {match.type === "relationType" ? (
-          <div className={relationComboboxStyles.RelationComboboxLabel}>
-            {match.isForward ? match.object.label : match.object.reverseLabel}:
-          </div>
-        ) : (
-          <>
-            <div className={styles.DropdownItemContent}>
-              <div style={{ flex: 1, overflow: "hidden" }}>
-                {match.object instanceof GraphNode ? (
-                  match.object.text
-                ) : (
-                  <RelationDisplay
-                    from={match.object.from.text}
-                    to={match.object.to.text}
-                    relationType={match.object.relationType.label}
-                  />
-                )}
-              </div>
-              <div className={styles.DropdownItemHelper}>
-                {showTabHelper && index === 0 && <div className={styles.DropdownHelper}>Tab to select </div>}
-                {match.type === "node" && <TypeIndicator object={match.object} />}
-                {match.type === "relation" && <div className={styles.RelTypeIndicator}>Relation</div>}
-                {match.type === "node" && <RelationCounter object={match.object} showTooltip={false} />}
-              </div>
+export const DropdownItem = forwardRef<HTMLLIElement, DropdownItemProps>(
+  ({ index, isSelected, isNotOwned, onMouseEnter, onClick, showTabHelper, match }, ref) => {
+    return (
+      <li
+        ref={ref}
+        className={cn(isSelected ? styles.Selected : "", isNotOwned ? styles.NotOwned : "")}
+        onMouseEnter={onMouseEnter}
+        onClick={onClick}
+        aria-selected={isSelected}
+        role="option"
+      >
+        <div className={styles.DropdownItem}>
+          {match.type === "relationType" ? (
+            <div className={relationComboboxStyles.RelationComboboxLabel}>
+              {match.isForward ? match.object.label : match.object.reverseLabel}:
             </div>
-            {match.type === "node" ? <Path path={getCanonicalPath(match.object)} /> : null}
-          </>
-        )}
-      </div>
-    </li>
-  );
-}
+          ) : (
+            <>
+              <div className={styles.DropdownItemContent}>
+                <div style={{ flex: 1, overflow: "hidden" }}>
+                  {match.object instanceof GraphNode ? (
+                    match.object.text
+                  ) : (
+                    <RelationDisplay
+                      from={match.object.from.text}
+                      to={match.object.to.text}
+                      relationType={match.object.relationType.label}
+                    />
+                  )}
+                </div>
+                <div className={styles.DropdownItemHelper}>
+                  {showTabHelper && index === 0 && <div className={styles.DropdownHelper}>Tab to select </div>}
+                  {match.type === "node" && <TypeIndicator object={match.object} />}
+                  {match.type === "relation" && <div className={styles.RelTypeIndicator}>Relation</div>}
+                  {match.type === "node" && <RelationCounter object={match.object} showTooltip={false} />}
+                </div>
+              </div>
+              {match.type === "node" ? <Path path={getCanonicalPath(match.object)} /> : null}
+            </>
+          )}
+        </div>
+      </li>
+    );
+  },
+);
+
+DropdownItem.displayName = "DropdownItem";
 
 export function RelationDisplay({ from, to, relationType }: { from: string; to: string; relationType: string }) {
   return (
