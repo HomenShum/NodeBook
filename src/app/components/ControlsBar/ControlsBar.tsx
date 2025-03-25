@@ -100,6 +100,12 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     setSlug(newValue);
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      saveSlug();
+    }
+  };
+
   useEffect(() => {
     setSlug(savedSlug);
   }, [savedSlug]);
@@ -109,6 +115,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
 
     if (slug.length === 0) {
       await deleteSlugByNodeId(tree.rootObjectId);
+      addToast({
+        title: "Short URL removed",
+        duration: 4000,
+      });
       return;
     }
 
@@ -126,6 +136,11 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     if (!wasSuccess) {
       alert("Something went wrong");
       setSlug(savedSlug);
+    } else {
+      addToast({
+        title: "Short URL saved",
+        duration: 4000,
+      });
     }
   };
 
@@ -133,7 +148,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
     if (!savedSlug || savedSlug.length <= 0) return;
     navigator.clipboard.writeText(`${window.location.origin}/${savedSlug}`).then(() => {
       addToast({
-        title: "Link copied to clipboard",
+        title: "Short URL copied to clipboard",
         duration: 4000,
       });
     });
@@ -327,7 +342,13 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Popover>
+        <Popover
+          onOpenChange={(open: boolean) => {
+            if (!open) {
+              setSlug(savedSlug);
+            }
+          }}
+        >
           <PopoverTrigger asChild>
             <Button size="sm">
               <Sliders size={14} strokeWidth={1.5} />
@@ -438,6 +459,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                   id="set-slug"
                   value={slug}
                   onChange={handleOnChange}
+                  onKeyDown={handleKeyDown}
                   disabled={user.isAnonymous}
                   className={user.isAnonymous ? s.DisabledInput : ""}
                 />
