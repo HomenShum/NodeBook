@@ -35,6 +35,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { addToFavorites, isFavorited, removeFromFavorites } from "@/app/graph/favorites";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { useToast } from "@/app/hooks/useToast";
 import { useParseWithAi } from "@/app/llm/useParseWithAi";
 import { getAncestorsAsArray, useSetAuthorRoot, useSetMainRoot } from "@/app/tree/utils";
 import { createRouteUrl, downloadSubtree, exportSubtreeToIdeapad } from "@/app/util";
@@ -224,6 +225,7 @@ const AddChildNode = () => {
 
 const CopyUrl = () => {
   const { treeNode } = useTreeNode();
+  const { addToast } = useToast();
 
   const handleCopyUrl = useCallback(async () => {
     const domain = `${window.location.protocol}//${window.location.host}`;
@@ -232,7 +234,10 @@ const CopyUrl = () => {
       relations: getAncestorsAsArray(treeNode).map((node) => node.relationToChild),
     });
     await navigator.clipboard.writeText(`${domain}${path}`);
-  }, [treeNode]);
+    addToast({
+      title: "Copied node URL to clipboard",
+    });
+  }, [treeNode, addToast]);
 
   return (
     <DropdownMenuItem onSelect={handleCopyUrl}>

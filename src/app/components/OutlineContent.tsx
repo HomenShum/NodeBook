@@ -245,7 +245,7 @@ function OutlineContent({ tree }: Props) {
                   copyObjectUrlToClipboard(treeNodeToObjectPath(treeRoot));
                 }
                 addToast({
-                  title: "Copied URL to clipboard",
+                  title: "Copied page URL to clipboard",
                 });
               }}
             >

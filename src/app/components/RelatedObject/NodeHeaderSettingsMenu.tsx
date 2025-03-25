@@ -17,6 +17,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { addToFavorites, isFavorited, removeFromFavorites } from "@/app/graph/favorites";
+import { useToast } from "@/app/hooks/useToast";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard, downloadSubtree, exportSubtreeToIdeapad } from "@/app/util";
@@ -34,6 +35,7 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
   const setRoot = useSetMainRoot();
   const user = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { addToast } = useToast();
 
   const [publicDialogOpen, setPublicDialogOpen] = useState(false);
 
@@ -70,8 +72,11 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
               {treeNode.object.isPublic ? "Make private" : "Make public"}
             </DropdownMenuItem>
             <DropdownMenuItem
-              onSelect={() => {
-                copyObjectUrlToClipboard(treeNodeToObjectPath(treeNode));
+              onSelect={async () => {
+                await copyObjectUrlToClipboard(treeNodeToObjectPath(treeNode));
+                addToast({
+                  title: "Copied page URL to clipboard",
+                });
               }}
             >
               <ClipboardCopy size={14} />

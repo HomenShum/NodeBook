@@ -24,6 +24,7 @@ import { useViewStore } from "@/app/view/useViewStore";
 // import all constants
 import { RelationTypePrefix } from "@/app/components/RelatedObject/RelationTypePrefix";
 import { TypeIndicator } from "@/app/editor/plugins/dropdown/DropdownItem";
+import { useToast } from "@/app/hooks/useToast";
 import { cn } from "@/lib/utils";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
@@ -164,6 +165,8 @@ const Content = observer(function Content() {
   const [comboBoxWidth, setComboBoxWidth] = useState(
     document.getElementById([treeNode.id, "relationCombobox"].join("-"))?.clientWidth,
   );
+  const { addToast } = useToast();
+
   useEffect(() => {
     setComboBoxWidth(document.getElementById([treeNode.id, "relationCombobox"].join("-"))?.clientWidth);
   }, [relationComboboxIsOpen, treeNode.relationWithParent.relationType, setComboBoxWidth, treeNode.id]);
@@ -338,8 +341,11 @@ const Content = observer(function Content() {
             variant="ghost"
             data-tooltip="Copy URL"
             className={cn(styles.ObjectRightToggle, styles.CopyURLButton)}
-            onPointerDown={() => {
-              copyObjectUrlToClipboard(treeNodeToObjectPath(treeNode));
+            onPointerDown={async () => {
+              await copyObjectUrlToClipboard(treeNodeToObjectPath(treeNode));
+              addToast({
+                title: "Copied node URL to clipboard",
+              });
             }}
           >
             <div className={styles.CopyURLIcon}>
