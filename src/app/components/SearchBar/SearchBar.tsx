@@ -34,7 +34,6 @@ export const SearchBar = observer(function SearchBar() {
   const handleCancelClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      viewStore.setDeepSearching(false);
       viewStore.cancelDeepSearch();
       setVisibleInput("");
       setIsExpanded(false);
@@ -61,7 +60,7 @@ export const SearchBar = observer(function SearchBar() {
   useEffect(() => {
     const handleSearchUpdate = (e: CustomEvent<string>) => {
       setVisibleInput(e.detail);
-      setIsExpanded(true);
+      setIsExpanded(e.detail !== "");
     };
 
     window.addEventListener("update-search-input", handleSearchUpdate as EventListener);
@@ -137,7 +136,6 @@ export const SearchBar = observer(function SearchBar() {
             // NOTE: Vimium will screw this up! It will override custom ESC behavior
             setIsExpanded(false);
             // Explicitly set deepSearching to false
-            viewStore.setDeepSearching(false);
             viewStore.cancelDeepSearch();
             setVisibleInput("");
           } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {

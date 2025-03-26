@@ -54,6 +54,7 @@ export class ViewStore {
   public quickCaptureTree: Tree;
   public activeTree: Tree;
   public notificationPaneOpen = false;
+  public jumpToNodeId: string | null = null;
 
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.isCommandBarOpen = false;
@@ -145,6 +146,7 @@ export class ViewStore {
         quickCaptureView: computed,
         setNotificationPaneOpen: action,
         recreateSearchTrees: action,
+        jumpToNodeId: observable,
       });
     }
   }

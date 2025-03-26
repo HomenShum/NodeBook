@@ -1,11 +1,11 @@
 import {
   Beaker,
+  CircleArrowDown,
   Delete,
   Download,
   Edit,
   Ellipsis,
-  Expand,
-  GitCompare,
+  Expand, GitCompare,
   Globe,
   Link,
   Lock,
@@ -16,7 +16,7 @@ import {
   RefreshCcwDot,
   SendToBack,
   Star,
-  User,
+  User
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -35,10 +35,12 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { addToFavorites, isFavorited, removeFromFavorites } from "@/app/graph/favorites";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { getOtherObject } from '@/app/graph/utils';
 import { useToast } from "@/app/hooks/useToast";
 import { useParseWithAi } from "@/app/llm/useParseWithAi";
 import { getAncestorsAsArray, useSetAuthorRoot, useSetMainRoot } from "@/app/tree/utils";
 import { createRouteUrl, downloadSubtree, exportSubtreeToIdeapad } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
 import { useTreeNode } from "./RelatedObjectContext";
@@ -187,6 +189,44 @@ const TogglePublic = () => {
       </DropdownMenuItem>
       <SetPublicDialog isOpen={publicDialogOpen} setOpen={setPublicDialogOpen} treeNode={treeNode} />
     </>
+  );
+};
+
+const JumpTo = () => {
+  const { treeNode } = useTreeNode();
+  const { object } = treeNode;
+  const viewStore = useViewStore();
+  const setRoot = useSetMainRoot();
+
+  const handleGoToNode = useCallback(() => {
+    viewStore.cancelDeepSearch();
+    viewStore.jumpToNodeId = object.id;
+
+    // searchQuery is updated asynchronously with an event listener, so we need to wait for it to be updated
+    // before we can scroll to the node.
+    setTimeout(() => {
+      const parent = object.canonicalRelation ? getOtherObject(object.canonicalRelation, object.id) : null;
+      if (parent) {
+        setRoot(parent);
+      }
+
+      const element = document.querySelector(`[data-nodeid="${object.id}"]`);
+      if (!element) {
+        return;
+      }
+      element.scrollIntoView({ behavior: "auto" });
+    }, 0);
+  }, [viewStore, object, setRoot]);
+
+  if (viewStore.searchQuery === "") {
+    return null;
+  }
+
+  return (
+    <DropdownMenuItem onClick={handleGoToNode}>
+      <CircleArrowDown size={14} />
+      Jump to
+    </DropdownMenuItem>
   );
 };
 
@@ -403,6 +443,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
           <ZoomToNode />
         ) : (
           <>
+            <JumpTo />
             <GoToAuthorNode />
             <ToggleFromNote />
             <TogglePin />

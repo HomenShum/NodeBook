@@ -1,5 +1,4 @@
 import { observer } from "mobx-react-lite";
-import { useState } from "react";
 
 import { AddPinButton } from "@/app/components/Buttons/AddPinButton";
 import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
@@ -26,6 +25,7 @@ import { cn } from "@/lib/utils";
 
 import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./styles/ChildGroups.module.css";
+import { usePagination } from "./utils/usePagination";
 
 interface ChildGroupsProps {
   treeNode: TreeNode;
@@ -86,7 +86,7 @@ export const NoteContentSection = observer(function NoteContentSection({ parentN
               marginLeft: topLevelNote || rootNote ? "0px" : "-20px",
               paddingBottom:
                 i === group.nodes.length - 1 &&
-                treeNode.childrenGroupsById.all.nodes[0]?.childrenGroupsById.noteContent?.nodes.length > 0
+                  treeNode.childrenGroupsById.all.nodes[0]?.childrenGroupsById.noteContent?.nodes.length > 0
                   ? "20px"
                   : "1px",
             }}
@@ -153,9 +153,8 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
             </div>
           ))}
           <div
-            className={`${styles.PinSectionSeparator} ${
-              viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
-            }`}
+            className={`${styles.PinSectionSeparator} ${viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
+              }`}
           />
         </>
       )}
@@ -169,7 +168,6 @@ interface AllSectionProps {
 }
 
 const AllSection = observer(function AllSection({ parentNode, group }: AllSectionProps) {
-  const [limit, setLimit] = useState(50);
   const settingsStore = useSettingsStore();
   const viewStore = useViewStore();
   const viewType =
@@ -177,11 +175,16 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
       ? viewStore.quickCaptureViewType
       : viewStore.viewType;
   const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
+  const { paginatedNodes, loadNext, loadPrevious } = usePagination(group.nodes);
 
   return (
     <div>
-      {group.nodes
-        .slice(0, limit)
+      {loadPrevious && (
+        <div style={{ marginTop: "20px" }}>
+          <Button onClick={() => loadPrevious()}>Load more</Button>
+        </div>
+      )}
+      {paginatedNodes
         .filter((childTreeNode) => {
           if (
             !settingsStore.showHiddenRelations &&
@@ -206,9 +209,9 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
             </div>
           );
         })}
-      {limit < group.nodes.length && (
+      {loadNext && (
         <div style={{ marginTop: "20px" }}>
-          <Button onClick={() => setLimit(limit + 30)}>Load more</Button>
+          <Button onClick={() => loadNext()}>Load more</Button>
         </div>
       )}
     </div>

@@ -1,0 +1,23 @@
+---
+description: Creating PR summary
+globs: 
+alwaysApply: false
+---
+
+# PR SUmmary
+
+Creating PR summary please use following template
+```
+## Summary
+
+Please include a summary of the changes, and how it addresses issue or feature. Explain changes to dependencies (with link to its homepage) and environment variables.
+
+Completes ENT-XXXX (or one of the other [magic words](mdc:https:/linear.app/docs/github#magic-words) to link the PR to a linear issue)
+
+## How to test
+
+Provide steps on how to test the fix/feature (which you know, because you tested it 👀)
+
+```
+
+Resposne should be provided as markdown
