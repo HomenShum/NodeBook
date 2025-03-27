@@ -1,6 +1,7 @@
 "use client";
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { useAuth } from "@/app/auth/useAuth";
@@ -56,12 +57,16 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       const objectId = (window && window.location.pathname.split("/").pop()) || "home";
       if (!auth && !envAllowsMockAuth()) return logger.debug("Skip loading stores while auth is not enabled");
       if (auth?.isLoading) return logger.debug("Skip loading stores while auth is loading");
-
+      axios.defaults.headers.common["Content-Type"] = "application/json";
       logger.debug("Starting to setup stores", { ...auth });
       setIsLoading(true);
 
       if (auth && auth.user) {
-        localStorage.setItem(JWT_LOCAL_STORAGE_KEY, await auth.getAccessTokenSilently());
+        const token = await auth.getAccessTokenSilently();
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        localStorage.setItem(JWT_LOCAL_STORAGE_KEY, token);
+      } else {
+        axios.defaults.headers.common["Authorization"] = null;
       }
 
       const authedFetch = getAuthFetch();

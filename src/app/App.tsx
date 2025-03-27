@@ -17,6 +17,7 @@ import useTrackMemory from "@/app/hooks/useTrackMemory";
 import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
+import ImageViewer from "@/app/components/ImageViewer/ImageViewer";
 import { cn } from "@/lib/utils";
 
 import styles from "./app.module.css";
@@ -108,6 +109,7 @@ export default observer(function App({ children }: Props) {
       <div className={styles.App}>
         <div className={styles.AppContainer}>
           <OfflineWarning />
+          <ImageViewer />
           <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
           <CommandBar />
           <div className={styles.Container}>

@@ -836,8 +836,12 @@ export class GraphStore {
       id: id,
       version: 1,
       authorId: authorId,
-      label: typeof label === "string" ? label : label.map((chip) => chip.value).join(" "),
-      reverseLabel: typeof reverseLabel === "string" ? reverseLabel : reverseLabel.map((chip) => chip.value).join(" "),
+      label:
+        typeof label === "string" ? label : label.map((chip) => (chip.type === "image" ? "" : chip.value)).join(" "),
+      reverseLabel:
+        typeof reverseLabel === "string"
+          ? reverseLabel
+          : reverseLabel.map((chip) => (chip.type === "image" ? "" : chip.value)).join(" "),
       isPublic: props.isPublic ?? true,
     };
 
@@ -929,9 +933,9 @@ export class GraphStore {
       }
 
       const origFwNode = this.getNodeOrThrow(fwNodeId);
-      const origLabel = origFwNode.content[0].value;
+      const origLabel = origFwNode.content[0].type === "image" ? "" : origFwNode.content[0].value;
       const origRevNode = this.getNodeOrThrow(revNodeId);
-      const origRevLabel = origRevNode.content[0].value;
+      const origRevLabel = origRevNode.content[0].type === "image" ? "" : origRevNode.content[0].value;
       const origPublic = origFwNode.isPublic;
 
       const relationType: GraphRelationType = {
@@ -2588,18 +2592,27 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.allRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.pinnedRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
-    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
-      acc[node.id] = node.noteContentRelationsList.serialize();
-      return acc;
-    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.allRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.pinnedRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
+    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
+      (acc, node) => {
+        acc[node.id] = node.noteContentRelationsList.serialize();
+        return acc;
+      },
+      {} as Record<string, SerializedPositionList<GraphRelation>>,
+    );
 
     return {
       usersById,

@@ -30,6 +30,10 @@ export type Chip =
       type: "link";
       value: string;
       url: string;
+    }
+  | {
+      type: "image";
+      url: string;
     };
 
 export type GraphNodeProps = {
@@ -202,6 +206,8 @@ export class GraphNode extends BaseGraphObject implements Serializable {
               console.error("Error accessing referencedNode.text:", error);
               return "@[Error]";
             }
+          case "image":
+            return "";
           default:
             chip satisfies never;
         }

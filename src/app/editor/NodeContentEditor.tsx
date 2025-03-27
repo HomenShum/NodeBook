@@ -33,6 +33,8 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
+import { ImageNode } from "@/app/graph/ImageNode";
+import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./Editor.module.css";
 
@@ -43,6 +45,7 @@ interface Props {
 }
 
 export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEditable, editorRef }: Props) {
+  const viewStore = useViewStore();
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
   }
@@ -73,10 +76,19 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
   const tree = treeNode.tree;
   const handleMentionNodeClick = useClickableMention(treeNode);
 
+  const handleImageClick = (event: Event) => {
+    const src = (event.target as HTMLImageElement).src;
+    src && viewStore.setSrcForImageViewer(src);
+  };
+
   return (
     <div className={styles.EditorWrapper} ref={editorRef}>
       <LexicalComposer
-        initialConfig={createConfig({ namespace: "descendant-editor", treeNode, editable: isEditorEditable })}
+        initialConfig={createConfig({
+          namespace: "descendant-editor",
+          treeNode,
+          editable: isEditorEditable,
+        })}
       >
         <RichTextPlugin
           ErrorBoundary={LexicalErrorBoundary}
@@ -106,6 +118,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <TodoPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
+        <NodeEventPlugin nodeType={ImageNode} eventType={"click"} eventListener={handleImageClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />
         <SearchQueryHighlightPlugin />
 

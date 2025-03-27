@@ -44,6 +44,10 @@ const SerializedChipSchema = z.discriminatedUnion("type", [
     value: z.string(),
     url: z.string(),
   }),
+  z.object({
+    type: z.literal("image"),
+    url: z.string(),
+  }),
 ]);
 
 export const SerializedNodeSchema = z.object({

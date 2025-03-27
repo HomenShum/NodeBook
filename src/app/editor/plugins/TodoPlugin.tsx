@@ -49,11 +49,15 @@ export const TodoPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
         event.stopPropagation();
 
         // Have to specifically update the content here so undo goes back to just the text
-        treeNode.object.content[0].value =
-          rootTextContent.slice(0, prefixSize) + "]" + treeNode.object.content[0].value.slice(prefixSize);
+        if (treeNode.object.content[0].type !== "image") {
+          treeNode.object.content[0].value =
+            rootTextContent.slice(0, prefixSize) + "]" + treeNode.object.content[0].value.slice(prefixSize);
+        }
 
         const content = treeNode.object.content.map((chip) => ({ ...chip }));
-        content[0].value = content[0].value.substring(prefixSize + 1);
+        if (content[0].type !== "image") {
+          content[0].value = content[0].value.substring(prefixSize + 1);
+        }
 
         graphStore.updateNode({
           nodeId: treeNode.object.id,

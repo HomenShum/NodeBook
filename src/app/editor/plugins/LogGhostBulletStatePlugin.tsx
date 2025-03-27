@@ -27,7 +27,7 @@ export const LogCollapsedEditorPlugin = () => {
       // the editor from collapsing in prod. But we know from ENT-4573 that when the
       // editor is collapsed, it's because there's an empty span inside it.
       const span = editor.getRootElement()?.querySelector("p > span");
-      if (span instanceof HTMLElement && span.innerText === "") {
+      if (span instanceof HTMLElement && span.innerHTML === "") {
         logger.error("In ghost bullet state", { html: editor.getRootElement()?.innerHTML });
       }
     });

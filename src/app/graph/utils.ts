@@ -169,7 +169,8 @@ export const sliceChips = (chips: Chip[], start: number, end?: number): Chip[] =
 
   // Handle negative indices
   const totalLength = chips.reduce(
-    (sum, chip) => sum + (chip.type === "mention" || chip.type === "linebreak" ? 1 : chip.value.length),
+    (sum, chip) =>
+      sum + (chip.type === "mention" || chip.type === "linebreak" || chip.type === "image" ? 1 : chip.value.length),
     0,
   );
   const actualStart = start < 0 ? Math.max(0, totalLength + start) : start;
@@ -178,7 +179,8 @@ export const sliceChips = (chips: Chip[], start: number, end?: number): Chip[] =
   if (actualStart >= actualEnd) return [];
 
   for (const chip of chips) {
-    const chipLength = chip.type === "mention" || chip.type === "linebreak" ? 1 : chip.value.length;
+    const chipLength =
+      chip.type === "mention" || chip.type === "linebreak" || chip.type === "image" ? 1 : chip.value.length;
 
     if (currentPos + chipLength <= actualStart) {
       // Skip chips before start
@@ -191,8 +193,8 @@ export const sliceChips = (chips: Chip[], start: number, end?: number): Chip[] =
       break;
     }
 
-    if (chip.type === "mention" || chip.type === "linebreak") {
-      // For mentions and linebreaks - only include if they start within range
+    if (chip.type === "mention" || chip.type === "linebreak" || chip.type === "image") {
+      // For mentions and linebreaks and images - only include if they start within range
       // and end within range (since they have length 1)
       if (currentPos >= actualStart && currentPos + 1 <= actualEnd) {
         result.push(chip);

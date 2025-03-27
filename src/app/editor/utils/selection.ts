@@ -115,6 +115,8 @@ function $createLexicalSelectionFromOffsets(
 /**
  * Returns the selection position of the editor as integer offsets from the start of the editor.
  *
+ * Warning: This will return undefined when the selection is inside a DecoratorNode (i.e ImageNode)
+ *
  * This is different from {@link getLexicalSelectionPosition} which provides the offsets relative
  * to the lexical node the selection anchor/focus is in.
  */
@@ -291,13 +293,30 @@ export function $getCaretPosition(): null | {
   let lineNumber = 1;
   let lineCount = 1;
   const caretRects = range.getClientRects();
-  if (caretRects.length > 0) {
+  if (caretRects.length > 0 && editorElement.children.length >= 0) {
     const caretRect = caretRects[caretRects.length - 1];
-    const inputBoxRect = editorElement.getBoundingClientRect();
-    const lineHeight = parseInt(getComputedStyle(editorElement).lineHeight, 10);
-    lineCount = Math.round(inputBoxRect.height / lineHeight);
-    while (caretRect.top > inputBoxRect.top + lineHeight * lineNumber) {
-      lineNumber++;
+
+    // There could be multiple HTML children (<span>,<span><img></span>) of a different heights on a
+    // single line OR there could be a single <span> element spanning multiple lines.
+    // So every new Y coordinate meaning beginning of a new line.
+
+    //Note: Our Editor element always has a single <p> tag and that <p> contains <span> tag(s).
+    //<img> too is always wrapped in a <span> tag in our code.
+    const uniqueYCoordinates = new Set<number>();
+    Array.from(editorElement.children[0].children).forEach((element) => {
+      Array.from(element.getClientRects()).forEach((rect) => {
+        uniqueYCoordinates.add(rect.y);
+      });
+    });
+
+    lineCount = uniqueYCoordinates.size;
+    let lineIndex = 0;
+    for (const y of Array.from(uniqueYCoordinates)) {
+      if (y > caretRect.bottom) {
+        break;
+      }
+      lineNumber = lineIndex + 1;
+      lineIndex++;
     }
   }
 
@@ -329,5 +348,21 @@ export function $atEditorStart() {
   //   T a y l o r _ @ l i k e s _ c a t
   //  |_____________|___________|_______|
   //     TNode          MNode     TNode
-  return selectionStart.offset === 0 && selectionEnd.offset === 0;
+
+  // Since I added ImageNodes, this has changed a bit. Turns out the offsets are for a
+  // continuous series of similar types of nodes (that's what am guessing based on my debugger).
+  // So if we have a image node before the text/mention node (both of them, mention node and text
+  // node are TextNode), we get offset 0 at the start of the combination of these
+  // nodes but it's a local offset, not a global.
+
+  //
+  // 0 1            0 1 2 3 4 5 6 7 1 2 3 4 5 6 1 2 3 4
+  //  H  Image Node  T a y l o r _ @ l i k e s _ c a t
+  // |_|            |_____________|___________|_______|
+  // TNode             TNode          MNode     TNode
+  //
+  const isChildIndexInsideParentZero =
+    selection.getNodes().length > 0 && selection.getNodes()[0].getIndexWithinParent() === 0;
+
+  return selectionStart.offset === 0 && selectionEnd.offset === 0 && isChildIndexInsideParentZero;
 }

@@ -67,8 +67,7 @@ export function MentionDropdown({
           .filter((m) => {
             if (m.type !== "node") return false;
             const node = m.object as GraphNode;
-            const nodeText = node.content?.map((c) => c.value).join("") || "";
-            console.log("nodeText", nodeText);
+            const nodeText = node.content?.map((c) => (c.type === "image" ? "" : c.value)).join("") || "";
             if (nodeText.startsWith(HASHTAG_SYMBOL)) {
               return nodeText.slice(1).toLowerCase() === dropdown.search.toLowerCase();
             }

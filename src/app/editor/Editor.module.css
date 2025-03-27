@@ -30,6 +30,16 @@
   width: 100%;
 }
 
+.ContentEditable > p > span[data-lexical-decorator="true"][contenteditable="false"] > img {
+  max-width: 200px;
+  max-height: 200px;
+  cursor: pointer;
+}
+
+.ContentEditable > p > span[data-lexical-decorator="true"][contenteditable="false"] > img:hover {
+  opacity: 0.9;
+}
+
 .LinkNode {
   color: var(--teal-11);
   text-decoration: none;

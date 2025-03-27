@@ -188,8 +188,8 @@ export class UpdateManager {
       return false;
     }
     // Check if the text content is all the same. If it is, then this is part of the previous update so return true.
-    const oldText = updates[0].oldProps.content.map((chip) => chip.value).join("");
-    const newText = updates[0].newProps.content.map((chip) => chip.value).join("");
+    const oldText = updates[0].oldProps.content.map((chip) => (chip.type === "image" ? chip.url : chip.value)).join("");
+    const newText = updates[0].newProps.content.map((chip) => (chip.type === "image" ? chip.url : chip.value)).join("");
 
     return oldText === newText;
   }

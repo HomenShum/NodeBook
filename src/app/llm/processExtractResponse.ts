@@ -38,7 +38,7 @@ export const processExtractResponse = async (
     for (const entity of extractedEntityNames) {
       const searchResults = graphStore.search({ text: entity, filters: { types: ["node"] } });
       for (const result of searchResults.nodes) {
-        if (result.node.content.map((c) => c.value).join("") !== entity) {
+        if (result.node.content.map((c) => (c.type === "image" ? "" : c.value)).join("") !== entity) {
           continue;
         }
         const otherNodeId = result.node.id;

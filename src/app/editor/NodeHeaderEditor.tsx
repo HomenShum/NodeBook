@@ -19,6 +19,7 @@ import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 
 import styles from "./Editor.module.css";
 

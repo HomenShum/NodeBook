@@ -20,6 +20,12 @@ export class ViewStore {
   public graphMode: boolean = false;
   public cardMode: boolean = false;
 
+  /**
+   * When a value is provided, ImageViewer component renders a
+   * image that covers the whole screen
+   */
+  public srcForImageViewer: string | null = null;
+
   public viewType = ViewType.Outline;
   public quickCaptureViewType = ViewType.Note;
   public treeView: Tree;
@@ -70,6 +76,7 @@ export class ViewStore {
       sidebarTrees: false,
       quickCaptureViewType: true,
       quickCaptureOpen: true,
+      srcForImageViewer: false,
     });
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
@@ -147,8 +154,13 @@ export class ViewStore {
         setNotificationPaneOpen: action,
         recreateSearchTrees: action,
         jumpToNodeId: observable,
+        setSrcForImageViewer: action,
       });
     }
+  }
+
+  setSrcForImageViewer(src: string | null) {
+    this.srcForImageViewer = src;
   }
 
   setDeepSearching(deepSearching: boolean) {

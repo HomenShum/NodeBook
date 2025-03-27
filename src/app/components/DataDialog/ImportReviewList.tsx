@@ -23,7 +23,7 @@ export const ImportReviewList = ({
 
   const getNodeLabel = (nodeId: string) => {
     const node = newNodesById[nodeId] || existingNodesById[nodeId];
-    return node?.content?.[0]?.value || "Unknown Node";
+    return (node?.content[0].type !== "image" && node?.content?.[0]?.value) || "Unknown Node";
   };
 
   const getRelationTypeLabel = (typeId: string) => {

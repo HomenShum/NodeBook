@@ -26,8 +26,8 @@ const NodeIdWithTooltip = ({ nodeId, nodeContent }: NodeIdWithTooltipProps) => {
   const graphStore = useGraphStore();
   const node = graphStore.nodesById.get(nodeId);
   const content =
-    node?.content.map((c) => c.value).join("") ||
-    nodeContent?.content.map((c) => c.value).join("") ||
+    node?.content.map((c) => (c.type === "image" ? "" : c.value)).join("") ||
+    nodeContent?.content.map((c) => (c.type === "image" ? "" : c.value)).join("") ||
     "Node no longer exists";
 
   return (
@@ -43,7 +43,7 @@ const getUpdateDescription = (update: GraphUpdate): JSX.Element => {
       return (
         <>
           Added node: <NodeIdWithTooltip nodeId={update.node.id} nodeContent={update.node} /> with content &ldquo;
-          {update.node.content.map((c) => c.value).join("")}&rdquo;
+          {update.node.content.map((c) => (c.type === "image" ? "Image" : c.value)).join("")}&rdquo;
         </>
       );
     case "updateNode":
@@ -51,14 +51,14 @@ const getUpdateDescription = (update: GraphUpdate): JSX.Element => {
         <>
           Updated node: <NodeIdWithTooltip nodeId={update.oldProps.id} nodeContent={update.newProps} /> with content
           &ldquo;
-          {update.newProps.content.map((c) => c.value).join("")}&rdquo;
+          {update.newProps.content.map((c) => (c.type === "image" ? "Image" : c.value)).join("")}&rdquo;
         </>
       );
     case "deleteNode":
       return (
         <>
           Deleted node: <NodeIdWithTooltip nodeId={update.node.id} nodeContent={update.node} /> with content &ldquo;
-          {update.node.content.map((c) => c.value).join("")}&rdquo;
+          {update.node.content.map((c) => (c.type === "image" ? "Image" : c.value)).join("")}&rdquo;
         </>
       );
     case "addRelation":

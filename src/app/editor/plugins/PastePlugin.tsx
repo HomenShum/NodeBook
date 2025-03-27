@@ -1,6 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getSelection, COMMAND_PRIORITY_LOW, KEY_DOWN_COMMAND, PASTE_COMMAND } from "lexical";
 import { useEffect, useRef } from "react";
+import axios from "axios";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -15,10 +16,11 @@ import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useToast } from "@/app/hooks/useToast";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
 import { TreeNodeContentSelectionPosition } from "@/app/tree/selection";
-import { getAuthFetch, uuid } from "@/app/util";
+import { getAuthFetch, toast, uuid } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { PasteLinksOption } from "@/db/schema";
 import { HASHTAG_SYMBOL } from "@/lib/utils";
+import ApiClient from "@/app/api/utils/client/ApiClient";
 
 // Helper function to extract hashtags from text content
 const extractHashtags = (chips: Chip[]): string[] => {
@@ -306,6 +308,91 @@ const convertPastedNodesToReferences = async (
 };
 
 /**
+ * Insert a ImageNode at the caret position with blob as source, upload
+ * image to S3, after upload is successfully, replace blob with the
+ * uploaded URL.
+ */
+const $handleImagePaste = async ({
+  graphStore,
+  nodeId,
+  file,
+}: {
+  graphStore: GraphStore;
+  nodeId: string;
+  file: File;
+}): Promise<void> => {
+  const CLOUDFRONT_CDN_URL = "https://d3sffy99zp9cp0.cloudfront.net";
+  const selection = $getSelection();
+
+  if (!selection) return;
+
+  //Todo: Move to constants file and export so server can use it too.
+  const MAX_UPLOAD_IN_BYTES = 16777216; //16 MB (in binary)
+
+  if (file.size > MAX_UPLOAD_IN_BYTES) {
+    toast("We only support image uploads upto 16MB");
+    return;
+  }
+
+  const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
+  const mime = file.type;
+  const imageChip: Chip = { type: "image", url: URL.createObjectURL(file) };
+
+  const imageChipInsertIndex = chipsBefore.length;
+
+  await graphStore.updateNode({
+    nodeId,
+    nodeProps: {
+      content: [...chipsBefore, imageChip, ...chipsAfter],
+    },
+  });
+
+  const node = graphStore.getNode(nodeId);
+
+  if (!node) return;
+
+  const { url, fields } = (await ApiClient.files.getPresignedData(mime)).data;
+
+  const formData = new FormData();
+  Object.keys(fields).forEach((key) => formData.append(key, fields[key]));
+  formData.append("file", file);
+
+  let newChips: Chip[] = [];
+
+  try {
+    await axios.post(url, formData, {
+      transformRequest: (data, headers) => {
+        delete headers.Authorization;
+        return data;
+      },
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    newChips = node.content.map((chip, index) => {
+      if (index === imageChipInsertIndex && chip.type === "image") {
+        return {
+          type: "image",
+          url: `${CLOUDFRONT_CDN_URL}/${fields.key}`,
+        };
+      }
+      return chip;
+    });
+  } catch (e) {
+    //Delete ImageNode
+    newChips = node.content.filter((chip, index) => {
+      return !(index === imageChipInsertIndex && chip.type === "image");
+    });
+    toast("Error uploading image");
+  }
+
+  await graphStore.updateNode({
+    nodeId: nodeId,
+    nodeProps: {
+      content: [...newChips],
+    },
+  });
+};
+
+/**
  * Plugin that allows pasting multiple lines of text into a node.
  */
 export const PastePlugin = () => {
@@ -337,7 +424,7 @@ export const PastePlugin = () => {
   useEffect(() => {
     return editor.registerCommand<ClipboardEvent>(
       PASTE_COMMAND,
-      (event) => {
+      (event: ClipboardEvent) => {
         event.preventDefault();
         event.stopPropagation();
         const shiftKey = shiftWasPressed.current;
@@ -345,6 +432,12 @@ export const PastePlugin = () => {
         if (!(object instanceof GraphNode) || !event.clipboardData) return false;
 
         const clipboardData = event.clipboardData;
+        const file = clipboardData && clipboardData.files.length > 0 && clipboardData.files[0];
+
+        if (file && file.type.startsWith("image/")) {
+          $handleImagePaste({ graphStore, file, nodeId: object.id });
+          return true;
+        }
 
         // Handle the paste operation in an async IIFE
         (async () => {
@@ -581,7 +674,10 @@ export const PastePlugin = () => {
             }
 
             if (isInlinePaste && tree.selection && tree.selection.type === "editor" && firstLine) {
-              const firstLineLength = firstLine.chips.reduce((sum, chip) => sum + chip.value.length, 0);
+              const firstLineLength = firstLine.chips.reduce(
+                (sum, chip) => sum + (chip.type !== "image" ? chip.value.length : 0),
+                0,
+              );
               let position: TreeNodeContentSelectionPosition = "end";
               if (tree.selection.position === "start") {
                 position = { anchorOffset: firstLineLength, focusOffset: firstLineLength };
@@ -672,7 +768,7 @@ const getRelationTypeLabel = (chips: Chip[]) => {
   const indexOfColon = chips.findIndex((chip) => chip.type === "text" && chip.value.includes("::"));
   let relationTypeLabel = chips
     .slice(0, indexOfColon + 1)
-    .map((chip) => chip.value)
+    .map((chip) => (chip.type === "image" ? "" : chip.value))
     .join("");
   relationTypeLabel = relationTypeLabel.slice(0, relationTypeLabel.indexOf("::")).trim();
   return { relationTypeLabel, indexOfColon };
@@ -711,7 +807,9 @@ const getNewRelationType = (graphStore: GraphStore, chips: Chip[], newRelationTy
       }
       // Slice the colon chip so that we get the text after the colon into the rest of the chip.
       let slicedColonChip = chips[indexOfColon];
-      slicedColonChip.value = slicedColonChip.value.slice(slicedColonChip.value.indexOf("::") + 2);
+      if (slicedColonChip.type !== "image") {
+        slicedColonChip.value = slicedColonChip.value.slice(slicedColonChip.value.indexOf("::") + 2);
+      }
       chips = chips.slice(indexOfColon + 1);
       chips.unshift(slicedColonChip);
     }
@@ -751,6 +849,7 @@ const getLinkAdditionTxs = (chips: Chip[], parentId: string, mode: PasteLinksOpt
     case "PopulateAsOrphanedNodes":
       const linkTextToNodeId = new Map<string, string>();
       links.forEach((link) => {
+        if (link.type !== "link") return;
         const newNodeId = uuid();
 
         txs.push({

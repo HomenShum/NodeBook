@@ -15,6 +15,8 @@ const processEnvSchema = z
     EXTRACT_ENTITIES_OPENAI_MODEL: z.string().optional(),
     EXTRACT_ENTITIES_OPENAI_TEMP: z.string().optional(),
     PINECONE_API_KEY: z.string().optional(),
+    AWS_ACCESS_KEY_ID: z.string().optional(),
+    AWS_SECRET_ACCESS_KEY: z.string().optional(),
   })
   .refine((data) => data.POSTGRES_CUSTOM_URL || data.POSTGRES_URL, "POSTGRES_URL or POSTGRES_CUSTOM_URL is required");
 processEnvSchema.parse(process.env);
@@ -44,4 +46,6 @@ export const env = Object.freeze({
       ? parseFloat(process.env.EXTRACT_ENTITIES_OPENAI_TEMP)
       : null,
   PINECONE_API_KEY: process.env.PINECONE_API_KEY ?? "",
+  AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || "",
+  AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
 });

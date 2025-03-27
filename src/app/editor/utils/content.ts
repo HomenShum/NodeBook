@@ -18,6 +18,7 @@ import { $createLinkNode, $isLinkNode, LinkNode } from "@/app/graph/LinkNode";
 import { $createMentionNode, $isMentionNode, MentionNode } from "@/app/graph/MentionNode";
 import { GraphRelationType } from "@/app/graph/types";
 import { MENTION_SYMBOL } from "@/lib/utils";
+import { $createImageNode, $isImageNode, ImageNode } from "@/app/graph/ImageNode";
 
 /**
  * The content of graph nodes is a flat list of text and mention nodes.
@@ -122,6 +123,8 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
         } else {
           // skip the text node
         }
+      } else if ($isImageNode(node)) {
+        chips.push(nodeToChip(node));
       } else {
         console.error("Unexpected node type", node);
       }
@@ -152,6 +155,8 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
         } else {
           // skip the text node
         }
+      } else if ($isImageNode(node)) {
+        chips.push(nodeToChip(node));
       } else {
         console.error("Unexpected node type", node);
       }
@@ -196,8 +201,10 @@ export const graphNodeMatchesParagraph = (node: GraphNode, paragraph: ParagraphN
         chip.value === lexicalNode.getTextContent() &&
         (chip.styles === undefined || chip.styles === lexicalNode.getFormat())
       );
+    } else if (lexicalNode instanceof ImageNode && chip.type === "image") {
+      return chip.url === lexicalNode.src;
     } else {
-      return chip.value === lexicalNode.getTextContent();
+      return chip.type !== "image" && chip.value === lexicalNode.getTextContent();
     }
   });
 
@@ -217,6 +224,8 @@ export const getChipToNodeFn = (graphStore: GraphStore) => {
         node.setFormat(chip.styles);
       }
       return node;
+    } else if (chip.type === "image") {
+      return $createImageNode({ src: chip.url });
     } else {
       return $createTextNode(chip.value);
     }
@@ -240,6 +249,8 @@ export function nodeToChip(node: LexicalNode): Chip {
     return { type: "text", value: node.getTextContent(), styles: node.getFormat() };
   } else if (node instanceof LineBreakNode) {
     return { type: "linebreak", value: node.getTextContent() };
+  } else if (node instanceof ImageNode) {
+    return { type: "image", url: node.getSrc() };
   } else {
     throw new Error("Unsupported node type");
   }

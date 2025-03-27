@@ -73,12 +73,9 @@ export const RelationPlugin = observer(function RelationPlugin() {
           let textBefore = $getText({ from: { index: 0, offset: 0 }, to: selectionLeft });
           let chipsBefore = $getChips({ index: 0, offset: 0 }, selectionLeft);
           // Remove trailing colon from chipsBefore
-          if (
-            chipsBefore.length &&
-            chipsBefore[chipsBefore.length - 1].type === "text" &&
-            chipsBefore[chipsBefore.length - 1].value.endsWith(":")
-          ) {
-            chipsBefore[chipsBefore.length - 1].value = chipsBefore[chipsBefore.length - 1].value.slice(0, -1);
+          const lastBeforeChip = chipsBefore.length && chipsBefore[chipsBefore.length - 1];
+          if (lastBeforeChip && lastBeforeChip.type === "text" && lastBeforeChip.value.endsWith(":")) {
+            lastBeforeChip.value = lastBeforeChip.value.slice(0, -1);
           }
           if (!settingsStore.triggerRelationOnSingleColon && !textBefore.endsWith(":")) {
             return false;
@@ -113,7 +110,7 @@ export const RelationPlugin = observer(function RelationPlugin() {
 
           // Set the content to the content after the cursor and focus
           const chipsRight = $getChips(selectionRight);
-          if (chipsRight.length) {
+          if (chipsRight.length && chipsRight[0].type !== "image") {
             chipsRight[0].value = chipsRight[0].value.trimStart(); // Remove leading whitespace
           }
           graphStoreTransaction.push({
@@ -211,6 +208,18 @@ export const RelationPlugin = observer(function RelationPlugin() {
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [tree, graphStore, settingsStore, settingsStore.triggerRelationOnSingleColon, editor, object, relation, treeNode.path, treeNode.id, treeNode.relationWithParent.relationType.id, treeNode.relationWithParent.to]);
+  }, [
+    tree,
+    graphStore,
+    settingsStore,
+    settingsStore.triggerRelationOnSingleColon,
+    editor,
+    object,
+    relation,
+    treeNode.path,
+    treeNode.id,
+    treeNode.relationWithParent.relationType.id,
+    treeNode.relationWithParent.to,
+  ]);
   return null;
 });

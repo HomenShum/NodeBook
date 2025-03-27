@@ -331,7 +331,7 @@ export function ideapadSnapshotFromSerializedGraph(data: SerializedGraphStore, u
     nodes: Object.values(data.nodesById).map((node) => ({
       clientId: getProperId(node.id, 36),
       userId: userId,
-      title: node.content.map((elem) => elem.value).join("") || "",
+      title: node.content.map((elem) => (elem.type === "image" ? "" : elem.value)).join("") || "",
       likeCount: 0,
       commentCount: 0,
       colorId: null,
@@ -469,7 +469,7 @@ export function ideapadSnapshotFromGraph(graphStore: GraphStore, userId: string)
     nodes.set(node.id, {
       clientId: node.id,
       userId: userId,
-      title: node.content.map((elem) => elem.value).join("") || "",
+      title: node.content.map((elem) => (elem.type === "image" ? "" : elem.value)).join("") || "",
       likeCount: 0,
       commentCount: 0,
       colorId: colorsByNodeId.get(node.id) || null,

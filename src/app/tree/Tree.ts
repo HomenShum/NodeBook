@@ -1338,7 +1338,7 @@ export class Tree {
       const isExpandedWithChildren = treeNode.isExpanded && treeNode.childCount > 0;
       const atStartOfLine =
         chips?.before
-          .map((c) => c.value)
+          .map((c) => (c.type === "image" ? c.url : c.value))
           .join()
           .trim() === "";
       const atStartOfChildWithContent =

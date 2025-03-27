@@ -46,7 +46,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
         tree.selection?.type === "editor" &&
         tree.selection.treeNodeId === treeNodeId &&
         sameSelectionPositions(editorSelectionPosition, tree.selection.position);
-      if (!match) {
+      if (editorSelectionPosition && !match) {
         tree.setFocusedNode(treeNodeId, editorSelectionPosition, true);
       }
 
@@ -129,7 +129,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
               editor.focus();
             }
             const editorSelectionPosition = editor.getEditorState().read($getSelectionPosition);
-            if (!sameSelectionPositions(editorSelectionPosition, tree.selection.position)) {
+            if (!editorSelectionPosition && !sameSelectionPositions(editorSelectionPosition, tree.selection.position)) {
               $setSelectionFromTree(tree.selection);
             }
           } else if (isFocused && tree.selection.treeNodeId !== treeNodeId) {
