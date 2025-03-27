@@ -145,6 +145,8 @@ export class SearchTree extends Tree {
       });
     });
 
+    this.applyFilter(this.root);
+
     end = Date.now();
     console.log("Time taken to hide relations", end - start);
   }

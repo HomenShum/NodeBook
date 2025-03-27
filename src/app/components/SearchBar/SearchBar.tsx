@@ -52,10 +52,6 @@ export const SearchBar = observer(function SearchBar() {
     [isExpanded, viewStore],
   );
 
-  useEffect(() => {
-    viewStore.recreateSearchTrees();
-  }, [graphStore.nodesById.size, viewStore]);
-
   // Listen for search input updates
   useEffect(() => {
     const handleSearchUpdate = (e: CustomEvent<string>) => {

@@ -152,7 +152,6 @@ export class ViewStore {
         cancelQuickCaptureDeepSearch: action,
         quickCaptureView: computed,
         setNotificationPaneOpen: action,
-        recreateSearchTrees: action,
         jumpToNodeId: observable,
         setSrcForImageViewer: action,
       });
@@ -375,18 +374,5 @@ export class ViewStore {
 
   setNotificationPaneOpen(state: boolean) {
     this.notificationPaneOpen = state;
-  }
-
-  recreateSearchTrees() {
-    const searchQuery = this.searchQuery;
-    const quickCaptureSearchQuery = this.quickCaptureSearchQuery;
-
-    if (searchQuery.length > 0) {
-      this.setSearchQuery(searchQuery);
-    }
-
-    if (quickCaptureSearchQuery.length > 0) {
-      this.setQuickCaptureSearchQuery(searchQuery);
-    }
   }
 }

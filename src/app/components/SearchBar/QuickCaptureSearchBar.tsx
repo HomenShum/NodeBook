@@ -51,10 +51,6 @@ export const QuickCaptureSearchBar = observer(function SearchBar() {
     [isExpanded, viewStore],
   );
 
-  useEffect(() => {
-    viewStore.recreateSearchTrees();
-  }, [graphStore.nodesById.size, viewStore]);
-
   const handleIconClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     inputRef.current?.focus();
