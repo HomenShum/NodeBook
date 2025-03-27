@@ -4,7 +4,8 @@ import { useCallback } from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
-import { getCanonicalPath } from "@/app/graph/utils";
+import { GraphStore } from "@/app/graph/GraphStore";
+import { getCanonicalPath, getOtherObjectOrThrow } from "@/app/graph/utils";
 import { createRouteUrl, ObjectPath } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -24,6 +25,27 @@ export type BreadcrumbAncestors = {
   relationToChild: GraphRelation | null;
   childGroupId: GroupId | null;
   path: string;
+};
+
+export const getCanonicalAncestors = (node: TreeNode, graphStore: GraphStore): BreadcrumbAncestors[] => {
+  let curObject = node.object;
+  const ancestors: BreadcrumbAncestors[] = [];
+  let canonicalRelationId: string | null | undefined = node.object.canonicalRelationId;
+  while (canonicalRelationId) {
+    const relation = graphStore.getRelationOrThrow(canonicalRelationId);
+    const otherObject = getOtherObjectOrThrow(relation, curObject.id);
+    if (relation) {
+      ancestors.unshift({
+        object: otherObject,
+        relationToChild: relation,
+        childGroupId: null,
+        path: "null",
+      });
+    }
+    canonicalRelationId = relation?.canonicalRelationId;
+    curObject = otherObject;
+  }
+  return ancestors;
 };
 
 /**

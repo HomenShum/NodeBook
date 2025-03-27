@@ -14,8 +14,9 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { getOtherObject } from "@/app/graph/utils";
 import { TreeNode } from "@/app/tree/nodes";
-import { BreadcrumbAncestors, getAncestorsAsArray, useSetMainRoot } from "@/app/tree/utils";
+import { BreadcrumbAncestors, useSetMainRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
 import { GLOBAL_ROOT_ID, USER_ROOT_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -175,51 +176,98 @@ interface BreadcrumbsProps {
 export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: BreadcrumbsProps) {
   const setRoot = useSetMainRoot();
   const graphStore = useGraphStore();
-  const [ancestors, setAncestors] = useState<BreadcrumbAncestors[]>(getAncestorsAsArray(treeNode));
   const router = useRouter();
 
-  useEffect(() => {
-    const hasUser =
-      ancestors.some((elem) => elem.object.id.startsWith(USER_ROOT_ID_PREFIX)) ||
-      treeNode.object.id.startsWith(USER_ROOT_ID_PREFIX);
-    const hasGlobalRoot =
-      ancestors.some((elem) => elem.object.id === GLOBAL_ROOT_ID) || treeNode.object.id === GLOBAL_ROOT_ID;
+  const getCanonicalAncestors = useCallback(
+    (node: TreeNode): BreadcrumbAncestors[] => {
+      let curObject = node.object;
+      const ancestors: BreadcrumbAncestors[] = [];
 
-    if (!hasUser && !hasGlobalRoot) {
-      const authorId = treeNode.object.authorId;
-      const userNode = graphStore.getNode(USER_ROOT_ID_PREFIX + authorId);
-      if (userNode) {
-        const newAncestors = ancestors;
-        newAncestors.unshift({
-          object: userNode,
-          relationToChild: null,
+      let canonicalRelationId: string | null | undefined = curObject.canonicalRelationId;
+
+      while (canonicalRelationId) {
+        const relation = graphStore.getRelation(canonicalRelationId);
+        if (!relation) {
+          graphStore.layerManager.lazyLoadWithIds([canonicalRelationId]);
+          break;
+        }
+        const otherObject = getOtherObject(relation, curObject.id);
+        if (!otherObject) {
+          break;
+        }
+        ancestors.unshift({
+          object: otherObject,
+          relationToChild: relation,
           childGroupId: null,
           path: "null",
         });
-        const usersNode = graphStore.usersNode;
-        const usersToUserRel = graphStore.usersToUserRelation;
-        if (usersNode && usersToUserRel) {
-          newAncestors.unshift({
-            object: usersNode,
-            relationToChild: usersToUserRel,
-            childGroupId: null,
-            path: "null",
-          });
-        }
-        const globalRootNode = graphStore.globalRoot;
-        const globalRootToUsersRel = graphStore.globalToUsersRelation;
-        if (globalRootNode && globalRootToUsersRel) {
-          newAncestors.unshift({
-            object: globalRootNode,
-            relationToChild: globalRootToUsersRel,
-            childGroupId: null,
-            path: "null",
-          });
-        }
-        setAncestors(newAncestors);
+        canonicalRelationId = otherObject.canonicalRelationId;
+        curObject = otherObject;
       }
-    }
-  }, [ancestors, setAncestors, treeNode.object.authorId, graphStore, treeNode.object.id]);
+      return ancestors;
+    },
+    [graphStore],
+  );
+
+  const getFullAncestorChain = useCallback(
+    (baseAncestors: BreadcrumbAncestors[]): BreadcrumbAncestors[] => {
+      const hasUser =
+        baseAncestors.some((elem) => elem.object.id.startsWith(USER_ROOT_ID_PREFIX)) ||
+        treeNode.object.id.startsWith(USER_ROOT_ID_PREFIX);
+      const hasGlobalRoot =
+        baseAncestors.some((elem) => elem.object.id === GLOBAL_ROOT_ID) || treeNode.object.id === GLOBAL_ROOT_ID;
+
+      if (!hasUser && !hasGlobalRoot) {
+        const authorId = treeNode.object.authorId;
+        const userNode = graphStore.getNode(USER_ROOT_ID_PREFIX + authorId);
+
+        if (userNode) {
+          const newAncestors = [...baseAncestors];
+          newAncestors.unshift({
+            object: userNode,
+            relationToChild: null,
+            childGroupId: null,
+            path: "null",
+          });
+
+          const usersNode = graphStore.usersNode;
+          const usersToUserRel = graphStore.usersToUserRelation;
+          if (usersNode && usersToUserRel) {
+            newAncestors.unshift({
+              object: usersNode,
+              relationToChild: usersToUserRel,
+              childGroupId: null,
+              path: "null",
+            });
+          }
+
+          const globalRootNode = graphStore.globalRoot;
+          const globalRootToUsersRel = graphStore.globalToUsersRelation;
+          if (globalRootNode && globalRootToUsersRel) {
+            newAncestors.unshift({
+              object: globalRootNode,
+              relationToChild: globalRootToUsersRel,
+              childGroupId: null,
+              path: "null",
+            });
+          }
+          return newAncestors;
+        }
+      }
+      return baseAncestors;
+    },
+    [graphStore, treeNode.object.authorId, treeNode.object.id],
+  );
+
+  const [ancestors, setAncestors] = useState(() => {
+    const canonicalAncestors = getCanonicalAncestors(treeNode);
+    return canonicalAncestors;
+  });
+
+  useEffect(() => {
+    const canonicalAncestors = getCanonicalAncestors(treeNode);
+    setAncestors(getFullAncestorChain(canonicalAncestors));
+  }, [treeNode, getCanonicalAncestors, getFullAncestorChain]);
 
   const handleNavigation = useCallback(
     (index: number) => {
