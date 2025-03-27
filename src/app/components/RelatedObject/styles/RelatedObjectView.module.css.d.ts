@@ -14,6 +14,7 @@ declare const styles: {
   readonly "HeaderInListView": string;
   readonly "Hidden": string;
   readonly "HoverCardTrigger": string;
+  readonly "Loading": string;
   readonly "LoadingSpinner": string;
   readonly "NoteContentBullet": string;
   readonly "NoteContentPrefix": string;
@@ -50,6 +51,7 @@ declare const styles: {
   readonly "TrailMenuTriggerVisible": string;
   readonly "Unpinned": string;
   readonly "bulletClick": string;
+  readonly "pulsate": string;
   readonly "showTooltip": string;
   readonly "spin": string;
 };

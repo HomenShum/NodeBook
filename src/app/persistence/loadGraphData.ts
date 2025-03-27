@@ -7,7 +7,6 @@ import { SerializedGraphStoreSchema, SerializedStores } from "@/app/persistence/
 import { getAuthFetch } from "@/app/util";
 import { PersistedUser } from "@/db/schema";
 import logger from "@/lib/logger";
-import { ViewStore } from "@/app/view/ViewStore";
 
 export const localLocalData = (graphStore: GraphStore) => {
   logger.debug("Loading data from local storage");
@@ -69,8 +68,11 @@ export class LayerManager {
       .filter((id) => !LayerManager.loadedIds.has(id))
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
-    ids.forEach((id) => LayerManager.loadedIds.add(id));
-    return this.fetchAndLoad(
+    ids.forEach((id) => {
+      LayerManager.loadedIds.add(id);
+      this.graphStore.setNodeLayerLoadingStatus(id, true);
+    });
+    const loadedIds = await this.fetchAndLoad(
       `/api/layer`,
       {
         method: "POST",
@@ -80,6 +82,10 @@ export class LayerManager {
       },
       withReset,
     );
+    ids.forEach((id) => {
+      this.graphStore.setNodeLayerLoadingStatus(id, false);
+    });
+    return loadedIds;
   }
 
   public async lazyLoadWithIds(objectIds: string[]) {

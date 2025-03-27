@@ -609,6 +609,25 @@ Right Area
   opacity: 1;
 }
 
+.RelatedObjectBulletContainer.Loading svg {
+  animation: pulsate 1.6s ease-in-out infinite;
+  color: var(--teal-6);
+  stroke: var(--teal-6);
+  fill: var(--teal-6);
+}
+
+@keyframes pulsate {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 .RelatedObjectContent:hover .NoteContentBullet:has(+ .RelatedObjectNode:has(.RelatedObjectContainer)),
 .RelatedObjectContent:hover .NoteContentRootBullet,
 .RelatedObjectContent:focus-within .NoteContentBullet:has(+ .RelatedObjectNode:has(.RelatedObjectContainer)),

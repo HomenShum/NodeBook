@@ -20,6 +20,7 @@ const Toggle = observer(function Toggle() {
   const settingsStore = useSettingsStore();
   const userId = graphStore.user?.id;
   const { treeNode } = useTreeNode();
+  const isLoading = graphStore.nodesInLayerLoading.has(treeNode.object.id);
 
   const handleToggleClick = useCallback(
     (event: React.MouseEvent) => {
@@ -72,6 +73,7 @@ const Toggle = observer(function Toggle() {
     isNoteContent(treeNode) &&
     treeNode.parentGroup.id === "noteContent" &&
     treeNode.parentGroup.nodes[0].id === treeNode.id;
+
   return (
     <div
       className={cn(
@@ -84,6 +86,7 @@ const Toggle = observer(function Toggle() {
           objectViewStyles.Hidden,
         isNoteContentRoot && objectViewStyles.NoteContentRootBullet,
         hasChildren && objectViewStyles.HasChildren,
+        isLoading && objectViewStyles.Loading,
       )}
       data-tooltip={tooltipContent}
     >

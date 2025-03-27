@@ -1,4 +1,4 @@
-import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
+import { action, computed, isObservable, makeObservable, observable, ObservableSet, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { NodeType } from "@/app/editor/plugins/dropdown/utils";
@@ -96,6 +96,7 @@ export class GraphStore {
 
   // This object is ONLY for the default relationtypes
   relationTypesById: Record<string, GraphRelationType> = defaultRelationTypes;
+  nodesInLayerLoading: Set<string> = new Set([]);
 
   cappedKeywordIndex: CappedKeywordIndex;
 
@@ -123,6 +124,7 @@ export class GraphStore {
         nodesById: observable.shallow,
         relationsById: observable.shallow,
         relationTypesById: observable.shallow,
+        nodesInLayerLoading: observable,
         // node
         addNode: action,
         removeNode: action,
@@ -146,6 +148,7 @@ export class GraphStore {
         importData: action,
         totalNodes: computed,
         updateInFlightSearchCount: action,
+        setNodeLayerLoadingStatus: action,
       });
     }
   }
@@ -3122,6 +3125,10 @@ export class GraphStore {
     } else {
       this.inFlightSearchCount--;
     }
+  }
+
+  setNodeLayerLoadingStatus(nodeId: string, isLoading: boolean): void {
+    isLoading ? this.nodesInLayerLoading.add(nodeId) : this.nodesInLayerLoading.delete(nodeId);
   }
 }
 
