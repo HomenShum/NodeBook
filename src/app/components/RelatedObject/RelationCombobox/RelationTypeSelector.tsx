@@ -237,11 +237,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            if (event.shiftKey) {
-              viewStore.createSidebarTree(treeNode.relationWithParent);
-            } else {
-              setRoot(treeNode.relationWithParent);
-            }
+            viewStore.createSidebarTree(treeNode.relationWithParent);
           }}
         >
           <MessageCircle size={18} />
