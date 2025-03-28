@@ -121,21 +121,12 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       if (match) {
         const queryString = match.matchingString;
         setSearchText(queryString);
-        if (queryString.length === 0) {
-          setDropdown((prev) => ({
-            type: "mention",
-            search: queryString,
-            matches: prev?.matches ?? [],
-            mentionTrigger: match.mentionTrigger,
-          }));
-        } else {
-          setDropdown((prev) => ({
-            type: "mention",
-            search: queryString,
-            matches: prev?.matches ?? [],
-            mentionTrigger: match.mentionTrigger,
-          }));
-        }
+        setDropdown((prev) => ({
+          type: "mention",
+          search: queryString,
+          matches: prev?.matches ?? [],
+          mentionTrigger: match.mentionTrigger,
+        }));
         // ENT-4247: If leadOffset is 0 (for example, when typing @ directly after another
         // mention), lexical fails to position the dropdown correctly (not sure why).
         // To get around this, we ensure the leadOffset is at least 1.

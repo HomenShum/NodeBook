@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { GraphNodeMatch, Match } from "@/app/editor/plugins/dropdown/types";
+import { GraphNodeMatch, GraphRelationTypeMatch, Match } from "@/app/editor/plugins/dropdown/types";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -23,6 +23,76 @@ type GetMatches = (text: string, types?: NodeType[]) => Match[];
 type NodeResult = { node: GraphNode; score: number };
 type RelationResult = { relation: GraphRelation; score: number };
 type RelationTypeResult = { relationType: GraphRelationType; score: number };
+
+function countRelationTypeRelations(graphStore: GraphStore, relationTypeIds: string[]) {
+  const relationTypesSizes = new Map<string, number>();
+  for (const relation of graphStore.getRelations()) {
+    if (relationTypeIds.includes(relation.relationType.id)) {
+      const currentSize = relationTypesSizes.get(relation.relationType.id) || 0;
+      relationTypesSizes.set(relation.relationType.id, currentSize + 1);
+    }
+  }
+
+  return relationTypesSizes;
+}
+
+function processRelationTypes(graphStore: GraphStore, relationTypes: RelationTypeResult[], text: string) {
+  const relationTypesSizes = countRelationTypeRelations(
+    graphStore,
+    relationTypes.map(({ relationType }) => relationType.id),
+  );
+
+  const filteredRelationTypes = new Map<string, GraphRelationTypeMatch[]>();
+  relationTypes.forEach(({ relationType, score }: RelationTypeResult) => {
+    const label = relationType.label.toLocaleLowerCase();
+    const reverseLabel = relationType.reverseLabel.toLocaleLowerCase();
+
+    const res: GraphRelationTypeMatch[] = [];
+    if (label.includes(text)) {
+      res.push({
+        key: relationType.id + "-rel-type",
+        type: "relationType" as const,
+        object: relationType,
+        score,
+        isForward: true,
+      });
+    }
+    if (label !== reverseLabel && reverseLabel.includes(text)) {
+      res.push({
+        key: relationType.id + "-rel-type-rev",
+        type: "relationType" as const,
+        object: relationType,
+        score,
+        isForward: false,
+      });
+    }
+
+    if (res.length === 0) {
+      return;
+    }
+
+    // If the relation type belongs to the user, we don't need to check if it has more relations
+    if (relationType.authorId === graphStore.user.id) {
+      filteredRelationTypes.set(label, res);
+      return;
+    }
+
+    const storedRelationType = filteredRelationTypes.get(label);
+    if (storedRelationType) {
+      const storedRelationTypeBelongsToUser = storedRelationType[0].object.authorId === graphStore.user.id;
+      const storedRelationTypeHasMoreRelations =
+        (relationTypesSizes.get(storedRelationType[0].object.id) ?? 0) > (relationTypesSizes.get(relationType.id) ?? 0);
+
+      if (storedRelationTypeBelongsToUser || storedRelationTypeHasMoreRelations) {
+        return;
+      }
+    }
+
+    filteredRelationTypes.set(label, res);
+  });
+
+  return [...filteredRelationTypes.values()].flat();
+}
 
 export function getMatches(
   graphStore: GraphStore,
@@ -49,32 +119,7 @@ export function getMatches(
       object: relation,
       score: Math.min(nodeScores.get(relation.from.id) || score, score),
     })),
-    ...results.relationTypes
-      .map(({ relationType, score }: RelationTypeResult) => {
-        const res = [];
-        const label = relationType.label.toLocaleLowerCase();
-        const reverseLabel = relationType.reverseLabel.toLocaleLowerCase();
-        if (label.includes(text)) {
-          res.push({
-            key: relationType.id + "-rel-type",
-            type: "relationType" as const,
-            object: relationType,
-            score,
-            isForward: true,
-          });
-        }
-        if (label !== reverseLabel && reverseLabel.includes(text)) {
-          res.push({
-            key: relationType.id + "-rel-type-rev",
-            type: "relationType" as const,
-            object: relationType,
-            score,
-            isForward: false,
-          });
-        }
-        return res;
-      })
-      .flat(),
+    ...processRelationTypes(graphStore, results.relationTypes, text),
   ];
 
   return matches
