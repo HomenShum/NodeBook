@@ -1,7 +1,7 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Maximize2, Play, Search } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -18,7 +18,7 @@ import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
 
 // Maximum depth for traversing relations
-const MAX_TRAVERSAL_DEPTH = 3;
+const MAX_TRAVERSAL_DEPTH = 2;
 
 interface TreeElementProps {
   object: GraphObject;
@@ -76,7 +76,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     return Array.from(new Set(hashtags));
   }, []);
 
-  const localHashtags = getHashtagNodes(object as GraphNode, currentDepth);
+  const localHashtags = useMemo(() => getHashtagNodes(object as GraphNode, currentDepth), [getHashtagNodes, object, currentDepth]);
 
   const virtualizer = useVirtualizer({
     count: localHashtags.length,
