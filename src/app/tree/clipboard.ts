@@ -1,4 +1,4 @@
-import { $createRangeSelection, $getRoot, $setSelection } from "lexical";
+import { $createRangeSelection, $getRoot, $isParagraphNode, $setSelection } from "lexical";
 
 import { $getChips } from "@/app/editor/utils/content";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
@@ -37,8 +37,15 @@ export const copyContentFromLexicalNodes = (addToEvent: ClipboardEvent, nodes: D
       const lastChild = $getRoot().getLastChild();
       if (!firstChild || !lastChild) return;
 
-      fullSelection.anchor.set(firstChild.getKey(), 0, "text");
-      fullSelection.focus.set(lastChild.getKey(), lastChild.getTextContentSize(), "text");
+      // Handle paragraph nodes by getting their first/last text content
+      const firstTextNode = $isParagraphNode(firstChild) ? firstChild.getFirstChild() : firstChild;
+      const lastTextNode = $isParagraphNode(lastChild) ? lastChild.getLastChild() : lastChild;
+
+      if (!firstTextNode || !lastTextNode) return;
+
+      fullSelection.anchor.set(firstTextNode.getKey(), 0, "text");
+      fullSelection.focus.set(lastTextNode.getKey(), lastTextNode.getTextContentSize(), "text");
+      $setSelection(fullSelection);
       $setSelection(fullSelection);
 
       const nTabs = depth - minDepth;
