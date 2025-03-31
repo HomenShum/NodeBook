@@ -30,6 +30,7 @@ import {
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
 import { Switch } from "@/app/components/UIPrimitives/Switch";
+import { VoiceInputButton } from "@/app/components/VoiceOps/VoiceInputButton";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useSlugs } from "@/app/contexts/SlugContext";
@@ -278,6 +279,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
         </div>
       </div>
       <div className={styles.RightWrapper}>
+        {!user.isAnonymous && <VoiceInputButton />}
         {settingsStore.showIdeapadLinkButton && (
           <Button
             size="sm"

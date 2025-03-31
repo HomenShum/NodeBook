@@ -1,0 +1,414 @@
+.VoiceOperationsList {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background-color: var(--gray-1);
+  display: flex;
+  flex-direction: column;
+}
+
+.HeadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px 32px 8px 32px;
+  color: var(--gray-12);
+  position: relative;
+  gap: 12px;
+  border-bottom: 1px solid var(--gray-6);
+}
+
+.TitleContainer {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.TitleText {
+  font-size: var(--font-size-h2);
+  font-weight: 400;
+  user-select: none;
+  letter-spacing: -0.02em;
+}
+
+.Description {
+  font-size: 14px;
+  color: var(--gray-11);
+  margin-bottom: 8px;
+}
+
+.FeedContainer {
+  max-width: 768px;
+  margin: 0 auto;
+  padding: 1rem;
+  width: 100%;
+}
+
+.FeedHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.FeedTitle {
+  font-size: var(--font-size-h3);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--gray-12);
+  letter-spacing: -0.02em;
+}
+
+.FeedSubtitle {
+  font-size: 14px;
+  color: var(--gray-9);
+}
+
+.RefreshButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--gray-9);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.RefreshButton:hover {
+  background-color: var(--gray-3);
+}
+
+.Refreshing {
+  animation: spin 1s linear infinite;
+  color: var(--teal-3);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.FeedItems {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.FeedItem {
+  border-bottom: 1px solid var(--gray-4);
+  padding-bottom: 12px;
+}
+
+.FeedItem:last-child {
+  border-bottom: none;
+}
+
+.FeedItemContent {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.FeedItemIcon {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.MicIconContainer {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--teal-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.MicIcon {
+  color: var(--teal-9);
+}
+
+.FeedItemBody {
+  flex-grow: 1;
+}
+
+.VoiceCard {
+  background-color: var(--gray-2);
+  border: 1px solid var(--gray-4);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.Expandable {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.Expandable:hover {
+  background-color: var(--gray-3);
+}
+
+.VoiceCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.VoiceText {
+  font-weight: 500;
+  color: var(--gray-12);
+  margin-bottom: 4px;
+}
+
+.VoiceTimestamp {
+  font-size: 12px;
+  color: var(--gray-9);
+  display: block;
+}
+
+.ExpandButton {
+  color: var(--gray-9);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.ExpandButton:hover {
+  color: var(--gray-11);
+}
+
+.GenerateButton {
+  margin-top: 8px;
+  background-color: var(--teal-3);
+  color: var(--teal-11);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.GenerateButton:hover {
+  background-color: var(--blue-4);
+}
+
+.LoadingIndicator {
+  margin-top: 8px;
+  background-color: var(--gray-3);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.LoadingSpinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top-color: var(--blue-9);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.LoadingText {
+  color: var(--gray-11);
+}
+
+.ErrorMessage {
+  margin-top: 8px;
+  background-color: var(--tomato-3);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+}
+
+.ErrorTitle {
+  font-weight: 500;
+  color: var(--tomato-11);
+  margin-bottom: 4px;
+}
+
+.ErrorDetails {
+  color: var(--tomato-10);
+}
+
+.OperationsContainer {
+  margin-top: 8px;
+  background-color: var(--gray-3);
+  border: 1px solid var(--gray-4);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.OperationsList {
+  margin-bottom: 12px;
+}
+
+.OperationsTitle {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gray-12);
+  margin-bottom: 8px;
+}
+
+.OperationsGroup {
+  margin-bottom: 12px;
+}
+
+.OperationsGroup:last-child {
+  margin-bottom: 0;
+}
+
+.OperationsGroupTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gray-9);
+  margin-bottom: 4px;
+}
+
+.OperationsItems {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.OperationItem {
+  background-color: var(--gray-2);
+  border: 1px solid var(--gray-4);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.OperationDescription {
+  font-weight: 500;
+  color: var(--gray-12);
+}
+
+.OperationType {
+  font-size: 11px;
+  color: var(--gray-9);
+  margin-top: 2px;
+}
+
+.ApplyButton {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--teal-9);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ApplyButton:hover {
+  background-color: var(--mint-10);
+}
+
+.IconLeft {
+  margin-right: 6px;
+}
+
+.EmptyContainer {
+  padding: 24px;
+  max-width: 768px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.EmptyTitle {
+  font-size: var(--font-size-h3);
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--gray-12);
+}
+
+.EmptyDescription {
+  font-size: 14px;
+  color: var(--gray-9);
+  margin-bottom: 16px;
+}
+
+.EmptyButton {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--gray-3);
+  color: var(--gray-11);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.EmptyButton:hover {
+  background-color: var(--gray-4);
+}
+
+/* Loading state */
+.LoadingContainer {
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.LoadingContent {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.LoadingAvatar {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 9999px;
+  background-color: var(--gray-4);
+  margin-bottom: 0.75rem;
+}
+
+.LoadingTitle {
+  height: 1rem;
+  width: 10rem;
+  background-color: var(--gray-4);
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.LoadingSubtitle {
+  height: 0.75rem;
+  width: 8rem;
+  background-color: var(--gray-4);
+  border-radius: 0.25rem;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

@@ -11,6 +11,7 @@ import { NotificationProvider } from "@/app/contexts/NotificationContext";
 import { SettingsStoreContext } from "@/app/contexts/SettingsStoreContext";
 import { SlugProvider } from "@/app/contexts/SlugContext";
 import { UserContext } from "@/app/contexts/UserContext";
+import { VoiceInputProvider } from "@/app/contexts/VoiceInputContext";
 import { env } from "@/app/envFrontend";
 import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -180,7 +181,9 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
           <GraphStoreProvider value={graphStore}>
             <ViewStoreProvider value={viewStore}>
               <SlugProvider>
-                <NotificationProvider>{children}</NotificationProvider>
+                <NotificationProvider>
+                  <VoiceInputProvider>{children}</VoiceInputProvider>
+                </NotificationProvider>
               </SlugProvider>
             </ViewStoreProvider>
           </GraphStoreProvider>

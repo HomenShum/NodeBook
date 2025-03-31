@@ -10,6 +10,7 @@ import {
   LogIn,
   LogOut,
   Mail,
+  Mic,
   MoonIcon,
   Newspaper,
   Search,
@@ -387,23 +388,45 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </span>
               <span className={styles.ButtonText}>Recently Created Notes</span>
             </Button>
-            <Button
-              variant="ghost"
-              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-              data-tooltip="See graph updates"
-              onClick={(e) => {
-                if (e.metaKey) {
-                  window.open("/updates", "_blank");
-                } else {
-                  handleNavigation(() => router.push("/updates"));
-                }
-              }}
-            >
-              <span>
-                <History size={16} strokeWidth={1.5} />
-              </span>
-              <span className={styles.ButtonText}>Updates Feed</span>
-            </Button>
+            {!user.isAnonymous && (
+              <Button
+                variant="ghost"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                data-tooltip="See graph updates"
+                onClick={(e) => {
+                  if (e.metaKey) {
+                    window.open("/updates", "_blank");
+                  } else {
+                    handleNavigation(() => router.push("/updates"));
+                  }
+                }}
+              >
+                <span>
+                  <History size={16} strokeWidth={1.5} />
+                </span>
+                <span className={styles.ButtonText}>Updates Feed</span>
+              </Button>
+            )}
+            {/* Voice Operations Button */}
+            {!user.isAnonymous && (
+              <Button
+                variant="ghost"
+                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
+                data-tooltip="Manage voice inputs and operations"
+                onClick={(e) => {
+                  if (e.metaKey) {
+                    window.open("/voice-operations", "_blank");
+                  } else {
+                    handleNavigation(() => router.push("/voice-operations"));
+                  }
+                }}
+              >
+                <span>
+                  <Mic size={16} strokeWidth={1.5} />
+                </span>
+                <span className={styles.ButtonText}>Voice Operations</span>
+              </Button>
+            )}
           </div>
           <div className={styles.ScrollableArea}>
             <MyFavoritesList />
