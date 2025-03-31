@@ -15,6 +15,7 @@ import {
   KEY_ARROW_UP_COMMAND,
   KEY_ENTER_COMMAND,
   KEY_ESCAPE_COMMAND,
+  KEY_SPACE_COMMAND,
   KEY_TAB_COMMAND,
   LexicalCommand,
   LexicalEditor,
@@ -30,6 +31,9 @@ import {
   useRef,
   useState,
 } from "react";
+
+import { MentionTypeaheadOption } from "@/app/editor/plugins/dropdown/MentionDropdown";
+import { HASHTAG_SYMBOL } from "@/lib/utils";
 
 export type MenuTextMatch = {
   leadOffset: number;
@@ -381,6 +385,28 @@ export function LexicalMenu<TOption extends MenuOption>({
         },
         commandPriority,
       ),
+      editor.registerCommand<KeyboardEvent>(
+        KEY_SPACE_COMMAND,
+        (payload) => {
+          const event = payload;
+          if (options === null || selectedIndex === null || options[selectedIndex] == null) {
+            return false;
+          }
+          // Only return true if the dropdown type is a hashtag mention.
+          if (
+            options[selectedIndex] instanceof MentionTypeaheadOption &&
+            options[selectedIndex].value.trigger === HASHTAG_SYMBOL
+          ) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            selectOptionAndCleanUp(options[selectedIndex]);
+            return true;
+          }
+          return false;
+        },
+        commandPriority,
+      ),
+
       editor.registerCommand(
         KEY_ENTER_COMMAND,
         (event: KeyboardEvent | null) => {

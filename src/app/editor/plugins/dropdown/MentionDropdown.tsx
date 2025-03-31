@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_HIGH, KEY_SPACE_COMMAND, TextNode } from "lexical";
-import { ReactPortal, useCallback, useEffect } from "react";
+import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
+import { ReactPortal, useCallback } from "react";
 import * as ReactDOM from "react-dom";
 
 import LineLoader from "@/app/components/LineLoader/LineLoader";
@@ -45,128 +45,12 @@ export function MentionDropdown({
   const graphStore = useGraphStore();
   const tree = treeNode.tree;
 
-  // Register space key handler
-  useEffect(() => {
-    return editor.registerCommand(
-      KEY_SPACE_COMMAND,
-      (event: KeyboardEvent) => {
-        if (!dropdown || dropdown.type !== "mention") {
-          return false;
-        }
-
-        // If the mention dropdown is open in @ mode, we don't handle this
-        if (dropdown.mentionTrigger === MENTION_SYMBOL) {
-          return false;
-        }
-
-        event.preventDefault();
-        event.stopImmediatePropagation();
-
-        // Check for exact matches
-        const exactMatches = dropdown.matches
-          .filter((m) => {
-            if (m.type !== "node") return false;
-            const node = m.object as GraphNode;
-            const nodeText = node.content?.map((c) => (c.type === "image" ? "" : c.value)).join("") || "";
-            if (nodeText.startsWith(HASHTAG_SYMBOL)) {
-              return nodeText.slice(1).toLowerCase() === dropdown.search.toLowerCase();
-            }
-            return nodeText.toLowerCase() === dropdown.search.toLowerCase();
-          })
-          .map((m) => m.object as GraphNode);
-
-        if (exactMatches.length > 0) {
-          // Sort by number of hashtag relations and take the most popular one
-          const mostPopularMatch = exactMatches.sort((a, b) => {
-            const aRelations = treeNode.object.relations.filter(
-              (r) => r.relationType.id === defaultRelationTypes.hashtag.id && r.to.id === a.id,
-            ).length;
-            const bRelations = treeNode.object.relations.filter(
-              (r) => r.relationType.id === defaultRelationTypes.hashtag.id && r.to.id === b.id,
-            ).length;
-            return bRelations - aRelations;
-          })[0];
-
-          // Link to the most popular exact match
-          editor.update(async () => {
-            const mentionNode = $createMentionNode(
-              mostPopularMatch.id,
-              mostPopularMatch.content?.toString() || "",
-              dropdown.mentionTrigger,
-            );
-            const selection = $getSelection();
-            if (!$isRangeSelection(selection)) return;
-            const textNode = selection.anchor.getNode();
-            if (!textNode) return;
-
-            textNode.replace(mentionNode);
-            const spaceAfter = new TextNode(" ");
-            mentionNode.insertAfter(spaceAfter);
-            spaceAfter.selectEnd();
-
-            // Add hashtag relation if it doesn't exist
-            const hasHashtagRelation = treeNode.object.relations.some(
-              (r) =>
-                r.relationType.id === defaultRelationTypes.hashtag.id &&
-                r.from.id === treeNode.object.id &&
-                r.to.id === mostPopularMatch.id,
-            );
-            if (!hasHashtagRelation) {
-              await graphStore.addRelation({
-                fromId: treeNode.object.id,
-                toId: mostPopularMatch.id,
-                relationTypeId: defaultRelationTypes.hashtag.id,
-              });
-            } else {
-              await graphStore.applyUpdates([]);
-            }
-          });
-        } else {
-          // No exact match, create new node as before
-          const newNodeText = dropdown.search;
-          const graphNodeId = uuid();
-          editor.update(async () => {
-            const mentionNode = $createMentionNode(graphNodeId, newNodeText, dropdown.mentionTrigger);
-            const selection = $getSelection();
-            if (!$isRangeSelection(selection)) return;
-            const textNode = selection.anchor.getNode();
-            if (!textNode) return;
-
-            textNode.replace(mentionNode);
-            const spaceAfter = new TextNode(" ");
-            mentionNode.insertAfter(spaceAfter);
-            spaceAfter.selectEnd();
-
-            const parentId = graphStore.myHashtagsNodeId;
-            await graphStore.addChildNode({
-              parentId: parentId,
-              nodeProps: { id: graphNodeId, content: "#" + newNodeText },
-              after: 0,
-              relationProps: {
-                relationTypeId: graphStore.relationTypesById.child.id,
-              },
-            });
-
-            await graphStore.addRelation({
-              fromId: treeNode.object.id,
-              toId: graphNodeId,
-              relationTypeId: defaultRelationTypes.hashtag.id,
-            });
-          });
-        }
-
-        return true;
-      },
-      COMMAND_PRIORITY_HIGH,
-    );
-  }, [editor, dropdown, graphStore, treeNode]);
-
   const options =
     dropdown?.type === "mention"
       ? [
           ...dropdown.matches
             .filter((m) => m.type === "node")
-            .map((m) => new MentionTypeaheadOption(m.object))
+            .map((m) => new MentionTypeaheadOption(m.object, dropdown.mentionTrigger))
             .slice(0, 10)
             .sort((a, b) => {
               // For hashtags, sort by number of relations in descending order
@@ -183,7 +67,7 @@ export function MentionDropdown({
               }
               return 0;
             }),
-          new MentionTypeaheadOption(dropdown.search),
+          new MentionTypeaheadOption(dropdown.search, dropdown.mentionTrigger),
         ]
       : [];
 
@@ -304,10 +188,11 @@ export function MentionDropdown({
 }
 
 export class MentionTypeaheadOption extends MenuOption {
-  value: { type: "existing"; object: GraphNode } | { type: "new"; text: string };
-  constructor(value: GraphNode | string) {
+  value: { type: "existing"; object: GraphNode; trigger: string } | { type: "new"; text: string; trigger: string };
+  constructor(value: GraphNode | string, trigger: string = "@") {
     super(typeof value === "string" ? value : value.id);
-    this.value = typeof value === "string" ? { type: "new", text: value } : { type: "existing", object: value };
+    this.value =
+      typeof value === "string" ? { type: "new", text: value, trigger } : { type: "existing", object: value, trigger };
   }
   get name() {
     return this.value.type === "new" ? `Create new node: ${this.value.text.trim()}` : this.value.object.text;
