@@ -46,7 +46,6 @@ export const copyContentFromLexicalNodes = (addToEvent: ClipboardEvent, nodes: D
       fullSelection.anchor.set(firstTextNode.getKey(), 0, "text");
       fullSelection.focus.set(lastTextNode.getKey(), lastTextNode.getTextContentSize(), "text");
       $setSelection(fullSelection);
-      $setSelection(fullSelection);
 
       const nTabs = depth - minDepth;
       const prefix =
