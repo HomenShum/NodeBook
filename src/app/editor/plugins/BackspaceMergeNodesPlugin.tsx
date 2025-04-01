@@ -4,6 +4,7 @@ import { useCallback, useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { $atEditorStart } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
@@ -13,7 +14,7 @@ import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes"
 import { Tree } from "@/app/tree/Tree";
 import { useTree } from "@/app/tree/TreeContext";
 import { getNextAbove } from "@/app/tree/utils";
-import { useUser } from "@/app/contexts/UserContext";
+import { useViewStore } from "@/app/view/useViewStore";
 
 /**
  * Concat two arrays of Chips into one.
@@ -40,6 +41,7 @@ export const BackspaceMergeNodesPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const { treeNode } = useTreeNode();
   const tree = useTree();
+  const viewStore = useViewStore();
   const { mergeNodes, addSiblingAboveIntoNote } = useMergers(treeNode.tree);
   const graphStore = useGraphStore();
   const user = useUser();
@@ -128,10 +130,12 @@ export const BackspaceMergeNodesPlugin = () => {
         if (handled) {
           const destroyMLNote =
             treeNode.parentGroup.id === "noteContent" &&
-            tree.selection !== null &&
-            tree.selection.type === "editor" &&
             treeNode.parent.childrenGroupsById["noteContent"].nodes.length === 2 &&
-            treeNode.parent.childrenGroupsById["noteContent"].nodes[1] === treeNode;
+            treeNode.parent.childrenGroupsById["noteContent"].nodes[1] === treeNode &&
+            ((tree.selection !== null && tree.selection.type === "editor") ||
+              (viewStore.quickCaptureOpen &&
+                viewStore.quickCaptureTree.selection !== null &&
+                viewStore.quickCaptureTree.selection.type === "editor"));
 
           if (destroyMLNote) {
             const firstNoteNode = treeNode.parent.childrenGroupsById["noteContent"].nodes[0];
