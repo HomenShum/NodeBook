@@ -53,12 +53,21 @@ export function MentionDropdown({
             .map((m) => new MentionTypeaheadOption(m.object, dropdown.mentionTrigger))
             .slice(0, 10)
             .sort((a, b) => {
-              // For hashtags, sort by number of relations in descending order
+              // For hashtags, sort by:
+              // exact match > number of relations in descending order
               if (dropdown.mentionTrigger === HASHTAG_SYMBOL) {
                 if (a.value.type !== "existing" || b.value.type !== "existing") {
                   return 0;
                 }
                 // Now we know both a and b are "existing" type
+                // Sort by exact match first..
+                if (a.value.object.text === "#" + dropdown.search && b.value.object.text !== "#" + dropdown.search) {
+                  return -1;
+                }
+                if (a.value.object.text !== "#" + dropdown.search && b.value.object.text === "#" + dropdown.search) {
+                  return 1;
+                }
+                // Then sort by number of relations in descending order
                 const aValue = a.value as { type: "existing"; object: GraphNode };
                 const bValue = b.value as { type: "existing"; object: GraphNode };
                 const aRelations = aValue.object.relations.length;

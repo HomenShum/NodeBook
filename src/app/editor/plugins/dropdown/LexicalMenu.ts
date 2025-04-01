@@ -253,9 +253,9 @@ export function LexicalMenu<TOption extends MenuOption>({
 
   const matchingString = resolution.match && resolution.match.matchingString;
 
-  useEffect(() => {
-    setHighlightedIndex(0);
-  }, [matchingString]);
+  // useEffect(() => {
+  //   setHighlightedIndex(0);
+  // }, [matchingString]);
 
   const selectOptionAndCleanUp = useCallback(
     (selectedEntry: TOption) => {
@@ -297,9 +297,10 @@ export function LexicalMenu<TOption extends MenuOption>({
   useLayoutEffect(() => {
     if (options === null) {
       setHighlightedIndex(null);
-    } else if (selectedIndex === null) {
-      updateSelectedIndex(0);
     }
+    // } else if (selectedIndex === null) {
+    //   updateSelectedIndex(0);
+    // }
   }, [options, selectedIndex, updateSelectedIndex]);
 
   useEffect(() => {
@@ -325,7 +326,9 @@ export function LexicalMenu<TOption extends MenuOption>({
         KEY_ARROW_DOWN_COMMAND,
         (payload) => {
           const event = payload;
-          if (options !== null && options.length && selectedIndex !== null) {
+          if (selectedIndex === null) {
+            setHighlightedIndex(0);
+          } else if (options !== null && options.length && selectedIndex !== null) {
             const newSelectedIndex = selectedIndex !== options.length - 1 ? selectedIndex + 1 : 0;
             updateSelectedIndex(newSelectedIndex);
             const option = options[newSelectedIndex];
@@ -375,12 +378,17 @@ export function LexicalMenu<TOption extends MenuOption>({
         KEY_TAB_COMMAND,
         (payload) => {
           const event = payload;
-          if (options === null || selectedIndex === null || options[selectedIndex] == null) {
+          if (options === null || options.length === 0) {
             return false;
           }
           event.preventDefault();
           event.stopImmediatePropagation();
-          selectOptionAndCleanUp(options[selectedIndex]);
+
+          if (selectedIndex == null) {
+            selectOptionAndCleanUp(options[0]);
+          } else {
+            selectOptionAndCleanUp(options[selectedIndex]);
+          }
           return true;
         },
         commandPriority,
@@ -389,18 +397,38 @@ export function LexicalMenu<TOption extends MenuOption>({
         KEY_SPACE_COMMAND,
         (payload) => {
           const event = payload;
-          if (options === null || selectedIndex === null || options[selectedIndex] == null) {
+          let curSelectedIndex: number | null = selectedIndex;
+          if (options === null) {
+            return false;
+          }
+          if (curSelectedIndex === null) {
+            curSelectedIndex = 0;
+          }
+          if (options[curSelectedIndex] == null) {
             return false;
           }
           // Only return true if the dropdown type is a hashtag mention.
-          if (
-            options[selectedIndex] instanceof MentionTypeaheadOption &&
-            options[selectedIndex].value.trigger === HASHTAG_SYMBOL
-          ) {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            selectOptionAndCleanUp(options[selectedIndex]);
-            return true;
+          const option = options[curSelectedIndex];
+          if (option instanceof MentionTypeaheadOption && option.value.trigger === HASHTAG_SYMBOL) {
+            const optionIsNew = option.value.type === "new";
+            // If the match is exact, complete the match. If it is inexact, create a new node.
+            const matchIsExact = option.value.type === "existing" && option.value.object.text === "#" + matchingString;
+            if (optionIsNew || matchIsExact) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              selectOptionAndCleanUp(option);
+              return true;
+            }
+            // If the match is inexact, create a new node.
+            const optionIndex = options.findIndex(
+              (option) => option instanceof MentionTypeaheadOption && option.value.type === "new",
+            );
+            if (optionIndex !== -1) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              selectOptionAndCleanUp(options[optionIndex]);
+              return true;
+            }
           }
           return false;
         },
@@ -410,17 +438,33 @@ export function LexicalMenu<TOption extends MenuOption>({
       editor.registerCommand(
         KEY_ENTER_COMMAND,
         (event: KeyboardEvent | null) => {
-          if (options === null || selectedIndex === null || options[selectedIndex] == null || !event) {
+          if (!event) {
             return false;
           }
-          // Close the dropdown and don't handle the event, allowing default behavior
-          close();
-          return false;
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
+          if (options === null || selectedIndex === null || options[selectedIndex] == null) {
+            close();
+            return false;
+          }
+
+          selectOptionAndCleanUp(options[selectedIndex]);
+          return true;
         },
         commandPriority,
       ),
     );
-  }, [selectOptionAndCleanUp, close, editor, options, selectedIndex, updateSelectedIndex, commandPriority]);
+  }, [
+    selectOptionAndCleanUp,
+    close,
+    editor,
+    options,
+    selectedIndex,
+    updateSelectedIndex,
+    commandPriority,
+    matchingString,
+  ]);
 
   const listItemProps = useMemo(
     () => ({
