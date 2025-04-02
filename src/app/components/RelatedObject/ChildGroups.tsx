@@ -210,7 +210,7 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
           );
         })}
       {loadNext && (
-        <div style={{ marginTop: "20px" }}>
+        <div style={{ margin: "20px 0px" }}>
           <Button onClick={() => loadNext()}>Load more</Button>
         </div>
       )}
