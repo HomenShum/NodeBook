@@ -444,7 +444,16 @@ export function LexicalMenu<TOption extends MenuOption>({
           event.preventDefault();
           event.stopImmediatePropagation();
 
-          if (options === null || selectedIndex === null || options[selectedIndex] == null) {
+          if (options === null) {
+            return false;
+          }
+
+          if (event.ctrlKey || event.metaKey) {
+            selectOptionAndCleanUp(options[options.length - 1]);
+            return true;
+          }
+
+          if (selectedIndex === null || options[selectedIndex] == null) {
             close();
             return false;
           }

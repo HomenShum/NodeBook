@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
-import { ReactPortal, useCallback } from "react";
+import { ReactPortal, useCallback, useEffect, useRef } from "react";
 import * as ReactDOM from "react-dom";
 
 import LineLoader from "@/app/components/LineLoader/LineLoader";
@@ -216,10 +216,48 @@ export function getMenuRenderFn(
     anchorElementRef,
     { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
   ): ReactPortal | JSX.Element | null {
+    // Add ref to track if mouse has moved since dropdown appeared
+    const mouseMoveSinceStateChange = useRef(false);
+    // Store ref to the list element
+    const ulRef = useRef<HTMLUListElement>(null);
+
+    useEffect(() => {
+      // Reset the flag when the options change
+      mouseMoveSinceStateChange.current = false;
+
+      // Add mouse move listener to detect when mouse moves
+      const handleMouseMove = (event: MouseEvent) => {
+        mouseMoveSinceStateChange.current = true;
+
+        // If the mouse is already over the dropdown when it moves,
+        // find which option it's hovering over and highlight it
+        if (ulRef.current) {
+          const listItems = ulRef.current.querySelectorAll("li");
+          listItems.forEach((item, index) => {
+            const rect = item.getBoundingClientRect();
+            if (
+              event.clientX >= rect.left &&
+              event.clientX <= rect.right &&
+              event.clientY >= rect.top &&
+              event.clientY <= rect.bottom
+            ) {
+              setHighlightedIndex(index);
+            }
+          });
+        }
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+
+      return () => {
+        document.removeEventListener("mousemove", handleMouseMove);
+      };
+    }, [setHighlightedIndex]);
+
     const Menu = (
       <div className={cn(styles.Dropdown, styles.TypeaheadPopover, forCommandBar && styles.ForCommandBar)}>
         <LineLoader height={2} />
-        <ul>
+        <ul ref={ulRef}>
           {options.map((option, i: number) =>
             option.value.type === "new" ? (
               <li
@@ -229,7 +267,10 @@ export function getMenuRenderFn(
                 ref={option.setRefElement}
                 id={"typeahead-item-" + i}
                 onMouseEnter={() => {
-                  setHighlightedIndex(i);
+                  // Only set highlighted index if mouse has moved since dropdown appeared
+                  if (mouseMoveSinceStateChange.current) {
+                    setHighlightedIndex(i);
+                  }
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -249,7 +290,10 @@ export function getMenuRenderFn(
                 ref={option.setRefElement}
                 isSelected={selectedIndex === i}
                 onMouseEnter={() => {
-                  setHighlightedIndex(i);
+                  // Only set highlighted index if mouse has moved since dropdown appeared
+                  if (mouseMoveSinceStateChange.current) {
+                    setHighlightedIndex(i);
+                  }
                 }}
                 onClick={(e) => {
                   e.stopPropagation();
