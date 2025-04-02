@@ -67,8 +67,6 @@
 
 .FeedHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 1.25rem;
 }
 
@@ -278,7 +276,18 @@
 }
 
 .ErrorDetails {
-  color: var(--tomato-10);
+  color: var(--red-9);
+  font-size: 12px;
+}
+
+.NoOperationsMessage {
+  margin-top: 8px;
+  background-color: var(--gray-3);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--gray-10);
+  text-align: left;
 }
 
 .OperationsContainer {

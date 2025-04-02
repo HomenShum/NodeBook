@@ -32,6 +32,7 @@ declare const styles: {
   readonly "LoadingTitle": string;
   readonly "MicIcon": string;
   readonly "MicIconContainer": string;
+  readonly "NoOperationsMessage": string;
   readonly "OperationDescription": string;
   readonly "OperationItem": string;
   readonly "OperationType": string;

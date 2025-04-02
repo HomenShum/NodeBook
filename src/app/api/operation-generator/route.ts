@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 
 import { env } from "@/envBackend";
 
@@ -9,8 +10,6 @@ export async function POST(req: NextRequest) {
     if (!text || !treeText) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
-
-    console.log("Received request with:", { text, treeTextLength: treeText.length });
 
     if (!env.OPENAI_API_KEY) {
       console.error("OpenAI API key is not set");
@@ -169,40 +168,79 @@ Response Format:
 
 Today's datetime is ${new Date()}
 `;
-    console.log("Sending request to OpenAI...");
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.1,
-      }),
+
+    const openai = new OpenAI({
+      apiKey: String(env.OPENAI_API_KEY),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("OpenAI API error:", {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText,
-      });
-      throw new Error(`OpenAI API error: ${response.status} ${response.statusText} - ${errorText}`);
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+      temperature: 0.1,
+    });
+
+    if (!response.choices[0].message.content) {
+      return NextResponse.json({ error: "No response from OpenAI" }, { status: 500 });
     }
 
-    console.log("Received response from OpenAI");
-    const data = await response.json();
-    const operations = JSON.parse(data.choices[0].message.content);
+    // Clean the response content to handle markdown code blocks
+    let content = response.choices[0].message.content.trim();
 
-    return NextResponse.json(operations);
+    try {
+      // First try: direct JSON parsing (if it's already valid JSON)
+      try {
+        const operations = JSON.parse(content);
+        return NextResponse.json(operations);
+      } catch (e) {
+        // If direct parsing fails, continue with cleaning
+      }
+
+      // Second try: Handle markdown code blocks
+      if (content.includes("```")) {
+        // Extract content between code block markers
+        const codeBlockMatch = content.match(/```(?:json)?\n([\s\S]*?)```/);
+        if (codeBlockMatch && codeBlockMatch[1]) {
+          content = codeBlockMatch[1].trim();
+        } else {
+          // If we have opening code block but can't match properly
+          content = content
+            .replace(/^```(?:json)?\n?/, "")
+            .replace(/```$/, "")
+            .trim();
+        }
+      }
+
+      // Third try: Handle any trailing or leading non-JSON content
+      // Find the first '{' and last '}' to extract just the JSON object
+      const firstBrace = content.indexOf("{");
+      const lastBrace = content.lastIndexOf("}");
+
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        content = content.substring(firstBrace, lastBrace + 1);
+      }
+
+      const operations = JSON.parse(content);
+      return NextResponse.json(operations);
+    } catch (parseError) {
+      console.error("JSON parsing error:", parseError);
+      console.error("Content that failed to parse:", content);
+
+      // Attempt to return a basic response structure if parsing fails
+      return NextResponse.json(
+        {
+          simpleOperations: [],
+          complexOperations: [],
+          error: "Failed to parse AI response",
+          details: parseError instanceof Error ? parseError.message : String(parseError),
+        },
+        { status: 200 },
+      ); // Still return 200 to avoid UI errors
+    }
   } catch (error) {
     console.error("Operation generation error:", error);
     return NextResponse.json(

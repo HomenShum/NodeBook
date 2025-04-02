@@ -412,6 +412,14 @@ export const VoiceOperationsList = observer(() => {
                       </div>
                     )}
 
+                    {operationState.operations &&
+                      !operationState.isLoading &&
+                      !operationState.error &&
+                      operationState.operations.simpleOperations.length === 0 &&
+                      operationState.operations.complexOperations.length === 0 && (
+                        <div className={styles.NoOperationsMessage}>No operations generated</div>
+                      )}
+
                     {hasOperations && isExpanded && (
                       <div className={styles.OperationsContainer}>
                         <div className={styles.OperationsList}>
