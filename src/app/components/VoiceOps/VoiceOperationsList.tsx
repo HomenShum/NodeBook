@@ -288,11 +288,13 @@ export const VoiceOperationsList = observer(() => {
 
   if (isLoading && !refreshing) {
     return (
-      <div className={styles.LoadingContainer}>
-        <div className={styles.LoadingContent}>
-          <div className={styles.LoadingAvatar}></div>
-          <div className={styles.LoadingTitle}></div>
-          <div className={styles.LoadingSubtitle}></div>
+      <div className={styles.VoiceOperationsList}>
+        <div className={styles.LoadingContainer}>
+          <div className={styles.LoadingContent}>
+            <div className={styles.LoadingAvatar}></div>
+            <div className={styles.LoadingTitle}></div>
+            <div className={styles.LoadingSubtitle}></div>
+          </div>
         </div>
       </div>
     );
@@ -300,158 +302,162 @@ export const VoiceOperationsList = observer(() => {
 
   if (voiceInputs.length === 0) {
     return (
-      <div className={styles.EmptyContainer}>
-        <h1 className={styles.EmptyTitle}>No voice inputs yet</h1>
-        <p className={styles.EmptyDescription}>
-          Try using the voice input button in the top toolbar to create some voice notes.
-        </p>
-        <button onClick={handleRefresh} className={styles.EmptyButton}>
-          <RefreshCw size={14} className={styles.IconLeft} />
-          Refresh
-        </button>
+      <div className={styles.VoiceOperationsList}>
+        <div className={styles.EmptyContainer}>
+          <h1 className={styles.EmptyTitle}>No voice inputs yet</h1>
+          <p className={styles.EmptyDescription}>
+            Try using the voice input button in the top toolbar to create some voice notes.
+          </p>
+          <button onClick={handleRefresh} className={styles.EmptyButton}>
+            <RefreshCw size={14} className={styles.IconLeft} />
+            Refresh
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.FeedContainer}>
-      <div className={styles.FeedHeader}>
-        <div>
-          <h1 className={styles.FeedTitle}>Voice Inputs</h1>
-          <p className={styles.FeedSubtitle}>Generate graph operations from your voice notes</p>
+    <div className={styles.VoiceOperationsList}>
+      <div className={styles.FeedContainer}>
+        <div className={styles.FeedHeader}>
+          <div>
+            <h1 className={styles.FeedTitle}>Voice Inputs</h1>
+            <p className={styles.FeedSubtitle}>Generate graph operations from your voice notes</p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            className={cn(styles.RefreshButton, refreshing && styles.Refreshing)}
+            disabled={refreshing}
+            aria-label="Refresh voice inputs"
+          >
+            <RefreshCw size={16} />
+          </button>
         </div>
-        <button
-          onClick={handleRefresh}
-          className={cn(styles.RefreshButton, refreshing && styles.Refreshing)}
-          disabled={refreshing}
-          aria-label="Refresh voice inputs"
-        >
-          <RefreshCw size={16} />
-        </button>
-      </div>
 
-      <div className={styles.FeedItems}>
-        {voiceInputs.map((input) => {
-          const nodeId = input.node.id;
-          const operationState = operationsMap[nodeId] || {
-            isLoading: false,
-            error: null,
-            operations: null,
-          };
+        <div className={styles.FeedItems}>
+          {voiceInputs.map((input) => {
+            const nodeId = input.node.id;
+            const operationState = operationsMap[nodeId] || {
+              isLoading: false,
+              error: null,
+              operations: null,
+            };
 
-          const isExpanded = expandedOperations[nodeId] || false;
-          const hasOperations =
-            operationState.operations &&
-            (operationState.operations.simpleOperations.length > 0 ||
-              operationState.operations.complexOperations.length > 0);
+            const isExpanded = expandedOperations[nodeId] || false;
+            const hasOperations =
+              operationState.operations &&
+              (operationState.operations.simpleOperations.length > 0 ||
+                operationState.operations.complexOperations.length > 0);
 
-          const formattedDate = new Date(input.timestamp).toLocaleString();
+            const formattedDate = new Date(input.timestamp).toLocaleString();
 
-          return (
-            <div key={nodeId} className={styles.FeedItem}>
-              <div className={styles.FeedItemContent}>
-                <div className={styles.FeedItemIcon}>
-                  <div className={styles.MicIconContainer}>
-                    <Mic size={14} className={styles.MicIcon} />
-                  </div>
-                </div>
-
-                <div className={styles.FeedItemBody}>
-                  <div
-                    className={cn(styles.VoiceCard, hasOperations && styles.Expandable)}
-                    onClick={() => hasOperations && toggleExpand(nodeId)}
-                  >
-                    <div className={styles.VoiceCardHeader}>
-                      <div>
-                        <p className={styles.VoiceText}>{input.text}</p>
-                        <span className={styles.VoiceTimestamp}>{formattedDate}</span>
-                      </div>
-
-                      {hasOperations && (
-                        <button
-                          className={styles.ExpandButton}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleExpand(nodeId);
-                          }}
-                        >
-                          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                        </button>
-                      )}
+            return (
+              <div key={nodeId} className={styles.FeedItem}>
+                <div className={styles.FeedItemContent}>
+                  <div className={styles.FeedItemIcon}>
+                    <div className={styles.MicIconContainer}>
+                      <Mic size={14} className={styles.MicIcon} />
                     </div>
                   </div>
 
-                  {!operationState.operations && !operationState.isLoading && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        generateOperations(input);
-                      }}
-                      className={styles.GenerateButton}
+                  <div className={styles.FeedItemBody}>
+                    <div
+                      className={cn(styles.VoiceCard, hasOperations && styles.Expandable)}
+                      onClick={() => hasOperations && toggleExpand(nodeId)}
                     >
-                      Generate Operations
-                    </button>
-                  )}
+                      <div className={styles.VoiceCardHeader}>
+                        <div>
+                          <p className={styles.VoiceText}>{input.text}</p>
+                          <span className={styles.VoiceTimestamp}>{formattedDate}</span>
+                        </div>
 
-                  {operationState.isLoading && (
-                    <div className={styles.LoadingIndicator}>
-                      <div className={styles.LoadingSpinner}></div>
-                      <div className={styles.LoadingText}>Generating operations...</div>
-                    </div>
-                  )}
-
-                  {operationState.error && (
-                    <div className={styles.ErrorMessage}>
-                      <p className={styles.ErrorTitle}>Error</p>
-                      <p className={styles.ErrorDetails}>{operationState.error}</p>
-                    </div>
-                  )}
-
-                  {hasOperations && isExpanded && (
-                    <div className={styles.OperationsContainer}>
-                      <div className={styles.OperationsList}>
-                        <div className={styles.OperationsTitle}>Operations to apply:</div>
-
-                        {operationState.operations && operationState.operations.simpleOperations.length > 0 && (
-                          <div className={styles.OperationsGroup}>
-                            <div className={styles.OperationsGroupTitle}>Simple Operations</div>
-                            <div className={styles.OperationsItems}>
-                              {operationState.operations.simpleOperations.map((op, i) => (
-                                <div key={i}>{renderOperation(op)}</div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {operationState.operations && operationState.operations.complexOperations.length > 0 && (
-                          <div className={styles.OperationsGroup}>
-                            <div className={styles.OperationsGroupTitle}>Complex Operations</div>
-                            <div className={styles.OperationsItems}>
-                              {operationState.operations.complexOperations.map((op, i) => (
-                                <div key={i}>{renderOperation(op)}</div>
-                              ))}
-                            </div>
-                          </div>
+                        {hasOperations && (
+                          <button
+                            className={styles.ExpandButton}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(nodeId);
+                            }}
+                          >
+                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </button>
                         )}
                       </div>
+                    </div>
 
+                    {!operationState.operations && !operationState.isLoading && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          applyOperations(nodeId);
+                          generateOperations(input);
                         }}
-                        className={styles.ApplyButton}
+                        className={styles.GenerateButton}
                       >
-                        <Check size={14} className={styles.IconLeft} />
-                        Apply Operations
+                        Generate Operations
                       </button>
-                    </div>
-                  )}
+                    )}
+
+                    {operationState.isLoading && (
+                      <div className={styles.LoadingIndicator}>
+                        <div className={styles.LoadingSpinner}></div>
+                        <div className={styles.LoadingText}>Generating operations...</div>
+                      </div>
+                    )}
+
+                    {operationState.error && (
+                      <div className={styles.ErrorMessage}>
+                        <p className={styles.ErrorTitle}>Error</p>
+                        <p className={styles.ErrorDetails}>{operationState.error}</p>
+                      </div>
+                    )}
+
+                    {hasOperations && isExpanded && (
+                      <div className={styles.OperationsContainer}>
+                        <div className={styles.OperationsList}>
+                          <div className={styles.OperationsTitle}>Operations to apply:</div>
+
+                          {operationState.operations && operationState.operations.simpleOperations.length > 0 && (
+                            <div className={styles.OperationsGroup}>
+                              <div className={styles.OperationsGroupTitle}>Simple Operations</div>
+                              <div className={styles.OperationsItems}>
+                                {operationState.operations.simpleOperations.map((op, i) => (
+                                  <div key={i}>{renderOperation(op)}</div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {operationState.operations && operationState.operations.complexOperations.length > 0 && (
+                            <div className={styles.OperationsGroup}>
+                              <div className={styles.OperationsGroupTitle}>Complex Operations</div>
+                              <div className={styles.OperationsItems}>
+                                {operationState.operations.complexOperations.map((op, i) => (
+                                  <div key={i}>{renderOperation(op)}</div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            applyOperations(nodeId);
+                          }}
+                          className={styles.ApplyButton}
+                        >
+                          <Check size={14} className={styles.IconLeft} />
+                          Apply Operations
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
