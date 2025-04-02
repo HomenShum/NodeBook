@@ -43,8 +43,6 @@ async function postHandler(req: NextAuthenticatedRequest) {
           updatedAt: new Date(),
         })
         .where(eq(expansionStateTable.rootObjectId, rootObjectId));
-
-      logger.debug(`Updated expansion state for rootObjectId: ${rootObjectId}`);
     } else {
       // Create new record
       await db.insert(expansionStateTable).values({
@@ -53,8 +51,6 @@ async function postHandler(req: NextAuthenticatedRequest) {
         expandedObjects: JSON.stringify(expandedObjects),
         updatedAt: new Date(),
       });
-
-      logger.debug(`Created expansion state for rootObjectId: ${rootObjectId}`);
     }
 
     return NextResponse.json({ success: true });
@@ -81,11 +77,9 @@ async function getHandler(req: NextAuthenticatedRequest) {
       .limit(1);
 
     if (state.length === 0) {
-      logger.debug(`No expansion state found for rootObjectId: ${rootObjectId}`);
       return NextResponse.json({ data: null });
     }
 
-    logger.debug(`Found expansion state for rootObjectId: ${rootObjectId}`);
     return NextResponse.json({
       data: {
         authorId: state[0].authorId,
@@ -113,7 +107,6 @@ async function deleteHandler(req: NextAuthenticatedRequest) {
     // Delete the record if it exists
     const result = await db.delete(expansionStateTable).where(eq(expansionStateTable.rootObjectId, rootObjectId));
 
-    logger.debug(`Deleted expansion state for rootObjectId: ${rootObjectId}`);
     return NextResponse.json({ success: true });
   } catch (error) {
     logger.error("Error deleting expansion state:", error);

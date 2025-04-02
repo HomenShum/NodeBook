@@ -32,8 +32,28 @@ export function VoiceInputButton() {
     };
   }, [isVoiceInputMode, mediaRecorder, timeoutId]);
 
+  // Add comprehensive cleanup when component unmounts
+  useEffect(() => {
+    return () => {
+      if (mediaRecorder) {
+        try {
+          mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+          setMediaRecorder(null);
+          setAudioChunks([]);
+          setIsRecording(false);
+        } catch (err) {
+          console.error("Error cleaning up media resources:", err);
+        }
+      }
+    };
+  }, [mediaRecorder]);
+
   const startRecording = async () => {
     try {
+      // Reset audio chunks when starting a new recording
+      setAudioChunks([]);
+
+      // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
 
@@ -48,9 +68,8 @@ export function VoiceInputButton() {
 
       // Set 60-second timeout to automatically stop recording
       const timeout = setTimeout(() => {
-        if (isRecording) {
-          stopRecording();
-          setVoiceInputMode(false);
+        if (isVoiceInputMode) {
+          toggleVoiceMode();
           // Toast notification
           addToast({
             title: "Voice input timeout",
@@ -63,6 +82,9 @@ export function VoiceInputButton() {
       console.error("Failed to start recording:", error);
       setError("Failed to start recording. Please make sure you have granted microphone permissions.");
       setVoiceInputMode(false);
+      setIsRecording(false);
+      setMediaRecorder(null);
+      setAudioChunks([]);
     }
   };
 
@@ -75,6 +97,7 @@ export function VoiceInputButton() {
       setTimeoutId(null);
     }
 
+    // Set the onstop handler before calling stop
     mediaRecorder.onstop = async () => {
       try {
         const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
@@ -134,7 +157,7 @@ export function VoiceInputButton() {
     if (isVoiceInputMode && !isRecording) {
       startRecording();
     }
-  }, [isVoiceInputMode]);
+  }, [isVoiceInputMode, isRecording]);
 
   return (
     <Button

@@ -27,10 +27,10 @@ export const VoiceOperationGenerator = observer(() => {
     const indent = "  ".repeat(depth);
     const bar = depth > 0 ? "- " : "";
     let result = `${indent}${bar}${node.text || "Untitled"} (${node.id})\n`;
-
+    const maxHorizRelations = 30;
     if (depth < maxDepth) {
       const childRelations = node.relations.filter((r: any) => r.from.id === node.id);
-      for (const relation of childRelations) {
+      for (const relation of childRelations.slice(0, maxHorizRelations)) {
         const childNode = relation.to;
         if (childNode && typeof childNode === "object") {
           result += generateTreeText(childNode, depth + 1, visited, maxDepth);

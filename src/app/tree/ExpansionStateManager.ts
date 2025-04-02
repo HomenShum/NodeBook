@@ -40,8 +40,6 @@ export class ExpansionStateManager {
         paths: expandedPaths,
         timestamp: Date.now(),
       });
-
-      logger.debug(`Successfully saved expansion state for rootObjectId: ${rootObjectId}`);
       return true;
     } catch (error) {
       logger.error("Error saving expansion state:", error);
@@ -57,7 +55,6 @@ export class ExpansionStateManager {
       // Check cache first
       const cached = this.cache.get(rootObjectId);
       if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
-        logger.debug(`Using cached expansion state for rootObjectId: ${rootObjectId}`);
         return cached.paths;
       }
 
@@ -72,7 +69,6 @@ export class ExpansionStateManager {
 
       const result = await response.json();
       if (!result.data) {
-        logger.debug(`No expansion state found for rootObjectId: ${rootObjectId}`);
         // Cache the null result too
         this.cache.set(rootObjectId, {
           paths: null,
@@ -86,8 +82,6 @@ export class ExpansionStateManager {
         paths: result.data.expandedObjects,
         timestamp: Date.now(),
       });
-
-      logger.debug(`Loaded expansion state for rootObjectId: ${rootObjectId}`);
       return result.data.expandedObjects;
     } catch (error) {
       logger.error("Error loading expansion state:", error);
@@ -114,7 +108,6 @@ export class ExpansionStateManager {
       // Clear from cache after successful delete
       this.cache.delete(rootObjectId);
 
-      logger.debug(`Successfully cleared expansion state for rootObjectId: ${rootObjectId}`);
       return true;
     } catch (error) {
       logger.error("Error clearing expansion state:", error);
