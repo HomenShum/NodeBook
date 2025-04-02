@@ -211,27 +211,40 @@ function OutlineContent({ tree }: Props) {
               </button>
             </div>
             <TooltipProvider>
-              <Tooltip>
+              {!isGlobalRoot ? (
+                <Tooltip>
+                  <div className={s.IconAndTitle}>
+                    {treeRoot.object.id === graphStore.homeRoot.id ? (
+                      <HomeIcon size={20} />
+                    ) : isGlobalRoot ? (
+                      <Globe size={20} strokeWidth={1.8} />
+                    ) : null}
+                    <TooltipTrigger asChild>
+                      <div style={{ width: "100%" }}>
+                        <h1 className={s.TitleText}>
+                          {treeRoot.isTodoItem && <Checkbox node={treeRoot} />}
+                          <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
+                        </h1>
+                        {settingsStore.showNodeDetails && <RootObjectDetails object={treeRoot.object} />}
+                      </div>
+                    </TooltipTrigger>
+                  </div>
+                  <TooltipContent align="start" side="bottom">
+                    {tooltipContent}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
                 <div className={s.IconAndTitle}>
-                  {treeRoot.object.id === graphStore.homeRoot.id ? (
-                    <HomeIcon size={20} />
-                  ) : isGlobalRoot ? (
-                    <Globe size={20} strokeWidth={1.8} />
-                  ) : null}
-                  <TooltipTrigger asChild>
-                    <div style={{ width: "100%" }}>
-                      <h1 className={s.TitleText}>
-                        {treeRoot.isTodoItem && <Checkbox node={treeRoot} />}
-                        <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
-                      </h1>
-                      {settingsStore.showNodeDetails && <RootObjectDetails object={treeRoot.object} />}
-                    </div>
-                  </TooltipTrigger>
+                  <Globe size={20} strokeWidth={1.8} />
+                  <div style={{ width: "100%" }}>
+                    <h1 className={s.TitleText}>
+                      {treeRoot.isTodoItem && <Checkbox node={treeRoot} />}
+                      <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
+                    </h1>
+                    {settingsStore.showNodeDetails && <RootObjectDetails object={treeRoot.object} />}
+                  </div>
                 </div>
-                <TooltipContent align="start" side="bottom">
-                  {tooltipContent}
-                </TooltipContent>
-              </Tooltip>
+              )}
             </TooltipProvider>
             <Button
               variant="default"
