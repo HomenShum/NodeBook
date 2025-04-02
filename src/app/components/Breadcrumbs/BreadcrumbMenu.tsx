@@ -6,6 +6,7 @@ import { useAuth } from "@/app/auth/useAuth";
 import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
 import { SyncStatusIndicator } from "@/app/components/SyncStatus/SyncStatusIndicator";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { VoiceInputButton } from "@/app/components/VoiceOps/VoiceInputButton";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useLoading } from "@/app/contexts/LoadingContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
@@ -84,6 +85,7 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
 
   return (
     <div className={s.BreadcrumbRightArea}>
+      {!user.isAnonymous && <VoiceInputButton />}
       <Button
         style={{ position: "relative" }}
         variant="default"
