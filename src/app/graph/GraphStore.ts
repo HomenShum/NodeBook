@@ -1,4 +1,4 @@
-import { action, computed, isObservable, makeObservable, observable, ObservableSet, toJS } from "mobx";
+import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { NodeType } from "@/app/editor/plugins/dropdown/utils";
@@ -94,6 +94,8 @@ export class GraphStore {
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
 
+  deletedNodes: Set<string> = new Set();
+
   // This object is ONLY for the default relationtypes
   relationTypesById: Record<string, GraphRelationType> = defaultRelationTypes;
   nodesInLayerLoading: Set<string> = new Set([]);
@@ -107,6 +109,7 @@ export class GraphStore {
       user.id,
       (data: SerializedGraphStore) => this.resetAndLoad(data),
       (updates) => this.applyUpdates(updates),
+      (nodeId: string) => this.deletedNodes.delete(nodeId),
       authedFetch,
     );
     this.layerManager = new LayerManager(this);
@@ -1376,6 +1379,8 @@ export class GraphStore {
       node: node.serialize(),
     });
 
+    this.deletedNodes.add(node.id);
+
     return updates;
   }
 
@@ -2592,27 +2597,18 @@ export class GraphStore {
     const relationsById = serializeMap(this.relationsById);
     const relationTypesById = toJS(this.relationTypesById);
 
-    const relationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.allRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
-    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.pinnedRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
-    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce(
-      (acc, node) => {
-        acc[node.id] = node.noteContentRelationsList.serialize();
-        return acc;
-      },
-      {} as Record<string, SerializedPositionList<GraphRelation>>,
-    );
+    const relationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.allRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const pinnedRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.pinnedRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
+    const noteContentRelationsByNodeId = Array.from(this.nodesById.values()).reduce((acc, node) => {
+      acc[node.id] = node.noteContentRelationsList.serialize();
+      return acc;
+    }, {} as Record<string, SerializedPositionList<GraphRelation>>);
 
     return {
       usersById,
@@ -2636,6 +2632,9 @@ export class GraphStore {
 
     // Nodes
     for (const props of Object.values(data.nodesById)) {
+      if (this.deletedNodes.has(props.id)) {
+        continue;
+      }
       try {
         this.loadSerializedNode({ ...props });
       } catch (error) {
@@ -2665,6 +2664,10 @@ export class GraphStore {
 
     for (const props of Object.values(data.relationsById)) {
       try {
+        if (this.deletedNodes.has(props.fromId) || this.deletedNodes.has(props.toId)) {
+          continue;
+        }
+
         const rel = this.loadSerializedRelation(props);
 
         if (rel.from instanceof PlaceholderGraphObject || rel.to instanceof PlaceholderGraphObject) {

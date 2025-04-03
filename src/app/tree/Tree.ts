@@ -985,24 +985,14 @@ export class Tree {
         }
       }
 
-      const nodesToRemove: TxCombined = [];
       const relationsToRemove: TxCombined = [];
 
       selection.nodes.forEach((treeNode) => {
         const relationId = treeNode.relationWithParent.id;
-        // if (relationId === treeNode.object.canonicalRelation?.id) {
-        //   nodesToRemove.push({
-        //     type: "removeNode",
-        //     transaction: {
-        //       nodeId: treeNode.object.id,
-        //     },
-        //   });
-        // } else {
         relationsToRemove.push({ type: "removeRelation", transaction: { relationId } });
-        //}
       });
 
-      this.graphStore.applyCombinedTransaction([...relationsToRemove, ...nodesToRemove]);
+      this.graphStore.applyCombinedTransaction([...relationsToRemove]);
 
       nodesToConvert.map((node) => {
         this.convertSingleLineNoteToNode(node);

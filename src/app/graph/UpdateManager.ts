@@ -5,11 +5,11 @@ import Pusher from "pusher-js";
 import { env } from "@/app/envFrontend";
 import { generateInverseUpdates, GraphUpdate } from "@/app/graph/GraphUpdate";
 import { condenseSyncDataBatch, SyncData, SyncDataSchema } from "@/app/graph/SyncData";
-import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
+import { getEntityIdsFromUpdates } from "@/app/graph/utils";
+import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import { uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
 import { getGlobalGraphChannel, userIdToPusherChannel } from "@/lib/pusher";
-import { getEntityIdsFromUpdates } from "@/app/graph/utils";
 
 const logger = appLogger.child({ service: "UpdateManager" });
 
@@ -39,6 +39,7 @@ export class UpdateManager {
 
   private refetchCallback: (data: SerializedGraphStore) => void;
   private applyGraphUpdates: (updates: GraphUpdate[]) => void;
+  private removeFromDeletedNodes: (nodeId: string) => void;
 
   static incrementSyncCount(entityId: string): void {
     const currentCount = UpdateManager.pendingNodeSyncCounts.get(entityId) || 0;
@@ -62,6 +63,7 @@ export class UpdateManager {
     userId: string,
     refetchCallback: (data: SerializedGraphStore) => void,
     applyUpdatesFn: (updates: GraphUpdate[]) => void,
+    removeFromDeletedNodes: (nodeId: string) => void,
     // When undefined, the manager will not sync with the server
     authedFetch?: typeof fetch,
   ) {
@@ -69,6 +71,7 @@ export class UpdateManager {
     this.authedFetch = authedFetch;
     this.refetchCallback = refetchCallback;
     this.applyGraphUpdates = applyUpdatesFn;
+    this.removeFromDeletedNodes = removeFromDeletedNodes;
     makeObservable(this);
   }
 
@@ -223,6 +226,11 @@ export class UpdateManager {
     // The "undo" operation actually creates a new action rather than directly reverting the original changes.
     // This is so that the changes from undo can be synced with backend.
     const inverted = generateInverseUpdates(updates);
+    inverted.forEach((update) => {
+      if (update.operation === "addNode") {
+        this.removeFromDeletedNodes(update.node.id);
+      }
+    });
     this.applyGraphUpdates(inverted);
     const dataForSync: SyncData = {
       clientId: this.clientId,
