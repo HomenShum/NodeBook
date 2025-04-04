@@ -32,6 +32,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   const openNewTab = useOpenNewTab();
   const settingsStore = useSettingsStore();
   const { sidebarExpandedLocalHashtags: isExpanded } = settingsStore;
+  const [searchQuery, setSearchQuery] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const scrollParentRef = useRef<HTMLDivElement>(null);
@@ -82,6 +83,18 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     [getHashtagNodes, object, currentDepth, refreshTrigger],
   );
 
+  // Calculate total height once based on all hashtags
+  const totalHeight = useMemo(() => {
+    return localHashtags.length * 36; // 36px is our estimateSize
+  }, [localHashtags.length]);
+
+  // Filter hashtags based on search query
+  const filteredHashtags = useMemo(() => {
+    if (!searchQuery) return localHashtags;
+    return localHashtags.filter((hashtag) => hashtag.text.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [localHashtags, searchQuery]);
+
+
   useEffect(() => {
     const intervalId = setInterval(() => {
       setRefreshTrigger((prev) => prev + 1);
@@ -91,7 +104,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   }, []);
 
   const virtualizer = useVirtualizer({
-    count: localHashtags.length,
+    count: filteredHashtags.length,
     getScrollElement: () => scrollParentRef.current,
     estimateSize: () => 36, // Approximate height of each hashtag button
     overscan: 5,
@@ -160,6 +173,10 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     [setRoot, viewStore],
   );
 
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
+
   return (
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
@@ -172,16 +189,29 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
           </div>
         </div>
       </div>
+      {isExpanded && (
+        <div className={styles.SearchContainer}>
+          <input
+            type="text"
+            placeholder="Search hashtags..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className={styles.SearchInput}
+          />
+        </div>
+      )}
       <div
         ref={scrollParentRef}
         className={styles.SidebarTreeChildren}
         style={{
-          height: "100%",
+          height: isExpanded ? Math.min(totalHeight, 300) + "px" : "100%", // Cap at 300px height
           overflow: "auto",
         }}
       >
-        {isExpanded && localHashtags.length === 0 ? (
-          <div className={styles.EmptyMessage}>No local hashtags found</div>
+        {isExpanded && filteredHashtags.length === 0 ? (
+          <div className={styles.EmptyMessage}>
+            {searchQuery ? "No matching hashtags found" : "No local hashtags found"}
+          </div>
         ) : (
           isExpanded && (
             <div
@@ -192,7 +222,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
               }}
             >
               {virtualizer.getVirtualItems().map((virtualRow) => {
-                const hashtag = localHashtags[virtualRow.index];
+                const hashtag = filteredHashtags[virtualRow.index];
                 return (
                   <div
                     key={hashtag.id}

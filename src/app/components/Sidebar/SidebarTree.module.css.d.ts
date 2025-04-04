@@ -16,7 +16,9 @@ declare const styles: {
   readonly "PinButtonHover": string;
   readonly "PinIcon": string;
   readonly "Pinned": string;
+  readonly "SearchContainer": string;
   readonly "SearchIcon": string;
+  readonly "SearchInput": string;
   readonly "Selected": string;
   readonly "SidebarTreeBlock": string;
   readonly "SidebarTreeChildren": string;
