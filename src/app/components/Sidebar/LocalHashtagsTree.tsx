@@ -1,11 +1,11 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Maximize2, Play, Search } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useSettingsStore } from '@/app/contexts/SettingsStoreContext';
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
@@ -32,6 +32,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   const openNewTab = useOpenNewTab();
   const settingsStore = useSettingsStore();
   const { sidebarExpandedLocalHashtags: isExpanded } = settingsStore;
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const scrollParentRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +77,18 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     return Array.from(new Set(hashtags));
   }, []);
 
-  const localHashtags = useMemo(() => getHashtagNodes(object as GraphNode, currentDepth), [getHashtagNodes, object, currentDepth]);
+  const localHashtags = useMemo(
+    () => getHashtagNodes(object as GraphNode, currentDepth),
+    [getHashtagNodes, object, currentDepth, refreshTrigger],
+  );
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setRefreshTrigger((prev) => prev + 1);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   const virtualizer = useVirtualizer({
     count: localHashtags.length,
