@@ -378,7 +378,7 @@ export function LexicalMenu<TOption extends MenuOption>({
         KEY_TAB_COMMAND,
         (payload) => {
           const event = payload;
-          if (options === null || options.length === 0) {
+          if (options === null || options.length === 0 || event.shiftKey) {
             return false;
           }
           event.preventDefault();
