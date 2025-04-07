@@ -12,6 +12,7 @@ import { RefObject, useEffect } from "react";
 import { createConfig } from "@/app/editor/createConfig";
 import { ArrowKeyPlugin } from "@/app/editor/plugins/ArrowKeyPlugin";
 import { BackspaceMergeNodesPlugin } from "@/app/editor/plugins/BackspaceMergeNodesPlugin";
+import { ContextualGenerationPlugin } from "@/app/editor/plugins/ContextualGenerationPlugin";
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { FormatKeyPlugin } from "@/app/editor/plugins/FormatKeyPlugin";
@@ -30,10 +31,10 @@ import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin"
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
 import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
+import { ImageNode } from "@/app/graph/ImageNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useTree } from "@/app/tree/TreeContext";
-import { ImageNode } from "@/app/graph/ImageNode";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./Editor.module.css";
@@ -115,6 +116,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <PreventCommandBackspace />}
         {isEditorEditable && <RelationPlugin />}
         {isEditorEditable && <ReplacementPlugin treeNode={treeNode} />}
+        {isEditorEditable && <ContextualGenerationPlugin treeNode={treeNode} />}
         {isEditorEditable && <TodoPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
