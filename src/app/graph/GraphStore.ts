@@ -95,6 +95,7 @@ export class GraphStore {
   relationsById: Map<string, GraphRelation> = new Map();
 
   deletedNodes: Set<string> = new Set();
+  deletedRelations: Set<string> = new Set();
 
   // This object is ONLY for the default relationtypes
   relationTypesById: Record<string, GraphRelationType> = defaultRelationTypes;
@@ -110,6 +111,7 @@ export class GraphStore {
       (data: SerializedGraphStore) => this.resetAndLoad(data),
       (updates) => this.applyUpdates(updates),
       (nodeId: string) => this.deletedNodes.delete(nodeId),
+      (relationId: string) => this.deletedRelations.delete(relationId),
       authedFetch,
     );
     this.layerManager = new LayerManager(this);
@@ -1593,6 +1595,8 @@ export class GraphStore {
         });
       }
 
+      this.deletedRelations.add(relation.id);
+
       // Delete the relation itself
       this.deleteFromRelationsById(relation.id);
       this.cappedKeywordIndex.delete(relation.id);
@@ -2663,6 +2667,9 @@ export class GraphStore {
     const loadedWithPlaceholders: GraphRelation[] = [];
 
     for (const props of Object.values(data.relationsById)) {
+      if (this.deletedRelations.has(props.id)) {
+        continue;
+      }
       try {
         if (this.deletedNodes.has(props.fromId) || this.deletedNodes.has(props.toId)) {
           continue;

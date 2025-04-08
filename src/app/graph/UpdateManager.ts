@@ -40,6 +40,7 @@ export class UpdateManager {
   private refetchCallback: (data: SerializedGraphStore) => void;
   private applyGraphUpdates: (updates: GraphUpdate[]) => void;
   private removeFromDeletedNodes: (nodeId: string) => void;
+  private removeFromDeletedRelations: (relationId: string) => void;
 
   static incrementSyncCount(entityId: string): void {
     const currentCount = UpdateManager.pendingNodeSyncCounts.get(entityId) || 0;
@@ -64,6 +65,7 @@ export class UpdateManager {
     refetchCallback: (data: SerializedGraphStore) => void,
     applyUpdatesFn: (updates: GraphUpdate[]) => void,
     removeFromDeletedNodes: (nodeId: string) => void,
+    removeFromDeletedRelations: (relationId: string) => void,
     // When undefined, the manager will not sync with the server
     authedFetch?: typeof fetch,
   ) {
@@ -72,6 +74,7 @@ export class UpdateManager {
     this.refetchCallback = refetchCallback;
     this.applyGraphUpdates = applyUpdatesFn;
     this.removeFromDeletedNodes = removeFromDeletedNodes;
+    this.removeFromDeletedRelations = removeFromDeletedRelations;
     makeObservable(this);
   }
 
@@ -229,6 +232,9 @@ export class UpdateManager {
     inverted.forEach((update) => {
       if (update.operation === "addNode") {
         this.removeFromDeletedNodes(update.node.id);
+      }
+      if (update.operation === "addRelation") {
+        this.removeFromDeletedRelations(update.relation.id);
       }
     });
     this.applyGraphUpdates(inverted);
