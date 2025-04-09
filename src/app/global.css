@@ -250,3 +250,8 @@ body,
 ::highlight(text-highlights) {
   background-color: var(--teal-4);
 }
+
+/* Utility Classes */
+.long-title {
+  font-size: var(--font-size-h3) !important;
+}

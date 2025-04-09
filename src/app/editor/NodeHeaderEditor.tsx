@@ -14,6 +14,7 @@ import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugi
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
+import { TitleSizePlugin } from "@/app/editor/plugins/TitleSizePlugin";
 import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
 import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -52,6 +53,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
           </span>
         }
       />
+      <TitleSizePlugin />
       <DropdownPlugin treeNode={treeNode} />
       <EnterKeyPlugin treeNode={treeNode} />
       <IgnoreModShiftAPlugin />

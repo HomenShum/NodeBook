@@ -5,6 +5,7 @@ declare const styles: {
   readonly "dark-theme": string;
   readonly "light": string;
   readonly "light-theme": string;
+  readonly "long-title": string;
   readonly "root": string;
 };
 export = styles;
