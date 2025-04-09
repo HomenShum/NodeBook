@@ -155,6 +155,11 @@ body,
   --gray-indicator: #7f8b8b;
   --gray-track: #7f8b8b;
 
+  /* White and black variables that swap in dark mode */
+  --white: #FFF;
+  --white-lighter: #FFF;
+  --almost-black: #0D1212;
+
   --font-size-micro: 0.6875rem; /* 11px */
   --font-size-mini: 0.75rem; /* 12px */
   --font-size-xs: 0.8125rem; /* 13px */
@@ -235,6 +240,11 @@ body,
   --gray-surface: rgba(0, 0, 0, 0.05);
   --gray-indicator: #667373;
   --gray-track: #667373;
+  
+  /* White and black variables swapped for dark mode */
+  --white: #0D1212;
+  --white-lighter: #212424;
+  --almost-black: #FFF;
 }
 
 ::highlight(text-highlights) {

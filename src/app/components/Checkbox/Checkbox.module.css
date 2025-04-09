@@ -10,8 +10,8 @@
 }
 
 .CheckboxWrapper .CheckboxRound label {
-  background-color: #fff;
-  border: 1px solid #ccc;
+  background-color: var(--white-lighter);
+  border: 1px solid var(--gray-8);
   border-radius: 50%;
   cursor: pointer;
   height: 16px;
@@ -20,17 +20,17 @@
 }
 
 .CheckboxWrapper .CheckboxRound label:after {
-  border: 2px solid #fff;
+  border: 2px solid var(--white);
   border-top: none;
   border-right: none;
   content: "";
-  height: 6px;
-  left: 4px;
+  height: 5px;
+  left: 3px;
   opacity: 0;
   position: absolute;
   top: 4px;
   transform: rotate(-45deg);
-  width: 8px;
+  width: 10px;
 }
 
 .CheckboxWrapper .CheckboxRound input[type="checkbox"] {
