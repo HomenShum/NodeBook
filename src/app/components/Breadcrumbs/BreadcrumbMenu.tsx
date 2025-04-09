@@ -77,9 +77,21 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
 
   if (user.isAnonymous && !isLoading) {
     return (
-      <Button variant="active" size="sm" onClick={() => auth?.loginWithRedirect()}>
-        Sign in
-      </Button>
+      <>
+        <Button
+          style={{ position: "relative" }}
+          variant="default"
+          className={cn(s.ShowTooltip, s.BottomAlign)}
+          data-tooltip={`Command bar · ` + [`${modKeyName}`, "⇧", "K"].join("+")}
+          size="icon"
+          onClick={() => viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen)}
+        >
+          <Command size={14} strokeWidth={1.5} />
+        </Button>
+        <Button variant="active" size="sm" onClick={() => auth?.loginWithRedirect()}>
+          Sign in
+        </Button>
+      </>
     );
   }
 
