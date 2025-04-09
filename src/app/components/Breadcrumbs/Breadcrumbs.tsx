@@ -182,6 +182,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
     (node: TreeNode): BreadcrumbAncestors[] => {
       let curObject = node.object;
       const ancestors: BreadcrumbAncestors[] = [];
+      const visitedIds = new Set<string>([curObject.id]); // Track visited object IDs
 
       let canonicalRelationId: string | null | undefined = curObject.canonicalRelationId;
 
@@ -192,9 +193,11 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
           break;
         }
         const otherObject = getOtherObject(relation, curObject.id);
-        if (!otherObject) {
+        if (!otherObject || visitedIds.has(otherObject.id)) {
+          // Check for cycles
           break;
         }
+        visitedIds.add(otherObject.id);
         ancestors.unshift({
           object: otherObject,
           relationToChild: relation,
@@ -211,6 +214,9 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
 
   const getFullAncestorChain = useCallback(
     (baseAncestors: BreadcrumbAncestors[]): BreadcrumbAncestors[] => {
+      // Create a set of existing object IDs to prevent cycles
+      const existingIds = new Set<string>([...baseAncestors.map((a) => a.object.id), treeNode.object.id]);
+
       const hasUser =
         baseAncestors.some((elem) => elem.object.id.startsWith(USER_ROOT_ID_PREFIX)) ||
         treeNode.object.id.startsWith(USER_ROOT_ID_PREFIX);
@@ -221,8 +227,9 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
         const authorId = treeNode.object.authorId;
         const userNode = graphStore.getNode(USER_ROOT_ID_PREFIX + authorId);
 
-        if (userNode) {
+        if (userNode && !existingIds.has(userNode.id)) {
           const newAncestors = [...baseAncestors];
+          existingIds.add(userNode.id);
           newAncestors.unshift({
             object: userNode,
             relationToChild: null,
@@ -232,7 +239,8 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
 
           const usersNode = graphStore.usersNode;
           const usersToUserRel = graphStore.usersToUserRelation;
-          if (usersNode && usersToUserRel) {
+          if (usersNode && usersToUserRel && !existingIds.has(usersNode.id)) {
+            existingIds.add(usersNode.id);
             newAncestors.unshift({
               object: usersNode,
               relationToChild: usersToUserRel,
@@ -243,7 +251,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
 
           const globalRootNode = graphStore.globalRoot;
           const globalRootToUsersRel = graphStore.globalToUsersRelation;
-          if (globalRootNode && globalRootToUsersRel) {
+          if (globalRootNode && globalRootToUsersRel && !existingIds.has(globalRootNode.id)) {
             newAncestors.unshift({
               object: globalRootNode,
               relationToChild: globalRootToUsersRel,
