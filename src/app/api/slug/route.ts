@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { and, eq, isNotNull, ne } from "drizzle-orm";
+import { NextRequest, NextResponse } from "next/server";
 
 import { getDb } from "@/db";
 import { graphNodeTable } from "@/db/schema";
@@ -63,6 +63,7 @@ export async function GET(req: NextRequest) {
   try {
     const db = getDb();
     const nodeId = req.nextUrl.searchParams.get("nodeId");
+    const slug = req.nextUrl.searchParams.get("slug");
 
     let nodes = [];
 
@@ -71,6 +72,12 @@ export async function GET(req: NextRequest) {
         .select({ slug: graphNodeTable.slug, id: graphNodeTable.id })
         .from(graphNodeTable)
         .where(eq(graphNodeTable.id, nodeId))
+        .limit(1);
+    } else if (slug) {
+      nodes = await db
+        .select({ slug: graphNodeTable.slug, id: graphNodeTable.id })
+        .from(graphNodeTable)
+        .where(eq(graphNodeTable.slug, slug))
         .limit(1);
     } else {
       nodes = await db

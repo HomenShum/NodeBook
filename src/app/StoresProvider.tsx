@@ -1,7 +1,7 @@
 "use client";
+import axios from "axios";
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 
 import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { useAuth } from "@/app/auth/useAuth";
@@ -51,6 +51,16 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       rootLogger,
     };
   }
+
+  async function fetchSlug(slug: string) {
+    const response = await fetch(`/api/slug?slug=${slug}`);
+    const data = await response.json();
+    if (data.nodes.length > 0) {
+      return data.nodes[0].id;
+    }
+    return "";
+  }
+
   // when auth changes, clean up current stores and setup up new ones
   useEffect(() => {
     let ignore = false;
@@ -113,6 +123,18 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       let graph = new GraphStore(user, settings, authedFetch);
       const view = new ViewStore(settings, graph);
 
+      // Prefetch the current root objet - if it's a slug, fetch the slug, otherwise use the current path's last part
+      let currentRootId = "";
+      if (window) {
+        const pathParts = window.location.pathname.split("/").filter(Boolean);
+        if (pathParts.length > 0) {
+          if (pathParts.length === 1) {
+            currentRootId = await fetchSlug(pathParts[0]);
+          } else {
+            currentRootId = pathParts[pathParts.length - 1].replace(/%7C/g, "|").replace(/%3A/g, ":");
+          }
+        }
+      }
       // load and start sync
       let syncCleanup = () => {};
       try {
@@ -129,6 +151,10 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
               graph.myFavoritesNodeId,
               graph.myStreamNodeId,
             ];
+
+            if (currentRootId) {
+              objectIds.push(currentRootId);
+            }
 
             graph.layerManager.clear();
             await graph.layerManager.initialize(objectIds);
