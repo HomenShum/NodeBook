@@ -94,7 +94,7 @@ export const SearchBar = observer(function SearchBar() {
     if (CSS.highlights) {
       CSS.highlights.set("text-highlights", new Highlight());
     }
-  }, [viewStore.searchQuery]);
+  }, [viewStore.searchQuery, graphStore.nodesById]);
 
   return (
     <div
