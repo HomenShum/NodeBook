@@ -35,7 +35,7 @@ export class SettingsStore {
   public atHashtagReplacement = false;
   public showIdeapadLinkButton = false;
   public showExportSubtreeToIdeapad: boolean = false;
-  public showGraphViewButton = false;
+  public showGraphViewButton = true;
   public parseWithAiLinkingOption: ParseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   public showBulletForEmptyNode: boolean = false;
   public showNotifications: boolean = true;
@@ -88,7 +88,7 @@ export class SettingsStore {
     this.atHashtagReplacement = false;
     this.showIdeapadLinkButton = false;
     this.showExportSubtreeToIdeapad = false;
-    this.showGraphViewButton = false;
+    this.showGraphViewButton = true;
     this.parseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
     this.showBulletForEmptyNode = false;
     this.showNotifications = true;
