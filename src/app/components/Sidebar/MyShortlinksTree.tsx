@@ -1,15 +1,17 @@
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useSettingsStore } from '@/app/contexts/SettingsStoreContext';
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useSlugs } from "@/app/contexts/SlugContext";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+
+import { SidebarSearchBar } from "./SidebarSearchBar";
 
 import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
@@ -22,10 +24,17 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchAllSlugs();
   }, []);
+
+  // Filter slugs based on search query
+  const filteredSlugs = Object.entries(slugs).filter(([nodeId, slug]) => {
+    if (!searchQuery) return true;
+    return slug.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   const handleOnClick = async (e: React.MouseEvent<HTMLButtonElement>, nodeId: string) => {
     e.stopPropagation();
@@ -53,18 +62,29 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
         <div className={styles.HeaderLeft}>
           <span>My Shortlinks</span>
           <div className={styles.HeaderControls}>
-            <Button variant="ghost" className={styles.HeaderButton} onClick={() => settingsStore.setSidebarExpandedMyShortlinks(!isExpanded)}>
+            <Button
+              variant="ghost"
+              className={styles.HeaderButton}
+              onClick={() => settingsStore.setSidebarExpandedMyShortlinks(!isExpanded)}
+            >
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
           </div>
         </div>
       </div>
       {isExpanded && (
+        <SidebarSearchBar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          placeholder="Search shortlinks..."
+        />
+      )}
+      {isExpanded && (
         <div className={styles.SidebarTreeChildren}>
-          {Object.keys(slugs).length === 0 ? (
-            <div className={styles.EmptyMessage}>No links yet</div>
+          {filteredSlugs.length === 0 ? (
+            <div className={styles.EmptyMessage}>{searchQuery ? "No matching links found" : "No links yet"}</div>
           ) : (
-            Array.from(Object.keys(slugs)).map((nodeId) => (
+            filteredSlugs.map(([nodeId, slug]) => (
               <Button
                 onClick={(e) => handleOnClick(e, nodeId)}
                 key={nodeId}
@@ -72,7 +92,7 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
                 style={{ display: "flex" }}
                 className={cn(styles.Button)}
               >
-                /{slugs[nodeId]}
+                /{slug}
               </Button>
             ))
           )}

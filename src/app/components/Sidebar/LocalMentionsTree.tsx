@@ -1,17 +1,19 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Maximize2, Play, Search } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useSettingsStore } from '@/app/contexts/SettingsStoreContext';
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+
+import { SidebarSearchBar } from "./SidebarSearchBar";
 
 import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
@@ -32,6 +34,8 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   const settingsStore = useSettingsStore();
   const { sidebarExpandedLocalMentions: isExpanded } = settingsStore;
   const scrollParentRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Function to get mention nodes from forward traversal
   const getMentionNodes = useCallback((node: GraphNode, depth: number, visited = new Set<string>()): GraphNode[] => {
@@ -71,10 +75,32 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     return Array.from(new Set(mentions));
   }, []);
 
-  const localMentions = getMentionNodes(object as GraphNode, currentDepth);
+  const localMentions = useMemo(
+    () => getMentionNodes(object as GraphNode, currentDepth),
+    [getMentionNodes, object, currentDepth, refreshTrigger],
+  );
+
+  // Filter mentions based on search query
+  const filteredMentions = useMemo(() => {
+    if (!searchQuery) return localMentions;
+    return localMentions.filter((mention) => mention.text.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [localMentions, searchQuery]);
+
+  // Calculate total height once based on all mentions
+  const totalHeight = useMemo(() => {
+    return localMentions.length * 36; // 36px is our estimateSize
+  }, [localMentions.length]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setRefreshTrigger((prev) => prev + 1);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, []);
 
   const virtualizer = useVirtualizer({
-    count: localMentions.length,
+    count: filteredMentions.length,
     getScrollElement: () => scrollParentRef.current,
     estimateSize: () => 36, // Approximate height of each mention button
     overscan: 5,
@@ -155,16 +181,21 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
           </div>
         </div>
       </div>
+      {isExpanded && (
+        <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search mentions..." />
+      )}
       <div
         ref={scrollParentRef}
         className={styles.SidebarTreeChildren}
         style={{
-          height: "100%",
+          height: isExpanded ? Math.min(totalHeight, 300) + "px" : "100%", // Cap at 300px height
           overflow: "auto",
         }}
       >
-        {isExpanded && localMentions.length === 0 ? (
-          <div className={styles.EmptyMessage}>No local mentions found</div>
+        {isExpanded && filteredMentions.length === 0 ? (
+          <div className={styles.EmptyMessage}>
+            {searchQuery ? "No matching mentions found" : "No local mentions found"}
+          </div>
         ) : (
           isExpanded && (
             <div
@@ -175,7 +206,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
               }}
             >
               {virtualizer.getVirtualItems().map((virtualRow) => {
-                const mention = localMentions[virtualRow.index];
+                const mention = filteredMentions[virtualRow.index];
                 return (
                   <div
                     key={mention.id}

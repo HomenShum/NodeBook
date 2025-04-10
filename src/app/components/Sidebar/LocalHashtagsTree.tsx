@@ -14,6 +14,8 @@ import { useViewStore } from "@/app/view/useViewStore";
 import { USER_MY_HASHTAGS_NODE_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
+import { SidebarSearchBar } from "./SidebarSearchBar";
+
 import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
 
@@ -94,7 +96,6 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     return localHashtags.filter((hashtag) => hashtag.text.toLowerCase().includes(searchQuery.toLowerCase()));
   }, [localHashtags, searchQuery]);
 
-
   useEffect(() => {
     const intervalId = setInterval(() => {
       setRefreshTrigger((prev) => prev + 1);
@@ -173,10 +174,6 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     [setRoot, viewStore],
   );
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
-
   return (
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
@@ -190,15 +187,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
         </div>
       </div>
       {isExpanded && (
-        <div className={styles.SearchContainer}>
-          <input
-            type="text"
-            placeholder="Search hashtags..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            className={styles.SearchInput}
-          />
-        </div>
+        <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search hashtags..." />
       )}
       <div
         ref={scrollParentRef}

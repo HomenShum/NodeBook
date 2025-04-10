@@ -4,12 +4,14 @@ import { useCallback, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useSettingsStore } from '@/app/contexts/SettingsStoreContext';
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { removeFromFavorites } from "@/app/graph/favorites";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+
+import { SidebarSearchBar } from "./SidebarSearchBar";
 
 import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
@@ -26,9 +28,15 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
 
   const settingsStore = useSettingsStore();
   const { sidebarExpandedMyFavorites: isExpanded } = settingsStore;
+  const [searchQuery, setSearchQuery] = useState("");
 
   const object = graphStore.myFavoritesNode;
   const uniqueChildren = [...new Set(object.children)];
+
+  // Filter children based on search query
+  const filteredChildren = searchQuery
+    ? uniqueChildren.filter((child) => child.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    : uniqueChildren;
 
   const handleMaximizeClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -50,7 +58,11 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
         <div className={styles.HeaderLeft}>
           <span>My Favorites</span>
           <div className={styles.HeaderControls}>
-            <Button variant="ghost" className={styles.HeaderButton} onClick={() => settingsStore.setSidebarExpandedMyFavorites(!isExpanded)}>
+            <Button
+              variant="ghost"
+              className={styles.HeaderButton}
+              onClick={() => settingsStore.setSidebarExpandedMyFavorites(!isExpanded)}
+            >
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
             <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMaximizeClick(e)}>
@@ -59,11 +71,14 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
           </div>
         </div>
       </div>
+      {isExpanded && (
+        <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search favorites..." />
+      )}
       <div className={styles.SidebarTreeChildren}>
-        {isExpanded && uniqueChildren.length === 0 ? (
-          <div className={styles.EmptyMessage}>No favorites yet</div>
+        {isExpanded && filteredChildren.length === 0 ? (
+          <div className={styles.EmptyMessage}>{searchQuery ? "No matching favorites found" : "No favorites yet"}</div>
         ) : (
-          isExpanded && uniqueChildren.map((o) => <FavoriteItem key={o.id} object={o} />)
+          isExpanded && filteredChildren.map((o) => <FavoriteItem key={o.id} object={o} />)
         )}
       </div>
     </div>

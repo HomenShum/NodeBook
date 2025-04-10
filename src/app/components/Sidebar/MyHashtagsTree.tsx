@@ -5,12 +5,14 @@ import React, { useCallback, useState } from "react";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { useSettingsStore } from '@/app/contexts/SettingsStoreContext';
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { comparePositions } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+
+import { SidebarSearchBar } from "./SidebarSearchBar";
 
 import hashtagSidebarStyles from "./HashtagTree.module.css";
 import styles1 from "./ResizableSidebar.module.css";
@@ -30,6 +32,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
   const { sidebarExpandedMyHashtags: isExpanded } = settingsStore;
 
   const [sortType, setSortType] = useState<SortType>("alphanumeric");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const pinnedUniqueChildren = Array.from(
     new Set(
@@ -62,6 +65,15 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
 
   const uniqueChildren = sortNodes(object.children);
   const sortedPinnedChildren = sortNodes(pinnedUniqueChildren);
+
+  // Filter children based on search query
+  const filteredUniqueChildren = searchQuery
+    ? uniqueChildren.filter((child) => child.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    : uniqueChildren;
+
+  const filteredPinnedChildren = searchQuery
+    ? sortedPinnedChildren.filter((child) => child.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    : sortedPinnedChildren;
 
   const toggleSort = useCallback(() => {
     setSortType((current) => {
@@ -157,8 +169,9 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           variant="ghost"
           className={styles.HeaderButton}
           onClick={toggleSort}
-          title={`Sort by ${sortType === "alphanumeric" ? "creation date" : sortType === "created" ? "tree view order" : "name"
-            }`}
+          title={`Sort by ${
+            sortType === "alphanumeric" ? "creation date" : sortType === "created" ? "tree view order" : "name"
+          }`}
         >
           {sortType === "alphanumeric" ? (
             <SortAsc size={14} />
@@ -169,9 +182,12 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           )}
         </Button>
       </div>
+      {isExpanded && (
+        <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search hashtags..." />
+      )}
       <div className={styles.SidebarTreeChildren}>
         {isExpanded &&
-          sortedPinnedChildren.map((o) => (
+          filteredPinnedChildren.map((o) => (
             <div key={o.id} className={hashtagSidebarStyles.HashtagRow}>
               <Button
                 variant="ghost"
@@ -195,17 +211,17 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
             </div>
           ))}
       </div>
-      {isExpanded && sortedPinnedChildren.length > 0 && (
+      {isExpanded && filteredPinnedChildren.length > 0 && (
         <div style={{ paddingLeft: "20px", width: "100%" }}>
           <hr style={{ width: "100%", opacity: "0.3", margin: "4px 0" }} />
         </div>
       )}
       <div className={styles.SidebarTreeChildren}>
-        {isExpanded && uniqueChildren.length === 0 ? (
-          <div className={styles.EmptyMessage}>No hashtags yet</div>
+        {isExpanded && filteredUniqueChildren.length === 0 ? (
+          <div className={styles.EmptyMessage}>{searchQuery ? "No matching hashtags found" : "No hashtags yet"}</div>
         ) : (
           isExpanded &&
-          uniqueChildren.map((o) => {
+          filteredUniqueChildren.map((o) => {
             const relation = object.relations.find((r) => r.from.id === object.id && r.to.id === o.id);
             return (
               <div key={o.id} className={hashtagSidebarStyles.HashtagRow}>
