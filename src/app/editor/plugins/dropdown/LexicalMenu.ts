@@ -398,6 +398,7 @@ export function LexicalMenu<TOption extends MenuOption>({
         (payload) => {
           const event = payload;
           let curSelectedIndex: number | null = selectedIndex;
+
           if (options === null) {
             return false;
           }
@@ -410,6 +411,10 @@ export function LexicalMenu<TOption extends MenuOption>({
           // Only return true if the dropdown type is a hashtag mention.
           const option = options[curSelectedIndex];
           if (option instanceof MentionTypeaheadOption && option.value.trigger === HASHTAG_SYMBOL) {
+            if (matchingString === " " || matchingString?.length === 0) {
+              close();
+              return false;
+            }
             const optionIsNew = option.value.type === "new";
             // If the match is exact, complete the match. If it is inexact, create a new node.
             const matchIsExact = option.value.type === "existing" && option.value.object.text === "#" + matchingString;

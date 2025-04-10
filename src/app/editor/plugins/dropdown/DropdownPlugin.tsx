@@ -119,6 +119,10 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       // Open mention dropdown after @ match
       const match = checkForMentionMatch(textBeforeCursor, settingsStore.useRoamResearchStyleMention);
       if (match) {
+        // If the match is a hashtag and it contains a space, don't open the dropdown.
+        if (match.matchingString.indexOf(" ") !== -1 && match.mentionTrigger === HASHTAG_SYMBOL) {
+          return null;
+        }
         const queryString = match.matchingString;
         setSearchText(queryString);
         setDropdown((prev) => ({
