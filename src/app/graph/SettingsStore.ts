@@ -29,7 +29,7 @@ export class SettingsStore {
   public disableCycles = true;
   public addStreamLabeledRelationsToMyLists = true;
   public allowShiftTabAboveViewRoot = false;
-  public hidePinnedItems = false;
+  public hidePinnedItems = true;
   public publicMode = true;
   public triggerRelationOnSingleColon = false;
   public atHashtagReplacement = false;
@@ -83,7 +83,7 @@ export class SettingsStore {
     this.disableCycles = true;
     this.addStreamLabeledRelationsToMyLists = true;
     this.allowShiftTabAboveViewRoot = false;
-    this.hidePinnedItems = false;
+    this.hidePinnedItems = true;
     this.triggerRelationOnSingleColon = false;
     this.atHashtagReplacement = false;
     this.showIdeapadLinkButton = false;
