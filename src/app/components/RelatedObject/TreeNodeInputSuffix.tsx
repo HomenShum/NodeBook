@@ -80,7 +80,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
               tree.moveSelectedNodesDown();
               break;
             }
-            isMod ? tree.expandAtSelection() : tree.moveEditorSelectionDown("start");
+            isMod ? tree.expandAtSelection() : tree.moveEditorSelectionDown("end");
             break;
           case "ArrowUp":
             e.preventDefault();
@@ -90,7 +90,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
               tree.moveSelectedNodesUp();
               break;
             }
-            e.metaKey || e.ctrlKey ? tree.collapseAtSelection() : tree.moveEditorSelectionUp("start");
+            e.metaKey || e.ctrlKey ? tree.collapseAtSelection() : tree.moveEditorSelectionUp("end");
             break;
           case "ArrowLeft":
             e.preventDefault();

@@ -25,6 +25,7 @@ import { SelectionStack } from "@/app/tree/SelectionStack";
 import { SortOptionLocalStorageCache } from "@/app/tree/SortOptionLocalStorageCache";
 import { comparePositions, compareTimestamps, ObjectPath, uuid } from "@/app/util";
 import { ViewType } from "@/app/view/types";
+import { NON_EDITABLE_OBJECT_PREFIXES } from "@/lib/constants";
 import appLogger from "@/lib/logger";
 
 import {
@@ -1901,6 +1902,49 @@ export class Tree {
     this.setFocusedNode(selection.anchorNodeId, position, false);
   }
 
+  calculateNewPosition(
+    selection: TreeSelectionWithNodes,
+    next: TreeNode,
+    position: TreeNodeContentSelectionPosition,
+  ): TreeNodeContentSelectionPosition {
+    let newPosition = position;
+    console.log("position", position);
+    // If we are using anchor and focus offsets, and the next node has less length than the offsets, the position should just be the end of the node.
+    if (
+      selection.type === "editor" &&
+      typeof selection.position === "object" &&
+      "anchorOffset" in selection.position &&
+      "focusOffset" in selection.position &&
+      selection.position.anchorOffset > 0 &&
+      selection.position.focusOffset > 0
+    ) {
+      if (
+        next &&
+        (next.object.text.length < selection.position.anchorOffset ||
+          next.object.text.length < selection.position.focusOffset)
+      ) {
+        newPosition = {
+          anchorOffset: next.object.text.length,
+          focusOffset: next.object.text.length,
+        };
+      }
+    }
+    // If the next node is not editable, we should move the focus to the end of the node.
+    if (
+      !next ||
+      next.object.objectType === "relation" ||
+      NON_EDITABLE_OBJECT_PREFIXES.some((prefix) => next.object.id.startsWith(prefix))
+    ) {
+      if (typeof position !== "string" && !(position.anchorOffset === 0 || position.focusOffset === 0)) {
+        newPosition = "end";
+      }
+      if (typeof newPosition === "object" && newPosition.anchorOffset === 0 && newPosition.focusOffset === 0) {
+        newPosition = "start";
+      }
+    }
+    console.log("newPosition", newPosition);
+    return newPosition;
+  }
   /**
    * Move selection from the current node to the next one up.
    */
@@ -1910,8 +1954,10 @@ export class Tree {
     const treeNode = selection.type === "editor" ? selection.treeNode : selection.top;
     const editMode = selection.type === "editor" ? selection.editMode : false;
     const next = getNextAbove(treeNode) || selection.top;
+
     if (!next) return false;
-    this.setFocusedNode(next.path, position, editMode);
+    let newPosition = this.calculateNewPosition(selection, next, position);
+    this.setFocusedNode(next.path, newPosition, editMode);
     return true;
   }
 
@@ -1928,11 +1974,12 @@ export class Tree {
     const editMode = selection.type === "editor" ? selection.editMode : false;
     if (!next) return false;
     const firstChild = next.visibleChildren[0];
+    let newPosition = this.calculateNewPosition(selection, next, position);
     if (firstChild && isNoteContent(firstChild)) {
-      this.setFocusedNode(firstChild.path, position, editMode);
+      this.setFocusedNode(firstChild.path, newPosition, editMode);
       return true;
     } else {
-      this.setFocusedNode(next.path, position, editMode);
+      this.setFocusedNode(next.path, newPosition, editMode);
       return true;
     }
   }
@@ -2098,7 +2145,7 @@ export class Tree {
 
     try {
       const expandedPaths = await this.expansionStateManager.loadExpansionState(this.rootObjectId);
-      if (!expandedPaths || expandedPaths.length === 0) {
+      if (expandedPaths === null) {
         logger.debug(`No server expansion state found for root: ${this.rootObjectId}, using local state`);
         return;
       }
@@ -2183,7 +2230,7 @@ export class Tree {
 
     try {
       const expandedPaths = await this.expansionStateManager.loadExpansionState(this.rootObjectId);
-      if (!expandedPaths || expandedPaths.length === 0) {
+      if (expandedPaths === null) {
         logger.debug(`No server expansion state found for root: ${this.rootObjectId}`);
         return false;
       }

@@ -17,3 +17,8 @@ export const DEFAULT_CARD_STATUSES = ["Not Acknowledged", "Acknowledged", "In Pr
 export const GLOBAL_HASHTAGS_NODE_ID = "global-hashtags-id";
 export const GLOBAL_ROOT_TO_HASHTAGS_RELATION_ID = "global-root-to-hashtags-relation-id";
 export const GLOBAL_HASHTAGS_TO_USER_HASHTAGS_RELATION_ID_PREFIX = "global-hashtags-to-user-hashtags-id-";
+export const NON_EDITABLE_OBJECT_PREFIXES = [
+  USER_MY_HASHTAGS_NODE_ID_PREFIX,
+  USER_MY_FAVORITES_NODE_ID_PREFIX,
+  USER_MY_TEMPLATES_NODE_ID_PREFIX,
+];

@@ -20,7 +20,8 @@ import styles1 from "./ResizableSidebar.module.css";
 import styles from "./SidebarTree.module.css";
 
 // Maximum depth for traversing relations
-const MAX_TRAVERSAL_DEPTH = 2;
+const MAX_TRAVERSAL_DEPTH = 5;
+const MAX_SEARCH_SIZE = 1000;
 
 interface TreeElementProps {
   object: GraphObject;
@@ -41,7 +42,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
 
   // Function to get hashtag nodes from forward traversal
   const getHashtagNodes = useCallback((node: GraphNode, depth: number, visited = new Set<string>()): GraphNode[] => {
-    if (depth >= MAX_TRAVERSAL_DEPTH || visited.has(node.id)) {
+    if (depth >= MAX_TRAVERSAL_DEPTH || visited.has(node.id) || visited.size >= MAX_SEARCH_SIZE) {
       return [];
     }
 

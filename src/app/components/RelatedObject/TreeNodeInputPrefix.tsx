@@ -19,7 +19,7 @@ type Props = {
  * When isEditorEditable is false, it becomes responsible for grabbing the
  * selection in response to tree selection changes.
  */
-export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeNode, isEditorEditable }: Props) {
+export const TreeNodeInputPrefix = observer(function TreeNodeInputPrefix({ treeNode, isEditorEditable }: Props) {
   const tree = treeNode.tree;
   const graphStore = useGraphStore();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -132,7 +132,7 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputSuffix({ treeN
               tree.moveSelectedNodesUp();
               break;
             }
-            e.metaKey || e.ctrlKey ? tree.collapseAtSelection() : tree.moveEditorSelectionUp("end");
+            e.metaKey || e.ctrlKey ? tree.collapseAtSelection() : tree.moveEditorSelectionUp("start");
             break;
           case "ArrowDown":
             e.preventDefault();
