@@ -1,3 +1,4 @@
+import { Search } from "lucide-react";
 import React, { useCallback, useRef } from "react";
 
 import styles from "./SidebarTree.module.css";
@@ -32,16 +33,19 @@ export function SidebarSearchBar({ searchQuery, setSearchQuery, placeholder = "S
 
   return (
     <div className={styles.SearchContainer}>
-      <input
-        ref={inputRef}
-        type="text"
-        placeholder={placeholder}
-        value={searchQuery}
-        onChange={handleSearchChange}
-        onKeyDown={handleKeyDown}
-        className={styles.SearchInput}
-        style={{ outline: "none" }} // Disable blue outline when focused
-      />
+      <div className={styles.SearchInputWrapper}>
+        <Search size={14} className={styles.SearchInputIcon} />
+        <input
+          ref={inputRef}
+          type="text"
+          placeholder={placeholder}
+          value={searchQuery}
+          onChange={handleSearchChange}
+          onKeyDown={handleKeyDown}
+          className={`${styles.SearchInput} ${searchQuery ? styles.SearchInputActive : ''}`}
+          style={{ outline: "none" }} // Disable blue outline when focused
+        />
+      </div>
     </div>
   );
 }

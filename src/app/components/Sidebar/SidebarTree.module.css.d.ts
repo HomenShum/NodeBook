@@ -19,6 +19,9 @@ declare const styles: {
   readonly "SearchContainer": string;
   readonly "SearchIcon": string;
   readonly "SearchInput": string;
+  readonly "SearchInputActive": string;
+  readonly "SearchInputIcon": string;
+  readonly "SearchInputWrapper": string;
   readonly "Selected": string;
   readonly "SidebarTreeBlock": string;
   readonly "SidebarTreeChildren": string;
