@@ -62,6 +62,9 @@ export class ViewStore {
   public notificationPaneOpen = false;
   public jumpToNodeId: string | null = null;
 
+  // Stack to store scroll positions with their corresponding object IDs
+  private scrollPositionStack: Array<{ position: number }> = [];
+
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.isCommandBarOpen = false;
     this.makeObservable();
@@ -154,6 +157,8 @@ export class ViewStore {
         setNotificationPaneOpen: action,
         jumpToNodeId: observable,
         setSrcForImageViewer: action,
+        saveScrollPosition: action,
+        restoreScrollPosition: action,
       });
     }
   }
@@ -374,5 +379,39 @@ export class ViewStore {
 
   setNotificationPaneOpen(state: boolean) {
     this.notificationPaneOpen = state;
+  }
+
+  // Save scroll position for a given object ID
+  saveScrollPosition(objectId: string) {
+    if (typeof window !== "undefined") {
+      const contentContainer = document.querySelector("[data-scroll-id='ContentContainer']");
+      if (contentContainer) {
+        console.log("saving scroll position", objectId, contentContainer.scrollTop);
+        this.scrollPositionStack.push({
+          position: contentContainer.scrollTop,
+        });
+      }
+    }
+  }
+
+  // Restore scroll position for the previous page
+  restoreScrollPosition(currentObjectId: string) {
+    // Find and remove the last matching position for this object ID
+    const index = this.scrollPositionStack.length - 1;
+    if (index !== -1) {
+      const { position } = this.scrollPositionStack[index];
+      // Remove this and all subsequent positions from the stack
+      this.scrollPositionStack.pop();
+
+      console.log("restoring scroll position", currentObjectId, position);
+      if (typeof window !== "undefined") {
+        requestAnimationFrame(() => {
+          const contentContainer = document.querySelector("[data-scroll-id='ContentContainer']");
+          if (contentContainer) {
+            contentContainer.scrollTop = position;
+          }
+        });
+      }
+    }
   }
 }

@@ -238,6 +238,10 @@ export function useSetMainRoot() {
   const router = useRouter();
   return useCallback(
     (obj: ObjectPath | GraphObject) => {
+      // Save scroll position for current object before navigating
+      const currentObjectId = viewStore.mainView.root.object.id;
+      viewStore.saveScrollPosition(currentObjectId);
+
       // See if shift key is pressed
       const objectPath = isGraphObject(obj) ? getCanonicalPath(obj) : obj;
       viewStore.setRoot(objectPath);

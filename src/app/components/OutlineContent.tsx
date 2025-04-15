@@ -171,6 +171,7 @@ function OutlineContent({ tree }: Props) {
     <div
       id={tree.id}
       tabIndex={-1}
+      data-scroll-id={"ContentContainer"}
       className={cn(
         appStyles.ContentContainer,
         (tree.isMainTree || (tree instanceof SearchTree && tree.isMainSearchTree)) &&

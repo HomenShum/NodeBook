@@ -18,6 +18,7 @@ import { getOtherObject } from "@/app/graph/utils";
 import { TreeNode } from "@/app/tree/nodes";
 import { BreadcrumbAncestors, useSetMainRoot } from "@/app/tree/utils";
 import { truncateText, useIsMobile } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
 import { GLOBAL_ROOT_ID, USER_ROOT_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -177,6 +178,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   const setRoot = useSetMainRoot();
   const graphStore = useGraphStore();
   const router = useRouter();
+  const viewStore = useViewStore();
 
   const getCanonicalAncestors = useCallback(
     (node: TreeNode): BreadcrumbAncestors[] => {
@@ -294,7 +296,16 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
           size="icon"
           className={cn(s.ShowTooltip, s.BottomAlign)}
           data-tooltip="Go back"
-          onClick={() => router.back()}
+          onClick={() => {
+            // Get the current object ID before navigating back
+            const currentObjectId = treeNode.object.id;
+            router.back();
+            // After navigation, restore scroll position
+            // We need to wait for the navigation to complete
+            setTimeout(() => {
+              viewStore.restoreScrollPosition(currentObjectId);
+            }, 40); // Race condition :(
+          }}
         >
           <ArrowLeft size={14} strokeWidth={1.5} />
         </Button>
