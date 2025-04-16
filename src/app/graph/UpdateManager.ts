@@ -247,6 +247,18 @@ export class UpdateManager {
     if (env.persistTo === "server") {
       this.syncQueue.push(dataForSync);
     }
+
+    // After undo is complete, try to restore the appropriate selection state
+    // This is done via a custom event that the ViewStore listens for
+    setTimeout(() => {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("restore-selection-state", {
+            detail: { updates },
+          }),
+        );
+      }
+    }, 50);
   }
 
   redo() {

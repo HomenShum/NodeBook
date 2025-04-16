@@ -2,10 +2,12 @@ import { LexicalEditor } from "lexical";
 import { action, computed, isObservable, makeAutoObservable, observable } from "mobx";
 
 import { GraphStore } from "@/app/graph/GraphStore";
+import { GraphUpdate } from "@/app/graph/GraphUpdate";
 import { SettingsStore } from "@/app/graph/SettingsStore";
 import { SerializedViewStore } from "@/app/persistence/SerializedData";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { SearchTree } from "@/app/tree/SearchTree";
+import { SelectionState } from "@/app/tree/SelectionState";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Path, Root, Tree } from "@/app/tree/Tree";
 import { makeAutoSaving } from "@/app/util";
@@ -65,6 +67,12 @@ export class ViewStore {
   // Stack to store scroll positions with their corresponding object IDs
   private scrollPositionStack: Array<{ position: number }> = [];
 
+  /**
+   * History of selection states for undo operations
+   */
+  @observable.shallow
+  selectionHistory: SelectionState[] = [];
+
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.isCommandBarOpen = false;
     this.makeObservable();
@@ -95,6 +103,23 @@ export class ViewStore {
     this.quickCaptureTree = new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.myStreamNode, {
       viewType: this.quickCaptureViewType,
     });
+
+    // Set up event listener for selection state tracking from Tree operations
+    if (typeof window !== "undefined") {
+      window.addEventListener("track-selection-state", ((event: CustomEvent) => {
+        if (event.detail) {
+          this.trackSelectionState(event.detail);
+        }
+      }) as EventListener);
+
+      // Set up event listener for restoring selection state after undo operations
+      window.addEventListener("restore-selection-state", ((event: CustomEvent) => {
+        console.log("restoring selection state", event.detail);
+        if (event.detail && event.detail.updates) {
+          this.restoreSelectionStateForUpdates(event.detail.updates);
+        }
+      }) as EventListener);
+    }
   }
   /**
    * Return state associated with the main view.
@@ -159,6 +184,9 @@ export class ViewStore {
         setSrcForImageViewer: action,
         saveScrollPosition: action,
         restoreScrollPosition: action,
+        selectionHistory: observable.shallow,
+        trackSelectionState: action,
+        restoreSelectionStateForUpdates: action,
       });
     }
   }
@@ -412,6 +440,84 @@ export class ViewStore {
           }
         });
       }
+    }
+  }
+
+  /**
+   * Tracks a selection state that should be restored if the associated operation is undone
+   *
+   * @param state The selection state to track
+   */
+  trackSelectionState(state: SelectionState) {
+    this.selectionHistory.push(state);
+
+    // Limit history size to prevent memory issues
+    if (this.selectionHistory.length > 100) {
+      this.selectionHistory.shift();
+    }
+  }
+
+  /**
+   * Attempts to restore the selection state for a set of graph updates that are being undone
+   *
+   * @param updates The graph updates being undone
+   * @returns true if a selection state was found and restored, false otherwise
+   */
+  restoreSelectionStateForUpdates(updates: GraphUpdate[]): boolean {
+    // Get all update IDs
+    const updateIds = updates
+      .map((update) => {
+        // Extract relevant IDs based on update operation
+        if (update.operation === "addNode") return update.node.id;
+        if (update.operation === "addRelation") return update.relation.id;
+        // For updates that modify existing entities, use the entity ID
+        if (update.operation === "updateNode") return update.oldProps.id;
+        if (update.operation === "updateRelation") return update.oldProps.id;
+        if (update.operation === "deleteNode") return update.node.id;
+        if (update.operation === "deleteRelation") return update.deleted.relation.id;
+        if (update.operation === "updateRelationList") return update.relationId;
+        return "";
+      })
+      .filter((id) => id !== "");
+
+    // Find the last matching selection state
+    for (let i = this.selectionHistory.length - 1; i >= 0; i--) {
+      const state = this.selectionHistory[i];
+
+      // Check if any of the IDs in the updates match the associated IDs
+      const hasMatch = state.associatedGraphUpdateIds.some((id) => updateIds.includes(id));
+
+      if (hasMatch) {
+        // Found a matching state, now try to restore it
+        const tree = this.getTreeByType(state.treeType);
+        if (tree) {
+          // Use the tree's selection mechanism to set the focus
+          tree.setFocusedNode(state.editorPath, state.position);
+
+          // Remove the selection state we just used
+          this.selectionHistory.splice(i, 1);
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Get a tree by its type
+   */
+  private getTreeByType(treeType: string): Tree | null {
+    switch (treeType) {
+      case "main":
+        return this.mainView;
+      case "quickCapture":
+        return this.quickCaptureView;
+      default:
+        // Check sidebar trees
+        const sidebarTree = this.sidebarTrees.find((tree) => tree.id === treeType);
+        if (sidebarTree) return sidebarTree;
+        return null;
     }
   }
 }

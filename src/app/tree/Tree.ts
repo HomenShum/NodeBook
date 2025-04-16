@@ -38,6 +38,7 @@ import {
   TreeNode,
 } from "./nodes";
 import { TreeNodeContentSelectionPosition, TreeSelection, TreeSelectionWithNodes } from "./selection";
+import { SelectionState } from "./SelectionState";
 import {
   createDescendantTreeNodesById,
   createPath,
@@ -1012,6 +1013,39 @@ export class Tree {
     const selection = this.selectionWithNodes;
     if (!selection) return false;
 
+    // Create selection state to track
+    const createSelectionState = (
+      operation: SelectionState["operation"],
+      nodeId: string,
+      path: string,
+    ): SelectionState => {
+      // Determine which tree we're in
+      let treeType = "main";
+
+      // Check if we're in a special tree - this.isMainTree is already set during construction
+      if (this.isMainTree) {
+        treeType = "main";
+      } else if (this.viewType === ViewType.Note) {
+        treeType = "quickCapture";
+      } else {
+        treeType = this.id;
+      }
+
+      // Create the selection state
+      const selectionState: SelectionState = {
+        nodeId,
+        previousNodeId: nodeId,
+        treeType,
+        editorPath: path,
+        operation,
+        position: "start",
+        timestamp: Date.now(),
+        associatedGraphUpdateIds: [], // Will be filled later
+      };
+
+      return selectionState;
+    };
+
     // indent multiline note when focused on first line
     if (selection.type === "editor") {
       const node = selection.treeNode;
@@ -1023,7 +1057,22 @@ export class Tree {
           if (isFirstLine && noteContentNodes.length > 1) {
             const siblingAbove = parent.siblingAbove;
             if (siblingAbove instanceof DescendantTreeNode) {
+              // Create selection state for tracking
+              const selState = createSelectionState("INDENT", node.object.id, node.path);
+
+              // Perform the operation
               await siblingAbove.addChildren([parent], -1);
+
+              // Track the selection state - we'll need to access this via an event
+              // for the global view store to capture
+              if (typeof window !== "undefined") {
+                window.dispatchEvent(
+                  new CustomEvent("track-selection-state", {
+                    detail: selState,
+                  }),
+                );
+              }
+
               // preserve editor focus
               if (this.selection?.type === "editor") {
                 const newParentPath = siblingAbove.childrenGroupsById.all.createChildPath(parent);
@@ -1041,11 +1090,26 @@ export class Tree {
     if (selection?.subtreeRoots.some((node) => node instanceof PointerTreeNode)) {
       return true;
     }
+
     for (const nodes of groupSiblings(selection?.subtreeRoots ?? [])) {
       if (nodes.length === 0) continue;
       const { parentGroup, siblingAbove } = nodes[0];
       if (parentGroup !== siblingAbove?.parentGroup) continue; // can't indent selections that span groups
+
+      // Create selection state for tracking
+      const selState = createSelectionState("INDENT", nodes[0].object.id, nodes[0].path);
+
+      // Perform the operation
       await siblingAbove.addChildren(nodes, -1);
+
+      // Track the selection state
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("track-selection-state", {
+            detail: selState,
+          }),
+        );
+      }
     }
     return true;
   }
@@ -1059,6 +1123,39 @@ export class Tree {
     const selection = this.selectionWithNodes;
     if (!selection) return false;
 
+    // Create selection state to track
+    const createSelectionState = (
+      operation: SelectionState["operation"],
+      nodeId: string,
+      path: string,
+    ): SelectionState => {
+      // Determine which tree we're in
+      let treeType = "main";
+
+      // Check if we're in a special tree - this.isMainTree is already set during construction
+      if (this.isMainTree) {
+        treeType = "main";
+      } else if (this.viewType === ViewType.Note) {
+        treeType = "quickCapture";
+      } else {
+        treeType = this.id;
+      }
+
+      // Create the selection state
+      const selectionState: SelectionState = {
+        nodeId,
+        previousNodeId: nodeId,
+        treeType,
+        editorPath: path,
+        operation,
+        position: "start",
+        timestamp: Date.now(),
+        associatedGraphUpdateIds: [], // Will be filled later
+      };
+
+      return selectionState;
+    };
+
     // dedent multiline note when focused on first line
     if (selection.type === "editor") {
       const node = selection.treeNode;
@@ -1070,7 +1167,22 @@ export class Tree {
           if (isFirstLine && noteContentNodes.length > 1) {
             const grandparent = parent.parent;
             if (grandparent instanceof RootTreeNode) return false;
+
+            // Create selection state for tracking
+            const selState = createSelectionState("DEDENT", node.object.id, node.path);
+
+            // Perform the operation
             await grandparent.parentGroup.add([parent], grandparent);
+
+            // Track the selection state
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(
+                new CustomEvent("track-selection-state", {
+                  detail: selState,
+                }),
+              );
+            }
+
             // preserve editor focus
             if (this.selection?.type === "editor") {
               const newParentPath = grandparent.parentGroup.createChildPath(parent);
@@ -1092,7 +1204,20 @@ export class Tree {
       const parent = nodes[0].parent;
       if (parent instanceof RootTreeNode) continue; // can't dedent past the root
 
+      // Create selection state for tracking
+      const selState = createSelectionState("DEDENT", nodes[0].object.id, nodes[0].path);
+
+      // Perform the operation
       await parent.parentGroup.add(nodes, parent);
+
+      // Track the selection state
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("track-selection-state", {
+            detail: selState,
+          }),
+        );
+      }
     }
     return true;
   }
