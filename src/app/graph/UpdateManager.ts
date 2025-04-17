@@ -15,6 +15,15 @@ const logger = appLogger.child({ service: "UpdateManager" });
 
 const pusher = new Pusher(env.pusherKey, { cluster: env.pusherCluster });
 
+/**
+ * Represents a transaction that can be undone/redone, potentially with selection state
+ */
+export interface TransactionObject {
+  updates: GraphUpdate[];
+  hasSelectionState: boolean;
+  id: string; // Unique ID for this transaction, used to match selection states
+}
+
 export class UpdateManager {
   private clientId = uuid();
   private userId: string;
@@ -23,10 +32,22 @@ export class UpdateManager {
   private static pendingNodeSyncCounts = new Map<string, number>();
   private nextSyncId: ReturnType<typeof setTimeout> | number = 0;
 
+  /**
+   * Flag to indicate that the next update will have a selection state
+   * This is set by operations like indentSelection before they modify the graph
+   */
+  nextUpdateHasSelectionState: boolean = false;
+
+  /**
+   * The ID of the last transaction that was created
+   * Used to associate selection states with their transactions
+   */
+  lastTransactionId: string | null = null;
+
   @observable.shallow
-  private undoStack: GraphUpdate[][] = [];
+  private undoStack: TransactionObject[] = [];
   @observable.shallow
-  private redoStack: GraphUpdate[][] = [];
+  private redoStack: TransactionObject[] = [];
 
   syncQueue: SyncData[] = [];
 
@@ -83,7 +104,7 @@ export class UpdateManager {
    */
   @computed
   get sessionUpdates() {
-    return this.undoStack;
+    return this.undoStack.map((transaction) => transaction.updates);
   }
 
   // TODO not sure about these
@@ -200,31 +221,58 @@ export class UpdateManager {
     return oldText === newText;
   }
 
-  queueUpdates(updates: GraphUpdate[]) {
+  /**
+   * Queue updates to be undone/redone and synced with the server.
+   *
+   * @param updates The graph updates
+   * @param hasSelectionState Whether this update has an associated selection state
+   */
+  queueUpdates(updates: GraphUpdate[], hasSelectionState: boolean = false) {
+    // Generate a unique ID for this transaction
+    const transactionId = uuid();
+    this.lastTransactionId = transactionId;
+
+    // Check if this update has been marked as having a selection state
+    hasSelectionState = hasSelectionState || this.nextUpdateHasSelectionState;
+    this.nextUpdateHasSelectionState = false; // Reset the flag
+
     // If the update is an updateNode link conversion, add it to the most recent element on the undoStack
     // because if not, then the undo will not work.
     if (this.undoStack.length > 0 && this.isTextSame(updates)) {
-      this.undoStack[this.undoStack.length - 1].push(updates[0]);
+      this.undoStack[this.undoStack.length - 1].updates.push(updates[0]);
     } else {
-      this.undoStack.push(updates);
+      this.undoStack.push({
+        updates,
+        hasSelectionState,
+        id: transactionId,
+      });
     }
+
     this.redoStack = [];
+
     const dataForSync: SyncData = {
       clientId: this.clientId,
       userId: this.userId,
-      transactionId: uuid(),
+      transactionId,
       updates,
     };
+
     if (env.persistTo === "server") {
       this.syncQueue.push(dataForSync);
     }
+
+    // Return the transaction ID so it can be associated with a selection state
+    return transactionId;
   }
+
   undo() {
-    const updates = this.undoStack.pop();
-    if (!updates) {
+    const transaction = this.undoStack.pop();
+    if (!transaction) {
       return;
     }
-    this.redoStack.push(updates);
+
+    const updates = transaction.updates;
+    this.redoStack.push(transaction);
 
     // The "undo" operation actually creates a new action rather than directly reverting the original changes.
     // This is so that the changes from undo can be synced with backend.
@@ -238,6 +286,7 @@ export class UpdateManager {
       }
     });
     this.applyGraphUpdates(inverted);
+
     const dataForSync: SyncData = {
       clientId: this.clientId,
       userId: this.userId,
@@ -247,15 +296,29 @@ export class UpdateManager {
     if (env.persistTo === "server") {
       this.syncQueue.push(dataForSync);
     }
+
+    // After undo is complete, try to restore the appropriate selection state if this transaction has one
+    if (transaction.hasSelectionState) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("restore-selection-state", {
+            detail: { transactionId: transaction.id },
+          }),
+        );
+      }
+    }
   }
 
   redo() {
-    const updates = this.redoStack.pop();
-    if (!updates) {
+    const transaction = this.redoStack.pop();
+    if (!transaction) {
       return;
     }
-    this.undoStack.push(updates);
+
+    const updates = transaction.updates;
+    this.undoStack.push(transaction);
     this.applyGraphUpdates(updates);
+
     const dataForSync: SyncData = {
       clientId: this.clientId,
       userId: this.userId,

@@ -11,6 +11,8 @@ import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
 import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
+import { TreeNodeContentSelectionPosition } from "@/app/tree/selection";
+import { SelectionState } from "@/app/tree/SelectionState";
 import { Tree } from "@/app/tree/Tree";
 import { useTree } from "@/app/tree/TreeContext";
 import { getNextAbove } from "@/app/tree/utils";
@@ -162,6 +164,47 @@ function useMergers(tree: Tree) {
   const graphStore = useGraphStore();
 
   /**
+   * Creates a selection state for tracking purposes
+   */
+  const createSelectionState = useCallback(
+    (source: DescendantTreeNode, target: TreeNode): SelectionState => {
+      // Determine which tree we're in
+      let treeType = "main";
+      if (tree.isMainTree) {
+        treeType = "main";
+      } else if (tree.viewType === "note") {
+        treeType = "quickCapture";
+      } else {
+        treeType = tree.id;
+      }
+
+      // Get the current position from the tree's selection
+      // For backspace merges, we'll want to restore to the start of the source node after undo
+      let position: TreeNodeContentSelectionPosition = "start";
+
+      // The key insight for backspace merge undo is to capture:
+      // 1. The source node ID (which will be recreated during undo)
+      // 2. The target node path (where the content was merged to)
+      // 3. The source node path (which will no longer exist but helps for debugging)
+
+      // Create the selection state
+      const selectionState: SelectionState = {
+        nodeId: source.object.id, // The source node that's being merged from
+        previousNodeId: target.object.id, // The target node that's being merged into
+        treeType,
+        editorPath: source.path, // Store source path for reference
+        operation: "BACKSPACE_MERGE",
+        position,
+        timestamp: Date.now(),
+        associatedGraphUpdateIds: [],
+      };
+
+      return selectionState;
+    },
+    [tree],
+  );
+
+  /**
    * Merges a source node into a target node. If the target node is a note,
    * the source node is converted to a regular node.
    */
@@ -174,6 +217,15 @@ function useMergers(tree: Tree) {
       // Otherwise the node gets deleted too in the recurrent process, after deleting the last relation
       if (target === tree.root && target.object.allRelationsList.size === 1) {
         return false;
+      }
+
+      // Create selection state for tracking
+      const selState = createSelectionState(source, target);
+
+      // Mark that the next update will have selection state
+      const updateManager = tree.getUpdateManager();
+      if (updateManager) {
+        updateManager.nextUpdateHasSelectionState = true;
       }
 
       const txs: TxCombinedPart[] = [
@@ -234,6 +286,22 @@ function useMergers(tree: Tree) {
       const targetTextLength = target.object.text.length;
       const sourceWasExpanded = source.isExpanded;
       graphStore.applyCombinedTransaction(txs);
+
+      // Get the transaction ID and track the selection state
+      if (updateManager?.lastTransactionId) {
+        const transactionId = updateManager.lastTransactionId;
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("track-selection-state", {
+              detail: {
+                selectionState: selState,
+                transactionId,
+              },
+            }),
+          );
+        }
+      }
+
       // If the source was expanded, expand the target
       if (sourceWasExpanded) {
         tree.setPathExpanded(target.path, true);
@@ -244,12 +312,22 @@ function useMergers(tree: Tree) {
       });
       return true;
     },
-    [graphStore, tree],
+    [graphStore, tree, createSelectionState],
   );
 
   const addSiblingAboveIntoNote = useCallback(
     (note: DescendantTreeNode) => {
       if (!note.siblingAbove) return false;
+
+      // Create selection state for tracking
+      const selState = createSelectionState(note.siblingAbove, note);
+
+      // Mark that the next update will have selection state
+      const updateManager = tree.getUpdateManager();
+      if (updateManager) {
+        updateManager.nextUpdateHasSelectionState = true;
+      }
+
       const txs: TxCombinedPart[] = [
         {
           type: "replaceRelationLink",
@@ -274,6 +352,22 @@ function useMergers(tree: Tree) {
       const siblingAboveExpanded = note.siblingAbove.isExpanded;
       const path = note.childrenGroupsById.noteContent.createChildPath(note.siblingAbove.relationWithParent);
       graphStore.applyCombinedTransaction(txs);
+
+      // Get the transaction ID and track the selection state
+      if (updateManager?.lastTransactionId) {
+        const transactionId = updateManager.lastTransactionId;
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("track-selection-state", {
+              detail: {
+                selectionState: selState,
+                transactionId,
+              },
+            }),
+          );
+        }
+      }
+
       if (siblingAboveExpanded) {
         tree.setPathExpanded(path, true);
       }
@@ -281,7 +375,7 @@ function useMergers(tree: Tree) {
 
       return true;
     },
-    [graphStore, tree],
+    [graphStore, tree, createSelectionState],
   );
 
   return { mergeNodes, addSiblingAboveIntoNote };
