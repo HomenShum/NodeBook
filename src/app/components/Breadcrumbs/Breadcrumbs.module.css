@@ -115,6 +115,7 @@
   will-change: transform, opacity;
   box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
   user-select: none;
+  pointer-events: none;
 }
 
 .ShowTooltip:hover::after {

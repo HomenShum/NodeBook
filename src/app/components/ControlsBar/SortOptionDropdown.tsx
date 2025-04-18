@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { SortOption } from "@/app/tree/Tree";
-import { cn } from "@/lib/utils";
 
 import styles from "./ControlsBar.module.css";
 
@@ -26,8 +25,6 @@ export const SortOptionDropdown = ({
         <Button
           size="sm"
           variant={sortOption.mode !== "manual" ? "active" : "default"}
-          className={cn(styles.ShowTooltip, styles.BottomAlign)}
-          data-tooltip="Select sorting order"
         >
           <ArrowUpDown size={14} />
           <span>Sort by</span>

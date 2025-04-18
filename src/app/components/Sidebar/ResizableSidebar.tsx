@@ -255,8 +255,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
           <div className={styles.TopContent}>
             <Button
               variant="ghost"
-              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-              data-tooltip="Go to Global Root"
+              className={cn(styles.Button)}
               onMouseEnter={() => {
                 graphStore.layerManager.lazyLoadWithIds([GLOBAL_ROOT_ID]);
               }}
@@ -279,8 +278,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </Button>
             <Button
               variant="ghost"
-              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-              data-tooltip="Go to your list"
+              className={cn(styles.Button)}
               onMouseEnter={() => {
                 graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
               }}
@@ -304,8 +302,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </Button>
             <Button
               variant="ghost"
-              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-              data-tooltip="Go to your stream"
+              className={cn(styles.Button)}
               onMouseEnter={() => {
                 graphStore.layerManager.lazyLoadWithIds([graphStore.myStreamNodeId]);
               }}
@@ -329,8 +326,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </Button>
             <Button
               variant="ghost"
-              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-              data-tooltip="Go to Query Interface"
+              className={cn(styles.Button)}
               onClick={(e) => {
                 if (e.metaKey) {
                   window.open("/query", "_blank");
@@ -348,8 +344,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <div className={styles.SidebarSectionHeader}>Feeds</div>
               <Button
                 variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Go to your global news feed"
+                className={cn(styles.Button)}
                 onClick={(e) => {
                   if (e.shiftKey) {
                     viewStore.createSidebarTree(graphStore.globalRoot);
@@ -371,8 +366,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </>
             <Button
               variant="ghost"
-              className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-              data-tooltip="See recently created notes"
+              className={cn(styles.Button)}
               onClick={(e) => {
                 if (e.shiftKey) {
                   viewStore.createSidebarTree(graphStore.globalRoot);
@@ -391,8 +385,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             {!user.isAnonymous && (
               <Button
                 variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="See graph updates"
+                className={cn(styles.Button)}
                 onClick={(e) => {
                   if (e.metaKey) {
                     window.open("/updates", "_blank");
@@ -411,8 +404,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             {!user.isAnonymous && (
               <Button
                 variant="ghost"
-                className={cn(styles.Button, styles.ShowTooltip, styles.RightAlign)}
-                data-tooltip="Manage voice inputs and operations"
+                className={cn(styles.Button)}
                 onClick={(e) => {
                   if (e.metaKey) {
                     window.open("/voice-operations", "_blank");

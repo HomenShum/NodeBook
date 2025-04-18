@@ -245,6 +245,7 @@
   will-change: transform, opacity;
   box-shadow: var(--shadow-sm);
   user-select: none;
+  pointer-events: none;
 }
 
 .ShowTooltip:hover::after {

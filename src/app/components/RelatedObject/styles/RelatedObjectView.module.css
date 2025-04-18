@@ -576,6 +576,7 @@ Right Area
   z-index: 5;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
+  pointer-events: none;
 }
 
 .showTooltip:hover::after {

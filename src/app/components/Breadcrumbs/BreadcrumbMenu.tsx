@@ -110,7 +110,7 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
       </Button>
       <Button
         style={{ position: "relative" }}
-        className={cn(s.ShowTooltip, s.RightAlign)}
+        className={cn(s.ShowTooltip, s.BottomAlign)}
         data-tooltip={settingsStore.publicMode ? "Public mode" : "Private mode"}
         variant={settingsStore.publicMode ? "active" : "default"}
         size="icon"

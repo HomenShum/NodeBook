@@ -47,18 +47,20 @@ function QuickCaptureMenu() {
       <div>
         {" "}
         <Button
-          className={cn(s1.ShowTooltip, s1.RightAlign)}
+          className={cn(s1.ShowTooltip, s1.BottomAlign)}
           data-tooltip={"Close Quick Capture"}
           size="icon"
+          style={{ position: "relative" }}
           onClick={() => viewStore.closeQuickCapture()}
         >
           <X size={14} />
         </Button>
         {!user.isAnonymous && (
           <Button
-            className={cn(s1.ShowTooltip, s1.RightAlign)}
+            className={cn(s1.ShowTooltip, s1.BottomAlign)}
             data-tooltip={"Open in Main View"}
             size="icon"
+            style={{ position: "relative" }}
             onClick={() => handleMainViewExpand()}
           >
             <ExpandIcon size={14} />
@@ -66,9 +68,10 @@ function QuickCaptureMenu() {
         )}
         {!user.isAnonymous && (
           <Button
-            className={cn(s1.ShowTooltip, s1.RightAlign)}
+            className={cn(s1.ShowTooltip, s1.BottomAlign)}
             data-tooltip={"Open in Side View"}
             size="icon"
+            style={{ position: "relative" }}
             onClick={() => handleSideViewExpand()}
           >
             <PanelRightIcon size={14} />
@@ -76,9 +79,10 @@ function QuickCaptureMenu() {
         )}
         {!user.isAnonymous && (
           <Button
-            className={cn(s1.ShowTooltip, s1.RightAlign)}
+            className={cn(s1.ShowTooltip, s1.BottomAlign)}
             data-tooltip={"Open in New View"}
             size="icon"
+            style={{ position: "relative" }}
             onClick={() => handleOpenInNewWindow()}
           >
             <AppWindowIcon size={14} />

@@ -180,6 +180,7 @@
   font-size: 12px;
   white-space: nowrap;
   z-index: 1000;
+  pointer-events: none;
 }
 
 .RightAlign[data-tooltip]:hover::after {
