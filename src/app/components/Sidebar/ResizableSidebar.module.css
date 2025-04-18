@@ -59,6 +59,8 @@
   padding: 0 12px; /* Add padding back inside scrollable area */
   scrollbar-width: thin; /* For Firefox */
   scrollbar-color: var(--gray-7) transparent; /* For Firefox */
+  position: relative;
+  z-index: 2;
 }
 
 /* Webkit scrollbar styling */
@@ -102,6 +104,7 @@
   height: calc(100vh - 16px);
   cursor: col-resize;
   touch-action: none;
+  z-index: 1;
 }
 
 .ResizerHandle {
@@ -109,6 +112,7 @@
   height: 100%;
   border-radius: 2px;
   transition: background-color 0.2s ease;
+  margin-left: 6px;
 }
 
 .Resizer:hover .ResizerHandle {

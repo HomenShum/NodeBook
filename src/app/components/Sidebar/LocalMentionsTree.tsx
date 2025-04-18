@@ -188,8 +188,8 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
         ref={scrollParentRef}
         className={styles.SidebarTreeChildren}
         style={{
-          height: isExpanded ? Math.min(totalHeight, 300) + "px" : "100%", // Cap at 300px height
-          overflow: "auto",
+          height: isExpanded ? Math.min(totalHeight, 500) + "px" : "100%", // Cap at 500px height
+          overflow: "auto"
         }}
       >
         {isExpanded && filteredMentions.length === 0 ? (
