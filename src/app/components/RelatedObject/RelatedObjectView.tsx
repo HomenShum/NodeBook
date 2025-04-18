@@ -568,7 +568,7 @@ const CardWrapper = observer(() => {
       },
     });
 
-    graphStore.addRelation({
+    await graphStore.addRelation({
       fromId: graphObject.id,
       toId: commentNode.id,
       relationTypeId: defaultRelationTypes.__comment__.id,
@@ -596,6 +596,31 @@ const CardWrapper = observer(() => {
       toId: newNode.id,
       relationTypeId: defaultRelationTypes.empty.id,
     });
+  };
+
+  // Check if this node is already in My Stream
+  const isSavedToStream = !!graphStore.myStreamNode.relations.find(
+    relation => relation.to.id === graphObject.id
+  );
+
+  // Function to add the node to My Stream
+  const saveToMyStream = async () => {
+    if (!isSavedToStream) {
+      await graphStore.addRelation({
+        fromId: graphStore.myStreamNodeId,
+        toId: graphObject.id,
+      });
+    } else {
+      // If already saved, find and remove the relation
+      const relationToRemove = graphStore.myStreamNode.relations.find(
+        relation => relation.to.id === graphObject.id
+      );
+      if (relationToRemove) {
+        await graphStore.removeRelation({
+          relationId: relationToRemove.id,
+        });
+      }
+    }
   };
 
   const commentsList = graphObject.allRelationsList
@@ -662,6 +687,8 @@ const CardWrapper = observer(() => {
       onTextChange={handleTextChange}
       onAddRelation={handleAddRelation}
       onRelationClick={handleRelationClick}
+      onSaveClicked={saveToMyStream}
+      isSaved={isSavedToStream}
       commentsList={commentsList}
       initialIsEditing={graphObject.text === ""}
     >

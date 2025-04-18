@@ -1,4 +1,4 @@
-import { GitFork, Heart, MessageCircle } from "lucide-react";
+import { Bookmark, GitFork, Heart, MessageCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { RelatedObjectMenu } from "@/app/components/RelatedObject/RelatedObjectMenu";
@@ -51,6 +51,8 @@ interface Props {
   onTextChange?: (text: string) => void;
   onAddRelation?: (text: string) => Promise<void>;
   onRelationClick?: (id: string) => void;
+  onSaveClicked?: () => void;
+  isSaved?: boolean;
   commentsList?: Array<{
     id: string;
     text: string;
@@ -79,6 +81,8 @@ export const Card = ({
   onTextChange,
   onAddRelation,
   onRelationClick,
+  onSaveClicked,
+  isSaved = false,
   commentsList = [],
   initialIsEditing = false,
 }: Props) => {
@@ -218,6 +222,15 @@ export const Card = ({
               <MessageCircle strokeWidth={2.5} size={18} style={{ transform: "scaleX(-1)" }} />
               <span className={styles.engagementText}>{commentsList.length}</span>
             </div>
+            {onSaveClicked && (
+              <div
+                className={cn(styles.engagementItem, isSaved && styles.active)}
+                onClick={onSaveClicked}
+                style={{ padding: '0.35rem 0.5rem' }}
+              >
+                <Bookmark strokeWidth={2.5} size={18} />
+              </div>
+            )}
           </div>
         </div>
       </div>
