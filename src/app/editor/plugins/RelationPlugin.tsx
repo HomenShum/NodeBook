@@ -52,7 +52,6 @@ export const RelationPlugin = observer(function RelationPlugin() {
               },
             });
             tree.indentSelection();
-            tree.setFocusedNode(treeNode.id, { anchorOffset: 0, focusOffset: 0 });
             return true;
           }
           return false;
@@ -208,18 +207,6 @@ export const RelationPlugin = observer(function RelationPlugin() {
         COMMAND_PRIORITY_LOW,
       ),
     );
-  }, [
-    tree,
-    graphStore,
-    settingsStore,
-    settingsStore.triggerRelationOnSingleColon,
-    editor,
-    object,
-    relation,
-    treeNode.path,
-    treeNode.id,
-    treeNode.relationWithParent.relationType.id,
-    treeNode.relationWithParent.to,
-  ]);
+  }, [tree, graphStore, settingsStore, settingsStore.triggerRelationOnSingleColon, editor, object, relation, treeNode.path, treeNode.id, treeNode.relationWithParent.relationType.id, treeNode.relationWithParent.to]);
   return null;
 });
