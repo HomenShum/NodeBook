@@ -243,7 +243,7 @@ Node
 }
 
 .RelatedObjectNode.Selected {
-  background-color: var(--teal-a3);
+  background-color: var(--teal-3);
 }
 
 .RelatedObjectNodeContent {

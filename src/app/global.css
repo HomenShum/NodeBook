@@ -71,11 +71,11 @@ h6 {
 }
 
 ::selection {
-  background-color: var(--blue-4);
+  background-color: var(--teal-3);
 }
 
 ::-moz-selection {
-  background-color: var(--blue-4);
+  background-color: var(--teal-3);
 }
 
 html,
