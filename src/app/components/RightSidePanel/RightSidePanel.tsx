@@ -3,11 +3,11 @@ import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import OutlineContent from "@/app/components/OutlineContent";
-import s from "@/app/components/RightSidebar/RightSidebar.module.css";
+import s from "@/app/components/RightSidePanel/RightSidePanel.module.css";
 import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 import { useViewStore } from "@/app/view/useViewStore";
 
-const RightSidebar = observer(function RightSidebar({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) {
+const RightSidePanel = observer(function RightSidePanel({ parentRef }: { parentRef: React.RefObject<HTMLDivElement> }) {
   const viewStore = useViewStore();
 
   const resizerRef = useRef<HTMLDivElement>(null);
@@ -45,7 +45,7 @@ const RightSidebar = observer(function RightSidebar({ parentRef }: { parentRef: 
           100;
 
         if (newWidth >= 40 && newWidth <= 60) {
-          viewStore.setRightSidebarWidth(newWidth);
+          viewStore.setRightSidePanelWidth(newWidth);
         }
       }
     },
@@ -74,19 +74,19 @@ const RightSidebar = observer(function RightSidebar({ parentRef }: { parentRef: 
     };
   }, [isResizing, resize, stopResizing]);
 
-  if (!viewStore.rightSidebarOpen) return <></>;
+  if (!viewStore.rightSidePanelOpen) return <></>;
 
   return (
-    <div ref={sidebarRef} className={s.RightSidebarContainer} style={{ width: `${viewStore.rightSidebarWidth}%` }}>
+    <div ref={sidebarRef} className={s.RightSidePanelContainer} style={{ width: `${viewStore.rightSidePanelWidth}%` }}>
       <div ref={resizerRef} className={s.Resizer} onPointerDown={startResizing}>
         <div className={s.ResizerHandle} />
       </div>
-      <div className={s.RightSidebar}>
-        <div className={s.CloseIconContainer} onClick={() => viewStore.toggleRightSidebar()} title={"Close sidebar"}>
+      <div className={s.RightSidePanel}>
+        <div className={s.CloseIconContainer} onClick={() => viewStore.toggleRightSidePanel()} title={"Close sidebar"}>
           <PanelRightCloseIcon size={20} />
         </div>
-        <OutlineParentContext.Provider value="RightSidebar">
-          {viewStore.sidebarTrees.map((tree) => (
+        <OutlineParentContext.Provider value="RightSidePanel">
+          {viewStore.sidePanelTrees.map((tree) => (
             <OutlineContent key={tree.id} tree={tree} />
           ))}
         </OutlineParentContext.Provider>
@@ -95,4 +95,4 @@ const RightSidebar = observer(function RightSidebar({ parentRef }: { parentRef: 
   );
 });
 
-export default RightSidebar;
+export default RightSidePanel;

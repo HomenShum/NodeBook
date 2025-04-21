@@ -134,7 +134,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   const handleChildClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => {
       if (e.shiftKey) {
-        viewStore.createSidebarTree(child);
+        viewStore.createSidePanelTree(child);
       } else if (e.metaKey) {
         openNewTab(child);
       } else {
@@ -167,7 +167,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => {
       e.stopPropagation(); // Prevent button click propagation
       if (e.shiftKey) {
-        viewStore.createSidebarTree(child);
+        viewStore.createSidePanelTree(child);
       } else {
         setRoot(child);
       }
@@ -195,7 +195,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
         className={styles.SidebarTreeChildren}
         style={{
           height: isExpanded ? Math.min(totalHeight, 500) + "px" : "100%", // Cap at 500px height
-          overflow: "auto"
+          overflow: "auto",
         }}
       >
         {isExpanded && filteredHashtags.length === 0 ? (

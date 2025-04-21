@@ -136,13 +136,13 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
         style={{ position: "relative" }}
         className={cn(s.ShowTooltip, s.RightAlign)}
         data-tooltip={
-          (viewStore.rightSidebarOpen ? "Close Side Tree View" : "Open Side Tree View") +
+          (viewStore.rightSidePanelOpen ? "Close Side Tree View" : "Open Side Tree View") +
           ` · ` +
           [`${modKeyName}`, `${optionKeyName}`, "S"].join("+")
         }
-        variant={viewStore.rightSidebarOpen ? "active" : "default"}
+        variant={viewStore.rightSidePanelOpen ? "active" : "default"}
         size="icon"
-        onClick={() => viewStore.toggleRightSidebar()}
+        onClick={() => viewStore.toggleRightSidePanel()}
       >
         <SquareSplitHorizontal size={14} strokeWidth={1.5} />
       </Button>

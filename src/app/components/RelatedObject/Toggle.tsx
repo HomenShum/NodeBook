@@ -41,7 +41,7 @@ const Toggle = observer(function Toggle() {
       }
 
       if (event.shiftKey && !isSidebarTree) {
-        viewStore.createSidebarTree(treeNode.object);
+        viewStore.createSidePanelTree(treeNode.object);
         return;
       }
 

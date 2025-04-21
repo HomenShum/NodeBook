@@ -42,7 +42,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
       if (e.shiftKey) {
-        viewStore.createSidebarTree(object);
+        viewStore.createSidePanelTree(object);
       } else if (e.metaKey) {
         openNewTab(object);
       } else {
@@ -112,7 +112,7 @@ const FavoriteItem = observer(function FavoriteItem({ object }: TreeElementProps
         title={object.text}
         onClick={(e) => {
           if (e.shiftKey) {
-            viewStore.createSidebarTree(object);
+            viewStore.createSidePanelTree(object);
           } else if (e.metaKey) {
             openNewTab(object);
           } else {

@@ -207,7 +207,7 @@ const Content = observer(function Content() {
 
     if (e.shiftKey) {
       // Open in sidebar when shift-clicked
-      viewStore.createSidebarTree(treeNode.object);
+      viewStore.createSidePanelTree(treeNode.object);
     } else {
       // Zoom into note root node when clicked
       setRoot(treeNode.object);
@@ -229,7 +229,7 @@ const Content = observer(function Content() {
               onPointerDown={(e) => {
                 if (e.shiftKey) {
                   // open in sidebar
-                  viewStore.createSidebarTree(treeNode.object);
+                  viewStore.createSidePanelTree(treeNode.object);
                 } else {
                   setRoot(treeNode.object);
                 }
@@ -443,7 +443,7 @@ const Controls = observer(function Controls({ showToggle }: { showToggle: boolea
               onPointerDown={(e) => {
                 if (e.shiftKey) {
                   // open in sidebar
-                  viewStore.createSidebarTree(treeNode.object);
+                  viewStore.createSidePanelTree(treeNode.object);
                 } else {
                   setRoot(treeNode.object);
                 }
@@ -599,9 +599,7 @@ const CardWrapper = observer(() => {
   };
 
   // Check if this node is already in My Stream
-  const isSavedToStream = !!graphStore.myStreamNode.relations.find(
-    relation => relation.to.id === graphObject.id
-  );
+  const isSavedToStream = !!graphStore.myStreamNode.relations.find((relation) => relation.to.id === graphObject.id);
 
   // Function to add the node to My Stream
   const saveToMyStream = async () => {
@@ -612,9 +610,7 @@ const CardWrapper = observer(() => {
       });
     } else {
       // If already saved, find and remove the relation
-      const relationToRemove = graphStore.myStreamNode.relations.find(
-        relation => relation.to.id === graphObject.id
-      );
+      const relationToRemove = graphStore.myStreamNode.relations.find((relation) => relation.to.id === graphObject.id);
       if (relationToRemove) {
         await graphStore.removeRelation({
           relationId: relationToRemove.id,

@@ -5,8 +5,8 @@ import React from "react";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { truncateText, useIsMobile } from "@/app/util";
-import { cn } from "@/lib/utils";
 import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -31,7 +31,7 @@ export const BreadcrumbItem = observer(function BreadcrumbItem({
 
   const handleClick = (event: React.MouseEvent<HTMLSpanElement>) => {
     if (event.shiftKey) {
-      viewStore.createSidebarTree(object);
+      viewStore.createSidePanelTree(object);
     } else {
       handleNavigation(index);
     }

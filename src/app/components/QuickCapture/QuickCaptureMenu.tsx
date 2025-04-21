@@ -32,7 +32,7 @@ function QuickCaptureMenu() {
     if (!viewStore.quickCaptureOpen) return;
     const root = viewStore.quickCaptureTree.root.object;
     viewStore.closeQuickCapture();
-    viewStore.createSidebarTree(root);
+    viewStore.createSidePanelTree(root);
   };
 
   const handleOpenInNewWindow = () => {

@@ -261,7 +261,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               }}
               onClick={(e) => {
                 if (e.shiftKey) {
-                  viewStore.createSidebarTree(graphStore.globalRoot);
+                  viewStore.createSidePanelTree(graphStore.globalRoot);
                 } else if (e.metaKey) {
                   openNewTab(graphStore.globalRoot);
                 } else {
@@ -284,7 +284,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               }}
               onClick={(e) => {
                 if (e.shiftKey) {
-                  viewStore.createSidebarTree(graphStore.getDefaultRootForUser());
+                  viewStore.createSidePanelTree(graphStore.getDefaultRootForUser());
                 } else if (e.metaKey) {
                   openNewTab(graphStore.getDefaultRootForUser());
                 } else {
@@ -308,7 +308,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               }}
               onClick={(e) => {
                 if (e.shiftKey) {
-                  viewStore.createSidebarTree(graphStore.myStreamNode);
+                  viewStore.createSidePanelTree(graphStore.myStreamNode);
                 } else if (e.metaKey) {
                   openNewTab(graphStore.myStreamNode);
                 } else {
@@ -347,7 +347,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 className={cn(styles.Button)}
                 onClick={(e) => {
                   if (e.shiftKey) {
-                    viewStore.createSidebarTree(graphStore.globalRoot);
+                    viewStore.createSidePanelTree(graphStore.globalRoot);
                   } else if (e.metaKey) {
                     openNewTab(graphStore.globalRoot);
                   } else {
@@ -369,7 +369,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               className={cn(styles.Button)}
               onClick={(e) => {
                 if (e.shiftKey) {
-                  viewStore.createSidebarTree(graphStore.globalRoot);
+                  viewStore.createSidePanelTree(graphStore.globalRoot);
                 } else if (e.metaKey) {
                   openNewTab(graphStore.globalRoot);
                 } else {

@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react";
 
-type ParentComponent = "OutlineView" | "QuickCapture" | "RightSidebar";
+type ParentComponent = "OutlineView" | "QuickCapture" | "RightSidePanel";
 
 export const OutlineParentContext = createContext<ParentComponent | null>(null);
 

@@ -29,7 +29,7 @@ export const isExpandAtSelectionHotKey = isHotkey("mod+ArrowDown");
 export const isCollapseAtSelectionHotKey = isHotkey("mod+ArrowUp");
 export const isCommandBarHotKey = isHotkey("mod+shift+k");
 export const isQuickCaptureHotkey = isHotkey("mod+opt+k");
-export const isRightSidebarHotkey = isHotkey("mod+opt+s");
+export const isRightSidePanelHotkey = isHotkey("mod+opt+s");
 export const isFocusSearchHotkey = isHotkey("mod+/");
 
 export const treeHotkeyMapping: {

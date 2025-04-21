@@ -1,7 +1,7 @@
 "use client";
+import { Plus } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useEffect, useRef } from "react";
-import { Plus } from "lucide-react";
 
 import appStyles from "@/app/app.module.css";
 import { Breadcrumbs } from "@/app/components/Breadcrumbs/Breadcrumbs";
@@ -10,19 +10,19 @@ import GraphContainer from "@/app/components/GraphView/GraphContainer";
 import OutlineContent from "@/app/components/OutlineContent";
 import { PageTitleUpdater } from "@/app/components/PageTitleUpdater";
 import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
-import RightSidebar from "@/app/components/RightSidebar/RightSidebar";
+import RightSidePanel from "@/app/components/RightSidePanel/RightSidePanel";
 import Loader from "@/app/components/UIPrimitives/Loader";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useLoading } from "@/app/contexts/LoadingContext";
 import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
-import { Tree } from "@/app/tree/Tree";
-import { TreeContext } from "@/app/tree/TreeContext";
-import { useViewStore } from "@/app/view/useViewStore";
-import { cn } from "@/lib/utils";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 import { useToast } from "@/app/hooks/useToast";
+import { Tree } from "@/app/tree/Tree";
+import { TreeContext } from "@/app/tree/TreeContext";
 import { useSetMainRoot } from "@/app/tree/utils";
+import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import s from "./OutlineView.module.css";
 
@@ -109,7 +109,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                 </button>
               )}
             </OutlineParentContext.Provider>
-            <RightSidebar parentRef={ref} />
+            <RightSidePanel parentRef={ref} />
           </div>
         )}
       </div>

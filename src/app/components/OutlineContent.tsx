@@ -9,7 +9,7 @@ import s from "@/app/components/OutlineView.module.css";
 import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
 import { RootObjectDetails } from "@/app/components/RelatedObject/RelatedObjectDetails";
-import s1 from "@/app/components/RightSidebar/RightSidebar.module.css";
+import s1 from "@/app/components/RightSidePanel/RightSidePanel.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -176,7 +176,7 @@ function OutlineContent({ tree }: Props) {
         appStyles.ContentContainer,
         (tree.isMainTree || (tree instanceof SearchTree && tree.isMainSearchTree)) &&
           viewStore.quickCaptureOpen &&
-          !viewStore.rightSidebarOpen
+          !viewStore.rightSidePanelOpen
           ? appStyles.SmallContainer
           : "",
       )}
@@ -192,7 +192,7 @@ function OutlineContent({ tree }: Props) {
                 onPointerDown={(e) => {
                   if (e.shiftKey) {
                     // open in sidebar
-                    viewStore.createSidebarTree(treeRoot.object);
+                    viewStore.createSidePanelTree(treeRoot.object);
                   } else {
                     // If this is the main (non-sidebar, non-quick capture) view, output a toast
                     if (tree.isMainTree) {
@@ -265,7 +265,7 @@ function OutlineContent({ tree }: Props) {
             >
               <Link size={16} strokeWidth={1.7} />
             </Button>
-            <div className={s1.CloseTreeButton} onClick={() => viewStore.deleteSidebarTree(tree.id)}>
+            <div className={s1.CloseTreeButton} onClick={() => viewStore.deleteSidePanelTree(tree.id)}>
               <X />
             </div>
           </div>

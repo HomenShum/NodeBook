@@ -48,16 +48,16 @@ export class ViewStore {
   processingNodeIds: Set<string> = new Set();
 
   public leftSidebarOpen = false;
-  public rightSidebarOpen = false;
+  public rightSidePanelOpen = false;
   public quickCaptureOpen = false;
   public isDarkMode = false;
   public sidebarWidth = 268;
-  public rightSidebarWidth = 50; // Percentage of screen width
+  public rightSidePanelWidth = 50; // Percentage of screen width
   public activeModal: "devTools" | "importData" | "clearData" | "setPublic" | "help" | null = null;
   public isCommandBarOpen: boolean = false;
   private deepSearching: boolean = false;
   private quickCaptureDeepSearching: boolean = false;
-  public sidebarTrees: Tree[] = [];
+  public sidePanelTrees: Tree[] = [];
   public quickCaptureTree: Tree;
   public activeTree: Tree;
   public notificationPaneOpen = false;
@@ -78,13 +78,13 @@ export class ViewStore {
     this.makeObservable();
     makeAutoSaving(this, {
       leftSidebarOpen: true,
-      rightSidebarOpen: true,
+      rightSidePanelOpen: true,
       isDarkMode: true,
       sidebarWidth: true,
       activeModal: true,
       graphMode: true,
       cardMode: true,
-      sidebarTrees: false,
+      sidePanelTrees: false,
       quickCaptureViewType: true,
       quickCaptureOpen: true,
       srcForImageViewer: false,
@@ -167,12 +167,12 @@ export class ViewStore {
         setQuickCaptureDeepSearching: action,
         isDeepSearching: computed,
         isQuickCaptureDeepSearching: computed,
-        createSidebarTree: action,
-        deleteSidebarTree: action,
+        createSidePanelTree: action,
+        deleteSidePanelTree: action,
         openQuickCapture: action,
         closeQuickCapture: action,
         setActiveTree: action,
-        toggleRightSidebar: action,
+        toggleRightSidePanel: action,
         setNodeIsProcessing: action,
         clearNodeIsProcessing: action,
         isNodeProcessing: observable,
@@ -304,23 +304,23 @@ export class ViewStore {
     this.sidebarWidth = width;
   }
 
-  setRightSidebarWidth(width: number) {
-    this.rightSidebarWidth = width;
+  setRightSidePanelWidth(width: number) {
+    this.rightSidePanelWidth = width;
   }
 
   setCommandBarOpen(open: boolean) {
     this.isCommandBarOpen = open;
   }
 
-  createSidebarTree(root: Root) {
-    this.rightSidebarOpen = true;
-    this.sidebarTrees.unshift(new Tree(this.graphStore, this.settingsStore, root));
+  createSidePanelTree(root: Root) {
+    this.rightSidePanelOpen = true;
+    this.sidePanelTrees.unshift(new Tree(this.graphStore, this.settingsStore, root));
   }
 
-  deleteSidebarTree(treeId: string) {
-    this.sidebarTrees = this.sidebarTrees.filter((tree) => tree.id != treeId);
-    if (this.sidebarTrees.length === 0) {
-      this.rightSidebarOpen = false;
+  deleteSidePanelTree(treeId: string) {
+    this.sidePanelTrees = this.sidePanelTrees.filter((tree) => tree.id != treeId);
+    if (this.sidePanelTrees.length === 0) {
+      this.rightSidePanelOpen = false;
     }
   }
 
@@ -350,8 +350,8 @@ export class ViewStore {
     this.activeTree = tree;
   }
 
-  toggleRightSidebar() {
-    this.rightSidebarOpen = !this.rightSidebarOpen;
+  toggleRightSidePanel() {
+    this.rightSidePanelOpen = !this.rightSidePanelOpen;
   }
 
   // Mouse event handlers
@@ -563,8 +563,8 @@ export class ViewStore {
         return this.quickCaptureView;
       default:
         // Check sidebar trees
-        const sidebarTree = this.sidebarTrees.find((tree) => tree.id === treeType);
-        if (sidebarTree) return sidebarTree;
+        const sidePanelTree = this.sidePanelTrees.find((tree) => tree.id === treeType);
+        if (sidePanelTree) return sidePanelTree;
         return null;
     }
   }

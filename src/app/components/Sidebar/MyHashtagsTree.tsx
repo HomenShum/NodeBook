@@ -97,7 +97,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
       if (e.shiftKey) {
-        viewStore.createSidebarTree(object);
+        viewStore.createSidePanelTree(object);
       } else if (e.metaKey) {
         openNewTab(object);
       } else {
@@ -111,7 +111,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.stopPropagation();
       if (e.shiftKey) {
-        viewStore.createSidebarTree(object);
+        viewStore.createSidePanelTree(object);
       } else if (e.metaKey) {
         openNewTab(object);
       } else {
@@ -124,7 +124,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
   const handleChildClick = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => {
       if (e.shiftKey) {
-        viewStore.createSidebarTree(child);
+        viewStore.createSidePanelTree(child);
       } else if (e.metaKey) {
         openNewTab(child);
       } else {

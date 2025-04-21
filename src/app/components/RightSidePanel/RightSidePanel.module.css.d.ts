@@ -4,8 +4,8 @@ declare const styles: {
   readonly "HeadingContainer": string;
   readonly "Resizer": string;
   readonly "ResizerHandle": string;
-  readonly "RightSidebar": string;
-  readonly "RightSidebarContainer": string;
+  readonly "RightSidePanel": string;
+  readonly "RightSidePanelContainer": string;
 };
 export = styles;
 

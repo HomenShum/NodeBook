@@ -8,7 +8,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { CmdEditor } from "@/app/components/CommandBar/CmdEditor";
 import LineLoader from "@/app/components/LineLoader/LineLoader";
 import { Path } from "@/app/components/Path";
+import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { TypeIndicator } from "@/app/editor/plugins/dropdown/DropdownItem";
 import { useGetRecentNodes } from "@/app/editor/plugins/dropdown/utils";
 import { isFavorited } from "@/app/graph/favorites";
 import { Chip } from "@/app/graph/GraphNode";
@@ -19,8 +21,6 @@ import { useSetMainRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn, isMac } from "@/lib/utils";
-import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
-import { TypeIndicator } from "@/app/editor/plugins/dropdown/DropdownItem";
 
 import styles from "./CommandBar.module.css";
 
@@ -87,7 +87,7 @@ const CommandBar = observer(() => {
             path,
             perform: async (event?: React.MouseEvent<HTMLDivElement>) => {
               if (event?.shiftKey) {
-                viewStore.createSidebarTree(object);
+                viewStore.createSidePanelTree(object);
               } else {
                 close();
                 resetSearch();
@@ -121,7 +121,7 @@ const CommandBar = observer(() => {
               path,
               perform: async (event?: React.MouseEvent<HTMLDivElement>) => {
                 if (event?.shiftKey) {
-                  viewStore.createSidebarTree(node);
+                  viewStore.createSidePanelTree(node);
                 } else {
                   close();
                   resetSearch();

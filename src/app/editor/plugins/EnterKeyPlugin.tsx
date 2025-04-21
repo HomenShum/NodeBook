@@ -36,7 +36,7 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
         let treeType = "main";
         if (treeNode.tree instanceof QuickCaptureTree || treeNode.tree instanceof QuickCaptureSearchTree) {
           treeType = "quickCapture";
-        } else if (viewStore.sidebarTrees.includes(treeNode.tree)) {
+        } else if (viewStore.sidePanelTrees.includes(treeNode.tree)) {
           treeType = treeNode.tree.id;
         }
 

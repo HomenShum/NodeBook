@@ -49,7 +49,7 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
     }
 
     if (e.shiftKey) {
-      viewStore.createSidebarTree(node);
+      viewStore.createSidePanelTree(node);
     } else {
       setRoot(node);
       router.push("/" + slugs[nodeId]);

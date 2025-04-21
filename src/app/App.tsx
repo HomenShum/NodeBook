@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "@/app/auth/useAuth";
 import CommandBar from "@/app/components/CommandBar/CommandBar";
 import { SidebarIcon } from "@/app/components/CustomIcons";
+import ImageViewer from "@/app/components/ImageViewer/ImageViewer";
 import OfflineWarning from "@/app/components/OfflineWarning/OfflineWarning";
 import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -14,10 +15,9 @@ import { useLoading } from "@/app/contexts/LoadingContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import useServiceWorker from "@/app/hooks/useServiceWorker";
 import useTrackMemory from "@/app/hooks/useTrackMemory";
-import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidebarHotkey } from "@/app/hotkeys";
+import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidePanelHotkey } from "@/app/hotkeys";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
-import ImageViewer from "@/app/components/ImageViewer/ImageViewer";
 import { cn } from "@/lib/utils";
 
 import styles from "./app.module.css";
@@ -63,9 +63,9 @@ export default observer(function App({ children }: Props) {
         event.preventDefault();
         viewStore.openQuickCapture(true);
       }
-      if (isRightSidebarHotkey(event)) {
+      if (isRightSidePanelHotkey(event)) {
         event.preventDefault();
-        viewStore.toggleRightSidebar();
+        viewStore.toggleRightSidePanel();
       }
       if (isFocusSearchHotkey(event)) {
         event.preventDefault();
