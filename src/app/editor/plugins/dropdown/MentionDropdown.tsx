@@ -163,14 +163,22 @@ export function MentionDropdown({
           );
 
           if (!hasMentionOrParentRelation) {
-            await graphStore.addRelation({
-              fromId: graphNodeId,
-              toId: treeNode.object.id,
-              relationTypeId:
-                dropdown.mentionTrigger === MENTION_SYMBOL
-                  ? graphStore.relationTypesById.child.id
-                  : graphStore.relationTypesById.relatedTo.id,
-            });
+            if (dropdown.mentionTrigger === TILDE_SYMBOL) {
+              await graphStore.addRelation({
+                fromId: treeNode.object.id,
+                toId: graphNodeId,
+                relationTypeId: defaultRelationTypes.author.id,
+              });
+            } else {
+              await graphStore.addRelation({
+                fromId: graphNodeId,
+                toId: treeNode.object.id,
+                relationTypeId:
+                  dropdown.mentionTrigger === MENTION_SYMBOL
+                    ? graphStore.relationTypesById.child.id
+                    : graphStore.relationTypesById.relatedTo.id,
+              });
+            }
           } else {
             //NOOP - The mention node isn't rendered without this.
             await graphStore.applyUpdates([]);
