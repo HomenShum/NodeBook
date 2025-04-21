@@ -86,7 +86,7 @@ export const NoteContentSection = observer(function NoteContentSection({ parentN
               marginLeft: topLevelNote || rootNote ? "0px" : "-20px",
               paddingBottom:
                 i === group.nodes.length - 1 &&
-                  treeNode.childrenGroupsById.all.nodes[0]?.childrenGroupsById.noteContent?.nodes.length > 0
+                treeNode.childrenGroupsById.all.nodes[0]?.childrenGroupsById.noteContent?.nodes.length > 0
                   ? "20px"
                   : "1px",
             }}
@@ -153,8 +153,9 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
             </div>
           ))}
           <div
-            className={`${styles.PinSectionSeparator} ${viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
-              }`}
+            className={`${styles.PinSectionSeparator} ${
+              viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
+            }`}
           />
         </>
       )}
@@ -186,12 +187,6 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
       )}
       {paginatedNodes
         .filter((childTreeNode) => {
-          if (
-            !settingsStore.showHiddenRelations &&
-            childTreeNode.relationWithParent.relationTypeId in hiddenRelationTypeIds
-          ) {
-            console.log("Hiding relation id: ", childTreeNode.relationWithParent.id);
-          }
           return (
             (!settingsStore.hidePinnedItems ||
               !childTreeNode.parent.object.isRelationPinned(childTreeNode.relationWithParent)) &&
