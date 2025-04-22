@@ -77,7 +77,7 @@ const Toggle = observer(function Toggle() {
   return (
     <div
       className={cn(
-        !isNoteContentRoot && objectViewStyles.NoteContentBullet,
+        !isNoteContentRoot && isNoteContent(treeNode) && objectViewStyles.NoteContentBullet,
         objectViewStyles.RelatedObjectBulletContainer,
         isEmpty &&
           !isNoteContent(treeNode) &&
