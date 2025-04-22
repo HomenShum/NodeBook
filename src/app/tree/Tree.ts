@@ -153,6 +153,7 @@ export class Tree {
       selectionWithNodes: computed,
       setFocusedNode: action,
       selectBetween: action,
+      handleShiftClickSelection: action,
       setRoot: action,
       setPathExpanded: action,
       togglePathExpanded: action,
@@ -432,6 +433,33 @@ export class Tree {
 
   selectBetween(anchorNodeId: string, headNodeId: string) {
     this.selection = { type: "node", anchorNodeId, headNodeId };
+  }
+
+  /**
+   * Handle shift-click to select all nodes between current selection and target node
+   * @param targetNodeId The ID of the node that was shift-clicked
+   * @returns True if selection was updated, false otherwise
+   */
+  handleShiftClickSelection(targetNodeId: string): boolean {
+    // If there's no current selection, just select the target node
+    if (!this.selection) {
+      this.selection = { type: "node", anchorNodeId: targetNodeId, headNodeId: targetNodeId };
+      return true;
+    }
+
+    // If current selection is a node selection, update the head to the target node
+    if (this.selection.type === "node") {
+      this.selection = { ...this.selection, headNodeId: targetNodeId };
+      return true;
+    }
+
+    // If current selection is an editor selection, use that node as the anchor and the target as the head
+    if (this.selection.type === "editor") {
+      this.selection = { type: "node", anchorNodeId: this.selection.treeNodeId, headNodeId: targetNodeId };
+      return true;
+    }
+
+    return false;
   }
 
   deletedRelationTypeOfEmptySelection() {

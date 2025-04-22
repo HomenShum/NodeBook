@@ -92,7 +92,17 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   });
 
   return (
-    <div className={styles.Container}>
+    <div 
+      className={styles.Container}
+      onPointerDown={(e) => {
+        // Handle shift-click to select nodes between current selection and clicked node
+        if (e.shiftKey) {
+          e.stopPropagation();
+          e.preventDefault();
+          tree.handleShiftClickSelection(treeNode.id);
+        }
+      }}
+    >
       <div className={cnOuterContainer}>
         {(!isAtCanonicalPath || objectIsEditRestricted) && !user.isAnonymous && (
           <TreeNodeInputPrefix treeNode={treeNode} isEditorEditable={editableEditor} />
@@ -108,6 +118,13 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
           onPointerDown={(e) => {
             if (isReadOnlyReference) {
               e.stopPropagation();
+            }
+            
+            // Handle shift-click to select nodes between current selection and clicked node
+            if (e.shiftKey) {
+              e.stopPropagation();
+              e.preventDefault();
+              tree.handleShiftClickSelection(treeNode.id);
             }
           }}
           data-tooltip={tooltipContent}
