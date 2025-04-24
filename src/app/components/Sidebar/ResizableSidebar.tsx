@@ -455,9 +455,11 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </TooltipProvider>
           </div>
         </div>
-        <div ref={resizerRef} className={styles.Resizer} onPointerDown={startResizing}>
-          <div className={styles.ResizerHandle} />
-        </div>
+        {isOpen && (
+          <div ref={resizerRef} className={styles.Resizer} onPointerDown={startResizing}>
+            <div className={styles.ResizerHandle} />
+          </div>
+        )}
       </aside>
       <NotificationPane />
       <HelpModal />
