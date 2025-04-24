@@ -1,8 +1,9 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import axios from "axios";
 import { $getSelection, COMMAND_PRIORITY_LOW, KEY_DOWN_COMMAND, PASTE_COMMAND } from "lexical";
 import { useEffect, useRef } from "react";
-import axios from "axios";
 
+import ApiClient from "@/app/api/utils/client/ApiClient";
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useOutlineParent } from "@/app/contexts/OutlineContentContext";
@@ -20,7 +21,6 @@ import { getAuthFetch, toast, uuid } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { PasteLinksOption } from "@/db/schema";
 import { HASHTAG_SYMBOL } from "@/lib/utils";
-import ApiClient from "@/app/api/utils/client/ApiClient";
 
 // Helper function to extract hashtags from text content
 const extractHashtags = (chips: Chip[]): string[] => {
@@ -533,14 +533,18 @@ export const PastePlugin = () => {
                 });
               }
 
-              // Depth is ignored for the first line, since we just add it to the current node
+              // The key fix - only allow firstLine.isChecked to be used if it's a boolean (true/false)
+              // This ensures that null/undefined values don't overwrite the existing checkbox
+              const preserveExistingCheck = typeof firstLine.isChecked !== 'boolean';
+              const finalIsChecked = preserveExistingCheck ? object.isChecked : firstLine.isChecked;
+              
               txs.push({
                 type: "updateNode",
                 transaction: {
                   nodeId: object.id,
                   nodeProps: {
                     content: newChips,
-                    isChecked: firstLine.isChecked !== undefined ? firstLine.isChecked : null,
+                    isChecked: finalIsChecked,
                   },
                 },
               });
@@ -889,12 +893,22 @@ const getLinkAdditionTxs = (chips: Chip[], parentId: string, mode: PasteLinksOpt
 
 const getTodoStatus = (text: string): { isChecked: boolean | null; remainingText: string } => {
   const trimmedText = text.trimStart();
-  if (trimmedText.startsWith("[x] ") || trimmedText.startsWith("[X] ")) {
-    return { isChecked: true, remainingText: trimmedText.substring(4) };
+  
+  // Match both standard and markdown-style to-do syntax with regex
+  // For checked items: [x], - [x], * [x] (case insensitive for 'x')
+  const checkedRegex = /^(?:(?:- |\* )?\[x\] )/i;
+  if (checkedRegex.test(trimmedText)) {
+    const match = trimmedText.match(checkedRegex)![0];
+    return { isChecked: true, remainingText: trimmedText.substring(match.length) };
   }
-  if (trimmedText.startsWith("[ ] ")) {
-    return { isChecked: false, remainingText: trimmedText.substring(4) };
+  
+  // For unchecked items: [ ], - [ ], * [ ]
+  const uncheckedRegex = /^(?:(?:- |\* )?\[ \] )/;
+  if (uncheckedRegex.test(trimmedText)) {
+    const match = trimmedText.match(uncheckedRegex)![0];
+    return { isChecked: false, remainingText: trimmedText.substring(match.length) };
   }
+  
   return { isChecked: null, remainingText: text };
 };
 
