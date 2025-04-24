@@ -13,6 +13,7 @@ import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
+import { SelectAllPlugin } from "@/app/editor/plugins/SelectAllPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { TitleSizePlugin } from "@/app/editor/plugins/TitleSizePlugin";
 import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
@@ -20,7 +21,6 @@ import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 
 import styles from "./Editor.module.css";
 
@@ -57,6 +57,7 @@ export const NodeHeaderEditor = observer(function NodeHeaderEditor({ treeNode, n
       <DropdownPlugin treeNode={treeNode} />
       <EnterKeyPlugin treeNode={treeNode} />
       <IgnoreModShiftAPlugin />
+      <SelectAllPlugin />
       <TodoPlugin treeNode={treeNode} />
       <ReplacementPlugin treeNode={treeNode} />
       <ClearEditorPlugin />

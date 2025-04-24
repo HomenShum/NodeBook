@@ -24,6 +24,7 @@ import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
 import { ReplacementPlugin } from "@/app/editor/plugins/ReplacementPlugin";
 import { SearchQueryHighlightPlugin } from "@/app/editor/plugins/SearchQueryHighlightPlugin";
+import { SelectAllPlugin } from "@/app/editor/plugins/SelectAllPlugin";
 import { SigilsPlugin } from "@/app/editor/plugins/SigilsPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
@@ -110,6 +111,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <EnterKeyPlugin treeNode={treeNode} />}
         {isEditorEditable && <FormatKeyPlugin />}
         {isEditorEditable && <IgnoreModShiftAPlugin />}
+        {isEditorEditable && <SelectAllPlugin />}
         {isEditorEditable && <LinkPlugin />}
         {isEditorEditable && <MinusKeyPlugin treeNode={treeNode} />}
         {isEditorEditable && <PastePlugin />}

@@ -149,15 +149,47 @@ function OutlineContent({ tree }: Props) {
       }
       viewStore.setActiveTree(tree);
     };
+
+    // Custom event handler for double Cmd+A
+    const handleDoubleCommandA = (event: CustomEvent) => {
+      if (viewStore.activeTree.id === tree.id) {
+        const focusedNode = tree.selectionWithNodes?.type === "editor" ? tree.selectionWithNodes.treeNode : null;
+
+        if (focusedNode) {
+          // If in multiline note, select the whole note
+          if (focusedNode.parentGroup?.id === "noteContent") {
+            const noteNodes = focusedNode.parent.childrenGroupsById.noteContent.nodes;
+            const firstNode = noteNodes[0];
+            const lastNode = noteNodes[noteNodes.length - 1];
+            tree.selectBetween(firstNode.id, lastNode.id);
+          } else {
+            // Otherwise select all nodes on the page
+            const allNodes = tree.state.root.childrenGroupsById.all.nodes;
+            if (allNodes.length > 0) {
+              tree.selectBetween(allNodes[0].id, allNodes[allNodes.length - 1].id);
+            }
+          }
+        }
+      }
+    };
+
     const handleFocus = () => {
       viewStore.setActiveTree(tree);
     };
+
     const element = elementRef.current;
     element && element.addEventListener("keydown", handleKeyDown);
     element && element.addEventListener("focusin", handleFocus);
+
+    // Add the event listener at the document level
+    document.addEventListener("doubleCommandA", handleDoubleCommandA as EventListener);
+
     return () => {
       element && element.removeEventListener("keydown", handleKeyDown);
       element && element.removeEventListener("focusin", handleFocus);
+
+      // Remove the event listener from the document
+      document.removeEventListener("doubleCommandA", handleDoubleCommandA as EventListener);
     };
   });
 
