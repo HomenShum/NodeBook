@@ -60,6 +60,7 @@ const SerializedUserSettingsSchema = z.object({
   showIdeapadLinkButton: z.boolean().optional(),
   showExportSubtreeToIdeapad: z.boolean().optional(),
   showGraphViewButton: z.boolean().optional(),
+  showGraphRoot: z.boolean().optional(),
   parseWithAiLinkingOption: ParseWithAiLinkingOptionEnum.optional(),
   showBulletForEmptyNode: z.boolean().optional(),
   showNotifications: z.boolean().optional(),

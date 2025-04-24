@@ -36,6 +36,7 @@ export class SettingsStore {
   public showIdeapadLinkButton = false;
   public showExportSubtreeToIdeapad: boolean = false;
   public showGraphViewButton = true;
+  public showGraphRoot = true;
   public parseWithAiLinkingOption: ParseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   public showBulletForEmptyNode: boolean = false;
   public showNotifications: boolean = true;
@@ -135,6 +136,7 @@ export class SettingsStore {
       showIdeapadLinkButton: this.showIdeapadLinkButton,
       showExportSubtreeToIdeapad: this.showExportSubtreeToIdeapad,
       showGraphViewButton: this.showGraphViewButton,
+      showGraphRoot: this.showGraphRoot,
       parseWithAiLinkingOption: this.parseWithAiLinkingOption,
       showBulletForEmptyNode: this.showBulletForEmptyNode,
       showNotifications: this.showNotifications,
@@ -173,6 +175,7 @@ export class SettingsStore {
     this.showIdeapadLinkButton = data.showIdeapadLinkButton ?? this.showIdeapadLinkButton;
     this.showExportSubtreeToIdeapad = data.showExportSubtreeToIdeapad ?? this.showExportSubtreeToIdeapad;
     this.showGraphViewButton = data.showGraphViewButton ?? this.showGraphViewButton;
+    this.showGraphRoot = data.showGraphRoot ?? this.showGraphRoot;
     this.parseWithAiLinkingOption = data.parseWithAiLinkingOption ?? this.parseWithAiLinkingOption;
     this.showBulletForEmptyNode = data.showBulletForEmptyNode ?? this.showBulletForEmptyNode;
     this.showNotifications = data.showNotifications ?? this.showNotifications;
@@ -322,6 +325,10 @@ export class SettingsStore {
 
   setSidebarExpandedLocalMentions(value: boolean) {
     this.sidebarExpandedLocalMentions = value;
+  }
+
+  setShowGraphRoot(value: boolean) {
+    this.showGraphRoot = value;
   }
 
   cleanup() {

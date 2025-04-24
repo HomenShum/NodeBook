@@ -16,6 +16,7 @@ import { Application, Container, ContainerChild, Graphics, Rectangle, Text } fro
 
 import { FONT_SIZE } from "@/app/components/GraphView/styles";
 import { calculateArrowPoints, getDisplayText } from "@/app/components/GraphView/utils";
+import { SettingsStore } from "@/app/graph/SettingsStore";
 import { Tree } from "@/app/tree/Tree";
 import { BaseTreeNode } from "@/app/tree/nodes";
 
@@ -49,7 +50,12 @@ type TweenNode = {
   stop: () => void;
 };
 
-export async function renderGraph(graphContainerId: string, tree: Tree, navigate: (node: NodeData) => void) {
+export async function renderGraph(
+  graphContainerId: string,
+  tree: Tree,
+  settingsStore: SettingsStore,
+  navigate: (node: NodeData) => void,
+) {
   // ================ GRAPH CONTAINER ================
   const container = document.getElementById(graphContainerId);
   if (!container) return () => {};
@@ -80,18 +86,24 @@ export async function renderGraph(graphContainerId: string, tree: Tree, navigate
   function traverseTree(node: BaseTreeNode) {
     for (const child of node.visibleChildren) {
       nodes.set(child.object.id, child);
-      relations.push({
-        source: nodes.get(node.object.id)!,
-        target: nodes.get(child.object.id)!,
-        relation: "unknown",
-      });
+      // Only add relations if we're showing the root or this isn't a relation to the root
+      if (settingsStore.showGraphRoot || node.object.id !== tree.state.root.object.id) {
+        relations.push({
+          source: nodes.get(node.object.id)!,
+          target: nodes.get(child.object.id)!,
+          relation: "unknown",
+        });
+      }
       if (child.isExpanded) {
         traverseTree(child);
       }
     }
   }
 
-  nodes.set(tree.state.root.object.id, tree.state.root);
+  // Only add the root node if showGraphRoot is true
+  if (settingsStore.showGraphRoot) {
+    nodes.set(tree.state.root.object.id, tree.state.root);
+  }
   traverseTree(tree.state.root);
 
   const graphData: { nodes: NodeData[]; relations: RelationData[] } = {
