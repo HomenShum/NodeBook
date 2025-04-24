@@ -142,7 +142,7 @@ export const BackspaceMergeNodesPlugin = () => {
           if (destroyMLNote) {
             const firstNoteNode = treeNode.parent.childrenGroupsById["noteContent"].nodes[0];
             if (firstNoteNode) {
-              tree.convertSingleLineNoteToNode(firstNoteNode);
+              treeNode.tree.convertSingleLineNoteToNode(firstNoteNode);
             }
           }
           event.preventDefault();
