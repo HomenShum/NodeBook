@@ -465,6 +465,7 @@ const CardWrapper = observer(() => {
   const graphStore = useGraphStore();
   const graphObject = treeNode.object;
   const setRoot = useSetMainRoot();
+  const { addToast } = useToast();
 
   const getAuthorName = (authorId: string) => {
     if (graphObject.authorId === userId) {
@@ -608,12 +609,50 @@ const CardWrapper = observer(() => {
         fromId: graphStore.myStreamNodeId,
         toId: graphObject.id,
       });
+      
+      // Add "#saved" tag to the node text if it doesn't already have it
+      if (!graphObject.text.includes("#saved")) {
+        const updatedText = graphObject.text + (graphObject.text ? " #saved" : "#saved");
+        graphStore.updateNode({
+          nodeId: graphObject.id,
+          nodeProps: {
+            content: [{ type: "text", value: updatedText }],
+          },
+        });
+      }
+      
+      // Show toast notification when saved
+      addToast({
+        title: "Saved to My Stream",
+        duration: 3000,
+      });
     } else {
       // If already saved, find and remove the relation
       const relationToRemove = graphStore.myStreamNode.relations.find((relation) => relation.to.id === graphObject.id);
       if (relationToRemove) {
         await graphStore.removeRelation({
           relationId: relationToRemove.id,
+        });
+        
+        // Remove "#saved" tag from the node text
+        if (graphObject.text.includes("#saved")) {
+          const updatedText = graphObject.text
+            .replace(" #saved", "")  // Remove with space before
+            .replace("#saved ", "")  // Remove with space after
+            .replace("#saved", "");  // Remove without spaces
+          
+          graphStore.updateNode({
+            nodeId: graphObject.id,
+            nodeProps: {
+              content: [{ type: "text", value: updatedText }],
+            },
+          });
+        }
+        
+        // Show toast notification when removed from My Stream
+        addToast({
+          title: "Removed from My Stream",
+          duration: 3000,
         });
       }
     }

@@ -211,8 +211,15 @@ export const Card = ({
         </div>
         <div className={styles.footerRight}>
           <div className={styles.engagement}>
-            <div className={cn(styles.engagementItem, isLiked && styles.active)} onClick={onLikeClicked}>
-              <Heart strokeWidth={2.5} size={18} />
+            <div
+              className={styles.engagementItem}
+              onClick={onLikeClicked}
+            >
+              {isLiked ? (
+                <Heart strokeWidth={2.5} size={18} style={{ color: 'var(--ruby-9)', fill: 'var(--ruby-9)' }} />
+              ) : (
+                <Heart strokeWidth={2.5} size={18} />
+              )}
               <span className={styles.engagementText}>{likes}</span>
             </div>
             <div
@@ -224,11 +231,15 @@ export const Card = ({
             </div>
             {onSaveClicked && (
               <div
-                className={cn(styles.engagementItem, isSaved && styles.active)}
+                className={styles.engagementItem}
                 onClick={onSaveClicked}
-                style={{ padding: '0.35rem 0.5rem' }}
+                style={{ padding: '0.35rem' }}
               >
-                <Bookmark strokeWidth={2.5} size={18} />
+                {isSaved ? (
+                  <Bookmark strokeWidth={2.5} size={18} style={{ color: 'var(--teal-8)', fill: 'var(--teal-8)' }} />
+                ) : (
+                  <Bookmark strokeWidth={2.5} size={18} />
+                )}
               </div>
             )}
           </div>
@@ -281,10 +292,14 @@ export const Card = ({
                     </div>
 
                     <div
-                      className={cn(styles.commentLike, comment.isLiked && styles.active)}
+                      className={styles.commentLike}
                       onClick={comment.onLikeClicked}
                     >
-                      <Heart size={12} />
+                      {comment.isLiked ? (
+                        <Heart size={12} style={{ color: 'var(--ruby-9)', fill: 'var(--ruby-9)' }} />
+                      ) : (
+                        <Heart size={12} />
+                      )}
                       <span>{comment.likes}</span>
                     </div>
                   </div>
