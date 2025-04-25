@@ -1,16 +1,14 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getRoot, $setSelection, ParagraphNode } from "lexical";
 import { observer } from "mobx-react-lite";
-import { useEffect, useCallback } from "react";
-import { useDebounce, useDebounceFn } from "ahooks";
+import { useEffect } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { $createParagraphMatchingGraphNode, $getChips, graphNodeMatchesParagraph } from "@/app/editor/utils/content";
 import { $getSelectionPosition, $setSelectionFromTree, sameSelectionPositions } from "@/app/editor/utils/selection";
-import { Chip, GraphNode } from "@/app/graph/GraphNode";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { TreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
-import { GraphStore } from "@/app/graph/GraphStore";
 
 interface Props {
   node: GraphNode;
@@ -125,7 +123,6 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
               //     behavior: "instant", //scrollIntoView with "smooth" causes a reflow in mew
               //     block: "center",
               //   });
-              // console.log("scrolled");
               editor.focus();
             }
             const editorSelectionPosition = editor.getEditorState().read($getSelectionPosition);

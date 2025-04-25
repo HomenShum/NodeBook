@@ -462,8 +462,6 @@ export const PastePlugin = () => {
 
           const isInlinePaste = !canConvertToReferences && lines.length === 1;
 
-          console.log(lines.length);
-
           let txs: TxCombined = [];
           let convertToNote = false;
           const newRootId = uuid();

@@ -77,7 +77,6 @@ export class SearchTree extends Tree {
     }
 
     let end = Date.now();
-    console.log("Time taken to get all paths", end - start);
     start = Date.now();
     this.searchRelations = new Set<string>(paths.flat());
     // For each relation path, create the tree path and expand it
@@ -103,7 +102,6 @@ export class SearchTree extends Tree {
       }
     }
     end = Date.now();
-    console.log("Time taken to expand paths", end - start);
     start = Date.now();
     // EDGE CASE handling for getting ideal behaviour:
     // 1. If a node is a leaf node that we retrieved, we want to hide its relations but keep the node in the tree.
@@ -148,7 +146,6 @@ export class SearchTree extends Tree {
     this.applyFilter(this.root);
 
     end = Date.now();
-    console.log("Time taken to hide relations", end - start);
   }
 
   protected applyFilter(treeNode: TreeNode): boolean {

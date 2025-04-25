@@ -72,7 +72,6 @@ export const ArrowKeyPlugin = () => {
               // navigate the the node below
               event.preventDefault();
               if (tree.selection?.type === "editor") {
-                console.log("In arrow key plugin, moving editor selection down");
                 if (tree.selection.position === "end" && element.textContent) {
                   tree.moveEditorSelectionDown({
                     anchorOffset: element.textContent.length,

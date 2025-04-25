@@ -1465,7 +1465,6 @@ export class Tree {
 
       // expansion updates
       // const expansions = { [treeNode.path]: false, [newNodePath]: treeNode.isExpanded };
-      // console.log(treeNode.relationWithParent.relationType.id);
       return {
         txs,
         newNodePath: newNodePath,
@@ -2144,7 +2143,6 @@ export class Tree {
         newPosition = "start";
       }
     }
-    console.log("newPosition", newPosition);
     return newPosition;
   }
   /**
@@ -2181,6 +2179,17 @@ export class Tree {
       this.setFocusedNode(firstChild.path, newPosition, editMode);
       return true;
     } else {
+      if (next.object.text.length === 0) {
+        newPosition = "start";
+      } else if (
+        typeof newPosition === "object" &&
+        (next.object.text.length < newPosition.anchorOffset || next.object.text.length < newPosition.focusOffset)
+      ) {
+        newPosition = {
+          anchorOffset: next.object.text.length,
+          focusOffset: next.object.text.length,
+        };
+      }
       this.setFocusedNode(next.path, newPosition, editMode);
       return true;
     }

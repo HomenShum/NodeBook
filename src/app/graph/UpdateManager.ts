@@ -445,7 +445,6 @@ export class UpdateManager {
         }
         const settledEntityIds = getEntityIdsFromUpdates(syncData);
         settledEntityIds.forEach((id) => UpdateManager.decrementSyncCount(id));
-        console.log("Sync map", UpdateManager.pendingNodeSyncCounts);
         syncData = syncDataBatch.shift();
       }
     } catch (e) {

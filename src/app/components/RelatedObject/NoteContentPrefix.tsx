@@ -92,7 +92,6 @@ export const NoteContentPrefix = observer(function NoteContentPrefix({ treeNode,
               break;
             default:
               if (e.key.length === 1 && /[a-zA-Z0-9]/.test(e.key) && !e.ctrlKey) {
-                console.log(/[a-zA-Z0-9]/.test(e.key));
                 e.preventDefault();
                 e.stopPropagation();
                 openRelComboBox();

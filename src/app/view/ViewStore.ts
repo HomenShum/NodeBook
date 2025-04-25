@@ -114,7 +114,6 @@ export class ViewStore {
 
       // Set up event listener for restoring selection state after undo operations
       window.addEventListener("restore-selection-state", ((event: CustomEvent) => {
-        console.log("restoring selection state", event.detail);
         if (event.detail && event.detail.transactionId) {
           this.restoreSelectionStateByTransactionId(event.detail.transactionId);
         }
@@ -414,7 +413,6 @@ export class ViewStore {
     if (typeof window !== "undefined") {
       const contentContainer = document.querySelector("[data-scroll-id='ContentContainer']");
       if (contentContainer) {
-        console.log("saving scroll position", objectId, contentContainer.scrollTop);
         this.scrollPositionStack.push({
           position: contentContainer.scrollTop,
         });
@@ -431,7 +429,6 @@ export class ViewStore {
       // Remove this and all subsequent positions from the stack
       this.scrollPositionStack.pop();
 
-      console.log("restoring scroll position", currentObjectId, position);
       if (typeof window !== "undefined") {
         requestAnimationFrame(() => {
           const contentContainer = document.querySelector("[data-scroll-id='ContentContainer']");
