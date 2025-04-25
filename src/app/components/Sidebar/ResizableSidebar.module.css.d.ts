@@ -8,6 +8,7 @@ declare const styles: {
   readonly "ButtonText": string;
   readonly "HelpIcon": string;
   readonly "Hidden": string;
+  readonly "HideOnMobile": string;
   readonly "LogInButton": string;
   readonly "LogOutButton": string;
   readonly "LoginButtonWrapper": string;

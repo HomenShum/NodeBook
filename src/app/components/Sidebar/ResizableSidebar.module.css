@@ -23,6 +23,10 @@
   .Resizer {
     display: none;
   }
+  
+  .HideOnMobile {
+    display: none;
+  }
 }
 
 .Backdrop {

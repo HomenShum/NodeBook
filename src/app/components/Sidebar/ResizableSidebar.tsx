@@ -3,10 +3,10 @@ import {
   FileSpreadsheet,
   FileStackIcon,
   Globe,
-  HelpCircle,
   History,
   Home,
   Key,
+  Keyboard,
   LogIn,
   LogOut,
   Mail,
@@ -16,7 +16,7 @@ import {
   Search,
   SettingsIcon,
   SunIcon,
-  User,
+  User
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -200,10 +200,10 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               variant="ghost"
               size="icon"
               onClick={openHelpModal}
-              className={cn(styles.ShowTooltip, styles.BottomAlign)}
-              data-tooltip="Help"
+              className={cn(styles.ShowTooltip, styles.BottomAlign, styles.HideOnMobile)}
+              data-tooltip="Keyboard Shortcuts"
             >
-              <HelpCircle size={16} strokeWidth={1.5} />
+              <Keyboard size={16} strokeWidth={1.5} />
             </Button>
             <Button
               variant="ghost"
