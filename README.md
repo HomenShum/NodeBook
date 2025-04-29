@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/en/download)
+- [Node.js v22.14.0](https://nodejs.org/en/download)
 - [Yarn](https://yarnpkg.com/getting-started/install)
 
 ### Install
