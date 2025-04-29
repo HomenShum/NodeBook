@@ -29,7 +29,9 @@ yarn vercel env pull --environment=development .env.local
 
 ```
 
-(Optional) By default, persistence is disabled. To enable persistence, set the `NEXT_PUBLIC_PERSISTENCE_ENABLED` environment variable to `true` and `NEXT_PUBLIC_IS_AUTH_ENABLED` to `true` in `.env.local`.
+By default, persistence is disabled. To enable persistence, set the `NEXT_PUBLIC_PERSISTENCE_ENABLED` environment variable to `true` and `NEXT_PUBLIC_IS_AUTH_ENABLED` to `true` in `.env.local`.
+
+Moreover, you'll want to change `POSTGRES_CUSTOM_URL` in `.env.local` to point to `mew_lite` instead of `verceldb` to link your local app to our main development database (i.e. to work with the same backend as `edge.globalbrain.ai`). See below for how to set up your own development database.
 
 ### Start
 
@@ -39,7 +41,7 @@ Start the development server:
 yarn dev
 ```
 
-### (Optional) Set up a database for testing
+### (Recommended) Set up a database for testing
 
 _Note: This is only necessary for changes that modify the existing database schema_
 
