@@ -3,4 +3,5 @@ export enum ViewType {
   Note = "note",
   Graph = "graph",
   Card = "card",
+  Webpage = "webpage",
 }

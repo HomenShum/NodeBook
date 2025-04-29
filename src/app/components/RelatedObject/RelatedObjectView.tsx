@@ -25,6 +25,7 @@ import { useViewStore } from "@/app/view/useViewStore";
 import { RelationTypePrefix } from "@/app/components/RelatedObject/RelationTypePrefix";
 import { TypeIndicator } from "@/app/editor/plugins/dropdown/DropdownItem";
 import { useToast } from "@/app/hooks/useToast";
+import { ViewType } from "@/app/view/types";
 import { cn } from "@/lib/utils";
 
 import { ChildGroups, NoteContentSection } from "./ChildGroups";
@@ -54,8 +55,9 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
   // node is content of a note which is a direct child of the root
   const hideToggle =
     isNoteContentRoot ||
-    (viewType === "note" && isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode) ||
-    (viewType === "note" && treeNode.parent instanceof RootTreeNode);
+    (viewType === ViewType.Note && isNoteContent(treeNode) && treeNode.parent.parent instanceof RootTreeNode) ||
+    (viewType === ViewType.Note && treeNode.parent instanceof RootTreeNode) ||
+    (viewType === ViewType.Webpage && treeNode.parent instanceof RootTreeNode && treeNode.childCount === 0);
 
   const hasNoteContent = treeNode.childrenGroupsById.noteContent.nodes.length > 0;
 
@@ -609,7 +611,7 @@ const CardWrapper = observer(() => {
         fromId: graphStore.myStreamNodeId,
         toId: graphObject.id,
       });
-      
+
       // Add "#saved" tag to the node text if it doesn't already have it
       if (!graphObject.text.includes("#saved")) {
         const updatedText = graphObject.text + (graphObject.text ? " #saved" : "#saved");
@@ -620,7 +622,7 @@ const CardWrapper = observer(() => {
           },
         });
       }
-      
+
       // Show toast notification when saved
       addToast({
         title: "Saved to My Stream",
@@ -633,14 +635,14 @@ const CardWrapper = observer(() => {
         await graphStore.removeRelation({
           relationId: relationToRemove.id,
         });
-        
+
         // Remove "#saved" tag from the node text
         if (graphObject.text.includes("#saved")) {
           const updatedText = graphObject.text
-            .replace(" #saved", "")  // Remove with space before
-            .replace("#saved ", "")  // Remove with space after
-            .replace("#saved", "");  // Remove without spaces
-          
+            .replace(" #saved", "") // Remove with space before
+            .replace("#saved ", "") // Remove with space after
+            .replace("#saved", ""); // Remove without spaces
+
           graphStore.updateNode({
             nodeId: graphObject.id,
             nodeProps: {
@@ -648,7 +650,7 @@ const CardWrapper = observer(() => {
             },
           });
         }
-        
+
         // Show toast notification when removed from My Stream
         addToast({
           title: "Removed from My Stream",

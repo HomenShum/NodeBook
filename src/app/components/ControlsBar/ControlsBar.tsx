@@ -307,6 +307,8 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 <NetworkIcon size={14} strokeWidth={1.5} />
               ) : viewStore.viewType === ViewType.Outline ? (
                 <ListIcon size={17} strokeWidth={1.8} />
+              ) : viewStore.viewType === ViewType.Webpage ? (
+                <Globe size={14} strokeWidth={1.5} />
               ) : (
                 <NotesIcon />
               )}
@@ -317,6 +319,8 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                   ? "List View"
                   : viewStore.viewType === ViewType.Note
                   ? "Note View"
+                  : viewStore.viewType === ViewType.Webpage
+                  ? "Webpage View"
                   : "Card View"}
               </span>
             </Button>
@@ -333,6 +337,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             <DropdownMenuItem onSelect={() => setViewType(ViewType.Card)}>
               <NotesIcon />
               Card View
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setViewType(ViewType.Webpage)}>
+              <Globe size={14} strokeWidth={1.5} />
+              Webpage View
             </DropdownMenuItem>
             {settingsStore.showGraphViewButton && (
               <DropdownMenuItem onSelect={() => setViewType(ViewType.Graph)}>
