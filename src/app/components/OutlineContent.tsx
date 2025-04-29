@@ -128,7 +128,7 @@ function OutlineContent({ tree }: Props) {
       if (tree.isMainTree && tree.selection === null && isEscapeSelectionHotkey(event)) {
         wasEventHandled = true;
         setRoot(graphStore.getDefaultRootForUser());
-        viewStore.setViewType(ViewType.Note);
+        viewStore.setViewType(ViewType.Outline);
       }
       if (!wasEventHandled) {
         wasEventHandled = handleTreeHotkeys(event, tree);
