@@ -92,11 +92,11 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   });
 
   return (
-    <div 
+    <div
       className={styles.Container}
       onPointerDown={(e) => {
         // Handle shift-click to select nodes between current selection and clicked node
-        if (e.shiftKey) {
+        if (e.shiftKey && !tree.isNodeFocused(treeNode.id)) {
           e.stopPropagation();
           e.preventDefault();
           tree.handleShiftClickSelection(treeNode.id);
@@ -119,9 +119,9 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
             if (isReadOnlyReference) {
               e.stopPropagation();
             }
-            
+
             // Handle shift-click to select nodes between current selection and clicked node
-            if (e.shiftKey) {
+            if (e.shiftKey && !tree.isNodeFocused(treeNode.id)) {
               e.stopPropagation();
               e.preventDefault();
               tree.handleShiftClickSelection(treeNode.id);
