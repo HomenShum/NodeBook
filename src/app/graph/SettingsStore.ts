@@ -46,6 +46,7 @@ export class SettingsStore {
   public todosFilterType: string = "all";
   public todosInQuickCaptureFilterType: string = "all";
   public showHiddenRelations: boolean = false;
+  public hideHashtagRelations: boolean = false;
   public sidebarExpandedMyFavorites: boolean = true;
   public sidebarExpandedMyHashtags: boolean = true;
   public sidebarExpandedMyShortlinks: boolean = true;
@@ -98,6 +99,7 @@ export class SettingsStore {
     this.todosFilterType = "all";
     this.todosInQuickCaptureFilterType = "all";
     this.showHiddenRelations = false;
+    this.hideHashtagRelations = false;
     this.sidebarExpandedMyFavorites = true;
     this.sidebarExpandedMyHashtags = true;
     this.sidebarExpandedMyShortlinks = true;
@@ -145,6 +147,7 @@ export class SettingsStore {
       todosFilterType: this.todosFilterType,
       todosInQuickCaptureFilterType: this.todosInQuickCaptureFilterType,
       showHiddenRelations: this.showHiddenRelations,
+      hideHashtagRelations: this.hideHashtagRelations,
       sidebarExpandedMyFavorites: this.sidebarExpandedMyFavorites,
       sidebarExpandedMyHashtags: this.sidebarExpandedMyHashtags,
       sidebarExpandedMyShortlinks: this.sidebarExpandedMyShortlinks,
@@ -184,6 +187,7 @@ export class SettingsStore {
     this.todosFilterType = data.todosFilterType ?? this.todosFilterType;
     this.todosInQuickCaptureFilterType = data.todosInQuickCaptureFilterType ?? this.todosInQuickCaptureFilterType;
     this.showHiddenRelations = data.showHiddenRelations ?? this.showHiddenRelations;
+    this.hideHashtagRelations = data.hideHashtagRelations ?? this.hideHashtagRelations;
     this.sidebarExpandedMyFavorites = data.sidebarExpandedMyFavorites ?? this.sidebarExpandedMyFavorites;
     this.sidebarExpandedMyHashtags = data.sidebarExpandedMyHashtags ?? this.sidebarExpandedMyHashtags;
     this.sidebarExpandedMyShortlinks = data.sidebarExpandedMyShortlinks ?? this.sidebarExpandedMyShortlinks;
@@ -301,6 +305,10 @@ export class SettingsStore {
 
   setTodosInQuickCaptureFilterType(value: string) {
     this.todosInQuickCaptureFilterType = value;
+  }
+
+  setHideHashtagRelations(value: boolean) {
+    this.hideHashtagRelations = value;
   }
 
   setShowHiddenRelations(value: boolean) {

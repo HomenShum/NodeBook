@@ -162,7 +162,7 @@ export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType
   empty: { version: 1, id: "empty", authorId: GLOBAL_ADMIN_USER_ID, label: "", reverseLabel: "", isPublic: false },
 };
 
-export const hiddenRelationTypeIds = new Set([defaultRelationTypes.dataSource.id, defaultRelationTypes.hashtag.id]);
+export const hiddenRelationTypeIds = new Set([defaultRelationTypes.dataSource.id]);
 
 export const MAX_PREFIX_LENGTH = 3;
 export const DELETED_NODE_TEXT = "Unloaded Node";

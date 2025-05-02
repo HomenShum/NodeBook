@@ -270,6 +270,7 @@ export class Tree {
       hideDirectParent: this.settingsStore.hideDirectParent,
       hidePinnedSection: this.settingsStore.hidePinnedItems,
       showOnlyTodos: this.settingsStore.showOnlyTodos,
+      hideHashtagRelations: this.settingsStore.hideHashtagRelations,
       todosFilterType: this.settingsStore.todosFilterType,
       ...this.partialFilter,
     };
@@ -769,6 +770,14 @@ export class Tree {
         isSameRelationAsParentToGrandparent &&
         grandparentNotInBreadcrumb &&
         !nodeIsNoteContent
+      ) {
+        return { visible: false, hasTodoDescendant };
+      }
+
+      // Filter hashtag relations
+      if (
+        filter.hideHashtagRelations &&
+        treeNode.relationWithParent.relationType.id === defaultRelationTypes.hashtag.id
       ) {
         return { visible: false, hasTodoDescendant };
       }
@@ -2486,4 +2495,5 @@ export type Filter = {
   hidePinnedSection: boolean;
   showOnlyTodos: boolean;
   todosFilterType?: string;
+  hideHashtagRelations: boolean;
 };

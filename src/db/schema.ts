@@ -70,6 +70,7 @@ const SerializedUserSettingsSchema = z.object({
   todosFilterType: z.string().optional(),
   todosInQuickCaptureFilterType: z.string().optional(),
   showHiddenRelations: z.boolean().optional(),
+  hideHashtagRelations: z.boolean().optional(),
   sidebarExpandedMyFavorites: z.boolean().optional(),
   sidebarExpandedMyHashtags: z.boolean().optional(),
   sidebarExpandedMyShortlinks: z.boolean().optional(),

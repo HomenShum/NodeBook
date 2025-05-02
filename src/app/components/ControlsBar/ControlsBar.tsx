@@ -407,6 +407,14 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 />
               </div>
               <div className={s.SwitchItem}>
+                <label htmlFor="hide-hashtag-relations">Hide hashtag relations</label>
+                <Switch
+                  id="hide-hashtag-relations"
+                  checked={settingsStore.hideHashtagRelations}
+                  onCheckedChange={(checked: boolean) => settingsStore.setHideHashtagRelations(checked)}
+                />
+              </div>
+              <div className={s.SwitchItem}>
                 <label htmlFor="hide-thoughtstream-bullets">Hide bullets in thoughtstream view</label>
                 <Switch
                   id="hide-thoughtstream-bullets"
