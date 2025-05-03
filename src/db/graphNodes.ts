@@ -40,8 +40,17 @@ export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[])
   return true;
 };
 
-const contentNotEqual = (a: SerializedNode, b: SerializedNode) =>
-  JSON.stringify(a.content) !== JSON.stringify(b.content);
+const contentNotEqual = (a: SerializedNode, b: SerializedNode) => {
+  // styles are undefined for default nodes such as My Stream
+  // so we need to set them to 0 for the comparison for the text chips
+  const aContent = a.content.map((item) =>
+    item.type === "text" ? (item.styles ? item : { ...item, styles: 0 }) : item,
+  );
+  const bContent = b.content.map((item) =>
+    item.type === "text" ? (item.styles ? item : { ...item, styles: 0 }) : item,
+  );
+  return JSON.stringify(aContent) !== JSON.stringify(bContent);
+};
 
 export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode, newProps: SerializedNode) => {
   if (newProps.id === GLOBAL_ROOT_ID) {
