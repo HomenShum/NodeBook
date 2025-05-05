@@ -38,6 +38,7 @@ describe("GraphStore.load", () => {
           canonicalRelationId: null,
           isChecked: null,
           accessMode: AccessMode.READ,
+          attributes: {},
         },
         b: {
           id: "b",
@@ -51,6 +52,7 @@ describe("GraphStore.load", () => {
           canonicalRelationId: null,
           isChecked: null,
           accessMode: AccessMode.READ,
+          attributes: {},
         },
       },
       relationTypesById: {

@@ -7,12 +7,16 @@ import { notificationTable } from "@/db/schema";
 
 export const GET = withAuth(getHandler);
 async function getHandler(request: NextAuthenticatedRequest) {
-  const db = getDb();
-  const userNotifications = await db
-    .select()
-    .from(notificationTable)
-    .where(eq(notificationTable.userId, request.userId));
-  return NextResponse.json({ status: "success", data: userNotifications });
+  try {
+    const db = getDb();
+    const userNotifications = await db
+      .select()
+      .from(notificationTable)
+      .where(eq(notificationTable.userId, request.userId));
+    return NextResponse.json({ status: "success", data: userNotifications });
+  } catch (e) {
+    return NextResponse.json({ error: "Invalid request body" });
+  }
 }
 
 export const POST = withAuth(postHandler);

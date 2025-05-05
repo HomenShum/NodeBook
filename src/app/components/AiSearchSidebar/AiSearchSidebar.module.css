@@ -1,0 +1,138 @@
+.Container {
+  min-width: 400px;
+  padding: 20px;
+  max-width: 400px;
+  overflow-y: auto;
+}
+
+.SearchContainer {
+  position: relative;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: all 0.15s ease;
+  background: var(--gray-3);
+  color: var(--gray-11);
+}
+
+.SearchContent {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 100%;
+  min-width: 72px;
+  transition: all 0.15s ease;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  padding: 0 6px 1px 8px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.SearchIconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  height: 24px;
+  padding-left: 10px;
+}
+
+.LoadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: start;
+  width: 100%;
+}
+
+.StagingContainer {
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  flex-direction: column;
+  overflow: auto;
+  max-height: 80vh;
+  scrollbar-width: thin;
+}
+
+.EllipsisAnimation {
+  font-size: 15px;
+  font-weight: 300;
+}
+
+.EllipsisAnimation:last-of-type:after {
+  content: "...";
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: bottom;
+  animation: ellipsis-loading 1s infinite .3s;
+  animation-fill-mode: forwards;
+  width: 1.25em;
+}
+
+@keyframes ellipsis-loading {
+  25% {
+    content: "";
+  }
+  50% {
+    content: ".";
+  }
+  75% {
+    content: "..";
+  }
+  100% {
+    content: "...";
+  }
+}
+
+.StagingButtons{
+  display: flex;
+  justify-content: start;
+  width: 100%;
+  margin: 10px 0px;
+  gap: 10px;
+}
+
+.RelevancyList {
+  margin-bottom: 5px;
+}
+
+.RelevancyList, .RelevancyList td, .RelevancyList tr {
+  font-size: 10px;
+  border: 0.5px solid var(--gray-6);
+  border-collapse: collapse;
+  border-radius: 10px;
+}
+
+.RelevancyList td {
+  padding: 5px
+}
+
+.CheckboxContainer {
+  margin-top: 5px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.CheckboxContainer > input {
+  width: 12px;
+  height: 12px;
+}
+
+.GlobalStagingControls {
+  font-size: 15px;
+}
+
+.GlobalStagingControls > summary {
+  margin: 10px 0;
+}

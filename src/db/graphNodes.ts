@@ -29,6 +29,7 @@ export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[])
         isChecked: node.isChecked ?? null,
         canonicalRelationId: node.canonicalRelationId,
         accessMode: node.accessMode,
+        attributes: node.attributes,
       })),
     )
     .returning({ createdId: graphNodeTable.id })
@@ -94,6 +95,7 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
       isChecked: newProps.isChecked ?? null,
       canonicalRelationId: newProps.canonicalRelationId,
       accessMode: newProps.accessMode,
+      attributes: newProps.attributes,
     })
     .where(and(eq(graphNodeTable.authorId, oldProps.authorId), eq(graphNodeTable.id, oldProps.id)))
     .returning({ updatedId: graphNodeTable.id });

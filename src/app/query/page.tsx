@@ -2,8 +2,9 @@
 
 import { captureException } from "@sentry/nextjs";
 import { LinkIcon, Loader2, Search, X } from "lucide-react";
-import { action, observable, toJS } from "mobx";
+import { action, observable, runInAction, toJS } from "mobx";
 import { observer } from "mobx-react-lite";
+import React, { useEffect } from "react";
 
 import appStyles from "@/app/app.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -14,6 +15,10 @@ import { useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import appLogger from "@/lib/logger";
 import { cn } from "@/lib/utils";
+import { UNLOGGED_USER } from "@/app/auth/MewUser";
+import { getAuthFetch } from "@/app/util";
+
+import { QueryMode, ReadParsedResponse, ReadQueryResponse } from "./types";
 
 import styles from "./page.module.css";
 
@@ -28,155 +33,225 @@ const EXAMPLE_QUERIES = [
   "founders of a series a company interested in sustainability",
 ];
 
-type QueryResponse = {
-  response: string;
-  error?: string;
-};
-
-type ResponseLine =
-  | { type: "text"; content: string }
-  | { type: "citation"; nodeId: string }
-  | { type: "link"; url: string; content: string };
-type ParsedResponse = ResponseLine[][];
-
 const state = observable<{
   query: string;
-  response: ParsedResponse | null;
+  response: ReadParsedResponse | null;
   error: string;
   isLoading: boolean;
+  mode: QueryMode;
+  userId: string;
 }>({
   query: "",
   response: null,
   error: "",
   isLoading: false,
+  mode: QueryMode.READ,
+  userId: UNLOGGED_USER.id,
 });
+
+const toggleMode = action(() => {
+  state.mode = state.mode === QueryMode.READ ? QueryMode.CREATE : QueryMode.READ;
+  state.response = null;
+  state.isLoading = false;
+  state.error = "";
+});
+
+const executeReadQuery = action(async () => {
+  const { query, userId } = state;
+
+  try {
+    const response = await fetch("/api/query", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query, userId }),
+    });
+
+    const data: ReadQueryResponse = await response.json();
+
+    if (data.error) {
+      state.error = data.error;
+    } else {
+      state.response = JSON.parse(data.response).content;
+      logger.info("query response", {
+        query,
+        response: data.response,
+        parsed: toJS(state.response),
+      });
+    }
+  } catch (err) {
+    captureException(err, { user: { id: userId }, extra: { query, message: "Error processing AI query" } });
+    state.error = "Failed to process query. Please try again.";
+  }
+});
+
+const executeCreateQuery = action(async () => {
+  const { query, userId } = state;
+  const authedFetch = getAuthFetch();
+  try {
+    const response = await fetch("/api/query", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ query, userId }),
+    });
+
+    const data: ReadQueryResponse = await response.json();
+
+    if (data.error) {
+      state.error = data.error;
+    } else {
+      state.response = JSON.parse(data.response).content;
+      logger.info("query response", {
+        query,
+        response: data.response,
+        parsed: toJS(state.response),
+      });
+    }
+  } catch (err) {
+    captureException(err, { user: { id: userId }, extra: { query, message: "Error processing AI query" } });
+    state.error = "Failed to process query. Please try again.";
+  }
+});
+
+const executeQuery = async () => {
+  state.isLoading = true;
+  state.error = "";
+
+  switch (state.mode) {
+    case QueryMode.READ:
+      await executeReadQuery();
+      break;
+    case QueryMode.CREATE:
+      await executeCreateQuery();
+      break;
+    default:
+      throw new Error("Invalid query mode");
+  }
+
+  state.isLoading = false;
+};
 
 const MewQueryInterface = observer(function MewQueryInterface() {
   const user = useUser();
   const viewStore = useViewStore();
 
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await executeQuery(state.query);
-  };
-
-  const executeQuery = action(async (query: string) => {
-    state.isLoading = true;
-    state.error = "";
-
-    try {
-      const response = await fetch("/api/query", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ query, userId: user.id }),
-      });
-
-      const data: QueryResponse = await response.json();
-
-      if (data.error) {
-        state.error = data.error;
-      } else {
-        state.response = JSON.parse(data.response).content;
-        logger.info("query response", {
-          query,
-          response: data.response,
-          parsed: toJS(state.response),
-        });
-      }
-    } catch (err) {
-      captureException(err, { user: { id: user.id }, extra: { query, message: "Error processing AI query" } });
-      state.error = "Failed to process query. Please try again.";
-    } finally {
-      state.isLoading = false;
-    }
-  });
+  useEffect(() => {
+    runInAction(() => {
+      state.userId = user.id;
+    });
+  }, [user]);
 
   return (
     <div className={cn(appStyles.ViewContainer, { [appStyles.ViewContainerFull]: !viewStore.leftSidebarOpen })}>
-      <form onSubmit={handleFormSubmit} className={styles.form}>
-        {/* Search bar */}
-        <div className={styles.searchContainer}>
-          <div className={styles.searchIconWrapper}>
-            {state.isLoading ? (
-              <Loader2 className={styles.loadingIcon} size={14} strokeWidth={1.5} />
-            ) : (
-              <Search className={styles.searchIcon} size={14} strokeWidth={1.5} />
-            )}
-          </div>
-          <input
-            type="search"
-            className={styles.searchInput}
-            value={state.query}
-            onChange={action((e) => {
-              state.query = e.target.value;
-              if (state.query.length === 0) {
-                state.response = null;
-              }
-            })}
-            placeholder="Ask your graph..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleFormSubmit(e);
-              }
-            }}
-          />
-          {state.query && (
-            <Button
-              variant="ghost"
-              className={styles.clearButton}
-              onClick={action(() => {
-                state.query = "";
-                state.response = null;
-              })}
-            >
-              <X size={14} />
-            </Button>
-          )}
-        </div>
-      </form>
-      <div className={styles.searchResults}>
-        {/* Example queries - only show when no query */}
-        {!state.query && (
-          <div className={styles.examplesSection}>
-            <div>Example queries</div>
-            {EXAMPLE_QUERIES.map((q) => (
-              <div
-                key={q}
-                className={styles.exampleQuery}
-                onClick={action(() => {
-                  state.query = q;
-                  executeQuery(q);
-                })}
-              >
-                <Search className={styles.exampleIcon} size={14} strokeWidth={1.5} />
-                <span>{q}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        {state.error && (
-          <div className={styles.error}>
-            <div className={styles.errorHeader}>
-              <svg className={styles.errorIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12" y2="16" />
-              </svg>
-              <h4 className={styles.errorTitle}>Error</h4>
-            </div>
-            <p className={styles.errorMessage}>{state.error}</p>
-          </div>
-        )}
-
-        {/* Response */}
-        {state.response && !state.isLoading && <Response response={state.response} />}
-      </div>
+      <SearchBar />
+      <SearchResult />
     </div>
   );
 });
 
+const SearchBar = observer(function SearchBar() {
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await executeQuery();
+  };
+  return (
+    <form onSubmit={handleFormSubmit} className={styles.form}>
+      <div className={styles.searchContainer}>
+        <div className={styles.searchIconWrapper}>
+          {state.isLoading ? (
+            <Loader2 className={styles.loadingIcon} size={14} strokeWidth={1.5} />
+          ) : (
+            <Search className={styles.searchIcon} size={14} strokeWidth={1.5} />
+          )}
+        </div>
+        <input
+          type="search"
+          className={styles.searchInput}
+          value={state.query}
+          onChange={action((e) => {
+            state.query = e.target.value;
+            if (state.query.length === 0) {
+              state.response = null;
+            }
+          })}
+          placeholder="Ask your graph..."
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleFormSubmit(e);
+            }
+          }}
+        />
+        {state.query && (
+          <Button
+            variant="ghost"
+            className={styles.clearButton}
+            onClick={action(() => {
+              state.query = "";
+              state.response = null;
+            })}
+          >
+            <X size={14} />
+          </Button>
+        )}
+      </div>
+      <input type="checkbox" />
+    </form>
+  );
+});
+const SearchResult = observer(function SearchResult() {
+  const showExample = !state.query && !state.error;
+  const showError = state.error;
+
+  if (showExample) {
+    return (
+      <div className={styles.searchResults}>
+        <div className={styles.examplesSection}>
+          <div>Example queries</div>
+          {EXAMPLE_QUERIES.map((q) => (
+            <div
+              key={q}
+              className={styles.exampleQuery}
+              onClick={action(() => {
+                state.query = q;
+                executeQuery();
+              })}
+            >
+              <Search className={styles.exampleIcon} size={14} strokeWidth={1.5} />
+              <span>{q}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (showError) {
+    return (
+      <div className={styles.searchResults}>
+        <div className={styles.error}>
+          <div className={styles.errorHeader}>
+            <svg className={styles.errorIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12" y2="16" />
+            </svg>
+            <h4 className={styles.errorTitle}>Error</h4>
+          </div>
+          <p className={styles.errorMessage}>{state.error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.searchResults}>
+      <Response />
+    </div>
+  );
+});
 // parse basic markdown (bold/italics)
 function parseMarkdown(text: string): JSX.Element {
   const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
@@ -184,10 +259,10 @@ function parseMarkdown(text: string): JSX.Element {
   return (
     <>
       {parts.map((part, i) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
+        if (part.startsWith("**") && part.endsWith("**")) {
           // bold text
           return <strong key={i}>{part.slice(2, -2)}</strong>;
-        } else if (part.startsWith('*') && part.endsWith('*')) {
+        } else if (part.startsWith("*") && part.endsWith("*")) {
           // italic text
           return <em key={i}>{part.slice(1, -1)}</em>;
         } else {
@@ -199,7 +274,8 @@ function parseMarkdown(text: string): JSX.Element {
   );
 }
 
-function Response({ response }: { response: ParsedResponse }) {
+const Response = observer(function Response() {
+  const response = state.response;
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
   const { addToast } = useToast();
@@ -213,6 +289,8 @@ function Response({ response }: { response: ParsedResponse }) {
     setRoot(node);
   }
 
+  if (response === null) return <></>;
+
   return (
     <div className={styles.response}>
       {response.map((line, lineIndex) => {
@@ -223,7 +301,7 @@ function Response({ response }: { response: ParsedResponse }) {
             elements.push(
               <span key={`text-${partIndex}`} className={styles.responseText}>
                 {parseMarkdown(part.content)}
-              </span>
+              </span>,
             );
           } else if (part.type === "citation") {
             const node = graphStore.getNode(part.nodeId);
@@ -236,7 +314,7 @@ function Response({ response }: { response: ParsedResponse }) {
                   className={styles.citationLink}
                 >
                   <LinkIcon className={styles.responseLinkIcon} size={14} strokeWidth={1.5} />
-                </span>
+                </span>,
               );
             }
           } else if (part.type === "link") {
@@ -249,7 +327,7 @@ function Response({ response }: { response: ParsedResponse }) {
                 className={styles.linkText}
               >
                 {part.content}
-              </a>
+              </a>,
             );
           }
         });
@@ -262,6 +340,6 @@ function Response({ response }: { response: ParsedResponse }) {
       })}
     </div>
   );
-}
+});
 
 export default MewQueryInterface;

@@ -23,6 +23,7 @@ import { TreeContext } from "@/app/tree/TreeContext";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import AiSearchSidebar from "@/app/components/AiSearchSidebar/AiSearchSidebar";
 
 import s from "./OutlineView.module.css";
 
@@ -109,6 +110,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                 </button>
               )}
             </OutlineParentContext.Provider>
+            <AiSearchSidebar />
             <RightSidePanel parentRef={ref} />
           </div>
         )}

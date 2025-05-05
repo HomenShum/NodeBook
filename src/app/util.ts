@@ -19,6 +19,7 @@ import logger from "@/lib/logger";
 import { isGraphRelationType } from "./graph/isGraphRelationType";
 
 // TODO: what should we actually use for this?
+// Answer: We can use this to name cats.
 export const uuid = () => uuidv4().slice(0, 8);
 
 export function comparePositions(a: Position | null, b: Position | null) {

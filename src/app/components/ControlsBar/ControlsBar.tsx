@@ -10,6 +10,7 @@ import {
   MinusSquare,
   NetworkIcon,
   Save,
+  SearchIcon,
   Sliders,
   WorkflowIcon,
   X,
@@ -17,6 +18,7 @@ import {
 import { observer } from "mobx-react-lite";
 import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 
+import { VoiceInputButton } from "@/app/components/VoiceOps/VoiceInputButton";
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
@@ -278,6 +280,23 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
         </div>
       </div>
       <div className={styles.RightWrapper}>
+        {!user.isAnonymous && (
+          <Button
+            size="sm"
+            variant={viewStore.aiSearchStore.isSidebarOpen ? "active" : "default"}
+            onClick={() =>
+              viewStore.setAiSearchState({
+                isSidebarOpen: !viewStore.aiSearchStore.isSidebarOpen,
+              })
+            }
+            className={cn(s.ShowTooltip, s.BottomAlign)}
+            data-tooltip={"Toggle Ai Search"}
+          >
+            <SearchIcon size={14} strokeWidth={1.5} />
+            <span>Ai Search</span>
+          </Button>
+        )}
+        {!user.isAnonymous && <VoiceInputButton />}
         {settingsStore.showIdeapadLinkButton && (
           <Button
             size="sm"
@@ -316,12 +335,12 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 {viewStore.graphMode
                   ? "Graph View"
                   : viewStore.viewType === ViewType.Outline
-                  ? "List View"
-                  : viewStore.viewType === ViewType.Note
-                  ? "Note View"
-                  : viewStore.viewType === ViewType.Webpage
-                  ? "Webpage View"
-                  : "Card View"}
+                    ? "List View"
+                    : viewStore.viewType === ViewType.Note
+                      ? "Note View"
+                      : viewStore.viewType === ViewType.Webpage
+                        ? "Webpage View"
+                        : "Card View"}
               </span>
             </Button>
           </DropdownMenuTrigger>

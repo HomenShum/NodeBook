@@ -10,6 +10,7 @@ import { SelectionState } from "@/app/tree/SelectionState";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Path, Root, Tree } from "@/app/tree/Tree";
 import { makeAutoSaving } from "@/app/util";
+import { AiSearchStore } from "@/app/view/AiSearchStore";
 import { ViewType } from "@/app/view/types";
 
 export class ViewStore {
@@ -62,6 +63,7 @@ export class ViewStore {
   public activeTree: Tree;
   public notificationPaneOpen = false;
   public jumpToNodeId: string | null = null;
+  public aiSearchStore = new AiSearchStore();
 
   // Stack to store scroll positions with their corresponding object IDs
   private scrollPositionStack: Array<{ position: number }> = [];
@@ -142,6 +144,10 @@ export class ViewStore {
     return this.quickCaptureTree;
   }
 
+  setAiSearchState(aiState: Partial<AiSearchStore>) {
+    this.aiSearchStore = { ...this.aiSearchStore, ...aiState };
+  }
+
   setRoot(root: Root) {
     this.treeView.setRoot(root);
     this.sublistView.setRoot(root);
@@ -173,6 +179,7 @@ export class ViewStore {
         setActiveTree: action,
         toggleRightSidePanel: action,
         setNodeIsProcessing: action,
+        setAiSearchState: action,
         clearNodeIsProcessing: action,
         isNodeProcessing: observable,
         cancelDeepSearch: action,

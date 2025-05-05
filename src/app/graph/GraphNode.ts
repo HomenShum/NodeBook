@@ -48,6 +48,7 @@ export type GraphNodeProps = {
   isChecked?: boolean | null;
   canonicalRelationId?: string | null;
   accessMode?: AccessMode;
+  attributes?: Record<string, boolean | number | string | null>;
 };
 
 export type PositionedRelation = {
@@ -73,6 +74,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   isNewRelatedObjectsPublic: boolean;
   isChecked: boolean | null = null;
   accessMode: AccessMode = AccessMode.READ;
+  attributes: Record<string, boolean | string | number | null> = {};
   constructor(
     store: GraphStore,
     {
@@ -87,6 +89,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       canonicalRelationId = null,
       isChecked = null,
       accessMode = AccessMode.READ,
+      attributes = {},
     }: GraphNodeProps & { authorId: string },
   ) {
     super(store);
@@ -106,6 +109,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     this.canonicalRelationId = canonicalRelationId;
     this.isChecked = isChecked;
     this.accessMode = accessMode;
+    this.attributes = attributes;
     this.makeObservable();
   }
 
@@ -119,6 +123,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isNewRelatedObjectsPublic: observable,
       isChecked: observable,
       accessMode: observable,
+      attributes: observable.shallow,
       canonicalRelationId: observable,
       canonicalRelation: computed,
       content: observable.shallow,
@@ -139,6 +144,13 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     if (newProps.isPublic !== undefined) {
       oldValues.isPublic = this.isPublic;
       this.isPublic = newProps.isPublic;
+    }
+    if (newProps.attributes !== undefined) {
+      oldValues.attributes = this.attributes;
+      this.attributes = {
+        ...this.attributes,
+        ...newProps.attributes,
+      };
     }
     if (newProps.isNewRelatedObjectsPublic !== undefined) {
       oldValues.isNewRelatedObjectsPublic = this.isNewRelatedObjectsPublic;
@@ -262,6 +274,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       canonicalRelationId: this.canonicalRelationId ?? null,
       isChecked: this.isChecked ?? null,
       accessMode: this.accessMode,
+      attributes: this.attributes,
     };
   }
 }

@@ -467,6 +467,7 @@ export class GraphStore {
         updatedAt: props.updatedAt ?? new Date(),
         canonicalRelationId: props.canonicalRelationId,
         accessMode: props.accessMode ?? AccessMode.READ,
+        attributes: props.attributes || {},
       });
 
       this.nodesById.set(node.id, node);

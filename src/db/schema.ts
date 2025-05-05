@@ -111,6 +111,7 @@ export const graphNodeTable = pgTable(
     slug: text("slug"),
     contentTsvector: tsvector("content_tsvector"),
     accessMode: integer("access_mode").notNull().default(0),
+    attributes: json().default({}).$type<Record<string, boolean | string | number | null>>(),
   },
   (t) => ({
     unique: unique().on(t.id, t.authorId),
@@ -120,6 +121,7 @@ export const graphNodeTable = pgTable(
     authorPublicCompositeIndex: index("author_public_index").on(t.authorId, t.isPublic),
   }),
 );
+
 export const GraphNodeSchema = createSelectSchema(graphNodeTable);
 export type PersistedGraphNode = z.infer<typeof GraphNodeSchema>;
 
