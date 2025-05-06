@@ -1,14 +1,15 @@
 import {
   CheckSquare,
-  Download,
+  ChevronsDownUp,
   Globe,
+  Link,
   Link2,
   ListFilter,
   ListIcon,
   Map,
   MapPin,
-  MinusSquare,
   NetworkIcon,
+  RotateCcw,
   Save,
   SearchIcon,
   Sliders,
@@ -20,7 +21,7 @@ import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 import { VoiceInputButton } from "@/app/components/VoiceOps/VoiceInputButton";
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
-import { FlattenIcon, NestedIcon, NotesIcon } from "@/app/components/CustomIcons";
+import { ExpandLineArrowsIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
@@ -147,6 +148,14 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   };
 
   function copySlug(): void {
+    if (slug !== savedSlug) {
+      addToast({
+        title: "Save short URL before copying",
+        duration: 4000,
+      });
+      return;
+    }
+
     if (!savedSlug || savedSlug.length <= 0) return;
     navigator.clipboard.writeText(`${window.location.origin}/${savedSlug}`).then(() => {
       addToast({
@@ -304,16 +313,67 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             <span>Graph</span>
           </Button>
         )}
-        <Button
-          size="sm"
-          variant={viewStore.flattenSublists ? "active" : "default"}
-          onClick={() => viewStore.setFlattenSublists(!viewStore.flattenSublists)}
-          className={cn(s.ShowTooltip, s.BottomAlign)}
-          data-tooltip={viewStore.flattenSublists ? "Expand Sublists" : "Flatten Sublists"}
-        >
-          {viewStore.flattenSublists ? <FlattenIcon /> : <NestedIcon />}
-          <span>Sublists</span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm">
+              <ExpandLineArrowsIcon />
+              <span>Expansion</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={() => {
+                tree.collapseAllNodes();
+                addToast({
+                  title: "All nodes collapsed",
+                  duration: 4000,
+                });
+              }}
+            >
+              <ChevronsDownUp size={14} strokeWidth={1.5} />
+              Collapse all
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={async () => {
+                const success = await tree.saveExpansionStateForAllUsers();
+                if (success) {
+                  addToast({
+                    title: "Expansion state saved for all users",
+                    duration: 4000,
+                  });
+                } else {
+                  addToast({
+                    title: "Failed to save expansion state",
+                    duration: 4000,
+                  });
+                }
+              }}
+            >
+              <Save size={14} strokeWidth={1.5} />
+              Save current state
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={async () => {
+                const success = await tree.applySavedExpansionState();
+                if (success) {
+                  addToast({
+                    title: "Saved expansion state applied",
+                    duration: 4000,
+                  });
+                } else {
+                  addToast({
+                    title: "No saved expansion state found",
+                    duration: 4000,
+                  });
+                }
+              }}
+            >
+              <RotateCcw size={14} strokeWidth={1.5} />
+              Apply saved state
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm">
@@ -492,87 +552,31 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                   <input id="set-ideapad-link" value={ideapadLink} onChange={handleLinkChange} />
                 </div>
               )}
-              <div className={cn(s.SwitchItem, s.TextInput)}>
-                <label htmlFor="set-slug">Short URL</label>
-                <input
-                  id="set-slug"
-                  value={slug}
-                  onChange={handleOnChange}
-                  onKeyDown={handleKeyDown}
-                  disabled={user.isAnonymous}
-                  className={user.isAnonymous ? s.DisabledInput : ""}
-                />
-                <button onClick={saveSlug} disabled={user.isAnonymous}>
-                  Save
-                </button>
-                <button onClick={copySlug}>Copy</button>
-              </div>
-              {!user.isAnonymous && (
-                <div className={s.SwitchItem}>
-                  <span>Expansion State</span>
-                  <div className={s.ButtonContainer}>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className={s.PopoverButton}
-                      onClick={async () => {
-                        const success = await tree.saveExpansionStateForAllUsers();
-                        if (success) {
-                          addToast({
-                            title: "Expansion state saved for all users",
-                            duration: 4000,
-                          });
-                        } else {
-                          addToast({
-                            title: "Failed to save expansion state",
-                            duration: 4000,
-                          });
-                        }
-                      }}
-                    >
-                      <Save size={14} />
-                      <span>Save</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className={s.PopoverButton}
-                      onClick={() => {
-                        tree.collapseAllNodes();
-                        addToast({
-                          title: "All nodes collapsed",
-                          duration: 4000,
-                        });
-                      }}
-                    >
-                      <MinusSquare size={14} />
-                      <span>Collapse All</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className={s.PopoverButton}
-                      onClick={async () => {
-                        const success = await tree.applySavedExpansionState();
-                        if (success) {
-                          addToast({
-                            title: "Saved expansion state applied",
-                            duration: 4000,
-                          });
-                        } else {
-                          addToast({
-                            title: "No saved expansion state found",
-                            duration: 4000,
-                          });
-                        }
-                      }}
-                    >
-                      <Download size={14} />
-                      <span>Apply Saved State</span>
-                    </Button>
+              <div className={s.shortUrlContainer}>
+                <span className={s.shortUrlLabel}>Short URL</span>
+                <div style={{ display: "flex", width: "100%" }}>
+                  <div className={s.shortUrlInputContainer}>
+                    <input
+                      id="set-slug"
+                      value={slug}
+                      onChange={handleOnChange}
+                      onKeyDown={handleKeyDown}
+                      disabled={user.isAnonymous}
+                      className={cn(s.shortUrlInput, user.isAnonymous ? s.DisabledInput : "")}
+                    />
+                    <button className={s.shortUrlCopyButton} onClick={copySlug} disabled={!slug || user.isAnonymous}>
+                      <Link size={16} />
+                    </button>
                   </div>
+                  <button
+                    className={s.shortUrlSaveButton}
+                    onClick={saveSlug}
+                    disabled={user.isAnonymous || slug === savedSlug}
+                  >
+                    Save
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
           </PopoverContent>
         </Popover>

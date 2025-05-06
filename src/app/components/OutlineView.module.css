@@ -140,11 +140,11 @@
   border-radius: 4px;
 }
 
-.LinkButton {
+.LinkButton:not([class*="active"]) {
   background-color: transparent;
 }
 
-.LinkButton:hover {
+.LinkButton:hover:not([class*="active"]) {
   background-color: var(--gray-3);
 }
 

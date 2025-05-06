@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef } from "react";
 import appStyles from "@/app/app.module.css";
 import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
 import { Checkbox } from "@/app/components/Checkbox/Checkbox";
+import { FlattenIcon, SublistsIcon } from "@/app/components/CustomIcons";
 import s from "@/app/components/OutlineView.module.css";
 import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
@@ -279,6 +280,15 @@ function OutlineContent({ tree }: Props) {
                 </div>
               )}
             </TooltipProvider>
+            <Button
+              variant={viewStore.flattenSublists ? "active" : "default"}
+              className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
+              data-tooltip={viewStore.flattenSublists ? "Expand Sublists" : "Flatten Sublists"}
+              size="icon"
+              onClick={() => viewStore.setFlattenSublists(!viewStore.flattenSublists)}
+            >
+              {viewStore.flattenSublists ? <FlattenIcon /> : <SublistsIcon />}
+            </Button>
             <Button
               variant="default"
               className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}

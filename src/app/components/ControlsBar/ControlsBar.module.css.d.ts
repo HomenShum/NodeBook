@@ -14,6 +14,12 @@ declare const styles: {
   readonly "SortOptionDropdown": string;
   readonly "SwitchItem": string;
   readonly "TextInput": string;
+  readonly "shortUrlContainer": string;
+  readonly "shortUrlCopyButton": string;
+  readonly "shortUrlInput": string;
+  readonly "shortUrlInputContainer": string;
+  readonly "shortUrlLabel": string;
+  readonly "shortUrlSaveButton": string;
 };
 export = styles;
 

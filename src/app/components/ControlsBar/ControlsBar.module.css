@@ -75,8 +75,9 @@
 .PopoverHeader {
   padding: 8px;
   height: 32px;
-  color: var(--gray-11);
+  color: var(--gray-8);
   font-size: var(--font-size-xs);
+  font-weight: 500;
 }
 
 .PopoverButtonsContainer {
@@ -149,4 +150,111 @@
   opacity: 0.6;
   background-color: var(--gray-3);
   cursor: not-allowed;
+}
+
+.shortUrlContainer {
+  margin-top: 8px;
+  border-top: 1px solid var(--gray-5);
+  padding-top: 12px;
+  padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.shortUrlLabel {
+  color: var(--gray-10);
+  font-size: var(--font-size-sm);
+  margin-right: 16px;
+  flex-shrink: 0;
+}
+
+.shortUrlInputContainer {
+  position: relative;
+  display: flex;
+  border: 1px solid var(--gray-6);
+  border-radius: 6px;
+  height: 28px;
+  width: 100%;
+  flex-grow: 1;
+  overflow: hidden;
+  background-color: var(--white);
+  transition: border-color 300ms ease;
+}
+
+.shortUrlInputContainer:focus-within {
+  border-color: var(--gray-9);
+}
+
+.shortUrlInput {
+  outline: 0;
+  border: 0;
+  height: 100%;
+  font-family: "Roboto Mono", monospace;
+  padding: 0 36px 0 8px;
+  font-size: calc(var(--font-size-mini) + 1px);
+  color: var(--gray-11);
+  width: 100%;
+  background-color: transparent;
+}
+
+.shortUrlCopyButton {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  bottom: 3px;
+  height: 22px;
+  width: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--gray-9);
+  background-color: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  z-index: 2;
+}
+
+.shortUrlCopyButton:hover {
+  color: var(--gray-12);
+  background-color: var(--gray-3);
+}
+
+.shortUrlCopyButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.shortUrlSaveButton {
+  background-color: transparent;
+  color: var(--gray-9);
+  border: none;
+  border-radius: 6px;
+  padding: 0 8px;
+  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 400;
+  height: 28px;
+  margin-left: 6px;
+}
+
+.shortUrlSaveButton:hover {
+  color: var(--gray-12);
+  background-color: var(--gray-3);
+}
+
+.shortUrlSaveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.shortUrlSaveButton:disabled:hover {
+  background-color: transparent;
 }
