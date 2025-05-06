@@ -432,9 +432,21 @@ const ExportSubtreeToIdeapad = () => {
 export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdatingRelationType }: Props) {
   const user = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { treeNode } = useTreeNode();
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setMenuOpen(open);
+    if (open) {
+      // When menu is opened, select the node by setting both anchor and head to the same node
+      treeNode.tree.selectBetween(treeNode.id, treeNode.id);
+    } else {
+      // When menu is closed, deselect the node
+      treeNode.tree.selection = null;
+    }
+  }, [treeNode]);
 
   return (
-    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+    <DropdownMenu open={menuOpen} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger className={cn(styles.TrailMenuTrigger, menuOpen && styles.TrailMenuTriggerVisible)}>
         <Ellipsis size={16} className={styles.TrailMenuIcon} />
       </DropdownMenuTrigger>
