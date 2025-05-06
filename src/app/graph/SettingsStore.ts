@@ -11,6 +11,7 @@ import {
   SearchAndReplaceDropdownOptionEnum,
   SerializedUserSettings,
 } from "@/db/schema";
+import { ViewType } from "@/app/view/types";
 
 export class SettingsStore {
   private saveUserSettings?: (settings: SerializedUserSettings) => Promise<void>;
@@ -52,6 +53,7 @@ export class SettingsStore {
   public sidebarExpandedMyShortlinks: boolean = true;
   public sidebarExpandedLocalHashtags: boolean = true;
   public sidebarExpandedLocalMentions: boolean = true;
+  public viewModePreference: SerializedUserSettings["viewModePreferences"] = {};
   private stopAutosave: () => void;
 
   constructor(
@@ -105,6 +107,7 @@ export class SettingsStore {
     this.sidebarExpandedMyShortlinks = true;
     this.sidebarExpandedLocalHashtags = true;
     this.sidebarExpandedLocalMentions = true;
+    this.viewModePreference = {};
   }
 
   private async syncToServer() {
@@ -153,6 +156,7 @@ export class SettingsStore {
       sidebarExpandedMyShortlinks: this.sidebarExpandedMyShortlinks,
       sidebarExpandedLocalHashtags: this.sidebarExpandedLocalHashtags,
       sidebarExpandedLocalMentions: this.sidebarExpandedLocalMentions,
+      viewModePreferences: this.viewModePreference,
     };
   }
 
@@ -193,6 +197,7 @@ export class SettingsStore {
     this.sidebarExpandedMyShortlinks = data.sidebarExpandedMyShortlinks ?? this.sidebarExpandedMyShortlinks;
     this.sidebarExpandedLocalHashtags = data.sidebarExpandedLocalHashtags ?? this.sidebarExpandedLocalHashtags;
     this.sidebarExpandedLocalMentions = data.sidebarExpandedLocalMentions ?? this.sidebarExpandedLocalMentions;
+    this.viewModePreference = data.viewModePreferences ?? this.viewModePreference;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -337,6 +342,24 @@ export class SettingsStore {
 
   setShowGraphRoot(value: boolean) {
     this.showGraphRoot = value;
+  }
+
+  getViewMode(nodeId: string): ViewType {
+    if (this.viewModePreference && this.viewModePreference[nodeId]) {
+      return this.viewModePreference[nodeId];
+    }
+    return ViewType.Outline;
+  }
+
+  setViewMode(nodeId: string, viewType: ViewType) {
+    if (!this.viewModePreference) {
+      this.viewModePreference = {};
+    }
+    if (viewType === ViewType.Outline) {
+      delete this.viewModePreference[nodeId];
+      return;
+    }
+    this.viewModePreference[nodeId] = viewType;
   }
 
   cleanup() {

@@ -108,8 +108,11 @@ export function StoresProvider({ children }: Readonly<{ children: React.ReactNod
       const settings = new SettingsStore(user.settings, async (newSettings) => {
         if (user.isAnonymous || !env.isPersistenceEnabled) return;
         const userData = { ...user, settings: newSettings };
+        // When saving settings do not wait for a response from the server (removed the await)
+        // as it will cause a lag when a user switches the view mode. Since as of now, we are
+        // storing the view mode for each node (rendered in the ControlBar dropdown)
         try {
-          await authedFetch("/api/user/settings", {
+          authedFetch("/api/user/settings", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

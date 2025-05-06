@@ -206,12 +206,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
 
   const setViewType = useCallback(
     (viewType: ViewType) => {
-      if (viewType === ViewType.Graph) {
-        viewStore.setGraphMode(true);
-      } else {
-        viewStore.setGraphMode(false);
-        viewStore.setViewType(viewType);
-      }
+      viewStore.setViewType(viewType);
     },
     [viewStore],
   );
@@ -322,7 +317,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm">
-              {viewStore.graphMode ? (
+              {viewStore.viewType === ViewType.Graph ? (
                 <NetworkIcon size={14} strokeWidth={1.5} />
               ) : viewStore.viewType === ViewType.Outline ? (
                 <ListIcon size={17} strokeWidth={1.8} />
@@ -332,7 +327,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 <NotesIcon />
               )}
               <span>
-                {viewStore.graphMode
+                {viewStore.viewType === ViewType.Graph
                   ? "Graph View"
                   : viewStore.viewType === ViewType.Outline
                     ? "List View"

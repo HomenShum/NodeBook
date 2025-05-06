@@ -19,7 +19,6 @@ export class ViewStore {
   public searchQuery: string = "";
   public quickCaptureSearchQuery: string = "";
   public flattenSublists: boolean = false;
-  public graphMode: boolean = false;
   public cardMode: boolean = false;
 
   /**
@@ -28,7 +27,6 @@ export class ViewStore {
    */
   public srcForImageViewer: string | null = null;
 
-  public viewType = ViewType.Outline;
   public quickCaptureViewType = ViewType.Note;
   public treeView: Tree;
   public sublistView: Tree;
@@ -84,7 +82,6 @@ export class ViewStore {
       isDarkMode: true,
       sidebarWidth: true,
       activeModal: true,
-      graphMode: true,
       cardMode: true,
       sidePanelTrees: false,
       quickCaptureViewType: true,
@@ -163,7 +160,6 @@ export class ViewStore {
         setQuickCaptureSearchQuery: action,
         setFlattenSublists: action,
         setCommandBarOpen: action,
-        setGraphMode: action,
         isMouseUpAfterDrag: observable,
         handleMouseDown: action,
         handleMouseMove: action,
@@ -209,8 +205,12 @@ export class ViewStore {
     this.quickCaptureDeepSearching = deepSearching;
   }
 
-  setViewType(viewType: ViewType) {
-    this.viewType = viewType;
+  setViewType(viewType: ViewType): void {
+    this.settingsStore.setViewMode(this.mainView.rootObjectId, viewType);
+  }
+
+  get viewType(): ViewType {
+    return this.settingsStore.getViewMode(this.mainView.rootObjectId);
   }
 
   setQuickCaptureViewType(viewType: ViewType) {
@@ -227,10 +227,6 @@ export class ViewStore {
 
   setFlattenSublists(flattenSublists: boolean) {
     this.flattenSublists = flattenSublists;
-  }
-
-  setGraphMode(graphMode: boolean) {
-    this.graphMode = graphMode;
   }
 
   toggleCardMode() {

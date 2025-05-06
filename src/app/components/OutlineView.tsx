@@ -24,6 +24,7 @@ import { useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 import AiSearchSidebar from "@/app/components/AiSearchSidebar/AiSearchSidebar";
+import { ViewType } from "@/app/view/types";
 
 import s from "./OutlineView.module.css";
 
@@ -85,7 +86,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
         </div>
         {isLoading ? (
           <Loader />
-        ) : viewStore.graphMode ? (
+        ) : viewStore.viewType === ViewType.Graph ? (
           <GraphContainer tree={tree} />
         ) : (
           <div className={s.MainAndSidebarContainer} ref={ref}>

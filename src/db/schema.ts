@@ -16,6 +16,8 @@ import {
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
+import { ViewType } from "@/app/view/types";
+
 export const dataTable = pgTable("data", {
   id: serial("id").primaryKey(),
   json: text("json"),
@@ -76,6 +78,7 @@ const SerializedUserSettingsSchema = z.object({
   sidebarExpandedMyShortlinks: z.boolean().optional(),
   sidebarExpandedLocalHashtags: z.boolean().optional(),
   sidebarExpandedLocalMentions: z.boolean().optional(),
+  viewModePreferences: z.record(z.nativeEnum(ViewType)).optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 
