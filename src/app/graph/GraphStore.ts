@@ -154,6 +154,7 @@ export class GraphStore {
         totalNodes: computed,
         updateInFlightSearchCount: action,
         setNodeLayerLoadingStatus: action,
+        nodeInLayerLoadingHasId: action,
       });
     }
   }
@@ -2006,6 +2007,10 @@ export class GraphStore {
       default:
         return relationListType satisfies never;
     }
+  }
+
+  nodeInLayerLoadingHasId(nodeId: string): boolean {
+    return this.nodesInLayerLoading.has(nodeId);
   }
 
   getPinnedRelationList(nodeOrId: GraphObject | string): FractionalPositionedList<GraphRelation> {

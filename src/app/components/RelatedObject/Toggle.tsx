@@ -20,7 +20,7 @@ const Toggle = observer(function Toggle() {
   const settingsStore = useSettingsStore();
   const userId = graphStore.user?.id;
   const { treeNode } = useTreeNode();
-  const isLoading = graphStore.nodesInLayerLoading.has(treeNode.object.id);
+  const isLoading = graphStore.nodeInLayerLoadingHasId(treeNode.object.id);
 
   const handleToggleClick = useCallback(
     (event: React.MouseEvent) => {
