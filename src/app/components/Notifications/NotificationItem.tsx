@@ -38,7 +38,9 @@ export const NotificationItem = observer(function NotificationItem({ notificatio
         <AtSignIcon />
       </div>
       <div className={styles.NotificationTextContainer}>
-        <p>{userNode ? userNode.text : "Someone"} mentioned you:</p>
+        <p>
+          {userNode ? userNode.text : "Someone"} <span className={styles.nonHighlightedText}>mentioned you:</span>
+        </p>
         <p>•&nbsp;{targetNode.text}</p>
         <p>{notification.createdAt}</p>
       </div>
