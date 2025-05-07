@@ -19,7 +19,6 @@ import {
 import { observer } from "mobx-react-lite";
 import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 
-import { VoiceInputButton } from "@/app/components/VoiceOps/VoiceInputButton";
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { ExpandLineArrowsIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
@@ -300,7 +299,6 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             <span>Ai Search</span>
           </Button>
         )}
-        {!user.isAnonymous && <VoiceInputButton />}
         {settingsStore.showIdeapadLinkButton && (
           <Button
             size="sm"
@@ -390,12 +388,12 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 {viewStore.viewType === ViewType.Graph
                   ? "Graph View"
                   : viewStore.viewType === ViewType.Outline
-                    ? "List View"
-                    : viewStore.viewType === ViewType.Note
-                      ? "Note View"
-                      : viewStore.viewType === ViewType.Webpage
-                        ? "Webpage View"
-                        : "Card View"}
+                  ? "List View"
+                  : viewStore.viewType === ViewType.Note
+                  ? "Note View"
+                  : viewStore.viewType === ViewType.Webpage
+                  ? "Webpage View"
+                  : "Card View"}
               </span>
             </Button>
           </DropdownMenuTrigger>
