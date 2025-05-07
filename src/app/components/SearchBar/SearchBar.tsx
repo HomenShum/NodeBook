@@ -110,11 +110,7 @@ export const SearchBar = observer(function SearchBar() {
       <input
         ref={inputRef}
         type="search"
-        placeholder={
-          isExpanded
-            ? `Search... ${" ".repeat(20)}Create (${env.isMac ? "⌘+Enter" : "Ctrl+Enter"})`
-            : `Search... ( ${env.isMac ? "⌘+/" : "Ctrl+/"} )`
-        }
+        placeholder="Search page..."
         className={styles.SearchContent}
         value={visibleInput}
         onChange={handleInputChange}
@@ -151,6 +147,13 @@ export const SearchBar = observer(function SearchBar() {
           }
         })}
       />
+      <div className={styles.KeyboardShortcuts}>
+        {isExpanded ? (
+          <span>Create ({env.isMac ? "⌘+Enter" : "Ctrl+Enter"})</span>
+        ) : !viewStore.quickCaptureOpen ? (
+          <span>({env.isMac ? "⌘+/" : "Ctrl+/"})</span>
+        ) : null}
+      </div>
       {isExpanded && (
         <Button variant="ghost" className={styles.CancelSearch} onClick={handleCancelClick}>
           <X size={14} />

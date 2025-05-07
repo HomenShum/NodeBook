@@ -96,3 +96,17 @@
   opacity: 1;
   color: var(--gray-9);
 }
+
+.KeyboardShortcuts {
+  position: absolute;
+  right: 10px;
+  color: var(--gray-8);
+  font-size: var(--font-size-mini);
+  font-weight: 500;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.SearchExpanded .KeyboardShortcuts {
+  right: 28px;
+}
