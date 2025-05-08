@@ -36,7 +36,6 @@ export class SettingsStore {
   public atHashtagReplacement = false;
   public showIdeapadLinkButton = false;
   public showExportSubtreeToIdeapad: boolean = false;
-  public showGraphViewButton = true;
   public showGraphRoot = true;
   public parseWithAiLinkingOption: ParseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   public showBulletForEmptyNode: boolean = false;
@@ -92,7 +91,6 @@ export class SettingsStore {
     this.atHashtagReplacement = false;
     this.showIdeapadLinkButton = false;
     this.showExportSubtreeToIdeapad = false;
-    this.showGraphViewButton = true;
     this.parseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
     this.showBulletForEmptyNode = false;
     this.showNotifications = true;
@@ -140,7 +138,6 @@ export class SettingsStore {
       atHashtagReplacement: this.atHashtagReplacement,
       showIdeapadLinkButton: this.showIdeapadLinkButton,
       showExportSubtreeToIdeapad: this.showExportSubtreeToIdeapad,
-      showGraphViewButton: this.showGraphViewButton,
       showGraphRoot: this.showGraphRoot,
       parseWithAiLinkingOption: this.parseWithAiLinkingOption,
       showBulletForEmptyNode: this.showBulletForEmptyNode,
@@ -181,7 +178,6 @@ export class SettingsStore {
     this.atHashtagReplacement = data.atHashtagReplacement ?? this.atHashtagReplacement;
     this.showIdeapadLinkButton = data.showIdeapadLinkButton ?? this.showIdeapadLinkButton;
     this.showExportSubtreeToIdeapad = data.showExportSubtreeToIdeapad ?? this.showExportSubtreeToIdeapad;
-    this.showGraphViewButton = data.showGraphViewButton ?? this.showGraphViewButton;
     this.showGraphRoot = data.showGraphRoot ?? this.showGraphRoot;
     this.parseWithAiLinkingOption = data.parseWithAiLinkingOption ?? this.parseWithAiLinkingOption;
     this.showBulletForEmptyNode = data.showBulletForEmptyNode ?? this.showBulletForEmptyNode;
@@ -274,10 +270,6 @@ export class SettingsStore {
 
   setShowExportSubtreeToIdeapad(value: boolean): void {
     this.showExportSubtreeToIdeapad = value;
-  }
-
-  setShowGraphViewButton(value: boolean): void {
-    this.showGraphViewButton = value;
   }
 
   setParseWithAiLinkingOption(value: ParseWithAiLinkingOption): void {

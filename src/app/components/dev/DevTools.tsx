@@ -210,14 +210,6 @@ export const DevTools = observer(function DevTools() {
         <label className={styles.LabelSetting}>
           <input
             type="checkbox"
-            checked={settingsStore.showGraphViewButton}
-            onChange={(e) => settingsStore.setShowGraphViewButton(e.target.checked)}
-          />
-          Show Graph View Button
-        </label>
-        <label className={styles.LabelSetting}>
-          <input
-            type="checkbox"
             checked={settingsStore.showBulletForEmptyNode}
             onChange={(e) => settingsStore.setShowBulletForEmptyNode(e.target.checked)}
           />
