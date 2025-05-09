@@ -100,7 +100,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   }
 
   decorate(): JSX.Element {
-    return <img src={this.src} />;
+    return <img src={this.src} alt={"Image"} />;
   }
 
   isInline() {

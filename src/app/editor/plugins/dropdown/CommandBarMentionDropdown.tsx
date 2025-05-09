@@ -79,7 +79,7 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
 
       return null;
     },
-    [getMatches, getRecentNodes, getRecentHashtags, getMatchesForHashtags, textChanged],
+    [settingsStore.useRoamResearchStyleMention, getRecentHashtags, getRecentNodes, getMatchesForHashtags, getMatches],
   );
 
   const onSelectOption = useCallback(

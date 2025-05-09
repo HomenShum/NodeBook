@@ -49,7 +49,7 @@ const RightSidePanel = observer(function RightSidePanel({ parentRef }: { parentR
         }
       }
     },
-    [isResizing, viewStore],
+    [isResizing, parentRef, viewStore],
   );
 
   useEffect(() => {

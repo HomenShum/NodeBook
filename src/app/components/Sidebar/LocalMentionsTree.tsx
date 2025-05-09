@@ -77,6 +77,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
 
   const localMentions = useMemo(
     () => getMentionNodes(object as GraphNode, currentDepth),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [getMentionNodes, object, currentDepth, refreshTrigger],
   );
 

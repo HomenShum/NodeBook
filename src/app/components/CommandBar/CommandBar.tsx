@@ -183,7 +183,7 @@ const CommandBar = observer(() => {
     // we don't always get the full paths. Here we call it again with only the first 5 commands
     // so we're more likely to get the full paths.
     graphStore.layerManager.loadCanonicalWithIds(commands.slice(0, 5).map(({ id }) => id));
-    return commands;
+    return commands; // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     graphStore.totalNodes, //Required to refresh the search results
     search.text,

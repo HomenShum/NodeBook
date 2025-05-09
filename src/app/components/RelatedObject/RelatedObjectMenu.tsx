@@ -5,7 +5,8 @@ import {
   Download,
   Edit,
   Ellipsis,
-  Expand, GitCompare,
+  Expand,
+  GitCompare,
   Globe,
   Link,
   Lock,
@@ -16,7 +17,7 @@ import {
   RefreshCcwDot,
   SendToBack,
   Star,
-  User
+  User,
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -35,7 +36,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { addToFavorites, isFavorited, removeFromFavorites } from "@/app/graph/favorites";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { getOtherObject } from '@/app/graph/utils';
+import { getOtherObject } from "@/app/graph/utils";
 import { useToast } from "@/app/hooks/useToast";
 import { useParseWithAi } from "@/app/llm/useParseWithAi";
 import { getAncestorsAsArray, useSetAuthorRoot, useSetMainRoot } from "@/app/tree/utils";
@@ -253,7 +254,7 @@ const AddChildNode = () => {
   const handleAddChild = useCallback(() => {
     graphStore.addChildNode({ parentId: treeNode.object.id });
     tree.setPathExpanded(treeNode.path, true);
-  }, [graphStore, treeNode]);
+  }, [graphStore, treeNode, tree]);
 
   return (
     <DropdownMenuItem onSelect={handleAddChild}>
@@ -434,16 +435,19 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
   const [menuOpen, setMenuOpen] = useState(false);
   const { treeNode } = useTreeNode();
 
-  const handleOpenChange = useCallback((open: boolean) => {
-    setMenuOpen(open);
-    if (open) {
-      // When menu is opened, select the node by setting both anchor and head to the same node
-      treeNode.tree.selectBetween(treeNode.id, treeNode.id);
-    } else {
-      // When menu is closed, deselect the node
-      treeNode.tree.selection = null;
-    }
-  }, [treeNode]);
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      setMenuOpen(open);
+      if (open) {
+        // When menu is opened, select the node by setting both anchor and head to the same node
+        treeNode.tree.selectBetween(treeNode.id, treeNode.id);
+      } else {
+        // When menu is closed, deselect the node
+        treeNode.tree.selection = null;
+      }
+    },
+    [treeNode],
+  );
 
   return (
     <DropdownMenu open={menuOpen} onOpenChange={handleOpenChange}>

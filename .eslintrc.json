@@ -2,6 +2,7 @@
   "extends": ["next"],
   "plugins": ["@typescript-eslint", "import"],
   "rules": {
+    "@next/next/no-img-element": "off",
     "no-warning-comments": [
       "warn",
       {

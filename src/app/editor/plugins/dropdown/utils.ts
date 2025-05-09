@@ -244,7 +244,7 @@ export const useGetMatchesForHashtags = (maxResults: number): GetMatches => {
 
       return results;
     },
-    [graphStore],
+    [graphStore.myHashtagsNode.children, maxResults],
   );
 };
 
@@ -278,7 +278,7 @@ export const useGetMatchesForTemplate = (maxResults: number): ((text: string) =>
 
       return results;
     },
-    [graphStore],
+    [graphStore.myTemplatesNode.children, maxResults],
   );
 };
 

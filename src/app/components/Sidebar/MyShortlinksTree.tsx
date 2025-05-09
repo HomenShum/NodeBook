@@ -28,6 +28,7 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
 
   useEffect(() => {
     fetchAllSlugs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filter slugs based on search query

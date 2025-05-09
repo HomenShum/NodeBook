@@ -6,7 +6,6 @@ import { useViewStore } from "@/app/view/useViewStore";
 const DEFAULT_PAGINATION_SIZE = 50;
 
 export const usePagination = (nodes: DescendantTreeNode[], pageSize = DEFAULT_PAGINATION_SIZE) => {
-  const [name] = useState(Date.now());
   const [ensureInViewIndex, setEnsureInViewIndex] = useState(-1);
   const [startOffset, setStartOffset] = useState(0);
   const [endOffset, setEndOffset] = useState(0);
@@ -21,7 +20,7 @@ export const usePagination = (nodes: DescendantTreeNode[], pageSize = DEFAULT_PA
     if (ensureInViewIndex !== -1) {
       viewStore.jumpToNodeId = null;
     }
-  }, [viewStore.jumpToNodeId, nodes]);
+  }, [viewStore.jumpToNodeId, nodes, viewStore, ensureInViewIndex]);
 
   // Reset the ensureInViewIndex when a new node is added
   useEffect(() => {

@@ -271,7 +271,7 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
         return false;
       }
     },
-    [treeNode, viewStore.quickCaptureViewType, viewStore.viewType, tree, addToast, viewStore],
+    [treeNode, tree, addToast, viewStore],
   );
 }
 

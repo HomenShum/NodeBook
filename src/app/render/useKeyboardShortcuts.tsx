@@ -4,7 +4,6 @@ import { useCallback, useEffect } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
-import { useToast } from "@/app/hooks/useToast";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -14,7 +13,6 @@ export const useKeyboardShortcuts = () => {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
-  const { addToast } = useToast();
 
   const handleKeyDown = useCallback(
     async (e: KeyboardEvent) => {
@@ -48,7 +46,7 @@ export const useKeyboardShortcuts = () => {
         viewStore.setViewType(ViewType.Note);
       }
     },
-    [viewStore, graphStore, setRoot, addToast],
+    [viewStore, graphStore, setRoot],
   );
   useEffect(() => {
     if (!user.isAnonymous) {

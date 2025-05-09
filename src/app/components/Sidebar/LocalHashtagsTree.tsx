@@ -83,6 +83,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
 
   const localHashtags = useMemo(
     () => getHashtagNodes(object as GraphNode, currentDepth),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [getHashtagNodes, object, currentDepth, refreshTrigger],
   );
 
