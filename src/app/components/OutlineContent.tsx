@@ -122,9 +122,12 @@ function OutlineContent({ tree }: Props) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       let wasEventHandled = false;
-      if (tree.id === viewStore.quickCaptureTree.id && isEscapeSelectionHotkey(event)) {
+      if (viewStore.quickCaptureOpen && isEscapeSelectionHotkey(event)) {
         wasEventHandled = true;
         viewStore.closeQuickCapture();
+        viewStore.setActiveTree(viewStore.mainView);
+        const topChild = viewStore.mainView.root.childrenGroupsById.all.nodes[0] ?? viewStore.mainView.createChildOfRootAndFocus();
+        viewStore.mainView.setFocusedNode(topChild.path, "end", true, true);
       }
       if (tree.isMainTree && tree.selection === null && isEscapeSelectionHotkey(event)) {
         wasEventHandled = true;

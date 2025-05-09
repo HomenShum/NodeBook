@@ -47,21 +47,6 @@ function QuickCapture() {
     setSelectedFilters(filters);
   }, [settingsStore.showOnlyTodosInQuickCapture, settingsStore.todosInQuickCaptureFilterType]);
 
-  // Add event listener for Escape key to close the quick capture popup
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && viewStore.quickCaptureOpen) {
-        viewStore.closeQuickCapture();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [viewStore]);
-
   const toggleFilter = useCallback(
     (filter: string, status?: string) => {
       if (filter === "TODOs") {
