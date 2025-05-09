@@ -27,6 +27,7 @@ import { comparePositions, compareTimestamps, ObjectPath, uuid } from "@/app/uti
 import { ViewType } from "@/app/view/types";
 import { NON_EDITABLE_OBJECT_PREFIXES } from "@/lib/constants";
 import appLogger from "@/lib/logger";
+import { env } from "@/app/envFrontend";
 
 import {
   BaseTreeNode,
@@ -525,7 +526,7 @@ export class Tree {
       this.pendingExpansionObjectIds.clear();
 
       // Load expansion state for the new root - do this asynchronously
-      if (this.remoteHydrationEnabled) {
+      if (this.remoteHydrationEnabled && env.isAuthEnabled) {
         setTimeout(() => this.loadExpansionStateFromServer(), 0);
       }
     }
@@ -2089,7 +2090,7 @@ export class Tree {
             //Example: 1 <-H,A        Output: 1 <-A
             //           2                      2
             //         3                      3 <-H
-            const nextDown = head.isAncestorOf(anchor) ? getNextBelow(head) : getNextSubtreeBelow(head) ?? null;
+            const nextDown = head.isAncestorOf(anchor) ? getNextBelow(head) : (getNextSubtreeBelow(head) ?? null);
             if (!nextDown || nextDown.parentGroup.id !== head.parentGroup.id) return false;
             this.selectionStack.push(dir, this.selection.headNodeId);
             this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextDown.path };
@@ -2290,7 +2291,7 @@ export class Tree {
       });
       node = node.parent;
       relationWithParent =
-        node instanceof DescendantTreeNode ? node.relationWithParent : node?.parent?.relationToChild ?? null;
+        node instanceof DescendantTreeNode ? node.relationWithParent : (node?.parent?.relationToChild ?? null);
     }
     this.graphStore.applyCombinedTransaction(trx);
   }

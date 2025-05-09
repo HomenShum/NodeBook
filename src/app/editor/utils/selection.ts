@@ -53,7 +53,15 @@ export const $setSelectionFromTree = (selection: TreeNodeContentSelection) => {
   } else if (selection.position === "end" || !selection.position) {
     $getRoot().selectEnd();
   } else {
-    $setSelection($createLexicalSelectionFromTreePosition(selection.position));
+    //$createLexicalSelectionFromTreePosition returns null with input {anchorOffset: 0, focusOffset: 0} when the node
+    //content empty. This case can only occur when empty nodes are being merged and selection.position is
+    //set to offsets.
+    //Just set the selection to end position (which is the default) if we don't have RangeSelection.
+    const rangeSelection = $createLexicalSelectionFromTreePosition(selection.position);
+    if (rangeSelection) {
+      $setSelection(rangeSelection);
+    }
+    $getRoot().selectEnd();
   }
 };
 
