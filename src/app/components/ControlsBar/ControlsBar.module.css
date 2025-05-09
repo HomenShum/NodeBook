@@ -1,8 +1,7 @@
 .ControlsBar {
   padding: 0 8px 0 40px;
   height: 40px;
-  border: 0.5px solid var(--gray-6);
-  border-top: none;
+  border-bottom: 0.5px solid var(--gray-6);
   display: flex;
   width: 100%;
   gap: 6px;
@@ -28,6 +27,7 @@
 .Icon {
   color: var(--gray-10);
   transform: scale(0.8);
+  flex-shrink: 0;
 }
 
 .RightWrapper {
