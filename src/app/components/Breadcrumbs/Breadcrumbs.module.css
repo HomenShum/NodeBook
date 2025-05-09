@@ -9,7 +9,7 @@
   position: relative;
 }
 
-@media only screen and (max-width: 450px) {
+@media only screen and (max-width: 767px) {
   .BreadcrumbContainer {
     padding: 0 8px 0 38px;
   }
@@ -29,7 +29,7 @@
   flex-grow: 1;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .BreadcrumbWrapper {
     flex-grow: 0;
   }

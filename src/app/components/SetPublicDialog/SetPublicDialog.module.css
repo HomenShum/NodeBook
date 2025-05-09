@@ -31,7 +31,7 @@
   color: var(--gray-11);
 }
 
-@media (max-width: 450px) {
+@media (max-width: 767px) {
   .DialogContent {
     margin: 8px 0;
     padding: 24px 12px;
@@ -119,7 +119,7 @@
   user-select: none;
 }
 
-.SelectedFileLabel>button {
+.SelectedFileLabel > button {
   display: flex;
   align-items: center;
 }

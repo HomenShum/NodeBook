@@ -14,7 +14,7 @@
   transform: translateX(0);
 }
 
-@media (max-width: 450px) {
+@media (max-width: 767px) {
   .Sidebar {
     width: 80% !important;
     max-width: 300px;
@@ -23,7 +23,7 @@
   .Resizer {
     display: none;
   }
-  
+
   .HideOnMobile {
     display: none;
   }
@@ -40,7 +40,7 @@
   z-index: 29;
 }
 
-@media (max-width: 450px) {
+@media (max-width: 767px) {
   .Backdrop {
     display: block;
   }
@@ -283,7 +283,7 @@
   }
 }
 
-@media (max-width: 450px) {
+@media (max-width: 720px) {
   .Sidebar {
     width: 100% !important;
   }

@@ -84,12 +84,6 @@
   visibility: visible;
 }
 
-@media only screen and (max-width: 450px) {
-  .SidebarToggle {
-    left: 16px;
-  }
-}
-
 .Container {
   position: relative;
   width: 100%;
@@ -119,7 +113,7 @@
   }
 }
 
-@media (max-width: 450px) {
+@media (max-width: 767px) {
   .Main {
     margin-left: 0 !important;
   }

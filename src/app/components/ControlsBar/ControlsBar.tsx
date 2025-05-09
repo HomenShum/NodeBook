@@ -293,10 +293,10 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
               })
             }
             className={cn(s.ShowTooltip, s.BottomAlign)}
-            data-tooltip={"Toggle Ai Search"}
+            data-tooltip={"Toggle AI Search"}
           >
             <SearchIcon size={14} strokeWidth={1.5} />
-            <span>Ai Search</span>
+            <span>AI</span>
           </Button>
         )}
         {settingsStore.showIdeapadLinkButton && (
