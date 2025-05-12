@@ -53,7 +53,8 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
 
   function PreventCommandBackspace() {
     const [editor] = useLexicalComposerContext();
-    const tree = useTree();
+    const viewStore = useViewStore();
+    const tree = viewStore.activeTree;
     useEffect(() => {
       return editor.registerCommand(
         KEY_DOWN_COMMAND,
