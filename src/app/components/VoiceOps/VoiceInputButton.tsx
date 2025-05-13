@@ -1,13 +1,32 @@
 "use client";
 
-import { Mic, MicOff } from "lucide-react";
+import { Mic } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import breadcrumbStyles from "@/app/components/Breadcrumbs/Breadcrumbs.module.css";
+import { StopIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useVoiceInput } from "@/app/contexts/VoiceInputContext";
 import { useToast } from "@/app/hooks/useToast";
 import { cn } from "@/lib/utils";
+
+import styles from "./VoiceInputButton.module.css";
+
+// Animation component for voice waves
+function VoiceWaveform() {
+  return (
+    <div className={styles.voiceWaveform}>
+      <div className={cn(styles.bar, styles.bar1)}></div>
+      <div className={cn(styles.bar, styles.bar2)}></div>
+      <div className={cn(styles.bar, styles.bar3)}></div>
+      <div className={cn(styles.bar, styles.bar4)}></div>
+      <div className={cn(styles.bar, styles.bar5)}></div>
+      <div className={cn(styles.bar, styles.bar6)}></div>
+      <div className={cn(styles.bar, styles.bar7)}></div>
+    </div>
+  );
+}
 
 export function VoiceInputButton() {
   const { isVoiceInputMode, setVoiceInputMode, transcript, setTranscript } = useVoiceInput();
@@ -161,14 +180,16 @@ export function VoiceInputButton() {
 
   return (
     <Button
-      size="sm"
+      size={isVoiceInputMode ? "sm" : "icon"}
       variant={isVoiceInputMode ? "active" : "default"}
       onClick={toggleVoiceMode}
-      className={cn("show-tooltip bottom-align")}
+      className={cn(breadcrumbStyles.ShowTooltip, breadcrumbStyles.BottomAlign, styles.voiceButton)}
       data-tooltip={isVoiceInputMode ? "Turn off voice input" : "Turn on voice input"}
     >
-      {isVoiceInputMode ? <Mic className="text-red-500" size={14} /> : <MicOff size={14} />}
-      <span>{isVoiceInputMode ? "Voice On" : "Voice Off"}</span>
+      <div className={styles.voiceButtonContent}>
+        {isVoiceInputMode && <VoiceWaveform />}
+        {isVoiceInputMode ? <StopIcon style={{ color: "var(--ruby-9)" }} size={8} /> : <Mic size={14} />}
+      </div>
     </Button>
   );
 }

@@ -1,0 +1,68 @@
+.voiceButtonContent {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.voiceButton {
+  transition: all 0.2s ease-out;
+}
+
+.voiceWaveform {
+  display: flex;
+  align-items: center;
+  height: 14px;
+  gap: 1.5px;
+  margin-right: 4px;
+}
+
+.bar {
+  width: 1.5px;
+  background-color: var(--teal-11);
+  border-radius: 2px;
+}
+
+.bar1 {
+  height: 4px;
+  animation: wave 0.8s ease-in-out infinite;
+}
+
+.bar2 {
+  height: 8px;
+  animation: wave 0.8s ease-in-out infinite 0.2s;
+}
+
+.bar3 {
+  height: 5px;
+  animation: wave 0.8s ease-in-out infinite 0.4s;
+}
+
+.bar4 {
+  height: 7px;
+  animation: wave 0.8s ease-in-out infinite 0.1s;
+}
+
+.bar5 {
+  height: 3px;
+  animation: wave 0.8s ease-in-out infinite 0.3s;
+}
+
+.bar6 {
+  height: 6px;
+  animation: wave 0.8s ease-in-out infinite 0.5s;
+}
+
+.bar7 {
+  height: 5px;
+  animation: wave 0.8s ease-in-out infinite 0.25s;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    transform: scaleY(0.5);
+  }
+  50% {
+    transform: scaleY(1.2);
+  }
+}

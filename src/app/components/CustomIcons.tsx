@@ -210,3 +210,9 @@ export const ExpandLineArrowsIcon = () => (
     </defs>
   </svg>
 );
+
+export const StopIcon = ({ size = 12, style }: { size?: number; style?: React.CSSProperties }) => (
+  <svg width={size} height={size} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" style={style}>
+    <rect width="12" height="12" rx="4" fill="currentColor" />
+  </svg>
+);
