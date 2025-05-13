@@ -28,6 +28,7 @@ import { SelectAllPlugin } from "@/app/editor/plugins/SelectAllPlugin";
 import { SigilsPlugin } from "@/app/editor/plugins/SigilsPlugin";
 import { SyncWithModelsPlugin } from "@/app/editor/plugins/SyncWithModelsPlugin";
 import { TodoPlugin } from "@/app/editor/plugins/TodoPlugin";
+import { ToggleEditablePlugin } from "@/app/editor/plugins/ToggleEditablePlugin";
 import { ViewControllerRegistryPlugin } from "@/app/editor/plugins/ViewControllerRegistryPlugin";
 import { useClickableMention } from "@/app/editor/utils/useClickableMention";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -121,6 +122,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <ContextualGenerationPlugin treeNode={treeNode} />}
         {isEditorEditable && <TodoPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
+        <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <NodeEventPlugin nodeType={ImageNode} eventType={"click"} eventListener={handleImageClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />
