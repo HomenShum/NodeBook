@@ -321,7 +321,7 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
         <div className={s.BreadcrumbWrapper}>
           <RenderBreadcrumbs treeNode={treeNode} ancestors={ancestors} handleNavigation={handleNavigation} />
         </div>
-        <BreadcrumbMenu />
+        {!viewStore.quickCaptureOpen && <BreadcrumbMenu />}
       </nav>
     </>
   );
