@@ -1,6 +1,7 @@
-import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useEffect } from "react";
+
+import { DescendantTreeNode } from "@/app/tree/nodes";
 
 export const ToggleEditablePlugin = ({ treeNode, editable }: { treeNode: DescendantTreeNode; editable: boolean }) => {
   const [editor] = useLexicalComposerContext();
