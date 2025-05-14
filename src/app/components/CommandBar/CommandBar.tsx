@@ -133,6 +133,18 @@ const CommandBar = observer(() => {
                     setRoot(path);
                   }
                 }
+                // Scroll to the node
+                setRoot(node);
+                document.getElementById(node.id)?.scrollIntoView({ block: "center" });
+                // blank-out QC's selection so its editor gives up focus
+                viewStore.quickCaptureTree.setFocusedNode(null);
+                // make sure the main outline is the active tree
+                viewStore.setActiveTree(viewStore.mainView);
+                // move the caret to the main outline
+                const topChild =
+                  viewStore.mainView.root.childrenGroupsById.all.nodes[0] ??
+                  (await viewStore.mainView.createChildOfRootAndFocus()).node;
+                viewStore.mainView.setFocusedNode(topChild.path, "end", true, true);
               },
             };
           }),
@@ -147,7 +159,8 @@ const CommandBar = observer(() => {
             ? "Create blank node"
             : `Create new node: "${search.text}" ( ${isMac ? "⌘" : "Ctrl"} + Enter )`,
         perform: async () => {
-          const { node } = await graphStore.addChildNode({
+          // Create the parent node
+          const { node: parent } = await graphStore.addChildNode({
             parentId: graphStore.userRoot.id,
             nodeProps: { content: search.chips },
           });
@@ -156,26 +169,30 @@ const CommandBar = observer(() => {
           for (const mentionChip of newMentionChips) {
             await graphStore.addRelation({
               fromId: mentionChip.value,
-              toId: node.id,
+              // Add the parent node to the mention chip
+              toId: parent.id,
             });
           }
 
           close();
           resetSearch();
-          setRoot(node);
+          // Set the parent node as the root
+          setRoot(parent);
+          // Scroll to the parent node from other views, such as from the quick capture view
+          document.getElementById(parent.id)?.scrollIntoView({ block: "center" });
+          // Now create + focus the blank child in one go similar to the openQuickCapture method in ViewStore.ts
+          const { node: child } = await viewStore.mainView.createChildOfRootAndFocus();
 
           // Toast on new node creation
           addToast({
+            // Toast message facing the user to let them know the new node was created and they can edit on new line / child node immediately
             title: "New node created at your root",
-            description: node.text || "Empty node",
+            description: child.text || "Empty node",
             duration: 5000,
-            action: {
-              label: "Zoom into node",
-              onClick: () => handleZoomToNode(node),
-            },
           });
 
-          return node.id;
+          // Return the new parent node id that is created
+          return parent.id;
         },
       });
     }
