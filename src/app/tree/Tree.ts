@@ -427,6 +427,41 @@ export class Tree {
     this.setFocusedNode(nodeToFocus.id);
   }
 
+  getVisibleIds(): [Set<string>, Set<string>] {
+    const visibleNodeIds = new Set<string>();
+    const visibleRelationIds = new Set<string>();
+
+    const depth = 4;
+    let curDepthNodes: (DescendantTreeNode | RootTreeNode)[] = [this.root];
+
+    for (let i = 0; i < depth; i++) {
+      const nextDepthNodes: DescendantTreeNode[] = [];
+      for (const tNode of curDepthNodes) {
+        if (tNode.childCount > 0) {
+          for (const childGroup of tNode.childrenGroups) {
+            for (const child of childGroup.nodes) {
+              visibleNodeIds.add(child.object.id);
+              nextDepthNodes.push(child);
+              if (child.relationWithParent?.id) {
+                visibleRelationIds.add(child.relationWithParent.id);
+                if (child.relationWithParent.relations.length > 0) {
+                  for (const relation of child.relationWithParent.relations) {
+                    visibleRelationIds.add(relation.id);
+                    visibleNodeIds.add(relation.from.id);
+                    visibleNodeIds.add(relation.to.id);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      curDepthNodes = nextDepthNodes;
+    }
+
+    return [visibleNodeIds, visibleRelationIds];
+  }
+
   isNodeSelected(treeNodeId: string) {
     return (
       this.selectionWithNodes?.type === "node" && this.selectionWithNodes.nodes.some((node) => node.id === treeNodeId)

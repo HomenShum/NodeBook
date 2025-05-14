@@ -5,6 +5,7 @@ import { $getRoot, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
@@ -22,6 +23,7 @@ import { $getText } from "@/app/editor/utils/content";
 import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
+import { useViewStore } from "@/app/view/useViewStore";
 import { checkForMentionMatch, checkForTemplateMatch, HASHTAG_SYMBOL } from "@/lib/utils";
 
 const MAX_DROPDOWN_RESULTS = 20;
@@ -56,6 +58,8 @@ export const DropdownPlugin = observer(function DropdownPlugin({
 
   const [editor] = useLexicalComposerContext();
   const settingsStore = useSettingsStore();
+  const graphStore = useGraphStore();
+  const viewStore = useViewStore();
   const [searchText, setSearchText] = useState("");
   const debouncedSearchText = useDebounce(searchText, { wait: 150 });
   const getMatches = useGetMatchesForTreeNode(MAX_DROPDOWN_RESULTS, treeNode);
@@ -75,6 +79,14 @@ export const DropdownPlugin = observer(function DropdownPlugin({
     settingsStore.searchAndReplaceDropdown === "Always" ||
     (settingsStore.searchAndReplaceDropdown === "LabelledOnly" && labelledRelation);
 
+  // Handle dropdown closing and trigger search cache eviction
+  const handleCloseDropdown = useCallback(() => {
+    viewStore.evictNonVisibleIds();
+
+    // Set dropdown to null
+    setDropdown(null);
+  }, []);
+
   const clearDropdown = useCallback(() => {
     setDropdown((dropdown) => {
       if (dropdown?.type === "searchAndReplace" && dropdown.initiatedManually) {
@@ -82,6 +94,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
         // In this case we want to hide the dropdown but we also want it to open up
         // again when the user starts typing again. We can achieve this by keeping
         // the dropdown type the same but clearing the search and matches.
+        viewStore.evictNonVisibleIds();
         return { ...dropdown, search: "", matches: [] };
       } else {
         return null;
@@ -120,6 +133,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       const match = checkForMentionMatch(textBeforeCursor, settingsStore.useRoamResearchStyleMention);
       if (match) {
         // If the match is a hashtag and it contains a space, don't open the dropdown.
+        graphStore.enableSearchCache();
         if (match.matchingString.indexOf(" ") !== -1 && match.mentionTrigger === HASHTAG_SYMBOL) {
           return null;
         }
@@ -141,6 +155,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       const editorText = editor.getEditorState().read(() => $getRoot().getTextContent());
       setSearchText(editorText);
       if (passiveAutocompleteActive || dropdown?.type === "searchAndReplace") {
+        graphStore.enableSearchCache();
         setDropdown((prev) => ({
           type: "searchAndReplace",
           search: editorText,
@@ -154,6 +169,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       // Template dropdown
       const template = checkForTemplateMatch(textBeforeCursor);
       if (template) {
+        graphStore.enableSearchCache();
         setSearchText(template.matchingString);
         setDropdown((prev) => ({
           type: "template",
@@ -263,9 +279,9 @@ export const DropdownPlugin = observer(function DropdownPlugin({
     <>
       {treeNode instanceof DescendantTreeNode ? (
         dropdown?.type === "searchAndReplace" ? (
-          <SearchAndReplaceDropdown treeNode={treeNode} dropdown={dropdown} closeDropdown={() => setDropdown(null)} />
+          <SearchAndReplaceDropdown treeNode={treeNode} dropdown={dropdown} closeDropdown={handleCloseDropdown} />
         ) : (
-          <TemplateDropdown treeNode={treeNode} dropdown={dropdown} closeDropdown={() => setDropdown(null)} />
+          <TemplateDropdown treeNode={treeNode} dropdown={dropdown} closeDropdown={handleCloseDropdown} />
         )
       ) : null}
       <MentionDropdown treeNode={treeNode} dropdown={dropdown} triggerFn={triggerFn} />

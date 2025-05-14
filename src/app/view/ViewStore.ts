@@ -62,6 +62,7 @@ export class ViewStore {
   public notificationPaneOpen = false;
   public jumpToNodeId: string | null = null;
   public aiSearchStore = new AiSearchStore();
+  public evictNonVisibleIds: () => void;
 
   // Stack to store scroll positions with their corresponding object IDs
   private scrollPositionStack: Array<{ position: number }> = [];
@@ -88,6 +89,17 @@ export class ViewStore {
       quickCaptureOpen: true,
       srcForImageViewer: false,
     });
+
+    // Define evictNonVisibleIds as a bound method in constructor
+    this.evictNonVisibleIds = action(() => {
+      setTimeout(() => {
+        if (this.graphStore && this.activeTree) {
+          const [visibleNodeIds, visibleRelationIds] = this.getVisibleIds();
+          this.graphStore.evictSearchCache(visibleNodeIds, visibleRelationIds);
+        }
+      }, 1000);
+    });
+
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
     this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser(), { isMainTree: true });
@@ -274,6 +286,16 @@ export class ViewStore {
     this.quickCaptureSearchView.clearSearch(this.quickCaptureTree.root);
   }
 
+  getVisibleIds() {
+    const [activeTreeVisibleNodeIds, activeTreeVisibleRelationIds] = this.activeTree.getVisibleIds();
+    if (!this.treeView.isMainTree) {
+      const [mainTreeVisibleNodeIds, mainTreeVisibleRelationIds] = this.treeView.getVisibleIds();
+      mainTreeVisibleNodeIds.forEach((id) => activeTreeVisibleNodeIds.add(id));
+      mainTreeVisibleRelationIds.forEach((id) => activeTreeVisibleRelationIds.add(id));
+    }
+    return [activeTreeVisibleNodeIds, activeTreeVisibleRelationIds];
+  }
+
   cleanup() {
     this.setActiveModal(null);
     this.treeView.clear(this.graphStore.getDefaultRootForUser());
@@ -312,6 +334,9 @@ export class ViewStore {
 
   setCommandBarOpen(open: boolean) {
     this.isCommandBarOpen = open;
+    if (open) {
+      this.graphStore.enableSearchCache();
+    }
   }
 
   createSidePanelTree(root: Root) {

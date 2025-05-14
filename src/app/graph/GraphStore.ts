@@ -104,6 +104,13 @@ export class GraphStore {
 
   cappedKeywordIndex: CappedKeywordIndex;
 
+  // Cache for tracking nodes and relations loaded specifically during search
+  private searchCacheNodeIds: Set<string> = new Set();
+  private searchCacheRelationIds: Set<string> = new Set();
+  private evictionTimeout: NodeJS.Timeout | null = null;
+
+  isSearchCacheActive = false;
+
   constructor(user: MewUser = UNLOGGED_USER, settings?: SettingsStore, authedFetch?: typeof fetch) {
     this.user = user;
     this.settings = settings;
@@ -131,10 +138,15 @@ export class GraphStore {
         relationsById: observable.shallow,
         relationTypesById: observable.shallow,
         nodesInLayerLoading: observable,
+        isSearchCacheActive: observable,
+        addNodeIdToSearchCache: action,
+        addRelationIdToSearchCache: action,
         // node
         addNode: action,
         removeNode: action,
         updateNode: action,
+        deleteIdsFromRelationsById: action,
+        deleteIdsFromNodesById: action,
         // relation
         addRelation: action,
         removeRelation: action,
@@ -156,6 +168,7 @@ export class GraphStore {
         updateInFlightSearchCount: action,
         setNodeLayerLoadingStatus: action,
         nodeInLayerLoadingHasId: action,
+        evictSearchCache: action,
       });
     }
   }
@@ -1543,6 +1556,14 @@ export class GraphStore {
     return this.relationsById.delete(id);
   }
 
+  deleteIdsFromRelationsById(ids: string[]): boolean {
+    return ids.every((id) => this.relationsById.delete(id));
+  }
+
+  deleteIdsFromNodesById(ids: string[]): boolean {
+    return ids.every((id) => this.nodesById.delete(id));
+  }
+
   setRelationsById(id: string, relation: GraphRelation) {
     this.relationsById.set(id, relation);
   }
@@ -2733,6 +2754,14 @@ export class GraphStore {
     };
   }
 
+  addNodeIdToSearchCache(nodeId: string) {
+    this.searchCacheNodeIds.add(nodeId);
+  }
+
+  addRelationIdToSearchCache(relationId: string) {
+    this.searchCacheRelationIds.add(relationId);
+  }
+
   /**
    * Load the serialized data into the store. Existing data isn't cleared, but values
    * are overwritten if they already exist.
@@ -3136,6 +3165,173 @@ export class GraphStore {
       results.relationTypes.sort((a, b) => (sort.order === "asc" ? a.score - b.score : b.score - a.score));
     }
     return results;
+  }
+
+  enableSearchCache(): void {
+    this.isSearchCacheActive = true;
+  }
+
+  disableSearchCache(): void {
+    this.isSearchCacheActive = false;
+  }
+
+  /**
+   * Evicts nodes and relations from the search cache that are not visible in the current tree view.
+   *
+   * @param visibleNodeIds Set of node IDs currently visible in the tree view
+   * @param visibleRelationIds Set of relation IDs currently visible in the tree view
+   */
+  evictSearchCache(visibleNodeIds: Set<string>, visibleRelationIds: Set<string>): void {
+    // Clear any pending timeout
+    logger.debug("Evicting search cache...");
+
+    if (this.isSearchCacheActive && this.evictionTimeout) {
+      clearTimeout(this.evictionTimeout);
+    }
+    this.disableSearchCache();
+
+    // Set timeout to delay eviction by 1 second
+    this.evictionTimeout = setTimeout(() => {
+      // Collect nodes and relations to evict
+      const nodesToEvict: string[] = [];
+      const relationsToEvict: string[] = [];
+
+      // Find nodes that are in the search cache but not visible in the tree
+      for (const nodeId of this.searchCacheNodeIds) {
+        if (!visibleNodeIds.has(nodeId)) {
+          nodesToEvict.push(nodeId);
+        }
+      }
+
+      // Find relations that are in the search cache but not visible in the tree
+      for (const relationId of this.searchCacheRelationIds) {
+        if (!visibleRelationIds.has(relationId)) {
+          relationsToEvict.push(relationId);
+        }
+      }
+
+      this._removeNodesByAnimationFrame(nodesToEvict);
+      this._removeRelationsByAnimationFrame(relationsToEvict);
+
+      // Clear the search caches after eviction
+      this.searchCacheNodeIds.clear();
+      this.searchCacheRelationIds.clear();
+      this.evictionTimeout = null;
+    }, 500);
+  }
+
+  /**
+   * Internal method to delete multiple nodes locally without sending updates to the backend.
+   */
+  private _removeNodesLocally(nodes: (GraphNode | string)[]): void {
+    if (nodes.length === 0) return;
+
+    const nodeIds = nodes.map((node) => (typeof node === "string" ? node : node.id));
+
+    nodes.forEach((nodeOrId) => {
+      const node = typeof nodeOrId === "string" ? this.nodesById.get(nodeOrId) : nodeOrId;
+      if (!node || node.isDeleteRestricted) return;
+
+      // Remove node from local store
+      this.cappedKeywordIndex.delete(node.id);
+    });
+
+    this.layerManager.unloadIds(nodeIds);
+
+    this.deleteIdsFromNodesById(nodeIds);
+  }
+
+  private _removeRelationsByAnimationFrame(relations: (GraphRelation | string)[], batchSize: number = 500): void {
+    if (relations.length === 0) return;
+
+    const batch = relations.slice(0, batchSize);
+    this._removeRelationsLocally(batch);
+
+    if (relations.length > batchSize) {
+      setTimeout(() => {
+        requestAnimationFrame(() => this._removeRelationsByAnimationFrame(relations.slice(batchSize)));
+      }, 100);
+    } else {
+      this._removeRelationsLocally(relations.slice(batchSize));
+      logger.debug(`Removed all relations`);
+    }
+  }
+
+  private _removeNodesByAnimationFrame(nodes: (GraphNode | string)[], batchSize: number = 500): void {
+    if (nodes.length === 0) return;
+
+    const batch = nodes.slice(0, batchSize);
+    this._removeNodesLocally(batch);
+
+    if (nodes.length > batchSize) {
+      setTimeout(() => {
+        requestAnimationFrame(() => this._removeNodesByAnimationFrame(nodes.slice(batchSize)));
+      }, 100);
+    } else {
+      this._removeNodesLocally(nodes.slice(batchSize));
+      logger.debug(`Removed all nodes`);
+    }
+  }
+
+  /**
+   * Internal method to delete multiple relations locally without sending updates to the backend.
+   */
+  private _removeRelationsLocally(relations: (GraphRelation | string)[]): void {
+    if (relations.length === 0) return;
+
+    // Process relations recursively
+    const processedIds = new Set<string>();
+    const idsToUnload = new Set<string>();
+
+    const processRelation = (relationOrId: GraphRelation | string) => {
+      const relation = typeof relationOrId === "string" ? this.getRelation(relationOrId) : relationOrId;
+      if (!relation || processedIds.has(relation.id)) return;
+      if (relation.id.startsWith(USERS_TO_USER_RELATION_ID_PREFIX)) return; // Can't delete relation from users to user
+
+      processedIds.add(relation.id);
+      idsToUnload.add(relation.id);
+
+      // Process child relations
+      relation.relations.forEach((childRel) => {
+        processRelation(childRel);
+      });
+
+      const { from: fromNode, to: toNode } = relation;
+
+      // // // Remove the relation from the nodes
+      fromNode.allRelationsList.delete(relation.id);
+      toNode.allRelationsList.delete(relation.id);
+
+      // // Remove from pinned lists
+      fromNode.pinnedRelationsList.delete(relation.id);
+      toNode.pinnedRelationsList.delete(relation.id);
+
+      // // Remove from note content lists
+      fromNode.noteContentRelationsList.delete(relation.id);
+      toNode.noteContentRelationsList.delete(relation.id);
+
+      // Delete the relation itself
+      this.deleteFromRelationsById(relation.id);
+      this.cappedKeywordIndex.delete(relation.id);
+    };
+
+    relations.forEach(processRelation);
+
+    this.layerManager.unloadIds(Array.from(idsToUnload));
+  }
+
+  /**
+   * Clears the search cache without evicting any nodes or relations.
+   * This can be used if we want to preserve currently loaded items.
+   */
+  clearSearchCache(): void {
+    this.searchCacheNodeIds.clear();
+    this.searchCacheRelationIds.clear();
+
+    if (this.evictionTimeout) {
+      clearTimeout(this.evictionTimeout);
+      this.evictionTimeout = null;
+    }
   }
 
   getRelationsFrom(node: GraphNode): GraphRelation[] {
