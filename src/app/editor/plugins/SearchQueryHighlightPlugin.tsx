@@ -1,7 +1,7 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useEffect } from "react";
 
-import { useViewStore } from '@/app/view/useViewStore';
+import { useViewStore } from "@/app/view/useViewStore";
 
 const OBSERVER_CONFIG = { subtree: true, childList: true };
 
@@ -15,44 +15,45 @@ const getTextNodes = (node: Node) => {
   }
 
   return allTextNodes;
-}
+};
 
+const isHighlightSupported = () => {
+  return typeof CSS !== "undefined" && "highlights" in CSS;
+};
 
 const highlightText = (searchQuery: string, rootElement: Node) => {
   const query = searchQuery.trim().toLowerCase();
   const textNodes = getTextNodes(rootElement);
 
-  const ranges = textNodes
-    .map((el) => {
-      const nodeText = el.textContent?.toLowerCase() ?? ""
-      const indices = [];
-      let startPos = 0;
-      while (startPos < query.length) {
-        const index = nodeText.indexOf(query, startPos);
-        if (index === -1) {
-          break;
-        }
-        indices.push(index);
-        startPos = index + query.length;
+  const ranges = textNodes.map((el) => {
+    const nodeText = el.textContent?.toLowerCase() ?? "";
+    const indices = [];
+    let startPos = 0;
+    while (startPos < query.length) {
+      const index = nodeText.indexOf(query, startPos);
+      if (index === -1) {
+        break;
       }
+      indices.push(index);
+      startPos = index + query.length;
+    }
 
-      return indices.map((index) => {
-        const range = new Range();
-        range.setStart(el, index);
-        range.setEnd(el, index + query.length);
-        return range;
-      });
+    return indices.map((index) => {
+      const range = new Range();
+      range.setStart(el, index);
+      range.setEnd(el, index + query.length);
+      return range;
     });
+  });
 
-  const highlight = CSS.highlights.get("text-highlights");
-  if (highlight) {
+  if (isHighlightSupported()) {
+    const highlight = CSS.highlights.get("text-highlights") || new Highlight();
     ranges.flat().forEach((range) => {
       highlight.add(range);
     });
     CSS.highlights.set("text-highlights", highlight);
   }
-
-}
+};
 
 export const SearchQueryHighlightPlugin = () => {
   const [editor] = useLexicalComposerContext();
