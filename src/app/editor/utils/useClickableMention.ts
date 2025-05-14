@@ -5,9 +5,11 @@ import { useDoubleClick } from "@/app/hooks/useDoubleClick";
 import { useToast } from "@/app/hooks/useToast";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { useSetMainRoot } from "@/app/tree/utils";
+import { useViewStore } from "@/app/view/useViewStore";
 
 export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode) => {
   const graphStore = useGraphStore();
+  const viewStore = useViewStore();
   const { addToast } = useToast();
   const setRoot = useSetMainRoot();
   const tree = treeNode.tree;
@@ -17,8 +19,26 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
       const nodeId = (e.target as HTMLElement).getAttribute("data-lexical-mentioned-graph-node-id")!;
       const node = graphStore.getNode(nodeId);
       const isTopLevelExpanded = tree.isPathExpanded(treeNode.path) || treeNode instanceof RootTreeNode;
+      const ctrlKey = e.ctrlKey || e.metaKey;
 
       if (node) {
+        // Handle keyboard modifiers (shift or ctrl/cmd)
+        if (e.shiftKey) {
+          tree.setFocusedNode(null); // Clear the focused node to prevent text selection
+          e.preventDefault();
+          e.stopPropagation();
+          viewStore.createSidePanelTree(node);
+          return;
+        }
+
+        if (ctrlKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          setRoot(node);
+          return;
+        }
+
+        // Special case for non-mainTree
         if (!tree.isMainTree) {
           setRoot(node);
           return;
@@ -58,7 +78,7 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
         });
       }
     },
-    [graphStore, tree, treeNode, addToast, setRoot],
+    [graphStore, viewStore, tree, treeNode, addToast, setRoot],
   );
 
   const handleDoubleClick = (e: any) => {
