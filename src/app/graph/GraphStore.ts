@@ -49,7 +49,7 @@ import {
 import logger from "@/lib/logger";
 import { getInverseRelation } from "@/lib/relation-inverter";
 import { CappedKeywordIndex, KeywordTrieIndex } from "@/lib/trie";
-import { scoreMatch } from "@/lib/utils";
+import { MentionTrigger, scoreMatch } from "@/lib/utils";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
 import { AccessMode, Chip, GraphNode } from "./GraphNode";
@@ -66,6 +66,7 @@ import {
   TxRemoveNode,
   TxRemoveRelation,
   TxRemoveRelationFromList,
+  TxReplaceMentionChipWithTextChip,
   TxReplaceRelationLink,
   TxSetAccessMode,
   TxSetIsPublic,
@@ -571,17 +572,60 @@ export class GraphStore {
 
     const oldProps = node.serialize();
     const canonicalRelationId = tx.nodeProps.canonicalRelationId ?? node.canonicalRelationId;
+    const updates: GraphUpdate[] = [];
+
+    // If content is being updated, check for removed mention chips
+    if (tx.nodeProps.content !== undefined) {
+      const oldContent = node.content;
+      const newContent =
+        typeof tx.nodeProps.content === "string"
+          ? [{ type: "text", value: tx.nodeProps.content }]
+          : tx.nodeProps.content;
+
+      // Find mention chips that were removed
+      const oldMentionChips = oldContent.filter(
+        (chip): chip is { type: "mention"; value: string; mentionTrigger?: MentionTrigger } => chip.type === "mention",
+      );
+      const newMentionChips = newContent.filter(
+        (chip): chip is { type: "mention"; value: string; mentionTrigger?: MentionTrigger } => chip.type === "mention",
+      );
+      const replacedMentionChips = newContent.filter(
+        (chip): chip is { type: "text"; value: string } => chip.type === "text" && chip.value[0] === "#",
+      );
+
+      // For each removed mention chip, delete its hashtag relation
+      for (const oldChip of oldMentionChips) {
+        if (!newMentionChips.some((newChip) => newChip.value === oldChip.value)) {
+          const mentionNode = this.nodesById.get(oldChip.value);
+          if (mentionNode && replacedMentionChips.some((newChip) => newChip.value === mentionNode.text)) {
+            // If the mention chip was replaced with a text chip, don't delete the relation
+            // because the relation will be deleted when the mention node is deleted in updateNode
+            // We know when its replaced when the mention chip is replaced with a text chip with the same text
+            continue;
+          }
+          // Find and delete the hashtag relation
+          const relations = node.relations.filter(
+            (r) => r.to.id === oldChip.value && r.relationType.label.toLowerCase() === "has hashtag",
+          );
+          for (const relation of relations) {
+            if (this.relationsById.has(relation.id)) {
+              const { updates: deleteUpdates } = this.deleteRelation(relation);
+              updates.push(...deleteUpdates);
+            }
+          }
+        }
+      }
+    }
+
     node.update({ ...tx.nodeProps, canonicalRelationId });
 
-    return {
-      updates: [
-        {
-          operation: "updateNode",
-          oldProps,
-          newProps: node.serialize(),
-        },
-      ],
-    };
+    updates.push({
+      operation: "updateNode",
+      oldProps,
+      newProps: node.serialize(),
+    });
+
+    return { updates };
   }
 
   /**
@@ -1548,6 +1592,13 @@ export class GraphStore {
         updates.push(...canonicalUpdates);
       }
 
+      // Replace mention chip with text chip if relation is a hashtag relation
+      if (relation.relationType.label.toLowerCase() === "has hashtag") {
+        const { updates: mentionUpdates } = this._replaceMentionChipWithTextChip({
+          relationId: relation.id,
+        });
+        updates.push(...mentionUpdates);
+      }
       let curUpdates = fromNode.pinnedRelationsList.delete(relation.id);
       if (curUpdates.length > 0) {
         updates.push({
@@ -2036,19 +2087,70 @@ export class GraphStore {
     };
   }
 
+  private _replaceMentionChipWithTextChip(tx: TxReplaceMentionChipWithTextChip): { updates: GraphUpdate[] } {
+    const relation = this.relationsById.get(tx.relationId);
+    if (!relation) {
+      return { updates: [] };
+    }
+    const mentionNode = this.nodesById.get(relation.from.id);
+    if (relation.relationType.label.toLowerCase() === "has hashtag" && mentionNode instanceof GraphNode) {
+      let updated = false;
+      const newContent = mentionNode.content.map((chip): Chip => {
+        if (chip.type === "mention" && chip.value === relation.to.id) {
+          updated = true; // Updated is true when we've found the matching mention chip
+          const mentionedNode = this.nodesById.get(chip.value);
+          const mentionText = mentionedNode ? mentionedNode.text : "";
+          return { type: "text", value: mentionText } as Chip;
+        }
+        return chip;
+      });
+      if (updated) {
+        const nodeUpdateResult = this._updateNode({
+          nodeId: mentionNode.id,
+          nodeProps: { content: newContent },
+        });
+        // When we convert a mention relation chip to text, it will trigger a deleteRelation event
+        // which will trigger this method again
+        // So we need to return the updates from the node update
+        return { updates: nodeUpdateResult.updates };
+      }
+    }
+    return { updates: [] };
+  }
+
   private _removeRelationFromList(tx: TxRemoveRelationFromList): { updates: GraphUpdate[] } {
+    // --- Begin: Mention relation chip replacement logic for when a relation is removed from the hidden relation list---
+    const relation = this.relationsById.get(tx.relationId);
+    if (!relation) {
+      return { updates: [] };
+    }
+    const mentionNode = this.nodesById.get(relation.from.id);
+    if (
+      tx.listType === "all" && // Only do this for general relations, not pinned, nor noteContent
+      relation.relationType.label.toLowerCase() === "has hashtag" &&
+      mentionNode instanceof GraphNode
+    ) {
+      const { updates } = this._replaceMentionChipWithTextChip({
+        relationId: tx.relationId,
+      });
+      if (updates.length > 0) {
+        return { updates };
+      }
+    }
+    // --- End: Mention relation chip replacement logic ---
+    // If the mention relation chip is not found, we can just delete the relation from the list
+    // and return the updates as it is
     const list = this.getRelationList(tx.objectId, tx.listType);
     const partialUpdates = list.delete(tx.relationId);
-    return {
-      updates: partialUpdates.map((update) => ({
-        ...update,
-        authorId: this.user.id,
-        nodeId: tx.objectId,
-        type: tx.listType,
-        oldIsPublic: this.relationsById.get(tx.relationId)?.isPublic ?? false,
-        newIsPublic: this.relationsById.get(tx.relationId)?.isPublic ?? false,
-      })),
-    };
+    const updates: GraphUpdate[] = partialUpdates.map((update) => ({
+      ...update,
+      authorId: this.user.id,
+      nodeId: tx.objectId,
+      type: tx.listType,
+      oldIsPublic: this.relationsById.get(tx.relationId)?.isPublic ?? false,
+      newIsPublic: this.relationsById.get(tx.relationId)?.isPublic ?? false,
+    }));
+    return { updates };
   }
 
   pinRelations(objectId: string, relationIds: string[], after?: Positioner<GraphRelation>) {

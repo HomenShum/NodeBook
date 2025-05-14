@@ -117,6 +117,10 @@ export type TxRemoveRelationFromList = {
   listType: ListType;
 };
 
+export type TxReplaceMentionChipWithTextChip = {
+  relationId: string;
+};
+
 // TODO: probably can be done with less boilerplate code?
 // TODO: probably can be done with less boilerplate code?
 export type TxCombinedPart =
