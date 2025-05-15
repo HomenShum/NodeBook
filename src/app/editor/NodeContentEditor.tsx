@@ -18,7 +18,6 @@ import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { FormatKeyPlugin } from "@/app/editor/plugins/FormatKeyPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
-import { LogCollapsedEditorPlugin } from "@/app/editor/plugins/LogGhostBulletStatePlugin";
 import { MinusKeyPlugin } from "@/app/editor/plugins/MinusKeyPlugin";
 import { PastePlugin } from "@/app/editor/plugins/PastePlugin";
 import { RelationPlugin } from "@/app/editor/plugins/RelationPlugin";
@@ -127,8 +126,6 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         <NodeEventPlugin nodeType={ImageNode} eventType={"click"} eventListener={handleImageClick} />
         <ViewControllerRegistryPlugin treeNode={treeNode} />
         <SearchQueryHighlightPlugin />
-
-        <LogCollapsedEditorPlugin />
       </LexicalComposer>
     </div>
   );
