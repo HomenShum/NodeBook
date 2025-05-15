@@ -1,4 +1,5 @@
 import { LexicalEditor } from "lexical";
+import { untracked } from "mobx";
 
 import { env } from "@/app/envFrontend";
 import { defaultRelationTypes } from "@/app/graph/constants";
@@ -57,7 +58,7 @@ export abstract class BaseTreeNode {
 
   protected constructor({ tree, object }: { tree: Tree; object: GraphObject }) {
     this.tree = tree;
-    this.object = object;
+    this.object = object instanceof GraphNode ? untracked(() => object) : object;
   }
 
   /**
@@ -559,12 +560,14 @@ export abstract class BaseGroup {
       }
 
       // Check for mentions in the object's content that need to be loaded
-      if (object instanceof GraphNode && object.content) {
-        const mentionIds = object.content.filter((block) => block.type === "mention").map((block) => block.value);
-        if (mentionIds.length > 0) {
-          missingIds.push(...mentionIds);
+      untracked(() => {
+        if (object instanceof GraphNode && object.content) {
+          const mentionIds = object.content.filter((block) => block.type === "mention").map((block) => block.value);
+          if (mentionIds.length > 0) {
+            missingIds.push(...mentionIds);
+          }
         }
-      }
+      });
 
       const node = new DescendantTreeNode({
         object,
