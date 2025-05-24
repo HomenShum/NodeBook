@@ -15,7 +15,13 @@ import { useLoading } from "@/app/contexts/LoadingContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import useServiceWorker from "@/app/hooks/useServiceWorker";
 import useTrackMemory from "@/app/hooks/useTrackMemory";
-import { isCommandBarHotKey, isFocusSearchHotkey, isQuickCaptureHotkey, isRightSidePanelHotkey } from "@/app/hotkeys";
+import {
+  isCommandBarHotKey,
+  isFocusSearchHotkey,
+  isQuickCaptureHotkey,
+  isRightSidePanelHotkey,
+  modKeyName,
+} from "@/app/hotkeys";
 import { useKeyboardShortcuts } from "@/app/render/useKeyboardShortcuts";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -114,7 +120,7 @@ export default observer(function App({ children }: Props) {
           <CommandBar />
           <div className={styles.Container}>
             <Button
-              data-tooltip="Toggle sidebar · ⌘⇧B"
+              data-tooltip={`Toggle sidebar · ${modKeyName}+⇧+B`}
               className={cn(styles.SidebarToggle, unreadCount ? styles.UnreadNotification : "")}
               variant="default"
               size="icon"
