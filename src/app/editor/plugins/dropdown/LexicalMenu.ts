@@ -502,40 +502,69 @@ export function useMenuAnchorRef(
 ): MutableRefObject<HTMLElement> {
   const [editor] = useLexicalComposerContext();
   const anchorElementRef = useRef<HTMLElement>(document.createElement("div"));
+  const menuResizeObserverRef = useRef<ResizeObserver | null>(null);
+
   const positionMenu = useCallback(() => {
-    anchorElementRef.current.style.top = anchorElementRef.current.style.bottom;
     const rootElement = document.body; // This is the change compared to the original LexicalMenu
     const containerDiv = anchorElementRef.current;
 
     const menuEle = containerDiv.firstChild as HTMLElement;
     if (rootElement !== null && resolution !== null) {
       const { left, top, width, height } = resolution.getRect();
-      const anchorHeight = anchorElementRef.current.offsetHeight; // use to position under anchor
-      containerDiv.style.top = `${
-        top + anchorHeight + 3 + (shouldIncludePageYOffset__EXPERIMENTAL ? window.pageYOffset : 0)
-      }px`;
-      containerDiv.style.left = `${left + window.pageXOffset}px`;
+      const pageXOffset = window.pageXOffset || window.scrollX;
+      const pageYOffset = window.pageYOffset || window.scrollY;
+
+      // Calculate viewport-relative coordinates
+      const viewportLeft = left;
+      const viewportTop = top;
+
+      // Configure container with fixed positioning - this avoids affecting document overflow
+      containerDiv.style.position = "fixed";
+      // Add vertical spacing (20px) when positioning below to prevent overlap with node text
+      containerDiv.style.top = `${viewportTop + 20}px`;
+      containerDiv.style.left = `${viewportLeft}px`;
       containerDiv.style.height = `${height}px`;
       containerDiv.style.width = `${width}px`;
+
       if (menuEle !== null) {
-        menuEle.style.top = `${top}`;
+        // Remove the top positioning on the menu element
+        if (menuEle.style) {
+          menuEle.style.top = "";
+        }
+
         const menuRect = menuEle.getBoundingClientRect();
-        const menuHeight = menuRect.height;
         const menuWidth = menuRect.width;
+        const menuHeight = Math.min(menuRect.height, window.innerHeight * 0.3); // Cap at 30% of viewport
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
 
-        const rootElementRect = rootElement.getBoundingClientRect();
+        // Ensure menu stays within viewport horizontally
+        if (viewportLeft + menuWidth > viewportWidth) {
+          containerDiv.style.left = `${viewportWidth - menuWidth - 10}px`; // 10px buffer
+        }
 
-        if (left + menuWidth > rootElementRect.right) {
-          containerDiv.style.left = `${rootElementRect.right - menuWidth + window.pageXOffset}px`;
+        // Ensure menu stays within viewport vertically
+        if (viewportTop + 20 + menuHeight > viewportHeight) {
+          // Position above the cursor if it would otherwise extend below viewport
+          containerDiv.style.top = `${viewportTop - menuHeight}px`;
         }
-        if (
-          (top + menuHeight > window.innerHeight || top + menuHeight > rootElementRect.bottom) &&
-          top - rootElementRect.top > menuHeight + height
-        ) {
-          containerDiv.style.top = `${
-            top - menuHeight - height + (shouldIncludePageYOffset__EXPERIMENTAL ? window.pageYOffset : 0)
-          }px`;
+
+        // Add a resize observer to the menu element itself to reposition when its content changes
+        if (menuResizeObserverRef.current) {
+          menuResizeObserverRef.current.disconnect();
         }
+        menuResizeObserverRef.current = new ResizeObserver(() => {
+          const newMenuRect = menuEle.getBoundingClientRect();
+          const newMenuHeight = Math.min(newMenuRect.height, window.innerHeight * 0.3);
+
+          // Only update position if necessary to stay in viewport
+          if (viewportTop + 20 + newMenuHeight > viewportHeight) {
+            containerDiv.style.top = `${viewportTop - newMenuHeight}px`;
+          } else {
+            containerDiv.style.top = `${viewportTop + 20}px`;
+          }
+        });
+        menuResizeObserverRef.current.observe(menuEle);
       }
 
       if (!containerDiv.isConnected) {
@@ -546,14 +575,15 @@ export function useMenuAnchorRef(
         containerDiv.setAttribute("id", "typeahead-menu");
         containerDiv.setAttribute("role", "listbox");
         containerDiv.style.display = "block";
-        containerDiv.style.position = "absolute";
+        containerDiv.style.position = "fixed";
+        containerDiv.style.zIndex = "9999";
         parent.append(containerDiv);
       }
       anchorElementRef.current = containerDiv;
       rootElement.setAttribute("aria-controls", "typeahead-menu");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, resolution, shouldIncludePageYOffset__EXPERIMENTAL, className, parent]);
+  }, [editor, resolution, className, parent]);
 
   useEffect(() => {
     const rootElement = editor.getRootElement();
@@ -567,6 +597,12 @@ export function useMenuAnchorRef(
         const containerDiv = anchorElementRef.current;
         if (containerDiv !== null && containerDiv.isConnected) {
           containerDiv.remove();
+        }
+
+        // Clean up the resize observer when unmounting
+        if (menuResizeObserverRef.current) {
+          menuResizeObserverRef.current.disconnect();
+          menuResizeObserverRef.current = null;
         }
       };
     }
