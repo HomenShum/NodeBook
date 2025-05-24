@@ -74,11 +74,11 @@ h6 {
 }
 
 ::selection {
-  background-color: var(--teal-3);
+  background-color: var(--teal-4);
 }
 
 ::-moz-selection {
-  background-color: var(--teal-3);
+  background-color: var(--teal-4);
 }
 
 html,
@@ -251,7 +251,7 @@ body,
 }
 
 ::highlight(text-highlights) {
-  background-color: var(--teal-4);
+  background-color: var(--teal-5);
 }
 
 /* Utility Classes */
