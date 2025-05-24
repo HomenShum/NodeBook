@@ -546,6 +546,7 @@ Right Area
   text-align: center;
   border-radius: 4px;
   font-size: var(--font-size-mini);
+  font-family: "Roboto Mono", monospace;
   background-color: var(--gray-2);
   cursor: default;
   color: var(--gray-10);
@@ -565,6 +566,8 @@ Right Area
   padding: 4px 8px;
   border-radius: 4px;
   font-size: var(--font-size-mini);
+  font-family: var(--font-inter);
+  font-weight: 500;
   color: var(--gray-10);
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
