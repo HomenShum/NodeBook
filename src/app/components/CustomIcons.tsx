@@ -192,9 +192,9 @@ export const SublistsIcon = () => (
   </svg>
 );
 
-export const ExpandLineArrowsIcon = () => (
-  <svg width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <g fill="currentColor" clipPath="url(#clip0_4832_125)">
+export const ExpandLineArrowsIcon = ({ size = 14, fill = "currentColor" }) => (
+  <svg width={size} height={size} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g fill={fill} clipPath="url(#clip0_4832_125)">
       <path
         fillRule="evenodd"
         clipRule="evenodd"

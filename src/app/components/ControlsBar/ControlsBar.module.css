@@ -122,18 +122,25 @@
   gap: 4px;
 }
 
-@media (max-width: 767px) {
+@media (max-width: 800px) {
   .ControlsBar {
     padding: 8px 8px;
     height: fit-content;
     gap: 8px;
     align-items: start;
-    flex-direction: column;
-    justify-content: start;
   }
 
-  .FiltersDropdown {
+  /* Hide elements with this class on mobile screens */
+  .HideOnMobile {
     display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .ControlsBar {
+    border-top: none;
+    border-bottom: none;
+    box-shadow: 0px 2px 4px -1px var(--teal-1);
   }
 }
 

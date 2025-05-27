@@ -13,9 +13,18 @@
   flex-shrink: 0;
 }
 
-@media only screen and (max-width: 767px) {
+@media only screen and (max-width: 800px) {
   .BreadcrumbContainer {
     padding: 0 8px 0 38px;
+  }
+  .BreadcrumbRightArea {
+    margin-left: auto;
+  }
+}
+
+@media only screen and (max-width: 600px) {
+  .BreadcrumbWrapper {
+    display: none !important;
   }
 }
 
@@ -32,12 +41,6 @@
   padding-left: 10px;
   overflow-x: auto;
   flex-grow: 1;
-}
-
-@media (max-width: 767px) {
-  .BreadcrumbWrapper {
-    flex-grow: 0;
-  }
 }
 
 .Breadcrumb {

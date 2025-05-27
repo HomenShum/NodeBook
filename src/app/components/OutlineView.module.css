@@ -6,6 +6,10 @@
   overscroll-behavior: none;
 }
 
+.MiddleRow {
+  display: none;
+}
+
 .HeadingContainer {
   display: flex;
   flex-direction: column;
@@ -109,7 +113,7 @@
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 800px) {
   .OutlineContent {
     height: calc(100dvh - 130px);
   }
@@ -118,12 +122,36 @@
     padding: 24px 0 0 18px;
   }
 
-  .WindowNav {
-    height: 114px;
-  }
-
   .Nodes {
     padding: 0 18px 0 48px;
+  }
+}
+
+@media (max-width: 600px) {
+  .WindowNav {
+    height: 120px;
+  }
+
+  .OutlineContent {
+    height: calc(100dvh - 140px);
+  }
+
+  .MiddleRow {
+    display: flex;
+    height: 40px;
+    padding: 0 8px 0px 12px;
+    border-bottom: 0.5px solid var(--gray-6);
+    width: 100%;
+    gap: 6px;
+    align-items: center;
+    background-color: var(--gray-1);
+    justify-content: space-between;
+  }
+
+  .MiddleRowBlock {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 }
 
@@ -224,4 +252,27 @@
 
 .FloatingActionButton:active {
   transform: scale(0.95);
+}
+
+.BreadcrumbContentForMiddleRow {
+  display: flex;
+  align-items: center;
+  padding-top: 0.5px;
+  overflow-x: auto;
+  flex-grow: 1;
+}
+
+.Separator {
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.Breadcrumb {
+  cursor: default;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  user-select: none;
+  text-wrap: nowrap;
+  font-size: var(--font-size-sm);
 }

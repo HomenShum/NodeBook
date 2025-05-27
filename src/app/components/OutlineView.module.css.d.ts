@@ -1,4 +1,6 @@
 declare const styles: {
+  readonly "Breadcrumb": string;
+  readonly "BreadcrumbContentForMiddleRow": string;
   readonly "EmptySpaceClickArea": string;
   readonly "FloatingActionButton": string;
   readonly "HeadingContainer": string;
@@ -9,6 +11,8 @@ declare const styles: {
   readonly "MenuIcon": string;
   readonly "MenuTrigger": string;
   readonly "MenuTriggerVisible": string;
+  readonly "MiddleRow": string;
+  readonly "MiddleRowBlock": string;
   readonly "Nodes": string;
   readonly "NoteContentSection": string;
   readonly "OutlineContent": string;
@@ -16,6 +20,7 @@ declare const styles: {
   readonly "RelationObject": string;
   readonly "RelationObjects": string;
   readonly "RelationType": string;
+  readonly "Separator": string;
   readonly "TitleContainer": string;
   readonly "TitleText": string;
   readonly "TooltipContent": string;

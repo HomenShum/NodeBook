@@ -5,6 +5,7 @@ declare const styles: {
   readonly "ControlsBarWrapper": string;
   readonly "DisabledInput": string;
   readonly "FiltersDropdown": string;
+  readonly "HideOnMobile": string;
   readonly "Icon": string;
   readonly "PopoverButton": string;
   readonly "PopoverButtonsContainer": string;

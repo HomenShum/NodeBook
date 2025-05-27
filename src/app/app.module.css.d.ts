@@ -3,7 +3,6 @@ declare const styles: {
   readonly "AppContainer": string;
   readonly "Container": string;
   readonly "ContentContainer": string;
-  readonly "Hidden": string;
   readonly "Main": string;
   readonly "MainContainer": string;
   readonly "MainDragging": string;

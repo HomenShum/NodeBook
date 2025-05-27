@@ -39,7 +39,7 @@ import { useUser } from "@/app/contexts/UserContext";
 import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 import { useToast } from "@/app/hooks/useToast";
 import { SortOption, Tree } from "@/app/tree/Tree";
-import { ideapadLinkManager } from "@/app/util";
+import { ideapadLinkManager, useIsMobile } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -83,6 +83,8 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   const { addToast } = useToast();
   const { updateSlugByNodeId, slugs, deleteSlugByNodeId } = useSlugs();
   const user = useUser();
+  const isSmallScreen = useIsMobile(600);
+  const isMobileSize = useIsMobile(800);
 
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [ideapadLink, setIdeapadLink] = useState(ideapadLinkManager.get(tree.rootObjectId));
@@ -238,9 +240,9 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
         <div className={styles.FiltersDropdown}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="sm">
+              <Button size={isMobileSize ? "icon" : "sm"}>
                 <ListFilter size={14} strokeWidth={1.5} />
-                <span>Filters</span>
+                <span className={styles.HideOnMobile}>Filters</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -279,7 +281,11 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           </DropdownMenu>
         </div>
         <div className={styles.SortOptionDropdown}>
-          <SortOptionDropdown sortOption={tree.sortOption} updateSortOption={updateSortOption} />
+          <SortOptionDropdown
+            sortOption={tree.sortOption}
+            updateSortOption={updateSortOption}
+            isMobileSize={isMobileSize}
+          />
         </div>
       </div>
       <div className={styles.RightWrapper}>
@@ -311,115 +317,119 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             <span>Graph</span>
           </Button>
         )}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm">
-              <ExpandLineArrowsIcon />
-              <span>Expansion</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem
-              onClick={() => {
-                tree.collapseAllNodes();
-                addToast({
-                  title: "All nodes collapsed",
-                  duration: 4000,
-                });
-              }}
-            >
-              <ChevronsDownUp size={14} strokeWidth={1.5} />
-              Collapse all
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={async () => {
-                const success = await tree.saveExpansionStateForAllUsers();
-                if (success) {
+        {!isSmallScreen && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size={isMobileSize ? "icon" : "sm"}>
+                <ExpandLineArrowsIcon size={14} />
+                <span className={styles.HideOnMobile}>Expansion</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => {
+                  tree.collapseAllNodes();
                   addToast({
-                    title: "Expansion state saved for all users",
+                    title: "All nodes collapsed",
                     duration: 4000,
                   });
-                } else {
-                  addToast({
-                    title: "Failed to save expansion state",
-                    duration: 4000,
-                  });
-                }
-              }}
-            >
-              <Save size={14} strokeWidth={1.5} />
-              Save current state
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={async () => {
-                const success = await tree.applySavedExpansionState();
-                if (success) {
-                  addToast({
-                    title: "Saved expansion state applied",
-                    duration: 4000,
-                  });
-                } else {
-                  addToast({
-                    title: "No saved expansion state found",
-                    duration: 4000,
-                  });
-                }
-              }}
-            >
-              <RotateCcw size={14} strokeWidth={1.5} />
-              Apply saved state
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm">
-              {viewStore.viewType === ViewType.Graph ? (
-                <NetworkIcon size={14} strokeWidth={1.5} />
-              ) : viewStore.viewType === ViewType.Outline ? (
-                <ListIcon size={17} strokeWidth={1.8} />
-              ) : viewStore.viewType === ViewType.Webpage ? (
-                <Globe size={14} strokeWidth={1.5} />
-              ) : (
-                <NotesIcon />
-              )}
-              <span>
-                {viewStore.viewType === ViewType.Graph
-                  ? "Graph View"
-                  : viewStore.viewType === ViewType.Outline
+                }}
+              >
+                <ChevronsDownUp size={14} strokeWidth={1.5} />
+                Collapse all
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={async () => {
+                  const success = await tree.saveExpansionStateForAllUsers();
+                  if (success) {
+                    addToast({
+                      title: "Expansion state saved for all users",
+                      duration: 4000,
+                    });
+                  } else {
+                    addToast({
+                      title: "Failed to save expansion state",
+                      duration: 4000,
+                    });
+                  }
+                }}
+              >
+                <Save size={14} strokeWidth={1.5} />
+                Save current state
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={async () => {
+                  const success = await tree.applySavedExpansionState();
+                  if (success) {
+                    addToast({
+                      title: "Saved expansion state applied",
+                      duration: 4000,
+                    });
+                  } else {
+                    addToast({
+                      title: "No saved expansion state found",
+                      duration: 4000,
+                    });
+                  }
+                }}
+              >
+                <RotateCcw size={14} strokeWidth={1.5} />
+                Apply saved state
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {!isSmallScreen && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm">
+                {viewStore.viewType === ViewType.Graph ? (
+                  <NetworkIcon size={14} strokeWidth={1.5} />
+                ) : viewStore.viewType === ViewType.Outline ? (
+                  <ListIcon size={17} strokeWidth={1.8} />
+                ) : viewStore.viewType === ViewType.Webpage ? (
+                  <Globe size={14} strokeWidth={1.5} />
+                ) : (
+                  <NotesIcon />
+                )}
+                <span>
+                  {viewStore.viewType === ViewType.Graph
+                    ? "Graph View"
+                    : viewStore.viewType === ViewType.Outline
                     ? "List View"
                     : viewStore.viewType === ViewType.Note
-                      ? "Note View"
-                      : viewStore.viewType === ViewType.Webpage
-                        ? "Webpage View"
-                        : "Card View"}
-              </span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onSelect={() => setViewType(ViewType.Outline)}>
-              <ListIcon size={17} strokeWidth={1.7} />
-              List View
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setViewType(ViewType.Note)}>
-              <NotesIcon />
-              Note View
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setViewType(ViewType.Card)}>
-              <NotesIcon />
-              Card View
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setViewType(ViewType.Webpage)}>
-              <Globe size={14} strokeWidth={1.5} />
-              Webpage View
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setViewType(ViewType.Graph)}>
-              <NetworkIcon size={14} strokeWidth={1.5} />
-              Graph View
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                    ? "Note View"
+                    : viewStore.viewType === ViewType.Webpage
+                    ? "Webpage View"
+                    : "Card View"}
+                </span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => setViewType(ViewType.Outline)}>
+                <ListIcon size={17} strokeWidth={1.7} />
+                List View
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setViewType(ViewType.Note)}>
+                <NotesIcon />
+                Note View
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setViewType(ViewType.Card)}>
+                <NotesIcon />
+                Card View
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setViewType(ViewType.Webpage)}>
+                <Globe size={14} strokeWidth={1.5} />
+                Webpage View
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setViewType(ViewType.Graph)}>
+                <NetworkIcon size={14} strokeWidth={1.5} />
+                Graph View
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
         <Popover
           onOpenChange={(open: boolean) => {
             if (!open) {
@@ -428,9 +438,9 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           }}
         >
           <PopoverTrigger asChild>
-            <Button size="sm">
+            <Button size={isMobileSize ? "icon" : "sm"}>
               <Sliders size={14} strokeWidth={1.5} />
-              <span>Display</span>
+              <span className={styles.HideOnMobile}>Display</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" sideOffset={5}>

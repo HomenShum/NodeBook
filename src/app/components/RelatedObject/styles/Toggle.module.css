@@ -75,7 +75,7 @@
   transform: rotate(90deg);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 800px) {
   .ToggleButton {
     color: var(--gray-8);
     fill: var(--gray-8);

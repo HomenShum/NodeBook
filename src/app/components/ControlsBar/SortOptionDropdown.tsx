@@ -15,19 +15,18 @@ import styles from "./ControlsBar.module.css";
 export const SortOptionDropdown = ({
   sortOption,
   updateSortOption,
+  isMobileSize,
 }: {
   sortOption: SortOption;
   updateSortOption: (partialSortOption: Partial<SortOption>) => void;
+  isMobileSize?: boolean;
 }) => (
   <div className={styles.SortOptionDropdown}>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          size="sm"
-          variant={sortOption.mode !== "manual" ? "active" : "default"}
-        >
+        <Button size={isMobileSize ? "icon" : "sm"} variant={sortOption.mode !== "manual" ? "active" : "default"}>
           <ArrowUpDown size={14} />
-          <span>Sort by</span>
+          <span className={styles.HideOnMobile}>Sort by</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={4}>
