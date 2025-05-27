@@ -48,7 +48,7 @@
 
 .SidebarContent {
   display: flex;
-  padding: 16px 12px 12px 12px;
+  padding: 16px 12px 8px;
   height: 100%;
   flex-direction: column;
   flex-grow: 1;
@@ -60,11 +60,22 @@
   overflow-y: auto;
   overflow-x: hidden;
   margin: 0 -12px; /* Compensate for parent padding */
-  padding: 0 12px; /* Add padding back inside scrollable area */
+  padding: 0 12px 20px; /* Add padding back inside scrollable area and bottom padding */
   scrollbar-width: thin; /* For Firefox */
   scrollbar-color: var(--gray-7) transparent; /* For Firefox */
   position: relative;
   z-index: 2;
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.ScrollableArea.ShowTopBorder {
+  border-top-color: var(--gray-5);
+}
+
+.ScrollableArea.ShowBottomBorder {
+  border-bottom-color: var(--gray-5);
 }
 
 /* Webkit scrollbar styling */
@@ -181,6 +192,7 @@
   margin-top: auto;
   width: 100%;
   justify-content: space-between;
+  padding-top: 8px;
 }
 
 .BetaLabel {

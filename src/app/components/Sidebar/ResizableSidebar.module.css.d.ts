@@ -20,7 +20,9 @@ declare const styles: {
   readonly "RightAlign": string;
   readonly "ScrollableArea": string;
   readonly "Selected": string;
+  readonly "ShowBottomBorder": string;
   readonly "ShowTooltip": string;
+  readonly "ShowTopBorder": string;
   readonly "Sidebar": string;
   readonly "SidebarContent": string;
   readonly "SidebarSectionHeader": string;

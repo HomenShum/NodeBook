@@ -16,7 +16,7 @@ import {
   Search,
   SettingsIcon,
   SunIcon,
-  User
+  User,
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -75,8 +75,11 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const { unreadCount } = useNotifications();
   const sidebarRef = useRef<HTMLDivElement>(null);
   const resizerRef = useRef<HTMLDivElement>(null);
+  const scrollableRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
   const [activePointerId, setActivePointerId] = useState<number | null>(null);
+  const [showTopBorder, setShowTopBorder] = useState(false);
+  const [showBottomBorder, setShowBottomBorder] = useState(true);
 
   const graphStore = useGraphStore();
   const settingsStore = useSettingsStore();
@@ -84,6 +87,45 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const setRoot = useSetMainRoot();
   const openNewTab = useOpenNewTab();
   const router = useRouter();
+
+  const handleScroll = useCallback(() => {
+    if (!scrollableRef.current) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollableRef.current;
+    const isAtTop = scrollTop === 0;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1; // -1 for rounding errors
+
+    setShowTopBorder(!isAtTop);
+    setShowBottomBorder(!isAtBottom);
+  }, []);
+
+  useEffect(() => {
+    const scrollableElement = scrollableRef.current;
+    if (!scrollableElement) return;
+
+    // Initial check
+    handleScroll();
+
+    scrollableElement.addEventListener("scroll", handleScroll);
+    return () => scrollableElement.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  // ResizeObserver to detect content size changes
+  useEffect(() => {
+    const scrollableElement = scrollableRef.current;
+    if (!scrollableElement) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      // Small delay to ensure DOM has updated
+      setTimeout(handleScroll, 10);
+    });
+
+    resizeObserver.observe(scrollableElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [handleScroll]);
 
   const handleOpenDevTools = () => {
     viewStore.setActiveModal("devTools");
@@ -420,7 +462,14 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </Button>
             )}
           </div>
-          <div className={styles.ScrollableArea}>
+          <div
+            className={cn(
+              styles.ScrollableArea,
+              showTopBorder && styles.ShowTopBorder,
+              showBottomBorder && styles.ShowBottomBorder,
+            )}
+            ref={scrollableRef}
+          >
             <MyFavoritesList />
             <MyHashtagsTree />
             <MyShortlinksTree />
