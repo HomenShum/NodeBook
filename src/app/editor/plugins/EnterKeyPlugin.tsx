@@ -289,8 +289,8 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
       action((event) => {
         if (!event) return false;
 
-        // Handle Ctrl/Cmd+Enter by inserting a line break
-        if (event.metaKey || event.ctrlKey) {
+        // Handle Alt+Enter by inserting a line break
+        if (event.altKey) {
           editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
           return true;
         }
