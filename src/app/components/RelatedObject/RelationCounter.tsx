@@ -14,8 +14,7 @@ export const RelationCounter = ({
   const relationCount = object.relations.length - 1;
 
   if (relationCount <= 0) {
-    // Return empty div to avoid layout shift
-    return <div className={styles.RelationCounter} />;
+    return null;
   }
 
   return (

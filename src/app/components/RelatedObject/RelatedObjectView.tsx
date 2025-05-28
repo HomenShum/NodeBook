@@ -338,6 +338,9 @@ const Content = observer(function Content() {
           )
         }
         <div className={styles.RelatedObjectRightArea}>
+          {viewType !== "replace" && !isNoteContentRoot && treeNode.object.relations.length <= 1 && (
+            <div style={{ width: 18, height: 18 }} />
+          )}
           <Button
             size="state"
             variant="ghost"
@@ -380,14 +383,6 @@ const Content = observer(function Content() {
             </div>
           </Button>
           <TypeIndicator object={treeNode.object} />
-          {/* I think not showing this in replace mode is a good option but feel free to change */}
-          {viewType !== "replace" && !isNoteContentRoot && (
-            <RelationCounter
-              object={treeNode.object}
-              onClick={() => tree.togglePathExpanded(treeNode.path)}
-              showTooltip={true}
-            />
-          )}
           {env.env !== "production" && (
             <>
               {treeNode.id === nodeSelectionAnchorId && (
@@ -402,6 +397,14 @@ const Content = observer(function Content() {
               )}
             </>
           )}
+          {viewType !== "replace" && !isNoteContentRoot && (
+            <RelationCounter
+              object={treeNode.object}
+              onClick={() => tree.togglePathExpanded(treeNode.path)}
+              showTooltip={true}
+            />
+          )}
+
           {/* Add right click area for focusing at the end of the node */}
           <div className={styles.RelatedObjectRightClickArea} onPointerDown={handleRightAreaClick} />
         </div>
