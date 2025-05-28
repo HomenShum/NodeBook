@@ -51,8 +51,8 @@ export class LayerManager {
     this.searchDebounceTimer = setTimeout(async () => {
       this.graphStore.updateInFlightSearchCount("increment");
       this.searchedText.set(text, true);
-      const nodeIds = await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`, {}, false, true);
-      this.loadCanonicalWithIds(nodeIds, false, true);
+      const nodeIds = await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`);
+      this.loadCanonicalWithIds(nodeIds);
       this.graphStore.updateInFlightSearchCount("decrement");
     }, 150);
   }
@@ -100,29 +100,18 @@ export class LayerManager {
     }, 400);
   }
 
-  public unloadIds(objectIds: string[]) {
-    objectIds.forEach((id) => {
-      LayerManager.loadedIds.delete(id);
-    });
-  }
-
-  public async loadCanonicalWithIds(objectIds: string[], reload = false, fromSearch = false) {
+  public async loadCanonicalWithIds(objectIds: string[], reload = false) {
     const ids = objectIds
       .filter((id) => (reload ? true : !LayerManager.loadedIdsForCanonical.has(id)))
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => LayerManager.loadedIdsForCanonical.add(id));
-    return this.fetchAndLoad(
-      `/api/layer/canonical`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          objectIds: ids,
-        }),
-      },
-      false,
-      fromSearch,
-    );
+    return this.fetchAndLoad(`/api/layer/canonical`, {
+      method: "POST",
+      body: JSON.stringify({
+        objectIds: ids,
+      }),
+    });
   }
 
   //Todo: I don't like this method and this class can be improved.
@@ -168,55 +157,15 @@ export class LayerManager {
    * @param withReset - Whether to reset the graph store before loading the data.
    * @returns A promise that resolves to an array of node IDs successfully loaded i the graph store, or an empty array if fetching or parsing fails.
    */
-  private async fetchAndLoad(
-    url: string,
-    init: RequestInit = {},
-    withReset: boolean = false,
-    fromSearch: boolean = false,
-  ): Promise<string[]> {
+  private async fetchAndLoad(url: string, init: RequestInit = {}, withReset: boolean = false): Promise<string[]> {
     if (!env.isPersistenceEnabled || env.persistTo !== "server") return [];
     const authFetch = getAuthFetch();
     const response = await authFetch(url, init);
     if (!response.ok) return [];
     const syncData = await response.json();
-
-    // If we are loading from a dropdown and there are no longer any dropdowns open, we don't need to do anything
     const parsed = SerializedGraphStoreSchema.safeParse(syncData.data);
-    const isSearchCacheActive = this.graphStore.isSearchCacheActive;
-
-    if (fromSearch && !isSearchCacheActive) {
-      logger.debug(
-        `Loaded data from search, but search is not active. Dumping ${
-          Object.keys(parsed.data?.nodesById ?? {}).length
-        } nodes`,
-      );
-      return [];
-    }
-
     if (parsed.success) {
-      if (withReset) {
-        this.graphStore.resetAndLoad(parsed.data);
-      } else {
-        let nodeIdsBeforeLoad: Set<string> = new Set();
-        let relationIdsBeforeLoad: Set<string> = new Set();
-        if (isSearchCacheActive) {
-          nodeIdsBeforeLoad = new Set(this.graphStore.nodesById.keys());
-          relationIdsBeforeLoad = new Set(this.graphStore.relationsById.keys());
-        }
-        this.graphStore.load(parsed.data);
-        if (isSearchCacheActive) {
-          Object.values(parsed.data.nodesById).forEach((node) => {
-            if (!nodeIdsBeforeLoad.has(node.id)) {
-              this.graphStore.addNodeIdToSearchCache(node.id);
-            }
-          });
-          Object.values(parsed.data.relationsById).forEach((relation) => {
-            if (!relationIdsBeforeLoad.has(relation.id)) {
-              this.graphStore.addRelationIdToSearchCache(relation.id);
-            }
-          });
-        }
-      }
+      withReset ? this.graphStore.resetAndLoad(parsed.data) : this.graphStore.load(parsed.data);
       logger.debug("Graph layer loaded");
       return Object.keys(parsed.data.nodesById);
     } else {

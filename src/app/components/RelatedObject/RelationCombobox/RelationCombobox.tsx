@@ -9,7 +9,6 @@ import { RelationTypeSelector } from "@/app/components/RelatedObject/RelationCom
 import styles from "@/app/components/RelatedObject/styles/RelationCombobox.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Popover, PopoverTrigger } from "@/app/components/UIPrimitives/Popover";
-import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { DescendantTreeNode, PointerTreeNode } from "@/app/tree/nodes";
@@ -40,7 +39,6 @@ export const RelationCombobox = observer(function RelationCombobox({
   const viewStore = useViewStore();
   const isForward = relation.to.id === object.id;
   const isMobile = useIsMobile();
-  const graphStore = useGraphStore();
   const [isHovered, setIsHovered] = React.useState(isMobile);
 
   const label = React.useMemo(() => {

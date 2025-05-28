@@ -17,7 +17,6 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
 import { DropdownItem } from "./DropdownItem";
@@ -38,9 +37,9 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   const state = useMemo(() => {
     return dropdown?.type === "searchAndReplace"
       ? {
-          matches: dropdown.matches,
-          initiatedManually: dropdown.initiatedManually,
-        }
+        matches: dropdown.matches,
+        initiatedManually: dropdown.initiatedManually,
+      }
       : null;
   }, [dropdown]);
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
@@ -48,7 +47,6 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   const [editor] = useLexicalComposerContext();
   const tree = treeNode.tree;
   const graphStore = useGraphStore();
-  const viewStore = useViewStore();
   // We only want to highlight where the mouse is when the user intentionally puts it there.
   // If the dropdown opens overtop of where the mouse was, we don't want to highlight that option.
   const mouseMoveSinceStateChange = useRef(false);
@@ -80,9 +78,8 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
         await treeNode.setObject(match.object);
       }
       tree.setFocusedNode(treeNode.path);
-      closeDropdown();
     },
-    [graphStore, tree, treeNode, closeDropdown],
+    [graphStore, tree, treeNode],
   );
 
   useEffect(() => {
@@ -200,8 +197,6 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   }, [editor, state, treeNode, tree, highlightedIndex, closeDropdown, selectMatch]);
 
   if (state === null || state.matches.length === 0) {
-    // Do search cache eviction here
-    viewStore.evictNonVisibleIds();
     return null;
   }
   return (

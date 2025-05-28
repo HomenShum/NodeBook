@@ -55,7 +55,6 @@ const CommandBar = observer(() => {
 
   const close = useCallback(() => {
     viewStore.setCommandBarOpen(false);
-    viewStore.evictNonVisibleIds();
   }, [viewStore]);
 
   const [selectedIndex, setSelectedIndex] = useState(0);
