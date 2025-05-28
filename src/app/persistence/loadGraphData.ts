@@ -31,6 +31,7 @@ export class LayerManager {
   private searchDebounceTimer: NodeJS.Timeout | null = null;
   private lazyLoadTimer: NodeJS.Timeout | null = null;
   private readonly graphStore: GraphStore;
+  private abortController: AbortController | null = null;
 
   public clear() {
     LayerManager.loadedIds.clear();
@@ -46,14 +47,32 @@ export class LayerManager {
   loadWithText(text: string): void {
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
+      if (this.abortController) {
+        this.abortController.abort();
+      }
+      this.abortController = new AbortController();
     }
     if (!text || text.length < 3 || this.searchedText.has(text)) return;
     this.searchDebounceTimer = setTimeout(async () => {
-      this.graphStore.updateInFlightSearchCount("increment");
-      this.searchedText.set(text, true);
-      const nodeIds = await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`);
-      this.loadCanonicalWithIds(nodeIds);
-      this.graphStore.updateInFlightSearchCount("decrement");
+      try {
+        this.graphStore.updateInFlightSearchCount("increment");
+        this.searchedText.set(text, true);
+        const nodeIds = await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`, {
+          signal: this.abortController?.signal,
+        });
+        this.loadCanonicalWithIds(nodeIds, false, {
+          signal: this.abortController?.signal,
+        });
+      } catch (e) {
+        this.searchedText.delete(text);
+        if (e instanceof DOMException && e.name === "AbortError") {
+          logger.debug("Search aborted");
+        } else {
+          throw e;
+        }
+      } finally {
+        this.graphStore.updateInFlightSearchCount("decrement");
+      }
     }, 150);
   }
 
@@ -100,13 +119,14 @@ export class LayerManager {
     }, 400);
   }
 
-  public async loadCanonicalWithIds(objectIds: string[], reload = false) {
+  public async loadCanonicalWithIds(objectIds: string[], reload = false, init: RequestInit = {}) {
     const ids = objectIds
       .filter((id) => (reload ? true : !LayerManager.loadedIdsForCanonical.has(id)))
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => LayerManager.loadedIdsForCanonical.add(id));
     return this.fetchAndLoad(`/api/layer/canonical`, {
+      ...init,
       method: "POST",
       body: JSON.stringify({
         objectIds: ids,
