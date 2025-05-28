@@ -2,7 +2,6 @@
   position: sticky;
   height: 80px;
   top: 0;
-  z-index: 20;
   overscroll-behavior: none;
 }
 
