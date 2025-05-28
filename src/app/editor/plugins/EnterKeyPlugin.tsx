@@ -1,5 +1,5 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getSelection, COMMAND_PRIORITY_NORMAL, KEY_ENTER_COMMAND } from "lexical";
+import { $getSelection, COMMAND_PRIORITY_NORMAL, INSERT_LINE_BREAK_COMMAND, KEY_ENTER_COMMAND } from "lexical";
 import { action } from "mobx";
 import { useCallback, useEffect } from "react";
 
@@ -288,6 +288,13 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
       KEY_ENTER_COMMAND,
       action((event) => {
         if (!event) return false;
+
+        // Handle Ctrl/Cmd+Enter by inserting a line break
+        if (event.metaKey || event.ctrlKey) {
+          editor.dispatchCommand(INSERT_LINE_BREAK_COMMAND, false);
+          return true;
+        }
+
         const selection = $getSelection();
         if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
         const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
