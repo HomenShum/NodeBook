@@ -158,10 +158,11 @@ body,
   --gray-indicator: #7f8b8b;
   --gray-track: #7f8b8b;
 
-  /* White and black variables that swap in dark mode */
   --white: #fff;
-  --white-lighter: #fff;
   --almost-black: #0d1212;
+  /* White and gray-1 variables that swap with appropriate contrast in dark mode */
+  --white-lighter: #fff;
+  --gray-1-lighter: #f6fafa;
 
   --font-size-micro: 0.6875rem; /* 11px */
   --font-size-mini: 0.75rem; /* 12px */
@@ -176,7 +177,7 @@ body,
 
   --shadow-sm: 0px 1px 2px rgba(0, 0, 0, 0.05), 0px 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-md: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
-  --shadow-lg: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
+  --shadow-lg: rgba(0, 0, 0, 0.032) 0px 3px 16px, rgba(0, 0, 0, 0.067) 0px 2px 6px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
 }
 
 /* Dark mode */
@@ -244,10 +245,11 @@ body,
   --gray-indicator: #667373;
   --gray-track: #667373;
 
-  /* White and black variables swapped for dark mode */
   --white: #0d1212;
-  --white-lighter: #212424;
   --almost-black: #fff;
+  /* White and gray-1 variables swapped appropriate contrast in dark mode */
+  --white-lighter: #1a1d1d;
+  --gray-1-lighter: #212424;
 }
 
 ::highlight(text-highlights) {

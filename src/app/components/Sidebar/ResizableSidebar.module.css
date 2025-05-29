@@ -62,7 +62,7 @@
   margin: 0 -12px; /* Compensate for parent padding */
   padding: 0 12px 20px; /* Add padding back inside scrollable area and bottom padding */
   scrollbar-width: thin; /* For Firefox */
-  scrollbar-color: var(--gray-7) transparent; /* For Firefox */
+  scrollbar-color: var(--gray-6) transparent; /* For Firefox */
   position: relative;
   z-index: 2;
   border-top: 1px solid transparent;
@@ -88,7 +88,7 @@
 }
 
 .ScrollableArea::-webkit-scrollbar-thumb {
-  background-color: var(--gray-7);
+  background-color: var(--gray-6);
   border-radius: 3px;
   transition: background-color 0.2s ease;
 }

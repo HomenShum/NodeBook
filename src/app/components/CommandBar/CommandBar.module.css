@@ -25,7 +25,7 @@
 }
 
 .Content {
-  background-color: var(--gray-1);
+  background-color: var(--gray-1-lighter);
   border-radius: 6px;
   border: solid 0.5px var(--gray-6);
   box-shadow: var(--shadow-lg);
@@ -45,6 +45,8 @@
 .List {
   flex-grow: 1;
   overflow-y: auto; /* Make the list scrollable */
+  scrollbar-width: thin; /* Hide the scrollbar for cleaner UI */
+  scrollbar-color: var(--gray-6) transparent; /* Set the color of the scrollbar */
   max-height: calc(85vh - 100px); /* Adjust based on your input height and padding */
   position: relative; /* Add this */
 }
@@ -56,7 +58,7 @@
   left: 0;
   right: 0;
   height: 24px;
-  background: linear-gradient(to top, var(--gray-1), transparent);
+  background: linear-gradient(to top, var(--gray-1-lighter), transparent);
   pointer-events: none;
   border-radius: 6px;
 }
@@ -86,7 +88,7 @@
   border-bottom: solid 0.5px var(--gray-6);
   margin-bottom: 2px;
   color: var(--gray-12);
-  background-color: var(--teal-1);
+  background-color: var(--white);
   outline: none;
 }
 
@@ -96,6 +98,6 @@
 
 .Input p:has(br:only-child):after {
   content: "Search notes...";
-  color: var(--gray-10);
+  color: var(--gray-8);
   cursor: text;
 }

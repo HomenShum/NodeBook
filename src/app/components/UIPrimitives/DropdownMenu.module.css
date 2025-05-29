@@ -1,7 +1,7 @@
 .DropdownMenuContent {
   min-width: fit-content;
   max-width: 600px;
-  background-color: var(--gray-1);
+  background-color: var(--gray-1-lighter);
   border: solid 0.5px var(--gray-6);
   z-index: 50;
   list-style: none;
@@ -37,7 +37,7 @@
   cursor: default;
   white-space: nowrap;
   font-size: var(--font-size-sm);
-  color: var(--gray-12);
+  color: var(--gray-11);
   display: flex;
   gap: 8px;
   user-select: none;
