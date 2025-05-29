@@ -2,8 +2,8 @@ import { Plus } from "lucide-react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tree } from "@/app/tree/Tree";
-import { cn } from "@/lib/utils";
 import { useViewStore } from "@/app/view/useViewStore";
+import { cn } from "@/lib/utils";
 
 import styles from "./CreateNewButton.module.css";
 

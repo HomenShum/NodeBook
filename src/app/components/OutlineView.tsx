@@ -351,6 +351,10 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                   className={s.FloatingActionButton}
                   onClick={(e) => {
                     e.preventDefault();
+                    if (isMobileSize && viewStore.quickCaptureOpen) {
+                      viewStore.quickCaptureView.createChildOfRootAndFocus();
+                      return;
+                    }
                     createAndZoomIntoNewNode().catch((error) => {
                       console.error("Failed to create and zoom into new node:", error);
                       addToast({

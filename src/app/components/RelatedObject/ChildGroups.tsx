@@ -19,6 +19,7 @@ import {
   TreeNode,
 } from "@/app/tree/nodes";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
+import { useIsMobile } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -108,6 +109,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
   const viewStore = useViewStore();
   const tree = parentNode.tree;
   const user = useUser();
+  const isSmallScreen = useIsMobile(600);
   const isRoot = parentNode instanceof RootTreeNode;
   const isEmpty = group.nodes.length === 0;
   const viewType =
@@ -125,7 +127,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
   return (
     <>
       <div className={cn(styles.TopHeader, isRoot && styles.TopHeaderRoot)}>
-        {isRoot && (!user.isAnonymous || allowAnonymousAppend) && <CreateNewButton tree={tree} />}
+        {isRoot && (!user.isAnonymous || allowAnonymousAppend) && !isSmallScreen && <CreateNewButton tree={tree} />}
       </div>
       {!isEmpty && (
         <div className={styles.PinnedHeader}>
