@@ -23,6 +23,7 @@ import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropd
 import { ExpandLineArrowsIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import buttonStyles from "@/app/components/UIPrimitives/Button.module.css";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -88,6 +89,12 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
 
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [ideapadLink, setIdeapadLink] = useState(ideapadLinkManager.get(tree.rootObjectId));
+
+  // Add state for tracking open dropdown menus
+  const [filtersMenuOpen, setFiltersMenuOpen] = useState(false);
+  const [expansionMenuOpen, setExpansionMenuOpen] = useState(false);
+  const [viewTypeMenuOpen, setViewTypeMenuOpen] = useState(false);
+  const [displayMenuOpen, setDisplayMenuOpen] = useState(false);
 
   const savedSlug = slugs[tree.rootObjectId] || "";
   const [slug, setSlug] = useState(savedSlug);
@@ -238,14 +245,18 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           />
         ))}
         <div className={styles.FiltersDropdown}>
-          <DropdownMenu>
+          <DropdownMenu open={filtersMenuOpen} onOpenChange={setFiltersMenuOpen}>
             <DropdownMenuTrigger asChild>
-              <Button size={isMobileSize ? "icon" : "sm"}>
+              <Button
+                size={isMobileSize ? "icon" : "sm"}
+                variant="default"
+                className={cn(filtersMenuOpen && buttonStyles.pressed)}
+              >
                 <ListFilter size={14} strokeWidth={1.5} />
                 <span className={styles.HideOnMobile}>Filters</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent align="start" sideOffset={4}>
               <DropdownMenuItem onSelect={() => toggleFilter("Public", "all")}>
                 <Globe size={14} strokeWidth={1.5} />
                 Public
@@ -266,17 +277,11 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
               <DropdownMenuSeparator />
               <DropdownMenuItem disabled>
                 <CheckSquare size={14} strokeWidth={1.5} />
-                TODOs
+                To-Dos
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "all")} style={{ paddingLeft: "24px" }}>
-                All TODOs
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "checked")} style={{ paddingLeft: "24px" }}>
-                Checked TODOs
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "unchecked")} style={{ paddingLeft: "24px" }}>
-                Unchecked TODOs
-              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "all")}>All To-Dos</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "checked")}>Checked To-Dos</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => toggleFilter("TODOs", "unchecked")}>Unchecked To-Dos</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -318,14 +323,18 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           </Button>
         )}
         {!isSmallScreen && (
-          <DropdownMenu>
+          <DropdownMenu open={expansionMenuOpen} onOpenChange={setExpansionMenuOpen}>
             <DropdownMenuTrigger asChild>
-              <Button size={isMobileSize ? "icon" : "sm"}>
-                <ExpandLineArrowsIcon size={14} />
-                <span className={styles.HideOnMobile}>Expansion</span>
+              <Button
+                size={isMobileSize ? "icon" : "sm"}
+                variant="default"
+                className={cn(expansionMenuOpen && buttonStyles.pressed)}
+              >
+                <ExpandLineArrowsIcon />
+                {!isMobileSize && <span>Expansion</span>}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent align="end" sideOffset={4}>
               <DropdownMenuItem
                 onClick={() => {
                   tree.collapseAllNodes();
@@ -381,9 +390,9 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           </DropdownMenu>
         )}
         {!isSmallScreen && (
-          <DropdownMenu>
+          <DropdownMenu open={viewTypeMenuOpen} onOpenChange={setViewTypeMenuOpen}>
             <DropdownMenuTrigger asChild>
-              <Button size="sm">
+              <Button size="sm" variant="default" className={cn(viewTypeMenuOpen && buttonStyles.pressed)}>
                 {viewStore.viewType === ViewType.Graph ? (
                   <NetworkIcon size={14} strokeWidth={1.5} />
                 ) : viewStore.viewType === ViewType.Outline ? (
@@ -406,7 +415,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 </span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
+            <DropdownMenuContent align="end" sideOffset={4}>
               <DropdownMenuItem onSelect={() => setViewType(ViewType.Outline)}>
                 <ListIcon size={17} strokeWidth={1.7} />
                 List View
@@ -431,14 +440,20 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
           </DropdownMenu>
         )}
         <Popover
+          open={displayMenuOpen}
           onOpenChange={(open: boolean) => {
+            setDisplayMenuOpen(open);
             if (!open) {
               setSlug(savedSlug);
             }
           }}
         >
           <PopoverTrigger asChild>
-            <Button size={isMobileSize ? "icon" : "sm"}>
+            <Button
+              size={isMobileSize ? "icon" : "sm"}
+              variant="default"
+              className={cn(displayMenuOpen && buttonStyles.pressed)}
+            >
               <Sliders size={14} strokeWidth={1.5} />
               <span className={styles.HideOnMobile}>Display</span>
             </Button>

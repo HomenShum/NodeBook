@@ -6,6 +6,7 @@ import { useAuth } from "@/app/auth/useAuth";
 import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
 import { SyncStatusIndicator } from "@/app/components/SyncStatus/SyncStatusIndicator";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import buttonStyles from "@/app/components/UIPrimitives/Button.module.css";
 import { VoiceInputButton } from "@/app/components/VoiceOps/VoiceInputButton";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useLoading } from "@/app/contexts/LoadingContext";
@@ -81,7 +82,7 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
         <Button
           style={{ position: "relative" }}
           variant="default"
-          className={cn(s.ShowTooltip, s.BottomAlign)}
+          className={cn(s.ShowTooltip, s.BottomAlign, viewStore.isCommandBarOpen && buttonStyles.pressed)}
           data-tooltip={`Command bar · ` + [`${modKeyName}`, "⇧", "K"].join("+")}
           size="icon"
           onClick={() => viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen)}
@@ -101,7 +102,7 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
       <Button
         style={{ position: "relative" }}
         variant="default"
-        className={cn(s.ShowTooltip, s.BottomAlign)}
+        className={cn(s.ShowTooltip, s.BottomAlign, viewStore.isCommandBarOpen && buttonStyles.pressed)}
         data-tooltip={`Command bar · ` + [`${modKeyName}`, "⇧", "K"].join("+")}
         size="icon"
         onClick={() => viewStore.setCommandBarOpen(!viewStore.isCommandBarOpen)}

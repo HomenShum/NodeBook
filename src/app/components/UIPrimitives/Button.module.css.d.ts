@@ -10,6 +10,7 @@ declare const styles: {
   readonly "ghostSmooth": string;
   readonly "link": string;
   readonly "outline": string;
+  readonly "pressed": string;
   readonly "size-default": string;
   readonly "size-icon": string;
   readonly "size-lg": string;

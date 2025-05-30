@@ -28,6 +28,12 @@
   color: var(--gray-12);
 }
 
+/* Pressed state for buttons with open menus */
+.default.pressed {
+  background-color: var(--gray-5);
+  color: var(--gray-12);
+}
+
 .destructive {
   background-color: var(--tomato-9);
   color: var(--tomato-1);

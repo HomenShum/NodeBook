@@ -11,6 +11,7 @@ import s from "@/app/components/QuickCapture/QuickCapture.module.css";
 import QuickCaptureMenu from "@/app/components/QuickCapture/QuickCaptureMenu";
 import { QuickCaptureSearchBar } from "@/app/components/SearchBar/QuickCaptureSearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import buttonStyles from "@/app/components/UIPrimitives/Button.module.css";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,6 +32,7 @@ function QuickCapture() {
   const user = useUser();
   const settingsStore = useSettingsStore();
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [filtersMenuOpen, setFiltersMenuOpen] = useState(false);
 
   // Initialize selectedFilters based on current settings
   useEffect(() => {
@@ -121,14 +123,14 @@ function QuickCapture() {
               />
             ))}
             <div className={s1.FiltersDropdown}>
-              <DropdownMenu>
+              <DropdownMenu open={filtersMenuOpen} onOpenChange={setFiltersMenuOpen}>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm">
+                  <Button size="sm" className={cn(filtersMenuOpen && buttonStyles.pressed)}>
                     <ListFilter size={14} strokeWidth={1.5} />
                     <span>Filters</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent align="start" sideOffset={4}>
                   <DropdownMenuItem onSelect={() => toggleFilter("Public")}>
                     <Globe size={14} strokeWidth={1.5} />
                     Public

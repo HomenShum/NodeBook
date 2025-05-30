@@ -1,6 +1,8 @@
 import { ArrowDown10, ArrowUp01, ArrowUpDown, FolderEdit, FolderSync, Hand, SortAsc } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
+import buttonStyles from "@/app/components/UIPrimitives/Button.module.css";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { SortOption } from "@/app/tree/Tree";
+import { cn } from "@/lib/utils";
 
 import styles from "./ControlsBar.module.css";
 
@@ -20,83 +23,91 @@ export const SortOptionDropdown = ({
   sortOption: SortOption;
   updateSortOption: (partialSortOption: Partial<SortOption>) => void;
   isMobileSize?: boolean;
-}) => (
-  <div className={styles.SortOptionDropdown}>
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size={isMobileSize ? "icon" : "sm"} variant={sortOption.mode !== "manual" ? "active" : "default"}>
-          <ArrowUpDown size={14} />
-          <span className={styles.HideOnMobile}>Sort by</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" sideOffset={4}>
-        <DropdownMenuItem
-          onSelect={(e) => {
-            e.preventDefault();
-            updateSortOption({ mode: "alphabetical" });
-          }}
-          data-highlighted={sortOption.mode === "alphabetical" || undefined}
-        >
-          <SortAsc size={14} />
-          <span>Alphabetical</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={(e) => {
-            e.preventDefault();
-            updateSortOption({ mode: "createdAt" });
-          }}
-          data-highlighted={sortOption.mode === "createdAt" || undefined}
-        >
-          <FolderEdit size={14} />
-          <span>Created time</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={(e) => {
-            e.preventDefault();
-            updateSortOption({ mode: "updatedAt" });
-          }}
-          data-highlighted={sortOption.mode === "updatedAt" || undefined}
-        >
-          <FolderSync size={14} />
-          <span>Updated time</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onSelect={(e) => {
-            e.preventDefault();
-            updateSortOption({ mode: "manual" });
-          }}
-          data-highlighted={sortOption.mode === "manual" || undefined}
-        >
-          <Hand size={14} />
-          <span>Manual ordering</span>
-        </DropdownMenuItem>
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
 
-        {sortOption.mode !== "manual" && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                updateSortOption({ direction: "asc" });
-              }}
-              data-highlighted={sortOption.direction === "asc" || undefined}
-            >
-              <ArrowUp01 size={14} />
-              <span>{sortOption.mode === "alphabetical" ? "A to Z" : "Oldest first"}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                updateSortOption({ direction: "desc" });
-              }}
-              data-highlighted={sortOption.direction === "desc" || undefined}
-            >
-              <ArrowDown10 size={14} />
-              <span>{sortOption.mode === "alphabetical" ? "Z to A" : "Newest first"}</span>
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  </div>
-);
+  return (
+    <div className={styles.SortOptionDropdown}>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            size={isMobileSize ? "icon" : "sm"}
+            variant={sortOption.mode !== "manual" ? "active" : "default"}
+            className={cn(sortOption.mode === "manual" && isOpen && buttonStyles.pressed)}
+          >
+            <ArrowUpDown size={14} />
+            <span className={styles.HideOnMobile}>Sort by</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" sideOffset={4}>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              updateSortOption({ mode: "alphabetical" });
+            }}
+            data-highlighted={sortOption.mode === "alphabetical" || undefined}
+          >
+            <SortAsc size={14} />
+            <span>Alphabetical</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              updateSortOption({ mode: "createdAt" });
+            }}
+            data-highlighted={sortOption.mode === "createdAt" || undefined}
+          >
+            <FolderEdit size={14} />
+            <span>Created time</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              updateSortOption({ mode: "updatedAt" });
+            }}
+            data-highlighted={sortOption.mode === "updatedAt" || undefined}
+          >
+            <FolderSync size={14} />
+            <span>Updated time</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              updateSortOption({ mode: "manual" });
+            }}
+            data-highlighted={sortOption.mode === "manual" || undefined}
+          >
+            <Hand size={14} />
+            <span>Manual ordering</span>
+          </DropdownMenuItem>
+
+          {sortOption.mode !== "manual" && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  updateSortOption({ direction: "asc" });
+                }}
+                data-highlighted={sortOption.direction === "asc" || undefined}
+              >
+                <ArrowUp01 size={14} />
+                <span>{sortOption.mode === "alphabetical" ? "A to Z" : "Oldest first"}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  updateSortOption({ direction: "desc" });
+                }}
+                data-highlighted={sortOption.direction === "desc" || undefined}
+              >
+                <ArrowDown10 size={14} />
+                <span>{sortOption.mode === "alphabetical" ? "Z to A" : "Newest first"}</span>
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+};
