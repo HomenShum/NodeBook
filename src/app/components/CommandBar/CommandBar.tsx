@@ -63,14 +63,6 @@ const CommandBar = observer(() => {
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
 
-  const handleZoomToNode = useCallback(
-    (object: GraphObject) => {
-      setRoot(object);
-      close();
-    },
-    [setRoot, close],
-  );
-
   const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, graphStore.userRoot.id);
 
   const filteredCommands = useMemo<Command[]>(() => {
@@ -202,7 +194,7 @@ const CommandBar = observer(() => {
     graphStore.layerManager.loadCanonicalWithIds(commands.slice(0, 5).map(({ id }) => id));
     return commands; // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    graphStore.totalNodes, //Required to refresh the search results
+    graphStore.refreshSearchTrigger, //Required to refresh the search results
     search.text,
     search.chips,
     getRecentNodes,
@@ -211,7 +203,6 @@ const CommandBar = observer(() => {
     close,
     setRoot,
     addToast,
-    handleZoomToNode,
   ]);
 
   useEffect(() => {

@@ -324,8 +324,6 @@ export class Tree {
       return { ...this.selection, treeNode: node, subtreeRoots: [node], top: node, bottom: node };
     }
 
-    logger.debug("Recomputing selected nodes", { selection: toJS(this.selection), state: this.state });
-
     const anchor = descendantTreeNodesById.get(this.selection.anchorNodeId);
     const head = descendantTreeNodesById.get(this.selection.headNodeId);
 

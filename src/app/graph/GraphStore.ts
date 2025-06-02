@@ -1,4 +1,4 @@
-import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
+import { isObservable, toJS, action, observable, makeObservable } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { NodeType } from "@/app/editor/plugins/dropdown/utils";
@@ -90,7 +90,7 @@ export class GraphStore {
   user: MewUser;
   updateManager: UpdateManager;
   layerManager: LayerManager;
-
+  refreshSearchTrigger: number = 0;
   usersById: Map<string, MewUserPublic> = new Map();
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
@@ -124,48 +124,18 @@ export class GraphStore {
   makeObservable() {
     if (!isObservable(this)) {
       makeObservable(this, {
-        user: observable,
+        refreshSearchTrigger: observable,
         inFlightSearchCount: observable,
-        usersById: observable.shallow,
-        nodesById: observable.shallow,
-        relationsById: observable.shallow,
-        relationTypesById: observable.shallow,
         nodesInLayerLoading: observable,
-        // node
-        addNode: action,
-        removeNode: action,
-        updateNode: action,
-        // relation
-        addRelation: action,
-        removeRelation: action,
-        replaceRelationLink: action,
-        deleteFromRelationsById: action,
-        setRelationsById: action,
-        // relation type
-        addRelationType: action,
-        // misc
-        setIsPublic: action,
-        addChildNode: action,
-        applyUpdates: action,
-        load: action,
-        cleanup: action,
-        resetAndLoad: action,
-        applyCombinedTransaction: action,
-        importData: action,
-        totalNodes: computed,
         updateInFlightSearchCount: action,
         setNodeLayerLoadingStatus: action,
-        nodeInLayerLoadingHasId: action,
+        incrementSearchTrigger: action,
       });
     }
   }
 
   get userRootId(): string {
     return USER_ROOT_ID_PREFIX + this.user.id;
-  }
-
-  get totalNodes(): number {
-    return this.nodesById.size;
   }
 
   get userRoot(): GraphNode {
@@ -3256,6 +3226,10 @@ export class GraphStore {
     } else {
       this.inFlightSearchCount--;
     }
+  }
+
+  incrementSearchTrigger() {
+    this.refreshSearchTrigger++;
   }
 
   setNodeLayerLoadingStatus(nodeId: string, isLoading: boolean): void {

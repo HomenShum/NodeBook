@@ -50,7 +50,7 @@ export class LayerManager {
       // Removing this because it's causing issues with search.
       // if (this.abortController) {
       //   try {
-      //     this.abortController.abort();
+      //     this.abortController.abort(`received new search query ${text}`);
       //   } catch (e) {
       //     if (e instanceof DOMException && e.name === "AbortError") {
       //       logger.debug("Search aborted");
@@ -72,6 +72,7 @@ export class LayerManager {
         this.loadCanonicalWithIds(nodeIds, false, {
           signal: this.abortController?.signal,
         });
+        this.graphStore.incrementSearchTrigger();
       } catch (e) {
         this.searchedText.delete(text);
         if (e instanceof DOMException && e.name === "AbortError") {

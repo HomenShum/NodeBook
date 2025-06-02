@@ -1,6 +1,6 @@
 import { Maximize2, Play, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
