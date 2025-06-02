@@ -1,4 +1,5 @@
 ALTER TABLE "graph_node" ADD COLUMN "content_text" text;--> statement-breakpoint
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE INDEX "content_search_trgm_index" ON "graph_node" USING GIN ("content_text" gin_trgm_ops);
 CREATE OR REPLACE FUNCTION update_content_text()
 RETURNS TRIGGER AS $$

@@ -28,16 +28,6 @@ export const answerQuery = async (userId: string, query: string): Promise<Serial
   let nodeRows: { id: string }[] = [];
   if (query_words.length === 1) {
     const query_str = `%${query_words[0]}%`;
-    // nodeRows = await db
-    //   .select({ id: graphNodeTable.id })
-    //   .from(graphNodeTable)
-    //   .where(
-    //     and(
-    //       sql`content_text like '%${query_str}%'`,
-    //       or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPublic, true)),
-    //     ),
-    //   )
-    //   .limit(50);
     const result = await db.execute(
       sql`SELECT id FROM graph_node WHERE content_text ILIKE ${query_str} AND (author_id = ${userId} OR is_public = true) LIMIT 50`,
     );
