@@ -7,6 +7,7 @@ declare const styles: {
   readonly "FirstNote": string;
   readonly "NodeIndentation": string;
   readonly "NoteSeparator": string;
+  readonly "NoteSeparatorWithDate": string;
   readonly "PinIcon": string;
   readonly "PinIcon_PinnedVisible": string;
   readonly "PinSectionSeparator": string;

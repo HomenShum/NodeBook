@@ -72,13 +72,44 @@
 }
 
 .NoteSeparator {
-  border-top: 1px dashed var(--gray-5);
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font-size: x-small;
+}
+
+.NoteSeparatorWithDate {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font-size: x-small;
+}
+
+.NoteSeparator::before,
+.NoteSeparator::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px dashed var(--gray-5);
+}
+
+.NoteSeparatorWithDate::before,
+.NoteSeparatorWithDate::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px dashed var(--gray-5);
+}
+
+.NoteSeparatorWithDate::before {
+  margin-right: 1.5em;
+}
+
+.NoteSeparatorWithDate::after {
+  margin-left: 1.5em;
 }
 
 .FirstNote {
   margin-top: 8px;
   padding-top: 8px;
-  border: none;
 }
 
 .DefaultNote {

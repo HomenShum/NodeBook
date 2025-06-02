@@ -3,6 +3,7 @@ import { observer } from "mobx-react-lite";
 import { AddPinButton } from "@/app/components/Buttons/AddPinButton";
 import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
+import { formatNoteSeparatorDate } from "@/app/components/RelatedObject/utils/helpers";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
@@ -148,12 +149,16 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
 
       {group.isExpanded && !isEmpty && (
         <>
-          {group.nodes.map((treeNode, i) => (
-            <div key={treeNode.path}>
-              {noteView && <Separator i={i} />}
-              <RelatedObjectView treeNode={treeNode} />
-            </div>
-          ))}
+          {group.nodes.map((treeNode, i) => {
+            const showDate =
+              i == 0 || treeNode.object.createdAt.toDateString() !== group.nodes[i - 1].object.createdAt.toDateString();
+            return (
+              <div key={treeNode.path}>
+                {noteView && <Separator i={i} date={showDate ? treeNode.object.createdAt : null} />}
+                <RelatedObjectView treeNode={treeNode} />
+              </div>
+            );
+          })}
           <div
             className={`${styles.PinSectionSeparator} ${
               viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
@@ -198,14 +203,19 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
             )
           );
         })
-        .map((childTreeNode, i) => {
-          return (
+        .reduce((acc, childTreeNode, i, array) => {
+          const prevNode = i > 0 ? array[i - 1] : null;
+          const showDate =
+            noteView &&
+            (!prevNode || childTreeNode.object.createdAt.toDateString() !== prevNode.object.createdAt.toDateString());
+          acc.push(
             <div key={childTreeNode.path}>
-              {noteView && <Separator i={i} />}
+              {noteView && <Separator i={i} date={showDate ? childTreeNode.object.createdAt : null} />}
               <RelatedObjectView treeNode={childTreeNode} />
-            </div>
+            </div>,
           );
-        })}
+          return acc;
+        }, [] as JSX.Element[])}
       {loadNext && (
         <div style={{ margin: "20px 0px" }}>
           <Button onClick={() => loadNext()}>Load more</Button>
@@ -240,6 +250,14 @@ const PointerSection = observer(function PointerSection({ group }: PointerSectio
   );
 });
 
-function Separator({ i }: { i: number }) {
-  return <div className={cn(styles.NoteSeparator, i === 0 ? styles.FirstNote : styles.DefaultNote)} />;
+function Separator({ i, date }: { i: number; date: Date | null }) {
+  if (!date) {
+    return <div className={cn(styles.NoteSeparator, i === 0 ? styles.FirstNote : styles.DefaultNote)} />;
+  } else {
+    return (
+      <div className={cn(styles.NoteSeparatorWithDate, i === 0 ? styles.FirstNote : styles.DefaultNote)}>
+        {formatNoteSeparatorDate(date)}
+      </div>
+    );
+  }
 }
