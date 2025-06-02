@@ -107,6 +107,7 @@ export const graphNodeTable = pgTable(
     createdAt: timestamp("created_at"),
     updatedAt: timestamp("updated_at"),
     content: text("content"),
+    contentText: text("content_text"),
     isPublic: boolean("is_public").default(false),
     isNewRelatedObjectsPublic: boolean("is_new_related_objects_public").default(false),
     canonicalRelationId: text("canonical_relation_id"),
@@ -119,6 +120,8 @@ export const graphNodeTable = pgTable(
   (t) => ({
     unique: unique().on(t.id, t.authorId),
     contentSearchIndex: index("content_search_index").using("gin", t.contentTsvector),
+    contentSearchTrgmIndex: index("content_search_trgm_index").using("gin_trgm_ops", t.contentText),
+    // contentSearchTrgmGistIndex: index("content_search_trgm_gist_index").using("gist_trgm_ops", t.contentText),
     authorIdIndex: index("author_id_index").on(t.authorId),
     isPublicIndex: index("is_public_index").on(t.isPublic),
     authorPublicCompositeIndex: index("author_public_index").on(t.authorId, t.isPublic),

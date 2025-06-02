@@ -246,6 +246,13 @@
       "when": 1745336218967,
       "tag": "0034_outstanding_triton",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1748619422226,
+      "tag": "0035_db_add_trigram_index",
+      "breakpoints": true
     }
   ]
 }

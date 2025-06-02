@@ -47,10 +47,19 @@ export class LayerManager {
   loadWithText(text: string): void {
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
-      if (this.abortController) {
-        this.abortController.abort();
-      }
-      this.abortController = new AbortController();
+      // Removing this because it's causing issues with search.
+      // if (this.abortController) {
+      //   try {
+      //     this.abortController.abort();
+      //   } catch (e) {
+      //     if (e instanceof DOMException && e.name === "AbortError") {
+      //       logger.debug("Search aborted");
+      //     } else {
+      //       throw e;
+      //     }
+      //   }
+      // }
+      // this.abortController = new AbortController();
     }
     if (!text || text.length < 3 || this.searchedText.has(text)) return;
     this.searchDebounceTimer = setTimeout(async () => {
