@@ -59,6 +59,8 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
     (viewType === ViewType.Note && treeNode.parent instanceof RootTreeNode) ||
     (viewType === ViewType.Webpage && treeNode.parent instanceof RootTreeNode && treeNode.childCount === 0);
 
+  const fillSpaceForToggle =
+    viewType === ViewType.Webpage && treeNode.parent instanceof RootTreeNode && treeNode.childCount === 0;
   const hasNoteContent = treeNode.childrenGroupsById.noteContent.nodes.length > 0;
 
   if (viewType === "card") {
@@ -76,6 +78,7 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
       <Main treeNode={treeNode}>
         {!(viewType === "note" && !hasNoteContent) && <Controls showToggle={hideToggle} />}
         {!hideToggle && <Toggle />}
+        {fillSpaceForToggle && <div style={{ width: 21, height: 21 }} />}
         <Content />
       </Main>
       {viewType === "note" &&
