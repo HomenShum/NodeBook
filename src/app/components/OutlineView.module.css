@@ -82,6 +82,9 @@
 .TooltipContent {
   color: var(--gray-10);
   font-size: var(--font-size-mini);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .TitleText {
