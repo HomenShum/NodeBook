@@ -1,4 +1,4 @@
-import { isObservable, toJS, action, observable, makeObservable } from "mobx";
+import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { NodeType } from "@/app/editor/plugins/dropdown/utils";

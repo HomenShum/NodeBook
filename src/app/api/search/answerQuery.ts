@@ -26,7 +26,7 @@ export const answerQuery = async (userId: string, query: string): Promise<Serial
   db.execute(sql`SELECT set_limit(0.9);`);
   const query_words: string[] = query.split(" ").map((word) => word.toLowerCase());
   let nodeRows: { id: string }[] = [];
-  if (query_words.length === 1) {
+  if (query_words.length === 1 && query_words[0].length < 12) {
     const query_str = `%${query_words[0]}%`;
     const result = await db.execute(
       sql`SELECT id FROM graph_node WHERE content_text ILIKE ${query_str} AND (author_id = ${userId} OR is_public = true) LIMIT 50`,
