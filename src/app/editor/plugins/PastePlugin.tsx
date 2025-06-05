@@ -446,12 +446,29 @@ export const PastePlugin = () => {
           const pastedNodeIds = [object.id];
 
           const mewData = clipboardData.getData(MEW_CLIPBOARD_MIMETYPE);
-          const lines = normalizeDepth(
-            mewData
-              ? getLinesFromMewData(mewData, shiftKey)
-              : getLinesFromPlainText(clipboardData.getData("text/plain"), shiftKey),
-          );
+          const htmlData = clipboardData.getData("text/html");
+          const plainText = clipboardData.getData("text/plain");
 
+          let rawLines: ChipsWithContext[];
+
+          if (mewData) {
+            rawLines = getLinesFromMewData(mewData, shiftKey);
+          } else if (htmlData) {
+            rawLines = getLinesFromHtmlList(htmlData, shiftKey); 
+          } else {
+            rawLines = getLinesFromPlainText(plainText, shiftKey);
+          }
+
+          let lines: ChipsWithContext[];
+          try {
+            lines = normalizeDepth(rawLines);
+          } catch (error) {
+            console.error("Error processing pasted content:", error);
+            // Fallback to plain text in case of any parse error
+            const normalizedText = getLinesFromPlainText(plainText, shiftKey);
+            lines = normalizeDepth(normalizedText);
+          }
+                    
           // Store original node IDs if they exist
           const originalNodeIds = lines
             .filter((line) => line.nodeId !== undefined)
@@ -893,15 +910,15 @@ const getTodoStatus = (text: string): { isChecked: boolean | null; remainingText
   const trimmedText = text.trimStart();
   
   // Match both standard and markdown-style to-do syntax with regex
-  // For checked items: [x], - [x], * [x] (case insensitive for 'x')
-  const checkedRegex = /^(?:(?:- |\* )?\[x\] )/i;
+  // For checked items: [x], - [x], * [x] (case insensitive for 'x'), ☑, ✅
+  const checkedRegex = /^(?:(?:- |\* )?\[x\]\s?|[\u2611\u2612\u2705]\s?)/i;  
   if (checkedRegex.test(trimmedText)) {
     const match = trimmedText.match(checkedRegex)![0];
     return { isChecked: true, remainingText: trimmedText.substring(match.length) };
   }
   
-  // For unchecked items: [ ], - [ ], * [ ]
-  const uncheckedRegex = /^(?:(?:- |\* )?\[ \] )/;
+  // For unchecked items: [ ], - [ ], * [ ], ☐
+  const uncheckedRegex = /^(?:(?:- |\* )?\[ \]\s?|[\u2610]\s?)/;  
   if (uncheckedRegex.test(trimmedText)) {
     const match = trimmedText.match(uncheckedRegex)![0];
     return { isChecked: false, remainingText: trimmedText.substring(match.length) };
@@ -930,6 +947,324 @@ const getLinesFromMewData = (mewData: string, shiftKey: boolean): ChipsWithConte
         ),
       ]
     : chipParts; // Or just use the chips for the same number of nodes
+};
+
+/**
+ * Parse clipboard HTML (Google Docs, Slack, ChatGPT/Claude, ProseMirror…) into
+ * our internal `{ chips, depth, isChecked }[]` structure.
+ *
+ * Key improvements:
+ * • Handles Google Docs malformed HTML where nested lists are siblings of LI
+ * • Properly anchors root-level lists under previous content
+ * • Respects data-indent/data-stringify-indent attributes
+ * • Prevents duplicate content from nested lists
+ * • Better GCD calculation for indent detection
+ */
+export const getLinesFromHtmlList = (
+  html: string,
+  shiftKey = false,
+): ChipsWithContext[] => {
+  // ── 0. Slack paragraph-break normalisation & "Shift-paste = raw" ───────────
+  const normalisedHtml = html.replace(
+    /<span[^>]*data-stringify-type=['"]paragraph-break['"][^>]*><\/span>/gi,
+    '<br/>',
+  );
+
+  if (shiftKey) {
+    const raw = normalisedHtml
+      .replace(/<(?:p|div|h[1-6]|li|tr|table)\b[^>]*>/gi, '\n')
+      .replace(/<br\s*\/?>/gi, '\n');
+    const text = new DOMParser()
+      .parseFromString(raw, 'text/html')
+      .body.textContent?.replace(/\n{3,}/g, '\n\n') ?? '';
+    return [{
+      chips: transformTextToChips(text),
+      depth: 0,
+      isChecked: null,
+    }];
+  }
+
+  // ── 1. Detect indent-step (px → levels) via GCD ─────────────────────────────
+  const doc = new DOMParser().parseFromString(normalisedHtml, 'text/html');
+  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+  const pxValues = Array.from(doc.querySelectorAll<HTMLElement>('[style]'))
+    .flatMap(el =>
+      ['paddingLeft','marginLeft','paddingInlineStart','marginInlineStart']
+        .map(k => parseFloat((el.style as any)[k]) || 0)
+    )
+    .filter(v => v > 0);
+  const INDENT_PX = pxValues.length ? pxValues.reduce(gcd) : 24;
+
+  // ── 2. Helpers ───────────────────────────────────────────────────────────────
+  type BlockTags = 'DIV'|'P'|'UL'|'OL'|'LI'|'TABLE'|'BLOCKQUOTE'|
+                   'H1'|'H2'|'H3'|'H4'|'H5'|'H6'|'PRE'|'HR';
+  const blockChildTags = new Set<BlockTags>([
+    'DIV','P','UL','OL','LI','TABLE','BLOCKQUOTE',
+    'H1','H2','H3','H4','H5','H6','PRE','HR'
+  ]);
+
+  const lines: ChipsWithContext[] = [];
+  let currentSectionDepth: number | null = null;
+  let headingBaseLevel: number | null = null;
+
+  const pushLines = (raw: string, baseDepth: number) => {
+    raw
+      .split(/\r?\n/)
+      .forEach(lineText => {
+        // only emit a blank if raw was exactly whitespace, and not a multi-line split
+        if (/^[\t ]*$/.test(lineText)) {
+          if (raw.trim() === '' && !raw.includes('\n')) {
+            lines.push({ chips: [], depth: baseDepth, isChecked: null });
+          }
+          return;
+        }
+
+        const { depth: extra, remainingText } = getDepthFromTextOffset(lineText);
+        const trimmed = remainingText.trim();
+        const { isChecked, remainingText: afterTodo } = getTodoStatus(trimmed);
+        lines.push({
+          chips: afterTodo ? transformTextToChips(afterTodo) : [],
+          depth: baseDepth + extra,
+          isChecked,
+        });
+      });
+  };
+
+  const cssDepth = (el: HTMLElement) => {
+    const m = (el.getAttribute('style') || '')
+      .match(/(?:padding|margin)-(?:left|inline-start):\s*([\d.]+)px/i);
+    return m && INDENT_PX > 0
+      ? Math.round(parseFloat(m[1]) / INDENT_PX)
+      : 0;
+  };
+
+  const declaredLevel = (el: HTMLElement) => {
+    const a = el.getAttribute('data-indent')
+      ?? el.getAttribute('data-stringify-indent');
+    return a !== null ? parseInt(a, 10) : null;
+  };
+
+  // ── 3. Single DOM-walk ───────────────────────────────────────────────────────
+  const walk = (el: Element, currentDepth: number) => {
+    for (const node of Array.from(el.childNodes)) {
+      if (node.nodeType !== Node.ELEMENT_NODE) continue;
+      const elem = node as HTMLElement;
+
+      // Determines when a P or DIV should "anchor" under the last heading.
+      const getAnchor = (depth: number) =>
+        depth === 0 && currentSectionDepth !== null
+          ? currentSectionDepth + 1
+          : depth;
+
+      switch (elem.tagName) {
+        // — LI —
+        case 'LI': {
+          const clone = elem.cloneNode(true) as HTMLElement;
+          clone.querySelectorAll('ul,ol').forEach(n => n.remove());
+          const htmlWithBreaks = clone.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+          const tmp = document.createElement('div');
+          tmp.innerHTML = htmlWithBreaks;
+          const text = tmp.textContent ?? '';
+
+          const lvl = declaredLevel(elem);
+          let itemDepth: number, nestedCtx: number;
+          if (lvl !== null) {
+            itemDepth = lvl; // In this model, LI's declaredLevel is its actual depth
+            nestedCtx = lvl; // Nested lists start from this LI's depth
+          } else {
+            itemDepth = currentDepth + cssDepth(elem);
+            nestedCtx = itemDepth;
+          }
+
+          pushLines(text, itemDepth);
+
+          // Properly nested lists
+          elem.querySelectorAll<HTMLElement>(':scope > ul, :scope > ol')
+            .forEach(nested => walk(nested, nestedCtx + 1)); // Nested lists are +1 depth
+
+          // Handle malformed "sibling" lists (Google Docs style)
+          let nextSibling = elem.nextElementSibling;
+          while (nextSibling && (nextSibling.tagName === 'UL' || nextSibling.tagName === 'OL')) {
+            walk(nextSibling as HTMLElement, nestedCtx + 1); // Treat as nested, so +1 depth
+            const toRemove = nextSibling;
+            nextSibling = nextSibling.nextElementSibling;
+            // Mark the element as processed to avoid re-processing
+            toRemove.setAttribute('data-processed', 'true');
+          }
+          break;
+        }
+
+        // — UL/OL (anchored to last heading/paragraph when at root) —
+        case 'UL':
+        case 'OL': {
+          // Skip if already processed as a sibling list
+          if (elem.getAttribute('data-processed') === 'true') break;
+          
+          const anchor = getAnchor(currentDepth);
+          const lvl = declaredLevel(elem);
+          const listDepth = lvl !== null
+            ? lvl
+            : anchor + cssDepth(elem);
+
+          walk(elem, listDepth); // Children of UL/OL (i.e., LIs) will use this as their base depth
+          break;
+        }
+
+        // — BLOCKQUOTE —
+        case 'BLOCKQUOTE':
+          walk(elem, currentDepth + 1 + cssDepth(elem));
+          break;
+
+        // — HEADINGS —
+        case 'H1': case 'H2': case 'H3':
+        case 'H4': case 'H5': case 'H6': {
+          const tagLevel = parseInt(elem.tagName.slice(1), 10);
+          if (headingBaseLevel === null) headingBaseLevel = tagLevel;
+          const rel = tagLevel - (headingBaseLevel || 1); // Ensure headingBaseLevel is not null
+          const actual = Math.max(0, rel + cssDepth(elem)); // Ensure depth isn't negative
+          pushLines(elem.textContent ?? '', actual);
+          currentSectionDepth = actual;
+          break;
+        }
+
+        // — P —
+        /* ───────────────  P  (Google-Docs tabs + inline <br>)  ──────────────── */
+        case 'P': {
+          /* 0 . ignore empty ProseMirror trailing breaks */
+          if (
+            elem.querySelector('br.ProseMirror-trailingBreak') &&
+            !elem.textContent?.trim()
+          ) break;
+
+          /* 1 . depth = # of Apple-tab-spans that prefix this paragraph */
+          const depthFromTabs = elem.querySelectorAll('span.Apple-tab-span').length;
+
+          /* 2 . materialise every <br> in the paragraph as "\n" characters         */
+          const htmlWithBreaks = elem.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+
+          /* 3 . strip span wrappers but keep the \n we just inserted               */
+          const tmp = document.createElement('div');
+          tmp.innerHTML = htmlWithBreaks;
+          const fullText = tmp.textContent ?? '';
+
+          /* 4 . each \n-separated chunk becomes *its own* outline line             */
+          fullText.split(/\r?\n/).forEach(chunk => {
+            const text = chunk.replace(/\t/g, '');                  // drop literal tabs
+            if (!text.trim()) return;                              // skip blanks
+
+            const { isChecked, remainingText } = getTodoStatus(text);
+            const { depth: extra, remainingText: tail } =
+              getDepthFromTextOffset(remainingText);               // spaces ⇒ extra depth
+
+            lines.push({
+              chips: transformTextToChips(tail.trim()),
+              depth: getAnchor(currentDepth) + cssDepth(elem) + depthFromTabs + extra,
+              isChecked,
+            });
+          });
+
+          break;   /* paragraph handled completely */
+        }
+
+        // — DIV —
+        case 'DIV': {
+          if (
+            elem.childElementCount === 1 &&
+            elem.firstElementChild?.tagName === 'BR' &&
+            elem.firstElementChild.classList.contains('ProseMirror-trailingBreak') &&
+            !elem.textContent?.trim()
+          ) {
+            break;
+          }
+
+          const hasBlocks = Array.from(elem.children)
+            .some(c => blockChildTags.has(c.tagName as BlockTags));
+
+          if (hasBlocks) {
+            walk(elem, currentDepth + cssDepth(elem));
+          } else {
+            const htmlWithBreaks = elem.innerHTML
+              .replace(/<br\s*\/?>/gi, '\n')
+              .replace(/\n+$/, '');
+            const tmp = document.createElement('div');
+            tmp.innerHTML = htmlWithBreaks;
+            const text = tmp.textContent ?? '';
+            if (text.trim()) {
+              pushLines(text, getAnchor(currentDepth) + cssDepth(elem));
+            }
+          }
+          break;
+        }
+
+        /* ───────────────  PRE  (fenced code - single node, keep \n)  ─────────────── */
+        case 'PRE': {
+          /* 1.  Harvest the literal text inside <pre> … <code>  */
+          const code = elem.textContent?.replace(/\r\n/g, '\n') ?? '';
+
+          /* 2.  Fence only when it really is a code block                          */
+          const fenced = elem.querySelector('code')
+              ? `\`\`\`<code>\n${code}\n</code>\`\`\``
+              : code;
+
+          /* 3.  Push ONE ChipsWithContext entry (don't use pushLines → no split)   */
+          lines.push({
+            chips: transformTextToChips(fenced),
+            depth: getAnchor(currentDepth) + 1 + cssDepth(elem),
+            isChecked: null,
+          });
+          break;
+        }
+
+        /* ───────────────  TABLE  ──────────────── */
+        case 'TABLE': {
+          const base = getAnchor(currentDepth) + 1 + cssDepth(elem);
+          const rows = Array.from(elem.querySelectorAll('tr'));
+          if (!rows.length) break;
+
+          const hdrs = Array.from(rows[0].querySelectorAll('th, td'))
+            .map((c, i) => c.textContent?.trim() || `Col-${i+1}`);
+          let dataRows = rows;
+          if (rows[0].querySelector('th') || hdrs.some(h => !h.startsWith('Col-'))) {
+            dataRows = rows.slice(1);
+          }
+
+          dataRows.forEach(tr => {
+            const cells = Array.from(tr.cells).map(c => c.textContent?.trim() || '');
+            const obj: Record<string,string> = {};
+            hdrs.forEach((h,i) => { obj[h] = cells[i]||''; });
+            pushLines(JSON.stringify(obj), base);
+          });
+          break;
+        }
+
+        // — BR as blank line —
+        case 'BR':
+          if (
+            (el.tagName === 'BODY' || blockChildTags.has(el.tagName as BlockTags)) &&
+            el === elem.parentElement // Ensure BR is a direct child of a block
+          ) {
+            // Only add a blank line if the BR is effectively standalone
+            if (!elem.previousSibling && !elem.nextSibling && el.textContent?.trim() === '') {
+               lines.push({
+                 chips: [],
+                 depth: currentDepth + cssDepth(el as HTMLElement),
+                 isChecked: null
+               });
+            }
+          }
+          break;
+
+        // — default recurse —
+        default: // For other container tags like SPAN, B, I, etc.
+          if (elem.childNodes.length > 0) { // Only recurse if it has children
+             walk(elem, currentDepth + cssDepth(elem)); // CSS depth of inline elements is usually 0
+          }
+      }
+    }
+  };
+
+  walk(doc.body, 0);
+  return lines;
 };
 
 export const getLinesFromPlainText = (text: string, shiftKey: boolean): ChipsWithContext[] => {
