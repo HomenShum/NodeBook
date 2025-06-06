@@ -6,6 +6,7 @@
   max-width: 50vw;
   z-index: 30;
   box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
+  position: relative;
   transition: height 0.1s ease-in-out;
 }
 
@@ -30,6 +31,19 @@
   max-height: 30vh;
   max-width: 600px;
   scrollbar-width: none;
+}
+
+/* Gradient element that's rendered conditionally when content overflows */
+.BottomGradient {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  background: linear-gradient(to top, var(--gray-1-lighter), transparent);
+  pointer-events: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 1;
 }
 
 .Dropdown ul > :last-child {

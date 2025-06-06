@@ -62,6 +62,8 @@ const CommandBar = observer(() => {
   const dropdownContainerRef = useRef<HTMLDivElement>(null);
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
 
   const getRecentNodes = useGetRecentNodes(MAX_DROPDOWN_RESULTS, graphStore.userRoot.id);
 
@@ -251,6 +253,36 @@ const CommandBar = observer(() => {
     }
   }, [selectedIndex]);
 
+  // Check if list has overflow and update state
+  useEffect(() => {
+    if (listRef.current) {
+      const hasScrollableContent = listRef.current.scrollHeight > listRef.current.clientHeight;
+      setHasOverflow(hasScrollableContent);
+
+      // Initially check if it's scrolled to bottom (might be if content is just a bit overflowing)
+      const isAtBottom =
+        Math.abs(listRef.current.scrollHeight - listRef.current.scrollTop - listRef.current.clientHeight) < 1;
+      setIsScrolledToBottom(isAtBottom);
+    }
+  }, [filteredCommands, search]);
+
+  // Add scroll event listener to track when user scrolls to bottom
+  useEffect(() => {
+    const listElement = listRef.current;
+    if (!listElement) return;
+
+    const handleScroll = () => {
+      // Check if scrolled to bottom (with a small tolerance for rounding errors)
+      const isAtBottom = Math.abs(listElement.scrollHeight - listElement.scrollTop - listElement.clientHeight) < 1;
+      setIsScrolledToBottom(isAtBottom);
+    };
+
+    listElement.addEventListener("scroll", handleScroll);
+    return () => {
+      listElement.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   // When the mention dropdown is open (see `CmdEditor`), pressing escape should
   // close it, not the command bar. Previously we used the `Dialog.Content`'s
   // `onEscapeKeyDown` prop to handle closing the command bar on escape, but
@@ -308,6 +340,7 @@ const CommandBar = observer(() => {
                   {command.type !== "create" && <Path path={command.path} skipLast={true} />}
                 </div>
               ))}
+              {hasOverflow && !isScrolledToBottom && <div className={styles.BottomGradient} />}
             </div>
           </Dialog.Content>
         </Dialog.Overlay>

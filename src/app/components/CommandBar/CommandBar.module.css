@@ -51,9 +51,9 @@
   position: relative; /* Add this */
 }
 
-.List::after {
-  content: "";
-  position: fixed;
+/* Gradient element that's rendered conditionally when content overflows */
+.BottomGradient {
+  position: absolute;
   bottom: 0;
   left: 0;
   right: 0;

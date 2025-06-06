@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
-import { ReactPortal, useCallback, useEffect, useRef } from "react";
+import { ReactPortal, useCallback, useEffect, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
 import LineLoader from "@/app/components/LineLoader/LineLoader";
@@ -228,6 +228,40 @@ export function getMenuRenderFn(
     const mouseMoveSinceStateChange = useRef(false);
     // Store ref to the list element
     const ulRef = useRef<HTMLUListElement>(null);
+    // State to track if the list has overflow
+    const [hasOverflow, setHasOverflow] = useState(false);
+    // State to track if scrolled to bottom
+    const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+
+    // Check if list has overflow whenever options or selected index changes
+    useEffect(() => {
+      if (ulRef.current) {
+        const hasScrollableContent = ulRef.current.scrollHeight > ulRef.current.clientHeight;
+        setHasOverflow(hasScrollableContent);
+
+        // Initially check if it's scrolled to bottom
+        const isAtBottom =
+          Math.abs(ulRef.current.scrollHeight - ulRef.current.scrollTop - ulRef.current.clientHeight) < 1;
+        setIsScrolledToBottom(isAtBottom);
+      }
+    }, [options, selectedIndex]);
+
+    // Add scroll event listener to track when user scrolls to bottom
+    useEffect(() => {
+      const listElement = ulRef.current;
+      if (!listElement) return;
+
+      const handleScroll = () => {
+        // Check if scrolled to bottom (with a small tolerance for rounding errors)
+        const isAtBottom = Math.abs(listElement.scrollHeight - listElement.scrollTop - listElement.clientHeight) < 1;
+        setIsScrolledToBottom(isAtBottom);
+      };
+
+      listElement.addEventListener("scroll", handleScroll);
+      return () => {
+        listElement.removeEventListener("scroll", handleScroll);
+      };
+    }, []);
 
     useEffect(() => {
       // Reset the flag when the options change
@@ -318,6 +352,7 @@ export function getMenuRenderFn(
             ),
           )}
         </ul>
+        {hasOverflow && !isScrolledToBottom && <div className={styles.BottomGradient} />}
       </div>
     );
 

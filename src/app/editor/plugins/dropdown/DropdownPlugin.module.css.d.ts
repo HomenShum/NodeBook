@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "BottomGradient": string;
   readonly "Dropdown": string;
   readonly "DropdownHelper": string;
   readonly "DropdownItem": string;

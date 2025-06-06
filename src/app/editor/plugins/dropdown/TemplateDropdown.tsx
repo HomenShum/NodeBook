@@ -50,6 +50,40 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
   // If the dropdown opens overtop of where the mouse was, we don't want to highlight that option.
   const mouseMoveSinceStateChange = useRef(false);
   const listRef = useRef<HTMLUListElement>(null);
+  // State to track if the list has overflow
+  const [hasOverflow, setHasOverflow] = useState(false);
+  // State to track if scrolled to bottom
+  const [isScrolledToBottom, setIsScrolledToBottom] = useState(false);
+
+  // Check if list has overflow whenever matches or highlighted index changes
+  useEffect(() => {
+    if (listRef.current && state) {
+      const hasScrollableContent = listRef.current.scrollHeight > listRef.current.clientHeight;
+      setHasOverflow(hasScrollableContent);
+
+      // Initially check if it's scrolled to bottom
+      const isAtBottom =
+        Math.abs(listRef.current.scrollHeight - listRef.current.scrollTop - listRef.current.clientHeight) < 1;
+      setIsScrolledToBottom(isAtBottom);
+    }
+  }, [state, highlightedIndex]);
+
+  // Add scroll event listener to track when user scrolls to bottom
+  useEffect(() => {
+    const listElement = listRef.current;
+    if (!listElement) return;
+
+    const handleScroll = () => {
+      // Check if scrolled to bottom (with a small tolerance for rounding errors)
+      const isAtBottom = Math.abs(listElement.scrollHeight - listElement.scrollTop - listElement.clientHeight) < 1;
+      setIsScrolledToBottom(isAtBottom);
+    };
+
+    listElement.addEventListener("scroll", handleScroll);
+    return () => {
+      listElement.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
 
   // Reset highlighted index when options change (but only once they've been set)
   useEffect(() => {
@@ -270,6 +304,7 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
           </li>
         ))}
       </ul>
+      {hasOverflow && !isScrolledToBottom && <div className={styles.BottomGradient} />}
     </div>
   );
 });
