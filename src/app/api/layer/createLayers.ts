@@ -1,37 +1,22 @@
 import { and, desc, eq, inArray, like, or } from "drizzle-orm";
 
 import { UNLOGGED_USER } from "@/app/auth/MewUser";
-import {
-  MewUserPublic,
-  SerializedGraphStore,
-  SerializedNode,
-  SerializedRelation,
-} from "@/app/persistence/SerializedData";
+import { MewUserPublic, SerializedGraphStore, SerializedNode } from "@/app/persistence/SerializedData";
 import { getDb } from "@/db";
 import { graphNodeTable, graphRelationTable, relationListsTable, relationTypeTable, userTable } from "@/db/schema";
 
 export const createLayerWithCanonical = async (userId: string, objectIds: string[]): Promise<SerializedGraphStore> => {
-  //Note: Skipping loading the positions/labels in this block since we just
-  //need relations and nodes for the path. It shouldn't break anything
-  //but if it does, revert this.
   const db = getDb();
   const seenIds = new Map<string, boolean>();
-  let iterations = 20; //just a fail-safe so we don't get stuck in infinite loop
+  let iterations = 50; //just a fail-safe so we don't get stuck in infinite loop
   let nextNodeIds = new Set<string>(objectIds);
 
-  const snapshot: SerializedGraphStore = {
-    usersById: {},
-    nodesById: {},
-    relationTypesById: {},
-    relationsById: {},
-    relationsByNodeId: {},
-    pinnedRelationsByNodeId: {},
-    noteContentRelationsByNodeId: {},
-  };
-
   while (nextNodeIds.size > 0 && iterations--) {
-    const result = await db
-      .select()
+    const relations = await db
+      .select({
+        id: graphRelationTable.id,
+        fromId: graphRelationTable.fromId,
+      })
       .from(graphRelationTable)
       .innerJoin(
         graphNodeTable,
@@ -45,49 +30,13 @@ export const createLayerWithCanonical = async (userId: string, objectIds: string
     nextNodeIds.forEach((nodeId) => seenIds.set(nodeId, true));
     nextNodeIds.clear();
 
-    result.forEach((row) => {
-      const relation = row.graph_relation;
-      const node = row.graph_node;
+    relations.forEach((relation) => {
       if (!relation.fromId || relation.fromId === "global-root-id" || seenIds.has(relation.fromId)) return;
-      snapshot.relationsById[relation.id] = getSerializedRelationFromDbRow(relation);
-      snapshot.nodesById[node.id] = getSerializedNodeFromDbRow(node);
       nextNodeIds.add(relation.fromId);
     });
   }
 
-  return snapshot;
-};
-
-const getSerializedNodeFromDbRow = (row: typeof graphNodeTable.$inferSelect): SerializedNode => {
-  return {
-    version: row.version,
-    id: row.id,
-    authorId: row.authorId ?? UNLOGGED_USER.id,
-    createdAt: row.createdAt!,
-    updatedAt: row.updatedAt ?? row.createdAt!,
-    content: JSON.parse(row.content ?? ""),
-    isPublic: !!row.isPublic,
-    isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
-    canonicalRelationId: row.canonicalRelationId ?? null,
-    isChecked: row.isChecked,
-    accessMode: row.accessMode,
-    attributes: row.attributes as SerializedNode["attributes"],
-  };
-};
-
-const getSerializedRelationFromDbRow = (row: typeof graphRelationTable.$inferSelect): SerializedRelation => {
-  return {
-    version: row.version,
-    id: row.id,
-    authorId: row.authorId ?? UNLOGGED_USER.id,
-    createdAt: row.createdAt ?? new Date(),
-    updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
-    fromId: row.fromId ?? "",
-    toId: row.toId ?? "",
-    relationTypeId: row.relationTypeId ?? "",
-    isPublic: !!row.isPublic,
-    canonicalRelationId: row.canonicalRelationId ?? null,
-  };
+  return createLayers(userId, Array.from(seenIds.keys()), 1);
 };
 
 export const createLayerWithRelation = async (userId: string): Promise<SerializedGraphStore> => {
@@ -169,7 +118,21 @@ export const createLayerWithRelation = async (userId: string): Promise<Serialize
     );
 
   for (const row of nodeRows) {
-    snapshot.nodesById[row.id] = getSerializedNodeFromDbRow(row);
+    const node: SerializedNode = {
+      version: row.version,
+      id: row.id,
+      authorId: row.authorId ?? UNLOGGED_USER.id,
+      createdAt: row.createdAt!,
+      updatedAt: row.updatedAt ?? row.createdAt!,
+      content: JSON.parse(row.content ?? ""),
+      isPublic: !!row.isPublic,
+      isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
+      canonicalRelationId: row.canonicalRelationId ?? null,
+      isChecked: row.isChecked,
+      accessMode: row.accessMode,
+      attributes: row.attributes as SerializedNode["attributes"],
+    };
+    snapshot.nodesById[node.id] = node;
   }
 
   const relationRows = await db
@@ -184,7 +147,19 @@ export const createLayerWithRelation = async (userId: string): Promise<Serialize
 
   for (const row of relationRows) {
     // Add the relation to our snapshot
-    snapshot.relationsById[row.id] = getSerializedRelationFromDbRow(row);
+    snapshot.relationsById[row.id] = {
+      version: row.version,
+      id: row.id,
+      authorId: row.authorId ?? UNLOGGED_USER.id,
+      createdAt: row.createdAt ?? new Date(),
+      updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
+      fromId: row.fromId ?? "",
+      toId: row.toId ?? "",
+      relationTypeId: row.relationTypeId ?? "",
+      isPublic: !!row.isPublic,
+      canonicalRelationId: row.canonicalRelationId ?? null,
+    };
+
     row.relationTypeId && relationTypeIds.add(row.relationTypeId);
   }
 

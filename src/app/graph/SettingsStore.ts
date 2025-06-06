@@ -1,7 +1,6 @@
 "use client";
 
 import { autorun, isObservable, makeAutoObservable } from "mobx";
-import axios from "axios";
 
 import {
   ParseWithAiLinkingOption,
@@ -13,13 +12,10 @@ import {
   SerializedUserSettings,
 } from "@/db/schema";
 import { ViewType } from "@/app/view/types";
-import { env } from "@/app/envFrontend";
-import ApiClient from "@/app/api/utils/client/ApiClient";
-import { logger } from "@/app/StoresProvider";
-import { MewUser, MOCK_MEW_USER } from "@/app/auth/MewUser";
 
 export class SettingsStore {
-  private user: MewUser;
+  private saveUserSettings?: (settings: SerializedUserSettings) => Promise<void>;
+
   public addAllNewNodesAsChildrenOfUserNode = false;
   public showNodeDetails = false;
   public hideDirectParent = true;
@@ -59,11 +55,14 @@ export class SettingsStore {
   public viewModePreference: SerializedUserSettings["viewModePreferences"] = {};
   private stopAutosave: () => void;
 
-  constructor(user = MOCK_MEW_USER) {
-    this.user = user;
+  constructor(
+    initialSettings?: SerializedUserSettings,
+    saveUserSettings?: (settings: SerializedUserSettings) => Promise<void>,
+  ) {
+    this.saveUserSettings = saveUserSettings;
     this.makeObservable();
-    if (user.settings) {
-      this.deserialize(user.settings);
+    if (initialSettings) {
+      this.deserialize(initialSettings);
     }
     this.stopAutosave = autorun(() => this.syncToServer());
   }
@@ -71,18 +70,6 @@ export class SettingsStore {
   makeObservable() {
     if (isObservable(this)) return;
     makeAutoObservable(this);
-  }
-
-  async persist(newSettings: SerializedUserSettings): Promise<void> {
-    if (!env.isPersistenceEnabled || this.user.isAnonymous || !axios.defaults.headers.common["Authorization"]) return;
-    try {
-      await ApiClient.user.save({
-        ...this.user,
-        settings: newSettings,
-      });
-    } catch (e) {
-      logger.error("Failed to save user settings", e);
-    }
   }
 
   resetToDefaults() {
@@ -122,10 +109,12 @@ export class SettingsStore {
   }
 
   private async syncToServer() {
-    try {
-      await this.persist(this.serialize());
-    } catch (e) {
-      console.warn("Error saving user settings", e);
+    if (this.saveUserSettings) {
+      try {
+        await this.saveUserSettings(this.serialize());
+      } catch (e) {
+        console.warn("Error saving user settings", e);
+      }
     }
   }
 

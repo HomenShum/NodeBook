@@ -1,4 +1,3 @@
-"use client";
 import React, { createContext, useCallback, useContext, useState } from "react";
 
 import {
@@ -33,20 +32,19 @@ export const ToastContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [toasts, setToasts] = useState<ToastType[]>([]);
   const [nextId, setNextId] = useState(0);
 
-  const addToast = useCallback(
-    (toast: Omit<ToastType, "id">) => {
-      const id = nextId;
-      setToasts((prevToasts) => [...prevToasts, { ...toast, id }]);
-      setNextId((prevId) => prevId + 1);
+  const addToast = useCallback((toast: Omit<ToastType, "id">) => {
+    const id = nextId;
+    setToasts((prevToasts) => [...prevToasts, { ...toast, id }]);
+    setNextId((prevId) => prevId + 1);
 
-      const duration = toast.duration || 5000; // Default to 5 seconds
-      setTimeout(() => {
-        // Trigger the closing animation
-        setToasts((prevToasts) => prevToasts.map((t) => (t.id === id ? { ...t, closing: true } : t)));
-      }, duration);
-    },
-    [nextId],
-  );
+    const duration = toast.duration || 5000; // Default to 5 seconds
+    setTimeout(() => {
+      // Trigger the closing animation
+      setToasts((prevToasts) =>
+        prevToasts.map((t) => (t.id === id ? { ...t, closing: true } : t))
+      );
+    }, duration);
+  }, [nextId]);
 
   const removeToast = useCallback((id: number) => {
     setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
