@@ -20,7 +20,7 @@ import { observer } from "mobx-react-lite";
 import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
-import { ExpandLineArrowsIcon, NotesIcon } from "@/app/components/CustomIcons";
+import { CardsIcon, ExpandLineArrowsIcon, NotesIcon } from "@/app/components/CustomIcons";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import buttonStyles from "@/app/components/UIPrimitives/Button.module.css";
@@ -396,11 +396,13 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 {viewStore.viewType === ViewType.Graph ? (
                   <NetworkIcon size={14} strokeWidth={1.5} />
                 ) : viewStore.viewType === ViewType.Outline ? (
-                  <ListIcon size={17} strokeWidth={1.8} />
+                  <ListIcon size={15} strokeWidth={2} />
                 ) : viewStore.viewType === ViewType.Webpage ? (
                   <Globe size={14} strokeWidth={1.5} />
-                ) : (
+                ) : viewStore.viewType === ViewType.Note ? (
                   <NotesIcon />
+                ) : (
+                  <CardsIcon size={14} />
                 )}
                 <span>
                   {viewStore.viewType === ViewType.Graph
@@ -417,7 +419,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={4}>
               <DropdownMenuItem onSelect={() => setViewType(ViewType.Outline)}>
-                <ListIcon size={17} strokeWidth={1.7} />
+                <ListIcon size={15} strokeWidth={2} />
                 List View
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setViewType(ViewType.Note)}>
@@ -425,7 +427,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 Note View
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setViewType(ViewType.Card)}>
-                <NotesIcon />
+                <CardsIcon />
                 Card View
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setViewType(ViewType.Webpage)}>
