@@ -245,7 +245,7 @@ export const truncateText = (text: string, maxLength: number) => {
   return text;
 };
 
-export const useIsMobile = (breakpoint: number = 480): boolean => {
+export const useIsMobile = (breakpoint: number = 600): boolean => {
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
   useEffect(() => {
