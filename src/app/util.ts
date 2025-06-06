@@ -15,6 +15,7 @@ import { getOtherObject } from "@/app/graph/utils";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import { NotificationMessageContent } from "@/db/schema";
 import logger from "@/lib/logger";
+import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 
 import { isGraphRelationType } from "./graph/isGraphRelationType";
 
@@ -551,6 +552,26 @@ export function exportToIdeapad({ nodes, edges }: { nodes: Map<string, any>; edg
   link.click();
   URL.revokeObjectURL(url);
 }
+
+export const envAllowsMockAuth = () => {
+  return env.env === "development" || env.env === "preview";
+};
+
+export const LocalStorageUser = {
+  get: (): MewUser | null => {
+    const stringifiedUser = typeof localStorage !== "undefined" ? localStorage.getItem("user") : null;
+    if (stringifiedUser) {
+      return new MewUser(JSON.parse(stringifiedUser));
+    }
+    return null;
+  },
+  save: (user: MewUser) => {
+    localStorage.setItem("user", JSON.stringify(user));
+  },
+  delete: () => {
+    localStorage.removeItem("user");
+  },
+};
 
 export type Notification = {
   id: string;

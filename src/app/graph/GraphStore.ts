@@ -2,6 +2,7 @@ import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
 import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { NodeType } from "@/app/editor/plugins/dropdown/utils";
+import { env } from "@/app/envFrontend";
 import {
   ALL_LIST_TYPES,
   defaultRelationTypes,
@@ -24,7 +25,7 @@ import {
   SerializedPositionList,
   SerializedRelation,
 } from "@/app/persistence/SerializedData";
-import { ObjectPath, Position, uuid } from "@/app/util";
+import { getAuthFetch, ObjectPath, Position, uuid } from "@/app/util";
 import {
   DEFAULT_CARD_STATUSES,
   GLOBAL_ADMIN_USER_ID,
@@ -104,7 +105,7 @@ export class GraphStore {
 
   cappedKeywordIndex: CappedKeywordIndex;
 
-  constructor(user: MewUser = UNLOGGED_USER, settings?: SettingsStore, authedFetch?: typeof fetch) {
+  constructor(user: MewUser = UNLOGGED_USER, settings?: SettingsStore) {
     this.user = user;
     this.settings = settings;
     this.updateManager = new UpdateManager(
@@ -113,7 +114,7 @@ export class GraphStore {
       (updates) => this.applyUpdates(updates),
       (nodeId: string) => this.deletedNodes.delete(nodeId),
       (relationId: string) => this.deletedRelations.delete(relationId),
-      authedFetch,
+      env.isPersistenceEnabled && typeof fetch !== "undefined" ? getAuthFetch() : undefined,
     );
     this.layerManager = new LayerManager(this);
     this.cappedKeywordIndex = new KeywordTrieIndex(MAX_PREFIX_LENGTH);
@@ -2231,7 +2232,7 @@ export class GraphStore {
     this.relationsById.clear();
     this.updateManager.cleanup();
     this.cappedKeywordIndex.clear();
-
+    this.layerManager.clear();
     this.ensureDefaultObjectsCreated();
   }
 
