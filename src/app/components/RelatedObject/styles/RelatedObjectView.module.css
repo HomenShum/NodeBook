@@ -614,7 +614,7 @@ Right Area
 }
 
 .RelatedObjectBulletContainer.Loading svg {
-  animation: pulsate 1.6s ease-in-out infinite;
+  animation: pulsate 0.7s ease-in-out infinite;
   color: var(--teal-6);
   stroke: var(--teal-6);
   fill: var(--teal-6);

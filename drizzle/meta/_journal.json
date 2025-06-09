@@ -253,6 +253,13 @@
       "when": 1748619422226,
       "tag": "0035_db_add_trigram_index",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1749217126854,
+      "tag": "0036_flimsy_skullbuster",
+      "breakpoints": true
     }
   ]
 }

@@ -64,7 +64,6 @@ export const copyContentFromLexicalNodes = (addToEvent: ClipboardEvent, nodes: D
 
   clipboardData.setData("text/plain", plainTextParts.join("\n"));
   clipboardData.setData(MEW_CLIPBOARD_MIMETYPE, JSON.stringify(chipParts));
-  console.log(chipParts);
 
   return true;
 };

@@ -31,6 +31,8 @@ export type TxAddRelation = {
   toId: string;
   relationTypeId?: string;
   after?: Positioner<GraphRelation>;
+  retainRelationCount?: boolean;
+  relationCount?: number;
   canonicalRelationId?: string | null;
 };
 

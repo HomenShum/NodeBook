@@ -5,6 +5,7 @@ import React, { useCallback } from "react";
 import { CyclicIcon } from "@/app/components/CustomIcons";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
 import { isNoteContent } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -20,7 +21,13 @@ const Toggle = observer(function Toggle() {
   const settingsStore = useSettingsStore();
   const userId = graphStore.user?.id;
   const { treeNode } = useTreeNode();
-  const isLoading = graphStore.nodeInLayerLoadingHasId(treeNode.object.id);
+
+  let isLoading = false;
+  if (treeNode.object instanceof GraphNode) {
+    const totalRelations = treeNode.object.relationCount ?? 0;
+    const loadedRelations = treeNode.object.relations.length;
+    isLoading = totalRelations > loadedRelations;
+  }
 
   const handleToggleClick = useCallback(
     (event: React.MouseEvent) => {

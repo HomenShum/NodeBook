@@ -21,12 +21,15 @@ export type GraphRelationProps = {
   isPublic?: boolean;
   updatedAt?: Date;
   canonicalRelationId?: string | null;
+  relationCount?: number;
+  retainRelationCount?: boolean;
 };
 
 export type GraphRelationPropsWithoutTargets = {
   id?: string;
   relationTypeId?: GraphRelationType["id"];
   isPublic?: boolean;
+  relationCount?: number;
 };
 
 export class GraphRelation extends BaseGraphObject implements Serializable {
@@ -41,6 +44,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
   from: GraphObject;
   to: GraphObject;
   canonicalRelationId: string | null = null;
+  relationCount: number;
 
   constructor(
     store: GraphStore,
@@ -52,6 +56,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       to,
       relationType: type = defaultRelationTypes.child,
       isPublic = false,
+      relationCount = 0,
     }: GraphRelationProps & { authorId: string },
   ) {
     super(store);
@@ -63,6 +68,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     this.to = to;
     this.relationTypeId = type.id;
     this.isPublic = isPublic;
+    this.relationCount = relationCount;
     this.makeObservable();
   }
 
@@ -81,7 +87,10 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       canonicalRelationId: observable,
       canonicalRelation: computed,
       text: computed,
+      relationCount: observable,
       update: action,
+      incrementRelationCount: action,
+      decrementRelationCount: action,
       incrementVersion: action,
     });
   }
@@ -117,6 +126,23 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
     if (props.canonicalRelationId !== undefined) {
       this.canonicalRelationId = props.canonicalRelationId;
     }
+    if (props.relationCount !== undefined) {
+      this.relationCount = props.relationCount;
+    }
+  }
+
+  /**
+   * Increment the relation count by the specified amount (default 1)
+   */
+  incrementRelationCount(amount: number = 1): void {
+    this.relationCount += amount;
+  }
+
+  /**
+   * Decrement the relation count by the specified amount (default 1)
+   */
+  decrementRelationCount(amount: number = 1): void {
+    this.relationCount = Math.max(0, this.relationCount - amount);
   }
 
   get text(): string {
@@ -246,6 +272,7 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
       relationTypeId: this.relationTypeId,
       isPublic: this.isPublic,
       canonicalRelationId: this.canonicalRelationId ?? null,
+      relationCount: this.relationCount,
     };
   }
 }

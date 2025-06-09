@@ -1,4 +1,6 @@
+import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation } from "@/app/graph/GraphRelation";
 
 import styles from "./styles/RelatedObjectView.module.css";
 
@@ -11,9 +13,12 @@ export const RelationCounter = ({
   onClick?: (e: React.MouseEvent) => void;
   showTooltip?: boolean;
 }) => {
-  const relationCount = object.relations.length - 1;
+  let displayCount = 0;
+  if (object instanceof GraphNode || object instanceof GraphRelation) {
+    displayCount = Number(object.relationCount) - 1 || object.relations.length - 1 || -1;
+  }
 
-  if (relationCount <= 0) {
+  if (displayCount <= 0) {
     return null;
   }
 
@@ -30,7 +35,7 @@ export const RelationCounter = ({
           : undefined
       }
     >
-      {relationCount}
+      {displayCount}
     </div>
   );
 };

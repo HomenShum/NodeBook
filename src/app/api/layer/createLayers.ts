@@ -72,6 +72,7 @@ const getSerializedNodeFromDbRow = (row: typeof graphNodeTable.$inferSelect): Se
     isChecked: row.isChecked,
     accessMode: row.accessMode,
     attributes: row.attributes as SerializedNode["attributes"],
+    relationCount: row.relationCount,
   };
 };
 
@@ -87,6 +88,7 @@ const getSerializedRelationFromDbRow = (row: typeof graphRelationTable.$inferSel
     relationTypeId: row.relationTypeId ?? "",
     isPublic: !!row.isPublic,
     canonicalRelationId: row.canonicalRelationId ?? null,
+    relationCount: row.relationCount,
   };
 };
 
@@ -378,6 +380,7 @@ export const createLayers = async (
       relationTypeId: row.relationTypeId ?? "",
       isPublic: !!row.isPublic,
       canonicalRelationId: row.canonicalRelationId ?? null,
+      relationCount: row.relationCount,
     };
   }
 
@@ -418,6 +421,7 @@ export const createLayers = async (
         relationTypeId: row.relationTypeId ?? "",
         isPublic: !!row.isPublic,
         canonicalRelationId: row.canonicalRelationId ?? null,
+        relationCount: row.relationCount,
       };
 
       // Queue fromId and toId for next layer if we haven't seen them
@@ -489,6 +493,7 @@ export const createLayers = async (
           relationTypeId: row.relationTypeId ?? "",
           isPublic: !!row.isPublic,
           canonicalRelationId: row.canonicalRelationId ?? null,
+          relationCount: row.relationCount,
         };
       });
     }
@@ -520,6 +525,7 @@ export const createLayers = async (
           relationTypeId: row.relationTypeId ?? "",
           isPublic: !!row.isPublic,
           canonicalRelationId: row.canonicalRelationId ?? null,
+          relationCount: row.relationCount,
         };
       }
 
@@ -558,6 +564,7 @@ export const createLayers = async (
       isChecked: row.isChecked,
       accessMode: row.accessMode,
       attributes: row.attributes as SerializedNode["attributes"],
+      relationCount: row.relationCount,
     };
     snapshot.nodesById[node.id] = node;
   }
@@ -580,6 +587,7 @@ export const createLayers = async (
       relationTypeId: row.relationTypeId ?? "",
       isPublic: !!row.isPublic,
       canonicalRelationId: row.canonicalRelationId ?? null,
+      relationCount: row.relationCount,
     };
   }
 

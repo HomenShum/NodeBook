@@ -441,6 +441,7 @@ export class GraphStore {
         canonicalRelationId: props.canonicalRelationId,
         accessMode: props.accessMode ?? AccessMode.READ,
         attributes: props.attributes || {},
+        relationCount: props.relationCount ?? 0,
       });
 
       this.nodesById.set(node.id, node);
@@ -1026,6 +1027,8 @@ export class GraphStore {
         from,
         to,
         relationType,
+        relationCount: tx.relationCount ?? 0,
+        retainRelationCount: tx.retainRelationCount ?? false,
       },
       tx.after,
     );
@@ -1315,6 +1318,24 @@ export class GraphStore {
       });
     }
 
+    // Update relation counts when from or to objects change
+    if (oldFrom && newFrom && oldFrom !== newFrom) {
+      if (oldFrom instanceof GraphNode || oldFrom instanceof GraphRelation) {
+        oldFrom.decrementRelationCount();
+      }
+      if (newFrom instanceof GraphNode || newFrom instanceof GraphRelation) {
+        newFrom.incrementRelationCount();
+      }
+    }
+    if (oldTo && newTo && oldTo !== newTo) {
+      if (oldTo instanceof GraphNode || oldTo instanceof GraphRelation) {
+        oldTo.decrementRelationCount();
+      }
+      if (newTo instanceof GraphNode || newTo instanceof GraphRelation) {
+        newTo.incrementRelationCount();
+      }
+    }
+
     return updates;
   }
 
@@ -1433,6 +1454,16 @@ export class GraphStore {
       this.setRelationsById(relation.id, relation);
       this.cappedKeywordIndex.add(relation.id, () => relation!.searchText);
 
+      if (!relationProps.retainRelationCount) {
+        // Update relation counts for both from and to objects
+        if (relation.from instanceof GraphNode || relation.from instanceof GraphRelation) {
+          relation.from.incrementRelationCount();
+        }
+        if (relation.to instanceof GraphNode || relation.to instanceof GraphRelation) {
+          relation.to.incrementRelationCount();
+        }
+      }
+
       // Add relation to the `from` node's relation list
       const commonUpdatePart = { authorId, type: "all" as const, oldIsPublic: false, newIsPublic: relation.isPublic };
       const fromId = relation.from.id;
@@ -1497,6 +1528,15 @@ export class GraphStore {
         this.cappedKeywordIndex.delete(relation.id);
         relation.from.allRelationsList.delete(relation.id);
         relation.to.allRelationsList.delete(relation.id);
+
+        // Rollback relation count changes
+        if (relation.from instanceof GraphNode || relation.from instanceof GraphRelation) {
+          relation.from.decrementRelationCount();
+        }
+        if (relation.to instanceof GraphNode || relation.to instanceof GraphRelation) {
+          relation.to.decrementRelationCount();
+        }
+
         if (relation.from.canonicalRelation === relation) {
           const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.from);
           updates.push(...canonicalUpdates);
@@ -1624,6 +1664,14 @@ export class GraphStore {
       // Delete the relation itself
       this.deleteFromRelationsById(relation.id);
       this.cappedKeywordIndex.delete(relation.id);
+
+      // Update relation counts for both from and to objects
+      if (fromNode instanceof GraphNode || fromNode instanceof GraphRelation) {
+        fromNode.decrementRelationCount();
+      }
+      if (toNode instanceof GraphNode || toNode instanceof GraphRelation) {
+        toNode.decrementRelationCount();
+      }
     } catch (e) {
       if (!this.relationsById.has(relation.id)) {
         this.relationsById.set(relation.id, relation);
@@ -1655,6 +1703,15 @@ export class GraphStore {
     const relation = this.loadSerializedRelation(serializedRelation);
     this.setRelationsById(relation.id, relation);
     this.cappedKeywordIndex.add(relation.id, () => relation.searchText);
+
+    // Restore relation counts for both from and to objects
+    if (relation.from instanceof GraphNode || relation.from instanceof GraphRelation) {
+      relation.from.incrementRelationCount();
+    }
+    if (relation.to instanceof GraphNode || relation.to instanceof GraphRelation) {
+      relation.to.incrementRelationCount();
+    }
+
     this.setRelationPositions(relation, {
       fromPos,
       fromPinnedPos,
@@ -1762,9 +1819,9 @@ export class GraphStore {
     });
 
     if (tx.direction === "from") {
-      updates.push(...this.setRelationFrom(relation, newObject, tx.after));
+      updates.push(...this.setRelationFrom(relation, newObject, false, tx.after));
     } else {
-      updates.push(...this.setRelationTo(relation, newObject, tx.after));
+      updates.push(...this.setRelationTo(relation, newObject, false, tx.after));
     }
 
     return { object: newObject, relation, updates };
@@ -1843,6 +1900,7 @@ export class GraphStore {
   private setRelationFrom(
     relation: GraphRelation,
     newFrom: GraphObject,
+    retainRelationCount: boolean,
     after?: Positioner<GraphRelation>,
   ): GraphUpdate[] {
     if (relation.from === newFrom) {
@@ -1854,6 +1912,39 @@ export class GraphStore {
       const oldFrom = relation.from;
       const oldFromPosition = this.getRelationList(oldFrom).get(relation.id)?.position ?? null;
 
+      if (!retainRelationCount) {
+        if (newFrom instanceof GraphNode) {
+          updates.push({
+            operation: "updateNode",
+            oldProps: newFrom.serialize(),
+            newProps: { ...newFrom.serialize(), relationCount: newFrom.relationCount + 1 },
+          });
+          newFrom.incrementRelationCount();
+        } else if (newFrom instanceof GraphRelation) {
+          updates.push({
+            operation: "updateRelation",
+            oldProps: newFrom.serialize(),
+            newProps: { ...newFrom.serialize(), relationCount: newFrom.relationCount + 1 },
+          });
+          newFrom.incrementRelationCount();
+        }
+
+        if (oldFrom instanceof GraphNode) {
+          updates.push({
+            operation: "updateNode",
+            oldProps: oldFrom.serialize(),
+            newProps: { ...oldFrom.serialize(), relationCount: oldFrom.relationCount - 1 },
+          });
+          oldFrom.decrementRelationCount();
+        } else if (oldFrom instanceof GraphRelation) {
+          updates.push({
+            operation: "updateRelation",
+            oldProps: oldFrom.serialize(),
+            newProps: { ...oldFrom.serialize(), relationCount: oldFrom.relationCount - 1 },
+          });
+          oldFrom.decrementRelationCount();
+        }
+      }
       // remove this relation from the current "from" node's relation list, unless it's a circular relation
       if (relation.to.id != relation.from.id) {
         relation.from.allRelationsList.delete(relation.id);
@@ -1865,6 +1956,7 @@ export class GraphStore {
         relation.from.noteContentRelationsList.delete(relation.id);
       }
       relation.update({ from: newFrom, version: relation.version });
+
       relation.from.allRelationsList.add(relation, after);
       if (relation.from.canonicalRelationId === null) {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.from, relation);
@@ -1912,7 +2004,12 @@ export class GraphStore {
    * also updates the list of relations on the old and new `to` nodes
    * to reflect the changes.
    */
-  private setRelationTo(relation: GraphRelation, newTo: GraphObject, after?: Positioner<GraphRelation>): GraphUpdate[] {
+  private setRelationTo(
+    relation: GraphRelation,
+    newTo: GraphObject,
+    retainRelationCount: boolean,
+    after?: Positioner<GraphRelation>,
+  ): GraphUpdate[] {
     if (relation.to === newTo) {
       return [];
     }
@@ -1933,6 +2030,40 @@ export class GraphStore {
         relation.to.noteContentRelationsList.delete(relation.id);
       }
       relation.update({ to: newTo, version: relation.version });
+
+      if (!retainRelationCount) {
+        if (newTo instanceof GraphNode) {
+          updates.push({
+            operation: "updateNode",
+            oldProps: newTo.serialize(),
+            newProps: { ...newTo.serialize(), relationCount: newTo.relationCount + 1 },
+          });
+          newTo.incrementRelationCount();
+        } else if (newTo instanceof GraphRelation) {
+          updates.push({
+            operation: "updateRelation",
+            oldProps: newTo.serialize(),
+            newProps: { ...newTo.serialize(), relationCount: newTo.relationCount + 1 },
+          });
+          newTo.incrementRelationCount();
+        }
+        if (oldTo instanceof GraphNode) {
+          updates.push({
+            operation: "updateNode",
+            oldProps: oldTo.serialize(),
+            newProps: { ...oldTo.serialize(), relationCount: oldTo.relationCount - 1 },
+          });
+          oldTo.decrementRelationCount();
+        } else if (oldTo instanceof GraphRelation) {
+          updates.push({
+            operation: "updateRelation",
+            oldProps: oldTo.serialize(),
+            newProps: { ...oldTo.serialize(), relationCount: oldTo.relationCount - 1 },
+          });
+          oldTo.decrementRelationCount();
+        }
+      }
+
       relation.to.allRelationsList.add(relation, after);
       if (relation.to.canonicalRelationId === null) {
         const { updates: canonicalUpdates } = this.updateCanonicalRelation(relation.to, relation);
@@ -2770,13 +2901,13 @@ export class GraphStore {
         if (rel.from instanceof PlaceholderGraphObject) {
           const from = this.getObject(rel.from.id);
           if (from) {
-            this.setRelationFrom(rel, from);
+            this.setRelationFrom(rel, from, true);
           }
         }
         if (rel.to instanceof PlaceholderGraphObject) {
           const to = this.getObject(rel.to.id);
           if (to) {
-            this.setRelationTo(rel, to);
+            this.setRelationTo(rel, to, true);
           }
         }
       } catch (error) {
@@ -2843,7 +2974,10 @@ export class GraphStore {
       existing.update({ ...props, canonicalRelationId: props.canonicalRelationId });
       return existing;
     } else {
-      const { node } = this._addNode({ ...props, canonicalRelationId: props.canonicalRelationId });
+      const { node } = this._addNode({
+        ...props,
+        canonicalRelationId: props.canonicalRelationId,
+      });
 
       return node;
     }
@@ -2931,7 +3065,7 @@ export class GraphStore {
       existing.update({ ...props, relationType });
       return existing;
     } else {
-      const { relation } = this.createRelation({ ...props, from, to, relationType });
+      const { relation } = this.createRelation({ ...props, from, to, relationType, retainRelationCount: true });
       return relation;
     }
   }

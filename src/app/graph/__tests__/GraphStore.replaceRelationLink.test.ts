@@ -93,13 +93,23 @@ describe("GraphStore.replaceRelationLink", () => {
         },
         {
           operation: "updateNode",
+          oldProps: { ...nodeC.serialize(), relationCount: 2 },
+          newProps: { ...nodeC.serialize(), relationCount: 3 },
+        },
+        {
+          operation: "updateNode",
+          oldProps: { ...nodeA.serialize(), relationCount: 2, canonicalRelationId: relationAB.id },
+          newProps: { ...nodeA.serialize(), relationCount: 1, canonicalRelationId: relationAB.id },
+        },
+        {
+          operation: "updateNode",
           oldProps: { ...nodeA.serialize(), canonicalRelationId: relationAB.id },
           newProps: { ...nodeA.serialize(), canonicalRelationId: null },
         },
         {
           operation: "updateRelation",
           oldProps: abAtStart,
-          newProps: relationAB.serialize(),
+          newProps: { ...relationAB.serialize() },
         },
         {
           operation: "updateRelationList",
@@ -182,7 +192,7 @@ describe("GraphStore.replaceRelationLink", () => {
     const pendingUpdateSets: GraphUpdate[][] = graphStore.updateManager.pendingUpdates.map((update) => update.updates);
     expect(pendingUpdateSets).toEqual([
       [
-        { operation: "addNode", node: { ...serializedNewNode, canonicalRelationId: null } },
+        { operation: "addNode", node: { ...serializedNewNode, canonicalRelationId: null, relationCount: 0 } },
         {
           operation: "updateRelationList",
           authorId: "SPECIAL::mew|0123456789",
@@ -193,6 +203,16 @@ describe("GraphStore.replaceRelationLink", () => {
           oldPosition: abPosition,
           relationId: "ab",
           type: "all",
+        },
+        {
+          operation: "updateNode",
+          oldProps: { ...serializedNewNode, relationCount: 0, canonicalRelationId: null },
+          newProps: { ...serializedNewNode, relationCount: 1, canonicalRelationId: null },
+        },
+        {
+          operation: "updateNode",
+          oldProps: { ...nodeA.serialize(), relationCount: 2, canonicalRelationId: relationAB.id },
+          newProps: { ...nodeA.serialize(), relationCount: 1, canonicalRelationId: relationAB.id },
         },
         {
           operation: "updateNode",

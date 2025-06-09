@@ -67,6 +67,7 @@ export const SerializedNodeSchema = z.object({
     isAiGenerated: z.boolean().optional(),
     isUnconfirmed: z.boolean().optional(),
   }),
+  relationCount: z.number().default(0).optional(),
 });
 export type SerializedNode = z.infer<typeof SerializedNodeSchema>;
 
@@ -96,6 +97,7 @@ export const SerializedRelationSchema = z.object({
   updatedAt: z.coerce.date().default(new Date()),
   isPublic: z.boolean().default(false),
   canonicalRelationId: z.string().nullable().default(null),
+  relationCount: z.number().default(0).optional(),
 });
 export type SerializedRelation = z.infer<typeof SerializedRelationSchema>;
 

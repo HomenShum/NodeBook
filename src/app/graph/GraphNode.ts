@@ -49,6 +49,7 @@ export type GraphNodeProps = {
   canonicalRelationId?: string | null;
   accessMode?: AccessMode;
   attributes?: Record<string, boolean | number | string | null>;
+  relationCount?: number;
 };
 
 export type PositionedRelation = {
@@ -75,6 +76,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
   isChecked: boolean | null = null;
   accessMode: AccessMode = AccessMode.READ;
   attributes: Record<string, boolean | string | number | null> = {};
+  relationCount: number;
   constructor(
     store: GraphStore,
     {
@@ -90,6 +92,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isChecked = null,
       accessMode = AccessMode.READ,
       attributes = {},
+      relationCount = 0,
     }: GraphNodeProps & { authorId: string },
   ) {
     super(store);
@@ -110,6 +113,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     this.isChecked = isChecked;
     this.accessMode = accessMode;
     this.attributes = attributes;
+    this.relationCount = relationCount;
     this.makeObservable();
   }
 
@@ -127,7 +131,10 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       canonicalRelationId: observable,
       canonicalRelation: computed,
       content: observable.shallow,
+      relationCount: observable,
       update: action,
+      incrementRelationCount: action,
+      decrementRelationCount: action,
       text: computed,
       relationsWithPositions: computed,
       contentOnlyAsText: computed,
@@ -164,6 +171,10 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       oldValues.accessMode = this.accessMode;
       this.accessMode = newProps.accessMode;
     }
+    if (newProps.relationCount !== undefined) {
+      oldValues.relationCount = this.relationCount;
+      this.relationCount = newProps.relationCount;
+    }
     oldValues.version = this.version;
     if (newProps.version !== undefined) {
       this.version = newProps.version;
@@ -182,6 +193,20 @@ export class GraphNode extends BaseGraphObject implements Serializable {
     }
 
     return oldValues;
+  }
+
+  /**
+   * Increment the relation count by the specified amount (default 1)
+   */
+  incrementRelationCount(amount: number = 1): void {
+    this.relationCount += amount;
+  }
+
+  /**
+   * Decrement the relation count by the specified amount (default 1)
+   */
+  decrementRelationCount(amount: number = 1): void {
+    this.relationCount = Math.max(0, this.relationCount - amount);
   }
 
   /**
@@ -275,6 +300,7 @@ export class GraphNode extends BaseGraphObject implements Serializable {
       isChecked: this.isChecked ?? null,
       accessMode: this.accessMode,
       attributes: this.attributes,
+      relationCount: this.relationCount,
     };
   }
 }

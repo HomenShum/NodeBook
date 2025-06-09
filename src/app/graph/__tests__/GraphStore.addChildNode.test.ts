@@ -51,7 +51,7 @@ describe("GraphStore.addChildNode", () => {
       [
         {
           operation: "addNode",
-          node: { ...child.serialize(), canonicalRelationId: null },
+          node: { ...child.serialize(), canonicalRelationId: null, relationCount: 0 },
         },
         {
           operation: "addRelation",
