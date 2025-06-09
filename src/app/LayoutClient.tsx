@@ -48,7 +48,7 @@ const getRequestedObjectId = async (): Promise<string | null> => {
 
   if (path.startsWith("/") && parts.length == 1) {
     const slug = parts.pop();
-    if (!slug) return null;
+    if (!slug || slug === "g") return null;
     const db = getDb();
     const node = await db.query.graphNodeTable.findFirst({
       columns: {
