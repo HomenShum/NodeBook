@@ -3,7 +3,7 @@
   border: 1px solid var(--gray-4);
   border-radius: 0.5rem;
   width: 100%;
-  background: var(--gray-contrast);
+  background: var(--white);
   transition: all 0.2s ease;
   margin-bottom: 0.625rem;
   box-shadow: var(--shadow-sm);
@@ -85,7 +85,7 @@
   padding: 0.5rem 0.625rem;
   color: var(--gray-10);
   border-radius: 0.3125rem;
-  border: 1px solid var(--gray-4);
+  border: 1px solid var(--gray-5);
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -119,6 +119,8 @@
   border-radius: 0.3125rem;
   border: 1px solid var(--gray-4);
   margin-left: 0.5rem;
+  background: var(--white);
+  color: var(--gray-11);
 
   &::placeholder {
     color: var(--gray-8);
@@ -230,6 +232,8 @@
   border-radius: 0.3125rem;
   border: 1px solid var(--gray-4);
   font-size: var(--font-size-sm);
+  background-color: var(--white);
+  color: var(--gray-11);
 
   &::placeholder {
     color: var(--gray-8);
@@ -253,7 +257,7 @@
   border-radius: 4px;
   background: var(--gray-2);
   font-size: var(--font-size-sm);
-  color: var(--gray-12);
+  color: var(--gray-11);
 }
 
 .commentHeader {
@@ -265,7 +269,7 @@
 
 .commentAuthor {
   font-weight: 500;
-  color: var(--gray-11);
+  color: var(--gray-9);
   display: inline-block;
   align-items: center;
   margin-right: 0.5rem;
@@ -303,7 +307,7 @@
 }
 
 .commentTime {
-  color: var(--gray-10);
+  color: var(--gray-8);
   font-weight: 400;
   font-size: var(--font-size-xs);
 }
@@ -312,6 +316,7 @@
   padding: 0 0.75rem;
   background: var(--gray-4);
   color: var(--gray-11);
+  font-size: var(--font-size-sm);
 
   &:hover:not(:disabled) {
     background: var(--gray-5);
