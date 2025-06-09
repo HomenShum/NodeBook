@@ -1,4 +1,5 @@
 import { User } from "@auth0/auth0-react";
+import { captureException } from "@sentry/nextjs";
 
 import { GetUserResponseSchema, PostUserResponseSchema } from "@/app/api/types";
 import { env } from "@/app/envFrontend";
@@ -47,19 +48,10 @@ export class LayerManager {
   loadWithText(text: string): void {
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
-      // Removing this because it's causing issues with search.
-      // if (this.abortController) {
-      //   try {
-      //     this.abortController.abort(`received new search query ${text}`);
-      //   } catch (e) {
-      //     if (e instanceof DOMException && e.name === "AbortError") {
-      //       logger.debug("Search aborted");
-      //     } else {
-      //       throw e;
-      //     }
-      //   }
-      // }
-      // this.abortController = new AbortController();
+      if (this.abortController) {
+        this.abortController.abort(`received new search query ${text}`);
+      }
+      this.abortController = new AbortController();
     }
     if (!text || text.length < 3 || this.searchedText.has(text)) return;
     this.searchDebounceTimer = setTimeout(async () => {
@@ -78,7 +70,9 @@ export class LayerManager {
         if (e instanceof DOMException && e.name === "AbortError") {
           logger.debug("Search aborted");
         } else {
-          throw e;
+          captureException(e, {
+            extra: { text, message: "Search failed" },
+          });
         }
       } finally {
         this.graphStore.updateInFlightSearchCount("decrement");
