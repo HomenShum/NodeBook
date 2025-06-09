@@ -2,8 +2,9 @@
 import axios from "axios";
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import React, { useEffect, useState } from "react";
-import { useAsyncEffect } from "ahooks";
 
+import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
+import { useAuth } from "@/app/auth/useAuth";
 import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
 import { LoadingContext } from "@/app/contexts/LoadingContext";
 import { NotificationProvider } from "@/app/contexts/NotificationContext";
@@ -28,73 +29,15 @@ export function StoresProvider({
   children,
   initialObjectId,
 }: Readonly<{ children: React.ReactNode; initialObjectId: string | null }>) {
-  axios.defaults.headers.common["Content-Type"] = "application/json";
   const [isLoading, setIsLoading] = useState(true);
-  const [settingsStore, setSettingsStore] = useState<SettingsStore | null>(null);
-  const [graphStore, setGraphStore] = useState<GraphStore | null>(null);
-  const [viewStore, setViewStore] = useState<ViewStore | null>(null);
+
+  // instantiate empty stores with unlogged user
   const user = useSetupUser();
+  const [settingsStore, setSettingsStore] = useState<SettingsStore>(new SettingsStore(UNLOGGED_USER));
+  const [graphStore, setGraphStore] = useState<GraphStore>(new GraphStore(UNLOGGED_USER, settingsStore));
+  const [viewStore, setViewStore] = useState<ViewStore>(new ViewStore(settingsStore, graphStore));
 
-  useEffect(() => {
-    if (!user) return;
-    const settings = new SettingsStore(user);
-    const graph = new GraphStore(user, settings);
-    const view = new ViewStore(settings, graph);
-    setSettingsStore(settings);
-    setGraphStore(graph);
-    setViewStore(view);
-    return () => {
-      logger.debug("Cleaning up stores");
-      graph.updateManager.stopSync();
-      graph.cleanup();
-      settings.cleanup();
-      view.cleanup();
-    };
-  }, [user]);
-
-  useAsyncEffect(async () => {
-    if (!graphStore || !user || !settingsStore) return;
-    try {
-      setIsLoading(true);
-      if (env.isPersistenceEnabled) {
-        if (env.persistTo === "server") {
-          const objectIds = [
-            graphStore.relationTypesNodeId,
-            GLOBAL_USERS_NODE_ID,
-            GLOBAL_USERS_RELATION_ID,
-            graphStore.userRootId,
-            graphStore.usersToUserRelationId,
-            graphStore.myHashtagsNodeId,
-            graphStore.myFavoritesNodeId,
-            graphStore.myStreamNodeId,
-          ];
-          if (initialObjectId) {
-            objectIds.push(decodeURIComponent(initialObjectId));
-          }
-          graphStore.layerManager.clear();
-          await graphStore.layerManager.initialize(objectIds);
-          graphStore.updateManager.startSync();
-        } else if (env.persistTo === "local") {
-          localLocalData(graphStore);
-        }
-      }
-    } catch (e) {
-      toast("Failed to load data from server. Starting with an empty graph.");
-      setGraphStore(new GraphStore(user, settingsStore));
-      logger.error("Failed sync setup", e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [graphStore, settingsStore, user]);
-
-  useEffect(() => {
-    if (!viewStore) return;
-    viewStore.startObservingMouse();
-    return () => {
-      viewStore.stopObservingMouse();
-    };
-  }, [viewStore]);
-
+  // expose stores to window for debugging
   if (env.env !== "production" && typeof window !== "undefined") {
     window.mew = {
       env,
@@ -107,13 +50,82 @@ export function StoresProvider({
     };
   }
 
-  if (!user || !viewStore || !graphStore || !settingsStore) {
-    return <></>;
-  }
+  // when auth changes, clean up current stores and setup up new ones
+  useEffect(() => {
+    if (!user) return;
+    let ignore = false;
+    async function setupStores() {
+      let syncCleanup = () => {};
+      if (!user) return syncCleanup;
+      logger.debug("Starting to setup stores");
+      setIsLoading(true);
+
+      // create new stores (shorter names to distinguish from the state variables)
+      const settings = new SettingsStore(user);
+      let graph = new GraphStore(user, settings);
+      const view = new ViewStore(settings, graph);
+
+      // load and start sync
+      try {
+        if (env.isPersistenceEnabled) {
+          if (env.persistTo === "server") {
+            const objectIds = [
+              decodeURIComponent(initialObjectId || "home"),
+              graph.relationTypesNodeId,
+              GLOBAL_USERS_NODE_ID,
+              GLOBAL_USERS_RELATION_ID,
+              graph.userRootId,
+              graph.usersToUserRelationId,
+              graph.myHashtagsNodeId,
+              graph.myFavoritesNodeId,
+              graph.myStreamNodeId,
+            ];
+            graph.layerManager.clear();
+            await graph.layerManager.initialize(objectIds);
+          } else if (env.persistTo === "local") {
+            localLocalData(graph);
+          }
+        }
+      } catch (e) {
+        toast("Failed to load data from server. Starting with an empty graph.");
+        graph = new GraphStore(user, settings);
+        logger.error("Failed sync setup", e);
+      }
+
+      // Set up stores. (unless we are unmounting, in which case ignore the result)
+      if (ignore) return;
+      logger.debug("Starting sync");
+      syncCleanup = graph.updateManager.startSync();
+      setGraphStore(graph);
+      setSettingsStore(settings);
+      setViewStore(view);
+      setIsLoading(false);
+      return () => {
+        logger.debug("Cleaning up stores");
+        graph.cleanup();
+        settings.cleanup();
+        view.cleanup();
+        syncCleanup();
+      };
+    }
+
+    const cleanupPromise = setupStores();
+    return () => {
+      ignore = true;
+      cleanupPromise.then((cleanup) => cleanup?.());
+    };
+  }, [initialObjectId, user]);
+
+  useEffect(() => {
+    viewStore.startObservingMouse();
+    return () => {
+      viewStore.stopObservingMouse();
+    };
+  }, [viewStore]);
 
   return (
     <LoadingContext.Provider value={isLoading}>
-      <UserContext.Provider value={user}>
+      <UserContext.Provider value={user || UNLOGGED_USER}>
         <SettingsStoreContext.Provider value={settingsStore}>
           <GraphStoreProvider value={graphStore}>
             <ViewStoreProvider value={viewStore}>
