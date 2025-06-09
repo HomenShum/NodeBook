@@ -141,6 +141,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
 
   const handleLogout = useCallback(() => {
     if (!auth) return;
+    localStorage.clear();
     auth.logout({ logoutParams: { returnTo: window.location.origin } });
   }, [auth]);
 

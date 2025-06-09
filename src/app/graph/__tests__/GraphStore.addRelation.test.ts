@@ -13,8 +13,9 @@ describe("GraphStore.addRelation", () => {
 
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
-
-    graphStore = new GraphStore(MOCK_MEW_USER, new SettingsStore({ publicMode: false }));
+    const user = MOCK_MEW_USER;
+    user.settings.publicMode = false;
+    graphStore = new GraphStore(user, new SettingsStore(user));
 
     startNode = await graphStore.addNode({
       nodeProps: {
@@ -122,7 +123,7 @@ describe("GraphStore.addRelation", () => {
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
       isNewRelatedObjectsPublic: true,
-      isChecked: null
+      isChecked: null,
     });
 
     await graphStore.setIsPublic({
@@ -131,7 +132,7 @@ describe("GraphStore.addRelation", () => {
       alsoSetRelatedObjects: true,
       alsoSetChildrenAndDescendants: true,
       isNewRelatedObjectsPublic: false,
-      isChecked: null
+      isChecked: null,
     });
 
     const relation = await graphStore.addRelation({

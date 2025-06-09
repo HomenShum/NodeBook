@@ -42,6 +42,7 @@ export class FractionalPositionedList<T extends ListItem & Serializable> impleme
       move: action,
       clear: action,
       load: action,
+      undoDelete: action,
     });
   }
 

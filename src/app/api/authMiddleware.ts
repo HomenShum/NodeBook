@@ -48,7 +48,7 @@ export function withAuth(handler: (req: NextAuthenticatedRequest) => Promise<Nex
       const payload = await verifyToken(token);
 
       if (!payload || typeof payload.sub !== "string") {
-        return NextResponse.json({ status: "error", message: "Invalid user ID" }, { status: 400 });
+        return NextResponse.json({ status: "error", message: "Invalid user ID" }, { status: 401 });
       }
 
       req.userId = payload.sub;
