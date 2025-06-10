@@ -6,7 +6,9 @@ import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation } from "@/app/graph/GraphRelation";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
 import { comparePositions } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -207,7 +209,9 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
                   <PinCustomIcon />
                 </div>
               </Button>
-              <span className={styles.NodeCount}>{o.relations.length - 1}</span>
+              <span className={styles.NodeCount}>
+                {o instanceof GraphNode || o instanceof GraphRelation ? o.relationCount : o.relations.length - 1}
+              </span>
             </div>
           ))}
       </div>
@@ -246,7 +250,9 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
                     <PinCustomIcon />
                   </div>
                 </Button>
-                <span className={styles.NodeCount}>{o.relations.length - 1}</span>
+                <span className={styles.NodeCount}>
+                  {o instanceof GraphNode || o instanceof GraphRelation ? o.relationCount : o.relations.length - 1}
+                </span>
               </div>
             );
           })
