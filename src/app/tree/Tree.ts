@@ -1,6 +1,7 @@
-import { action, computed, isObservable, makeObservable, observable, toJS } from "mobx";
+import { action, computed, isObservable, makeObservable, observable } from "mobx";
 import { SetStateAction } from "react";
 
+import { env } from "@/app/envFrontend";
 import { BaseGraphObject } from "@/app/graph/BaseGraphObject";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { Chip, GraphNode, GraphNodeProps } from "@/app/graph/GraphNode";
@@ -27,7 +28,6 @@ import { comparePositions, compareTimestamps, ObjectPath, uuid } from "@/app/uti
 import { ViewType } from "@/app/view/types";
 import { NON_EDITABLE_OBJECT_PREFIXES } from "@/lib/constants";
 import appLogger from "@/lib/logger";
-import { env } from "@/app/envFrontend";
 
 import {
   BaseTreeNode,
@@ -1438,6 +1438,7 @@ export class Tree {
           transaction: {
             parentId: treeNode.parent.object.id,
             after: 0,
+            nodeProps: { isChecked },
             relationProps: {
               id: relationId,
             },
@@ -1449,6 +1450,7 @@ export class Tree {
           transaction: {
             parentId: treeNode.parent.object.id,
             after: sibAbove ? sibAbove.relationWithParent : -1,
+            nodeProps: { isChecked },
             relationProps: {
               id: relationId,
             },
@@ -2088,7 +2090,7 @@ export class Tree {
             //Example: 1 <-H,A        Output: 1 <-A
             //           2                      2
             //         3                      3 <-H
-            const nextDown = head.isAncestorOf(anchor) ? getNextBelow(head) : (getNextSubtreeBelow(head) ?? null);
+            const nextDown = head.isAncestorOf(anchor) ? getNextBelow(head) : getNextSubtreeBelow(head) ?? null;
             if (!nextDown || nextDown.parentGroup.id !== head.parentGroup.id) return false;
             this.selectionStack.push(dir, this.selection.headNodeId);
             this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextDown.path };
@@ -2289,7 +2291,7 @@ export class Tree {
       });
       node = node.parent;
       relationWithParent =
-        node instanceof DescendantTreeNode ? node.relationWithParent : (node?.parent?.relationToChild ?? null);
+        node instanceof DescendantTreeNode ? node.relationWithParent : node?.parent?.relationToChild ?? null;
     }
     this.graphStore.applyCombinedTransaction(trx);
   }
