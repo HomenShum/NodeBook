@@ -22,7 +22,7 @@ export const TodoPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
         if (!event) return false;
         const selection = $getSelection();
         if (!selection || !$isRangeSelection(selection) || !selection.isCollapsed()) return false;
-        if ((event.key === "Backspace" || event.key === "Delete") && treeNode.isTodoItem && $atEditorStart()) {
+        if (event.key === "Backspace" && treeNode.isTodoItem && $atEditorStart()) {
           graphStore.updateNode({
             nodeId: treeNode.object.id,
             nodeProps: { isChecked: null },
