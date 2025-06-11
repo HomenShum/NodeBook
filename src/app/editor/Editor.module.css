@@ -6,12 +6,13 @@
 }
 
 .MentionNode {
-  text-decoration: underline var(--gray-3);
+  text-decoration: none;
   color: var(--teal-11);
   cursor: pointer;
 }
 
 .MentionNode:hover {
+  text-decoration: underline var(--gray-5);
   color: var(--teal-10);
 }
 
