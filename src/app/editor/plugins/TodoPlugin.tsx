@@ -70,13 +70,13 @@ export const TodoPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
     );
   }, [editor, graphStore, treeNode]);
 
-  // cmd + shift + y toggle
+  // cmd/ctrl + shift + y toggle
   useEffect(() => {
     return editor.registerCommand(
       KEY_DOWN_COMMAND,
       action((event) => {
         if (!event) return false;
-        if (event.key === "y" && event.metaKey && event.shiftKey) {
+        if (event.key === "Y" && (event.metaKey || event.ctrlKey) && event.shiftKey) {
           if (treeNode.tree.selection?.type !== "editor") return false;
           treeNode.tree.toggleEditorSelectionTodo();
           return true;
