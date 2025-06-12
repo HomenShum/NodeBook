@@ -518,13 +518,15 @@ export function useMenuAnchorRef(
       const viewportLeft = left;
       const viewportTop = top;
 
+      // Calculate dynamic vertical offset based on element height (with minimum of 20px)
+      const elementHeight = height;
+      const verticalOffset = Math.max(20, elementHeight + 5);
+
       // Configure container with fixed positioning - this avoids affecting document overflow
       containerDiv.style.position = "fixed";
-      // Add vertical spacing (20px) when positioning below to prevent overlap with node text
-      containerDiv.style.top = `${viewportTop + 20}px`;
+      // Add dynamic vertical spacing when positioning below to prevent overlap with node text
+      containerDiv.style.top = `${viewportTop + verticalOffset}px`;
       containerDiv.style.left = `${viewportLeft}px`;
-      containerDiv.style.height = `${height}px`;
-      containerDiv.style.width = `${width}px`;
 
       if (menuEle !== null) {
         // Remove the top positioning on the menu element
@@ -544,7 +546,7 @@ export function useMenuAnchorRef(
         }
 
         // Ensure menu stays within viewport vertically
-        if (viewportTop + 20 + menuHeight > viewportHeight) {
+        if (viewportTop + verticalOffset + menuHeight > viewportHeight) {
           // Position above the cursor if it would otherwise extend below viewport
           containerDiv.style.top = `${viewportTop - menuHeight}px`;
         }
@@ -558,10 +560,10 @@ export function useMenuAnchorRef(
           const newMenuHeight = Math.min(newMenuRect.height, window.innerHeight * 0.3);
 
           // Only update position if necessary to stay in viewport
-          if (viewportTop + 20 + newMenuHeight > viewportHeight) {
+          if (viewportTop + verticalOffset + newMenuHeight > viewportHeight) {
             containerDiv.style.top = `${viewportTop - newMenuHeight}px`;
           } else {
-            containerDiv.style.top = `${viewportTop + 20}px`;
+            containerDiv.style.top = `${viewportTop + verticalOffset}px`;
           }
         });
         menuResizeObserverRef.current.observe(menuEle);
