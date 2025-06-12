@@ -23,7 +23,7 @@
 .HeaderLeft {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 1px;
   flex: 1;
   min-width: 0;
 }
@@ -82,20 +82,6 @@
   cursor: default;
 }
 
-.IconBox {
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 2px;
-  color: var(--gray-8);
-}
-
-.IconBox:hover {
-  color: var(--gray-9);
-}
-
 .IconExpanded {
   transform: rotate(90deg);
 }
@@ -107,7 +93,6 @@
 .Button {
   width: 100%;
   text-align: left;
-  padding: 8px 8px;
   justify-content: flex-start;
   align-items: center;
   gap: 8px;
@@ -122,6 +107,7 @@
   position: relative;
   display: flex;
   justify-content: space-between;
+  border-radius: 6px;
 }
 
 .Button:hover {
@@ -148,7 +134,6 @@
 
 .HeaderControls {
   display: flex;
-  gap: 4px;
   align-items: center;
 }
 
@@ -231,9 +216,9 @@
 .ExpandButton {
   opacity: 0;
   padding: 2px;
-  height: 20px;
-  width: 20px;
-  color: var(--gray-8);
+  min-width: 26px;
+  max-width: 26px;
+  max-height: 26px;
 }
 
 .Button:hover .ExpandButton {
@@ -241,7 +226,6 @@
 }
 
 .ExpandButton:hover {
-  color: var(--gray-11);
   background-color: var(--gray-4);
 }
 
@@ -276,7 +260,7 @@
 }
 
 .SearchInput.SearchInputActive {
-  border-color: var(--gray-8);
+  border-color: var(--gray-7);
 }
 
 .SearchInput:hover {
@@ -292,4 +276,19 @@
 
 .SearchInput::placeholder {
   color: var(--gray-8);
+}
+
+.IconButton {
+  position: relative;
+  margin-left: 2px;
+  padding: 2px !important;
+  min-width: 26px;
+  max-width: 26px;
+  max-height: 26px;
+  border-radius: 6px;
+  background-color: transparent;
+}
+
+.IconButton:hover {
+  background-color: var(--gray-3);
 }

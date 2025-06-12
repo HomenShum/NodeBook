@@ -7,7 +7,7 @@ declare const styles: {
   readonly "HeaderButton": string;
   readonly "HeaderControls": string;
   readonly "HeaderLeft": string;
-  readonly "IconBox": string;
+  readonly "IconButton": string;
   readonly "IconExpanded": string;
   readonly "IconRotated": string;
   readonly "IconsContainer": string;

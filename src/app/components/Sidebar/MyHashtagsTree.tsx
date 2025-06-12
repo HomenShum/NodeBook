@@ -4,6 +4,7 @@ import React, { useCallback, useState } from "react";
 
 import { PinCustomIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -158,31 +159,34 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           <span>{object.text}</span>
 
           <div className={styles.HeaderControls}>
-            <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
+            <Button variant="ghost" className={styles.IconButton} onClick={handleMainClick}>
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
-            <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMaximizeClick(e)}>
-              <Maximize2 size={16} />
+            <Button variant="ghostSmooth" className={styles.IconButton} onClick={(e) => handleMaximizeClick(e)}>
+              <Maximize2 size={13} />
             </Button>
           </div>
         </div>
 
-        <Button
-          variant="ghost"
-          className={styles.HeaderButton}
-          onClick={toggleSort}
-          title={`Sort by ${
-            sortType === "alphanumeric" ? "creation date" : sortType === "created" ? "tree view order" : "name"
-          }`}
-        >
-          {sortType === "alphanumeric" ? (
-            <SortAsc size={14} />
-          ) : sortType === "created" ? (
-            <Clock size={14} />
-          ) : (
-            <List size={14} />
-          )}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghostSmooth" className={styles.IconButton} onClick={toggleSort}>
+                {sortType === "alphanumeric" ? (
+                  <SortAsc size={14} />
+                ) : sortType === "created" ? (
+                  <Clock size={14} />
+                ) : (
+                  <List size={14} />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="center" sideOffset={8}>
+              Sort by{" "}
+              {sortType === "alphanumeric" ? "creation date" : sortType === "created" ? "tree view order" : "name"}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       {isExpanded && (
         <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search hashtags..." />

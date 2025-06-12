@@ -65,7 +65,7 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
           <div className={styles.HeaderControls}>
             <Button
               variant="ghost"
-              className={styles.HeaderButton}
+              className={styles.IconButton}
               onClick={() => settingsStore.setSidebarExpandedMyShortlinks(!isExpanded)}
             >
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
@@ -90,7 +90,11 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
                 onClick={(e) => handleOnClick(e, nodeId)}
                 key={nodeId}
                 variant="ghost"
-                style={{ display: "flex" }}
+                style={{
+                  justifyContent: "flex-start",
+                  padding: "8px",
+                  width: "100%",
+                }}
                 className={cn(styles.Button)}
               >
                 /{slug}

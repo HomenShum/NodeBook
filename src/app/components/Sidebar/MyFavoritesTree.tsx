@@ -60,13 +60,13 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
           <div className={styles.HeaderControls}>
             <Button
               variant="ghost"
-              className={styles.HeaderButton}
+              className={styles.IconButton}
               onClick={() => settingsStore.setSidebarExpandedMyFavorites(!isExpanded)}
             >
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
-            <Button variant="ghost" className={styles.HeaderButton} onClick={(e) => handleMaximizeClick(e)}>
-              <Maximize2 size={16} />
+            <Button variant="ghostSmooth" className={styles.IconButton} onClick={(e) => handleMaximizeClick(e)}>
+              <Maximize2 size={13} />
             </Button>
           </div>
         </div>
@@ -127,11 +127,12 @@ const FavoriteItem = observer(function FavoriteItem({ object }: TreeElementProps
       </Button>
       {isHovered && (
         <Button
-          variant="ghost"
+          variant="ghostSmooth"
+          className={cn(styles.IconButton)}
           onClick={(e) => removeFromFavorites(graphStore, object)}
           aria-label="Remove from favorites"
         >
-          <X size={14} />
+          <X size={13} />
         </Button>
       )}
     </div>

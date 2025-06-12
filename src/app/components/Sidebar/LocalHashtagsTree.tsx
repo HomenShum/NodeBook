@@ -1,5 +1,5 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Maximize2, Play, Search } from "lucide-react";
+import { Maximize2, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -182,7 +182,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
         <div className={styles.HeaderLeft}>
           <span>Local Hashtags</span>
           <div className={styles.HeaderControls}>
-            <Button variant="ghost" className={styles.HeaderButton} onClick={handleMainClick}>
+            <Button variant="ghost" className={styles.IconButton} onClick={handleMainClick}>
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
           </div>
@@ -227,7 +227,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
                       transform: `translateY(${virtualRow.start}px)`,
                       display: "flex",
                       alignItems: "center",
-                      padding: "0 8px",
+                      paddingRight: "4px",
                     }}
                   >
                     <Button
@@ -236,12 +236,9 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
                       onClick={(e) => handleChildClick(e, hashtag)}
                     >
                       <span style={{ textAlign: "left" }}>{hashtag.text}</span>
-                      <div className={styles.IconsContainer}>
-                        <Search size={14} className={styles.SearchIcon} />
-                      </div>
                     </Button>
                     <Button
-                      variant="ghost"
+                      variant="ghostSmooth"
                       size="icon"
                       className={styles.ExpandButton}
                       onClick={(e) => handleExpandClick(e, hashtag)}
