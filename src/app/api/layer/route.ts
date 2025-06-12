@@ -19,6 +19,7 @@ async function postHandler(req: NextAuthenticatedRequest) {
     throw Error("Missing objects");
   }
 
-  const data = await createLayers(userId, objectIds);
+  // Load connected layers for regular layer loading (not search)
+  const data = await createLayers(userId, objectIds, 1, true);
   return NextResponse.json({ data });
 }

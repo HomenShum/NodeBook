@@ -120,6 +120,14 @@ export class GraphStore {
     this.cappedKeywordIndex = new KeywordTrieIndex(MAX_PREFIX_LENGTH);
     this.ensureDefaultObjectsCreated();
     this.makeObservable();
+
+    // Load initial essential user objects with their first levels
+    // This runs after basic setup to ensure all necessary objects are available
+    if (!user.isAnonymous && env.isPersistenceEnabled) {
+      this.layerManager.loadInitial().catch((e) => {
+        logger.error("Failed to load initial user data", e);
+      });
+    }
   }
 
   makeObservable() {

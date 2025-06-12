@@ -24,7 +24,7 @@ import { cn, isMac } from "@/lib/utils";
 
 import styles from "./CommandBar.module.css";
 
-const MAX_DROPDOWN_RESULTS = 30;
+const MAX_DROPDOWN_RESULTS = 60;
 
 export type Search = { text: string; chips: Chip[] };
 
@@ -243,6 +243,31 @@ const CommandBar = observer(() => {
     [filteredCommands, selectedIndex],
   );
 
+  const trimCommandName = (name: string) => {
+    if (name.length > 100) {
+      let hasMatch = false;
+      if (name.includes(search.text)) {
+        hasMatch = true;
+      }
+      if (hasMatch) {
+        const matchIndex = name.indexOf(search.text);
+        const startIndex = Math.max(0, matchIndex - 30);
+        const endIndex = Math.min(name.length, matchIndex + search.text.length + 30);
+        let trimmedName = name.slice(startIndex, endIndex);
+        if (startIndex > 0) {
+          trimmedName = "..." + trimmedName;
+        }
+        if (endIndex < name.length) {
+          trimmedName = trimmedName + "...";
+        }
+        return trimmedName;
+      } else {
+        return name.slice(0, 60) + "...";
+      }
+    }
+    return name;
+  };
+
   // Scroll to selected element
   useEffect(() => {
     if (listRef.current) {
@@ -328,7 +353,7 @@ const CommandBar = observer(() => {
                   onClick={(e) => command.perform(e)}
                 >
                   <span style={{ display: "flex", gap: 8, alignItems: "center", width: "100%" }}>
-                    <span style={{ marginRight: "auto" }}>{command.name}</span>
+                    <span style={{ marginRight: "auto" }}>{trimCommandName(command.name)}</span>
                     {command.type === "navigate" && (
                       <>
                         <TypeIndicator object={command.object} />

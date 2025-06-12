@@ -2,6 +2,7 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -10,6 +11,7 @@ import { createRouteUrl, ObjectPath } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
+import logger from "@/lib/logger";
 
 import { DescendantTreeNode, GroupId, PathToRootNode, RootTreeNode, TreeNode } from "./nodes";
 
@@ -236,6 +238,8 @@ export function walkTree(treeNode: TreeNode, callback: (node: TreeNode) => boole
 export function useSetMainRoot() {
   const viewStore = useViewStore();
   const router = useRouter();
+  const graphStore = useGraphStore();
+
   return useCallback(
     (obj: ObjectPath | GraphObject) => {
       // Save scroll position for current object before navigating
@@ -245,13 +249,29 @@ export function useSetMainRoot() {
       // See if shift key is pressed
       const objectPath = isGraphObject(obj) ? getCanonicalPath(obj) : obj;
       viewStore.setRoot(objectPath);
+
+      // Check if we need to load the first layer for this node
+      const targetObject = objectPath.object;
+      if (targetObject instanceof GraphNode) {
+        const loadedRelationCount = targetObject.relations.length;
+        const storedRelationCount = targetObject.relationCount;
+
+        // If we have fewer loaded relations than the stored count, load the first layer
+        if (loadedRelationCount < storedRelationCount) {
+          // Load the first layer of this node's relations
+          graphStore.layerManager.loadWithIds([targetObject.id], false, [targetObject.id]).catch((error) => {
+            logger.warn(`Failed to load first layer for node ${targetObject.id}:`, error);
+          });
+        }
+      }
+
       const url = createRouteUrl(objectPath);
       if (url === `/g/${GLOBAL_ROOT_ID}`) {
         viewStore.setViewType(ViewType.Outline);
       }
       router.push(url);
     },
-    [viewStore, router],
+    [viewStore, router, graphStore],
   );
 }
 

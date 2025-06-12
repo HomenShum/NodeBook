@@ -85,6 +85,14 @@ function OutlineContent({ tree }: Props) {
   const userId = graphStore.user?.id;
   const isGlobalRoot = treeRoot.object.id === graphStore.globalRoot.id;
 
+  // Check if the main root is loading (has incomplete relation data)
+  let isMainRootLoading = false;
+  if (treeRoot.object instanceof GraphNode) {
+    const totalRelations = treeRoot.object.relationCount;
+    const loadedRelations = treeRoot.object.relations.length;
+    isMainRootLoading = totalRelations > loadedRelations;
+  }
+
   const tooltipContent = useMemo(() => {
     const authorId = treeRoot.object.authorId;
     const authorName = authorId === userId ? "You" : graphStore.usersById.get(authorId)?.username || authorId;
@@ -126,7 +134,8 @@ function OutlineContent({ tree }: Props) {
         wasEventHandled = true;
         viewStore.closeQuickCapture();
         viewStore.setActiveTree(viewStore.mainView);
-        const topChild = viewStore.mainView.root.childrenGroupsById.all.nodes[0] ?? viewStore.mainView.createChildOfRootAndFocus();
+        const topChild =
+          viewStore.mainView.root.childrenGroupsById.all.nodes[0] ?? viewStore.mainView.createChildOfRootAndFocus();
         viewStore.mainView.setFocusedNode(topChild.path, "end", true, true);
       }
       if (tree.isMainTree && tree.selection === null && isEscapeSelectionHotkey(event)) {
@@ -258,7 +267,7 @@ function OutlineContent({ tree }: Props) {
                     ) : null}
                     <TooltipTrigger asChild>
                       <div style={{ width: "100%" }}>
-                        <h1 className={s.TitleText}>
+                        <h1 className={cn(s.TitleText, isMainRootLoading && relatedObjectStyles.Loading)}>
                           {treeRoot.isTodoItem && <Checkbox node={treeRoot} />}
                           <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
                         </h1>
@@ -274,7 +283,7 @@ function OutlineContent({ tree }: Props) {
                 <div className={s.IconAndTitle}>
                   <Globe size={20} strokeWidth={1.8} />
                   <div style={{ width: "100%" }}>
-                    <h1 className={s.TitleText}>
+                    <h1 className={cn(s.TitleText, isMainRootLoading && relatedObjectStyles.Loading)}>
                       {treeRoot.isTodoItem && <Checkbox node={treeRoot} />}
                       <NodeHeaderEditor key={treeRoot.object.id} treeNode={treeRoot} />
                     </h1>

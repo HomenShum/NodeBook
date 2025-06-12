@@ -279,7 +279,12 @@ export const createLayersWithBfs = async (userId: string, objectId: string): Pro
   const visitedNodeIds = new Set<string>();
   const queuedNodeIds = new Set<string>([objectId]);
 
-  while (queuedNodeIds.size > 0) {
+  // Add limits to prevent unbounded expansion
+  const MAX_BFS_NODES = 500; // Limit total nodes loaded
+  const MAX_BFS_DEPTH = 3; // Limit depth of traversal
+  let currentDepth = 0;
+
+  while (queuedNodeIds.size > 0 && visitedNodeIds.size < MAX_BFS_NODES && currentDepth < MAX_BFS_DEPTH) {
     const relationRows = await db
       .select({ toId: graphRelationTable.toId })
       .from(graphRelationTable)
@@ -289,15 +294,21 @@ export const createLayersWithBfs = async (userId: string, objectId: string): Pro
           or(inArray(graphRelationTable.fromId, Array.from(queuedNodeIds))),
           or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPublic, true)),
         ),
-      );
+      )
+      .limit(100); // Limit results per query
+
     queuedNodeIds.forEach((id) => visitedNodeIds.add(id));
     queuedNodeIds.clear();
     relationRows.forEach((row) => {
-      row.toId && !visitedNodeIds.has(row.toId) && queuedNodeIds.add(row.toId);
+      if (row.toId && !visitedNodeIds.has(row.toId) && visitedNodeIds.size < MAX_BFS_NODES) {
+        queuedNodeIds.add(row.toId);
+      }
     });
+    currentDepth++;
   }
 
-  return createLayers(userId, Array.from(visitedNodeIds));
+  // Load the discovered nodes without additional layers to prevent further expansion
+  return createLayers(userId, Array.from(visitedNodeIds), 1, false);
 };
 
 async function fetchRelationListsInBatches(
@@ -335,6 +346,7 @@ export const createLayers = async (
   userId: string,
   objectIds: string[],
   layersToLoad = 1,
+  loadConnectedLayers = true,
 ): Promise<SerializedGraphStore> => {
   const snapshot: SerializedGraphStore = {
     usersById: {},
@@ -388,7 +400,10 @@ export const createLayers = async (
   const initialNodeIds = objectIds.filter((id) => !relationIds.has(id));
   initialNodeIds.forEach((id) => nodeIds.add(id));
 
-  for (let currentLayer = 0; currentLayer < layersToLoad; currentLayer++) {
+  // If loadConnectedLayers is false, skip the layer loading loop
+  const layersToLoadActual = loadConnectedLayers ? layersToLoad : 0;
+
+  for (let currentLayer = 0; currentLayer < layersToLoadActual; currentLayer++) {
     const relationRows = await db
       .select()
       .from(graphRelationTable)
@@ -569,26 +584,30 @@ export const createLayers = async (
     snapshot.nodesById[node.id] = node;
   }
 
-  // Load relations of relations
-  const relationChildrenRows = await db
-    .select()
-    .from(graphRelationTable)
-    .where(inArray(graphRelationTable.fromId, Array.from(relationIds)));
-  for (const row of relationChildrenRows) {
-    relationIds.add(row.id);
-    snapshot.relationsById[row.id] = {
-      version: row.version,
-      id: row.id,
-      authorId: row.authorId ?? UNLOGGED_USER.id,
-      createdAt: row.createdAt ?? new Date(),
-      updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
-      fromId: row.fromId ?? "",
-      toId: row.toId ?? "",
-      relationTypeId: row.relationTypeId ?? "",
-      isPublic: !!row.isPublic,
-      canonicalRelationId: row.canonicalRelationId ?? null,
-      relationCount: row.relationCount,
-    };
+  // Only load relations of relations if we're loading connected layers
+  if (loadConnectedLayers) {
+    // Load relations of relations
+    const relationChildrenRows = await db
+      .select()
+      .from(graphRelationTable)
+      .where(inArray(graphRelationTable.fromId, Array.from(relationIds)));
+
+    for (const row of relationChildrenRows) {
+      relationIds.add(row.id);
+      snapshot.relationsById[row.id] = {
+        version: row.version,
+        id: row.id,
+        authorId: row.authorId ?? UNLOGGED_USER.id,
+        createdAt: row.createdAt ?? new Date(),
+        updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
+        fromId: row.fromId ?? "",
+        toId: row.toId ?? "",
+        relationTypeId: row.relationTypeId ?? "",
+        isPublic: !!row.isPublic,
+        canonicalRelationId: row.canonicalRelationId ?? null,
+        relationCount: row.relationCount,
+      };
+    }
   }
 
   // Todo: Maybe we can do a inner join with nodes?
@@ -662,4 +681,54 @@ export const createLayers = async (
   }
 
   return snapshot;
+};
+
+/**
+ * Create initial layers for essential user objects with their first levels.
+ * This ensures all necessary default objects are loaded along with their immediate children.
+ */
+export const createInitialLayers = async (userId: string): Promise<SerializedGraphStore> => {
+  const userRootId = `user-root-id-${userId}`;
+  const myHashtagsId = `user-my-hashtags-node-id-${userId}`;
+  const myTemplatesId = `user-my-templates-node-id-${userId}`;
+  const myFavoritesId = `user-my-favorites-node-id-${userId}`;
+  const myStreamId = `user-my-stream-node-id-${userId}`;
+  const relationTypesId = `user-relation-types-node-id-${userId}`;
+  const cardStatusesId = `user-card-statuses-node-id-${userId}`;
+
+  // Essential objects that need their first level loaded
+  const essentialObjectIds = [userRootId, myHashtagsId, myTemplatesId, myFavoritesId, relationTypesId, cardStatusesId];
+
+  // Load the essential objects with their connected layers
+  const essentialData = await createLayers(userId, essentialObjectIds, 1, true);
+
+  // Load the first 100 nodes of "my stream" separately to avoid loading too much
+  const db = getDb();
+  const myStreamChildRelations = await db
+    .select({ toId: graphRelationTable.toId })
+    .from(graphRelationTable)
+    .where(
+      and(
+        eq(graphRelationTable.fromId, myStreamId),
+        eq(graphRelationTable.relationTypeId, "child"),
+        or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPublic, true)),
+      ),
+    )
+    .limit(100);
+
+  const streamNodeIds = myStreamChildRelations.map((row) => row.toId).filter((id): id is string => id !== null);
+
+  if (streamNodeIds.length > 0) {
+    // Load stream nodes without their connected layers to avoid exponential expansion
+    const streamData = await createLayers(userId, streamNodeIds, 1, false);
+
+    // Merge the stream data into essential data
+    Object.assign(essentialData.nodesById, streamData.nodesById);
+    Object.assign(essentialData.relationsById, streamData.relationsById);
+    Object.assign(essentialData.relationsByNodeId, streamData.relationsByNodeId);
+    Object.assign(essentialData.pinnedRelationsByNodeId, streamData.pinnedRelationsByNodeId);
+    Object.assign(essentialData.noteContentRelationsByNodeId, streamData.noteContentRelationsByNodeId);
+  }
+
+  return essentialData;
 };

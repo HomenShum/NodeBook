@@ -620,6 +620,11 @@ Right Area
   fill: var(--teal-6);
 }
 
+/* Loading animation for main root title text */
+h1.Loading {
+  animation: pulsate 0.7s ease-in-out infinite;
+}
+
 @keyframes pulsate {
   0% {
     opacity: 1;

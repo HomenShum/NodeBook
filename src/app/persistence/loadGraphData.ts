@@ -33,16 +33,33 @@ export class LayerManager {
   private lazyLoadTimer: NodeJS.Timeout | null = null;
   private readonly graphStore: GraphStore;
   private abortController: AbortController | null = null;
+  private initialLoadComplete = false; // Track if initial load is done
 
   public clear() {
     LayerManager.loadedIds.clear();
     this.searchedText.clear();
+    this.initialLoadComplete = false;
     clearTimeout(this.searchDebounceTimer || -1);
     clearTimeout(this.lazyLoadTimer || -1);
   }
 
   constructor(graphStore: GraphStore) {
     this.graphStore = graphStore;
+  }
+
+  /**
+   * Load initial essential user objects with their first levels.
+   * This should be called once when the app starts up.
+   */
+  async loadInitial(): Promise<void> {
+    if (this.initialLoadComplete) return;
+
+    try {
+      await this.fetchAndLoad(`/api/layer/initial`);
+      this.initialLoadComplete = true;
+    } catch (e) {
+      logger.error("Failed to load initial layers", e);
+    }
   }
 
   loadWithText(text: string): void {
@@ -58,12 +75,11 @@ export class LayerManager {
       try {
         this.graphStore.updateInFlightSearchCount("increment");
         this.searchedText.set(text, true);
+        // Search only loads specific nodes without layers for performance
         const nodeIds = await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`, {
           signal: this.abortController?.signal,
         });
-        this.loadCanonicalWithIds(nodeIds, false, {
-          signal: this.abortController?.signal,
-        });
+        // We don't need canonical loading for search results as they're just nodes
         this.graphStore.incrementSearchTrigger();
       } catch (e) {
         this.searchedText.delete(text);
@@ -86,9 +102,9 @@ export class LayerManager {
     await this.fetchAndLoad(`/api/layer/bfs?objectId=${objectId}`);
   }
 
-  public async loadWithIds(objectIds: string[], withReset = false) {
+  public async loadWithIds(objectIds: string[], withReset = false, forceIds: string[] = []) {
     const ids = objectIds
-      .filter((id) => !LayerManager.loadedIds.has(id))
+      .filter((id) => !LayerManager.loadedIds.has(id) || forceIds.includes(id))
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => {

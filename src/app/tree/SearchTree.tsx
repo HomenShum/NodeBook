@@ -79,6 +79,10 @@ export class SearchTree extends Tree {
     let end = Date.now();
     start = Date.now();
     this.searchRelations = new Set<string>(paths.flat());
+
+    // Note: We no longer need to call loadWithBFS here since search results
+    // are already loaded by the search API and we don't need their full layers
+
     // For each relation path, create the tree path and expand it
     for (const path of paths) {
       let curPath = "";
