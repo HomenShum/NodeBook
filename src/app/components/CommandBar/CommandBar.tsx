@@ -306,7 +306,7 @@ const CommandBar = observer(() => {
     return () => {
       listElement.removeEventListener("scroll", handleScroll);
     };
-  }, []);
+  }, [filteredCommands]); // Add filteredCommands as dependency so it runs after the list is rendered
 
   // When the mention dropdown is open (see `CmdEditor`), pressing escape should
   // close it, not the command bar. Previously we used the `Dialog.Content`'s

@@ -40,15 +40,16 @@
   flex-direction: column;
   outline: none;
   padding: 2px 2px 0;
+  overflow: hidden;
 }
 
 .List {
   flex-grow: 1;
-  overflow-y: auto; /* Make the list scrollable */
-  scrollbar-width: thin; /* Hide the scrollbar for cleaner UI */
-  scrollbar-color: var(--gray-6) transparent; /* Set the color of the scrollbar */
-  max-height: calc(85vh - 100px); /* Adjust based on your input height and padding */
-  position: relative; /* Add this */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-6) transparent;
+  max-height: calc(85vh - 100px);
 }
 
 /* Gradient element that's rendered conditionally when content overflows */
@@ -57,10 +58,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 24px;
+  height: 32px;
   background: linear-gradient(to top, var(--gray-1-lighter), transparent);
   pointer-events: none;
-  border-radius: 6px;
+  border-radius: 0 0 6px 6px;
 }
 
 .Item {

@@ -8,6 +8,7 @@
   box-shadow: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
   position: relative;
   transition: height 0.1s ease-in-out;
+  overflow: hidden;
 }
 
 .SearchAndReplace {
@@ -39,7 +40,7 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 24px;
+  height: 32px;
   background: linear-gradient(to top, var(--gray-1-lighter), transparent);
   pointer-events: none;
   border-radius: 0 0 4px 4px;
