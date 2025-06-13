@@ -87,11 +87,11 @@ function OutlineContent({ tree }: Props) {
 
   // Check if the main root is loading (has incomplete relation data)
   let isMainRootLoading = false;
-  if (treeRoot.object instanceof GraphNode) {
-    const totalRelations = treeRoot.object.relationCount;
-    const loadedRelations = treeRoot.object.relations.length;
-    isMainRootLoading = totalRelations > loadedRelations;
-  }
+  // if (treeRoot.object instanceof GraphNode) {
+  //   const totalRelations = treeRoot.object.relationCount;
+  //   const loadedRelations = treeRoot.object.relations.length;
+  //   isMainRootLoading = totalRelations > loadedRelations;
+  // }
 
   const tooltipContent = useMemo(() => {
     const authorId = treeRoot.object.authorId;
