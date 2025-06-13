@@ -24,7 +24,11 @@ export const answerQuery = async (userId: string, query: string): Promise<Serial
   // able to use the GIN index and filter out results after, in some cases a sequential
   // scan would be performed if the engine believes that would be faster.
   db.execute(sql`SELECT set_limit(0.9);`);
-  const query_words: string[] = query.split(" ").map((word) => word.toLowerCase());
+  const query_words: string[] = query
+    .trim()
+    .split(" ")
+    .filter((word) => word.length > 0)
+    .map((word) => word.toLowerCase());
   let nodeRows: { id: string }[] = [];
   if (query_words.length === 1 && query_words[0].length < 12) {
     const query_str = `%${query_words[0]}%`;

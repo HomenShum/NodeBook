@@ -37,9 +37,9 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   const state = useMemo(() => {
     return dropdown?.type === "searchAndReplace"
       ? {
-        matches: dropdown.matches,
-        initiatedManually: dropdown.initiatedManually,
-      }
+          matches: dropdown.matches,
+          initiatedManually: dropdown.initiatedManually,
+        }
       : null;
   }, [dropdown]);
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);

@@ -5,6 +5,7 @@ import { $getRoot, COMMAND_PRIORITY_NORMAL, KEY_DOWN_COMMAND } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
@@ -53,7 +54,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
   treeNode: TreeNode;
 }): JSX.Element | null {
   const [dropdown, setDropdown] = useState<Dropdown>(null);
-
+  const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
   const settingsStore = useSettingsStore();
   const [searchText, setSearchText] = useState("");
@@ -214,7 +215,14 @@ export const DropdownPlugin = observer(function DropdownPlugin({
         matches,
       };
     });
-  }, [debouncedSearchText, passiveAutocompleteActive, labelledRelation, getMatches, getRecentNodes]);
+  }, [
+    debouncedSearchText,
+    passiveAutocompleteActive,
+    labelledRelation,
+    getMatches,
+    getRecentNodes,
+    graphStore.refreshSearchTrigger,
+  ]);
 
   // Handle state transitions which {@link triggerFn} can't handle
   useEffect(() => {
