@@ -80,23 +80,25 @@ export const NoteContentSection = observer(function NoteContentSection({ parentN
   const rootNote = parentNode instanceof RootTreeNode;
   return (
     <div>
-      {group.nodes.map((treeNode, i) => {
-        return (
-          <div
-            key={treeNode.path}
-            style={{
-              marginLeft: topLevelNote || rootNote ? "0px" : "-20px",
-              paddingBottom:
-                i === group.nodes.length - 1 &&
-                treeNode.childrenGroupsById.all.nodes[0]?.childrenGroupsById.noteContent?.nodes.length > 0
-                  ? "20px"
-                  : "1px",
-            }}
-          >
-            <RelatedObjectView treeNode={treeNode} />
-          </div>
-        );
-      })}
+      {group.nodes
+        .filter((node) => node.object.objectType !== "placeholder")
+        .map((treeNode, i) => {
+          return (
+            <div
+              key={treeNode.path}
+              style={{
+                marginLeft: topLevelNote || rootNote ? "0px" : "-20px",
+                paddingBottom:
+                  i === group.nodes.length - 1 &&
+                  treeNode.childrenGroupsById.all.nodes[0]?.childrenGroupsById.noteContent?.nodes.length > 0
+                    ? "20px"
+                    : "1px",
+              }}
+            >
+              <RelatedObjectView treeNode={treeNode} />
+            </div>
+          );
+        })}
     </div>
   );
 });
@@ -149,16 +151,19 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
 
       {group.isExpanded && !isEmpty && (
         <>
-          {group.nodes.map((treeNode, i) => {
-            const showDate =
-              i == 0 || treeNode.object.createdAt.toDateString() !== group.nodes[i - 1].object.createdAt.toDateString();
-            return (
-              <div key={treeNode.path}>
-                {noteView && <Separator i={i} date={showDate ? treeNode.object.createdAt : null} />}
-                <RelatedObjectView treeNode={treeNode} />
-              </div>
-            );
-          })}
+          {group.nodes
+            .filter((node) => node.object.objectType !== "placeholder")
+            .map((treeNode, i) => {
+              const showDate =
+                i == 0 ||
+                treeNode.object.createdAt.toDateString() !== group.nodes[i - 1].object.createdAt.toDateString();
+              return (
+                <div key={treeNode.path}>
+                  {noteView && <Separator i={i} date={showDate ? treeNode.object.createdAt : null} />}
+                  <RelatedObjectView treeNode={treeNode} />
+                </div>
+              );
+            })}
           <div
             className={`${styles.PinSectionSeparator} ${
               viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
@@ -195,6 +200,7 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
       {paginatedNodes
         .filter((childTreeNode) => {
           return (
+            childTreeNode.object.objectType !== "placeholder" &&
             (!settingsStore.hidePinnedItems ||
               !childTreeNode.parent.object.isRelationPinned(childTreeNode.relationWithParent)) &&
             !(
@@ -239,13 +245,15 @@ const PointerSection = observer(function PointerSection({ group }: PointerSectio
 
   return (
     <div>
-      {group.nodes.map((childTreeNode, i) => {
-        return (
-          <div key={childTreeNode.path}>
-            <RelatedObjectView treeNode={childTreeNode} />
-          </div>
-        );
-      })}
+      {group.nodes
+        .filter((node) => node.object.objectType !== "placeholder")
+        .map((childTreeNode, i) => {
+          return (
+            <div key={childTreeNode.path}>
+              <RelatedObjectView treeNode={childTreeNode} />
+            </div>
+          );
+        })}
     </div>
   );
 });
