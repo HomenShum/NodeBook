@@ -1,0 +1,45 @@
+.PlaceholderContainer {
+  margin: 4px 0;
+}
+
+.PlaceholderToggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.PlaceholderToggle > .ToggleButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  padding: 0px 0px 0px 0px;
+  height: 24px;
+}
+
+.ToggleButton:hover {
+  color: var(--text);
+}
+
+.Ellipsis {
+  font-size: 16px;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.Count {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-left: 4px;
+}
+
+.FilteredNodesContainer {
+  /* margin-left: 16px; */
+  border-left: 1px dashed var(--border-subtle);
+  /* padding-left: 12px; */
+}
+
+.FilteredNode {
+  margin: 4px 0;
+  opacity: 0.5;
+}

@@ -21,6 +21,7 @@ import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 
 import { SortOptionDropdown } from "@/app/components/ControlsBar/SortOptionDropdown";
 import { CardsIcon, ExpandLineArrowsIcon, NotesIcon } from "@/app/components/CustomIcons";
+import { GlobalFilteredNodesButton } from "@/app/components/RelatedObject/GlobalFilteredNodesButton";
 import { SearchBar } from "@/app/components/SearchBar/SearchBar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import buttonStyles from "@/app/components/UIPrimitives/Button.module.css";
@@ -310,6 +311,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
             <span>AI</span>
           </Button>
         )}
+        <GlobalFilteredNodesButton showLabel={false} tooltipClassName={cn(s.ShowTooltip, s.BottomAlign)} />
         {settingsStore.showIdeapadLinkButton && (
           <Button
             size="sm"

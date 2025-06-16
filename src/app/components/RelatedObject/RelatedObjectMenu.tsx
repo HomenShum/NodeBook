@@ -328,13 +328,13 @@ const ReplaceNode = observer(() => {
 });
 
 const SetToEditView = () => {
-  const { viewType, setViewType } = useTreeNode();
+  const { viewType, setViewType, treeNode } = useTreeNode();
 
   const handleSetToEditView = useCallback(() => {
     setViewType("edit");
   }, [setViewType]);
 
-  if (viewType === "edit") {
+  if (viewType === "edit" || !treeNode.isEditable) {
     return null;
   }
 

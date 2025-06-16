@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import React from "react";
 
 import { AuthProvider } from "@/app/auth/AuthProvider";
+import { FilteredNodesProvider } from "@/app/components/RelatedObject/contexts/FilteredNodesContext";
 import { ToastContextProvider } from "@/app/hooks/useToast";
 import { getDb } from "@/db";
 import { graphNodeTable } from "@/db/schema";
@@ -73,7 +74,9 @@ export default async function LayoutClient({
     <ToastContextProvider>
       <AuthProvider>
         <StoresProvider initialObjectId={objectId}>
-          <App>{children}</App>
+          <FilteredNodesProvider>
+            <App>{children}</App>
+          </FilteredNodesProvider>
         </StoresProvider>
       </AuthProvider>
     </ToastContextProvider>

@@ -602,11 +602,7 @@ Right Area
 }
 
 .NoteContentBullet {
-  opacity: 0;
-}
-
-.RelatedObjectContent .NoteContentRootBullet {
-  opacity: 1;
+  opacity: 0 !important;
 }
 
 .RelatedObjectContent .RelatedObjectBulletContainer.HasChildren {
@@ -637,11 +633,12 @@ h1.Loading {
   }
 }
 
-.RelatedObjectContent:hover .NoteContentBullet:has(+ .RelatedObjectNode:has(.RelatedObjectContainer)),
+.RelatedObjectContent:hover .NoteContentBullet,
+.RelatedObjectContent:focus-within .NoteContentBullet,
+.NoteContentRootBullet,
 .RelatedObjectContent:hover .NoteContentRootBullet,
-.RelatedObjectContent:focus-within .NoteContentBullet:has(+ .RelatedObjectNode:has(.RelatedObjectContainer)),
 .RelatedObjectContent:focus-within .NoteContentRootBullet {
-  opacity: 1;
+  opacity: 0 !important;
 }
 
 .RelatedObjectContent:hover .RelatedObjectMenu {

@@ -1,12 +1,19 @@
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
+import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { DescendantTreeNode, PathToRootNode, RootTreeNode, TreeNode } from "@/app/tree/nodes";
+import {
+  DescendantTreeNode,
+  GroupId,
+  PathToRootNode,
+  RootTreeNode,
+  TreeNode,
+} from "@/app/tree/nodes";
 import { Filter, Path, Root, Tree } from "@/app/tree/Tree";
 import { createPath, isNoteContent, walkTree } from "@/app/tree/utils";
-import { ObjectPath } from "@/app/util";
+import { ObjectPath, Position } from "@/app/util";
 import logger from "@/lib/logger";
 
 export class SearchTree extends Tree {
@@ -15,7 +22,15 @@ export class SearchTree extends Tree {
   private searchExpansions = new Set<string>();
   private searchRelations = new Set<string>();
   private hiddenRelations = new Set<string>();
+  private alwaysVisibleNodes = new Set<string>();
   isMainSearchTree: boolean;
+
+  /**
+   * Stores information about filtered nodes during search
+   * Map structure: { parentPath -> { groupId -> filteredNodes[] } }
+   */
+  public filteredNodesByPath: Map<string, Record<GroupId, DescendantTreeNode[]>> = new Map();
+
   constructor(
     graphStore: GraphStore,
     settingsStore: SettingsStore,
@@ -37,10 +52,17 @@ export class SearchTree extends Tree {
 
   deepSearch(query: string) {
     let start = Date.now();
+
+    // Clean up any deleted nodes from alwaysVisibleNodes
+    this.cleanupAlwaysVisibleNodes();
+
     // Reset the temp nodes and paths if the query has changed
     if (query !== this.search) {
       this.tempNodes = [];
       this.tempPaths = [];
+
+      // Clear filtered nodes when the query changes
+      this.filteredNodesByPath.clear();
     }
     this.search = query;
     if (query === "") {
@@ -57,7 +79,20 @@ export class SearchTree extends Tree {
 
     // Filter out nodes that don't belong to the current user and are not public
     results.nodes = results.nodes.filter((n) => n.node.isPublic || n.node.authorId === this.graphStore.user.id);
-    const nodesToWalk = [...this.tempNodes, ...Array.from(results.nodes, (n) => n.node)];
+
+    // Add nodes in alwaysVisibleNodes to the search results if they're not already included
+    const searchResultIds = new Set(results.nodes.map((r) => r.node.id));
+    const additionalNodes: GraphNode[] = [];
+    for (const nodeId of this.alwaysVisibleNodes) {
+      if (!searchResultIds.has(nodeId)) {
+        const node = this.graphStore.getNode(nodeId);
+        if (node) {
+          additionalNodes.push(node);
+        }
+      }
+    }
+
+    const nodesToWalk = [...this.tempNodes, ...Array.from(results.nodes, (n) => n.node), ...additionalNodes];
 
     if (!(this.rootObject instanceof GraphNode)) {
       logger.warn("Root is not a node, this case isn't handled yet. Cancelling search.");
@@ -88,20 +123,31 @@ export class SearchTree extends Tree {
       let curPath = "";
       for (const rel of path) {
         // if the relation list associated with this relation is of type noteContent, then use 'noteContent' instead of 'all'
-        const fromNodeId = this.graphStore.getRelationOrThrow(rel).from;
-        const noteContent = this.graphStore.getRelationList(fromNodeId, "noteContent");
-        const pinnedContentIds = this.graphStore.getRelationList(fromNodeId, "pinned").keys;
-        if (noteContent.size > 0) {
-          curPath = createPath(curPath, "noteContent", rel);
-        } else if (pinnedContentIds.some((pinId) => pinId === rel)) {
-          curPath = createPath(curPath, "pinned", rel);
-        } else {
-          curPath = createPath(curPath, "all", rel);
-        }
+        try {
+          const relation = this.graphStore.getRelation(rel);
+          if (!relation) {
+            logger.warn("Skipping invalid relation in search path:", rel);
+            continue;
+          }
 
-        if (!(curPath in this.searchExpansions)) {
-          this.setPathExpanded(curPath, true);
-          this.searchExpansions.add(rel);
+          const fromNodeId = relation.from;
+          const noteContent = this.graphStore.getRelationList(fromNodeId, "noteContent");
+          const pinnedContentIds = this.graphStore.getRelationList(fromNodeId, "pinned").keys;
+          if (noteContent.size > 0) {
+            curPath = createPath(curPath, "noteContent", rel);
+          } else if (pinnedContentIds.some((pinId) => pinId === rel)) {
+            curPath = createPath(curPath, "pinned", rel);
+          } else {
+            curPath = createPath(curPath, "all", rel);
+          }
+
+          if (!(curPath in this.searchExpansions)) {
+            this.setPathExpanded(curPath, true);
+            this.searchExpansions.add(rel);
+          }
+        } catch (error) {
+          logger.warn("Error processing relation in search path:", rel, error);
+          continue;
         }
       }
     }
@@ -131,6 +177,7 @@ export class SearchTree extends Tree {
     }
 
     // Walk through and remove all nodes from the tree that are not leaves nor in the path of a search result.
+    // This is where hydrate_subset will be called and filtered nodes will be populated
     walkTree(this.root, (treeNode) => {
       if (this.tempPaths.includes(treeNode.path)) {
         this.setPathExpanded(treeNode.path, true);
@@ -153,18 +200,41 @@ export class SearchTree extends Tree {
   }
 
   protected applyFilter(treeNode: TreeNode): boolean {
+    // Clean up deleted nodes from alwaysVisibleNodes before filtering
+    this.cleanupAlwaysVisibleNodes();
+
     // Straight copied from the original applyFilter method. We need to modify it slightly to filter out the hidden relations.
     const hidePointerSection = Object.getPrototypeOf(this).constructor.name === "Tree";
-    function walk(treeNode: TreeNode, filter: Filter, hideSet: Set<string>): boolean {
+    const graphStore = this.graphStore; // Capture reference for use in nested function
+    const alwaysVisible = this.alwaysVisibleNodes; // Capture reference for nested function
+
+    function walk(treeNode: TreeNode, filter: Filter, hideSet: Set<string>, alwaysVisible: Set<string>): boolean {
       if (hidePointerSection) {
         treeNode.childrenGroupsById.pointer.nodes = [];
       }
       if (filter.hidePinnedSection) {
         treeNode.childrenGroupsById.pinned.nodes = [];
       }
+
+      // Process children first
       treeNode.childrenGroups.forEach((group) => {
-        group.nodes = group.nodes.filter((child) => walk(child, filter, hideSet));
+        group.nodes = group.nodes.filter((child) => walk(child, filter, hideSet, alwaysVisible));
       });
+
+      // After processing children, check if this node has any visible children in alwaysVisibleNodes
+      let hasAlwaysVisibleChildren = false;
+      if (treeNode.childrenGroups) {
+        for (const group of treeNode.childrenGroups) {
+          for (const child of group.nodes) {
+            if (alwaysVisible.has(child.object.id)) {
+              hasAlwaysVisibleChildren = true;
+              break;
+            }
+          }
+          if (hasAlwaysVisibleChildren) break;
+        }
+      }
+
       if (treeNode instanceof RootTreeNode) {
         return true;
       }
@@ -195,6 +265,34 @@ export class SearchTree extends Tree {
       }
       const relId = treeNode.relationWithParent.id;
 
+      // Check if this node should always be visible (newly created during search)
+      if (alwaysVisible.has(treeNode.object.id)) {
+        // Verify the node and its relation actually still exist
+        const objectExists = !!treeNode.object && treeNode.object.id !== undefined;
+        const relationExists =
+          treeNode.relationWithParent &&
+          !!treeNode.relationWithParent.id &&
+          !!treeNode.relationWithParent.from &&
+          !!treeNode.relationWithParent.to;
+
+        // Additional check: verify the relation still exists in GraphStore
+        const relationInStore = relationExists
+          ? !!treeNode.relationWithParent && !!graphStore.getRelation(treeNode.relationWithParent.id)
+          : false;
+
+        if (objectExists && relationExists && relationInStore) {
+          return true;
+        } else {
+          alwaysVisible.delete(treeNode.object.id);
+          // Continue with normal filtering logic
+        }
+      }
+
+      // NEW: Check if this node should be visible because it has newly created children
+      if (hasAlwaysVisibleChildren) {
+        return true;
+      }
+
       // This is the only real difference from the original applyFilter. We check if the relation is in the hiddenRelations set
       // and if it is, we filter it out.
       if (hideSet.has(relId)) {
@@ -202,13 +300,14 @@ export class SearchTree extends Tree {
       }
       return true;
     }
-    return walk(treeNode, this.filter, this.hiddenRelations);
+    return walk(treeNode, this.filter, this.hiddenRelations, this.alwaysVisibleNodes);
   }
 
   clearSearch(root: Root) {
     this.searchExpansions.clear();
     this.hiddenRelations.clear();
     this.searchRelations.clear();
+    this.alwaysVisibleNodes.clear();
     this.clear(root);
   }
 
@@ -239,5 +338,99 @@ export class SearchTree extends Tree {
       this.removeFromSearchExpansions(path);
     }
     this.expansionsByPath.set(path, newState);
+  }
+
+  /**
+   * Clean up deleted nodes from alwaysVisibleNodes set
+   * Also verify that all tracked nodes still have valid relations
+   */
+  private cleanupAlwaysVisibleNodes() {
+    const toRemove: string[] = [];
+
+    for (const objectId of this.alwaysVisibleNodes) {
+      const object = this.graphStore.getObject(objectId);
+      if (!object) {
+        toRemove.push(objectId);
+        continue;
+      }
+
+      // Additional validation: check if the object's relations are still valid
+      if (object instanceof GraphNode || object instanceof GraphRelation) {
+        try {
+          // Verify the object's relations still exist in the GraphStore
+          const relations = object.relations;
+          for (const relation of relations) {
+            if (!this.graphStore.getRelation(relation.id)) {
+              logger.warn("Object has invalid relation reference:", objectId, relation.id);
+            }
+          }
+        } catch (error) {
+          logger.warn("Error validating relations for object:", objectId, error);
+          // If there are validation errors, consider removing from alwaysVisible
+          toRemove.push(objectId);
+        }
+      }
+    }
+
+    toRemove.forEach((objectId) => this.alwaysVisibleNodes.delete(objectId));
+  }
+
+  /**
+   * Gets contiguous groups of filtered nodes for a given parent path and group
+   * This method validates node existence on-demand to handle deletions
+   */
+  public getContiguousFilteredGroups(parentPath: string, groupId: GroupId): DescendantTreeNode[][] {
+    const filteredNodesMap = this.filteredNodesByPath.get(parentPath);
+    if (!filteredNodesMap) return [];
+
+    const storedGroups = (filteredNodesMap as any)[`${groupId}_contiguous`] || [];
+
+    // Validate and filter out deleted nodes from each group
+    const validGroups: DescendantTreeNode[][] = [];
+
+    for (const group of storedGroups) {
+      const validNodes = group.filter((node: DescendantTreeNode) => {
+        // Check if the node's object still exists in GraphStore
+        const objectExists = !!this.graphStore.getObject(node.object.id);
+
+        // Check if the node's relation still exists in GraphStore
+        const relationExists = !!this.graphStore.getRelation(node.relationWithParent.id);
+
+        if (!objectExists || !relationExists) {
+          return false;
+        }
+
+        return true;
+      });
+
+      // Only include groups that still have valid nodes
+      if (validNodes.length > 0) {
+        validGroups.push(validNodes);
+      }
+    }
+
+    // Update the stored data with cleaned groups
+    if (validGroups.length !== storedGroups.length) {
+      (filteredNodesMap as any)[`${groupId}_contiguous`] = validGroups;
+    }
+
+    return validGroups;
+  }
+
+  /**
+   * Gets position information for filtered node groups, validating node existence
+   * This method uses the validated contiguous groups to ensure positions are accurate
+   */
+  public getFilteredGroupPositions(parentPath: string, groupId: GroupId): { position: Position; groupIndex: number }[] {
+    // Use our validated contiguous groups method
+    const contiguousGroups = this.getContiguousFilteredGroups(parentPath, groupId);
+    return contiguousGroups.map((group, groupIndex) => {
+      // Since the nodes are contiguous, we can use any node's position as the anchor position
+      const firstNode = group[0];
+      return {
+        position: firstNode.position,
+        groupIndex,
+      };
+    });
   }
 }

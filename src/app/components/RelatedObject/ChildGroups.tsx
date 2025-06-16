@@ -3,6 +3,7 @@ import { observer } from "mobx-react-lite";
 import { AddPinButton } from "@/app/components/Buttons/AddPinButton";
 import { CreateNewButton } from "@/app/components/Buttons/CreateNewButton";
 import { PinCustomIcon } from "@/app/components/CustomIcons";
+import { FilteredNodesPlaceholder } from "@/app/components/RelatedObject/FilteredNodesPlaceholder";
 import { formatNoteSeparatorDate } from "@/app/components/RelatedObject/utils/helpers";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
@@ -20,7 +21,8 @@ import {
   TreeNode,
 } from "@/app/tree/nodes";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
-import { useIsMobile } from "@/app/util";
+import { SearchTree } from "@/app/tree/SearchTree";
+import { comparePositions, Position, useIsMobile } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
@@ -29,9 +31,79 @@ import { RelatedObjectView } from "./RelatedObjectView";
 import styles from "./styles/ChildGroups.module.css";
 import { usePagination } from "./utils/usePagination";
 
+// Define types for our combined item arrays
+type VisibleNodeItem = {
+  type: "node";
+  node: DescendantTreeNode;
+  position: Position;
+};
+
+type FilteredGroupItem = {
+  type: "filteredGroup";
+  position: Position;
+  groupIndex: number;
+};
+
+type CombinedItem = VisibleNodeItem | FilteredGroupItem;
+
 interface ChildGroupsProps {
   treeNode: TreeNode;
 }
+
+// This function is used to render the nodes for the group during search.
+// It is used to render the combined items, both visible and filtered nodes.
+// Filtered nodes are items which would not match the search query, grouped together contiguously.
+const renderItemsForSearch = (
+  tree: SearchTree,
+  noteView: boolean,
+  parentNode: TreeNode,
+  group: NoteContentGroup | PinnedGroup | AllGroup,
+) => {
+  const visibleNodes = group.nodes;
+  const filteredPositions = tree.getFilteredGroupPositions(parentNode.path, group.id);
+  const combinedItems : CombinedItem[] = [
+    ...visibleNodes.map((node) => {
+      return {
+        type: "node" as const,
+        node: node,
+        position: node.position,
+      };
+    }),
+    ...filteredPositions.map(({ position, groupIndex }: { position: any; groupIndex: number }) => ({
+      type: "filteredGroup" as const,
+      position,
+      groupIndex,
+    })),
+  ].sort((a, b) => comparePositions(a.position, b.position));
+  
+  return (
+    combinedItems.map((item, i) => {
+      if (item.type === "node") {
+        const previousItem = combinedItems[i - 1] as VisibleNodeItem;
+        const showDate =
+          i == 0 ||
+          (previousItem.type === "node" &&
+            item.node.object.createdAt.toDateString() !== previousItem.node.object.createdAt.toDateString());
+        return (
+          <div key={item.node.path}>
+            {noteView && <Separator i={i} date={showDate ? item.node.object.createdAt : null} />}
+            <RelatedObjectView treeNode={item.node} />
+          </div>
+        );
+      } else {
+        return (
+          <FilteredNodesPlaceholder
+            key={`${parentNode.path}-${group.id}-filtered-${item.groupIndex}`}
+            tree={parentNode.tree as SearchTree}
+            parentPath={parentNode.path}
+            groupId={group.id}
+            groupIndex={item.groupIndex}
+          />
+        );
+      }
+    })
+  );
+};
 
 export const ChildGroups = observer(function ChildGroups({ treeNode }: ChildGroupsProps) {
   const children: ChildrenGroups = treeNode.childrenGroups;
@@ -123,7 +195,12 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
   const allowAnonymousAppend =
     parentNode.object instanceof GraphNode && parentNode.object.accessMode === AccessMode.APPEND;
 
-  if (isEmpty && !group.isExpanded && !isRoot) {
+  const hasSearch = parentNode.tree instanceof SearchTree && parentNode.tree.search !== "";
+  const contiguousGroups = hasSearch ? (parentNode.tree as SearchTree).getContiguousFilteredGroups(parentNode.path, group.id) : [];
+  const hasFilteredNodes = contiguousGroups.length > 0;
+  const filteredNodesCount = contiguousGroups.reduce((count: number, group: any[]) => count + group.length, 0);
+
+  if (isEmpty && !group.isExpanded && !isRoot && !hasFilteredNodes) {
     return null;
   }
 
@@ -132,7 +209,7 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
       <div className={cn(styles.TopHeader, isRoot && styles.TopHeaderRoot)}>
         {isRoot && (!user.isAnonymous || allowAnonymousAppend) && !isSmallScreen && <CreateNewButton tree={tree} />}
       </div>
-      {!isEmpty && (
+      {(!isEmpty || hasFilteredNodes) && (
         <div className={styles.PinnedHeader}>
           <Button
             variant={group.isExpanded ? "ghostActive" : "ghostSmooth"}
@@ -143,27 +220,34 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
               <PinCustomIcon />
             </span>
             Pinned
-            <span className={styles.PinnedCount}>{group.nodes.length}</span>
+            <span className={styles.PinnedCount}>{group.nodes.length + filteredNodesCount}</span>
           </Button>
           {!user.isAnonymous && <AddPinButton parentNode={parentNode} group={group} />}
         </div>
       )}
 
-      {group.isExpanded && !isEmpty && (
+      {group.isExpanded && (!isEmpty || hasFilteredNodes) && (
         <>
-          {group.nodes
-            .filter((node) => node.object.objectType !== "placeholder")
-            .map((treeNode, i) => {
-              const showDate =
-                i == 0 ||
-                treeNode.object.createdAt.toDateString() !== group.nodes[i - 1].object.createdAt.toDateString();
+          {(() => {
+            if (hasSearch) {
+              return renderItemsForSearch(tree as SearchTree, noteView, parentNode, group);
+            } else {
               return (
-                <div key={treeNode.path}>
-                  {noteView && <Separator i={i} date={showDate ? treeNode.object.createdAt : null} />}
-                  <RelatedObjectView treeNode={treeNode} />
-                </div>
-              );
-            })}
+                group.nodes
+                  .filter((node) => node.object.objectType !== "placeholder")
+                  .map((treeNode, i) => {
+                    const showDate =
+                      i == 0 || treeNode.object.createdAt.toDateString() !== group.nodes[i - 1].object.createdAt.toDateString();
+                    return (
+                      <div key={treeNode.path}>
+                        {noteView && <Separator i={i} date={showDate ? treeNode.object.createdAt : null} />}
+                        <RelatedObjectView treeNode={treeNode} />
+                      </div>
+                    );
+                  })
+              )
+            }
+          })()}
           <div
             className={`${styles.PinSectionSeparator} ${
               viewType === ViewType.Note ? styles.StreamSpacing : styles.DefaultSpacing
@@ -190,6 +274,20 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
   const noteView = parentNode instanceof RootTreeNode && viewType === ViewType.Note;
   const { paginatedNodes, loadNext, loadPrevious } = usePagination(group.nodes);
 
+  const hasSearch = parentNode.tree.search !== "";
+  const tree = parentNode.tree;
+  const groupNodes = paginatedNodes.filter((node) => {
+    return (
+      node.object.objectType !== "placeholder" &&
+      (!settingsStore.hidePinnedItems ||
+        !node.parent.object.isRelationPinned(node.relationWithParent)) &&
+      !(
+        !settingsStore.showHiddenRelations &&
+        hiddenRelationTypeIds.has(node.relationWithParent.relationTypeId)
+      )
+    );
+  });
+
   return (
     <div>
       {loadPrevious && (
@@ -197,31 +295,25 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
           <Button onClick={() => loadPrevious()}>Load more</Button>
         </div>
       )}
-      {paginatedNodes
-        .filter((childTreeNode) => {
-          return (
-            childTreeNode.object.objectType !== "placeholder" &&
-            (!settingsStore.hidePinnedItems ||
-              !childTreeNode.parent.object.isRelationPinned(childTreeNode.relationWithParent)) &&
-            !(
-              !settingsStore.showHiddenRelations &&
-              hiddenRelationTypeIds.has(childTreeNode.relationWithParent.relationTypeId)
-            )
-          );
-        })
-        .reduce((acc, childTreeNode, i, array) => {
-          const prevNode = i > 0 ? array[i - 1] : null;
-          const showDate =
-            noteView &&
-            (!prevNode || childTreeNode.object.createdAt.toDateString() !== prevNode.object.createdAt.toDateString());
-          acc.push(
-            <div key={childTreeNode.path}>
-              {noteView && <Separator i={i} date={showDate ? childTreeNode.object.createdAt : null} />}
-              <RelatedObjectView treeNode={childTreeNode} />
-            </div>,
-          );
-          return acc;
-        }, [] as JSX.Element[])}
+      {(() => {
+        if (hasSearch) {
+          return renderItemsForSearch(tree as SearchTree, noteView, parentNode, group);
+        } else {
+          return groupNodes.reduce((acc: JSX.Element[], childTreeNode, i, array) => {
+            const prevNode = i > 0 ? array[i - 1] : null;
+            const showDate =
+              noteView &&
+              (!prevNode || childTreeNode.object.createdAt.toDateString() !== prevNode.object.createdAt.toDateString());
+            acc.push(
+              <div key={childTreeNode.path}>
+                {noteView && <Separator i={i} date={showDate ? childTreeNode.object.createdAt : null} />}
+                <RelatedObjectView treeNode={childTreeNode} />
+              </div>,
+            );
+            return acc;
+          }, [] as JSX.Element[]);
+        }
+      })()}
       {loadNext && (
         <div style={{ margin: "20px 0px" }}>
           <Button onClick={() => loadNext()}>Load more</Button>

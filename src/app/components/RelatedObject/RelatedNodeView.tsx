@@ -42,7 +42,8 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
     (!user.isAnonymous || allowAnonymousAppend) &&
     objectIsGraphNode &&
     (isAtCanonicalPath || isEditMode) &&
-    !objectIsEditRestricted;
+    !objectIsEditRestricted &&
+    treeNode.isEditable;
 
   const outerShouldBeColumn = isAtCanonicalPath && !objectIsEditRestricted;
   const cnOuterContainer = cn(
@@ -130,7 +131,7 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
           data-tooltip={tooltipContent}
         >
           <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} editorRef={editorRef} />
-          {isReadOnlyReference && !user.isAnonymous && (
+          {isReadOnlyReference && !user.isAnonymous && treeNode.isEditable && (
             <Button
               variant="ghost"
               size="icon"

@@ -8,8 +8,10 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { getOtherObject, getOtherObjectOrThrow } from "@/app/graph/utils";
+import { SearchTree } from "@/app/tree/SearchTree";
 import { SublistTree } from "@/app/tree/SublistTree";
 import { Tree } from "@/app/tree/Tree";
+import { isNoteContent } from "@/app/tree/utils";
 import { comparePositions, createRouteUrl, Position } from "@/app/util";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import logger from "@/lib/logger";
@@ -248,6 +250,7 @@ export class DescendantTreeNode extends BaseTreeNode {
   searchMatchInDescendants: boolean;
   path: string;
   depth: number;
+  isEditable: boolean;
   //Todo: Remove this, just a temporary workaround for sublist view,
   constructor({
     object,
@@ -256,6 +259,7 @@ export class DescendantTreeNode extends BaseTreeNode {
     group,
     isSearchMatch = false,
     searchMatchInDescendants = false,
+    isEditable = true,
   }: {
     object: GraphObject;
     position: Position;
@@ -263,6 +267,7 @@ export class DescendantTreeNode extends BaseTreeNode {
     group: BaseGroup;
     isSearchMatch?: boolean;
     searchMatchInDescendants?: boolean;
+    isEditable?: boolean;
   }) {
     super({ tree: group.tree, object });
     this.path = group.path + "/" + relationWithParent.id;
@@ -279,6 +284,7 @@ export class DescendantTreeNode extends BaseTreeNode {
     this.searchMatchInDescendants = searchMatchInDescendants;
     this.relationWithParent = relationWithParent;
     this.position = position;
+    this.isEditable = isEditable;
   }
 
   hydrate() {
@@ -422,6 +428,7 @@ export class PointerTreeNode extends DescendantTreeNode {
       group: sourceNode.parentGroup,
       isSearchMatch: sourceNode.isSearchMatch,
       searchMatchInDescendants: sourceNode.searchMatchInDescendants,
+      isEditable: sourceNode.isEditable,
     });
     this.sourceNode = sourceNode;
   }
@@ -485,13 +492,20 @@ export abstract class BaseGroup {
 
   hydrate_subset(subsetRelations: Set<string>): Set<string> {
     const newlyHidden = new Set<string>();
-    const nodes = [];
     const missingIds = [];
+
+    // We'll collect both visible and hidden nodes in a single ordered list
+    const allNodes: DescendantTreeNode[] = [];
+    // Keep track of which nodes are hidden
+    const hiddenNodeIds = new Set<string>();
+
     for (const { relation, position } of this.relationsWithPositions) {
-      if (!subsetRelations.has(relation.id)) {
+      const isVisible = subsetRelations.has(relation.id);
+
+      if (!isVisible) {
         newlyHidden.add(relation.id);
-        continue;
       }
+
       const object = getOtherObject(relation, this.parent.object.id);
       if (!object) {
         missingIds.push(relation.from.id, relation.to.id);
@@ -527,13 +541,90 @@ export abstract class BaseGroup {
       ) {
         node.hydrate();
       }
-      nodes.push(node);
+
+      // Add all nodes to the list in original order
+      allNodes.push(node);
+
+      // Mark hidden nodes by their ID
+      if (!isVisible) {
+        // Check if the node would be hidden by hideDirectParent setting
+        const filter = this.tree.filter;
+        const isParentRelation =
+          node.isBackrelation &&
+          (node.relationWithParent.relationType.id === defaultRelationTypes.child.id ||
+            node.relationWithParent.relationType.id === defaultRelationTypes.sublist.id);
+
+        const isSameRelationAsParentToGrandparent = node.relationWithParent.id === node.parent.relationWithParent?.id;
+        const grandparentNotInBreadcrumb = !(node.parent.parent instanceof PathToRootNode);
+        const nodeIsNoteContent = isNoteContent(node);
+
+        const wouldBeHiddenByDirectParent =
+          filter.hideDirectParent &&
+          isSameRelationAsParentToGrandparent &&
+          grandparentNotInBreadcrumb &&
+          !nodeIsNoteContent;
+
+        const wouldBeHiddenByAllParents = filter.hideAllParents && isParentRelation;
+
+        const wouldBeHiddenByAllRootParents = filter.hideAllRootParents && isParentRelation && node.object.isRoot;
+
+        // Skip adding to filteredNodesByPath if it would be hidden by filter settings
+        if (wouldBeHiddenByDirectParent || wouldBeHiddenByAllParents || wouldBeHiddenByAllRootParents) {
+          continue;
+        }
+
+        hiddenNodeIds.add(node.id);
+      }
     }
+
     if (missingIds.length > 0) {
       // logger.debug("Loading missing ids", missingIds);
       this.tree.loadMissingIdsDuringHydration(missingIds);
     }
-    this.nodes = nodes;
+
+    // Store all nodes in the original order
+    this.nodes = allNodes;
+
+    if (!(this.tree instanceof SearchTree)) {
+      throw new Error("This method is only supported for SearchTree");
+    }
+
+    // This section now filters the nodes by the hidden node IDs
+    // Store hidden node IDs in the tree for filtering later
+    const parentPath = this.parent.path;
+    if (!this.tree.filteredNodesByPath.has(parentPath)) {
+      this.tree.filteredNodesByPath.set(parentPath, {} as Record<GroupId, DescendantTreeNode[]>);
+    }
+
+    // Store the hidden node IDs
+    const filterMap = this.tree.filteredNodesByPath.get(parentPath)!;
+    (filterMap as any)[`${this.id}_hidden_ids`] = hiddenNodeIds;
+
+    // Process contiguous groups for efficient handling
+    // We now sort the nodes by position to make it easier to find contiguous groups
+    allNodes.sort((a, b) => comparePositions(a.position, b.position));
+    if (hiddenNodeIds.size > 0) {
+      // Find contiguous blocks of hidden nodes in the original order
+      const contiguousGroups: DescendantTreeNode[][] = [];
+      let currentGroup: DescendantTreeNode[] = [];
+
+      for (const node of allNodes) {
+        if (hiddenNodeIds.has(node.id)) {
+          currentGroup.push(node);
+        } else if (currentGroup.length > 0) {
+          contiguousGroups.push([...currentGroup]);
+          currentGroup = [];
+        }
+      }
+
+      if (currentGroup.length > 0) {
+        contiguousGroups.push(currentGroup);
+      }
+
+      // Store the contiguous groups
+      (filterMap as any)[`${this.id}_contiguous`] = contiguousGroups;
+    }
+
     return newlyHidden;
   }
 
@@ -604,7 +695,6 @@ export abstract class BaseGroup {
     return this.path + "/" + relation.id;
   }
 }
-// TODO Can define a type for this?
 
 export class PinnedGroup extends BaseGroup {
   id = "pinned" as const;
