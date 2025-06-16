@@ -139,6 +139,7 @@ export class GraphStore {
         updateInFlightSearchCount: action,
         setNodeLayerLoadingStatus: action,
         incrementSearchTrigger: action,
+        load: action,
       });
     }
   }
