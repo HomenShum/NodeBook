@@ -53,6 +53,7 @@ jobs:
           BACKUP_FILE=$(cat latest_backup.txt)
           aws s3 cp s3://mew-vercel-backup/$BACKUP_FILE mew_lite_dump.bak
 
-      - name: Restore backup to MEW_STABLE_DATABASE_URL
+      - name: Restore backup to MEW_DEV_DATABASE_URL
         run: |
-          pg_restore -v --clean --no-owner --if-exists --dbname="$MEW_DEV_DATABASE_URL" mew_lite_dump.bak
+          pg_restore -c -v --no-acl -d $MEW_DEV_DATABASE_URL mew_lite_dump.bak
+          psql "$MEW_DEV_DATABASE_URL" -c 'SET search_path TO "$user", public;'
