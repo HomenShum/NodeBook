@@ -3,9 +3,15 @@ name: Fast forward stable on main
 on:
   schedule:
     # Runs at 12 AM UTC every Monday
-    - cron: "0 0 * * 1"
+    - cron: "0 0 * * 5"
   # Allows manual triggering
   workflow_dispatch:
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: us-west-1
+  MEW_STABLE_DATABASE_URL: ${{ secrets.MEW_STABLE_DATABASE_URL }}
 
 jobs:
   rebase:
@@ -28,3 +34,25 @@ jobs:
           git checkout stable
           git merge main
           git push origin stable
+
+      - name: Install PostgreSQL client and AWS CLI
+        run: |
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/postgres.list'
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-16
+
+      - name: Download latest mew_lite backup from S3
+        run: |
+          aws s3 ls s3://mew-vercel-backup/ | \
+            grep mew_lite_dump | \
+            sort | \
+            tail -n 1 | \
+            awk '{print $4}' > latest_backup.txt
+
+          BACKUP_FILE=$(cat latest_backup.txt)
+          aws s3 cp s3://mew-vercel-backup/$BACKUP_FILE mew_lite_dump.bak
+
+      - name: Restore backup to MEW_STABLE_DATABASE_URL
+        run: |
+          pg_restore -v --clean --no-owner --if-exists --dbname="$MEW_STABLE_DATABASE_URL" mew_lite_dump.bak
