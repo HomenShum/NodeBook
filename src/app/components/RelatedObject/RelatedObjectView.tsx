@@ -78,7 +78,7 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
       <Main treeNode={treeNode}>
         {!(viewType === "note" && !hasNoteContent) && <Controls showToggle={hideToggle} />}
         {!hideToggle && <Toggle />}
-        {fillSpaceForToggle && <div style={{ width: 21, height: 21 }} />}
+        {fillSpaceForToggle && <div style={{ width: 16, height: 21 }} />}
         <Content />
       </Main>
       {viewType === "note" &&
