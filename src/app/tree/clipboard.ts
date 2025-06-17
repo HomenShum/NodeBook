@@ -15,6 +15,16 @@ export const MEW_CLIPBOARD_MIMETYPE = "application/x-mew-graphstore";
 
 const TEXT_TAB = "\t";
 
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
 /**
  * Copy content from one or more DescendantTreeNodes.
  *
@@ -63,6 +73,7 @@ export const copyContentFromLexicalNodes = (addToEvent: ClipboardEvent, nodes: D
   });
 
   clipboardData.setData("text/plain", plainTextParts.join("\n"));
+  clipboardData.setData("text/html", plainTextParts.map(escapeHtml).join("<br/>"));
   clipboardData.setData(MEW_CLIPBOARD_MIMETYPE, JSON.stringify(chipParts));
 
   return true;
