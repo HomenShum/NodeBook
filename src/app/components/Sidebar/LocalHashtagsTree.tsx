@@ -1,7 +1,6 @@
-import { useVirtualizer } from "@tanstack/react-virtual";
 import { Maximize2, Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -28,6 +27,51 @@ interface TreeElementProps {
   currentDepth?: number;
 }
 
+interface HashtagItemProps {
+  hashtag: GraphObject;
+  onChildClick: (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => void;
+  onExpandClick: (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => void;
+}
+
+const HashtagItem = observer(function HashtagItem({ hashtag, onChildClick, onExpandClick }: HashtagItemProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      key={hashtag.id}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+        minWidth: 0,
+      }}
+      onPointerEnter={() => setIsHovered(true)}
+      onPointerLeave={() => setIsHovered(false)}
+    >
+      <Button
+        variant="ghost"
+        className={cn(styles.Button)}
+        style={{ justifyContent: "flex-start" }}
+        title={hashtag.text}
+        onClick={(e) => onChildClick(e, hashtag)}
+      >
+        {hashtag.text}
+      </Button>
+      {isHovered && (
+        <Button
+          variant="ghostSmooth"
+          className={cn(styles.IconButton)}
+          onClick={(e) => onExpandClick(e, hashtag)}
+          aria-label="Expand hashtag"
+        >
+          <Maximize2 size={13} />
+        </Button>
+      )}
+    </div>
+  );
+});
+
 const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: TreeElementProps) {
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
@@ -37,8 +81,6 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
   const { sidebarExpandedLocalHashtags: isExpanded } = settingsStore;
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  const scrollParentRef = useRef<HTMLDivElement>(null);
 
   // Function to get hashtag nodes from forward traversal
   const getHashtagNodes = useCallback((node: GraphNode, depth: number, visited = new Set<string>()): GraphNode[] => {
@@ -87,11 +129,6 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     [getHashtagNodes, object, currentDepth, refreshTrigger],
   );
 
-  // Calculate total height once based on all hashtags
-  const totalHeight = useMemo(() => {
-    return localHashtags.length * 36; // 36px is our estimateSize
-  }, [localHashtags.length]);
-
   // Filter hashtags based on search query
   const filteredHashtags = useMemo(() => {
     if (!searchQuery) return localHashtags;
@@ -105,13 +142,6 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
 
     return () => clearInterval(intervalId);
   }, []);
-
-  const virtualizer = useVirtualizer({
-    count: filteredHashtags.length,
-    getScrollElement: () => scrollParentRef.current,
-    estimateSize: () => 36, // Approximate height of each hashtag button
-    overscan: 5,
-  });
 
   const handleNavigation = useCallback(
     (action: () => void) => {
@@ -191,65 +221,21 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
       {isExpanded && (
         <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search hashtags..." />
       )}
-      <div
-        ref={scrollParentRef}
-        className={styles.SidebarTreeChildren}
-        style={{
-          height: isExpanded ? Math.min(totalHeight, 500) + "px" : "100%", // Cap at 500px height
-          overflow: "auto",
-        }}
-      >
+      <div className={styles.SidebarTreeChildren}>
         {isExpanded && filteredHashtags.length === 0 ? (
           <div className={styles.EmptyMessage}>
             {searchQuery ? "No matching hashtags found" : "No local hashtags found"}
           </div>
         ) : (
-          isExpanded && (
-            <div
-              style={{
-                height: `${virtualizer.getTotalSize()}px`,
-                width: "100%",
-                position: "relative",
-              }}
-            >
-              {virtualizer.getVirtualItems().map((virtualRow) => {
-                const hashtag = filteredHashtags[virtualRow.index];
-                return (
-                  <div
-                    key={hashtag.id}
-                    className={cn(styles.Button)}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: `${virtualRow.size}px`,
-                      transform: `translateY(${virtualRow.start}px)`,
-                      display: "flex",
-                      alignItems: "center",
-                      paddingRight: "4px",
-                    }}
-                  >
-                    <Button
-                      variant="ghost"
-                      className="w-full h-full flex justify-between items-center"
-                      onClick={(e) => handleChildClick(e, hashtag)}
-                    >
-                      <span style={{ textAlign: "left" }}>{hashtag.text}</span>
-                    </Button>
-                    <Button
-                      variant="ghostSmooth"
-                      size="icon"
-                      className={styles.ExpandButton}
-                      onClick={(e) => handleExpandClick(e, hashtag)}
-                    >
-                      <Maximize2 size={14} />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          )
+          isExpanded &&
+          filteredHashtags.map((hashtag) => (
+            <HashtagItem
+              key={hashtag.id}
+              hashtag={hashtag}
+              onChildClick={handleChildClick}
+              onExpandClick={handleExpandClick}
+            />
+          ))
         )}
       </div>
     </>
