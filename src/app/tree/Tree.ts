@@ -1132,6 +1132,7 @@ export class Tree {
                 const newNotePath = createPath(newParentPath, "noteContent", node.relationWithParent.id);
                 this.setFocusedNode(newNotePath, selection.position, selection.editMode);
               }
+
               return true;
             }
           }
@@ -1150,7 +1151,7 @@ export class Tree {
       if (parentGroup !== siblingAbove?.parentGroup) continue; // can't indent selections that span groups
 
       // Create selection state for tracking
-      const selState = createSelectionState("INDENT", nodes[0].object.id, nodes[0].path);
+      let selState = createSelectionState("INDENT", nodes[0].object.id, nodes[0].path);
 
       // Mark that the next update will have selection state
       const updateManager = this.getUpdateManager();
@@ -1160,6 +1161,28 @@ export class Tree {
 
       // Perform the operation
       await siblingAbove.addChildren(nodes, -1);
+
+      // If the node is a second child of a notecontent group, when indenting the second child,
+      //  since the second child becomes a child of the first child, the multiline note is destroyed.
+      //  In this case, we convert the multiline note to a node.
+      if (selection.type === "editor") {
+        const node = nodes[0];
+        if (node.parentGroup.id === "noteContent" && node.parent instanceof DescendantTreeNode) {
+          const noteContentNodes = node.parent.childrenGroupsById.noteContent.nodes;
+          const nodeToConvert = noteContentNodes[0];
+          if (noteContentNodes.length === 2 && noteContentNodes[1] === node) {
+            this.convertSingleLineNoteToNode(nodeToConvert);
+            // Set selection to the child of the first node
+            const position = this.selection?.type === "editor" ? this.selection.position : "end";
+            const noteContentRegexp = /\/noteContent\/[^/]*/;
+            const partialNewPath = nodeToConvert.path.replace(noteContentRegexp, "");
+            const newPath = createPath(partialNewPath, "all", noteContentNodes[1].relationWithParent.id);
+            this.setFocusedNode(newPath, position);
+            // This currently doesn't work properly - TODO
+            selState = createSelectionState("INDENT", noteContentNodes[1].object.id, newPath);
+          }
+        }
+      }
 
       // Get the transaction ID and track the selection state
       if (updateManager?.lastTransactionId) {
