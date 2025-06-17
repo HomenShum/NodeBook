@@ -244,15 +244,15 @@ const CommandBar = observer(() => {
   );
 
   const trimCommandName = (name: string) => {
-    if (name.length > 100) {
+    if (name.length > 300) {
       let hasMatch = false;
       if (name.includes(search.text)) {
         hasMatch = true;
       }
       if (hasMatch) {
         const matchIndex = name.indexOf(search.text);
-        const startIndex = Math.max(0, matchIndex - 30);
-        const endIndex = Math.min(name.length, matchIndex + search.text.length + 30);
+        let startIndex = Math.max(0, matchIndex - 150);
+        const endIndex = Math.min(name.length, matchIndex + search.text.length + 150);
         let trimmedName = name.slice(startIndex, endIndex);
         if (startIndex > 0) {
           trimmedName = "..." + trimmedName;
@@ -262,7 +262,7 @@ const CommandBar = observer(() => {
         }
         return trimmedName;
       } else {
-        return name.slice(0, 60) + "...";
+        return name.slice(0, 300) + "...";
       }
     }
     return name;
