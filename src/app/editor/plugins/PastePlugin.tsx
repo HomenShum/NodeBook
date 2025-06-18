@@ -1150,7 +1150,6 @@ export const getLinesFromHtmlList = (
           /* 4 . each \n-separated chunk becomes *its own* outline line             */
           fullText.split(/\r?\n/).forEach(chunk => {
             const text = chunk.replace(/\t/g, '');                  // drop literal tabs
-            if (!text.trim()) return;                              // skip blanks
 
             const { isChecked, remainingText } = getTodoStatus(text);
             const { depth: extra, remainingText: tail } =
@@ -1272,7 +1271,6 @@ export const getLinesFromPlainText = (text: string, shiftKey: boolean): ChipsWit
     ? [{ chips: transformTextToChips(text), depth: 0 }]
     : text
         .split("\n")
-        .filter((l) => l.length > 0)
         .map((value) => {
           const { remainingText: textAfterDepth, depth } = getDepthFromTextOffset(value);
           const { isChecked, remainingText } = getTodoStatus(textAfterDepth);
