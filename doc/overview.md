@@ -42,6 +42,8 @@ We have server-side search and client-side search, done via two different indexe
 
 The server-side search is all in `answerQuery.ts`. We use the trigram Gini index extension built into postgres to do this, with a pretty high threshold to improve search performance. See `pg_trgm` for more info on this.
 
-### 3. Displaying
+TODO: expand on this
 
-Since each view pivoted around a given root node is different, we need to have a way to unambiguously store and display these pivoted views. I.e. let's say we have the following tree
+### 3. Displaying & Manipulating the Tree
+
+TODO
