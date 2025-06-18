@@ -36,8 +36,8 @@ export const answerQuery = async (userId: string, query: string): Promise<Serial
   if (query_str[query_str.length - 1] !== "%") {
     query_str = query_str + "%";
   }
-  // If the query is less than 8 characters, don't use the word similarity function
-  if (query_str.length < 8) {
+  // If the query is less than 16 characters, don't use the word similarity function
+  if (query_str.length < 16) {
     nodeRows = await db
       .select({ id: graphNodeTable.id })
       .from(graphNodeTable)
@@ -47,9 +47,9 @@ export const answerQuery = async (userId: string, query: string): Promise<Serial
           or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPublic, true)),
         ),
       )
-      .limit(50);
-  } else {
-    nodeRows = await db
+      .limit(100);
+    } else {
+      nodeRows = await db
       .select({ id: graphNodeTable.id })
       .from(graphNodeTable)
       .where(
@@ -59,7 +59,7 @@ export const answerQuery = async (userId: string, query: string): Promise<Serial
         ),
       )
       .orderBy(desc(sql`strict_word_similarity(${query}, content_text)`))
-      .limit(50);
+      .limit(100);
   }
 
   // Only load the specific search result nodes without their connected layers
