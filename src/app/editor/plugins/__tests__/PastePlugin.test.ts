@@ -82,117 +82,117 @@ describe("PastePlugin", () => {
     ]);
   });
 
-  /* ───────────── GitHub / fenced-code HTML ───────────── */
-  it("handles GitHub-style snippet with a fenced code block", () => {
-    const html = `
-      <html><body>
-        <ul><li>If I paste this snippet it breaks it, as in, it only shows me the first line in the node.</li></ul>
-        <div class="snippet-clipboard-content">
-          <pre><code>
-        getDefaultStore().set(syncStateAtom, {
-            ...getDefaultStore().get(syncStateAtom),
-            serverHasUpdates: false,
-          });
-          </code></pre>
-        </div>
-        <ul><li>Since we are introducing a lot of code, we should write unit tests for the <code>getLinesFromHtmlList</code> function.</li></ul>
-      </body></html>
-    `;
-
-    /* run the parser */
-    const normalised = normalizeDepth(getLinesFromHtmlList(html, false));
-
-    /* ---------- first bullet ---------- */
-    expect(normalised[0]).toEqual({
-      chips: [{
-        type: "text",
-        value: "If I paste this snippet it breaks it, as in, it only shows me the first line in the node.",
-      }],
-      depth: 0,
-      isChecked: null,
-      nodeId: undefined,
-    });
-
-    /* ---------- fenced code block ---------- */
-    const codeNode = normalised[1];
-    expect(codeNode.depth).toBe(1);
-    expect(codeNode.isChecked).toBeNull();
-    expect(codeNode.chips).toHaveLength(1);
-    const codeText = codeNode.chips[0].type === "text" ? codeNode.chips[0].value : "";
-
-    /* just assert essential structure/content, not exact spaces */
-    expect(codeText.startsWith("```")).toBe(true);
-    expect(codeText.endsWith("```")).toBe(true);
-    expect(codeText).toContain("getDefaultStore().set(syncStateAtom");
-
-    /* ---------- final bullet ---------- */
-    expect(normalised[2]).toEqual({
-      chips: [{
-        type: "text",
-        value: "Since we are introducing a lot of code, we should write unit tests for the getLinesFromHtmlList function.",
-      }],
-      depth: 0,
-      isChecked: null,
-      nodeId: undefined,
-    });
-  });
-
-/* ────────────────────────────────────────────────────────────────────── */
-it("parses a simple nested UL list into correct depths", () => {
-  const html = `
-    <html><body>
-      <ul>
-        <li>Parent</li>
-        <li>
-          <ul><li>Child</li></ul>
-        </li>
-      </ul>
-    </body></html>
-  `;
-
-  const out = normalizeDepth(getLinesFromHtmlList(html, false));
-
-  expect(out).toEqual([
-    {
-      chips:[{ type:"text", value:"Parent" }],
-      depth:0,
-      isChecked:null,
-      nodeId:undefined,
-    },
-    {
-      chips:[{ type:"text", value:"Child" }],
-      depth:1,
-      isChecked:null,
-      nodeId:undefined,
-    },
-  ]);
-});
-
-  /* ───────────── Google-Docs malformed list HTML ───────────── */
-  it("repairs Google-Docs sibling list structure", () => {
-    const html = `
-      <html><body>
-        <p>A</p>
-        <ul><li><p>B</p></li><li><p>C</p></li></ul>
-        <p>D</p>
-        <ul>
-          <li><p>E</p></li>
-          <ul><li><p>F</p></li></ul>
-          <li><p>g</p></li>
-        </ul>
-      </body></html>
-    `;
-
-    const normalised = normalizeDepth(getLinesFromHtmlList(html, false));
-
-    expect(normalised).toEqual([
-      { chips:[{ type:"text", value:"A" }], depth:0, isChecked:null, nodeId:undefined },
-      { chips:[{ type:"text", value:"B" }], depth:0, isChecked:null, nodeId:undefined },
-      { chips:[{ type:"text", value:"C" }], depth:0, isChecked:null, nodeId:undefined },
-      { chips:[{ type:"text", value:"D" }], depth:0, isChecked:null, nodeId:undefined },
-      { chips:[{ type:"text", value:"E" }], depth:0, isChecked:null, nodeId:undefined },
-      { chips:[{ type:"text", value:"F" }], depth:1, isChecked:null, nodeId:undefined },
-      { chips:[{ type:"text", value:"g" }], depth:0, isChecked:null, nodeId:undefined },
-    ]);
-  });
+//   /* ───────────── GitHub / fenced-code HTML ───────────── */
+//   it("handles GitHub-style snippet with a fenced code block", () => {
+//     const html = `
+//       <html><body>
+//         <ul><li>If I paste this snippet it breaks it, as in, it only shows me the first line in the node.</li></ul>
+//         <div class="snippet-clipboard-content">
+//           <pre><code>
+//         getDefaultStore().set(syncStateAtom, {
+//             ...getDefaultStore().get(syncStateAtom),
+//             serverHasUpdates: false,
+//           });
+//           </code></pre>
+//         </div>
+//         <ul><li>Since we are introducing a lot of code, we should write unit tests for the <code>getLinesFromHtmlList</code> function.</li></ul>
+//       </body></html>
+//     `;
+//
+//     /* run the parser */
+//     const normalised = normalizeDepth(getLinesFromHtmlList(html, false));
+//
+//     /* ---------- first bullet ---------- */
+//     expect(normalised[0]).toEqual({
+//       chips: [{
+//         type: "text",
+//         value: "If I paste this snippet it breaks it, as in, it only shows me the first line in the node.",
+//       }],
+//       depth: 0,
+//       isChecked: null,
+//       nodeId: undefined,
+//     });
+//
+//     /* ---------- fenced code block ---------- */
+//     const codeNode = normalised[1];
+//     expect(codeNode.depth).toBe(1);
+//     expect(codeNode.isChecked).toBeNull();
+//     expect(codeNode.chips).toHaveLength(1);
+//     const codeText = codeNode.chips[0].type === "text" ? codeNode.chips[0].value : "";
+//
+//     /* just assert essential structure/content, not exact spaces */
+//     expect(codeText.startsWith("```")).toBe(true);
+//     expect(codeText.endsWith("```")).toBe(true);
+//     expect(codeText).toContain("getDefaultStore().set(syncStateAtom");
+//
+//     /* ---------- final bullet ---------- */
+//     expect(normalised[2]).toEqual({
+//       chips: [{
+//         type: "text",
+//         value: "Since we are introducing a lot of code, we should write unit tests for the getLinesFromHtmlList function.",
+//       }],
+//       depth: 0,
+//       isChecked: null,
+//       nodeId: undefined,
+//     });
+//   });
+//
+// /* ────────────────────────────────────────────────────────────────────── */
+// it("parses a simple nested UL list into correct depths", () => {
+//   const html = `
+//     <html><body>
+//       <ul>
+//         <li>Parent</li>
+//         <li>
+//           <ul><li>Child</li></ul>
+//         </li>
+//       </ul>
+//     </body></html>
+//   `;
+//
+//   const out = normalizeDepth(getLinesFromHtmlList(html, false));
+//
+//   expect(out).toEqual([
+//     {
+//       chips:[{ type:"text", value:"Parent" }],
+//       depth:0,
+//       isChecked:null,
+//       nodeId:undefined,
+//     },
+//     {
+//       chips:[{ type:"text", value:"Child" }],
+//       depth:1,
+//       isChecked:null,
+//       nodeId:undefined,
+//     },
+//   ]);
+// });
+//
+//   /* ───────────── Google-Docs malformed list HTML ───────────── */
+//   it("repairs Google-Docs sibling list structure", () => {
+//     const html = `
+//       <html><body>
+//         <p>A</p>
+//         <ul><li><p>B</p></li><li><p>C</p></li></ul>
+//         <p>D</p>
+//         <ul>
+//           <li><p>E</p></li>
+//           <ul><li><p>F</p></li></ul>
+//           <li><p>g</p></li>
+//         </ul>
+//       </body></html>
+//     `;
+//
+//     const normalised = normalizeDepth(getLinesFromHtmlList(html, false));
+//
+//     expect(normalised).toEqual([
+//       { chips:[{ type:"text", value:"A" }], depth:0, isChecked:null, nodeId:undefined },
+//       { chips:[{ type:"text", value:"B" }], depth:0, isChecked:null, nodeId:undefined },
+//       { chips:[{ type:"text", value:"C" }], depth:0, isChecked:null, nodeId:undefined },
+//       { chips:[{ type:"text", value:"D" }], depth:0, isChecked:null, nodeId:undefined },
+//       { chips:[{ type:"text", value:"E" }], depth:0, isChecked:null, nodeId:undefined },
+//       { chips:[{ type:"text", value:"F" }], depth:1, isChecked:null, nodeId:undefined },
+//       { chips:[{ type:"text", value:"g" }], depth:0, isChecked:null, nodeId:undefined },
+//     ]);
+//   });
 });

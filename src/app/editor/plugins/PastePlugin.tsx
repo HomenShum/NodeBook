@@ -1047,7 +1047,17 @@ export const getLinesFromHtmlList = (
   // ── 3. Single DOM-walk ───────────────────────────────────────────────────────
   const walk = (el: Element, currentDepth: number) => {
     for (const node of Array.from(el.childNodes)) {
-      if (node.nodeType !== Node.ELEMENT_NODE) continue;
+      if(node.nodeType === Node.TEXT_NODE){
+        lines.push({
+          chips: transformTextToChips(node.textContent || ""),
+          depth: currentDepth,
+          isChecked: null
+        });
+        continue;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE){
+        continue;
+      }
       const elem = node as HTMLElement;
 
       // Determines when a P or DIV should "anchor" under the last heading.
