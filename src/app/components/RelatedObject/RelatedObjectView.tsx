@@ -60,7 +60,10 @@ export const RelatedObjectView = observer(function RelatedObjectView({ treeNode 
     (viewType === ViewType.Webpage && treeNode.parent instanceof RootTreeNode && treeNode.childCount === 0);
 
   const fillSpaceForToggle =
-    viewType === ViewType.Webpage && treeNode.parent instanceof RootTreeNode && treeNode.childCount === 0;
+    viewType === ViewType.Webpage &&
+    treeNode.parent instanceof RootTreeNode &&
+    treeNode.childCount === 0 &&
+    treeNode.childrenGroupsById.noteContent.nodes.length === 0;
   const hasNoteContent = treeNode.childrenGroupsById.noteContent.nodes.length > 0;
 
   if (viewType === "card") {
