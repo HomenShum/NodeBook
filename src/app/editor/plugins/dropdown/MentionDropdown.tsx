@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { COMMAND_PRIORITY_HIGH, TextNode } from "lexical";
-import { ReactPortal, useCallback, useEffect, useRef, useState } from "react";
+import { ReactPortal, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as ReactDOM from "react-dom";
 
 import LineLoader from "@/app/components/LineLoader/LineLoader";
@@ -45,40 +45,54 @@ export function MentionDropdown({
   const graphStore = useGraphStore();
   const tree = treeNode.tree;
 
-  const options =
-    dropdown?.type === "mention"
-      ? [
-          ...dropdown.matches
-            .filter((m) => m.type === "node")
-            .map((m) => new MentionTypeaheadOption(m.object, dropdown.mentionTrigger))
-            .slice(0, 10)
-            .sort((a, b) => {
-              // For hashtags, sort by:
-              // exact match > number of relations in descending order
-              if (dropdown.mentionTrigger === HASHTAG_SYMBOL) {
-                if (a.value.type !== "existing" || b.value.type !== "existing") {
-                  return 0;
+  const options = useMemo(
+    () => {
+      let isHashtagWithExactMatch = false;
+      if (dropdown?.type === "mention" && dropdown.mentionTrigger === HASHTAG_SYMBOL && dropdown.matches.some((o) => o.type === "node" && o.object.text === HASHTAG_SYMBOL + dropdown.search)) {
+        isHashtagWithExactMatch = true;
+      }
+
+      const sortedOptions = dropdown?.type === "mention"
+        ? [
+            ...dropdown.matches
+              .filter((m) => m.type === "node")
+              .map((m) => new MentionTypeaheadOption(m.object, dropdown.mentionTrigger))
+              .slice(0, 10)
+              .sort((a, b) => {
+                // For hashtags, sort by:
+                // exact match > number of relations in descending order
+                if (dropdown.mentionTrigger === HASHTAG_SYMBOL) {
+                  if (a.value.type !== "existing" || b.value.type !== "existing") {
+                    return 0;
+                  }
+                  // Now we know both a and b are "existing" type
+                  // Sort by exact match first..
+                  if (a.value.object.text === "#" + dropdown.search && b.value.object.text !== "#" + dropdown.search) {
+                    return -1;
+                  }
+                  if (a.value.object.text !== "#" + dropdown.search && b.value.object.text === "#" + dropdown.search) {
+                    return 1;
+                  }
+                  // Then sort by number of relations in descending order
+                  const aValue = a.value as { type: "existing"; object: GraphNode };
+                  const bValue = b.value as { type: "existing"; object: GraphNode };
+                  const aRelations = aValue.object.relations.length;
+                  const bRelations = bValue.object.relations.length;
+                  return bRelations - aRelations;
                 }
-                // Now we know both a and b are "existing" type
-                // Sort by exact match first..
-                if (a.value.object.text === "#" + dropdown.search && b.value.object.text !== "#" + dropdown.search) {
-                  return -1;
-                }
-                if (a.value.object.text !== "#" + dropdown.search && b.value.object.text === "#" + dropdown.search) {
-                  return 1;
-                }
-                // Then sort by number of relations in descending order
-                const aValue = a.value as { type: "existing"; object: GraphNode };
-                const bValue = b.value as { type: "existing"; object: GraphNode };
-                const aRelations = aValue.object.relations.length;
-                const bRelations = bValue.object.relations.length;
-                return bRelations - aRelations;
-              }
-              return 0;
-            }),
-          new MentionTypeaheadOption(dropdown.search, dropdown.mentionTrigger),
-        ]
-      : [];
+                return 0;
+              }),
+            new MentionTypeaheadOption(dropdown.search, dropdown.mentionTrigger),
+          ]
+        : [];
+        if (isHashtagWithExactMatch) {
+          sortedOptions.splice(sortedOptions.findIndex((o) => o.value.type === "new"), 1);
+        }
+        return sortedOptions;
+    },
+    [dropdown],
+  );
+
 
   const onSelectOption = useCallback(
     async (opt: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
