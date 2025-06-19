@@ -16,7 +16,7 @@ import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { $getChips, $getText, matchDefaultRelationType } from "@/app/editor/utils/content";
-import { $getTextAroundSelection, getLexicalSelectionPosition } from "@/app/editor/utils/selection";
+import { $atEditorStart, $getTextAroundSelection, getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
@@ -131,8 +131,13 @@ export const RelationPlugin = observer(function RelationPlugin() {
       // From the users perspective, it'll look like the colon in front of the relation
       // type was deleted.
       editor.registerCommand(
-        KEY_BACKSPACE_COMMAND,
+        KEY_DOWN_COMMAND,
         (event) => {
+
+          if(event.key !== "Backspace"){
+            return false;
+          }
+
           // If it's a child relation, or the selection isn't at the start, exit
           if (
             treeNode.relationWithParent.relationType.id === defaultRelationTypes.child.id &&
@@ -155,10 +160,20 @@ export const RelationPlugin = observer(function RelationPlugin() {
               end.offset === 0
             );
           });
+
           if (!isSelectionAtStart) {
             return false;
           }
 
+          if ((event.metaKey || event.ctrlKey) && $atEditorStart()) {
+            const res = tree.deletedRelationType();
+            if (res) {
+              event.stopPropagation();
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              return true;
+            }
+          }
           // Go ahead with removing relation type and setting content
 
           event.preventDefault();

@@ -462,12 +462,12 @@ export class Tree {
     return false;
   }
 
-  deletedRelationTypeOfEmptySelection() {
+  deletedRelationType() {
     if (this.selection?.type !== "editor") {
       return false;
     }
     const selectedNode = this.getNode(this.selection.treeNodeId);
-    if (!selectedNode || selectedNode.object.text !== "") {
+    if (!selectedNode) {
       return false;
     }
     if (selectedNode.relationWithParent.relationType.id === defaultRelationTypes.child.id) {

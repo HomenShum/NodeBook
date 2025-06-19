@@ -5,7 +5,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { COMMAND_PRIORITY_HIGH, KEY_DOWN_COMMAND } from "lexical";
+import { COMMAND_PRIORITY_HIGH, KEY_BACKSPACE_COMMAND, KEY_DOWN_COMMAND } from "lexical";
 import { observer } from "mobx-react-lite";
 import { RefObject, useEffect } from "react";
 
@@ -34,7 +34,6 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { ImageNode } from "@/app/graph/ImageNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { DescendantTreeNode } from "@/app/tree/nodes";
-import { useTree } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 
 import styles from "./Editor.module.css";
@@ -49,30 +48,6 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
   const viewStore = useViewStore();
   if (!(treeNode.object instanceof GraphNode)) {
     throw new Error("Expected object to be a GraphNode");
-  }
-
-  function PreventCommandBackspace() {
-    const [editor] = useLexicalComposerContext();
-    const viewStore = useViewStore();
-    const tree = viewStore.activeTree;
-    useEffect(() => {
-      return editor.registerCommand(
-        KEY_DOWN_COMMAND,
-        (event) => {
-          if ((event.metaKey || event.ctrlKey) && event.key === "Backspace") {
-            const res = tree.deletedRelationTypeOfEmptySelection();
-            if (res) {
-              event.stopPropagation();
-              event.preventDefault();
-              event.stopImmediatePropagation();
-            }
-          }
-          return false;
-        },
-        COMMAND_PRIORITY_HIGH,
-      );
-    }, [editor, tree]);
-    return null;
   }
 
   const tree = treeNode.tree;
@@ -115,7 +90,6 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <LinkPlugin />}
         {isEditorEditable && <MinusKeyPlugin treeNode={treeNode} />}
         {isEditorEditable && <PastePlugin />}
-        {isEditorEditable && <PreventCommandBackspace />}
         {isEditorEditable && <RelationPlugin />}
         {isEditorEditable && <ReplacementPlugin treeNode={treeNode} />}
         {isEditorEditable && <ContextualGenerationPlugin treeNode={treeNode} />}
