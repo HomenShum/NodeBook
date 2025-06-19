@@ -9,10 +9,12 @@
   transition: background-color 0.15s, color 0.15s;
   outline: none;
   width: fit-content;
-  cursor: default;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .Disabled {
+  cursor: not-allowed;
   pointer-events: none;
   opacity: 0.5;
 }
@@ -157,6 +159,7 @@
 }
 
 .Button:disabled {
+  cursor: not-allowed;
   pointer-events: none;
   opacity: 0.5;
 }

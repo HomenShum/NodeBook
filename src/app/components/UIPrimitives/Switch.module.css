@@ -8,7 +8,7 @@
   height: var(--switch-height);
   background-color: var(--gray-4);
   border-radius: 12px;
-  cursor: default;
+  cursor: pointer;
   position: relative;
 }
 
@@ -41,7 +41,8 @@
 
 .Switch.Disabled {
   opacity: 0.5;
-  cursor: default;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* .Switch.size-sm {

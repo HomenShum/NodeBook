@@ -260,8 +260,5 @@
 .shortUrlSaveButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
-
-.shortUrlSaveButton:disabled:hover {
-  background-color: transparent;
+  pointer-events: none;
 }
