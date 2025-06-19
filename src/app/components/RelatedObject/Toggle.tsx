@@ -1,6 +1,6 @@
 import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
 
 import { CyclicIcon } from "@/app/components/CustomIcons";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -22,12 +22,23 @@ const Toggle = observer(function Toggle() {
   const userId = graphStore.user?.id;
   const { treeNode } = useTreeNode();
 
-  let isLoading = false;
-  if (treeNode.object instanceof GraphNode) {
-    const totalRelations = treeNode.object.relationCount ?? 0;
-    const loadedRelations = treeNode.object.relations.length;
-    isLoading = totalRelations > loadedRelations;
-  }
+  const isLoading = useMemo(() => {
+    if (treeNode.object instanceof GraphNode) {
+      const totalRelations = treeNode.object.relationCount ?? 0;
+      const loadedRelations = treeNode.object.relations.length;
+
+      if(graphStore.nodesInLayerLoading.has(treeNode.object.id)){
+        return true;
+      }
+
+      if(graphStore.layerManager.loadedIds.has(treeNode.object.id)){
+        return false;
+      }
+
+      return totalRelations > loadedRelations;
+    }
+    return false;
+  }, [graphStore.nodesInLayerLoading.size, graphStore.layerManager.loadedIds.size, treeNode.object, graphStore.nodesInLayerLoading, graphStore.layerManager.loadedIds])
 
   const handleToggleClick = useCallback(
     (event: React.MouseEvent) => {

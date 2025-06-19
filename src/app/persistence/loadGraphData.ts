@@ -1,5 +1,6 @@
 import { User } from "@auth0/auth0-react";
 import { captureException } from "@sentry/nextjs";
+import { action, makeObservable, observable } from "mobx";
 
 import { GetUserResponseSchema, PostUserResponseSchema } from "@/app/api/types";
 import { env } from "@/app/envFrontend";
@@ -23,7 +24,7 @@ export const localLocalData = (graphStore: GraphStore) => {
 };
 
 export class LayerManager {
-  private static loadedIds = new Set<string>();
+  public loadedIds = new Set<string>();
   private lazyQueuedIds = new Set<string>();
   //We load just 1 layer, loading 2 layers for canonical can be expensive.
   //Hence a separate Set(). Take a look at this later.
@@ -36,7 +37,7 @@ export class LayerManager {
   private initialLoadComplete = false; // Track if initial load is done
 
   public clear() {
-    LayerManager.loadedIds.clear();
+    this.loadedIds.clear();
     this.searchedText.clear();
     this.initialLoadComplete = false;
     clearTimeout(this.searchDebounceTimer || -1);
@@ -45,6 +46,13 @@ export class LayerManager {
 
   constructor(graphStore: GraphStore) {
     this.graphStore = graphStore;
+    makeObservable(this, {
+      loadedIds: observable,
+      clear: action,
+      loadWithIds: action,
+      initialize: action,
+      lazyLoadWithIds: action
+    })
   }
 
   /**
@@ -104,11 +112,11 @@ export class LayerManager {
 
   public async loadWithIds(objectIds: string[], withReset = false, forceIds: string[] = []) {
     const ids = objectIds
-      .filter((id) => !LayerManager.loadedIds.has(id) || forceIds.includes(id))
+      .filter((id) => !this.loadedIds.has(id) || forceIds.includes(id))
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => {
-      LayerManager.loadedIds.add(id);
+      this.loadedIds.add(id);
       this.graphStore.setNodeLayerLoadingStatus(id, true);
     });
     const loadedIds = await this.fetchAndLoad(
@@ -131,7 +139,7 @@ export class LayerManager {
     if (this.lazyLoadTimer) {
       clearTimeout(this.lazyLoadTimer);
     }
-    objectIds.forEach((id) => !LayerManager.loadedIds.has(id) && this.lazyQueuedIds.add(id));
+    objectIds.forEach((id) => !this.loadedIds.has(id) && this.lazyQueuedIds.add(id));
     if (this.lazyQueuedIds.size <= 0) return;
     this.lazyLoadTimer = setTimeout(() => {
       this.loadWithIds(Array.from(this.lazyQueuedIds));
@@ -161,10 +169,10 @@ export class LayerManager {
     if (!env.isPersistenceEnabled || env.persistTo !== "server") return;
     const authFetch = getAuthFetch();
     const ids = objectIds
-      .filter((id) => !LayerManager.loadedIds.has(id))
+      .filter((id) => !this.loadedIds.has(id))
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
-    ids.forEach((id) => LayerManager.loadedIds.add(id));
+    ids.forEach((id) => this.loadedIds.add(id));
     const layers = await Promise.all([
       authFetch(`/api/layer`, {
         method: "POST",
