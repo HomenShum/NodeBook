@@ -198,7 +198,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       );
     } else if (dropdown?.type === "mention") {
       if (dropdown.mentionTrigger === HASHTAG_SYMBOL) {
-        matches = getHashtagMatches(debouncedSearchText);
+        matches = getHashtagMatches(debouncedSearchText, ["node"], treeNode.object.id);
       } else {
         matches = getMatches(debouncedSearchText, ["node"]);
       }

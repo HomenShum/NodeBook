@@ -8,7 +8,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphRelationType } from "@/app/graph/types";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
 import { isNoteContent } from "@/app/tree/utils";
-import { scoreMatch } from "@/lib/utils";
+import { HASHTAG_SYMBOL, scoreMatch } from "@/lib/utils";
 
 export type NodeType = "node" | "relation" | "relationType";
 
@@ -17,7 +17,7 @@ export interface FilterBy {
   relationTypeId?: string;
 }
 
-type GetMatches = (text: string, types?: NodeType[]) => Match[];
+type GetMatches = (text: string, types?: NodeType[], curNodeId?: string) => Match[];
 
 // Define the type for nodes and relations
 type NodeResult = { node: GraphNode; score: number };
@@ -230,21 +230,42 @@ export const useGetRecentNodes = (maxResults: number, toFilterByNodeId?: string)
   }, [graphStore, maxResults, toFilterByNodeId]);
 };
 
+function isCandidateHashtag(match: Match) {
+  // Starts with hashtag, and only has alphanumeric symbols + _
+  return match.type === "node" && match.object.text.startsWith(HASHTAG_SYMBOL) && /^[a-zA-Z0-9_]+$/.test(match.object.text.slice(1));
+}
 export const useGetMatchesForHashtags = (maxResults: number): GetMatches => {
   const graphStore = useGraphStore();
 
   return useCallback(
-    (text: string) => {
-      const results = graphStore.myHashtagsNode.children
-        .filter((node) => node instanceof GraphNode)
+    (text: string, types?: NodeType[], curNodeId?: string) => {
+      const ownedResults = graphStore.myHashtagsNode.children
+        .filter((node) => node instanceof GraphNode && node.id !== curNodeId)
         .filter((node) => node.text.toLocaleLowerCase().includes(text.toLocaleLowerCase()))
         .sort((a, b) => scoreMatch(b.text, text) - scoreMatch(a.text, text))
         .slice(0, maxResults)
         .map((node) => ({ key: node.id, type: "node" as const, object: node as GraphNode, score: 0 }));
 
-      return results;
+      const allResults = getMatches(graphStore, HASHTAG_SYMBOL + text, ["node"], maxResults).filter((match) => {
+        if (match.type !== "node") return false;
+        if (match.object.id === curNodeId) return false;
+        return isCandidateHashtag(match);
+      });
+      
+      // Deduplicate by node id and text content
+      const indicesToRemove = new Set<number>();
+      const ownedResultsTexts = new Set(ownedResults.map((result) => result.object.text));
+      const ownedResultsNodeIds = new Set(ownedResults.map((result) => result.object.id));
+      for (let j = 0; j < allResults.length; j++) {
+        const result = allResults[j] as GraphNodeMatch;
+        if (ownedResultsNodeIds.has(result.object.id) || ownedResultsTexts.has(result.object.text)) {
+          indicesToRemove.add(j);
+        }
+      }
+
+      return [...ownedResults, ...allResults.filter((_, index) => !indicesToRemove.has(index))];
     },
-    [graphStore.myHashtagsNode.children, maxResults],
+    [maxResults, graphStore],
   );
 };
 
