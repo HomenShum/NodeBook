@@ -27,6 +27,67 @@ interface TreeElementProps {
   object: GraphObject;
 }
 
+interface HashtagItemProps {
+  hashtag: GraphObject;
+  onChildClick: (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => void;
+  onPinClick: (e: React.MouseEvent<HTMLButtonElement>, child: GraphObject) => void;
+  isPinned: boolean;
+  relationCount: number;
+}
+
+const HashtagItem = observer(function HashtagItem({
+  hashtag,
+  onChildClick,
+  onPinClick,
+  isPinned,
+  relationCount,
+}: HashtagItemProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      key={hashtag.id}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+        minWidth: 0,
+      }}
+      onPointerEnter={() => setIsHovered(true)}
+      onPointerLeave={() => setIsHovered(false)}
+    >
+      <Button
+        variant="ghost"
+        className={cn(styles.Button)}
+        style={{ justifyContent: "flex-start" }}
+        title={hashtag.text}
+        onClick={(e) => onChildClick(e, hashtag)}
+      >
+        {hashtag.text}
+      </Button>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        {(isHovered || isPinned) && (
+          <Button
+            variant="ghostSmooth"
+            className={cn(hashtagSidebarStyles.PinButton, {
+              [hashtagSidebarStyles.Pinned]: isPinned,
+              [hashtagSidebarStyles.Unpinned]: !isPinned,
+            })}
+            onClick={(e) => onPinClick(e, hashtag)}
+            aria-label={isPinned ? "Unpin hashtag" : "Pin hashtag"}
+          >
+            <div className={hashtagSidebarStyles.PinIcon}>
+              <PinCustomIcon size={11} />
+            </div>
+          </Button>
+        )}
+        <span className={styles.NodeCount}>{relationCount}</span>
+      </div>
+    </div>
+  );
+});
+
 const TreeElement = observer(function TreeElement({ object }: TreeElementProps) {
   const viewStore = useViewStore();
   const setRoot = useSetMainRoot();
@@ -71,8 +132,10 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
 
   // Filter children based on search query
   const filteredUniqueChildren = searchQuery
-    ? uniqueChildren.filter((child) => child.text.toLowerCase().includes(searchQuery.toLowerCase()))
-    : uniqueChildren;
+    ? uniqueChildren
+        .filter((child) => child.text.toLowerCase().includes(searchQuery.toLowerCase()))
+        .filter((child) => !pinnedUniqueChildren.some((pinned) => pinned.id === child.id))
+    : uniqueChildren.filter((child) => !pinnedUniqueChildren.some((pinned) => pinned.id === child.id));
 
   const filteredPinnedChildren = searchQuery
     ? sortedPinnedChildren.filter((child) => child.text.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -194,29 +257,16 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
       <div className={styles.SidebarTreeChildren}>
         {isExpanded &&
           filteredPinnedChildren.map((o) => (
-            <div key={o.id} className={hashtagSidebarStyles.HashtagRow}>
-              <Button
-                variant="ghost"
-                style={{ justifyContent: "flex-start" }}
-                className={cn(styles.Button)}
-                onClick={(e) => handleChildClick(e, o)}
-              >
-                {o.text}
-              </Button>
-
-              <Button
-                variant="ghostSmooth"
-                className={cn(hashtagSidebarStyles.PinButton, hashtagSidebarStyles.Pinned)}
-                onClick={(e) => handlePinClick(e, o)}
-              >
-                <div className={hashtagSidebarStyles.PinIcon}>
-                  <PinCustomIcon />
-                </div>
-              </Button>
-              <span className={styles.NodeCount}>
-                {o instanceof GraphNode || o instanceof GraphRelation ? o.relationCount : o.relations.length - 1}
-              </span>
-            </div>
+            <HashtagItem
+              key={o.id}
+              hashtag={o}
+              onChildClick={handleChildClick}
+              onPinClick={handlePinClick}
+              isPinned={true}
+              relationCount={
+                o instanceof GraphNode || o instanceof GraphRelation ? o.relationCount : o.relations.length - 1
+              }
+            />
           ))}
       </div>
       {isExpanded && filteredPinnedChildren.length > 0 && (
@@ -232,32 +282,16 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           filteredUniqueChildren.map((o) => {
             const relation = object.relations.find((r) => r.from.id === object.id && r.to.id === o.id);
             return (
-              <div key={o.id} className={hashtagSidebarStyles.HashtagRow}>
-                <Button
-                  variant="ghost"
-                  style={{ justifyContent: "flex-start" }}
-                  className={cn(styles.Button)}
-                  onClick={(e) => handleChildClick(e, o)}
-                >
-                  {o.text}
-                </Button>
-
-                <Button
-                  variant="ghostSmooth"
-                  className={cn(hashtagSidebarStyles.PinButton, {
-                    [hashtagSidebarStyles.Pinned]: relation && object.isRelationPinned(relation),
-                    [hashtagSidebarStyles.Unpinned]: !relation || !object.isRelationPinned(relation),
-                  })}
-                  onClick={(e) => handlePinClick(e, o)}
-                >
-                  <div className={hashtagSidebarStyles.PinIcon}>
-                    <PinCustomIcon />
-                  </div>
-                </Button>
-                <span className={styles.NodeCount}>
-                  {o instanceof GraphNode || o instanceof GraphRelation ? o.relationCount : o.relations.length - 1}
-                </span>
-              </div>
+              <HashtagItem
+                key={o.id}
+                hashtag={o}
+                onChildClick={handleChildClick}
+                onPinClick={handlePinClick}
+                isPinned={relation ? object.isRelationPinned(relation) : false}
+                relationCount={
+                  o instanceof GraphNode || o instanceof GraphRelation ? o.relationCount : o.relations.length - 1
+                }
+              />
             );
           })
         )}

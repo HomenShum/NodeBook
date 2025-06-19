@@ -12,10 +12,6 @@ declare const styles: {
   readonly "IconRotated": string;
   readonly "IconsContainer": string;
   readonly "NodeCount": string;
-  readonly "PinButton": string;
-  readonly "PinButtonHover": string;
-  readonly "PinIcon": string;
-  readonly "Pinned": string;
   readonly "SearchContainer": string;
   readonly "SearchIcon": string;
   readonly "SearchInput": string;

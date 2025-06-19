@@ -99,15 +99,22 @@ export const ViewsIconMew = ({ size = 16, fill = "currentColor", stroke = "curre
 
 // TODO: refactor old icons
 
-export const PinCustomIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor">
-    <path
-      d="m6 2.58 2.89 2.9a2.64 2.64 0 0 0 3.37.3l.37.37-3.08 3.07 3.77 3.76v.34h-.34L9.21 9.56 6.16 12.6l-.37-.37a2.64 2.64 0 0 0-.3-3.36l-2.9-2.89-.85.85a.24.24 0 0 1-.34-.34l5.1-5.1c.1-.09.25-.09.34 0 .1.1.1.25 0 .35L6 2.58Z"
-      // strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      stroke="currentColor"
-    />
+export const PinCustomIcon = ({ size = 14 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox={`0 0 14 14`} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g clipPath="url(#clip0_5025_2)">
+      <path
+        d="M5.67042 2.2575L8.56042 5.1575C8.9981 5.59422 9.57518 5.86347 10.191 5.9183C10.8069 5.97312 11.4225 5.81004 11.9304 5.4575L12.3004 5.8275L9.22042 8.8975L12.9904 12.6575V12.9975H12.6504L8.88042 9.2375L5.83042 12.2775L5.46042 11.9075C5.81031 11.4004 5.97186 10.787 5.91707 10.1733C5.86228 9.5597 5.59461 8.98456 5.16042 8.5475L2.26042 5.6575L1.41042 6.5075C1.36533 6.55259 1.30418 6.57792 1.24042 6.57792C1.17665 6.57792 1.1155 6.55259 1.07042 6.5075C1.02533 6.46241 1 6.40126 1 6.3375C1 6.27374 1.02533 6.21259 1.07042 6.1675L6.17042 1.0675C6.27042 0.9775 6.42042 0.9775 6.51042 1.0675C6.61042 1.1675 6.61042 1.3175 6.51042 1.4175L5.67042 2.2575Z"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_5025_2">
+        <rect width="14" height="14" fill="white" />
+      </clipPath>
+    </defs>
   </svg>
 );
 
