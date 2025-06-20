@@ -1,6 +1,6 @@
 import { RotateCcw, RotateCw } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { VariableSizeList as List } from "react-window";
 
@@ -9,11 +9,11 @@ import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
-import { GraphUpdate } from "@/app/graph/GraphUpdate";
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { TreeContext } from "@/app/tree/TreeContext";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { GraphUpdate, AddNode, AddRelation, DeleteNode, DeleteRelation, UpdateNode, UpdateRelation } from "@/app/graph/GraphUpdate";
 
 import s from "./UpdatesFeed.module.css";
 
@@ -100,10 +100,11 @@ export const UpdatesFeed = observer(function UpdatesFeed() {
   const viewStore = useViewStore();
   const user = useUser();
   // Get updates in reverse chronological order
-  const updates = [...graphStore.updateManager.sessionUpdates].reverse();
   const listRef = useRef<List>(null);
   const measureRef = useRef<HTMLDivElement>(null);
   const [lineHeight, setLineHeight] = useState(26);
+  const [filterByRoot, setFilterByRoot] = useState(false);
+  const [updates, setUpdates] = useState(graphStore.updateManager.sessionUpdates.slice().reverse());
 
   useEffect(() => {
     if (measureRef.current) {
@@ -152,6 +153,81 @@ export const UpdatesFeed = observer(function UpdatesFeed() {
   const handleGlobalRedo = useCallback(() => {
     graphStore.updateManager.redo();
   }, [graphStore.updateManager]);
+
+  const handleFilter = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+
+    setFilterByRoot(isChecked);
+
+    if (!isChecked) {
+      const fullList = [...graphStore.updateManager.sessionUpdates].reverse();
+      setUpdates(fullList);
+      return;
+    }
+
+    const descendantIds = viewStore.getDescendantNodeIds();
+
+    const filteredUpdates = [...graphStore.updateManager.sessionUpdates]
+        .reverse().filter(update => {
+          for (let i = 0; i < update.length; i++) {
+        // Finds the relevant nodes' IDs depending on what kind of an update it is.
+        switch (update[i].operation) {
+          case "addRelation": {
+            const addRelation = update[i] as AddRelation;
+            if (descendantIds.has(addRelation.relation.toId) ||
+                descendantIds.has(addRelation.relation.fromId)) {
+              return true;
+            }
+            break;
+          }
+          case "updateRelationList": {
+            // This type of update has no node changes.
+            break;
+          }
+          case "updateNode": {
+            const updateNode = update[i] as UpdateNode;
+            if (descendantIds.has(updateNode.oldProps.id)) {
+              return true;
+            }
+            break;
+          }
+          case "addNode": {
+            const addNode = update[i] as AddNode;
+            if (descendantIds.has(addNode.node.id)) {
+              return true;
+            }
+            break;
+          }
+          case "updateRelation": {
+            const updateRelation = update[i] as UpdateRelation;
+            if (descendantIds.has(updateRelation.oldProps.toId) ||
+                descendantIds.has(updateRelation.oldProps.fromId)) {
+              return true;
+            }
+            break;
+          }
+          case "deleteRelation": {
+            const deleteRelation = update[i] as DeleteRelation;
+            if (descendantIds.has(deleteRelation.deleted.relation.toId) ||
+                descendantIds.has(deleteRelation.deleted.relation.fromId)) {
+              return true;
+            }
+            break;
+          }
+          case "deleteNode": {
+            const deleteNode = update[i] as DeleteNode;
+            if (descendantIds.has(deleteNode.node.id)) {
+              return true;
+            }
+            break;
+          }
+        }
+      }
+      return false;
+    });
+
+    setUpdates(filteredUpdates);
+  }, [graphStore.updateManager, viewStore]);
 
   const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const update = updates[index];
@@ -228,6 +304,11 @@ export const UpdatesFeed = observer(function UpdatesFeed() {
               <RotateCw size={16} strokeWidth={2} />
               <span>Redo</span>
             </Button>
+
+            <label className={s.GlobalButton}>
+              <input type="checkbox" checked={filterByRoot} onChange={handleFilter}/>
+                Filter Updates by Root
+            </label>
           </div>
         </div>
         <p className={s.Description}>

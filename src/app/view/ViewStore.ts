@@ -213,6 +213,11 @@ export class ViewStore {
     return this.settingsStore.getViewMode(this.mainView.rootObjectId);
   }
 
+  getDescendantNodeIds(): Set<string> {
+    const nodes = this.treeView.getDescendantNodes();
+    return new Set(nodes.map(node => node.object.id));
+  }
+
   setQuickCaptureViewType(viewType: ViewType) {
     this.quickCaptureViewType = viewType;
     this.quickCaptureTree = new QuickCaptureTree(

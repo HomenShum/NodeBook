@@ -368,6 +368,26 @@ export class Tree {
     return top;
   }
 
+  public getDescendantNodes(): TreeNode[] {
+    const nodes: TreeNode[] = [];
+
+    const walk = (node: TreeNode) => {
+      nodes.push(node);
+
+      node.childrenGroups.forEach((group) => {
+        group.nodes.forEach((childNode) => {
+          if (childNode.relationWithParent.id === childNode.object.canonicalRelationId) {
+            walk(childNode)
+          }
+        });
+      });
+    };
+
+    walk(this.state.root);
+
+    return nodes;
+  }
+
   private collectSelectedNodes(
     subtreeRoots: DescendantTreeNode[],
     anchor: DescendantTreeNode,
