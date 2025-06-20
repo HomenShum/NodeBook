@@ -54,8 +54,8 @@ const contentNotEqual = (a: SerializedNode, b: SerializedNode) => {
 };
 
 export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode, newProps: SerializedNode) => {
-  if (newProps.id === GLOBAL_ROOT_ID) {
-    throw new SyncError("Cannot update global root node", { actionName: "updateNode", data: { oldProps, newProps } });
+  if (newProps.id === GLOBAL_ROOT_ID && !(oldProps.content.length === 1 && newProps.content.length === 1 && oldProps.content[0].type === "text" && newProps.content[0].type === "text" && oldProps.content[0].value ===  newProps.content[0].value )) {
+    throw new SyncError("Cannot update global root node content", { actionName: "updateNode", data: { oldProps, newProps } });
   }
   if (oldProps.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
     throw new SyncError('Cannot update content of user\'s "My Hashtags" node', {
