@@ -545,7 +545,7 @@ export class Tree {
 
       // Load expansion state for the new root - do this asynchronously
       if (this.remoteHydrationEnabled && env.isAuthEnabled) {
-        setTimeout(() => this.loadExpansionStateFromServer(), 0);
+        setTimeout(() => this.applySavedExpansionState(), 0);
       }
     }
 
@@ -681,6 +681,7 @@ export class Tree {
   }
 
   setPathExpanded(path: Path, isExpanded: boolean) {
+
     this.expansionsByPath.set(path, isExpanded);
     this.expansionLocalStorageCache.update(this.expansionsByPath);
   }
@@ -2387,50 +2388,6 @@ export class Tree {
   private pendingExpansionObjectIds: Set<string> = new Set<string>();
 
   /**
-   * Called when an object is loaded from the server and hydrated into the tree
-   * to check if it should be expanded based on the server's expansion state
-   */
-  public onObjectLoaded(objectId: string) {
-    // No longer needed - expansion state is now path-based
-  }
-
-  /**
-   * Finds nodes with the given object ID and expands them
-   */
-  private processLoadedObject(objectId: string) {
-    // No longer needed - expansion state is now path-based
-  }
-
-  /**
-   * Loads expansion state from server and prepares to apply it as nodes are loaded
-   */
-  private async loadExpansionStateFromServer() {
-    if (!this.rootObjectId) return;
-
-    try {
-      const expandedPaths = await this.expansionStateManager.loadExpansionState(this.rootObjectId);
-      if (expandedPaths === null) {
-        logger.debug(`No server expansion state found for root: ${this.rootObjectId}, using local state`);
-        return;
-      }
-
-      logger.debug(`Loaded server expansion state for root: ${this.rootObjectId}, ${expandedPaths.length} paths`);
-
-      // Apply the expansion state directly since we have paths
-      expandedPaths.forEach((path) => this.setPathExpanded(path, true));
-    } catch (error) {
-      logger.error(`Error loading expansion state from server: ${error}`);
-    }
-  }
-
-  /**
-   * Process nodes that are already loaded and should be expanded
-   */
-  private processLoadedNodes() {
-    // No longer needed - expansion state is now path-based
-  }
-
-  /**
    * Saves current expansion state to the server for all users
    */
   public async saveExpansionStateForAllUsers(): Promise<boolean> {
@@ -2456,9 +2413,10 @@ export class Tree {
    * Gets all currently expanded paths in the tree
    */
   private getExpandedPaths(): string[] {
+    const pathPrefix = this.pathToRoot.slice(1).map((obj) => "/"+obj.childGroupId+"/"+obj.relation?.id).join("");
     return Array.from(this.expansionsByPath.entries())
       .filter(([_, isExpanded]) => isExpanded)
-      .map(([path, _]) => path);
+      .map(([path, _]) => path.slice(pathPrefix.length));
   }
 
   /**
@@ -2493,7 +2451,8 @@ export class Tree {
     if (!this.rootObjectId) return false;
 
     try {
-      const expandedPaths = await this.expansionStateManager.loadExpansionState(this.rootObjectId);
+      const pathPrefix = this.pathToRoot.slice(1).map((obj) => "/"+obj.childGroupId+"/"+obj.relation?.id).join("");
+      const expandedPaths = await this.expansionStateManager.loadExpansionState(this.rootObjectId)
       if (expandedPaths === null) {
         logger.debug(`No server expansion state found for root: ${this.rootObjectId}`);
         return false;
@@ -2503,7 +2462,8 @@ export class Tree {
       this.collapseAllNodes();
 
       // Apply the loaded expansion state
-      expandedPaths.forEach((path) => this.setPathExpanded(path, true));
+      expandedPaths.forEach((path) => this.setPathExpanded(pathPrefix+path, true));
+      expandedPaths.forEach((path) => console.log(pathPrefix+path))
 
       logger.debug(`Applied saved expansion state for root: ${this.rootObjectId}, ${expandedPaths.length} paths`);
       return true;
@@ -2519,7 +2479,7 @@ export class Tree {
    */
   public async initializeTree(): Promise<void> {
     if (this.remoteHydrationEnabled) {
-      await this.loadExpansionStateFromServer();
+      await this.applySavedExpansionState();
     }
   }
 
