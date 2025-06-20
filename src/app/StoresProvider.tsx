@@ -1,7 +1,7 @@
 "use client";
 import axios from "axios";
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
 import { useAuth } from "@/app/auth/useAuth";
@@ -36,6 +36,7 @@ export function StoresProvider({
   const [settingsStore, setSettingsStore] = useState<SettingsStore>(new SettingsStore(UNLOGGED_USER));
   const [graphStore, setGraphStore] = useState<GraphStore>(new GraphStore(UNLOGGED_USER, settingsStore));
   const [viewStore, setViewStore] = useState<ViewStore>(new ViewStore(settingsStore, graphStore));
+  const renderCounter = useRef(0);
 
   // expose stores to window for debugging
   if (env.env !== "production" && typeof window !== "undefined") {
@@ -52,7 +53,7 @@ export function StoresProvider({
 
   // when auth changes, clean up current stores and setup up new ones
   useEffect(() => {
-    if (!user) return;
+    if (!user || renderCounter.current > 1) return;
     let ignore = false;
     async function setupStores() {
       let syncCleanup = () => {};
@@ -82,6 +83,7 @@ export function StoresProvider({
             ];
             graph.layerManager.clear();
             await graph.layerManager.initialize(objectIds);
+            renderCounter.current++;
           } else if (env.persistTo === "local") {
             localLocalData(graph);
           }
