@@ -132,11 +132,7 @@ export function getMatches(
   return matches
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
-      // If the search text has the string "->" inside it, we prioritize relations over relationTypes over nodes
-      if (hasArrow) {
-        if (a.type === "relation" && b.type !== "relation") return -1;
-        if (b.type === "relation" && a.type !== "relation") return 1;
-      }
+
       // relationType before node before relation
       if (a.type === "relationType" && b.type !== "relationType") return -1;
       if (b.type === "relationType" && a.type !== "relationType") return 1;
