@@ -2,6 +2,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import axios from "axios";
 import { $getSelection, COMMAND_PRIORITY_LOW, KEY_DOWN_COMMAND, PASTE_COMMAND } from "lexical";
 import { useEffect, useRef } from "react";
+import { $insertDataTransferForRichText } from "@lexical/clipboard";
 
 import ApiClient from "@/app/api/utils/client/ApiClient";
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
@@ -448,11 +449,19 @@ export const PastePlugin = () => {
           const mewData = clipboardData.getData(MEW_CLIPBOARD_MIMETYPE);
           const htmlData = clipboardData.getData("text/html");
           const plainText = clipboardData.getData("text/plain");
+          const lexicalData =  clipboardData.getData("application/x-lexical-editor");
 
           let rawLines: ChipsWithContext[];
 
           if (mewData) {
             rawLines = getLinesFromMewData(mewData, shiftKey);
+          }  else if(lexicalData){
+            const selection = $getSelection();
+            if(selection){
+              $insertDataTransferForRichText(clipboardData, selection, editor);
+              return true;
+            }
+            return false;
           } else if (htmlData) {
             rawLines = getLinesFromHtmlList(htmlData, shiftKey); 
           } else {
