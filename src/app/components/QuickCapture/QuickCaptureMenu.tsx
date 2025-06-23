@@ -69,7 +69,7 @@ function QuickCaptureMenu() {
         {!user.isAnonymous && (
           <Button
             className={cn(s1.ShowTooltip, s1.BottomAlign)}
-            data-tooltip={"Open in Side View"}
+            data-tooltip={"Open in Side Panel"}
             size="icon"
             style={{ position: "relative" }}
             onClick={() => handleSideViewExpand()}
@@ -80,7 +80,7 @@ function QuickCaptureMenu() {
         {!user.isAnonymous && (
           <Button
             className={cn(s1.ShowTooltip, s1.BottomAlign)}
-            data-tooltip={"Open in New View"}
+            data-tooltip={"Open in New Tab"}
             size="icon"
             style={{ position: "relative" }}
             onClick={() => handleOpenInNewWindow()}

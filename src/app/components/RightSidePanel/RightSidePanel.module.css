@@ -9,6 +9,9 @@
   background: none;
   margin-top: 1px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-6) var(--gray-2);
+  position: relative;
 }
 
 .RightSidePanel > [class*="ContentContainer"] {
@@ -36,11 +39,12 @@
   position: relative;
   top: 0;
   left: 0;
-  width: 16px;
+  width: 8px;
   height: calc(100vh - 16px);
   cursor: col-resize;
   touch-action: none;
   flex-shrink: 0;
+  border-left: 1px solid var(--gray-6);
 }
 
 .ResizerHandle {
@@ -58,35 +62,12 @@
   background-color: var(--teal-a4);
 }
 
-.CloseIconContainer {
+.CloseButtonContainer {
   display: flex;
-  justify-content: start;
-  width: 100%;
-  overflow: hidden;
-  padding: 10px;
-  opacity: 0.7;
-  cursor: pointer;
-  min-height: 30px;
-}
-
-.CloseIconContainer:hover {
-  opacity: 1;
-}
-
-.CloseTreeButton {
-  display: none;
-  cursor: pointer;
-  margin-left: auto;
-  transition: opacity ease-in-out 10ms;
-  z-index: 1;
-}
-
-.CloseTreeButton:hover {
-  opacity: 0.8;
-}
-
-.RightSidePanel .CloseTreeButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding: 16px 8px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 99;
 }

@@ -183,6 +183,10 @@
   min-height: 100px;
 }
 
+.EmptySpaceClickAreaInSidePanel {
+  border-bottom: 1px solid var(--gray-6);
+}
+
 .MainAndSidebarContainer {
   display: flex;
 }

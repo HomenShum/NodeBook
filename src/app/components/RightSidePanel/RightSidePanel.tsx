@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import OutlineContent from "@/app/components/OutlineContent";
 import s from "@/app/components/RightSidePanel/RightSidePanel.module.css";
+import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 import { useViewStore } from "@/app/view/useViewStore";
 
@@ -82,8 +84,17 @@ const RightSidePanel = observer(function RightSidePanel({ parentRef }: { parentR
         <div className={s.ResizerHandle} />
       </div>
       <div className={s.RightSidePanel}>
-        <div className={s.CloseIconContainer} onClick={() => viewStore.toggleRightSidePanel()} title={"Close sidebar"}>
-          <PanelRightCloseIcon size={20} />
+        <div className={s.CloseButtonContainer}>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="default" size="icon" onClick={() => viewStore.toggleRightSidePanel()}>
+                  <PanelRightCloseIcon size={16} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Close Side Panel</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
         <OutlineParentContext.Provider value="RightSidePanel">
           {viewStore.sidePanelTrees.map((tree) => (

@@ -1,6 +1,5 @@
 declare const styles: {
-  readonly "CloseIconContainer": string;
-  readonly "CloseTreeButton": string;
+  readonly "CloseButtonContainer": string;
   readonly "HeadingContainer": string;
   readonly "Resizer": string;
   readonly "ResizerHandle": string;

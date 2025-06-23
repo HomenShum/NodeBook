@@ -1,6 +1,6 @@
 import { Globe, HomeIcon, Link, Maximize2, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useEffect, useMemo, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef } from "react";
 
 import appStyles from "@/app/app.module.css";
 import { ClickToCreateNodeButton } from "@/app/components/Buttons/ClickToCreateNodeButton";
@@ -10,10 +10,10 @@ import s from "@/app/components/OutlineView.module.css";
 import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
 import { RootObjectDetails } from "@/app/components/RelatedObject/RelatedObjectDetails";
-import s1 from "@/app/components/RightSidePanel/RightSidePanel.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useSlugs } from "@/app/contexts/SlugContext";
 import { useUser } from "@/app/contexts/UserContext";
@@ -126,6 +126,8 @@ function OutlineContent({ tree }: Props) {
       tree.setRoot(tree.root.parent.object);
     }
   };
+
+  const parentComponent = useContext(OutlineParentContext);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -292,15 +294,17 @@ function OutlineContent({ tree }: Props) {
                 </div>
               )}
             </TooltipProvider>
-            <Button
-              variant={viewStore.flattenSublists ? "active" : "default"}
-              className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
-              data-tooltip={viewStore.flattenSublists ? "Expand Sublists" : "Flatten Sublists"}
-              size="icon"
-              onClick={() => viewStore.setFlattenSublists(!viewStore.flattenSublists)}
-            >
-              {viewStore.flattenSublists ? <FlattenIcon /> : <SublistsIcon />}
-            </Button>
+            {parentComponent !== "RightSidePanel" && (
+              <Button
+                variant={viewStore.flattenSublists ? "active" : "default"}
+                className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
+                data-tooltip={viewStore.flattenSublists ? "Expand Sublists" : "Flatten Sublists"}
+                size="icon"
+                onClick={() => viewStore.setFlattenSublists(!viewStore.flattenSublists)}
+              >
+                {viewStore.flattenSublists ? <FlattenIcon /> : <SublistsIcon />}
+              </Button>
+            )}
             <Button
               variant="default"
               className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
@@ -319,9 +323,17 @@ function OutlineContent({ tree }: Props) {
             >
               <Link size={16} strokeWidth={1.7} />
             </Button>
-            <div className={s1.CloseTreeButton} onClick={() => viewStore.deleteSidePanelTree(tree.id)}>
-              <X />
-            </div>
+            {parentComponent === "RightSidePanel" && (
+              <Button
+                variant="default"
+                className={cn(breadcrumbs.ShowTooltip, breadcrumbs.BottomAlign, s.LinkButton)}
+                data-tooltip="Close Tree"
+                size="icon"
+                onClick={() => viewStore.deleteSidePanelTree(tree.id)}
+              >
+                <X size={20} strokeWidth={1.7} />
+              </Button>
+            )}
           </div>
           {treeRoot.object.noteContentRelationsList.size > 0 && (
             <div className={s.NoteContentSection}>
@@ -345,7 +357,10 @@ function OutlineContent({ tree }: Props) {
       </div>
       {!user.isAnonymous && (
         <div
-          className={s.EmptySpaceClickArea}
+          className={cn(
+            s.EmptySpaceClickArea,
+            parentComponent === "RightSidePanel" && s.EmptySpaceClickAreaInSidePanel,
+          )}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();

@@ -358,6 +358,10 @@ export class ViewStore {
   }
 
   toggleRightSidePanel() {
+    // If opening the side panel and QuickCapture is open, close QuickCapture first
+    if (!this.rightSidePanelOpen && this.quickCaptureOpen) {
+      this.closeQuickCapture();
+    }
     this.rightSidePanelOpen = !this.rightSidePanelOpen;
   }
 

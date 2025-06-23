@@ -2,6 +2,7 @@ declare const styles: {
   readonly "Breadcrumb": string;
   readonly "BreadcrumbContentForMiddleRow": string;
   readonly "EmptySpaceClickArea": string;
+  readonly "EmptySpaceClickAreaInSidePanel": string;
   readonly "FloatingActionButton": string;
   readonly "HeadingContainer": string;
   readonly "HeadingLeftHandler": string;

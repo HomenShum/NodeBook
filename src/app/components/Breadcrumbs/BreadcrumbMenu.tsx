@@ -137,7 +137,7 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
         style={{ position: "relative" }}
         className={cn(s.ShowTooltip, s.RightAlign)}
         data-tooltip={
-          (viewStore.rightSidePanelOpen ? "Close Side Tree View" : "Open Side Tree View") +
+          (viewStore.rightSidePanelOpen ? "Close Side Panel" : "Open Side Panel") +
           ` · ` +
           [`${modKeyName}`, `${optionKeyName}`, "S"].join("+")
         }
