@@ -1,8 +1,8 @@
+import { $insertDataTransferForRichText } from "@lexical/clipboard";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import axios from "axios";
 import { $getSelection, COMMAND_PRIORITY_LOW, KEY_DOWN_COMMAND, PASTE_COMMAND } from "lexical";
 import { useEffect, useRef } from "react";
-import { $insertDataTransferForRichText } from "@lexical/clipboard";
 
 import ApiClient from "@/app/api/utils/client/ApiClient";
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
@@ -1203,7 +1203,6 @@ export const getLinesFromHtmlList = (
           } else {
             const htmlWithBreaks = elem.innerHTML
               .replace(/<br\s*\/?>/gi, '\n')
-              .replace(/\n+$/, '');
             const tmp = document.createElement('div');
             tmp.innerHTML = htmlWithBreaks;
             const text = tmp.textContent ?? '';
@@ -1257,19 +1256,11 @@ export const getLinesFromHtmlList = (
 
         // — BR as blank line —
         case 'BR':
-          if (
-            (el.tagName === 'BODY' || blockChildTags.has(el.tagName as BlockTags)) &&
-            el === elem.parentElement // Ensure BR is a direct child of a block
-          ) {
-            // Only add a blank line if the BR is effectively standalone
-            if (!elem.previousSibling && !elem.nextSibling && el.textContent?.trim() === '') {
-               lines.push({
-                 chips: [],
-                 depth: currentDepth + cssDepth(el as HTMLElement),
-                 isChecked: null
-               });
-            }
-          }
+          lines.push({
+            chips: [],
+            depth: currentDepth + cssDepth(el as HTMLElement),
+            isChecked: null
+          });
           break;
 
         // — default recurse —
