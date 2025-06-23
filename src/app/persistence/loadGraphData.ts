@@ -9,6 +9,7 @@ import { SerializedGraphStoreSchema, SerializedStores } from "@/app/persistence/
 import { getAuthFetch } from "@/app/util";
 import { PersistedUser } from "@/db/schema";
 import logger from "@/lib/logger";
+import canonicalPathCacheStore from "@/stores/CanonicalPathCacheStore";
 
 export const localLocalData = (graphStore: GraphStore) => {
   logger.debug("Loading data from local storage");
@@ -153,6 +154,7 @@ export class LayerManager {
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => LayerManager.loadedIdsForCanonical.add(id));
+    canonicalPathCacheStore.load(objectIds);
     return this.fetchAndLoad(`/api/layer/canonical`, {
       ...init,
       method: "POST",

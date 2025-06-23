@@ -260,6 +260,13 @@
       "when": 1749217126854,
       "tag": "0036_flimsy_skullbuster",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1750661120832,
+      "tag": "0037_canonical_cache",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import {
   index,
   integer,
   json,
+  jsonb,
   pgEnum,
   pgTable,
   serial,
@@ -229,4 +230,14 @@ export const expansionStateTable = pgTable(
 );
 
 export const ExpansionStateSchema = createSelectSchema(expansionStateTable);
+export const canonicalPathCacheTable = pgTable("canonical_path_cache", {
+  objectId: text("object_id").primaryKey(),
+  ancestors: jsonb("ancestors").$type<{ id: string; label: string }[]>().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const CanonicalPathCacheSchema = createSelectSchema(canonicalPathCacheTable);
+export type PersistedCanonicalPathCache = z.infer<typeof CanonicalPathCacheSchema>;
+
 export type PersistedExpansionState = z.infer<typeof ExpansionStateSchema>;

@@ -1,11 +1,12 @@
 import { Chip } from "@/app/graph/GraphNode";
 import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
+import { SyncData } from "@/app/graph/SyncData";
 import { BaseGroup, DescendantTreeNode, GroupId, NoteContentGroup, PinnedGroup } from "@/app/tree/nodes";
 import { ObjectPath, objectPathToObjects } from "@/app/util";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
 import logger from "@/lib/logger";
-import { SyncData } from "@/app/graph/SyncData";
+import canonicalPathCacheStore from "@/stores/CanonicalPathCacheStore";
 
 const getSide = (relation: GraphRelation, id: string): "from" | "to" | undefined => {
   if (relation.from.id === id) {
@@ -135,13 +136,49 @@ export const getCanonicalPath = (object: GraphObject, maxDepth = 20): ObjectPath
     }
   }
 
+  relations.reverse();
+
+  if (endState === "not-loaded") {
+    canonicalPathCacheStore.load([object.id]);
+  }
+
   if (current.id === GLOBAL_ROOT_ID) {
     endState = "root";
   }
 
+  if (endState === "root" || endState === "cycle" || endState === "max-depth") {
+    const isCacheMissing = canonicalPathCacheStore.isMissing(object.id);
+    //If cache exists on the server and we have downloaded it, check for mismatch
+    if (isCacheMissing || (!isCacheMissing && canonicalPathCacheStore.cache.has(object.id))) {
+      const cachedAncestors = canonicalPathCacheStore.cache.get(object.id) || [];
+      const localAncestors = objectPathToObjects({ object, relations, endState }) || [];
+      const isLengthMismatch = localAncestors.length > 0 && cachedAncestors.length !== localAncestors.length;
+      let contentMismatch = false;
+      if (!isLengthMismatch) {
+        for (let i = 0; i < localAncestors.length; i++) {
+          if (localAncestors[i].text !== cachedAncestors[i].label || localAncestors[i].id !== cachedAncestors[i].id) {
+            contentMismatch = true;
+            break;
+          }
+        }
+      }
+      if (contentMismatch || isLengthMismatch) {
+        canonicalPathCacheStore.update(
+          object.id,
+          localAncestors.map((o) => {
+            return {
+              id: o.id,
+              label: o.text,
+            };
+          }),
+        );
+      }
+    }
+  }
+
   return {
     object,
-    relations: relations.reverse(),
+    relations,
     endState,
   };
 };
