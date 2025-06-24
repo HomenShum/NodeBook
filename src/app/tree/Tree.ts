@@ -2413,10 +2413,10 @@ export class Tree {
    * Gets all currently expanded paths in the tree
    */
   private getExpandedPaths(): string[] {
-    const pathPrefix = this.pathToRoot.slice(1).map((obj) => "/"+obj.childGroupId+"/"+obj.relation?.id).join("");
+    const pathPrefixLength = this.pathToRoot.slice(1).map((obj) => "/"+obj.childGroupId+"/"+obj.relation?.id).join("").length;
     return Array.from(this.expansionsByPath.entries())
       .filter(([_, isExpanded]) => isExpanded)
-      .map(([path, _]) => path.slice(pathPrefix.length));
+      .map(([path, _]) => path.slice(pathPrefixLength));
   }
 
   /**
