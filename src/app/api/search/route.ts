@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { uuid4 } from "@sentry/utils";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { aiSearchQuery } from "@/app/api/search/aiSearchQuery";
 import { answerQuery } from "@/app/api/search/answerQuery";
-import { uuid4 } from "@sentry/utils";
 
 const AiSearchSchema = z.object({
   rootNodeId: z.string().optional(),
