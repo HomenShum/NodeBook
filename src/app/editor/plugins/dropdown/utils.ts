@@ -12,11 +12,6 @@ import { HASHTAG_SYMBOL, scoreMatch } from "@/lib/utils";
 
 export type NodeType = "node" | "relation" | "relationType";
 
-export interface FilterBy {
-  nodeId?: string;
-  relationTypeId?: string;
-}
-
 type GetMatches = (text: string, types?: NodeType[], curNodeId?: string) => Match[];
 
 // Define the type for nodes and relations
