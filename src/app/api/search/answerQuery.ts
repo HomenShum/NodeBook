@@ -5,7 +5,12 @@ import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import { getDb } from "@/db";
 import { graphNodeTable } from "@/db/schema";
 
-export const answerQuery = async (userId: string, query: string): Promise<SerializedGraphStore> => {
+export const answerQuery = async (
+  userId: string,
+  query: string,
+  sessionId = "unknown",
+): Promise<SerializedGraphStore> => {
+  console.timeLog(sessionId, "[debug] Inside answerQuery, before getDb()");
   const db = getDb();
 
   if (query.length < 3) {
@@ -48,8 +53,8 @@ export const answerQuery = async (userId: string, query: string): Promise<Serial
         ),
       )
       .limit(100);
-    } else {
-      nodeRows = await db
+  } else {
+    nodeRows = await db
       .select({ id: graphNodeTable.id })
       .from(graphNodeTable)
       .where(
@@ -64,10 +69,14 @@ export const answerQuery = async (userId: string, query: string): Promise<Serial
 
   // Only load the specific search result nodes without their connected layers
   // This dramatically improves performance by avoiding exponential data expansion
-  return createLayers(
+  console.timeLog(sessionId, `[debug] Inside answerQuery, before createLayers`);
+  const layers = createLayers(
     userId,
     nodeRows.map((row) => row.id),
     1, // layersToLoad (unused when loadConnectedLayers = false)
     false, // loadConnectedLayers = false for search results
   );
+  console.timeLog(sessionId, `[debug] Inside answerQuery, after createLayers`);
+  console.timeEnd(sessionId);
+  return layers;
 };
