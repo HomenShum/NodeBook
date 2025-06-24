@@ -12,6 +12,7 @@ export const answerQuery = async (
 ): Promise<SerializedGraphStore> => {
   console.timeLog(sessionId, "[debug] Inside answerQuery, before getDb()");
   const db = getDb();
+  console.timeLog(sessionId, "[debug] Inside answerQuery, after getDb()");
 
   if (query.length < 3) {
     return {
@@ -29,6 +30,7 @@ export const answerQuery = async (
   // able to use the GIN index and filter out results after, in some cases a sequential
   // scan would be performed if the engine believes that would be faster.
   db.execute(sql`SELECT set_limit(0.95);`);
+  console.timeLog(sessionId, "[debug] Inside answerQuery, after SELECT set_limit(0.95)");
   let nodeRows: { id: string }[] = [];
 
   // Select top 100 ordered by trie match score
@@ -41,6 +43,8 @@ export const answerQuery = async (
   if (query_str[query_str.length - 1] !== "%") {
     query_str = query_str + "%";
   }
+
+  console.timeLog(sessionId, "[debug] Inside answerQuery, after if/else of length<16");
   // If the query is less than 16 characters, don't use the word similarity function
   if (query_str.length < 16) {
     nodeRows = await db
@@ -53,6 +57,7 @@ export const answerQuery = async (
         ),
       )
       .limit(100);
+    console.timeLog(sessionId, "[debug] Inside answerQuery, inside IF query len<16 after fetching node rows");
   } else {
     nodeRows = await db
       .select({ id: graphNodeTable.id })
@@ -65,7 +70,10 @@ export const answerQuery = async (
       )
       .orderBy(desc(sql`strict_word_similarity(${query}, content_text)`))
       .limit(100);
+    console.timeLog(sessionId, "[debug] Inside answerQuery, inside ELSE query len>= after fetching node rows");
   }
+
+  console.timeLog(sessionId, "[debug] Inside answerQuery, after selecting nodeRows (global)");
 
   // Only load the specific search result nodes without their connected layers
   // This dramatically improves performance by avoiding exponential data expansion
