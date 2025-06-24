@@ -24,6 +24,7 @@ yarn
 Link the vercel project then pull our `.env` file from vercel:
 
 ```bash
+
 yarn vercel:link
 yarn vercel env pull --environment=development .env.local
 
