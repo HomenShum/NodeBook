@@ -146,6 +146,19 @@ export class GraphRelation extends BaseGraphObject implements Serializable {
   }
 
   get text(): string {
+    const unloadedNodeIds: string[] = [];
+
+    if (this.store.nodesById.get(this.from.id) == null) {
+      unloadedNodeIds.push(this.from.id);
+    }
+    if (this.store.nodesById.get(this.to.id) == null) {
+      unloadedNodeIds.push(this.to.id);
+    }
+
+    if (unloadedNodeIds.length > 0) {
+      this.store.layerManager.lazyLoadWithIds(unloadedNodeIds);
+    }
+
     return `[(${this.from.text}) -(${this.relationType.label})-> (${this.to.text})]`;
   }
 
