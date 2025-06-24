@@ -149,6 +149,7 @@ export class Tree {
       partialFilter: observable,
       filter: computed,
       updateFilter: action,
+      setExpansionsByPath: action,
       state: computed,
       root: computed,
       selectionWithNodes: computed,
@@ -2372,8 +2373,12 @@ export class Tree {
     this.id = data.id;
     this.pathToRootIds = data.pathToRootIds;
     this.rootObjectId = rootObject.id;
-    this.expansionsByPath = expansionsByPath;
+    this.setExpansionsByPath(expansionsByPath);
     return true;
+  }
+
+  setExpansionsByPath(expansionsByPath: Map<string, boolean>) {
+    this.expansionsByPath = expansionsByPath;
   }
 
   copySelectedNodes(event: ClipboardEvent): boolean {
@@ -2438,7 +2443,7 @@ export class Tree {
       }
     });
 
-    this.expansionsByPath = newExpansions;
+    this.setExpansionsByPath(newExpansions);
     this.expansionLocalStorageCache.update(this.expansionsByPath);
 
     logger.debug("Collapsed all nodes in tree");
@@ -2463,7 +2468,6 @@ export class Tree {
 
       // Apply the loaded expansion state
       expandedPaths.forEach((path) => this.setPathExpanded(pathPrefix+path, true));
-      expandedPaths.forEach((path) => console.log(pathPrefix+path))
 
       logger.debug(`Applied saved expansion state for root: ${this.rootObjectId}, ${expandedPaths.length} paths`);
       return true;
