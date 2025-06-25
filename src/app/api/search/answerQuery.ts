@@ -20,7 +20,7 @@ export const answerQuery = async (
     region.includes("sfo") &&
     env.SF_PG_REPLICA_POSTGRES_URL.length > 0 &&
     (env.STAGE === "development" || env.STAGE === "production") &&
-    env.POSTGRES_DATABASE === "mew_lite"
+    env.POSTGRES_CONNECTION_STRING.includes("mew_lite")
   ) {
     console.timeLog(sessionId, "[debug] Inside answerQuery, using SF_PG_REPLICA_POSTGRES_URL");
     db = getDb(env.SF_PG_REPLICA_POSTGRES_URL);
