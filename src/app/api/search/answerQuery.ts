@@ -22,8 +22,10 @@ export const answerQuery = async (
     (env.STAGE === "development" || env.STAGE === "production") &&
     env.POSTGRES_DATABASE === "mew_lite"
   ) {
+    console.timeLog(sessionId, "[debug] Inside answerQuery, using SF_PG_REPLICA_POSTGRES_URL");
     db = getDb(env.SF_PG_REPLICA_POSTGRES_URL);
   } else {
+    console.timeLog(sessionId, "[debug] Inside answerQuery, using POSTGRES_CONNECTION_STRING");
     db = getDb();
   }
   console.timeLog(sessionId, "[debug] Inside answerQuery, after getDb()");
