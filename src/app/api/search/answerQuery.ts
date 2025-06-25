@@ -16,10 +16,15 @@ export const answerQuery = async (
   console.timeLog(sessionId, `[debug] Inside answerQuery, region: ${region}, country: ${country}`);
   console.timeLog(sessionId, "[debug] Inside answerQuery, before getDb()");
   let db;
+  console.log(`env.SF_PG_REPLICA_POSTGRES_URL length: ${env.SF_PG_REPLICA_POSTGRES_URL.length}`);
+  console.log(`env.STAGE: ${env.STAGE}`);
+  console.log(
+    `env.POSTGRES_CONNECTION_STRING includes mew_lite: ${env.POSTGRES_CONNECTION_STRING.includes("mew_lite")}`,
+  );
+  console.log(`region.includes("sfo"): ${region.includes("sfo")}`);
   if (
     region.includes("sfo") &&
     env.SF_PG_REPLICA_POSTGRES_URL.length > 0 &&
-    (env.STAGE === "development" || env.STAGE === "production") &&
     env.POSTGRES_CONNECTION_STRING.includes("mew_lite")
   ) {
     console.timeLog(sessionId, "[debug] Inside answerQuery, using SF_PG_REPLICA_POSTGRES_URL");
