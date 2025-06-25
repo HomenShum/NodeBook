@@ -22,34 +22,6 @@ export type Ancestor = {
   path: string;
 };
 
-export type BreadcrumbAncestors = {
-  object: GraphObject;
-  relationToChild: GraphRelation | null;
-  childGroupId: GroupId | null;
-  path: string;
-};
-
-export const getCanonicalAncestors = (node: TreeNode, graphStore: GraphStore): BreadcrumbAncestors[] => {
-  let curObject = node.object;
-  const ancestors: BreadcrumbAncestors[] = [];
-  let canonicalRelationId: string | null | undefined = node.object.canonicalRelationId;
-  while (canonicalRelationId) {
-    const relation = graphStore.getRelationOrThrow(canonicalRelationId);
-    const otherObject = getOtherObjectOrThrow(relation, curObject.id);
-    if (relation) {
-      ancestors.unshift({
-        object: otherObject,
-        relationToChild: relation,
-        childGroupId: null,
-        path: "null",
-      });
-    }
-    canonicalRelationId = relation?.canonicalRelationId;
-    curObject = otherObject;
-  }
-  return ancestors;
-};
-
 /**
  * Get all ancestors of a tree node as an array.
  *

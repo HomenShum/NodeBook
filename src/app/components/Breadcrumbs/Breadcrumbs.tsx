@@ -2,7 +2,7 @@
 import { ArrowLeft, ChevronRight, Ellipsis, Home } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
 import BreadcrumbMenu from "@/app/components/Breadcrumbs/BreadcrumbMenu";
@@ -14,13 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { getOtherObject } from "@/app/graph/utils";
+import { getCanonicalPath } from "@/app/graph/utils";
 import { TreeNode } from "@/app/tree/nodes";
-import { BreadcrumbAncestors, useSetMainRoot } from "@/app/tree/utils";
-import { truncateText, useIsMobile } from "@/app/util";
+import { useSetMainRoot } from "@/app/tree/utils";
+import { objectPathToObjects, truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
-import { GLOBAL_ROOT_ID, USER_ROOT_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { GraphObject } from "@/app/graph/GraphObject";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -28,7 +28,7 @@ const MAX_VISIBLE_ITEMS = 4; // For desktop view
 
 type RenderBreadcrumbsProps = {
   treeNode: TreeNode;
-  ancestors: BreadcrumbAncestors[];
+  ancestors: GraphObject[];
   handleNavigation: (index: number) => void;
 };
 
@@ -41,7 +41,7 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
   const graphStore = useGraphStore();
   const totalItems = ancestors.length;
 
-  const layerObjectIds = ancestors.map((a) => a.object.id);
+  const layerObjectIds = ancestors.map((a) => a.id);
   graphStore.layerManager.loadWithIds(layerObjectIds);
 
   if (isMobile) {
@@ -53,12 +53,7 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
       <>
         {ancestors.length > 0 && (
           <>
-            <BreadcrumbItem
-              object={firstItem.object}
-              path={firstItem.path}
-              index={0}
-              handleNavigation={handleNavigation}
-            />
+            <BreadcrumbItem object={firstItem} index={0} handleNavigation={handleNavigation} />
             {middleItems.length > 0 && (
               <>
                 <ChevronRight size={14} strokeWidth={2} className={s.Separator} />
@@ -70,11 +65,8 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
                   </DropdownMenuTrigger>
                   <DropdownMenuContent sideOffset={4}>
                     {middleItems.map((ancestor, index) => (
-                      <DropdownMenuItem
-                        key={`${ancestor.path}-${ancestor.object.text}`}
-                        onSelect={() => handleNavigation(index + 1)}
-                      >
-                        {RenderMenuItemContent(ancestor.object.text)}
+                      <DropdownMenuItem key={ancestor.id} onSelect={() => handleNavigation(index + 1)}>
+                        {RenderMenuItemContent(ancestor.text)}
                       </DropdownMenuItem>
                     ))}
                   </DropdownMenuContent>
@@ -83,13 +75,7 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
             )}
           </>
         )}
-        <BreadcrumbItem
-          object={treeNode.object}
-          path={treeNode.path}
-          index={totalItems}
-          isRoot={true}
-          handleNavigation={handleNavigation}
-        />
+        <BreadcrumbItem object={treeNode.object} index={totalItems} handleNavigation={handleNavigation} />
       </>
     );
   } else {
@@ -98,22 +84,8 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
       return (
         <>
           {ancestors.map((ancestor, index) => (
-            <BreadcrumbItem
-              key={`${ancestor.path}-${ancestor.object.text}`}
-              object={ancestor.object}
-              path={ancestor.path}
-              index={index}
-              handleNavigation={handleNavigation}
-            />
+            <BreadcrumbItem key={ancestor.id} object={ancestor} index={index} handleNavigation={handleNavigation} />
           ))}
-          <BreadcrumbItem
-            key={`root-${treeNode.object.text}`}
-            object={treeNode.object}
-            path={treeNode.path}
-            index={totalItems}
-            isRoot={true}
-            handleNavigation={handleNavigation}
-          />
         </>
       );
     }
@@ -122,12 +94,7 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
       <>
         {ancestors.length > 0 && (
           <>
-            <BreadcrumbItem
-              object={ancestors[0].object}
-              path={ancestors[0].path}
-              index={0}
-              handleNavigation={handleNavigation}
-            />
+            <BreadcrumbItem object={ancestors[0]} index={0} handleNavigation={handleNavigation} />
             <ChevronRight size={14} strokeWidth={2} className={s.Separator} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -137,34 +104,22 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
               </DropdownMenuTrigger>
               <DropdownMenuContent sideOffset={4}>
                 {ancestors.slice(1, -MAX_VISIBLE_ITEMS + 2).map((ancestor, index) => (
-                  <DropdownMenuItem
-                    key={`${ancestor.path}-${ancestor.object.text}`}
-                    onSelect={() => handleNavigation(index + 1)}
-                  >
-                    {RenderMenuItemContent(ancestor.object.text)}
+                  <DropdownMenuItem key={ancestor.id} onSelect={() => handleNavigation(index + 1)}>
+                    {RenderMenuItemContent(ancestor.text)}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
             {ancestors.slice(-MAX_VISIBLE_ITEMS + 2).map((ancestor, index) => (
               <BreadcrumbItem
-                key={`${ancestor.path}-${ancestor.object.text}`}
-                object={ancestor.object}
-                path={ancestor.path}
+                key={ancestor.id}
+                object={ancestor}
                 index={totalItems - MAX_VISIBLE_ITEMS + 2 + index}
                 handleNavigation={handleNavigation}
               />
             ))}
           </>
         )}
-        <BreadcrumbItem
-          key={`root-${treeNode.object.text}`}
-          object={treeNode.object}
-          path={treeNode.path}
-          index={totalItems}
-          isRoot={true}
-          handleNavigation={handleNavigation}
-        />
       </>
     );
   }
@@ -180,109 +135,16 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
   const router = useRouter();
   const viewStore = useViewStore();
 
-  const getCanonicalAncestors = useCallback(
-    (node: TreeNode): BreadcrumbAncestors[] => {
-      let curObject = node.object;
-      const ancestors: BreadcrumbAncestors[] = [];
-      const visitedIds = new Set<string>([curObject.id]); // Track visited object IDs
+  const objectPath = useMemo(() => getCanonicalPath(treeNode.object), [treeNode.object]);
 
-      let canonicalRelationId: string | null | undefined = curObject.canonicalRelationId;
-
-      while (canonicalRelationId) {
-        const relation = graphStore.getRelation(canonicalRelationId);
-        if (!relation) {
-          graphStore.layerManager.lazyLoadWithIds([canonicalRelationId]);
-          break;
-        }
-        const otherObject = getOtherObject(relation, curObject.id);
-        if (!otherObject || visitedIds.has(otherObject.id)) {
-          // Check for cycles
-          break;
-        }
-        visitedIds.add(otherObject.id);
-        ancestors.unshift({
-          object: otherObject,
-          relationToChild: relation,
-          childGroupId: null,
-          path: "null",
-        });
-        canonicalRelationId = otherObject.canonicalRelationId;
-        curObject = otherObject;
-      }
-      return ancestors;
-    },
-    [graphStore],
-  );
-
-  const getFullAncestorChain = useCallback(
-    (baseAncestors: BreadcrumbAncestors[]): BreadcrumbAncestors[] => {
-      // Create a set of existing object IDs to prevent cycles
-      const existingIds = new Set<string>([...baseAncestors.map((a) => a.object.id), treeNode.object.id]);
-
-      const hasUser =
-        baseAncestors.some((elem) => elem.object.id.startsWith(USER_ROOT_ID_PREFIX)) ||
-        treeNode.object.id.startsWith(USER_ROOT_ID_PREFIX);
-      const hasGlobalRoot =
-        baseAncestors.some((elem) => elem.object.id === GLOBAL_ROOT_ID) || treeNode.object.id === GLOBAL_ROOT_ID;
-
-      if (!hasUser && !hasGlobalRoot) {
-        const authorId = treeNode.object.authorId;
-        const userNode = graphStore.getNode(USER_ROOT_ID_PREFIX + authorId);
-
-        if (userNode && !existingIds.has(userNode.id)) {
-          const newAncestors = [...baseAncestors];
-          existingIds.add(userNode.id);
-          newAncestors.unshift({
-            object: userNode,
-            relationToChild: null,
-            childGroupId: null,
-            path: "null",
-          });
-
-          const usersNode = graphStore.usersNode;
-          const usersToUserRel = graphStore.usersToUserRelation;
-          if (usersNode && usersToUserRel && !existingIds.has(usersNode.id)) {
-            existingIds.add(usersNode.id);
-            newAncestors.unshift({
-              object: usersNode,
-              relationToChild: usersToUserRel,
-              childGroupId: null,
-              path: "null",
-            });
-          }
-
-          const globalRootNode = graphStore.globalRoot;
-          const globalRootToUsersRel = graphStore.globalToUsersRelation;
-          if (globalRootNode && globalRootToUsersRel && !existingIds.has(globalRootNode.id)) {
-            newAncestors.unshift({
-              object: globalRootNode,
-              relationToChild: globalRootToUsersRel,
-              childGroupId: null,
-              path: "null",
-            });
-          }
-          return newAncestors;
-        }
-      }
-      return baseAncestors;
-    },
-    [graphStore, treeNode.object.authorId, treeNode.object.id],
-  );
-
-  const [ancestors, setAncestors] = useState(() => {
-    const canonicalAncestors = getCanonicalAncestors(treeNode);
-    return canonicalAncestors;
-  });
-
-  useEffect(() => {
-    const canonicalAncestors = getCanonicalAncestors(treeNode);
-    setAncestors(getFullAncestorChain(canonicalAncestors));
-  }, [treeNode, getCanonicalAncestors, getFullAncestorChain]);
+  const ancestors = useMemo(() => {
+    return objectPathToObjects(objectPath) || [];
+  }, [objectPath]);
 
   const handleNavigation = useCallback(
     (index: number) => {
       if (index > ancestors.length) return;
-      const object = index === ancestors.length ? treeNode.object : ancestors[index].object;
+      const object = index === ancestors.length ? treeNode.object : ancestors[index];
       setRoot(object);
     },
     [treeNode, ancestors, setRoot],

@@ -7,27 +7,26 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { useTree } from "@/app/tree/TreeContext";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
 type BreadcrumbItemProps = {
   object: GraphObject;
-  path: string;
   index: number;
-  isRoot?: boolean;
   handleNavigation: (index: number) => void;
 };
 
 export const BreadcrumbItem = observer(function BreadcrumbItem({
   object,
-  path,
   index,
-  isRoot = false,
   handleNavigation,
 }: BreadcrumbItemProps) {
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
   const isMobile = useIsMobile();
+  const tree = useTree();
+  const isRoot = object.id === tree.rootObjectId;
 
   const handleClick = (event: React.MouseEvent<HTMLSpanElement>) => {
     if (event.shiftKey) {
@@ -38,7 +37,7 @@ export const BreadcrumbItem = observer(function BreadcrumbItem({
   };
 
   return (
-    <React.Fragment key={`${path}-${object.text}`}>
+    <React.Fragment key={object.id}>
       {index > 0 && <ChevronRight size={12} strokeWidth={2} className={s.Separator} />}
 
       <span className={s.Breadcrumb} onClick={handleClick}>

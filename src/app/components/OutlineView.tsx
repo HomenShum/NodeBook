@@ -11,7 +11,7 @@ import {
   Save,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import appStyles from "@/app/app.module.css";
 import AiSearchSidebar from "@/app/components/AiSearchSidebar/AiSearchSidebar";
@@ -38,16 +38,16 @@ import { useLoading } from "@/app/contexts/LoadingContext";
 import { OutlineParentContext } from "@/app/contexts/OutlineContentContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
-import { getOtherObject } from "@/app/graph/utils";
+import { getCanonicalPath } from "@/app/graph/utils";
 import { useToast } from "@/app/hooks/useToast";
-import { TreeNode } from "@/app/tree/nodes";
 import { Tree } from "@/app/tree/Tree";
 import { TreeContext } from "@/app/tree/TreeContext";
-import { BreadcrumbAncestors, useSetMainRoot } from "@/app/tree/utils";
-import { useIsMobile } from "@/app/util";
+import { useSetMainRoot } from "@/app/tree/utils";
+import { objectPathToObjects, useIsMobile } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
+import { GLOBAL_ROOT_ID } from "@/lib/constants";
 
 import s from "./OutlineView.module.css";
 
@@ -67,51 +67,16 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
   const isSmallScreen = useIsMobile(600);
   const isMobileSize = useIsMobile(800);
   const allowAnonymousAppend = treeRoot.object instanceof GraphNode && treeRoot.object.accessMode === AccessMode.APPEND;
+  const objectPath = useMemo(() => getCanonicalPath(treeRoot.object), [treeRoot.object]);
 
-  // For breadcrumb rendering in the middle row
-  const [ancestors, setAncestors] = useState<BreadcrumbAncestors[]>([]);
-
-  useEffect(() => {
-    if (isSmallScreen) {
-      const getCanonicalAncestors = (node: TreeNode): BreadcrumbAncestors[] => {
-        let curObject = node.object;
-        const ancestors: BreadcrumbAncestors[] = [];
-        const visitedIds = new Set<string>([curObject.id]);
-
-        let canonicalRelationId = curObject.canonicalRelationId;
-
-        while (canonicalRelationId) {
-          const relation = graphStore.getRelation(canonicalRelationId);
-          if (!relation) {
-            graphStore.layerManager.lazyLoadWithIds([canonicalRelationId]);
-            break;
-          }
-          const otherObject = getOtherObject(relation, curObject.id);
-          if (!otherObject || visitedIds.has(otherObject.id)) {
-            break;
-          }
-          visitedIds.add(otherObject.id);
-          ancestors.unshift({
-            object: otherObject,
-            relationToChild: relation,
-            childGroupId: null,
-            path: "null",
-          });
-          canonicalRelationId = otherObject.canonicalRelationId;
-          curObject = otherObject;
-        }
-        return ancestors;
-      };
-
-      const canonicalAncestors = getCanonicalAncestors(treeRoot);
-      setAncestors(canonicalAncestors);
-    }
-  }, [treeRoot, isSmallScreen, graphStore]);
+  const ancestors = useMemo(() => {
+    return objectPathToObjects(objectPath) || [];
+  }, [objectPath]);
 
   const handleBreadcrumbNavigation = useCallback(
     (index: number) => {
       if (index > ancestors.length) return;
-      const object = index === ancestors.length ? treeRoot.object : ancestors[index].object;
+      const object = index === ancestors.length ? treeRoot.object : ancestors[index];
       setRoot(object);
     },
     [treeRoot, ancestors, setRoot],
@@ -130,12 +95,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
         <>
           {ancestors.length > 0 && (
             <>
-              <BreadcrumbItem
-                object={firstItem.object}
-                path={firstItem.path}
-                index={0}
-                handleNavigation={handleBreadcrumbNavigation}
-              />
+              <BreadcrumbItem object={firstItem} index={0} handleNavigation={handleBreadcrumbNavigation} />
               {middleItems.length > 0 && (
                 <>
                   <ChevronRight size={14} strokeWidth={2} className={s.Separator} />
@@ -147,11 +107,8 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent sideOffset={4}>
                       {middleItems.map((ancestor, index) => (
-                        <DropdownMenuItem
-                          key={`${ancestor.path}-${ancestor.object.text}`}
-                          onSelect={() => handleBreadcrumbNavigation(index + 1)}
-                        >
-                          {ancestor.object.text || "(blank)"}
+                        <DropdownMenuItem key={ancestor.id} onSelect={() => handleBreadcrumbNavigation(index + 1)}>
+                          {ancestor.text || "(blank)"}
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>
@@ -160,13 +117,9 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
               )}
             </>
           )}
-          <BreadcrumbItem
-            object={treeRoot.object}
-            path={treeRoot.path}
-            index={totalItems}
-            isRoot={true}
-            handleNavigation={handleBreadcrumbNavigation}
-          />
+          {treeRoot.object.id !== GLOBAL_ROOT_ID && (
+            <BreadcrumbItem object={treeRoot.object} index={totalItems} handleNavigation={handleBreadcrumbNavigation} />
+          )}
         </>
       );
     }
@@ -301,12 +254,12 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                         {viewStore.viewType === ViewType.Graph
                           ? "Graph View"
                           : viewStore.viewType === ViewType.Outline
-                          ? "List View"
-                          : viewStore.viewType === ViewType.Note
-                          ? "Note View"
-                          : viewStore.viewType === ViewType.Webpage
-                          ? "Webpage View"
-                          : "Card View"}
+                            ? "List View"
+                            : viewStore.viewType === ViewType.Note
+                              ? "Note View"
+                              : viewStore.viewType === ViewType.Webpage
+                                ? "Webpage View"
+                                : "Card View"}
                       </span>
                     </Button>
                   </DropdownMenuTrigger>
