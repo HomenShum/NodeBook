@@ -2139,8 +2139,7 @@ export class GraphStore {
       if (object instanceof GraphNode) {
         return this.deleteNode(object);
       } else if (object instanceof GraphRelation) {
-        const { updates } = this._removeRelation({ relationId: object.id });
-        return updates;
+        return [];
       } else if (object instanceof PlaceholderGraphObject) {
         return [];
       }
