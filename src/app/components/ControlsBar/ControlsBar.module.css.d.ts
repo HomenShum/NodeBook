@@ -3,6 +3,7 @@ declare const styles: {
   readonly "ButtonContainer": string;
   readonly "ControlsBar": string;
   readonly "ControlsBarWrapper": string;
+  readonly "Disabled": string;
   readonly "DisabledInput": string;
   readonly "FiltersDropdown": string;
   readonly "HideOnMobile": string;

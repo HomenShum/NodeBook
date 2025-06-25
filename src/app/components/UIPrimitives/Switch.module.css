@@ -1,6 +1,6 @@
 .Switch {
   --switch-width: 24px;
-  --switch-height: 12px;
+  --switch-height: 14px;
   --thumb-size: 10px;
 
   all: unset;
@@ -21,14 +21,14 @@
 }
 
 .Switch[data-state="checked"]:hover {
-  background-color: var(--teal-10);
+  background-color: var(--teal-11);
 }
 
 .SwitchThumb {
   display: block;
   width: var(--thumb-size);
   height: var(--thumb-size);
-  background-color: var(--gray-1);
+  background-color: var(--gray-1) !important;
   border-radius: 10px;
   transition: transform 100ms;
   transform: translateX(2px);
@@ -36,7 +36,7 @@
 }
 
 .Switch[data-state="checked"] .SwitchThumb {
-  transform: translateX(calc(var(--switch-width) - var(--thumb-size) - 1px));
+  transform: translateX(calc(var(--switch-width) - var(--thumb-size) - 2px));
 }
 
 .Switch.Disabled {
