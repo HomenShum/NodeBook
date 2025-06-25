@@ -4,6 +4,7 @@ import { createLayers } from "@/app/api/layer/createLayers";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import { getDb } from "@/db";
 import { graphNodeTable } from "@/db/schema";
+import { env } from "@/envBackend";
 
 export const answerQuery = async (
   userId: string,
@@ -14,7 +15,17 @@ export const answerQuery = async (
 ): Promise<SerializedGraphStore> => {
   console.timeLog(sessionId, `[debug] Inside answerQuery, region: ${region}, country: ${country}`);
   console.timeLog(sessionId, "[debug] Inside answerQuery, before getDb()");
-  const db = getDb();
+  let db;
+  if (
+    region.includes("sfo") &&
+    env.SF_PG_REPLICA_POSTGRES_URL.length > 0 &&
+    (env.STAGE === "development" || env.STAGE === "production") &&
+    env.POSTGRES_DATABASE === "mew_lite"
+  ) {
+    db = getDb(env.SF_PG_REPLICA_POSTGRES_URL);
+  } else {
+    db = getDb();
+  }
   console.timeLog(sessionId, "[debug] Inside answerQuery, after getDb()");
   if (query.length < 3) {
     return {

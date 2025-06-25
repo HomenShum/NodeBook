@@ -30,6 +30,8 @@ export const env = Object.freeze({
   STAGE: process.env.VERCEL_ENV,
   POSTGRES_CONNECTION_STRING:
     process.env.POSTGRES_CONNECTION_STRING || process.env.POSTGRES_CUSTOM_URL || process.env.POSTGRES_URL || "",
+  SF_PG_REPLICA_POSTGRES_URL: process.env.SF_PG_REPLICA_POSTGRES_URL || "",
+  POSTGRES_DATABASE: process.env.POSTGRES_DATABASE || "",
   AUTH0_DOMAIN: process.env.NEXT_PUBLIC_AUTH0_DOMAIN ?? "",
   AUTH0_API_AUDIENCE: process.env.NEXT_PUBLIC_AUTH0_API_AUDIENCE ?? "",
   AUTH0_JWT_PUBLIC_KEY: process.env.AUTH0_JWT_PUBLIC_KEY ?? "",
