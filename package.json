@@ -43,6 +43,7 @@
     "@sentry/nextjs": "^8",
     "@tanstack/react-virtual": "^3.13.0",
     "@tweenjs/tween.js": "^25.0.0",
+    "@vercel/functions": "^1.5.0",
     "@vercel/postgres": "^0.8.0",
     "add": "^2.0.6",
     "ahooks": "^3.8.4",

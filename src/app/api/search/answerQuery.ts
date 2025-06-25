@@ -9,11 +9,13 @@ export const answerQuery = async (
   userId: string,
   query: string,
   sessionId = "unknown",
+  region = "unknown",
+  country = "unknown",
 ): Promise<SerializedGraphStore> => {
+  console.timeLog(sessionId, `[debug] Inside answerQuery, region: ${region}, country: ${country}`);
   console.timeLog(sessionId, "[debug] Inside answerQuery, before getDb()");
   const db = getDb();
   console.timeLog(sessionId, "[debug] Inside answerQuery, after getDb()");
-
   if (query.length < 3) {
     return {
       usersById: {},
