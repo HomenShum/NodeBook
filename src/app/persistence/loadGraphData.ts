@@ -85,7 +85,7 @@ export class LayerManager {
         this.graphStore.updateInFlightSearchCount("increment");
         this.searchedText.set(text, true);
         // Search only loads specific nodes without layers for performance
-        const nodeIds = await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`, {
+        await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`, {
           signal: this.abortController?.signal,
         });
         // We don't need canonical loading for search results as they're just nodes
@@ -155,7 +155,7 @@ export class LayerManager {
     if (ids.length <= 0) return;
     ids.forEach((id) => LayerManager.loadedIdsForCanonical.add(id));
     canonicalPathCacheStore.load(objectIds);
-    return this.fetchAndLoad(`/api/layer/canonical`, {
+    await this.fetchAndLoad(`/api/layer/canonical`, {
       ...init,
       method: "POST",
       body: JSON.stringify({
@@ -164,7 +164,7 @@ export class LayerManager {
     });
   }
 
-  //Todo: I don't like this method and this class can be improved.
+  // Todo: I don't like this method and this class can be improved.
   // Maybe at some point, use server side rendering.
   // Adding this so we can do load the first layer and relation types in parallel
   public async initialize(objectIds: string[]): Promise<void> {
@@ -192,11 +192,6 @@ export class LayerManager {
     if (parsed.success) {
       this.graphStore.load(parsed.data);
     }
-  }
-
-  public async loadRelationTypes() {
-    const url = `/api/layer/relations`;
-    return this.fetchAndLoad(url);
   }
 
   /**
