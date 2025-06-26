@@ -21,6 +21,7 @@
     "pinecone:upload": "tsx scripts/upload-to-pinecone.ts",
     "find-dead-code": "knip",
     "update-branches": "bash scripts/update-branches.sh",
+    "test:command-bar": "tsx puppeteer/test-command-bar-performance.ts",
     "prepare": "husky"
   },
   "dependencies": {
@@ -86,6 +87,7 @@
     "@types/jest": "^29.5.12",
     "@types/jsonwebtoken": "^9",
     "@types/node": "^20.14.5",
+    "@types/puppeteer": "^7.0.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-window": "^1",
@@ -108,6 +110,7 @@
     "knip": "^5.21.2",
     "postcss": "^8.4.35",
     "prettier": "3.5.3",
+    "puppeteer": "^24.10.2",
     "react-scan": "^0.2.14",
     "ts-jest": "^29.1.4",
     "tsx": "^4.7.1",
