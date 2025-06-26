@@ -16,7 +16,7 @@ export const answerQuery = async (
   console.timeLog(sessionId, `[debug] Inside answerQuery, region: ${region}, country: ${country}`);
   console.timeLog(sessionId, "[debug] Inside answerQuery, before getDb()");
   let db;
-  console.log(`env.SF_PG_REPLICA_POSTGRES_URL length: ${env.SF_PG_REPLICA_POSTGRES_URL.length}`);
+  console.log(`env.NEON_DB_ARIZ_REPLICA_MEW_LITE length: ${env.NEON_DB_ARIZ_REPLICA_MEW_LITE.length}`);
   console.log(`env.STAGE: ${env.STAGE}`);
   console.log(
     `env.POSTGRES_CONNECTION_STRING includes mew_lite: ${env.POSTGRES_CONNECTION_STRING.includes("mew_lite")}`,
@@ -24,11 +24,11 @@ export const answerQuery = async (
   console.log(`region.includes("sfo"): ${region.includes("sfo")}`);
   if (
     region.includes("sfo") &&
-    env.SF_PG_REPLICA_POSTGRES_URL.length > 0 &&
+    env.NEON_DB_ARIZ_REPLICA_MEW_LITE.length > 0 &&
     env.POSTGRES_CONNECTION_STRING.includes("mew_lite")
   ) {
-    console.timeLog(sessionId, "[debug] Inside answerQuery, using SF_PG_REPLICA_POSTGRES_URL");
-    db = getDb(env.SF_PG_REPLICA_POSTGRES_URL);
+    console.timeLog(sessionId, "[debug] Inside answerQuery, using NEON_DB_ARIZ_REPLICA_MEW_LITE");
+    db = getDb(env.NEON_DB_ARIZ_REPLICA_MEW_LITE);
   } else {
     console.timeLog(sessionId, "[debug] Inside answerQuery, using POSTGRES_CONNECTION_STRING");
     db = getDb();
