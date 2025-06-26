@@ -64,7 +64,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
             if (!treeNode.isAtCanonicalPath || treeNode.object instanceof GraphRelation) {
               try {
                 e.preventDefault();
-                await tree.replaceObjectAtNodeWithCopy(treeNode.id);
+                await tree.replaceObjectAtNodeWithCopy(treeNode.id, isMod);
                 tree.setFocusedNode(treeNode.id);
               } catch (error) {
                 alert(error instanceof Error ? error.message : "Unknown error");

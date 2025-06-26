@@ -5,7 +5,6 @@ import {
   $getSelection,
   COMMAND_PRIORITY_LOW,
   COMMAND_PRIORITY_NORMAL,
-  KEY_BACKSPACE_COMMAND,
   KEY_DOWN_COMMAND,
   KEY_SPACE_COMMAND,
 } from "lexical";

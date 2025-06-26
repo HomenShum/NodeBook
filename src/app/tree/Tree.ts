@@ -989,20 +989,29 @@ export class Tree {
    * from autocomplete to replace the current node with. Then they change their
    * mind and want to revert to back to editing a new object.
    */
-  async replaceObjectAtNodeWithCopy(treeNodeId: string) {
+  async replaceObjectAtNodeWithCopy(treeNodeId: string, clearContent = false) {
     const treeNode = this.getNodeOrThrow(treeNodeId);
     // If the node has noteContent, then we don't delete the node - we just replace the content with empty te
     let node: GraphNode | GraphRelation | null = null;
     const hasNoteContent = treeNode.object.noteContentRelationsList.size > 0;
     try {
       let content: string | Chip[] = "";
-      if (hasNoteContent || treeNode.object instanceof GraphRelation) {
+
+      if (clearContent) {
+        // For Ctrl/Cmd+Backspace, always create empty content
         content = "";
-      } else if (treeNode.object instanceof GraphNode) {
-        content = sliceChips(treeNode.object.content, 0, -1);
       } else {
-        content = treeNode.object.text.slice(0, -1);
+        // Existing logic for regular backspace
+        const hasNoteContent = treeNode.object.noteContentRelationsList.size > 0;
+        if (hasNoteContent || treeNode.object instanceof GraphRelation) {
+          content = "";
+        } else if (treeNode.object instanceof GraphNode) {
+          content = sliceChips(treeNode.object.content, 0, -1);
+        } else {
+          content = treeNode.object.text.slice(0, -1);
+        }
       }
+
       node = await this.graphStore.addNode({ nodeProps: { content } });
       await this.setObjectOnNode(treeNode.path, node);
     } catch (error) {
