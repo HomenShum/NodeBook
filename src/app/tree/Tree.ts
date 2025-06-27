@@ -378,7 +378,7 @@ export class Tree {
       node.childrenGroups.forEach((group) => {
         group.nodes.forEach((childNode) => {
           if (childNode.relationWithParent.id === childNode.object.canonicalRelationId) {
-            walk(childNode)
+            walk(childNode);
           }
         });
       });
@@ -682,7 +682,6 @@ export class Tree {
   }
 
   setPathExpanded(path: Path, isExpanded: boolean) {
-
     this.expansionsByPath.set(path, isExpanded);
     this.expansionLocalStorageCache.update(this.expansionsByPath);
   }
@@ -2144,7 +2143,7 @@ export class Tree {
             //Example: 1 <-H,A        Output: 1 <-A
             //           2                      2
             //         3                      3 <-H
-            const nextDown = head.isAncestorOf(anchor) ? getNextBelow(head) : getNextSubtreeBelow(head) ?? null;
+            const nextDown = head.isAncestorOf(anchor) ? getNextBelow(head) : (getNextSubtreeBelow(head) ?? null);
             if (!nextDown || nextDown.parentGroup.id !== head.parentGroup.id) return false;
             this.selectionStack.push(dir, this.selection.headNodeId);
             this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextDown.path };
@@ -2345,7 +2344,7 @@ export class Tree {
       });
       node = node.parent;
       relationWithParent =
-        node instanceof DescendantTreeNode ? node.relationWithParent : node?.parent?.relationToChild ?? null;
+        node instanceof DescendantTreeNode ? node.relationWithParent : (node?.parent?.relationToChild ?? null);
     }
     this.graphStore.applyCombinedTransaction(trx);
   }
@@ -2427,7 +2426,10 @@ export class Tree {
    * Gets all currently expanded paths in the tree
    */
   private getExpandedPaths(): string[] {
-    const pathPrefixLength = this.pathToRoot.slice(1).map((obj) => "/"+obj.childGroupId+"/"+obj.relation?.id).join("").length;
+    const pathPrefixLength = this.pathToRoot
+      .slice(1)
+      .map((obj) => "/" + obj.childGroupId + "/" + obj.relation?.id)
+      .join("").length;
     return Array.from(this.expansionsByPath.entries())
       .filter(([_, isExpanded]) => isExpanded)
       .map(([path, _]) => path.slice(pathPrefixLength));
@@ -2463,10 +2465,15 @@ export class Tree {
    */
   public async applySavedExpansionState(): Promise<boolean> {
     if (!this.rootObjectId) return false;
+    // If we are in a search tree, we don't want to apply the saved expansion state
+    if (!this.isMainTree) return false;
 
     try {
-      const pathPrefix = this.pathToRoot.slice(1).map((obj) => "/"+obj.childGroupId+"/"+obj.relation?.id).join("");
-      const expandedPaths = await this.expansionStateManager.loadExpansionState(this.rootObjectId)
+      const pathPrefix = this.pathToRoot
+        .slice(1)
+        .map((obj) => "/" + obj.childGroupId + "/" + obj.relation?.id)
+        .join("");
+      const expandedPaths = await this.expansionStateManager.loadExpansionState(this.rootObjectId);
       if (expandedPaths === null) {
         logger.debug(`No server expansion state found for root: ${this.rootObjectId}`);
         return false;
@@ -2476,7 +2483,7 @@ export class Tree {
       this.collapseAllNodes();
 
       // Apply the loaded expansion state
-      expandedPaths.forEach((path) => this.setPathExpanded(pathPrefix+path, true));
+      expandedPaths.forEach((path) => this.setPathExpanded(pathPrefix + path, true));
 
       logger.debug(`Applied saved expansion state for root: ${this.rootObjectId}, ${expandedPaths.length} paths`);
       return true;
