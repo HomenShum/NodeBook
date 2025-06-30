@@ -38,11 +38,11 @@ async function executeSearchQuery(page: Page, query: string): Promise<QueryResul
     await page.keyboard.press("KeyA");
     await page.keyboard.up(modifierKey);
 
-    // Start timing
-    const startTime = Date.now();
-
     // Type the query
     await page.type(inputSelector, query);
+
+    // Start timing
+    const startTime = Date.now();
 
     // Wait for results to populate
     await page.waitForFunction(
@@ -134,7 +134,7 @@ async function testCommandBarPerformance(queriesFilePath: string): Promise<Query
 
     // Navigate to the app
     console.log("Navigating to http://localhost:3000...");
-    await page.goto("http://localhost:3000", {
+    await page.goto("https://mew-ec2.ideaflow.app", {
       waitUntil: "networkidle2",
       timeout: 30000,
     });
