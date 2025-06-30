@@ -294,7 +294,6 @@ function useMergers(tree: Tree) {
             : target.path;
       }
       const targetTextLength = target.object.text.length;
-      const sourceWasExpanded = source.isExpanded;
       graphStore.applyCombinedTransaction(txs);
 
       // Get the transaction ID and track the selection state
@@ -312,10 +311,10 @@ function useMergers(tree: Tree) {
         }
       }
 
+      const sourceWasExpanded = source.isExpanded && source.childCount > 0;
       // If the source was expanded, expand the target
-      if (sourceWasExpanded) {
-        tree.setPathExpanded(target.path, true);
-      }
+      tree.setPathExpanded(target.path, sourceWasExpanded);
+
       tree.setFocusedNode(focusPath, {
         anchorOffset: targetTextLength,
         focusOffset: targetTextLength,
