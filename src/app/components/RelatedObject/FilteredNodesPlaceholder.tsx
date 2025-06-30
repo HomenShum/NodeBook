@@ -2,7 +2,7 @@
 
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 
 import { FilteredNodesContext } from "@/app/components/RelatedObject/contexts/FilteredNodesContext";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -95,15 +95,22 @@ export const FilteredNodesPlaceholder = observer(function FilteredNodesPlacehold
   // Get contiguous groups of filtered nodes
   const contiguousGroups = tree.getContiguousFilteredGroups(parentPath, groupId);
 
+  const nodes = useMemo(() => [...contiguousGroups[groupIndex]], [contiguousGroups, groupIndex]);
+  // Get the filtered nodes and ensure they're properly sorted by position
+  // We don't need to reverse them as was done previously - just sort by position
+  useEffect(() => {
+    nodes.forEach(node => setNodeAndDescendantsUneditable(node));
+  }, [nodes]);
+  
+
+  const filteredNodes = useMemo(() => [...contiguousGroups[groupIndex]].sort((a, b) => comparePositions(a.position, b.position)), [contiguousGroups, groupIndex]);
+  const count = filteredNodes.length;
+
+
   // If no groups or the specified group index is out of bounds
   if (contiguousGroups.length === 0 || groupIndex >= contiguousGroups.length) {
     return null;
   }
-
-  // Get the filtered nodes and ensure they're properly sorted by position
-  // We don't need to reverse them as was done previously - just sort by position
-  const filteredNodes = [...contiguousGroups[groupIndex]].sort((a, b) => comparePositions(a.position, b.position));
-  const count = filteredNodes.length;
 
   const handleToggle = () => {
     setLocalExpanded(!isExpanded);
@@ -124,14 +131,11 @@ export const FilteredNodesPlaceholder = observer(function FilteredNodesPlacehold
 
       {isExpanded && (
         <div className={cn(styles.FilteredNodesContainer)}>
-          {filteredNodes.map((node) => {
-            setNodeAndDescendantsUneditable(node);
-            return (
-              <div key={node.path} className={styles.FilteredNode}>
-                <RelatedObjectView treeNode={node} />
-              </div>
-            );
-          })}
+          {filteredNodes.map((node) => (
+            <div key={node.path} className={styles.FilteredNode}>
+              <RelatedObjectView treeNode={node} />
+            </div>
+          ))}
         </div>
       )}
     </div>

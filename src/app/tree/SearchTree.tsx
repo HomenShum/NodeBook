@@ -388,25 +388,37 @@ export class SearchTree extends Tree {
     // Validate and filter out deleted nodes from each group
     const validGroups: DescendantTreeNode[][] = [];
 
-    for (const group of storedGroups) {
-      const validNodes = group.filter((node: DescendantTreeNode) => {
-        // Check if the node's object still exists in GraphStore
-        const objectExists = !!this.graphStore.getObject(node.object.id);
+    const unfilteredNodes = this.getNode(parentPath)?.childrenGroupsById[groupId]?.nodes;
 
-        // Check if the node's relation still exists in GraphStore
-        const relationExists = !!this.graphStore.getRelation(node.relationWithParent.id);
+    const filteredNodes = storedGroups.flat();
 
-        if (!objectExists || !relationExists) {
-          return false;
-        }
-
-        return true;
-      });
-
-      // Only include groups that still have valid nodes
-      if (validNodes.length > 0) {
-        validGroups.push(validNodes);
+    if (!unfilteredNodes) {
+      if (filteredNodes.length === 0) {
+        return [];
       }
+      return [filteredNodes.sort(this.sortFunction.bind(this))];
+    }
+
+    const unFilteredNodesSet = new Set(unfilteredNodes.map((node) => node.id));
+
+    const sortedNodes = [...unfilteredNodes, ...filteredNodes].sort(this.sortFunction.bind(this));
+
+    let currentGroup: DescendantTreeNode[] = [];
+    for (const node of sortedNodes) {
+      if (unFilteredNodesSet.has(node.id)) {
+        if (currentGroup.length > 0) {
+          validGroups.push(currentGroup);
+          currentGroup = [];
+        }
+        continue;
+      }
+
+      currentGroup.push(node);
+    }
+
+    // Only include groups that still have valid nodes
+    if (currentGroup.length > 0) {
+      validGroups.push(currentGroup);
     }
 
     // Update the stored data with cleaned groups
@@ -424,6 +436,11 @@ export class SearchTree extends Tree {
   public getFilteredGroupPositions(parentPath: string, groupId: GroupId): { position: Position; groupIndex: number }[] {
     // Use our validated contiguous groups method
     const contiguousGroups = this.getContiguousFilteredGroups(parentPath, groupId);
+
+    if (contiguousGroups.length === 0) {
+      return [];
+    }
+
     return contiguousGroups.map((group, groupIndex) => {
       // Since the nodes are contiguous, we can use any node's position as the anchor position
       const firstNode = group[0];

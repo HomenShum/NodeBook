@@ -862,11 +862,9 @@ export class Tree {
     this.sortOptionLocalStorageCache.save(this.sortOption);
   }
 
-  protected applySort(treeNode: TreeNode) {
+  protected sortFunction(a: DescendantTreeNode, b: DescendantTreeNode) {
     const { mode, direction } = this.sortOption;
     const negation = direction === "asc" ? -1 : 1;
-
-    const sortFn = (a: DescendantTreeNode, b: DescendantTreeNode) => {
       if (mode === "manual") {
         return comparePositions(a.position, b.position);
       } else if (mode === "alphabetical") {
@@ -874,11 +872,12 @@ export class Tree {
       } else {
         return compareTimestamps(a.object[mode], b.object[mode], a.position, b.position) * negation;
       }
-    };
+  }
 
+  protected applySort(treeNode: TreeNode) {
     const walk = (node: TreeNode) => {
       node.childrenGroups.forEach((group) => {
-        group.nodes.sort(sortFn);
+        group.nodes.sort(this.sortFunction.bind(this));
         group.nodes.forEach(walk);
       });
     };

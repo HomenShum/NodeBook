@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useState } from "react";
+import { createContext, useCallback, useState } from "react";
 
 // Create a context to manage global expand/collapse state
 export const FilteredNodesContext = createContext<{
@@ -20,21 +20,21 @@ export const FilteredNodesProvider = ({ children }: { children: React.ReactNode 
   const [globalExpanded, setGlobalExpanded] = useState(false);
   const [instances, setInstances] = useState<Set<string>>(new Set());
 
-  const registerInstance = (id: string) => {
+  const registerInstance = useCallback((id: string) => {
     setInstances((prev) => {
       const newSet = new Set(prev);
       newSet.add(id);
       return newSet;
     });
-  };
+  }, []);
 
-  const unregisterInstance = (id: string) => {
+  const unregisterInstance = useCallback((id: string) => {
     setInstances((prev) => {
       const newSet = new Set(prev);
       newSet.delete(id);
       return newSet;
     });
-  };
+  }, []);
 
   return (
     <FilteredNodesContext.Provider
