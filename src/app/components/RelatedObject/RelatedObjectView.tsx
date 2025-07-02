@@ -376,11 +376,31 @@ const Content = observer(function Content() {
               treeNode.parent.object.isRelationPinned(treeNode.relationWithParent) ? styles.Pinned : styles.Unpinned,
             )}
             onPointerDown={() => {
+              // Store current focus state
+              const previousSelection = tree.selection;
+
               const isPinned = treeNode.parent.object.isRelationPinned(treeNode.relationWithParent);
               if (isPinned) {
                 treeNode.parent.object.unpinChildRelation(treeNode.relationWithParent);
               } else {
                 treeNode.parent.object.pinChildRelation(treeNode.relationWithParent);
+              }
+
+              // Restore focus after the operation
+              if (previousSelection?.type === "editor") {
+                tree.setFocusedNode(
+                    previousSelection.treeNodeId,
+                    previousSelection.position,
+                    previousSelection.editMode
+                );
+
+                // Force DOM focus after React updates
+                setTimeout(() => {
+                  const editorElement = document.querySelector(`[data-editor-path="${previousSelection.treeNodeId}"]`) as HTMLElement;
+                  if (editorElement) {
+                    editorElement.focus();
+                  }
+                }, 0);
               }
             }}
           >
