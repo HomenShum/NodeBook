@@ -242,3 +242,45 @@ export function checkForSearchAndReplaceMatch(
       return checkForSearchAndReplaceOnSemiColonAtStart(text);
   }
 }
+
+/**
+ * Trims content to a reasonable length while preserving context around search matches.
+ *
+ * @param content - The content to trim
+ * @param searchText - The search text to look for matches
+ * @returns Trimmed content with ellipsis where appropriate
+ */
+export function trimContent(content: string, searchText: string): string {
+  if (content.length > 150) {
+    let hasMatch = false;
+    if (content.includes(searchText)) {
+      hasMatch = true;
+    }
+    if (hasMatch) {
+      const matchWithinFirst150 = content.slice(0, 150).includes(searchText);
+      if (matchWithinFirst150) {
+        return content.slice(0, 150) + "...";
+      }
+      const matchIndex = content.indexOf(searchText);
+      let startIndex = Math.max(0, matchIndex - 75);
+      const endIndex = Math.min(content.length, matchIndex + searchText.length + 75);
+      let trimmedContent = content.slice(startIndex, endIndex);
+      let beginning = 50;
+      let contentBeginning = content.slice(0, beginning);
+      if (startIndex > beginning) {
+        trimmedContent = contentBeginning + "...    ..." + trimmedContent;
+      } else if (startIndex === beginning) {
+        trimmedContent = contentBeginning + trimmedContent;
+      } else {
+        trimmedContent = content.slice(0, endIndex);
+      }
+      if (endIndex < content.length) {
+        trimmedContent = trimmedContent + "...";
+      }
+      return trimmedContent;
+    } else {
+      return content.slice(0, 150) + "...";
+    }
+  }
+  return content;
+}

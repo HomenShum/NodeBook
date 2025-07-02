@@ -45,14 +45,18 @@ export function MentionDropdown({
   const graphStore = useGraphStore();
   const tree = treeNode.tree;
 
-  const options = useMemo(
-    () => {
-      let isHashtagWithExactMatch = false;
-      if (dropdown?.type === "mention" && dropdown.mentionTrigger === HASHTAG_SYMBOL && dropdown.matches.some((o) => o.type === "node" && o.object.text === HASHTAG_SYMBOL + dropdown.search)) {
-        isHashtagWithExactMatch = true;
-      }
+  const options = useMemo(() => {
+    let isHashtagWithExactMatch = false;
+    if (
+      dropdown?.type === "mention" &&
+      dropdown.mentionTrigger === HASHTAG_SYMBOL &&
+      dropdown.matches.some((o) => o.type === "node" && o.object.text === HASHTAG_SYMBOL + dropdown.search)
+    ) {
+      isHashtagWithExactMatch = true;
+    }
 
-      const sortedOptions = dropdown?.type === "mention"
+    const sortedOptions =
+      dropdown?.type === "mention"
         ? [
             ...dropdown.matches
               .filter((m) => m.type === "node")
@@ -85,14 +89,14 @@ export function MentionDropdown({
             new MentionTypeaheadOption(dropdown.search, dropdown.mentionTrigger),
           ]
         : [];
-        if (isHashtagWithExactMatch) {
-          sortedOptions.splice(sortedOptions.findIndex((o) => o.value.type === "new"), 1);
-        }
-        return sortedOptions;
-    },
-    [dropdown],
-  );
-
+    if (isHashtagWithExactMatch) {
+      sortedOptions.splice(
+        sortedOptions.findIndex((o) => o.value.type === "new"),
+        1,
+      );
+    }
+    return sortedOptions;
+  }, [dropdown]);
 
   const onSelectOption = useCallback(
     async (opt: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {

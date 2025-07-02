@@ -247,6 +247,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
             onClick={(e) => selectMatch(match)}
             showTabHelper={highlightedIndex === null}
             match={match}
+            searchText={dropdown?.search ?? ""}
           />
         ))}
       </ul>

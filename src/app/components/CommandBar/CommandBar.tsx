@@ -20,7 +20,7 @@ import { useToast } from "@/app/hooks/useToast";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { ObjectPath } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
-import { cn, isMac } from "@/lib/utils";
+import { cn, isMac, trimContent } from "@/lib/utils";
 
 import styles from "./CommandBar.module.css";
 
@@ -243,31 +243,6 @@ const CommandBar = observer(() => {
     [filteredCommands, selectedIndex],
   );
 
-  const trimCommandName = (name: string) => {
-    if (name.length > 300) {
-      let hasMatch = false;
-      if (name.includes(search.text)) {
-        hasMatch = true;
-      }
-      if (hasMatch) {
-        const matchIndex = name.indexOf(search.text);
-        let startIndex = Math.max(0, matchIndex - 150);
-        const endIndex = Math.min(name.length, matchIndex + search.text.length + 150);
-        let trimmedName = name.slice(startIndex, endIndex);
-        if (startIndex > 0) {
-          trimmedName = "..." + trimmedName;
-        }
-        if (endIndex < name.length) {
-          trimmedName = trimmedName + "...";
-        }
-        return trimmedName;
-      } else {
-        return name.slice(0, 300) + "...";
-      }
-    }
-    return name;
-  };
-
   // Scroll to selected element
   useEffect(() => {
     if (listRef.current) {
@@ -353,7 +328,7 @@ const CommandBar = observer(() => {
                   onClick={(e) => command.perform(e)}
                 >
                   <span style={{ display: "flex", gap: 8, alignItems: "center", width: "100%" }}>
-                    <span style={{ marginRight: "auto" }}>{trimCommandName(command.name)}</span>
+                    <span style={{ marginRight: "auto" }}>{trimContent(command.name, search.text)}</span>
                     {command.type === "navigate" && (
                       <>
                         <TypeIndicator object={command.object} />

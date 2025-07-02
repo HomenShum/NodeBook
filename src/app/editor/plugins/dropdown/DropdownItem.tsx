@@ -15,7 +15,7 @@ import {
   USER_RELATION_TYPES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
 } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { cn, trimContent } from "@/lib/utils";
 
 import { Match } from "./types";
 
@@ -29,10 +29,11 @@ interface DropdownItemProps {
   onClick: (e: React.MouseEvent<HTMLLIElement>) => void;
   showTabHelper?: boolean;
   match: Match;
+  searchText?: string;
 }
 
 export const DropdownItem = forwardRef<HTMLLIElement, DropdownItemProps>(
-  ({ index, isSelected, isNotOwned, onMouseEnter, onClick, showTabHelper, match }, ref) => {
+  ({ index, isSelected, isNotOwned, onMouseEnter, onClick, showTabHelper, match, searchText }, ref) => {
     return (
       <li
         ref={ref}
@@ -52,7 +53,11 @@ export const DropdownItem = forwardRef<HTMLLIElement, DropdownItemProps>(
               <div className={styles.DropdownItemContent}>
                 <div style={{ flex: 1, overflow: "hidden" }}>
                   {match.object instanceof GraphNode ? (
-                    match.object.text
+                    searchText ? (
+                      trimContent(match.object.text, searchText)
+                    ) : (
+                      match.object.text
+                    )
                   ) : (
                     <RelationDisplay
                       from={match.object.from.text}
