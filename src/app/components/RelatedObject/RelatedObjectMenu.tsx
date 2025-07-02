@@ -11,13 +11,14 @@ import {
   Link,
   Lock,
   Notebook,
+  PanelRight,
   Pin,
   PinOff,
   Plus,
   RefreshCcwDot,
   SendToBack,
   Star,
-  User,
+  User
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -246,6 +247,22 @@ const ExpandNode = () => {
   );
 };
 
+const OpenInSidePanel = () => {
+  const { treeNode } = useTreeNode();
+  const viewStore = useViewStore();
+  
+  const handleOpenInSidePanel = useCallback(() => {
+    viewStore.createSidePanelTree(treeNode.object);
+  }, [treeNode, viewStore]);
+
+  return (
+    <DropdownMenuItem onSelect={handleOpenInSidePanel}>
+      <PanelRight size={14} />
+      Open in Side Panel
+    </DropdownMenuItem>
+  );
+};
+
 const AddChildNode = () => {
   const { treeNode } = useTreeNode();
   const graphStore = useGraphStore();
@@ -466,6 +483,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
             <ToggleFavorites />
             <TogglePublic />
             <ExpandNode />
+            <OpenInSidePanel />
             <AddChildNode />
             <CopyUrl />
             <DeleteNode />
