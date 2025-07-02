@@ -162,6 +162,11 @@ export const TreeNodeInputPrefix = observer(function TreeNodeInputPrefix({ treeN
       type="text"
       value=""
       onChange={async (e) => {
+        // Don't allow text modification if the node is edit restricted.
+        if (treeNode.object.isEditRestricted) {
+          return;
+        }
+
         // When a user types in the input, apply the content to the end of the
         // node and then switch back into edit mode.
         // Requested in https://ideaflowteam.slack.com/archives/C07FU15QKTP/p1729288027846699

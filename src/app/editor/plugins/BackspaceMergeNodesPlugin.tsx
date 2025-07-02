@@ -105,6 +105,12 @@ export const BackspaceMergeNodesPlugin = () => {
         } else if (treeNode.siblingAbove) {
           // Merge into sibling above's last node above, or sibling above if it has no children
           const nextNodeAbove = getNextAbove(treeNode);
+
+          // Don't allow merge if the node above is edit restricted.
+          if (nextNodeAbove && nextNodeAbove.object.isEditRestricted) {
+              return false;
+          }
+
           handled = mergeNodes(treeNode, nextNodeAbove || treeNode.siblingAbove);
         } else if (treeNode.parent) {
           // Merge into parent
