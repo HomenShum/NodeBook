@@ -43,6 +43,16 @@ export const SortOptionDropdown = ({
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
+              updateSortOption({ mode: "manual" });
+            }}
+            data-highlighted={sortOption.mode === "manual" || undefined}
+          >
+            <Hand size={14} />
+            <span>Manual ordering</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
               updateSortOption({ mode: "alphabetical" });
             }}
             data-highlighted={sortOption.mode === "alphabetical" || undefined}
@@ -69,16 +79,6 @@ export const SortOptionDropdown = ({
           >
             <FolderSync size={14} />
             <span>Updated time</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={(e) => {
-              e.preventDefault();
-              updateSortOption({ mode: "manual" });
-            }}
-            data-highlighted={sortOption.mode === "manual" || undefined}
-          >
-            <Hand size={14} />
-            <span>Manual ordering</span>
           </DropdownMenuItem>
 
           {sortOption.mode !== "manual" && (
