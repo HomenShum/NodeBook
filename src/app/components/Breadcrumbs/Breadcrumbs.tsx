@@ -2,7 +2,7 @@
 import { ArrowLeft, ChevronRight, Ellipsis, Home } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 
 import { BreadcrumbItem } from "@/app/components/Breadcrumbs/BreadcrumbItem";
 import BreadcrumbMenu from "@/app/components/Breadcrumbs/BreadcrumbMenu";
@@ -14,13 +14,13 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { GraphObject } from "@/app/graph/GraphObject";
 import { getCanonicalPath } from "@/app/graph/utils";
 import { TreeNode } from "@/app/tree/nodes";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { objectPathToObjects, truncateText, useIsMobile } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
-import { GraphObject } from "@/app/graph/GraphObject";
 
 import { default as s } from "./Breadcrumbs.module.css";
 
@@ -41,8 +41,12 @@ const RenderBreadcrumbs = observer(({ treeNode, ancestors, handleNavigation }: R
   const graphStore = useGraphStore();
   const totalItems = ancestors.length;
 
-  const layerObjectIds = ancestors.map((a) => a.id);
-  graphStore.layerManager.loadWithIds(layerObjectIds);
+  const layerObjectIds = useMemo(() => ancestors.map((a) => a.id), [ancestors]);
+
+  // Move loading to useEffect to avoid render-time side effects
+  useEffect(() => {
+    graphStore.layerManager.loadWithIds(layerObjectIds);
+  }, [graphStore.layerManager, layerObjectIds]);
 
   if (isMobile) {
     // Mobile view (unchanged)

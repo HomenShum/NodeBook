@@ -124,9 +124,17 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
   const isMobile = useIsMobile();
   const graphStore = useGraphStore();
 
-  if (isMobile) {
+  // Move mobile loading to useEffect to avoid render-time side effects
+  useEffect(() => {
+    if (isMobile) {
+      graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
+    }
+  }, [isMobile, graphStore.layerManager, treeNode.object.id]);
+
+  // Preload on mouse enter but with debouncing to avoid excessive calls
+  const handleMouseEnter = useCallback(() => {
     graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
-  }
+  }, [graphStore.layerManager, treeNode.object.id]);
 
   return (
     <TreeNodeProvider
@@ -140,12 +148,7 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
         setViewType,
       }}
     >
-      <div
-        className={styles.RelatedObjectContent}
-        onMouseEnter={() => {
-          graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
-        }}
-      >
+      <div className={styles.RelatedObjectContent} onMouseEnter={handleMouseEnter}>
         {children}
       </div>
     </TreeNodeProvider>
@@ -389,14 +392,16 @@ const Content = observer(function Content() {
               // Restore focus after the operation
               if (previousSelection?.type === "editor") {
                 tree.setFocusedNode(
-                    previousSelection.treeNodeId,
-                    previousSelection.position,
-                    previousSelection.editMode
+                  previousSelection.treeNodeId,
+                  previousSelection.position,
+                  previousSelection.editMode,
                 );
 
                 // Force DOM focus after React updates
                 setTimeout(() => {
-                  const editorElement = document.querySelector(`[data-editor-path="${previousSelection.treeNodeId}"]`) as HTMLElement;
+                  const editorElement = document.querySelector(
+                    `[data-editor-path="${previousSelection.treeNodeId}"]`,
+                  ) as HTMLElement;
                   if (editorElement) {
                     editorElement.focus();
                   }

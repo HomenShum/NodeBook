@@ -1,12 +1,12 @@
-import React from "react";
 import { AtSignIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
-import { Notification } from "@/app/util";
-import { useSetMainRoot } from "@/app/tree/utils";
-import { USER_ROOT_ID_PREFIX } from "@/lib/constants";
 import { useNotifications } from "@/app/contexts/NotificationContext";
+import { useSetMainRoot } from "@/app/tree/utils";
+import { Notification } from "@/app/util";
+import { USER_ROOT_ID_PREFIX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 import styles from "./Notifications.module.css";
@@ -19,7 +19,12 @@ export const NotificationItem = observer(function NotificationItem({ notificatio
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
   const { markAsRead } = useNotifications();
-  graphStore.layerManager.lazyLoadWithIds([notification.messageContent.nodeId]);
+
+  // Move loading to useEffect to avoid render-time side effects
+  useEffect(() => {
+    graphStore.layerManager.lazyLoadWithIds([notification.messageContent.nodeId]);
+  }, [graphStore.layerManager, notification.messageContent.nodeId]);
+
   const userNode = graphStore.nodesById.get(USER_ROOT_ID_PREFIX + notification.messageContent.mentionedById);
   const targetNode = graphStore.nodesById.get(notification.messageContent.nodeId);
 
