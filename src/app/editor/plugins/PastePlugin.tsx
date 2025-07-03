@@ -17,7 +17,7 @@ import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useToast } from "@/app/hooks/useToast";
 import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
-import { TreeNodeContentSelectionPosition } from "@/app/tree/selection";
+import { TreeNodeContentSelectionPosition, TreeSelection } from "@/app/tree/selection";
 import { getAuthFetch, toast, uuid } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import { PasteLinksOption } from "@/db/schema";
@@ -446,26 +446,38 @@ export const PastePlugin = () => {
           // and the ID of the first existing node in-which the paste event occurs
           const pastedNodeIds = [object.id];
 
+          const rawTextContainsNewline = clipboardData.getData("text/plain").includes("\\n");
           const mewData = clipboardData.getData(MEW_CLIPBOARD_MIMETYPE);
           const htmlData = clipboardData.getData("text/html");
           const plainText = clipboardData.getData("text/plain");
-          const lexicalData =  clipboardData.getData("application/x-lexical-editor");
+          const lexicalData = clipboardData.getData("application/x-lexical-editor");
 
           let rawLines: ChipsWithContext[];
+          const initialTreeSelection: TreeSelection = { ...tree.selection } as TreeSelection;
 
           if (mewData) {
+            console.log("mewData");
             rawLines = getLinesFromMewData(mewData, shiftKey);
-          }  else if(lexicalData){
+          } else if (lexicalData) {
+            console.log("lexicalData");
             const selection = $getSelection();
-            if(selection){
+            if (selection) {
               $insertDataTransferForRichText(clipboardData, selection, editor);
               return true;
             }
             return false;
-          } else if (htmlData) {
-            rawLines = getLinesFromHtmlList(htmlData, shiftKey); 
+          } else if (htmlData && rawTextContainsNewline) {
+            console.log("htmlData");
+            rawLines = getLinesFromHtmlList(htmlData, shiftKey);
           } else {
             rawLines = getLinesFromPlainText(plainText, shiftKey);
+            if (rawLines.length <= 1) {
+              const selection = $getSelection();
+              if (selection) {
+                $insertDataTransferForRichText(clipboardData, selection, editor);
+                return true;
+              }
+            }
           }
 
           let lines: ChipsWithContext[];
@@ -477,7 +489,7 @@ export const PastePlugin = () => {
             const normalizedText = getLinesFromPlainText(plainText, shiftKey);
             lines = normalizeDepth(normalizedText);
           }
-                    
+
           // Store original node IDs if they exist
           const originalNodeIds = lines
             .filter((line) => line.nodeId !== undefined)
@@ -559,9 +571,9 @@ export const PastePlugin = () => {
 
               // The key fix - only allow firstLine.isChecked to be used if it's a boolean (true/false)
               // This ensures that null/undefined values don't overwrite the existing checkbox
-              const preserveExistingCheck = typeof firstLine.isChecked !== 'boolean';
+              const preserveExistingCheck = typeof firstLine.isChecked !== "boolean";
               const finalIsChecked = preserveExistingCheck ? object.isChecked : firstLine.isChecked;
-              
+
               txs.push({
                 type: "updateNode",
                 transaction: {
@@ -701,18 +713,28 @@ export const PastePlugin = () => {
               });
             }
 
-            if (isInlinePaste && tree.selection && tree.selection.type === "editor" && firstLine) {
+            if (
+              isInlinePaste &&
+              tree.selection &&
+              initialTreeSelection &&
+              initialTreeSelection.type === "editor" &&
+              firstLine
+            ) {
               const firstLineLength = firstLine.chips.reduce(
                 (sum, chip) => sum + (chip.type !== "image" ? chip.value.length : 0),
                 0,
               );
               let position: TreeNodeContentSelectionPosition = "end";
-              if (tree.selection.position === "start") {
+              console.log("initialTreeSelection", initialTreeSelection);
+              if (initialTreeSelection.position === "start") {
                 position = { anchorOffset: firstLineLength, focusOffset: firstLineLength };
-              } else if (tree.selection.position === "end") {
+              } else if (initialTreeSelection.position === "end") {
                 position = "end";
               } else {
-                const minOffset = Math.min(tree.selection.position.anchorOffset, tree.selection.position.focusOffset);
+                const minOffset = Math.min(
+                  initialTreeSelection.position.anchorOffset,
+                  initialTreeSelection.position.focusOffset,
+                );
                 position = { anchorOffset: firstLineLength + minOffset, focusOffset: firstLineLength + minOffset };
               }
               tree.setFocusedNode(path, position);
@@ -917,22 +939,22 @@ const getLinkAdditionTxs = (chips: Chip[], parentId: string, mode: PasteLinksOpt
 
 const getTodoStatus = (text: string): { isChecked: boolean | null; remainingText: string } => {
   const trimmedText = text.trimStart();
-  
+
   // Match both standard and markdown-style to-do syntax with regex
   // For checked items: [x], - [x], * [x] (case insensitive for 'x'), ☑, ✅
-  const checkedRegex = /^(?:(?:- |\* )?\[x\]\s?|[\u2611\u2612\u2705]\s?)/i;  
+  const checkedRegex = /^(?:(?:- |\* )?\[x\]\s?|[\u2611\u2612\u2705]\s?)/i;
   if (checkedRegex.test(trimmedText)) {
     const match = trimmedText.match(checkedRegex)![0];
     return { isChecked: true, remainingText: trimmedText.substring(match.length) };
   }
-  
+
   // For unchecked items: [ ], - [ ], * [ ], ☐
-  const uncheckedRegex = /^(?:(?:- |\* )?\[ \]\s?|[\u2610]\s?)/;  
+  const uncheckedRegex = /^(?:(?:- |\* )?\[ \]\s?|[\u2610]\s?)/;
   if (uncheckedRegex.test(trimmedText)) {
     const match = trimmedText.match(uncheckedRegex)![0];
     return { isChecked: false, remainingText: trimmedText.substring(match.length) };
   }
-  
+
   return { isChecked: null, remainingText: text };
 };
 
@@ -969,47 +991,67 @@ const getLinesFromMewData = (mewData: string, shiftKey: boolean): ChipsWithConte
  * • Prevents duplicate content from nested lists
  * • Better GCD calculation for indent detection
  */
-export const getLinesFromHtmlList = (
-  html: string,
-  shiftKey = false,
-): ChipsWithContext[] => {
+export const getLinesFromHtmlList = (html: string, shiftKey = false): ChipsWithContext[] => {
   // ── 0. Slack paragraph-break normalisation & "Shift-paste = raw" ───────────
-  const normalisedHtml = html.replace(
-    /<span[^>]*data-stringify-type=['"]paragraph-break['"][^>]*><\/span>/gi,
-    '<br/>',
-  );
+  const normalisedHtml = html.replace(/<span[^>]*data-stringify-type=['"]paragraph-break['"][^>]*><\/span>/gi, "<br/>");
 
   if (shiftKey) {
-    const raw = normalisedHtml
-      .replace(/<(?:p|div|h[1-6]|li|tr|table)\b[^>]*>/gi, '\n')
-      .replace(/<br\s*\/?>/gi, '\n');
-    const text = new DOMParser()
-      .parseFromString(raw, 'text/html')
-      .body.textContent?.replace(/\n{3,}/g, '\n\n') ?? '';
-    return [{
-      chips: transformTextToChips(text),
-      depth: 0,
-      isChecked: null,
-    }];
+    const raw = normalisedHtml.replace(/<(?:p|div|h[1-6]|li|tr|table)\b[^>]*>/gi, "\n").replace(/<br\s*\/?>/gi, "\n");
+    const text = new DOMParser().parseFromString(raw, "text/html").body.textContent?.replace(/\n{3,}/g, "\n\n") ?? "";
+    return [
+      {
+        chips: transformTextToChips(text),
+        depth: 0,
+        isChecked: null,
+      },
+    ];
   }
 
   // ── 1. Detect indent-step (px → levels) via GCD ─────────────────────────────
-  const doc = new DOMParser().parseFromString(normalisedHtml, 'text/html');
+  const doc = new DOMParser().parseFromString(normalisedHtml, "text/html");
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-  const pxValues = Array.from(doc.querySelectorAll<HTMLElement>('[style]'))
-    .flatMap(el =>
-      ['paddingLeft','marginLeft','paddingInlineStart','marginInlineStart']
-        .map(k => parseFloat((el.style as any)[k]) || 0)
+  const pxValues = Array.from(doc.querySelectorAll<HTMLElement>("[style]"))
+    .flatMap((el) =>
+      ["paddingLeft", "marginLeft", "paddingInlineStart", "marginInlineStart"].map(
+        (k) => parseFloat((el.style as any)[k]) || 0,
+      ),
     )
-    .filter(v => v > 0);
+    .filter((v) => v > 0);
   const INDENT_PX = pxValues.length ? pxValues.reduce(gcd) : 24;
 
   // ── 2. Helpers ───────────────────────────────────────────────────────────────
-  type BlockTags = 'DIV'|'P'|'UL'|'OL'|'LI'|'TABLE'|'BLOCKQUOTE'|
-                   'H1'|'H2'|'H3'|'H4'|'H5'|'H6'|'PRE'|'HR';
+  type BlockTags =
+    | "DIV"
+    | "P"
+    | "UL"
+    | "OL"
+    | "LI"
+    | "TABLE"
+    | "BLOCKQUOTE"
+    | "H1"
+    | "H2"
+    | "H3"
+    | "H4"
+    | "H5"
+    | "H6"
+    | "PRE"
+    | "HR";
   const blockChildTags = new Set<BlockTags>([
-    'DIV','P','UL','OL','LI','TABLE','BLOCKQUOTE',
-    'H1','H2','H3','H4','H5','H6','PRE','HR'
+    "DIV",
+    "P",
+    "UL",
+    "OL",
+    "LI",
+    "TABLE",
+    "BLOCKQUOTE",
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5",
+    "H6",
+    "PRE",
+    "HR",
   ]);
 
   const lines: ChipsWithContext[] = [];
@@ -1017,73 +1059,65 @@ export const getLinesFromHtmlList = (
   let headingBaseLevel: number | null = null;
 
   const pushLines = (raw: string, baseDepth: number) => {
-    raw
-      .split(/\r?\n/)
-      .forEach(lineText => {
-        // only emit a blank if raw was exactly whitespace, and not a multi-line split
-        if (/^[\t ]*$/.test(lineText)) {
-          if (raw.trim() === '' && !raw.includes('\n')) {
-            lines.push({ chips: [], depth: baseDepth, isChecked: null });
-          }
-          return;
+    raw.split(/\r?\n/).forEach((lineText) => {
+      // only emit a blank if raw was exactly whitespace, and not a multi-line split
+      if (/^[\t ]*$/.test(lineText)) {
+        if (raw.trim() === "" && !raw.includes("\n")) {
+          lines.push({ chips: [], depth: baseDepth, isChecked: null });
         }
+        return;
+      }
 
-        const { depth: extra, remainingText } = getDepthFromTextOffset(lineText);
-        const trimmed = remainingText.trim();
-        const { isChecked, remainingText: afterTodo } = getTodoStatus(trimmed);
-        lines.push({
-          chips: afterTodo ? transformTextToChips(afterTodo) : [],
-          depth: baseDepth + extra,
-          isChecked,
-        });
+      const { depth: extra, remainingText } = getDepthFromTextOffset(lineText);
+      const trimmed = remainingText.trim();
+      const { isChecked, remainingText: afterTodo } = getTodoStatus(trimmed);
+      lines.push({
+        chips: afterTodo ? transformTextToChips(afterTodo) : [],
+        depth: baseDepth + extra,
+        isChecked,
       });
+    });
   };
 
   const cssDepth = (el: HTMLElement) => {
-    const m = (el.getAttribute('style') || '')
-      .match(/(?:padding|margin)-(?:left|inline-start):\s*([\d.]+)px/i);
-    return m && INDENT_PX > 0
-      ? Math.round(parseFloat(m[1]) / INDENT_PX)
-      : 0;
+    const m = (el.getAttribute("style") || "").match(/(?:padding|margin)-(?:left|inline-start):\s*([\d.]+)px/i);
+    return m && INDENT_PX > 0 ? Math.round(parseFloat(m[1]) / INDENT_PX) : 0;
   };
 
   const declaredLevel = (el: HTMLElement) => {
-    const a = el.getAttribute('data-indent')
-      ?? el.getAttribute('data-stringify-indent');
+    const a = el.getAttribute("data-indent") ?? el.getAttribute("data-stringify-indent");
     return a !== null ? parseInt(a, 10) : null;
   };
 
   // ── 3. Single DOM-walk ───────────────────────────────────────────────────────
   const walk = (el: Element, currentDepth: number) => {
     for (const node of Array.from(el.childNodes)) {
-      if(node.nodeType === Node.TEXT_NODE){
+      if (node.nodeType === Node.TEXT_NODE) {
         lines.push({
           chips: transformTextToChips(node.textContent || ""),
           depth: currentDepth,
-          isChecked: null
+          isChecked: null,
         });
         continue;
       }
-      if (node.nodeType !== Node.ELEMENT_NODE){
+      if (node.nodeType !== Node.ELEMENT_NODE) {
         continue;
       }
       const elem = node as HTMLElement;
 
       // Determines when a P or DIV should "anchor" under the last heading.
       const getAnchor = (depth: number) =>
-        depth === 0 && currentSectionDepth !== null
-          ? currentSectionDepth + 1
-          : depth;
+        depth === 0 && currentSectionDepth !== null ? currentSectionDepth + 1 : depth;
 
       switch (elem.tagName) {
         // — LI —
-        case 'LI': {
+        case "LI": {
           const clone = elem.cloneNode(true) as HTMLElement;
-          clone.querySelectorAll('ul,ol').forEach(n => n.remove());
-          const htmlWithBreaks = clone.innerHTML.replace(/<br\s*\/?>/gi, '\n');
-          const tmp = document.createElement('div');
+          clone.querySelectorAll("ul,ol").forEach((n) => n.remove());
+          const htmlWithBreaks = clone.innerHTML.replace(/<br\s*\/?>/gi, "\n");
+          const tmp = document.createElement("div");
           tmp.innerHTML = htmlWithBreaks;
-          const text = tmp.textContent ?? '';
+          const text = tmp.textContent ?? "";
 
           const lvl = declaredLevel(elem);
           let itemDepth: number, nestedCtx: number;
@@ -1098,81 +1132,80 @@ export const getLinesFromHtmlList = (
           pushLines(text, itemDepth);
 
           // Properly nested lists
-          elem.querySelectorAll<HTMLElement>(':scope > ul, :scope > ol')
-            .forEach(nested => walk(nested, nestedCtx + 1)); // Nested lists are +1 depth
+          elem
+            .querySelectorAll<HTMLElement>(":scope > ul, :scope > ol")
+            .forEach((nested) => walk(nested, nestedCtx + 1)); // Nested lists are +1 depth
 
           // Handle malformed "sibling" lists (Google Docs style)
           let nextSibling = elem.nextElementSibling;
-          while (nextSibling && (nextSibling.tagName === 'UL' || nextSibling.tagName === 'OL')) {
+          while (nextSibling && (nextSibling.tagName === "UL" || nextSibling.tagName === "OL")) {
             walk(nextSibling as HTMLElement, nestedCtx + 1); // Treat as nested, so +1 depth
             const toRemove = nextSibling;
             nextSibling = nextSibling.nextElementSibling;
             // Mark the element as processed to avoid re-processing
-            toRemove.setAttribute('data-processed', 'true');
+            toRemove.setAttribute("data-processed", "true");
           }
           break;
         }
 
         // — UL/OL (anchored to last heading/paragraph when at root) —
-        case 'UL':
-        case 'OL': {
+        case "UL":
+        case "OL": {
           // Skip if already processed as a sibling list
-          if (elem.getAttribute('data-processed') === 'true') break;
-          
+          if (elem.getAttribute("data-processed") === "true") break;
+
           const anchor = getAnchor(currentDepth);
           const lvl = declaredLevel(elem);
-          const listDepth = lvl !== null
-            ? lvl
-            : anchor + cssDepth(elem);
+          const listDepth = lvl !== null ? lvl : anchor + cssDepth(elem);
 
           walk(elem, listDepth); // Children of UL/OL (i.e., LIs) will use this as their base depth
           break;
         }
 
         // — BLOCKQUOTE —
-        case 'BLOCKQUOTE':
+        case "BLOCKQUOTE":
           walk(elem, currentDepth + 1 + cssDepth(elem));
           break;
 
         // — HEADINGS —
-        case 'H1': case 'H2': case 'H3':
-        case 'H4': case 'H5': case 'H6': {
+        case "H1":
+        case "H2":
+        case "H3":
+        case "H4":
+        case "H5":
+        case "H6": {
           const tagLevel = parseInt(elem.tagName.slice(1), 10);
           if (headingBaseLevel === null) headingBaseLevel = tagLevel;
           const rel = tagLevel - (headingBaseLevel || 1); // Ensure headingBaseLevel is not null
           const actual = Math.max(0, rel + cssDepth(elem)); // Ensure depth isn't negative
-          pushLines(elem.textContent ?? '', actual);
+          pushLines(elem.textContent ?? "", actual);
           currentSectionDepth = actual;
           break;
         }
 
         // — P —
         /* ───────────────  P  (Google-Docs tabs + inline <br>)  ──────────────── */
-        case 'P': {
+        case "P": {
           /* 0 . ignore empty ProseMirror trailing breaks */
-          if (
-            elem.querySelector('br.ProseMirror-trailingBreak') &&
-            !elem.textContent?.trim()
-          ) break;
+          if (elem.querySelector("br.ProseMirror-trailingBreak") && !elem.textContent?.trim()) break;
 
           /* 1 . depth = # of Apple-tab-spans that prefix this paragraph */
-          const depthFromTabs = elem.querySelectorAll('span.Apple-tab-span').length;
+          const depthFromTabs = elem.querySelectorAll("span.Apple-tab-span").length;
 
           /* 2 . materialise every <br> in the paragraph as "\n" characters         */
-          const htmlWithBreaks = elem.innerHTML.replace(/<br\s*\/?>/gi, '\n');
+          const htmlWithBreaks = elem.innerHTML.replace(/<br\s*\/?>/gi, "\n");
 
           /* 3 . strip span wrappers but keep the \n we just inserted               */
-          const tmp = document.createElement('div');
+          const tmp = document.createElement("div");
           tmp.innerHTML = htmlWithBreaks;
-          const fullText = tmp.textContent ?? '';
+          const fullText = tmp.textContent ?? "";
 
           /* 4 . each \n-separated chunk becomes *its own* outline line             */
-          fullText.split(/\r?\n/).forEach(chunk => {
-            const text = chunk.replace(/\t/g, '');                  // drop literal tabs
+          fullText.split(/\r?\n/).forEach((chunk) => {
+            const text = chunk.replace(/\t/g, ""); // drop literal tabs
 
             const { isChecked, remainingText } = getTodoStatus(text);
-            const { depth: extra, remainingText: tail } =
-              getDepthFromTextOffset(remainingText);               // spaces ⇒ extra depth
+            const { depth: extra, remainingText: tail } = getDepthFromTextOffset(remainingText); // spaces ⇒ extra depth
 
             lines.push({
               chips: transformTextToChips(tail.trim()),
@@ -1181,31 +1214,29 @@ export const getLinesFromHtmlList = (
             });
           });
 
-          break;   /* paragraph handled completely */
+          break; /* paragraph handled completely */
         }
 
         // — DIV —
-        case 'DIV': {
+        case "DIV": {
           if (
             elem.childElementCount === 1 &&
-            elem.firstElementChild?.tagName === 'BR' &&
-            elem.firstElementChild.classList.contains('ProseMirror-trailingBreak') &&
+            elem.firstElementChild?.tagName === "BR" &&
+            elem.firstElementChild.classList.contains("ProseMirror-trailingBreak") &&
             !elem.textContent?.trim()
           ) {
             break;
           }
 
-          const hasBlocks = Array.from(elem.children)
-            .some(c => blockChildTags.has(c.tagName as BlockTags));
+          const hasBlocks = Array.from(elem.children).some((c) => blockChildTags.has(c.tagName as BlockTags));
 
           if (hasBlocks) {
             walk(elem, currentDepth + cssDepth(elem));
           } else {
-            const htmlWithBreaks = elem.innerHTML
-              .replace(/<br\s*\/?>/gi, '\n')
-            const tmp = document.createElement('div');
+            const htmlWithBreaks = elem.innerHTML.replace(/<br\s*\/?>/gi, "\n");
+            const tmp = document.createElement("div");
             tmp.innerHTML = htmlWithBreaks;
-            const text = tmp.textContent ?? '';
+            const text = tmp.textContent ?? "";
             if (text.trim()) {
               pushLines(text, getAnchor(currentDepth) + cssDepth(elem));
             }
@@ -1214,14 +1245,12 @@ export const getLinesFromHtmlList = (
         }
 
         /* ───────────────  PRE  (fenced code - single node, keep \n)  ─────────────── */
-        case 'PRE': {
+        case "PRE": {
           /* 1.  Harvest the literal text inside <pre> … <code>  */
-          const code = elem.textContent?.replace(/\r\n/g, '\n') ?? '';
+          const code = elem.textContent?.replace(/\r\n/g, "\n") ?? "";
 
           /* 2.  Fence only when it really is a code block                          */
-          const fenced = elem.querySelector('code')
-              ? `\`\`\`<code>\n${code}\n</code>\`\`\``
-              : code;
+          const fenced = elem.querySelector("code") ? `\`\`\`<code>\n${code}\n</code>\`\`\`` : code;
 
           /* 3.  Push ONE ChipsWithContext entry (don't use pushLines → no split)   */
           lines.push({
@@ -1233,40 +1262,44 @@ export const getLinesFromHtmlList = (
         }
 
         /* ───────────────  TABLE  ──────────────── */
-        case 'TABLE': {
+        case "TABLE": {
           const base = getAnchor(currentDepth) + 1 + cssDepth(elem);
-          const rows = Array.from(elem.querySelectorAll('tr'));
+          const rows = Array.from(elem.querySelectorAll("tr"));
           if (!rows.length) break;
 
-          const hdrs = Array.from(rows[0].querySelectorAll('th, td'))
-            .map((c, i) => c.textContent?.trim() || `Col-${i+1}`);
+          const hdrs = Array.from(rows[0].querySelectorAll("th, td")).map(
+            (c, i) => c.textContent?.trim() || `Col-${i + 1}`,
+          );
           let dataRows = rows;
-          if (rows[0].querySelector('th') || hdrs.some(h => !h.startsWith('Col-'))) {
+          if (rows[0].querySelector("th") || hdrs.some((h) => !h.startsWith("Col-"))) {
             dataRows = rows.slice(1);
           }
 
-          dataRows.forEach(tr => {
-            const cells = Array.from(tr.cells).map(c => c.textContent?.trim() || '');
-            const obj: Record<string,string> = {};
-            hdrs.forEach((h,i) => { obj[h] = cells[i]||''; });
+          dataRows.forEach((tr) => {
+            const cells = Array.from(tr.cells).map((c) => c.textContent?.trim() || "");
+            const obj: Record<string, string> = {};
+            hdrs.forEach((h, i) => {
+              obj[h] = cells[i] || "";
+            });
             pushLines(JSON.stringify(obj), base);
           });
           break;
         }
 
         // — BR as blank line —
-        case 'BR':
+        case "BR":
           lines.push({
             chips: [],
             depth: currentDepth + cssDepth(el as HTMLElement),
-            isChecked: null
+            isChecked: null,
           });
           break;
 
         // — default recurse —
         default: // For other container tags like SPAN, B, I, etc.
-          if (elem.childNodes.length > 0) { // Only recurse if it has children
-             walk(elem, currentDepth + cssDepth(elem)); // CSS depth of inline elements is usually 0
+          if (elem.childNodes.length > 0) {
+            // Only recurse if it has children
+            walk(elem, currentDepth + cssDepth(elem)); // CSS depth of inline elements is usually 0
           }
       }
     }
@@ -1279,13 +1312,11 @@ export const getLinesFromHtmlList = (
 export const getLinesFromPlainText = (text: string, shiftKey: boolean): ChipsWithContext[] => {
   return shiftKey
     ? [{ chips: transformTextToChips(text), depth: 0 }]
-    : text
-        .split("\n")
-        .map((value) => {
-          const { remainingText: textAfterDepth, depth } = getDepthFromTextOffset(value);
-          const { isChecked, remainingText } = getTodoStatus(textAfterDepth);
-          return { chips: transformTextToChips(remainingText), depth, isChecked: isChecked ?? null };
-        }) ?? [];
+    : (text.split("\n").map((value) => {
+        const { remainingText: textAfterDepth, depth } = getDepthFromTextOffset(value);
+        const { isChecked, remainingText } = getTodoStatus(textAfterDepth);
+        return { chips: transformTextToChips(remainingText), depth, isChecked: isChecked ?? null };
+      }) ?? []);
 };
 
 /** Add 1 depth for each tab or each 2 spaces at the beginning of the line */
