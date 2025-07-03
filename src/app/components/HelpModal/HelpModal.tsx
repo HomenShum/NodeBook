@@ -48,7 +48,7 @@ export const HelpModal = observer(function HelpModal() {
   return (
     <DataDialog title="" description="" modalType="help">
       <div className={styles.SettingsGroup}>
-        <h1>Keyboard Shortcuts</h1>
+        <h1 style={{paddingLeft: "6px"}}>Keyboard Shortcuts</h1>
         <div>
           {
             list.map((item) => <HotKeyItem key={item.name} name={item.name} keys={item.keys}/>)

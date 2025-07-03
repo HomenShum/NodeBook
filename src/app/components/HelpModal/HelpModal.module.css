@@ -3,11 +3,12 @@
   flex-direction: row;
   gap: 8px;
   justify-content: space-between;
-  padding: 1px 5px;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .HotkeyItem:hover {
-  background-color: #d9eef3;
+  background-color: var(--gray-3);
 }
 
 .HotkeyItemKeys {
@@ -21,17 +22,16 @@
 }
 
 .kbd {
-  --kbd-color-background: #f7f7f7;
-  --kbd-color-border: #cbcccd;
-  --kbd-color-text: #222325;
-  background-color: #f7f7f7;
+  --kbd-color-border: var(--gray-6);
+  --kbd-color-text: var(--gray-12);
+  background-color: var(--gray-2);
   border-radius: 0.25rem;
   border: 1px solid var(--kbd-color-border);
   box-shadow: 0 2px 0 1px var(--kbd-color-border);
   color: var(--kbd-color-text);
   cursor: default;
   display: inline-block;
-  font-size: 0.875em;
+  font-size: 0.9em;
   line-height: 1;
   min-width: 0.75rem;
   padding: 2px 5px;
