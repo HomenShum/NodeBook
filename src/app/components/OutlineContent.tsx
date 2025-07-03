@@ -1,4 +1,4 @@
-import { Globe, HomeIcon, Link, Maximize2, X } from "lucide-react";
+import { Globe, HomeIcon, Link, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import { useContext, useEffect, useMemo, useRef } from "react";
 
@@ -234,29 +234,6 @@ function OutlineContent({ tree }: Props) {
           <div className={s.TitleContainer}>
             <div className={s.HeadingLeftHandler}>
               <NodeHeaderSettingsMenu treeNode={treeRoot} />
-              <button
-                className={relatedObjectStyles.SetRootButton}
-                onPointerDown={(e) => {
-                  if (e.shiftKey) {
-                    // open in sidebar
-                    viewStore.createSidePanelTree(treeRoot.object);
-                  } else {
-                    // If this is the main (non-sidebar, non-quick capture) view, output a toast
-                    if (tree.isMainTree) {
-                      addToast({
-                        title: "Already expanded in Main Tree",
-                        description:
-                          "Expanding the tree root in the main view does nothing. If you Shift-Click, you can open this in the sidebar as well.",
-                      });
-                      return;
-                    }
-                    setRoot(treeRoot.object);
-                  }
-                }}
-                title="Set as root (Shift+Click to open in sidebar)"
-              >
-                <Maximize2 size={11} className={relatedObjectStyles.SetRootIcon} />
-              </button>
             </div>
             <TooltipProvider>
               {!isGlobalRoot ? (

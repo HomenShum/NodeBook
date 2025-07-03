@@ -1,4 +1,4 @@
-import { ClipboardCopy, Download, Ellipsis, Globe, List, Lock, Plus, Star, Trash2 } from "lucide-react";
+import { Download, Ellipsis, Globe, Link, List, Lock, PanelRightIcon, Plus, Star, Trash2 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
 import { useRouter } from "next/navigation";
@@ -7,11 +7,11 @@ import { useState } from "react";
 import styles from "@/app/components/OutlineView.module.css";
 import { SetPublicDialog } from "@/app/components/SetPublicDialog/SetPublicDialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
@@ -21,6 +21,7 @@ import { useToast } from "@/app/hooks/useToast";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard, downloadSubtree, exportSubtreeToIdeapad } from "@/app/util";
+import { useViewStore } from "@/app/view/useViewStore";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -34,6 +35,7 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
   const router = useRouter();
   const setRoot = useSetMainRoot();
   const user = useUser();
+  const viewStore = useViewStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const { addToast } = useToast();
 
@@ -79,8 +81,19 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
                 });
               }}
             >
-              <ClipboardCopy size={14} />
+              <Link size={14} />
               Copy URL
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                viewStore.createSidePanelTree(treeNode.object);
+                addToast({
+                  title: "Opened in side panel",
+                });
+              }}
+            >
+              <PanelRightIcon size={14} />
+              Open in Side Panel
             </DropdownMenuItem>
             {treeNode.object.isUserNode && (
               <DropdownMenuItem onSelect={() => router.push(`/all-nodes?authorId=${treeNode.object.authorId}`)}>
