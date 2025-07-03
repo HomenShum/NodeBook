@@ -143,13 +143,8 @@
   justify-content: start;
   flex-direction: column;
   background-color: var(--gray-1);
-  height: calc(100dvh - 96px);
-  padding-bottom: 72px;
-  /* border-bottom-left-radius: 6px; */
-  /* border-bottom-right-radius: 6px; */
-  /* border: 0.5px solid var(--gray-6); */
-  /* commenting above lines to remove bottom border that appears before the main ViewContainer border ends */
-  /* should delete these comments before merging */
+  height: calc(100dvh - 90px);
+  padding-bottom: 42px;
   border-top: none;
   overflow-y: auto;
   scrollbar-width: thin;
