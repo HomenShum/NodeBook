@@ -108,7 +108,7 @@ export const BackspaceMergeNodesPlugin = () => {
 
           // Don't allow merge if the node above is edit restricted.
           if (nextNodeAbove && nextNodeAbove.object.isEditRestricted) {
-              return false;
+            return false;
           }
 
           handled = mergeNodes(treeNode, nextNodeAbove || treeNode.siblingAbove);
@@ -130,7 +130,7 @@ export const BackspaceMergeNodesPlugin = () => {
               nodeId: treeNode.object.id,
             });
           }
-          const element = document.querySelector(`[data-object-suffix="${treeNode.siblingAbove.object.id}"]`);
+          const element = document.querySelector(`[data-object-suffix="${treeNode.siblingAbove.id}"]`);
           if (element && element instanceof HTMLInputElement) {
             element.focus();
           }
@@ -319,8 +319,8 @@ function useMergers(tree: Tree) {
 
       const sourceWasExpanded = source.isExpanded && source.childCount > 0;
       if (!target.isExpanded && sourceWasExpanded) {
-          // If the source was expanded, expand the target
-          tree.setPathExpanded(target.path, true);
+        // If the source was expanded, expand the target
+        tree.setPathExpanded(target.path, true);
       }
 
       tree.setFocusedNode(focusPath, {
