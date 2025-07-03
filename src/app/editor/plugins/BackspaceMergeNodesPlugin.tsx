@@ -318,8 +318,10 @@ function useMergers(tree: Tree) {
       }
 
       const sourceWasExpanded = source.isExpanded && source.childCount > 0;
-      // If the source was expanded, expand the target
-      tree.setPathExpanded(target.path, sourceWasExpanded);
+      if (!target.isExpanded && sourceWasExpanded) {
+          // If the source was expanded, expand the target
+          tree.setPathExpanded(target.path, true);
+      }
 
       tree.setFocusedNode(focusPath, {
         anchorOffset: targetTextLength,
