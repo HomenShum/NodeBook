@@ -29,6 +29,7 @@
   flex-direction: row;
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 .RightSidePanel > [class*="ContentContainer"] > .HeadingContainer {
@@ -67,7 +68,7 @@
   justify-content: flex-start;
   padding: 16px 8px;
   position: absolute;
-  left: 0;
+  left: 8px;
   top: 0;
-  z-index: 99;
+  z-index: 30;
 }

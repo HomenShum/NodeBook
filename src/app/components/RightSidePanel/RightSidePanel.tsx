@@ -83,19 +83,19 @@ const RightSidePanel = observer(function RightSidePanel({ parentRef }: { parentR
       <div ref={resizerRef} className={s.Resizer} onPointerDown={startResizing}>
         <div className={s.ResizerHandle} />
       </div>
+      <div className={s.CloseButtonContainer}>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="default" size="icon" onClick={() => viewStore.toggleRightSidePanel()}>
+                <PanelRightCloseIcon size={16} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Close Side Panel</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       <div className={s.RightSidePanel}>
-        <div className={s.CloseButtonContainer}>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="default" size="icon" onClick={() => viewStore.toggleRightSidePanel()}>
-                  <PanelRightCloseIcon size={16} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Close Side Panel</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
         <OutlineParentContext.Provider value="RightSidePanel">
           {viewStore.sidePanelTrees.map((tree) => (
             <OutlineContent key={tree.id} tree={tree} />
