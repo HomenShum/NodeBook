@@ -60,8 +60,32 @@ export const $setSelectionFromTree = (selection: TreeNodeContentSelection) => {
     const rangeSelection = $createLexicalSelectionFromTreePosition(selection.position);
     if (rangeSelection) {
       $setSelection(rangeSelection);
+    } else {
+      // If we can't create a proper selection with the given offsets,
+      // check if the offsets are at a valid position and try a fallback
+      const totalLength = $getRoot().getTextContentSize();
+      const { anchorOffset, focusOffset } = selection.position;
+
+      // If the offsets are exactly at the total length, it means cursor should be at end
+      if (anchorOffset >= totalLength && focusOffset >= totalLength) {
+        $getRoot().selectEnd();
+      } else if (anchorOffset <= 0 && focusOffset <= 0) {
+        $getRoot().selectStart();
+      } else {
+        // Try to create a clamped selection with valid offsets
+        const clampedAnchor = Math.min(anchorOffset, totalLength);
+        const clampedFocus = Math.min(focusOffset, totalLength);
+        const clampedRangeSelection = $createLexicalSelectionFromTreePosition({
+          anchorOffset: clampedAnchor,
+          focusOffset: clampedFocus,
+        });
+        if (clampedRangeSelection) {
+          $setSelection(clampedRangeSelection);
+        } else {
+          $getRoot().selectEnd();
+        }
+      }
     }
-    $getRoot().selectEnd();
   }
 };
 
@@ -101,19 +125,35 @@ function $createLexicalSelectionFromOffsets(
       if (selection.anchor.type === "text" && selection.focus.type === "text") {
         return selection;
       }
-      $createLexicalSelectionFromOffsets(position, selection, child, currentOffset);
+      const childResult = $createLexicalSelectionFromOffsets(position, selection, child, currentOffset);
+      if (childResult && childResult.anchor.type === "text" && childResult.focus.type === "text") {
+        return childResult;
+      }
       currentOffset += child.getTextContentSize();
     }
   } else {
     const length = currentNode.getTextContentSize();
-    if (selection.anchor.type !== "text" && currentOffset + length >= position.anchorOffset) {
-      selection.anchor.set(currentNode.getKey(), position.anchorOffset - currentOffset, "text");
+    // Set anchor if we haven't set it yet and this node contains the anchor position
+    if (
+      selection.anchor.type !== "text" &&
+      currentOffset <= position.anchorOffset &&
+      currentOffset + length >= position.anchorOffset
+    ) {
+      const relativeOffset = Math.max(0, Math.min(position.anchorOffset - currentOffset, length));
+      selection.anchor.set(currentNode.getKey(), relativeOffset, "text");
     }
-    if (selection.focus.type !== "text" && currentOffset + length >= position.focusOffset) {
-      selection.focus.set(currentNode.getKey(), position.focusOffset - currentOffset, "text");
+    // Set focus if we haven't set it yet and this node contains the focus position
+    if (
+      selection.focus.type !== "text" &&
+      currentOffset <= position.focusOffset &&
+      currentOffset + length >= position.focusOffset
+    ) {
+      const relativeOffset = Math.max(0, Math.min(position.focusOffset - currentOffset, length));
+      selection.focus.set(currentNode.getKey(), relativeOffset, "text");
     }
-    currentOffset += length;
   }
+
+  // Return selection only if both anchor and focus are properly set
   if (selection.anchor.type !== "text" || selection.focus.type !== "text") {
     return null;
   }
@@ -138,20 +178,30 @@ export function $getSelectionPosition(): TreeNodeContentSelectionPosition | unde
   let anchorOffset: number | null = null;
   let focusOffset: number | null = null;
 
-  function findOffsets(node: LexicalNode, offset: number) {
+  function findOffsets(node: LexicalNode, currentOffset: number) {
+    // Check if this node contains our anchor or focus points
     if (node === anchor.getNode()) {
-      anchorOffset = offset + anchor.offset;
+      anchorOffset = currentOffset + anchor.offset;
     }
     if (node === focus.getNode()) {
-      focusOffset = offset + focus.offset;
+      focusOffset = currentOffset + focus.offset;
     }
+
+    // If we've found both points, we're done
+    if (anchorOffset !== null && focusOffset !== null) {
+      return;
+    }
+
+    // For element nodes, recursively check children
     if ($isElementNode(node)) {
+      let childOffset = currentOffset;
       for (const child of node.getChildren()) {
+        // Early return if we've found both anchor and focus
         if (anchorOffset !== null && focusOffset !== null) {
           return;
         }
-        findOffsets(child, offset);
-        offset += child.getTextContentSize();
+        findOffsets(child, childOffset);
+        childOffset += child.getTextContentSize();
       }
     }
   }
@@ -161,6 +211,7 @@ export function $getSelectionPosition(): TreeNodeContentSelectionPosition | unde
   if (anchorOffset === null || focusOffset === null) {
     return;
   }
+
   const lastOffset = $getRoot().getTextContentSize();
   if (anchorOffset === lastOffset && focusOffset === lastOffset) {
     return "end";

@@ -323,10 +323,14 @@ function useMergers(tree: Tree) {
         tree.setPathExpanded(target.path, true);
       }
 
-      tree.setFocusedNode(focusPath, {
-        anchorOffset: targetTextLength,
-        focusOffset: targetTextLength,
-      });
+      // Use setTimeout to ensure the content update has propagated before setting selection
+      // This prevents timing issues where the selection calculation happens before the content is fully updated
+      setTimeout(() => {
+        tree.setFocusedNode(focusPath, {
+          anchorOffset: targetTextLength,
+          focusOffset: targetTextLength,
+        });
+      }, 0);
       return true;
     },
     [graphStore, tree, createSelectionState],
