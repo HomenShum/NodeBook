@@ -1,10 +1,8 @@
 "use client";
-import axios from "axios";
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import React, { useEffect, useRef, useState } from "react";
 
-import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
-import { useAuth } from "@/app/auth/useAuth";
+import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
 import { LoadingContext } from "@/app/contexts/LoadingContext";
 import { NotificationProvider } from "@/app/contexts/NotificationContext";
@@ -15,13 +13,14 @@ import { VoiceInputProvider } from "@/app/contexts/VoiceInputContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
+import useSetupUser from "@/app/hooks/useSetupUser";
+import { useToast } from "@/app/hooks/useToast";
 import { localLocalData } from "@/app/persistence/loadGraphData";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
 import { GLOBAL_USERS_NODE_ID, GLOBAL_USERS_RELATION_ID } from "@/lib/constants";
 import rootLogger from "@/lib/logger";
-import useSetupUser from "@/app/hooks/useSetupUser";
 
 export const logger = rootLogger.child({ service: "store-provider" });
 
@@ -36,6 +35,7 @@ export function StoresProvider({
   const [settingsStore, setSettingsStore] = useState<SettingsStore>(new SettingsStore(UNLOGGED_USER));
   const [graphStore, setGraphStore] = useState<GraphStore>(new GraphStore(UNLOGGED_USER, settingsStore));
   const [viewStore, setViewStore] = useState<ViewStore>(new ViewStore(settingsStore, graphStore));
+  const { addToast } = useToast();
   const renderCounter = useRef(0);
 
   // expose stores to window for debugging
@@ -63,7 +63,7 @@ export function StoresProvider({
 
       // create new stores (shorter names to distinguish from the state variables)
       const settings = new SettingsStore(user);
-      let graph = new GraphStore(user, settings);
+      let graph = new GraphStore(user, settings, addToast);
       const view = new ViewStore(settings, graph);
 
       // load and start sync
@@ -90,7 +90,7 @@ export function StoresProvider({
         }
       } catch (e) {
         toast("Failed to load data from server. Starting with an empty graph.");
-        graph = new GraphStore(user, settings);
+        graph = new GraphStore(user, settings, addToast);
         logger.error("Failed sync setup", e);
       }
 

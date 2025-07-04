@@ -11,7 +11,7 @@ import {
   Save,
 } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import appStyles from "@/app/app.module.css";
 import AiSearchSidebar from "@/app/components/AiSearchSidebar/AiSearchSidebar";
@@ -46,8 +46,8 @@ import { useSetMainRoot } from "@/app/tree/utils";
 import { objectPathToObjects, useIsMobile } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
-import { cn } from "@/lib/utils";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 
 import s from "./OutlineView.module.css";
 

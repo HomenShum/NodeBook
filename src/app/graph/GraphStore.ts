@@ -104,10 +104,20 @@ export class GraphStore {
   nodesInLayerLoading: Set<string> = new Set([]);
 
   cappedKeywordIndex: CappedKeywordIndex;
+  addToast?: (toast: { title: string; description?: string; action?: { label: string; onClick: () => void } }) => void;
 
-  constructor(user: MewUser = UNLOGGED_USER, settings?: SettingsStore) {
+  constructor(
+    user: MewUser = UNLOGGED_USER,
+    settings?: SettingsStore,
+    addToast?: (toast: {
+      title: string;
+      description?: string;
+      action?: { label: string; onClick: () => void };
+    }) => void,
+  ) {
     this.user = user;
     this.settings = settings;
+    this.addToast = addToast;
     this.updateManager = new UpdateManager(
       user.id,
       (data: SerializedGraphStore) => this.resetAndLoad(data),
@@ -120,7 +130,6 @@ export class GraphStore {
     this.cappedKeywordIndex = new KeywordTrieIndex(MAX_PREFIX_LENGTH);
     this.ensureDefaultObjectsCreated();
     this.makeObservable();
-
     // Load initial essential user objects with their first levels
     // This runs after basic setup to ensure all necessary objects are available
     if (!user.isAnonymous && env.isPersistenceEnabled) {
@@ -588,6 +597,24 @@ export class GraphStore {
           const relations = node.relations.filter(
             (r) => r.to.id === oldChip.value && r.relationType.label.toLowerCase() === "has hashtag",
           );
+          if (relations.length > 0) {
+            const hashtagNode = this.nodesById.get(relations[0].to.id);
+            if (hashtagNode && relations.length === hashtagNode.relationCount - 1) {
+              // If the hashtag node has no relations left, notify the user with a toast that gives
+              // them the option to delete it.
+              this.addToast?.({
+                title: `Hashtag node has no hashtag relations left`,
+                description: `Would you like to delete ${hashtagNode.text}?`,
+                action: {
+                  label: "Delete",
+                  onClick: () => {
+                    this.removeNode({ nodeId: hashtagNode.id });
+                  },
+                },
+              });
+            }
+          }
+
           for (const relation of relations) {
             if (this.relationsById.has(relation.id)) {
               const { updates: deleteUpdates } = this.deleteRelation(relation);
