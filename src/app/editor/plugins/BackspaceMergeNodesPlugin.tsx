@@ -93,13 +93,16 @@ export const BackspaceMergeNodesPlugin = () => {
               handled = mergeNodes(treeNode.parent, treeNode.parent.siblingAbove);
             } else {
               // Go into prefix
-              const prefixInput = document.querySelector(`[data-note-prefix="${treeNode.parent.object.id}"]`);
-              if (prefixInput && prefixInput instanceof HTMLInputElement) {
-                prefixInput.focus();
-                handled = true;
-              } else {
-                handled = false;
-              }
+              // const prefixInput = document.querySelector(`[data-note-prefix="${treeNode.parent.object.id}"]`);
+              // if (prefixInput && prefixInput instanceof HTMLInputElement) {
+              //   prefixInput.focus();
+              //   handled = true;
+              // } else {
+              //   handled = false;
+              // }
+              // Destroy multiline note
+              treeNode.tree.convertMultiLineNoteToNode(treeNode, false);
+              handled = true;
             }
           }
         } else if (treeNode.siblingAbove) {
@@ -148,7 +151,7 @@ export const BackspaceMergeNodesPlugin = () => {
           if (destroyMLNote) {
             const firstNoteNode = treeNode.parent.childrenGroupsById["noteContent"].nodes[0];
             if (firstNoteNode) {
-              treeNode.tree.convertSingleLineNoteToNode(firstNoteNode);
+              treeNode.tree.convertMultiLineNoteToNode(firstNoteNode, true);
             }
           }
           event.preventDefault();

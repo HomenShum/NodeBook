@@ -865,13 +865,13 @@ export class Tree {
   protected sortFunction(a: DescendantTreeNode, b: DescendantTreeNode) {
     const { mode, direction } = this.sortOption;
     const negation = direction === "asc" ? -1 : 1;
-      if (mode === "manual") {
-        return comparePositions(a.position, b.position);
-      } else if (mode === "alphabetical") {
-        return b.object.text.localeCompare(a.object.text) * negation;
-      } else {
-        return compareTimestamps(a.object[mode], b.object[mode], a.position, b.position) * negation;
-      }
+    if (mode === "manual") {
+      return comparePositions(a.position, b.position);
+    } else if (mode === "alphabetical") {
+      return b.object.text.localeCompare(a.object.text) * negation;
+    } else {
+      return compareTimestamps(a.object[mode], b.object[mode], a.position, b.position) * negation;
+    }
   }
 
   protected applySort(treeNode: TreeNode) {
@@ -1062,7 +1062,7 @@ export class Tree {
       this.graphStore.applyCombinedTransaction([...relationsToRemove]);
 
       nodesToConvert.map((node) => {
-        this.convertSingleLineNoteToNode(node);
+        this.convertMultiLineNoteToNode(node, true);
       });
       const node = getNextAbove(selection.top);
       if (node && nodesToConvert.length === 0) {
@@ -1200,7 +1200,7 @@ export class Tree {
           const noteContentNodes = node.parent.childrenGroupsById.noteContent.nodes;
           const nodeToConvert = noteContentNodes[0];
           if (noteContentNodes.length === 2 && noteContentNodes[1] === node) {
-            this.convertSingleLineNoteToNode(nodeToConvert);
+            this.convertMultiLineNoteToNode(nodeToConvert, true);
             // Set selection to the child of the first node
             const position = this.selection?.type === "editor" ? this.selection.position : "end";
             const noteContentRegexp = /\/noteContent\/[^/]*/;
@@ -1842,11 +1842,17 @@ export class Tree {
     return true;
   }
 
-  convertSingleLineNoteToNode(treeNode: DescendantTreeNode) {
+  convertMultiLineNoteToNode(treeNode: DescendantTreeNode, singleLine: boolean = false) {
     const txs: TxCombined = [];
     if (treeNode.parentGroup.id !== "noteContent") {
       logger.error("Can only convert single line notes to nodes when they are in the noteContent group");
       return false;
+    }
+    let otherTreeNodes: DescendantTreeNode[] = [];
+    if (!singleLine) {
+      otherTreeNodes = treeNode.parent.childrenGroupsById.noteContent.nodes.filter(
+        (node) => node.object.id !== treeNode.object.id,
+      );
     }
     const noteParent = treeNode.parent.parent;
     const noteRootRelation = treeNode.parent.relationWithParent;
@@ -1873,7 +1879,40 @@ export class Tree {
         transaction: { nodeId: treeNode.object.id, nodeProps: { isChecked: treeNode.parent.object.isChecked } },
       });
     }
-    // Delete the note content root node
+    // Add new relations before the note content root node is deleted, if multiLine
+    if (otherTreeNodes.length > 0) {
+      let previousRelationId: string = noteRootRelation.id;
+      for (const node of otherTreeNodes) {
+        const relationId = uuid();
+        txs.push({
+          type: "addRelation",
+          transaction: {
+            fromId: noteParent.object.id,
+            toId: node.object.id,
+            id: relationId,
+            after: previousRelationId,
+          },
+        });
+        // Check if the treeNode's relation with parent has a type
+        const rel = node.relationWithParent;
+        if (rel.hasCustomTypeRelation) {
+          const typeRel = rel.customTypeRelation;
+          if (typeRel) {
+            txs.push({
+              type: "replaceRelationLink",
+              transaction: {
+                direction: getSideOrThrow(typeRel, node.relationWithParent.id),
+                relationId: typeRel.id,
+                replaceWith: { type: "existing-object", id: relationId },
+              },
+            });
+          }
+        }
+        // Update previous relation id for positioning
+        previousRelationId = relationId;
+      }
+    }
+    // Delete the note content root node, which should also remove the other note content relations
     txs.push({
       type: "removeNode",
       transaction: { nodeId: treeNode.parent.object.id },
