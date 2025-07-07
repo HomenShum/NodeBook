@@ -7,6 +7,7 @@ import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { comparePositions } from "@/app/util";
 import {
   GLOBAL_ROOT_ID,
+  USER_MY_STREAM_NODE_ID_PREFIX,
   USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
   USER_MY_TEMPLATES_NODE_ID_PREFIX,
@@ -111,6 +112,9 @@ export abstract class BaseGraphObject {
     if (this.id === GLOBAL_ROOT_ID) {
       return true;
     }
+    if (this.id.startsWith(USER_MY_STREAM_NODE_ID_PREFIX)) {
+      return true;
+    }
     if (this.id.startsWith(USER_ROOT_ID_PREFIX)) {
       return true;
     }
@@ -133,6 +137,9 @@ export abstract class BaseGraphObject {
    */
   get isEditRestricted(): boolean {
     if (this.id === GLOBAL_ROOT_ID) {
+      return true;
+    }
+    if (this.id.startsWith(USER_MY_STREAM_NODE_ID_PREFIX)) {
       return true;
     }
     if (this.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
