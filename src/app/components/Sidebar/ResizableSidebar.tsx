@@ -469,7 +469,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </span>
               <span className={styles.ButtonText}>Recently Created Notes</span>
             </Button>
-            {!user.isAnonymous && (
+            {!user.isAnonymous && !user.newUser && (
               <Button
                 variant="ghost"
                 className={cn(styles.Button, currentTab === "updatesFeed" && styles.Selected)}

@@ -12,12 +12,12 @@ import { useToast } from "@/app/hooks/useToast";
 import { exportToIdeapad, ideapadSnapshotFromGraph } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import {
-  ParseWithAiLinkingOption,
-  ParseWithAiLinkingOptionEnum,
-  PasteLinksOption,
-  PasteLinksOptionEnum,
-  SearchAndReplaceDropdownOption,
-  SearchAndReplaceDropdownOptionEnum,
+    ParseWithAiLinkingOption,
+    ParseWithAiLinkingOptionEnum,
+    PasteLinksOption,
+    PasteLinksOptionEnum,
+    SearchAndReplaceDropdownOption,
+    SearchAndReplaceDropdownOptionEnum,
 } from "@/db/schema";
 import logger from "@/lib/logger";
 
@@ -113,6 +113,9 @@ export const DevTools = observer(function DevTools() {
   const settingsStore = useSettingsStore();
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
+
+  // Local state for newUser checkbox
+  const [newUserChecked, setNewUserChecked] = useState(user.newUser);
 
   const handleClose = useCallback(() => {
     viewStore.setActiveModal(null);
@@ -230,6 +233,18 @@ export const DevTools = observer(function DevTools() {
             onChange={(e) => settingsStore.setUseRoamResearchStyleMention(e.target.checked)}
           />
           Use Roam Research style mentions
+        </label>
+        <label className={styles.LabelSetting}>
+          <input
+            type="checkbox"
+            checked={newUserChecked}
+            onChange={async (e) => {
+              setNewUserChecked(e.target.checked);
+              user.newUser = e.target.checked;
+              await settingsStore.persist({ ...user.settings }); // persist settings to trigger save
+            }}
+          />
+          Enable new user mode (show simplified UI)
         </label>
         <div className={styles.DevToolsDropdownContainer}>
           <label>Trigger search and replace dropdown:</label>

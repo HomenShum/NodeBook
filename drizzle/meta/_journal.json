@@ -267,6 +267,13 @@
       "when": 1750661120832,
       "tag": "0037_canonical_cache",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1751557400057,
+      "tag": "0038_add_new_user_flag",
+      "breakpoints": true
     }
   ]
 }

@@ -91,6 +91,7 @@ export const userTable = pgTable("mew_user", {
   picture: text("picture"),
   createdAt: timestamp("created_at"),
   settings: text("settings").default("{}").notNull(),
+  newUser: boolean("new_user").default(true).notNull(),
 });
 export const UserSchema = createSelectSchema(userTable, {
   createdAt: z.coerce.date(),
