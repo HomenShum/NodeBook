@@ -1,13 +1,13 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
-  COMMAND_PRIORITY_HIGH,
-  COMMAND_PRIORITY_NORMAL,
-  KEY_ARROW_DOWN_COMMAND,
-  KEY_ARROW_UP_COMMAND,
-  KEY_ENTER_COMMAND,
-  KEY_ESCAPE_COMMAND,
-  KEY_TAB_COMMAND,
+    COMMAND_PRIORITY_HIGH,
+    COMMAND_PRIORITY_NORMAL,
+    KEY_ARROW_DOWN_COMMAND,
+    KEY_ARROW_UP_COMMAND,
+    KEY_ENTER_COMMAND,
+    KEY_ESCAPE_COMMAND,
+    KEY_TAB_COMMAND,
 } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -175,7 +175,8 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
       editor.registerCommand(
         KEY_ENTER_COMMAND,
         (event) => {
-          const match = highlightedIndex !== null ? nodes[highlightedIndex] : null;
+          const index = highlightedIndex !== null ? highlightedIndex : 0;
+          const match = nodes[index];
           if (match) {
             if (event) {
               event.preventDefault();

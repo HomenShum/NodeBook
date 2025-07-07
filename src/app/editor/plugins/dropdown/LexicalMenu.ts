@@ -251,9 +251,9 @@ export function LexicalMenu<TOption extends MenuOption>({
 
   const matchingString = resolution.match && resolution.match.matchingString;
 
-  // useEffect(() => {
-  //   setHighlightedIndex(0);
-  // }, [matchingString]);
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [matchingString]);
 
   const selectOptionAndCleanUp = useCallback(
     (selectedEntry: TOption) => {
@@ -295,10 +295,9 @@ export function LexicalMenu<TOption extends MenuOption>({
   useLayoutEffect(() => {
     if (options === null) {
       setHighlightedIndex(null);
+    } else if (selectedIndex === null) {
+      updateSelectedIndex(0);
     }
-    // } else if (selectedIndex === null) {
-    //   updateSelectedIndex(0);
-    // }
   }, [options, selectedIndex, updateSelectedIndex]);
 
   useEffect(() => {
@@ -447,7 +446,7 @@ export function LexicalMenu<TOption extends MenuOption>({
           event.preventDefault();
           event.stopImmediatePropagation();
 
-          if (options === null) {
+          if (options === null || options.length === 0) {
             return false;
           }
 
@@ -456,12 +455,14 @@ export function LexicalMenu<TOption extends MenuOption>({
             return true;
           }
 
-          if (selectedIndex === null || options[selectedIndex] == null) {
+          // If no option is selected, select the first one
+          const indexToSelect = selectedIndex === null ? 0 : selectedIndex;
+          if (options[indexToSelect] == null) {
             close();
             return false;
           }
 
-          selectOptionAndCleanUp(options[selectedIndex]);
+          selectOptionAndCleanUp(options[indexToSelect]);
           return true;
         },
         commandPriority,

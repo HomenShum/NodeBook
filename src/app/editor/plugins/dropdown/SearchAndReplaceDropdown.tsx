@@ -1,13 +1,13 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
-  COMMAND_PRIORITY_HIGH,
-  COMMAND_PRIORITY_NORMAL,
-  KEY_ARROW_DOWN_COMMAND,
-  KEY_ARROW_UP_COMMAND,
-  KEY_ENTER_COMMAND,
-  KEY_ESCAPE_COMMAND,
-  KEY_TAB_COMMAND,
+    COMMAND_PRIORITY_HIGH,
+    COMMAND_PRIORITY_NORMAL,
+    KEY_ARROW_DOWN_COMMAND,
+    KEY_ARROW_UP_COMMAND,
+    KEY_ENTER_COMMAND,
+    KEY_ESCAPE_COMMAND,
+    KEY_TAB_COMMAND,
 } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -88,8 +88,8 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
 
   // Reset highlighted index when options change (but only once they've been set)
   useEffect(() => {
-    if (state) {
-      setHighlightedIndex(state.initiatedManually ? 0 : null);
+    if (state && state.matches.length > 0) {
+      setHighlightedIndex(0);
     } else {
       setHighlightedIndex(null);
     }
@@ -132,7 +132,8 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
       editor.registerCommand(
         KEY_ENTER_COMMAND,
         (event) => {
-          const match = highlightedIndex !== null ? nodes[highlightedIndex] : null;
+          const index = highlightedIndex !== null ? highlightedIndex : 0;
+          const match = nodes[index];
           if (match) {
             if (event) {
               event.preventDefault();
