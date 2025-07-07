@@ -224,7 +224,13 @@
 
 .Button.Selected {
   background-color: var(--gray-3);
-  color: var(--teal-11);
+  color: var(--gray-11);
+  cursor: default;
+  z-index: 1;
+}
+
+.Button.Selected:hover {
+  color: var(--gray-11);
 }
 
 .Button.Selected .ButtonIcon {

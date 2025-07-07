@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import appStyles from "@/app/app.module.css";
@@ -48,7 +48,9 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useNotifications } from "@/app/contexts/NotificationContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
+import { GraphStore } from "@/app/graph/GraphStore";
 import { useOpenNewTab, useSetMainRoot } from "@/app/tree/utils";
+import { ViewStore } from "@/app/view/ViewStore";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import { GLOBAL_ROOT_ID } from "@/lib/constants";
@@ -61,6 +63,39 @@ interface Props {
   maxWidth?: number;
   className?: string;
   onResizeStateChange: (isResizing: boolean) => void;
+}
+
+export type SidebarTab =
+    | "globalRoot"
+    | "yourRoot"
+    | "yourStream"
+    | "aiQuery"
+    | "globalNewsFeed"
+    | "recentlyCreatedNotes"
+    | "updatesFeed"
+    | "voiceOperations"
+    | null;
+
+export function getSelectedSidebarTab(
+  viewStore: ViewStore,
+  graphStore: GraphStore,
+  pathname: string,
+  lastClickedTab: SidebarTab | null
+): SidebarTab {
+  const rootId = viewStore.treeView.root.object.id;
+
+  if (pathname.startsWith("/query")) return "aiQuery";
+  if (pathname.startsWith("/voice-operations")) return "voiceOperations";
+  if (pathname.startsWith("/updates")) return "updatesFeed";
+  if (pathname.startsWith("/all-nodes")) return "recentlyCreatedNotes";
+
+  if (rootId === graphStore.userRoot.id) return "yourRoot";
+  if (rootId === graphStore.myStreamNode.id) return "yourStream";
+
+  // "globalRoot" and "globalNewsFeed" share the same pathName, so there's no easy way to distinguish the two.
+  // We use a react state to keep track of the last clicked tab. Technically we can remove the previous logic
+  // as well, but it might be a good redundancy if we allow navigation from somewhere not in the sidebar.
+  return lastClickedTab;
 }
 
 export const ResizableSidebar = observer(function ResizableSidebar({
@@ -80,6 +115,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const [activePointerId, setActivePointerId] = useState<number | null>(null);
   const [showTopBorder, setShowTopBorder] = useState(false);
   const [showBottomBorder, setShowBottomBorder] = useState(true);
+  const [lastClickedTab, setLastClickedTab] = useState<SidebarTab | null>(null);
 
   const graphStore = useGraphStore();
   const settingsStore = useSettingsStore();
@@ -87,6 +123,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
   const setRoot = useSetMainRoot();
   const openNewTab = useOpenNewTab();
   const router = useRouter();
+  const pathname = usePathname();
 
   const handleScroll = useCallback(() => {
     if (!scrollableRef.current) return;
@@ -105,7 +142,6 @@ export const ResizableSidebar = observer(function ResizableSidebar({
 
     // Initial check
     handleScroll();
-
     scrollableElement.addEventListener("scroll", handleScroll);
     return () => scrollableElement.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
@@ -215,6 +251,8 @@ export const ResizableSidebar = observer(function ResizableSidebar({
     [viewStore],
   );
 
+  const currentTab = getSelectedSidebarTab(viewStore, graphStore, pathname, lastClickedTab);
+
   return (
     <>
       {isOpen && <div className={styles.Backdrop} onClick={() => viewStore.toggleLeftSidebar()} />}
@@ -298,11 +336,12 @@ export const ResizableSidebar = observer(function ResizableSidebar({
           <div className={styles.TopContent}>
             <Button
               variant="ghost"
-              className={cn(styles.Button)}
+              className={cn(styles.Button, currentTab === "globalRoot" && styles.Selected)}
               onMouseEnter={() => {
                 graphStore.layerManager.lazyLoadWithIds([GLOBAL_ROOT_ID]);
               }}
               onClick={(e) => {
+                setLastClickedTab("globalRoot");
                 if (e.shiftKey) {
                   viewStore.createSidePanelTree(graphStore.globalRoot);
                 } else if (e.metaKey) {
@@ -321,11 +360,12 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </Button>
             <Button
               variant="ghost"
-              className={cn(styles.Button)}
+              className={cn(styles.Button, currentTab === "yourRoot" && styles.Selected)}
               onMouseEnter={() => {
                 graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
               }}
               onClick={(e) => {
+                setLastClickedTab("yourRoot");
                 if (e.shiftKey) {
                   viewStore.createSidePanelTree(graphStore.getDefaultRootForUser());
                 } else if (e.metaKey) {
@@ -345,11 +385,12 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </Button>
             <Button
               variant="ghost"
-              className={cn(styles.Button)}
+              className={cn(styles.Button, currentTab === "yourStream" && styles.Selected)}
               onMouseEnter={() => {
                 graphStore.layerManager.lazyLoadWithIds([graphStore.myStreamNodeId]);
               }}
               onClick={(e) => {
+                setLastClickedTab("yourStream");
                 if (e.shiftKey) {
                   viewStore.createSidePanelTree(graphStore.myStreamNode);
                 } else if (e.metaKey) {
@@ -369,8 +410,9 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </Button>
             <Button
               variant="ghost"
-              className={cn(styles.Button)}
+              className={cn(styles.Button, currentTab === "aiQuery" && styles.Selected)}
               onClick={(e) => {
+                setLastClickedTab("aiQuery");
                 if (e.metaKey) {
                   window.open("/query", "_blank");
                 } else {
@@ -387,8 +429,9 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <div className={styles.SidebarSectionHeader}>Feeds</div>
               <Button
                 variant="ghost"
-                className={cn(styles.Button)}
+                className={cn(styles.Button, currentTab === "globalNewsFeed" && styles.Selected)}
                 onClick={(e) => {
+                  setLastClickedTab("globalNewsFeed");
                   if (e.shiftKey) {
                     viewStore.createSidePanelTree(graphStore.globalRoot);
                   } else if (e.metaKey) {
@@ -409,8 +452,9 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </>
             <Button
               variant="ghost"
-              className={cn(styles.Button)}
+              className={cn(styles.Button, currentTab === "recentlyCreatedNotes" && styles.Selected)}
               onClick={(e) => {
+                setLastClickedTab("recentlyCreatedNotes");
                 if (e.shiftKey) {
                   viewStore.createSidePanelTree(graphStore.globalRoot);
                 } else if (e.metaKey) {
@@ -428,8 +472,9 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             {!user.isAnonymous && (
               <Button
                 variant="ghost"
-                className={cn(styles.Button)}
+                className={cn(styles.Button, currentTab === "updatesFeed" && styles.Selected)}
                 onClick={(e) => {
+                  setLastClickedTab("updatesFeed");
                   if (e.metaKey) {
                     window.open("/updates", "_blank");
                   } else {
@@ -447,8 +492,9 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             {!user.isAnonymous && (
               <Button
                 variant="ghost"
-                className={cn(styles.Button)}
+                className={cn(styles.Button, currentTab === "voiceOperations" && styles.Selected)}
                 onClick={(e) => {
+                  setLastClickedTab("voiceOperations");
                   if (e.metaKey) {
                     window.open("/voice-operations", "_blank");
                   } else {
