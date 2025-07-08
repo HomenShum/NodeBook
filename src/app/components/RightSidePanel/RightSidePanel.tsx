@@ -13,9 +13,26 @@ const RightSidePanel = observer(function RightSidePanel({ parentRef }: { parentR
   const viewStore = useViewStore();
 
   const resizerRef = useRef<HTMLDivElement>(null);
+  const sidePanelContentRef = useRef<HTMLDivElement>(null);
   const [isResizing, setIsResizing] = useState(false);
   const [activePointerId, setActivePointerId] = useState<number | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const [prevTreeCount, setPrevTreeCount] = useState(0);
+
+  // Auto-scroll to top when new trees are added
+  useEffect(() => {
+    const currentTreeCount = viewStore.sidePanelTrees.length;
+    
+    // If tree count increased (new item added), scroll to top
+    if (currentTreeCount > prevTreeCount && sidePanelContentRef.current) {
+      sidePanelContentRef.current.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+    
+    setPrevTreeCount(currentTreeCount);
+  }, [viewStore.sidePanelTrees.length, prevTreeCount, sidePanelContentRef]);
 
   const startResizing = useCallback((e: React.PointerEvent) => {
     setIsResizing(true);
@@ -95,7 +112,7 @@ const RightSidePanel = observer(function RightSidePanel({ parentRef }: { parentR
           </Tooltip>
         </TooltipProvider>
       </div>
-      <div className={s.RightSidePanel}>
+      <div ref={sidePanelContentRef} className={s.RightSidePanel}>
         <OutlineParentContext.Provider value="RightSidePanel">
           {viewStore.sidePanelTrees.map((tree) => (
             <OutlineContent key={tree.id} tree={tree} />
