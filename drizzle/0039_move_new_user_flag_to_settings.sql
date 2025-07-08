@@ -1,0 +1,1 @@
+ALTER TABLE "mew_user" DROP COLUMN "new_user";

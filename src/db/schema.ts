@@ -80,6 +80,7 @@ const SerializedUserSettingsSchema = z.object({
   sidebarExpandedLocalHashtags: z.boolean().optional(),
   sidebarExpandedLocalMentions: z.boolean().optional(),
   viewModePreferences: z.record(z.nativeEnum(ViewType)).optional(),
+  newUser: z.boolean().optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 
@@ -91,7 +92,6 @@ export const userTable = pgTable("mew_user", {
   picture: text("picture"),
   createdAt: timestamp("created_at"),
   settings: text("settings").default("{}").notNull(),
-  newUser: boolean("new_user").default(true).notNull(),
 });
 export const UserSchema = createSelectSchema(userTable, {
   createdAt: z.coerce.date(),

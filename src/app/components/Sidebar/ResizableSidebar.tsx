@@ -66,21 +66,21 @@ interface Props {
 }
 
 export type SidebarTab =
-    | "globalRoot"
-    | "yourRoot"
-    | "yourStream"
-    | "aiQuery"
-    | "globalNewsFeed"
-    | "recentlyCreatedNotes"
-    | "updatesFeed"
-    | "voiceOperations"
-    | null;
+  | "globalRoot"
+  | "yourRoot"
+  | "yourStream"
+  | "aiQuery"
+  | "globalNewsFeed"
+  | "recentlyCreatedNotes"
+  | "updatesFeed"
+  | "voiceOperations"
+  | null;
 
 export function getSelectedSidebarTab(
   viewStore: ViewStore,
   graphStore: GraphStore,
   pathname: string,
-  lastClickedTab: SidebarTab | null
+  lastClickedTab: SidebarTab | null,
 ): SidebarTab {
   const rootId = viewStore.treeView.root.object.id;
 
@@ -469,7 +469,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </span>
               <span className={styles.ButtonText}>Recently Created Notes</span>
             </Button>
-            {!user.isAnonymous && !user.newUser && (
+            {!user.isAnonymous && !settingsStore.newUser && (
               <Button
                 variant="ghost"
                 className={cn(styles.Button, currentTab === "updatesFeed" && styles.Selected)}

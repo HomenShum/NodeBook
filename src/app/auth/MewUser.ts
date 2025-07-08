@@ -8,7 +8,6 @@ export class MewUser {
   picture: string;
   createdAt: Date;
   settings: SerializedUserSettings;
-  newUser: boolean;
 
   constructor(u: PersistedUser) {
     this.id = u.id;
@@ -18,7 +17,6 @@ export class MewUser {
     this.picture = u.picture ?? "/profile-default.jpg";
     this.createdAt = u.createdAt ?? new Date("2020-01-01");
     this.settings = u.settings ?? {};
-    this.newUser = u.newUser ?? true;
   }
 
   get isAnonymous() {
@@ -35,7 +33,6 @@ export const UNLOGGED_USER = new MewUser({
   picture: "/profile-default.jpg",
   createdAt: new Date("2024-07-16T17:14:31.223Z"),
   settings: {},
-  newUser: false,
 } as PersistedUser);
 
 const MOCK_MEW_USER_ID = "SPECIAL::mew|0123456789";
@@ -47,5 +44,4 @@ export const MOCK_MEW_USER = new MewUser({
   picture: "/profile-default.jpg",
   createdAt: new Date("2024-07-16T17:14:31.223Z"),
   settings: {},
-  newUser: false,
 } as PersistedUser);

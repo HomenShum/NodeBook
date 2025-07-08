@@ -1,8 +1,13 @@
 "use client";
 
-import { autorun, isObservable, makeAutoObservable } from "mobx";
 import axios from "axios";
+import { autorun, isObservable, makeAutoObservable } from "mobx";
 
+import ApiClient from "@/app/api/utils/client/ApiClient";
+import { MewUser, MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { env } from "@/app/envFrontend";
+import { logger } from "@/app/StoresProvider";
+import { ViewType } from "@/app/view/types";
 import {
   ParseWithAiLinkingOption,
   ParseWithAiLinkingOptionEnum,
@@ -12,11 +17,6 @@ import {
   SearchAndReplaceDropdownOptionEnum,
   SerializedUserSettings,
 } from "@/db/schema";
-import { ViewType } from "@/app/view/types";
-import { env } from "@/app/envFrontend";
-import ApiClient from "@/app/api/utils/client/ApiClient";
-import { logger } from "@/app/StoresProvider";
-import { MewUser, MOCK_MEW_USER } from "@/app/auth/MewUser";
 
 export class SettingsStore {
   private user: MewUser;
@@ -57,6 +57,7 @@ export class SettingsStore {
   public sidebarExpandedLocalHashtags: boolean = true;
   public sidebarExpandedLocalMentions: boolean = true;
   public viewModePreference: SerializedUserSettings["viewModePreferences"] = {};
+  public newUser: boolean = true;
   private stopAutosave: () => void;
 
   constructor(user = MOCK_MEW_USER) {
@@ -119,6 +120,7 @@ export class SettingsStore {
     this.sidebarExpandedLocalHashtags = true;
     this.sidebarExpandedLocalMentions = true;
     this.viewModePreference = {};
+    this.newUser = true;
   }
 
   private async syncToServer() {
@@ -165,6 +167,7 @@ export class SettingsStore {
       sidebarExpandedLocalHashtags: this.sidebarExpandedLocalHashtags,
       sidebarExpandedLocalMentions: this.sidebarExpandedLocalMentions,
       viewModePreferences: this.viewModePreference,
+      newUser: this.newUser,
     };
   }
 
@@ -205,6 +208,7 @@ export class SettingsStore {
     this.sidebarExpandedLocalHashtags = data.sidebarExpandedLocalHashtags ?? this.sidebarExpandedLocalHashtags;
     this.sidebarExpandedLocalMentions = data.sidebarExpandedLocalMentions ?? this.sidebarExpandedLocalMentions;
     this.viewModePreference = data.viewModePreferences ?? this.viewModePreference;
+    this.newUser = data.newUser ?? this.newUser;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {
@@ -277,6 +281,10 @@ export class SettingsStore {
 
   setShowIdeapadLinkButton(value: boolean): void {
     this.showIdeapadLinkButton = value;
+  }
+
+  setNewUser(value: boolean): void {
+    this.newUser = value;
   }
 
   setShowExportSubtreeToIdeapad(value: boolean): void {
