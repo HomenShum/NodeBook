@@ -2176,7 +2176,16 @@ export class Tree {
               // selection head is now the multiline note root node
               const rootNode = head.parent;
               this.selectionStack.push(dir, rootNode.path);
-              this.selection = { type: "node", anchorNodeId: rootNode.path, headNodeId: rootNode.path };
+              this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: rootNode.path };
+              // this.selection = { type: "node", anchorNodeId: rootNode.path, headNodeId: rootNode.path };
+              return true;
+            }
+            const headIsMultiLineNoteRoot = head.childrenGroups.some((group) => group.id === "noteContent");
+            if (headIsMultiLineNoteRoot) {
+              const nextDown = head.siblingBelowInSameGroup;
+              if (!nextDown || nextDown.parentGroup.id !== head.parentGroup.id) return false;
+              this.selectionStack.push(dir, this.selection.headNodeId);
+              this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextDown.path };
               return true;
             }
             //If anchor is a descendant of head, move head towards anchor instead of subtree.
