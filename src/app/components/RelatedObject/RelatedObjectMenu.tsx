@@ -18,7 +18,7 @@ import {
   RefreshCcwDot,
   SendToBack,
   Star,
-  User
+  User,
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -37,7 +37,6 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
 import { addToFavorites, isFavorited, removeFromFavorites } from "@/app/graph/favorites";
 import { GraphNode } from "@/app/graph/GraphNode";
-import { getOtherObject } from "@/app/graph/utils";
 import { useToast } from "@/app/hooks/useToast";
 import { useParseWithAi } from "@/app/llm/useParseWithAi";
 import { getAncestorsAsArray, useSetAuthorRoot, useSetMainRoot } from "@/app/tree/utils";
@@ -207,18 +206,18 @@ const JumpTo = () => {
     // searchQuery is updated asynchronously with an event listener, so we need to wait for it to be updated
     // before we can scroll to the node.
     setTimeout(() => {
-      const parent = object.canonicalRelation ? getOtherObject(object.canonicalRelation, object.id) : null;
-      if (parent) {
-        setRoot(parent);
-      }
+      // const parent = object.canonicalRelation ? getOtherObject(object.canonicalRelation, object.id) : null;
+      // if (parent) {
+      //   setRoot(parent);
+      // }
 
-      const element = document.querySelector(`[data-nodeid="${object.id}"]`);
+      const element = document.querySelector(`[data-editor-path="${treeNode.id}"]`);
       if (!element) {
         return;
       }
-      element.scrollIntoView({ behavior: "auto" });
-    }, 0);
-  }, [viewStore, object, setRoot]);
+      element.scrollIntoView({ behavior: "smooth" });
+    }, 150);
+  }, [viewStore, object, treeNode]);
 
   if (viewStore.searchQuery === "") {
     return null;
@@ -250,7 +249,7 @@ const ExpandNode = () => {
 const OpenInSidePanel = () => {
   const { treeNode } = useTreeNode();
   const viewStore = useViewStore();
-  
+
   const handleOpenInSidePanel = useCallback(() => {
     viewStore.createSidePanelTree(treeNode.object);
   }, [treeNode, viewStore]);
