@@ -39,6 +39,7 @@ import { addToFavorites, isFavorited, removeFromFavorites } from "@/app/graph/fa
 import { GraphNode } from "@/app/graph/GraphNode";
 import { useToast } from "@/app/hooks/useToast";
 import { useParseWithAi } from "@/app/llm/useParseWithAi";
+import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { getAncestorsAsArray, useSetAuthorRoot, useSetMainRoot } from "@/app/tree/utils";
 import { createRouteUrl, downloadSubtree, exportSubtreeToIdeapad } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -197,7 +198,7 @@ const JumpTo = () => {
   const { treeNode } = useTreeNode();
   const { object } = treeNode;
   const viewStore = useViewStore();
-  const setRoot = useSetMainRoot();
+  const tree = viewStore.activeTree;
 
   const handleGoToNode = useCallback(() => {
     viewStore.cancelDeepSearch();
@@ -212,12 +213,22 @@ const JumpTo = () => {
       // }
 
       const element = document.querySelector(`[data-editor-path="${treeNode.id}"]`);
+      let curParent: DescendantTreeNode | RootTreeNode | null = treeNode.parent;
+      const maxDepth = 6;
+      for (let i = 0; i < maxDepth; i++) {
+        if (curParent instanceof DescendantTreeNode) {
+          tree.setPathExpanded(curParent.path, true);
+          curParent = curParent.parent;
+        } else {
+          break;
+        }
+      }
       if (!element) {
         return;
       }
       element.scrollIntoView({ behavior: "smooth" });
     }, 150);
-  }, [viewStore, object, treeNode]);
+  }, [viewStore, object, treeNode, tree]);
 
   if (viewStore.searchQuery === "") {
     return null;
