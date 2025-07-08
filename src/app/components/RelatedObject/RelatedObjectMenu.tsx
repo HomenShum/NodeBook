@@ -198,37 +198,46 @@ const JumpTo = () => {
   const { treeNode } = useTreeNode();
   const { object } = treeNode;
   const viewStore = useViewStore();
-  const tree = viewStore.activeTree;
+  const tree = viewStore.treeView;
+  const searchTree = viewStore.searchView;
 
   const handleGoToNode = useCallback(() => {
     viewStore.cancelDeepSearch();
-    viewStore.jumpToNodeId = object.id;
+    viewStore.setJumpToNodeId(object.id);
+    const curSelection = searchTree.selection;
 
     // searchQuery is updated asynchronously with an event listener, so we need to wait for it to be updated
     // before we can scroll to the node.
+    const element = document.querySelector(`[data-editor-path="${treeNode.id}"]`);
+    let curParent: DescendantTreeNode | RootTreeNode | null = treeNode.parent;
+    const maxDepth = 6;
+    for (let i = 0; i < maxDepth; i++) {
+      if (curParent instanceof DescendantTreeNode) {
+        tree.setPathExpanded(curParent.path, true);
+        curParent = curParent.parent;
+      } else {
+        break;
+      }
+    }
+    if (curSelection) {
+      tree.setSelection(curSelection);
+    }
+
     setTimeout(() => {
       // const parent = object.canonicalRelation ? getOtherObject(object.canonicalRelation, object.id) : null;
       // if (parent) {
       //   setRoot(parent);
       // }
-
-      const element = document.querySelector(`[data-editor-path="${treeNode.id}"]`);
-      let curParent: DescendantTreeNode | RootTreeNode | null = treeNode.parent;
-      const maxDepth = 6;
-      for (let i = 0; i < maxDepth; i++) {
-        if (curParent instanceof DescendantTreeNode) {
-          tree.setPathExpanded(curParent.path, true);
-          curParent = curParent.parent;
-        } else {
-          break;
-        }
+      if (curSelection) {
+        tree.setSelection(curSelection);
       }
+      const element = document.querySelector(`[data-editor-path="${treeNode.id}"]`);
       if (!element) {
         return;
       }
-      element.scrollIntoView({ behavior: "smooth" });
-    }, 150);
-  }, [viewStore, object, treeNode, tree]);
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+  }, [viewStore, object, treeNode, tree, searchTree]);
 
   if (viewStore.searchQuery === "") {
     return null;
@@ -470,7 +479,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
         treeNode.tree.selectBetween(treeNode.id, treeNode.id);
       } else {
         // When menu is closed, deselect the node
-        treeNode.tree.selection = null;
+        treeNode.tree.setSelection(null);
       }
     },
     [treeNode],

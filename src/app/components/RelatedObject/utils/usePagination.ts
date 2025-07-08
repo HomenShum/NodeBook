@@ -18,7 +18,7 @@ export const usePagination = (nodes: DescendantTreeNode[], pageSize = DEFAULT_PA
 
     setEnsureInViewIndex(nodes.findIndex((node) => node.object.id === viewStore.jumpToNodeId));
     if (ensureInViewIndex !== -1) {
-      viewStore.jumpToNodeId = null;
+      viewStore.clearJumpToNodeId();
     }
   }, [viewStore.jumpToNodeId, nodes, viewStore, ensureInViewIndex]);
 

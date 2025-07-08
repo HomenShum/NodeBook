@@ -119,6 +119,7 @@ export class ViewStore {
       }) as EventListener);
     }
   }
+
   /**
    * Return state associated with the main view.
    * When we introduced sublists, we had to split the view into two separate trees.
@@ -183,6 +184,8 @@ export class ViewStore {
         quickCaptureView: computed,
         setNotificationPaneOpen: action,
         jumpToNodeId: observable,
+        setJumpToNodeId: action,
+        clearJumpToNodeId: action,
         setSrcForImageViewer: action,
         saveScrollPosition: action,
         restoreScrollPosition: action,
@@ -215,7 +218,7 @@ export class ViewStore {
 
   getDescendantNodeIds(): Set<string> {
     const nodes = this.treeView.getDescendantNodes();
-    return new Set(nodes.map(node => node.object.id));
+    return new Set(nodes.map((node) => node.object.id));
   }
 
   setQuickCaptureViewType(viewType: ViewType) {
@@ -228,6 +231,14 @@ export class ViewStore {
         viewType: this.quickCaptureViewType,
       },
     );
+  }
+
+  setJumpToNodeId(nodeId: string) {
+    this.jumpToNodeId = nodeId;
+  }
+
+  clearJumpToNodeId() {
+    this.jumpToNodeId = null;
   }
 
   setFlattenSublists(flattenSublists: boolean) {

@@ -167,6 +167,7 @@ export class Tree {
       deleteSelection: action,
       indentSelection: action,
       dedentSelection: action,
+      setSelection: action,
       split: action,
       moveSelectedNodesUp: action,
       moveSelectedNodesDown: action,
@@ -357,6 +358,10 @@ export class Tree {
       nodes: allNodes,
       subtreeRoots,
     };
+  }
+
+  setSelection(selection: TreeSelection | null) {
+    this.selection = selection;
   }
 
   private findTopNode(anchor: DescendantTreeNode, head: DescendantTreeNode): DescendantTreeNode | undefined {
