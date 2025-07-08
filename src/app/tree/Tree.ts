@@ -2183,10 +2183,11 @@ export class Tree {
             const headIsMultiLineNoteRoot = head.childrenGroups.some((group) => group.id === "noteContent");
             if (headIsMultiLineNoteRoot) {
               const nextDown = head.siblingBelowInSameGroup;
-              if (!nextDown || nextDown.parentGroup.id !== head.parentGroup.id) return false;
-              this.selectionStack.push(dir, this.selection.headNodeId);
-              this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextDown.path };
-              return true;
+              if (nextDown && nextDown.parentGroup.id === head.parentGroup.id) {
+                this.selectionStack.push(dir, this.selection.headNodeId);
+                this.selection = { type: "node", anchorNodeId: anchor.path, headNodeId: nextDown.path };
+                return true;
+              }
             }
             //If anchor is a descendant of head, move head towards anchor instead of subtree.
             //Example: 1 <-H        Output: 1
