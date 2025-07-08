@@ -31,6 +31,7 @@ export const isCommandBarHotKey = isHotkey("mod+shift+k");
 export const isQuickCaptureHotkey = isHotkey("mod+opt+k");
 export const isRightSidePanelHotkey = isHotkey("mod+opt+s");
 export const isFocusSearchHotkey = isHotkey("mod+/");
+export const isHelpModalHotkey = isHotkey("mod+shift+/");
 
 export const treeHotkeyMapping: {
   predicate: (event: KeyboardEvent, tree?: Tree) => boolean;
