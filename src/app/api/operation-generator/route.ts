@@ -30,23 +30,12 @@ Example:
     nodeProps: {
       content: [{ type: "text", value: "My new node title" }],
       isPublic: false
+      id: "new-id-xxx"
     }
   }
 }
 
-2. addChildNode(tx: TxAddChildNode)
-Example:
-{
-  type: "addChildNode",
-  transaction: {
-    parentId: "parent-node-id",
-    nodeProps: {
-      content: [{ type: "text", value: "Child node content" }]
-    }
-  }
-}
-
-3. updateNode(tx: TxUpdateNode)
+2. updateNode(tx: TxUpdateNode)
 Example:
 {
   type: "updateNode",
@@ -58,7 +47,7 @@ Example:
   }
 }
 
-4. removeNode(tx: TxRemoveNode)
+3. removeNode(tx: TxRemoveNode)
 Example:
 {
   type: "removeNode",
@@ -67,18 +56,18 @@ Example:
   }
 }
 
-5. addRelation(tx: TxAddRelation)
+4. addRelation(tx: TxAddRelation)
 Example:
 {
   type: "addRelation",
   transaction: {
-    fromId: "source-node-id",
-    toId: "target-node-id",
+    fromId: "source-object-id",
+    toId: "target-object-id",
     relationTypeId: "relation-type-id"
   }
 }
 
-6. updateRelation(tx: TxUpdateRelation)
+5. updateRelation(tx: TxUpdateRelation)
 Example:
 {
   type: "updateRelation",
@@ -91,7 +80,7 @@ Example:
   }
 }
 
-7. removeRelation(tx: TxRemoveRelation)
+6. removeRelation(tx: TxRemoveRelation)
 Example:
 {
   type: "removeRelation",
@@ -100,13 +89,13 @@ Example:
   }
 }
 
-8. replaceRelationLink(tx: TxReplaceRelationLink)
+7. replaceRelationLink(tx: TxReplaceRelationLink)
 Example:
 {
   type: "replaceRelationLink",
   transaction: {
     relationId: "relation-id",
-    direction: "from",
+    direction: "from" | "to",
     replaceWith: {
       type: "existing-object",
       id: "replacement-node-id"
@@ -114,7 +103,7 @@ Example:
   }
 }
 
-9. setIsPublic(tx: TxSetIsPublic)
+8. setIsPublic(tx: TxSetIsPublic)
 Example:
 {
   type: "setIsPublic",
@@ -128,7 +117,7 @@ Example:
   }
 }
 
-10. pinRelation(tx: TxPinRelation)
+9. pinRelation(tx: TxPinRelation)
 Example:
 {
   type: "pinRelation",
@@ -145,6 +134,16 @@ Only generate operations that are clearly intended by the text.
 Return a JSON object with two arrays: simpleOperations and complexOperations.
 Make sure all node and relation IDs referenced in the operations exist in the current graph structure.
 For new nodes or relations, you can use "new-id-xxx" as placeholder IDs.
+
+Note that when creating a series of interconnected objects, you should create all the nodes first, and then
+the relations. This is because the relations are created with the nodes, and you can't create a relation without
+a node.
+
+I.e. if the text says "Mammoths and Elephants are both mammals", you should create the mammoth, elephant and mammal nodes first, and then create the mammoth-mammal and elephant-mammal relationships.
+
+If the text is particularly long, you should favor breaking it down into a graph rather than adding it as a single node.
+
+Be detailed and meticulous, paying special attention to the relationsips between nodes and the logic of the relationships.
 
 Current Graph Structure:
 ${treeText}

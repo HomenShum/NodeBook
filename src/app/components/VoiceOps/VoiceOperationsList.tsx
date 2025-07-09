@@ -212,7 +212,7 @@ export const VoiceOperationsList = observer(() => {
     }
   };
 
-  const renderOperation = (op: TxCombinedPart) => {
+  const renderOperation = (op: TxCombinedPart, createdObjects: Map<string, string>) => {
     const descriptions: Record<string, string> = {
       addNode: "Create new node",
       addChildNode: "Create new child node",
@@ -239,8 +239,8 @@ export const VoiceOperationsList = observer(() => {
             typeof nodeContent === "string"
               ? nodeContent
               : nodeContent?.type === "text"
-              ? nodeContent?.value || "Untitled"
-              : "Untitled"
+                ? nodeContent?.value || "Untitled"
+                : "Untitled"
           }"`;
         case "addChildNode":
           const parentNode = graphStore.getNode(op.transaction.parentId);
@@ -249,17 +249,17 @@ export const VoiceOperationsList = observer(() => {
             typeof childContent === "string"
               ? childContent
               : childContent?.type === "text"
-              ? childContent?.value || "Untitled"
-              : "Untitled"
-          }" under "${parentNode?.text || "Unknown parent"}"`;
+                ? childContent?.value || "Untitled"
+                : "Untitled"
+          }" under "${parentNode?.text || createdObjects.get(op.transaction.parentId) || "Unknown parent"}"`;
         case "updateNode":
           const updateContent = op.transaction.nodeProps?.content?.[0];
           return `Update node "${
             typeof updateContent === "string"
               ? updateContent
               : updateContent?.type === "text"
-              ? updateContent?.value || "Untitled"
-              : "Untitled"
+                ? updateContent?.value || "Untitled"
+                : "Untitled"
           }"`;
         case "removeNode":
           const nodeToRemove = graphStore.getNode(op.transaction.nodeId);
@@ -272,7 +272,9 @@ export const VoiceOperationsList = observer(() => {
         case "addRelation":
           const fromNode = graphStore.getNode(op.transaction.fromId);
           const toNode = graphStore.getNode(op.transaction.toId);
-          return `Connect "${fromNode?.text || "Unknown"}" to "${toNode?.text || "Unknown"}"`;
+          return `Connect "${fromNode?.text || createdObjects.get(op.transaction.fromId) || "Unknown"}" to "${
+            toNode?.text || createdObjects.get(op.transaction.toId) || "Unknown"
+          }"`;
         default:
           return descriptions[op.type] || op.type;
       }
@@ -352,6 +354,21 @@ export const VoiceOperationsList = observer(() => {
 
             const formattedDate = new Date(input.timestamp).toLocaleString();
 
+            const createdObjects = new Map<string, string>();
+
+            operationState.operations?.simpleOperations
+              .filter((op) => op.type === "addNode" || op.type === "addChildNode")
+              .map((op) => {
+                if (op.transaction.nodeProps?.content instanceof Array) {
+                  createdObjects.set(
+                    op.transaction.nodeProps?.id || "",
+                    op.transaction.nodeProps?.content?.map((c) => (c.type === "text" ? c.value : "")).join(" "),
+                  );
+                } else if (op.transaction.nodeProps?.content && typeof op.transaction.nodeProps?.content === "string") {
+                  createdObjects.set(op.transaction.nodeProps?.id || "", op.transaction.nodeProps?.content);
+                }
+              });
+
             return (
               <div key={nodeId} className={styles.FeedItem}>
                 <div className={styles.FeedItemContent}>
@@ -430,7 +447,7 @@ export const VoiceOperationsList = observer(() => {
                               <div className={styles.OperationsGroupTitle}>Simple Operations</div>
                               <div className={styles.OperationsItems}>
                                 {operationState.operations.simpleOperations.map((op, i) => (
-                                  <div key={i}>{renderOperation(op)}</div>
+                                  <div key={i}>{renderOperation(op, createdObjects)}</div>
                                 ))}
                               </div>
                             </div>
@@ -441,7 +458,7 @@ export const VoiceOperationsList = observer(() => {
                               <div className={styles.OperationsGroupTitle}>Complex Operations</div>
                               <div className={styles.OperationsItems}>
                                 {operationState.operations.complexOperations.map((op, i) => (
-                                  <div key={i}>{renderOperation(op)}</div>
+                                  <div key={i}>{renderOperation(op, createdObjects)}</div>
                                 ))}
                               </div>
                             </div>
