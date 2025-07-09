@@ -13,7 +13,8 @@ import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 
-const getRenameLabel = (currentName: string, newName: string) => `Rename "${currentName}" relation type to "${newName}"`;
+const getRenameLabel = (currentName: string, newName: string) =>
+  `Rename "${currentName}" relation type to "${newName}"`;
 const getCreationLabel = (search: string) => `Create "${search}" relation type`;
 
 interface RelationTypeItem {
@@ -37,8 +38,8 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     relation.relationType.id === "child" && !isForward
       ? "parent"
       : isForward
-      ? relation.relationType.label
-      : relation.relationType.reverseLabel,
+        ? relation.relationType.label
+        : relation.relationType.reverseLabel,
   );
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const itemWasSelectedRef = useRef(false);
@@ -234,7 +235,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     >
       <div style={{ display: "flex", gap: "3px", alignItems: "center" }}>
         <div className={styles.RelationComboboxInput}>
-          <Search size={14} />
+          <Search size={14} color="var(--gray-8)" strokeWidth={3} />
           <input
             placeholder="Search relation types..."
             className={styles.RelationComboboxInputContent}
