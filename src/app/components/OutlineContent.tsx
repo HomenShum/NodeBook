@@ -146,7 +146,7 @@ function OutlineContent({ tree }: Props) {
         viewStore.setViewType(ViewType.Outline);
       }
       if (!wasEventHandled) {
-        wasEventHandled = handleTreeHotkeys(event, tree);
+        wasEventHandled = handleTreeHotkeys(event, tree, addToast);
       }
       if (isZoomInHotkey(event)) {
         wasEventHandled = true;

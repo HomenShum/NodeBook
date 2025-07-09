@@ -32,6 +32,7 @@ const list: HotkeyItem[] = [
   { name: "Dedent Selection", keys: ["Shift", "Tab"] },
   { name: "Escape Selection", keys: ["Esc"] },
   { name: "Select All Nodes", keys: [`${modKeyName}`, "A"], annotation: "(twice)" },
+  { name: "Save Expansion State", keys: [`${modKeyName}`, "S"] },
 
   // Zoom and Navigation
   { name: "Zoom In", keys: [`${modKeyName}`, "."] },

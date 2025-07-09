@@ -32,10 +32,14 @@ export const isQuickCaptureHotkey = isHotkey("mod+opt+k");
 export const isRightSidePanelHotkey = isHotkey("mod+opt+s");
 export const isFocusSearchHotkey = isHotkey("mod+/");
 export const isHelpModalHotkey = isHotkey("mod+shift+/");
+export const isSaveExpansionStateHotkey = isHotkey("mod+s");
 
 export const treeHotkeyMapping: {
   predicate: (event: KeyboardEvent, tree?: Tree) => boolean;
-  action: (tree: Tree) => void | boolean;
+  action: (
+    tree: Tree,
+    addToast?: (toast: { title: string; description?: string; duration?: number }) => void,
+  ) => void | boolean;
 }[] = [
   {
     predicate: (event, tree?: Tree) => tree?.selection?.type === "node" && isMoveUpHotKey(event),
@@ -76,16 +80,42 @@ export const treeHotkeyMapping: {
   { predicate: isLegacyToggleTodoHotkey, action: (tree: Tree) => tree.toggleNodeSelectionTodo() },
   { predicate: isToggleBoldHotkey, action: (tree: Tree) => tree.toggleNodeSelectionBold() },
   { predicate: isToggleItalicHotkey, action: (tree: Tree) => tree.toggleNodeSelectionItalic() },
+  {
+    predicate: isSaveExpansionStateHotkey,
+    action: (tree: Tree, addToast) => {
+      tree.saveExpansionStateForAllUsers().then((success) => {
+        if (addToast) {
+          if (success) {
+            addToast({
+              title: "Expansion state saved",
+              description: "Tree expansion state has been saved for all users",
+              duration: 3000,
+            });
+          } else {
+            addToast({
+              title: "Failed to save expansion state",
+              description: "Unable to save tree expansion state",
+              duration: 4000,
+            });
+          }
+        }
+      });
+    },
+  },
 ];
 
-export const handleTreeHotkeys = (event: KeyboardEvent, tree: Tree): boolean => {
+export const handleTreeHotkeys = (
+  event: KeyboardEvent,
+  tree: Tree,
+  addToast?: (toast: { title: string; description?: string; duration?: number }) => void,
+): boolean => {
   for (const { predicate, action } of treeHotkeyMapping) {
     if (predicate(event, tree)) {
       if (predicate !== isToggleTodoHotkey) {
         event.preventDefault();
         event.stopPropagation();
       }
-      action(tree);
+      action(tree, addToast);
       return true;
     }
   }
