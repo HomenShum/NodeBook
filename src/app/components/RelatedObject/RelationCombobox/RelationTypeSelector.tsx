@@ -1,4 +1,4 @@
-import { Delete, MessageCircle, Plus, Search } from "lucide-react";
+import { Delete, MessageCircle, Pen, Plus, Search } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { ParentRelationIcon } from "@/app/components/CustomIcons";
@@ -13,6 +13,7 @@ import { DescendantTreeNode } from "@/app/tree/nodes";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
 
+const getRenameLabel = (currentName: string, newName: string) => `Rename "${currentName}" relation type to "${newName}"`;
 const getCreationLabel = (search: string) => `Create "${search}" relation type`;
 
 interface RelationTypeItem {
@@ -113,6 +114,17 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
         .flat()
         .filter(({ label }) => label.toLowerCase().includes(search.toLowerCase())),
     );
+
+    if (search.length > 0 && parent !== null && relation.relationType.label !== search) {
+      tmpItems.push({
+        key: "rename",
+        label: getRenameLabel(relation.relationType.label, search),
+        onSelect: async () => {
+          await graphStore.renameRelationType(relation.relationType.id, search);
+        },
+        icon: () => <Pen size={14} strokeWidth={1.5} />,
+      });
+    }
 
     if (search.length > 0 && parent !== null && relation.relationType.label !== search) {
       tmpItems.push({

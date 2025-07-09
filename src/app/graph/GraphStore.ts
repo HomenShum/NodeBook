@@ -928,6 +928,17 @@ export class GraphStore {
     }
   }
 
+  async renameRelationType(id: string, newLabel: string, newReverseLabel?: string) {
+    // If newReverseLabel is null or undefined, default to `${newLabel} of`
+    const newReverseLabelOrDefault = newReverseLabel ?? `${newLabel} of`;
+    const { relationType, updates } = this._updateRelationType(id, {
+      label: newLabel,
+      reverseLabel: newReverseLabelOrDefault,
+    });
+    this.relationTypesById[id] = relationType;
+    this.updateManager.queueUpdates(updates);
+  }
+
   private _updateRelationType(
     id: string,
     props: { label?: string; reverseLabel?: string; isPublic?: boolean },
