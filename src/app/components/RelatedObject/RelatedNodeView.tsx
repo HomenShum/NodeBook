@@ -14,6 +14,7 @@ import { DescendantTreeNode } from "@/app/tree/nodes";
 import { cn } from "@/lib/utils";
 
 import styles from "./styles/RelatedNodeView.module.css";
+import { nodeIconMap } from "./utils/nodeIconMap";
 
 interface Props {
   treeNode: DescendantTreeNode;
@@ -33,6 +34,13 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   const isReadOnlyReference = !treeNode.isAtCanonicalPath && !isEditMode;
   const objectIsGraphNode = treeNode.object instanceof GraphNode;
   const objectIsEditRestricted = treeNode.object.isEditRestricted;
+
+  const iconString = treeNode.object.iconString;
+  let IconComponent = null;
+  if (iconString && nodeIconMap[iconString]) {
+    IconComponent = nodeIconMap[iconString];
+  }
+
   const allowAnonymousAppend =
     treeNode.tree.rootObject instanceof GraphNode &&
     treeNode.tree.rootObject.accessMode === AccessMode.APPEND &&
@@ -55,10 +63,11 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
   const cnInnerContainer = cn({
     [styles.FlexContainer]: true,
     [styles.ShowTooltip]: true,
-    [styles.Pill]: !isAtCanonicalPath,
+    [styles.Pill]: !isAtCanonicalPath && !objectIsEditRestricted,
     [styles.Editor]: !isAtCanonicalPath && isEditMode,
     [styles.Expanded]: !isAtCanonicalPath && !isEditMode && isExpanded,
     [styles.StrikeThrough]: treeNode.isTodoItem && treeNode.object instanceof GraphNode && treeNode.object.isChecked,
+    [styles.RestrictedNodeContainer]: objectIsEditRestricted,
   });
 
   const path = getCanonicalPath(treeNode.object);
@@ -111,14 +120,23 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
         <div
           className={cnInnerContainer}
           onClick={(e) => {
-            if (isReadOnlyReference) {
+            if (isReadOnlyReference || objectIsEditRestricted) {
               e.stopPropagation();
-              handleClick(e);
+              e.preventDefault();
+              if (objectIsEditRestricted) {
+                // For edit-restricted nodes, just toggle expand/collapse
+                tree.togglePathExpanded(treeNode.path);
+              } else {
+                handleClick(e);
+              }
             }
           }}
           onPointerDown={(e) => {
-            if (isReadOnlyReference) {
+            if (isReadOnlyReference || objectIsEditRestricted) {
               e.stopPropagation();
+              if (objectIsEditRestricted) {
+                e.preventDefault();
+              }
             }
 
             // Handle shift-click to select nodes between current selection and clicked node
@@ -128,9 +146,22 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
               tree.handleShiftClickSelection(treeNode.id);
             }
           }}
+          onMouseDown={(e) => {
+            if (objectIsEditRestricted) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          }}
           data-tooltip={tooltipContent}
         >
-          <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} editorRef={editorRef} />
+          {objectIsEditRestricted ? (
+            <div className={styles.RestrictedNode} data-tooltip={tooltipContent}>
+              {IconComponent && <IconComponent size={14} />}
+              {treeNode.object.text}
+            </div>
+          ) : (
+            <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} editorRef={editorRef} />
+          )}
           {isReadOnlyReference && !user.isAnonymous && treeNode.isEditable && (
             <Button
               variant="ghost"

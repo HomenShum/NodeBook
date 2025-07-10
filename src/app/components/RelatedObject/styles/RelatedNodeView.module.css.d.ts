@@ -8,6 +8,8 @@ declare const styles: {
   readonly "Pill": string;
   readonly "PillContainer": string;
   readonly "Placeholder": string;
+  readonly "RestrictedNode": string;
+  readonly "RestrictedNodeContainer": string;
   readonly "ShowTooltip": string;
   readonly "StrikeThrough": string;
   readonly "TextContent": string;

@@ -10,6 +10,7 @@ import {
   USER_MY_STREAM_NODE_ID_PREFIX,
   USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
+  USER_MY_STREAM_NODE_ID_PREFIX,
   USER_MY_TEMPLATES_NODE_ID_PREFIX,
   USER_ROOT_ID_PREFIX,
 } from "@/lib/constants";
@@ -151,7 +152,29 @@ export abstract class BaseGraphObject {
     if (this.id.startsWith(USER_MY_TEMPLATES_NODE_ID_PREFIX)) {
       return true;
     }
+    if (this.text === "__user_relation_types__") {
+      return true;
+    }
+    if (this.text === "__card_statuses__") {
+      return true;
+    }
     return false;
+  }
+
+  get iconString(): string {
+    if (this.id.startsWith(USER_MY_STREAM_NODE_ID_PREFIX)) {
+      return "stream";
+    }
+    if (this.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
+      return "hash";
+    }
+    if (this.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX)) {
+      return "favorites";
+    }
+    if (this.id.startsWith(USER_MY_TEMPLATES_NODE_ID_PREFIX)) {
+      return "templates";
+    }
+    return "";
   }
 
   pinChildRelation(childRelation: GraphRelation | GraphRelation[], after?: Positioner<GraphRelation>) {

@@ -49,7 +49,7 @@
   cursor: pointer;
 }
 
-/* 
+/*
 Tooltip
 */
 .TreeNodeReference .Pill::after {
@@ -68,7 +68,9 @@ Tooltip
   white-space: pre-line;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s 0.3s, visibility 0.2s 0.3s;
+  transition:
+    opacity 0.2s 0.3s,
+    visibility 0.2s 0.3s;
   z-index: 50;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
@@ -91,7 +93,9 @@ Tooltip
   transform: translateX(100%);
   visibility: hidden;
   opacity: 0.5;
-  transition: opacity 0.1s ease-in-out, visibility 0.1s ease-in-out;
+  transition:
+    opacity 0.1s ease-in-out,
+    visibility 0.1s ease-in-out;
 }
 
 .TreeNodeReference.PillContainer:hover .EditButton {
@@ -115,4 +119,39 @@ Tooltip
 
 .StrikeThrough {
   text-decoration: line-through;
+}
+
+/* Styling for Restricted Nodes */
+.RestrictedNodeContainer {
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  width: 100%;
+  height: 100%;
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.RestrictedNode {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 0px 4px;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: var(--gray-3);
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+.RestrictedNodeContainer:hover .RestrictedNode {
+  background-color: var(--gray-5);
+  color: var(--gray-12);
 }
