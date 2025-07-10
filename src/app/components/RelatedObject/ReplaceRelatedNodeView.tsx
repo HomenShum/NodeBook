@@ -137,7 +137,9 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
                           } `}
                         >
                           {text}
-                          {group.type === "nodes" && <RelationCounter object={object} showTooltip={false} />}
+                          {group.type === "nodes" && (
+                            <RelationCounter treeNodeOrGraphObject={object} showTooltip={false} />
+                          )}
                         </div>
                       ),
                   )}

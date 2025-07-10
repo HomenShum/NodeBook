@@ -59,7 +59,7 @@ export function StoresProvider({
       let syncCleanup = () => {};
       if (!user) return syncCleanup;
       logger.debug("Starting to setup stores");
-      setIsLoading(true);
+      // setIsLoading(true);
 
       // create new stores (shorter names to distinguish from the state variables)
       const settings = new SettingsStore(user);

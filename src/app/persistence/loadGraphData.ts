@@ -52,8 +52,8 @@ export class LayerManager {
       clear: action,
       loadWithIds: action,
       initialize: action,
-      lazyLoadWithIds: action
-    })
+      lazyLoadWithIds: action,
+    });
   }
 
   /**

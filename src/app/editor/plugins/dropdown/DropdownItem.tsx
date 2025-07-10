@@ -70,7 +70,9 @@ export const DropdownItem = forwardRef<HTMLLIElement, DropdownItemProps>(
                   {showTabHelper && index === 0 && <div className={styles.DropdownHelper}>Tab to select </div>}
                   {match.type === "node" && <TypeIndicator object={match.object} />}
                   {match.type === "relation" && <div className={styles.RelTypeIndicator}>Relation</div>}
-                  {match.type === "node" && <RelationCounter object={match.object} showTooltip={false} />}
+                  {match.type === "node" && (
+                    <RelationCounter treeNodeOrGraphObject={match.object} showTooltip={false} />
+                  )}
                 </div>
               </div>
               {match.type === "node" ? <Path path={getCanonicalPath(match.object)} /> : null}

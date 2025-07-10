@@ -4,13 +4,7 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import {
-  DescendantTreeNode,
-  GroupId,
-  PathToRootNode,
-  RootTreeNode,
-  TreeNode,
-} from "@/app/tree/nodes";
+import { DescendantTreeNode, GroupId, PathToRootNode, RootTreeNode, TreeNode } from "@/app/tree/nodes";
 import { Filter, Path, Root, Tree } from "@/app/tree/Tree";
 import { createPath, isNoteContent, walkTree } from "@/app/tree/utils";
 import { ObjectPath, Position } from "@/app/util";
@@ -239,6 +233,7 @@ export class SearchTree extends Tree {
         return true;
       }
       if (filter.hideBackrelations && treeNode.isBackrelation) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return false;
       }
       /** Parent from the perspective of the graph, not the current tree */
@@ -252,8 +247,10 @@ export class SearchTree extends Tree {
       const grandparentNotInBreadcrumb = !(treeNode.parent.parent instanceof PathToRootNode);
       const nodeIsNoteContent = isNoteContent(treeNode);
       if (filter.hideAllParents && isParentRelation) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return false;
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return false;
       } else if (
         filter.hideDirectParent &&
@@ -261,6 +258,7 @@ export class SearchTree extends Tree {
         grandparentNotInBreadcrumb &&
         !nodeIsNoteContent
       ) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return false;
       }
       const relId = treeNode.relationWithParent.id;
@@ -298,6 +296,7 @@ export class SearchTree extends Tree {
       if (hideSet.has(relId)) {
         return false;
       }
+      treeNode.tree.removeFilteredRelation(relId);
       return true;
     }
     return walk(treeNode, this.filter, this.hiddenRelations, this.alwaysVisibleNodes);

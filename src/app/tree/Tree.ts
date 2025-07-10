@@ -130,6 +130,7 @@ export class Tree {
     this.viewType = viewType;
     this.remoteHydrationEnabled = remoteHydrationEnabled;
     this.expansionStateManager = new ExpansionStateManager();
+    this.filteredRelations = new Set();
     this.makeObservable();
 
     // Don't load expansion state in constructor anymore
@@ -180,6 +181,10 @@ export class Tree {
       clear: action,
       deserializeInPlace: action,
       updateSortByOption: action,
+      filteredRelations: observable,
+      addFilteredRelation: action,
+      removeFilteredRelation: action,
+      isFilteredRelation: action,
     });
   }
 
@@ -194,6 +199,9 @@ export class Tree {
 
   /** The current selection in the tree. This can be a node selection or an editor selection. */
   selection: TreeSelection | null;
+
+  /** The ids of relations that are hidden in the tree. */
+  filteredRelations: Set<string>;
 
   rootObjectId: string;
 
@@ -772,6 +780,7 @@ export class Tree {
 
       // Apply standard filters
       if (filter.hideBackrelations && treeNode.isBackrelation) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return { visible: false, hasTodoDescendant };
       }
 
@@ -787,8 +796,10 @@ export class Tree {
       const nodeIsNoteContent = isNoteContent(treeNode);
 
       if (filter.hideAllParents && isParentRelation) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return { visible: false, hasTodoDescendant };
       } else if (filter.hideAllRootParents && isParentRelation && treeNode.object.isRoot) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return { visible: false, hasTodoDescendant };
       } else if (
         filter.hideDirectParent &&
@@ -796,6 +807,7 @@ export class Tree {
         grandparentNotInBreadcrumb &&
         !nodeIsNoteContent
       ) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return { visible: false, hasTodoDescendant };
       }
 
@@ -804,6 +816,7 @@ export class Tree {
         filter.hideHashtagRelations &&
         treeNode.relationWithParent.relationType.id === defaultRelationTypes.hashtag.id
       ) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return { visible: false, hasTodoDescendant };
       }
 
@@ -821,6 +834,7 @@ export class Tree {
           treeNode.object instanceof GraphNode &&
           treeNode.object.isChecked !== true
         ) {
+          treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
           return { visible: false, hasTodoDescendant };
         }
         // Filter unchecked TODOs
@@ -829,13 +843,27 @@ export class Tree {
           treeNode.object instanceof GraphNode &&
           treeNode.object.isChecked !== false
         ) {
+          treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
           return { visible: false, hasTodoDescendant };
         }
       }
+      treeNode.tree.removeFilteredRelation(treeNode.relationWithParent.id);
 
       return { visible: true, hasTodoDescendant: hasTodoDescendant || isTodo };
     }
     return walk(treeNode, this.filter).visible;
+  }
+
+  addFilteredRelation(relationId: string) {
+    this.filteredRelations.add(relationId);
+  }
+
+  removeFilteredRelation(relationId: string) {
+    this.filteredRelations.delete(relationId);
+  }
+
+  isFilteredRelation(relationId: string) {
+    return this.filteredRelations.has(relationId);
   }
 
   protected applySearch(treeNode: TreeNode) {

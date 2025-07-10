@@ -61,7 +61,7 @@ const renderItemsForSearch = (
 ) => {
   const visibleNodes = group.nodes;
   const filteredPositions = tree.getFilteredGroupPositions(parentNode.path, group.id);
-  const combinedItems : CombinedItem[] = [
+  const combinedItems: CombinedItem[] = [
     ...visibleNodes.map((node) => {
       return {
         type: "node" as const,
@@ -75,34 +75,32 @@ const renderItemsForSearch = (
       groupIndex,
     })),
   ].sort((a, b) => comparePositions(a.position, b.position));
-  
-  return (
-    combinedItems.map((item, i) => {
-      if (item.type === "node") {
-        const previousItem = combinedItems[i - 1] as VisibleNodeItem;
-        const showDate =
-          i == 0 ||
-          (previousItem.type === "node" &&
-            item.node.object.createdAt.toDateString() !== previousItem.node.object.createdAt.toDateString());
-        return (
-          <div key={item.node.path}>
-            {noteView && <Separator i={i} date={showDate ? item.node.object.createdAt : null} />}
-            <RelatedObjectView treeNode={item.node} />
-          </div>
-        );
-      } else {
-        return (
-          <FilteredNodesPlaceholder
-            key={`${parentNode.path}-${group.id}-filtered-${item.groupIndex}`}
-            tree={parentNode.tree as SearchTree}
-            parentPath={parentNode.path}
-            groupId={group.id}
-            groupIndex={item.groupIndex}
-          />
-        );
-      }
-    })
-  );
+
+  return combinedItems.map((item, i) => {
+    if (item.type === "node") {
+      const previousItem = combinedItems[i - 1] as VisibleNodeItem;
+      const showDate =
+        i == 0 ||
+        (previousItem.type === "node" &&
+          item.node.object.createdAt.toDateString() !== previousItem.node.object.createdAt.toDateString());
+      return (
+        <div key={item.node.path}>
+          {noteView && <Separator i={i} date={showDate ? item.node.object.createdAt : null} />}
+          <RelatedObjectView treeNode={item.node} />
+        </div>
+      );
+    } else {
+      return (
+        <FilteredNodesPlaceholder
+          key={`${parentNode.path}-${group.id}-filtered-${item.groupIndex}`}
+          tree={parentNode.tree as SearchTree}
+          parentPath={parentNode.path}
+          groupId={group.id}
+          groupIndex={item.groupIndex}
+        />
+      );
+    }
+  });
 };
 
 export const ChildGroups = observer(function ChildGroups({ treeNode }: ChildGroupsProps) {
@@ -196,7 +194,9 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
     parentNode.object instanceof GraphNode && parentNode.object.accessMode === AccessMode.APPEND;
 
   const hasSearch = parentNode.tree instanceof SearchTree && parentNode.tree.search !== "";
-  const contiguousGroups = hasSearch ? (parentNode.tree as SearchTree).getContiguousFilteredGroups(parentNode.path, group.id) : [];
+  const contiguousGroups = hasSearch
+    ? (parentNode.tree as SearchTree).getContiguousFilteredGroups(parentNode.path, group.id)
+    : [];
   const hasFilteredNodes = contiguousGroups.length > 0;
   const filteredNodesCount = contiguousGroups.reduce((count: number, group: any[]) => count + group.length, 0);
 
@@ -232,20 +232,19 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
             if (hasSearch) {
               return renderItemsForSearch(tree as SearchTree, noteView, parentNode, group);
             } else {
-              return (
-                group.nodes
-                  .filter((node) => node.object.objectType !== "placeholder")
-                  .map((treeNode, i) => {
-                    const showDate =
-                      i == 0 || treeNode.object.createdAt.toDateString() !== group.nodes[i - 1].object.createdAt.toDateString();
-                    return (
-                      <div key={treeNode.path}>
-                        {noteView && <Separator i={i} date={showDate ? treeNode.object.createdAt : null} />}
-                        <RelatedObjectView treeNode={treeNode} />
-                      </div>
-                    );
-                  })
-              )
+              return group.nodes
+                .filter((node) => node.object.objectType !== "placeholder")
+                .map((treeNode, i) => {
+                  const showDate =
+                    i == 0 ||
+                    treeNode.object.createdAt.toDateString() !== group.nodes[i - 1].object.createdAt.toDateString();
+                  return (
+                    <div key={treeNode.path}>
+                      {noteView && <Separator i={i} date={showDate ? treeNode.object.createdAt : null} />}
+                      <RelatedObjectView treeNode={treeNode} />
+                    </div>
+                  );
+                });
             }
           })()}
           <div
@@ -277,15 +276,16 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
   const hasSearch = parentNode.tree.search !== "";
   const tree = parentNode.tree;
   const groupNodes = paginatedNodes.filter((node) => {
-    return (
+    const show =
       node.object.objectType !== "placeholder" &&
-      (!settingsStore.hidePinnedItems ||
-        !node.parent.object.isRelationPinned(node.relationWithParent)) &&
-      !(
-        !settingsStore.showHiddenRelations &&
-        hiddenRelationTypeIds.has(node.relationWithParent.relationTypeId)
-      )
-    );
+      (!settingsStore.hidePinnedItems || !node.parent.object.isRelationPinned(node.relationWithParent)) &&
+      !(!settingsStore.showHiddenRelations && hiddenRelationTypeIds.has(node.relationWithParent.relationTypeId));
+    if (!show) {
+      tree.addFilteredRelation(node.relationWithParent.id);
+    } else {
+      tree.removeFilteredRelation(node.relationWithParent.id);
+    }
+    return show;
   });
 
   return (

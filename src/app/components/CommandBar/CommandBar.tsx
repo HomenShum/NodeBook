@@ -333,7 +333,7 @@ const CommandBar = observer(() => {
                       <>
                         <TypeIndicator object={command.object} />
                         {command.isFavorited && <Star size={16} />}
-                        <RelationCounter object={command.object} showTooltip={false} />
+                        <RelationCounter treeNodeOrGraphObject={command.object} showTooltip={false} />
                       </>
                     )}
                   </span>

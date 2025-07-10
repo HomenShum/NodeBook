@@ -1,13 +1,13 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
-    COMMAND_PRIORITY_HIGH,
-    COMMAND_PRIORITY_NORMAL,
-    KEY_ARROW_DOWN_COMMAND,
-    KEY_ARROW_UP_COMMAND,
-    KEY_ENTER_COMMAND,
-    KEY_ESCAPE_COMMAND,
-    KEY_TAB_COMMAND,
+  COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_NORMAL,
+  KEY_ARROW_DOWN_COMMAND,
+  KEY_ARROW_UP_COMMAND,
+  KEY_ENTER_COMMAND,
+  KEY_ESCAPE_COMMAND,
+  KEY_TAB_COMMAND,
 } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -296,7 +296,7 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
                     {index === 0 && highlightedIndex === null && (
                       <div className={styles.DropdownHelper}>Tab to select </div>
                     )}
-                    <RelationCounter object={match.object} showTooltip={false} />
+                    <RelationCounter treeNodeOrGraphObject={match.object} showTooltip={false} />
                   </div>
                 </div>
                 <Path path={getCanonicalPath(match.object)} />

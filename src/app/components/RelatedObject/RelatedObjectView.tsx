@@ -430,7 +430,7 @@ const Content = observer(function Content() {
           )}
           {viewType !== "replace" && !isNoteContentRoot && (
             <RelationCounter
-              object={treeNode.object}
+              treeNodeOrGraphObject={treeNode}
               onClick={() => tree.togglePathExpanded(treeNode.path)}
               showTooltip={true}
             />
