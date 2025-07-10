@@ -113,12 +113,8 @@ export function MentionDropdown({
 
         nodeToReplace.replace(mentionNode);
         let spaceAfter = new TextNode(" ");
-
-        if (dropdown.mentionTrigger === DOUBLE_BRACKET) {
-          spaceAfter = new TextNode("]] ");
-        }
-
         mentionNode.insertAfter(spaceAfter);
+
         if (
           dropdown.mentionTrigger === CONNECTION_SYMBOL ||
           dropdown.mentionTrigger === CONNECTION_SYMBOL_WITH_SPACE ||
