@@ -7,7 +7,6 @@ import { Positioner } from "@/app/graph/GraphTransactionTypes";
 import { comparePositions } from "@/app/util";
 import {
   GLOBAL_ROOT_ID,
-  USER_MY_STREAM_NODE_ID_PREFIX,
   USER_MY_FAVORITES_NODE_ID_PREFIX,
   USER_MY_HASHTAGS_NODE_ID_PREFIX,
   USER_MY_STREAM_NODE_ID_PREFIX,
