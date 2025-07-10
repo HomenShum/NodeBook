@@ -29,6 +29,7 @@ export function StoresProvider({
   initialObjectId,
 }: Readonly<{ children: React.ReactNode; initialObjectId: string | null }>) {
   const [isLoading, setIsLoading] = useState(true);
+  const [firstRender, setFirstRender] = useState(true);
 
   // instantiate empty stores with unlogged user
   const user = useSetupUser();
@@ -59,7 +60,10 @@ export function StoresProvider({
       let syncCleanup = () => {};
       if (!user) return syncCleanup;
       logger.debug("Starting to setup stores");
-      // setIsLoading(true);
+      if (firstRender) {
+        setFirstRender(false);
+        setIsLoading(true);
+      }
 
       // create new stores (shorter names to distinguish from the state variables)
       const settings = new SettingsStore(user);
