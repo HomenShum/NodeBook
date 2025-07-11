@@ -32,6 +32,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
 
   const object = graphStore.myFavoritesNode;
   const uniqueChildren = [...new Set(object.children)];
+  const hasFavorites = uniqueChildren.length > 0;
 
   // Filter children based on search query
   const filteredChildren = searchQuery
@@ -71,7 +72,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
           </div>
         </div>
       </div>
-      {isExpanded && (
+      {isExpanded && hasFavorites && (
         <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search favorites..." />
       )}
       <div className={styles.SidebarTreeChildren}>
