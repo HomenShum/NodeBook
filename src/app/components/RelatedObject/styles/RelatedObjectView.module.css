@@ -89,7 +89,9 @@ Bullet
   align-items: center;
   width: 16px;
   height: 24px;
-  transition: opacity, scale 0.2s ease-in-out;
+  transition:
+    opacity,
+    scale 0.2s ease-in-out;
   opacity: 1;
   cursor: default;
 }
@@ -139,7 +141,9 @@ Bullet
   cursor: default;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+  transition:
+    opacity 0.2s ease-in-out,
+    visibility 0.2s ease-in-out;
 }
 
 .TrailMenuIcon {
@@ -173,7 +177,9 @@ Tooltip
   white-space: pre-line;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s 0.3s, visibility 0.2s 0.3s;
+  transition:
+    opacity 0.2s 0.3s,
+    visibility 0.2s 0.3s;
   z-index: 50;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
@@ -250,7 +256,6 @@ Node
   display: flex;
   flex-direction: row;
   width: 100%;
-  max-width: 720px;
   gap: 4px;
 }
 
@@ -319,7 +324,9 @@ Right Area
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s 0.5s, visibility 0.3s 0.5s;
+  transition:
+    opacity 0.3s 0.5s,
+    visibility 0.3s 0.5s;
   z-index: 5;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
@@ -575,7 +582,9 @@ Right Area
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s 0.5s, visibility 0.2s 0.5s;
+  transition:
+    opacity 0.2s 0.5s,
+    visibility 0.2s 0.5s;
   z-index: 5;
   box-shadow: var(--shadow-sm);
   border: 0.5px solid var(--gray-6);
@@ -688,7 +697,9 @@ h1.Loading {
 .RelatedObjectMenu {
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+  transition:
+    opacity 0.2s ease-in-out,
+    visibility 0.2s ease-in-out;
 }
 
 @media (max-width: 768px) {
