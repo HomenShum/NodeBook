@@ -53,9 +53,9 @@ export class SettingsStore {
   public hideHashtagRelations: boolean = false;
   public sidebarExpandedMyFavorites: boolean = true;
   public sidebarExpandedMyHashtags: boolean = true;
-  public sidebarExpandedMyShortlinks: boolean = true;
-  public sidebarExpandedLocalHashtags: boolean = true;
-  public sidebarExpandedLocalMentions: boolean = true;
+  public sidebarExpandedMyShortlinks: boolean = false;
+  public sidebarExpandedLocalHashtags: boolean = false;
+  public sidebarExpandedLocalMentions: boolean = false;
   public viewModePreference: SerializedUserSettings["viewModePreferences"] = {};
   public newUser: boolean = true;
   private stopAutosave: () => void;
@@ -116,9 +116,9 @@ export class SettingsStore {
     this.hideHashtagRelations = false;
     this.sidebarExpandedMyFavorites = true;
     this.sidebarExpandedMyHashtags = true;
-    this.sidebarExpandedMyShortlinks = true;
-    this.sidebarExpandedLocalHashtags = true;
-    this.sidebarExpandedLocalMentions = true;
+    this.sidebarExpandedMyShortlinks = false;
+    this.sidebarExpandedLocalHashtags = false;
+    this.sidebarExpandedLocalMentions = false;
     this.viewModePreference = {};
     this.newUser = true;
   }

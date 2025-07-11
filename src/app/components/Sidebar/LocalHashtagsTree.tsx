@@ -206,6 +206,8 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     [setRoot, viewStore],
   );
 
+  const hasLocalHashtags = localHashtags.length > 0;
+
   return (
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
@@ -218,7 +220,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
           </div>
         </div>
       </div>
-      {isExpanded && (
+      {isExpanded && hasLocalHashtags && (
         <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search hashtags..." />
       )}
       <div className={styles.SidebarTreeChildren}>

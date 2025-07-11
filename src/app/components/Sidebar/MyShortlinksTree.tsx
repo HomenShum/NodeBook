@@ -57,6 +57,8 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
     }
   };
 
+  const hasShortlinks = Object.keys(slugs).length > 0;
+
   return (
     <div className={styles.SidebarTreeContainer}>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
@@ -73,7 +75,7 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
           </div>
         </div>
       </div>
-      {isExpanded && (
+      {isExpanded && hasShortlinks && (
         <SidebarSearchBar
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

@@ -141,6 +141,8 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
     ? sortedPinnedChildren.filter((child) => child.text.toLowerCase().includes(searchQuery.toLowerCase()))
     : sortedPinnedChildren;
 
+  const hasHashtags = uniqueChildren.length > 0 || sortedPinnedChildren.length > 0;
+
   const toggleSort = useCallback(() => {
     setSortType((current) => {
       if (current === "alphanumeric") return "created";
@@ -251,7 +253,7 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           </Tooltip>
         </TooltipProvider>
       </div>
-      {isExpanded && (
+      {isExpanded && hasHashtags && (
         <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search hashtags..." />
       )}
       <div className={styles.SidebarTreeChildren}>

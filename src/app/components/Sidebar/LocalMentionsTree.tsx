@@ -202,6 +202,8 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     [setRoot, viewStore],
   );
 
+  const hasLocalMentions = localMentions.length > 0;
+
   return (
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
@@ -214,7 +216,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
           </div>
         </div>
       </div>
-      {isExpanded && (
+      {isExpanded && hasLocalMentions && (
         <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search mentions..." />
       )}
       <div className={styles.SidebarTreeChildren}>
