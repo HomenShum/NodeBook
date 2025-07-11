@@ -1,5 +1,5 @@
 import { Delete, MessageCircle, Pen, Plus, Search } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ParentRelationIcon } from "@/app/components/CustomIcons";
 import SelectionItem from "@/app/components/RelatedObject/RelationCombobox/SelectionItem";
@@ -45,6 +45,8 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
   const itemWasSelectedRef = useRef(false);
   const viewStore = useViewStore();
   const setRoot = useSetMainRoot();
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleSelect = useCallback(
     async (relationType: GraphRelationType, wantDirection: "forward" | "reverse") => {
@@ -182,8 +184,26 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     (r) => r.relationType.id !== "__type__" && r.relationType.id !== "__reverse__",
   ).length;
 
+  useEffect(() => {
+    function handleGlobalPointerDown(e: PointerEvent) {
+      // If the pointer event is outside the popover and the input is still focused
+      if (
+        inputRef.current &&
+        document.activeElement === inputRef.current &&
+        popoverRef.current &&
+        !popoverRef.current.contains(e.target as Node)
+      ) {
+        close();
+      }
+    }
+
+    document.addEventListener('pointerdown', handleGlobalPointerDown, true);
+    return () => document.removeEventListener('pointerdown', handleGlobalPointerDown, true);
+  }, [close]);
+
   return (
     <PopoverContent
+      ref={popoverRef}
       onCloseAutoFocus={(e) => {
         e.preventDefault();
         // Focus on the prefix if the treeNode has noteContent
@@ -198,6 +218,23 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
           }
         }
         handleExternalClose();
+      }}
+      onInteractOutside={(e: any) => {
+        const isPointerEvent =
+          e.detail?.originalEvent instanceof PointerEvent ||
+          e.detail?.originalEvent?.type?.startsWith("pointer") ||
+          e.detail?.originalEvent?.type?.startsWith("mouse") ||
+          e.detail?.originalEvent?.type?.startsWith("touch");
+
+        // For focus events (like highlight), prevent close and restore focus/selection
+        if (!isPointerEvent && e.type === "dismissableLayer.focusOutside") {
+          // Restore focus to the input
+          if (inputRef.current) {
+            inputRef.current.focus();
+          }
+        }
+
+        e.preventDefault();
       }}
       onKeyDown={(e) => {
         if (e.key === "ArrowDown") {
@@ -237,6 +274,7 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
         <div className={styles.RelationComboboxInput}>
           <Search size={14} color="var(--gray-8)" strokeWidth={3} />
           <input
+            ref={inputRef}
             placeholder="Search relation types..."
             className={styles.RelationComboboxInputContent}
             value={search}
@@ -279,3 +317,4 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     </PopoverContent>
   );
 }
+
