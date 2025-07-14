@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { SetPublicDialog } from "@/app/components/SetPublicDialog/SetPublicDialog";
 import {
@@ -47,6 +47,105 @@ import { cn } from "@/lib/utils";
 
 import { useTreeNode } from "./RelatedObjectContext";
 import styles from "./styles/RelatedObjectView.module.css";
+
+// Custom positioning hook for Related Object Menu
+function useCustomMenuPositioning(menuOpen: boolean, triggerRef: React.RefObject<HTMLButtonElement>) {
+  const [position, setPosition] = useState<{
+    side: "top" | "right" | "bottom" | "left";
+    align: "start" | "center" | "end";
+    sideOffset: number;
+    alignOffset: number;
+    transform?: string;
+  }>({
+    side: "bottom",
+    align: "start",
+    sideOffset: 4,
+    alignOffset: -5,
+  });
+
+  const calculatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    const spaceBelow = viewportHeight - triggerRect.bottom;
+    const spaceLeft = triggerRect.left;
+    const spaceRight = viewportWidth - triggerRect.right;
+
+    // Estimated menu dimensions
+    const estimatedMenuHeight = 480;
+    const estimatedMenuWidth = 210;
+
+    // First decide: above or below based on vertical space
+    let verticalSide: "top" | "bottom";
+    if (spaceBelow >= estimatedMenuHeight + 8) {
+      // Enough space below - show below
+      verticalSide = "bottom";
+    } else if (spaceBelow <= estimatedMenuHeight * 0.25) {
+      // Very little space below - show above
+      verticalSide = "top";
+    } else {
+      // Moderate space below - check if we should go left/right instead
+      if (spaceLeft >= estimatedMenuWidth) {
+        // Move to left and bottom-align with viewport
+        const alignOffset = viewportHeight - estimatedMenuHeight - triggerRect.top - 8;
+        setPosition({
+          side: "left",
+          align: "start",
+          sideOffset: 4,
+          alignOffset: alignOffset,
+        });
+        return;
+      } else if (spaceRight >= estimatedMenuWidth) {
+        // Move to right and bottom-align with viewport
+        const alignOffset = viewportHeight - estimatedMenuHeight - triggerRect.top - 8;
+        setPosition({
+          side: "right",
+          align: "start",
+          sideOffset: 4,
+          alignOffset: alignOffset,
+        });
+        return;
+      } else {
+        // Fallback to bottom
+        verticalSide = "bottom";
+      }
+    }
+
+    // Second decide: horizontal alignment based on available space
+    const align = spaceLeft >= estimatedMenuWidth ? "end" : "start";
+
+    setPosition({
+      side: verticalSide,
+      align: align,
+      sideOffset: 4,
+      alignOffset: -5,
+    });
+  }, [triggerRef]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    // Calculate initial position immediately to avoid animation stutter
+    calculatePosition();
+
+    // Recalculate on resize/scroll
+    const handleResize = () => calculatePosition();
+    const handleScroll = () => calculatePosition();
+
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, [menuOpen, calculatePosition]);
+
+  return position;
+}
 
 const ZoomToNode = () => {
   const { treeNode } = useTreeNode();
@@ -470,6 +569,9 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
   const user = useUser();
   const [menuOpen, setMenuOpen] = useState(false);
   const { treeNode } = useTreeNode();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const position = useCustomMenuPositioning(menuOpen, triggerRef);
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -487,10 +589,18 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
 
   return (
     <DropdownMenu open={menuOpen} onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger className={cn(styles.TrailMenuTrigger, menuOpen && styles.TrailMenuTriggerVisible)}>
+      <DropdownMenuTrigger
+        ref={triggerRef}
+        className={cn(styles.TrailMenuTrigger, menuOpen && styles.TrailMenuTriggerVisible)}
+      >
         <Ellipsis size={16} className={styles.TrailMenuIcon} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" alignOffset={-5}>
+      <DropdownMenuContent
+        side={position.side}
+        align={position.align}
+        sideOffset={position.sideOffset}
+        alignOffset={position.alignOffset}
+      >
         {user.isAnonymous ? (
           <ZoomToNode />
         ) : (
