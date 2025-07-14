@@ -233,25 +233,27 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
           </div>
         </div>
 
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghostSmooth" className={styles.IconButton} onClick={toggleSort}>
-                {sortType === "alphanumeric" ? (
-                  <SortAsc size={14} />
-                ) : sortType === "created" ? (
-                  <Clock size={14} />
-                ) : (
-                  <List size={14} />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" align="center" sideOffset={8}>
-              Sort by{" "}
-              {sortType === "alphanumeric" ? "creation date" : sortType === "created" ? "tree view order" : "name"}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {hasHashtags && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghostSmooth" className={styles.IconButton} onClick={toggleSort}>
+                  {sortType === "alphanumeric" ? (
+                    <SortAsc size={14} />
+                  ) : sortType === "created" ? (
+                    <Clock size={14} />
+                  ) : (
+                    <List size={14} />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="center" sideOffset={8}>
+                Sort by{" "}
+                {sortType === "alphanumeric" ? "creation date" : sortType === "created" ? "tree view order" : "name"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
       {isExpanded && hasHashtags && (
         <SidebarSearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} placeholder="Search hashtags..." />
