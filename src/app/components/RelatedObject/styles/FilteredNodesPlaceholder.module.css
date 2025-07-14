@@ -12,13 +12,13 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  color: var(--text-muted);
+  color: var(--gray-9);
   padding: 0px 0px 0px 0px;
   height: 24px;
 }
 
 .ToggleButton:hover {
-  color: var(--text);
+  color: var(--gray-12);
 }
 
 .Ellipsis {
