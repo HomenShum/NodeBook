@@ -108,7 +108,7 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
   };
 
   const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const newValue = event.target.value.replace(/[^a-z0-9-]/g, "");
+    const newValue = event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
     setSlug(newValue);
   };
 
@@ -410,12 +410,12 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                   {viewStore.viewType === ViewType.Graph
                     ? "Graph View"
                     : viewStore.viewType === ViewType.Outline
-                    ? "List View"
-                    : viewStore.viewType === ViewType.Note
-                    ? "Note View"
-                    : viewStore.viewType === ViewType.Webpage
-                    ? "Webpage View"
-                    : "Card View"}
+                      ? "List View"
+                      : viewStore.viewType === ViewType.Note
+                        ? "Note View"
+                        : viewStore.viewType === ViewType.Webpage
+                          ? "Webpage View"
+                          : "Card View"}
                 </span>
               </Button>
             </DropdownMenuTrigger>
