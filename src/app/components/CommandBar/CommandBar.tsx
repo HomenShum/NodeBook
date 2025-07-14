@@ -116,6 +116,7 @@ const CommandBar = observer(() => {
               perform: async (event?: React.MouseEvent<HTMLDivElement>) => {
                 if (event?.shiftKey) {
                   viewStore.createSidePanelTree(node);
+                  return;
                 } else {
                   close();
                   resetSearch();
