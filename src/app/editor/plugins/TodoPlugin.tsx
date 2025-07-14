@@ -38,7 +38,9 @@ export const TodoPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
 
         const shouldCreateCheckedTodo = rootTextContent.startsWith("[x");
         const shouldCreateEmptyTodo =
-          !shouldCreateCheckedTodo && (rootTextContent.startsWith("[") || rootTextContent.startsWith("[ "));
+          !shouldCreateCheckedTodo &&
+          rootTextContent.startsWith("[") &&
+          !rootTextContent.startsWith("[[");
 
         if (!shouldCreateEmptyTodo && !shouldCreateCheckedTodo) return false;
         const prefixSize = !rootTextContent.startsWith("[x") && !rootTextContent.startsWith("[ ") ? 1 : 2;
