@@ -39,13 +39,13 @@ export const UnlabeledRelationIcon = ({ empty = false }) => (
 );
 
 export const FlattenIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="9" fill="none">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
     <path
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
       strokeWidth="1.5"
-      d="M3.915 1h7.58M1 1h.006m2.909 3.5h7.58M3.914 8h7.58M1 4.5h.006M1 8h.006"
+      d="M5.415 4.5h7.58M2.5 4.5h.006m2.909 3.5h7.58M5.414 11.5h7.58M2.5 8h.006M2.5 11.5h.006"
     />
   </svg>
 );
