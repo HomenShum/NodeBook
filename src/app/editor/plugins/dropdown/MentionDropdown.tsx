@@ -165,6 +165,28 @@ export function MentionDropdown({
             //NOOP - The mention node isn't rendered without this.
             await graphStore.applyUpdates([]);
           }
+        } else if (dropdown.mentionTrigger === DOUBLE_BRACKET) {
+          // Double bracket mention has to and from relations flipped compared
+          // to normal mention/parentRelation logic.
+          const hasDoubleBracketRelation = treeNode.object.relations.some(
+              (r) =>
+                  (r.relationType == defaultRelationTypes.relatedTo &&
+                      r.from.id === graphNodeId &&
+                      r.to.id === treeNode.object.id) ||
+                  (r.relationType.id === defaultRelationTypes.child.id &&
+                      r.to.id === treeNode.object.id &&
+                      r.from.id === graphNodeId),
+          );
+          if (!hasDoubleBracketRelation) {
+            await graphStore.addRelation({
+              fromId: graphNodeId,
+              toId: treeNode.object.id,
+              relationTypeId: graphStore.relationTypesById.relatedTo.id,
+            });
+          } else {
+            //NOOP - The mention node isn't rendered without this.
+            await graphStore.applyUpdates([]);
+          }
         } else {
           const hasMentionOrParentRelation = treeNode.object.relations.some(
             (r) =>
