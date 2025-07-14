@@ -690,7 +690,7 @@ export const createLayers = async (
 export const createInitialLayers = async (userId: string): Promise<SerializedGraphStore> => {
   const userRootId = `user-root-id-${userId}`;
   const myHashtagsId = `user-my-hashtags-node-id-${userId}`;
-  const myTemplatesId = `user-my-templates-node-id-${userId}`;
+  const myTemplatesId = `user-template-id-${userId}`;
   const myFavoritesId = `user-my-favorites-node-id-${userId}`;
   const myStreamId = `user-my-stream-node-id-${userId}`;
   const relationTypesId = `user-relation-types-node-id-${userId}`;
@@ -701,6 +701,12 @@ export const createInitialLayers = async (userId: string): Promise<SerializedGra
 
   // Load the essential objects with their connected layers
   const essentialData = await createLayers(userId, essentialObjectIds, 1, true);
+  const firstLayerTemplates = await createLayers(userId, [myTemplatesId], 2, true);
+  Object.assign(essentialData.nodesById, firstLayerTemplates.nodesById);
+  Object.assign(essentialData.relationsById, firstLayerTemplates.relationsById);
+  Object.assign(essentialData.relationsByNodeId, firstLayerTemplates.relationsByNodeId);
+  Object.assign(essentialData.pinnedRelationsByNodeId, firstLayerTemplates.pinnedRelationsByNodeId);
+  Object.assign(essentialData.noteContentRelationsByNodeId, firstLayerTemplates.noteContentRelationsByNodeId);
 
   // Load the first 100 nodes of "my stream" separately to avoid loading too much
   const db = getDb();

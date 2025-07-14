@@ -16,6 +16,7 @@ import { Path } from "@/app/components/Path";
 import { RelationCounter } from "@/app/components/RelatedObject/RelationCounter";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { Dropdown, GraphNodeMatch } from "@/app/editor/plugins/dropdown/types";
+import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
@@ -116,6 +117,7 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
 
           // Clone the child node
           const newNodeId = uuid();
+          const newRelationId = uuid();
           txs.push({
             type: "addChildNode",
             transaction: {
@@ -128,10 +130,26 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
               },
               relationProps: {
                 relationTypeId: relation.relationType.id,
+                id: newRelationId,
               },
               after: position.int,
             },
           });
+
+          if (relation.customTypeRelation) {
+            const relTypeNodeId = relation.customTypeRelation.to.id;
+            const relTypeNode = graphStore.getNode(relTypeNodeId);
+            if (relTypeNode) {
+              txs.push({
+                type: "addRelation",
+                transaction: {
+                  fromId: newRelationId,
+                  relationTypeId: defaultRelationTypes.__type__.id,
+                  toId: relTypeNodeId,
+                },
+              });
+            }
+          }
 
           // Recursively clone children
           for (const child of node.children) {
