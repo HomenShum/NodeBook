@@ -594,9 +594,16 @@ export class GraphStore {
             continue;
           }
           // Find and delete the hashtag relation
-          const relations = node.relations.filter(
+          const hashtagRelations = node.relations.filter(
             (r) => r.to.id === oldChip.value && r.relationType.label.toLowerCase() === "has hashtag",
           );
+
+          // Find and delete regular mention relations (relatedTo relations from mentioned node to current node)
+          const mentionRelations = node.relations.filter(
+            (r) => r.from.id === oldChip.value && r.relationType.label.toLowerCase() === "relates to",
+          );
+
+          const relations = [...hashtagRelations, ...mentionRelations];
           if (relations.length > 0) {
             const hashtagNode = this.nodesById.get(relations[0].to.id);
             if (hashtagNode && relations.length === hashtagNode.relationCount - 1) {
