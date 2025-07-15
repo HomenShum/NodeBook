@@ -456,10 +456,8 @@ export const PastePlugin = () => {
           const initialTreeSelection: TreeSelection = { ...tree.selection } as TreeSelection;
 
           if (mewData) {
-            console.log("mewData");
             rawLines = getLinesFromMewData(mewData, shiftKey);
           } else if (lexicalData) {
-            console.log("lexicalData");
             const selection = $getSelection();
             if (selection) {
               $insertDataTransferForRichText(clipboardData, selection, editor);
@@ -475,6 +473,9 @@ export const PastePlugin = () => {
               const selection = $getSelection();
               if (selection) {
                 $insertDataTransferForRichText(clipboardData, selection, editor);
+                // Wait for the SyncWithModelsPlugin to propogate update
+                // from editor -> graphstore node content
+                setTimeout(() => unfurlLinks(pastedNodeIds, graphStore), 1);
                 return true;
               }
             }
