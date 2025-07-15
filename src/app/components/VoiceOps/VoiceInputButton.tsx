@@ -180,6 +180,7 @@ export function VoiceInputButton() {
 
   return (
     <Button
+      style={{ position: "relative" }}
       size={isVoiceInputMode ? "sm" : "icon"}
       variant={isVoiceInputMode ? "active" : "default"}
       onClick={toggleVoiceMode}
