@@ -2458,7 +2458,7 @@ export class GraphStore {
     if (!globalRoot) {
       const { node } = this._addNode({
         id: GLOBAL_ROOT_ID,
-        content: [{ type: "text", value: "Global Root" }],
+        content: [{ type: "text", value: "Global Hub" }],
         isPublic: true,
         authorId: GLOBAL_ADMIN_USER_ID,
         createdAt: new Date(0),

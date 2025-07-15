@@ -356,7 +356,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <span>
                 <Globe size={16} strokeWidth={1.5} />
               </span>
-              <span className={styles.ButtonText}>{graphStore.globalRoot.text}</span>
+              <span className={styles.ButtonText}>Global Hub</span>
             </Button>
             <Button
               variant="ghost"
@@ -381,7 +381,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               <span>
                 <Home size={16} strokeWidth={1.5} />
               </span>
-              <span className={styles.ButtonText}>Your Root</span>
+              <span className={styles.ButtonText}>Home</span>
             </Button>
             <Button
               variant="ghost"

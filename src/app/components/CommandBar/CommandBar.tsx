@@ -181,7 +181,7 @@ const CommandBar = observer(() => {
           // Toast on new node creation
           addToast({
             // Toast message facing the user to let them know the new node was created and they can edit on new line / child node immediately
-            title: "New node created at your root",
+            title: "New node created at your home",
             description: child.text || "Empty node",
             duration: 5000,
           });
