@@ -205,20 +205,78 @@ export class UpdateManager {
     this.applyGraphUpdates(inverted);
   }
 
+  /**
+   * Checks if the update is a 'silent' update (e.g., link conversion or merge) by comparing content.
+   *
+   * This function compares both the text and formatting (styles) of each chip in the content array.
+   * If any chip's formatting (e.g., bold/italic) changes, or if any chip's value changes, this returns false.
+   *
+   * This ensures that formatting changes (like bold/italic) and TODO checkbox state changes are treated as separate undo steps,
+   * rather than being grouped with previous content changes. This fixes the bug where undoing a formatting or TODO change would also undo the previous content change, which is not the expected user behavior.
+   *
+   * For each chip type:
+   *   - text: compares type, value, and styles (formatting)
+   *   - image: compares type and url
+   *   - mention: compares type and value
+   *   - link: compares type, value, and url
+   *   - linebreak: compares type and value
+   *
+   * Special case: If a chip changes from type 'text' to type 'link' (with the same value and url),
+   * treat as a silent update (return true). This prevents undo from un-linkifying and re-linkifying strings,
+   * which would cause rubber banding in the UI.
+   */
   private isTextSame(updates: GraphUpdate[]) {
-    // This is meant to handle the cases where we do a silent update of:
-    // - merging nodes together
-    // - converting a link to a node
-
-    // Compare oldProps to newProps to see if the update is a link conversion
+    // Only handle single updateNode operations
     if (updates.length !== 1 || updates[0].operation !== "updateNode") {
       return false;
     }
-    // Check if the text content is all the same. If it is, then this is part of the previous update so return true.
-    const oldText = updates[0].oldProps.content.map((chip) => (chip.type === "image" ? chip.url : chip.value)).join("");
-    const newText = updates[0].newProps.content.map((chip) => (chip.type === "image" ? chip.url : chip.value)).join("");
-
-    return oldText === newText;
+    // If the TODO checkbox state changed, treat as a separate undo step.
+    if (updates[0].oldProps.isChecked !== updates[0].newProps.isChecked) {
+      return false;
+    }
+    const oldContent = updates[0].oldProps.content;
+    const newContent = updates[0].newProps.content;
+    if (!Array.isArray(oldContent) || !Array.isArray(newContent) || oldContent.length !== newContent.length) {
+      return false;
+    }
+    for (let i = 0; i < oldContent.length; i++) {
+      const oldChip = oldContent[i];
+      const newChip = newContent[i];
+      // Special case: allow text->link conversion with same value/url as a silent update
+      if (
+        oldChip.type === "text" &&
+        newChip.type === "link" &&
+        oldChip.value === newChip.value &&
+        newChip.url === newChip.value
+      ) {
+        continue;
+      }
+      // Compare type, value, and styles for text chips (handles bold/italic changes)
+      if (
+        oldChip.type !== newChip.type ||
+        (oldChip.type === "text" && newChip.type === "text" && (
+          oldChip.value !== newChip.value ||
+          (oldChip.styles ?? 0) !== (newChip.styles ?? 0)
+        ))
+      ) {
+        return false;
+      }
+      // For other chip types, compare their main properties
+      if (oldChip.type === "image" && newChip.type === "image" && oldChip.url !== newChip.url) {
+        return false;
+      }
+      if (oldChip.type === "mention" && newChip.type === "mention" && oldChip.value !== newChip.value) {
+        return false;
+      }
+      if (oldChip.type === "link" && newChip.type === "link" && (oldChip.value !== newChip.value || oldChip.url !== newChip.url)) {
+        return false;
+      }
+      if (oldChip.type === "linebreak" && newChip.type === "linebreak" && oldChip.value !== newChip.value) {
+        return false;
+      }
+    }
+    // If we reach here, all chips are either identical or text->link conversions
+    return true;
   }
 
   /**
