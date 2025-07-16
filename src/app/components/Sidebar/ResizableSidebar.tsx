@@ -308,8 +308,15 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </DropdownMenuTrigger>
               <DropdownMenuContent>
                 {user.isAnonymous && (
-                  <DropdownMenuItem className={styles.LogInButton} onSelect={() => auth?.loginWithRedirect()}>
-                    <LogIn size={16} strokeWidth={1.5} />
+                    <DropdownMenuItem
+                        className={styles.LogInButton}
+                        onSelect={() =>
+                            auth?.loginWithRedirect({
+                              appState: { returnTo: window.location.pathname + window.location.search },
+                            })
+                        }
+                    >
+                      <LogIn size={16} strokeWidth={1.5} />
                     <span>Log in</span>
                   </DropdownMenuItem>
                 )}

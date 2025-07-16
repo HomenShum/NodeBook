@@ -89,7 +89,7 @@ export const BreadcrumbMenu = observer(function BreadcrumbMenu() {
         >
           <Command size={14} strokeWidth={1.5} />
         </Button>
-        <Button variant="active" size="sm" onClick={() => auth?.loginWithRedirect()}>
+        <Button variant="active" size="sm" onClick={() => auth?.loginWithRedirect({ appState: { returnTo: window.location.pathname + window.location.search } })}>
           Sign in
         </Button>
       </>

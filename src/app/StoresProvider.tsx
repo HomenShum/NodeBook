@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
-import { LoadingContext } from "@/app/contexts/LoadingContext";
+import { LoadingContext, useLoading } from "@/app/contexts/LoadingContext";
 import { NotificationProvider } from "@/app/contexts/NotificationContext";
 import { SettingsStoreContext } from "@/app/contexts/SettingsStoreContext";
 import { SlugProvider } from "@/app/contexts/SlugContext";
@@ -24,12 +24,19 @@ import rootLogger from "@/lib/logger";
 
 export const logger = rootLogger.child({ service: "store-provider" });
 
+export type LoadingContextType = {
+  isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
 export function StoresProvider({
   children,
   initialObjectId,
 }: Readonly<{ children: React.ReactNode; initialObjectId: string | null }>) {
   const [isLoading, setIsLoading] = useState(true);
-  const [firstRender, setFirstRender] = useState(true);
+  const hasInitializedStoresRef = useRef(false);
+  const hasLoggedInRef = useRef(false);
+  const renderCounter = useRef(0);
 
   // instantiate empty stores with unlogged user
   const user = useSetupUser();
@@ -37,7 +44,9 @@ export function StoresProvider({
   const [graphStore, setGraphStore] = useState<GraphStore>(new GraphStore(UNLOGGED_USER, settingsStore));
   const [viewStore, setViewStore] = useState<ViewStore>(new ViewStore(settingsStore, graphStore));
   const { addToast } = useToast();
-  const renderCounter = useRef(0);
+
+  // Track if this is the first time loading after logging in
+  const isFirstLoginLoad = !hasLoggedInRef.current && user && !user.isAnonymous;
 
   // expose stores to window for debugging
   if (env.env !== "production" && typeof window !== "undefined") {
@@ -59,10 +68,8 @@ export function StoresProvider({
     async function setupStores() {
       let syncCleanup = () => {};
       if (!user) return syncCleanup;
-      logger.debug("Starting to setup stores");
-      if (firstRender) {
-        setFirstRender(false);
-        setIsLoading(true);
+      if (isFirstLoginLoad) {
+        hasLoggedInRef.current = true;
       }
 
       // create new stores (shorter names to distinguish from the state variables)
@@ -105,7 +112,15 @@ export function StoresProvider({
       setGraphStore(graph);
       setSettingsStore(settings);
       setViewStore(view);
-      setIsLoading(false);
+
+      if (isFirstLoginLoad) {
+        // First time loading has special loading logic, so don't hide the loading screen here.
+        // The loading screen is dismissed in page.tsx after it loads.
+        hasInitializedStoresRef.current = true;
+      } else {
+        setIsLoading(false);
+      }
+
       return () => {
         logger.debug("Cleaning up stores");
         graph.cleanup();
@@ -130,7 +145,7 @@ export function StoresProvider({
   }, [viewStore]);
 
   return (
-    <LoadingContext.Provider value={isLoading}>
+    <LoadingContext.Provider value={{ isLoading, setIsLoading }}>
       <UserContext.Provider value={user || UNLOGGED_USER}>
         <SettingsStoreContext.Provider value={settingsStore}>
           <GraphStoreProvider value={graphStore}>
