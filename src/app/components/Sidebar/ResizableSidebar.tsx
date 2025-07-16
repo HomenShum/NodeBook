@@ -1,7 +1,6 @@
 import {
   BellIcon,
   FileSpreadsheet,
-  FileStackIcon,
   Globe,
   History,
   Home,
@@ -28,6 +27,7 @@ import { useAuth } from "@/app/auth/useAuth";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import { HelpModal } from "@/app/components/HelpModal/HelpModal";
+import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
 import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
 import { LocalHashtagsTree } from "@/app/components/Sidebar/LocalHashtagsTree";
 import { LocalMentionsTree } from "@/app/components/Sidebar/LocalMentionsTree";
@@ -404,9 +404,9 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               }}
             >
               <span>
-                <FileStackIcon size={16} strokeWidth={1.5} />
+                <QuickCaptureIcon />
               </span>
-              <span className={styles.ButtonText}>Your Stream</span>
+              <span className={styles.ButtonText}>My Stream</span>
             </Button>
             <Button
               variant="ghost"

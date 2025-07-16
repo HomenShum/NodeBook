@@ -3,6 +3,7 @@ import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { removeFromFavorites } from "@/app/graph/favorites";
@@ -66,9 +67,18 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
             >
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
-            <Button variant="ghostSmooth" className={styles.IconButton} onClick={(e) => handleMaximizeClick(e)}>
-              <Maximize2 size={13} />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghostSmooth" className={styles.IconButton} onClick={(e) => handleMaximizeClick(e)}>
+                    <Maximize2 size={13} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center" sideOffset={8}>
+                  Open in Main View
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
       </div>
@@ -91,21 +101,9 @@ const FavoriteItem = observer(function FavoriteItem({ object }: TreeElementProps
   const viewStore = useViewStore();
   const setRoot = useSetMainRoot();
   const openNewTab = useOpenNewTab();
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div
-      key={object.id}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-        minWidth: 0,
-      }}
-      onPointerEnter={() => setIsHovered(true)}
-      onPointerLeave={() => setIsHovered(false)}
-    >
+    <div key={object.id} className={styles.TreeItem}>
       <Button
         variant="ghost"
         className={cn(styles.Button)}
@@ -126,16 +124,25 @@ const FavoriteItem = observer(function FavoriteItem({ object }: TreeElementProps
       >
         {object.text}
       </Button>
-      {isHovered && (
-        <Button
-          variant="ghostSmooth"
-          className={cn(styles.IconButton)}
-          onClick={(e) => removeFromFavorites(graphStore, object)}
-          aria-label="Remove from favorites"
-        >
-          <X size={13} />
-        </Button>
-      )}
+      <div className={styles.TreeItemButtons}>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghostSmooth"
+                className={cn(styles.IconButton)}
+                onClick={(e) => removeFromFavorites(graphStore, object)}
+                aria-label="Remove from favorites"
+              >
+                <X size={13} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="center" sideOffset={4}>
+              Remove from favorites
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 });

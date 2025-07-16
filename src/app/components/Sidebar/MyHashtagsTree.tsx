@@ -42,21 +42,8 @@ const HashtagItem = observer(function HashtagItem({
   isPinned,
   relationCount,
 }: HashtagItemProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
-    <div
-      key={hashtag.id}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-        minWidth: 0,
-      }}
-      onPointerEnter={() => setIsHovered(true)}
-      onPointerLeave={() => setIsHovered(false)}
-    >
+    <div key={hashtag.id} className={styles.TreeItem}>
       <Button
         variant="ghost"
         className={cn(styles.Button)}
@@ -67,21 +54,56 @@ const HashtagItem = observer(function HashtagItem({
         {hashtag.text}
       </Button>
       <div style={{ display: "flex", alignItems: "center" }}>
-        {(isHovered || isPinned) && (
-          <Button
-            variant="ghostSmooth"
-            className={cn(hashtagSidebarStyles.PinButton, {
-              [hashtagSidebarStyles.Pinned]: isPinned,
-              [hashtagSidebarStyles.Unpinned]: !isPinned,
-            })}
-            onClick={(e) => onPinClick(e, hashtag)}
-            aria-label={isPinned ? "Unpin hashtag" : "Pin hashtag"}
-          >
-            <div className={hashtagSidebarStyles.PinIcon}>
-              <PinCustomIcon size={11} />
-            </div>
-          </Button>
+        {isPinned && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghostSmooth"
+                  className={cn(hashtagSidebarStyles.PinButton, {
+                    [hashtagSidebarStyles.Pinned]: isPinned,
+                    [hashtagSidebarStyles.Unpinned]: !isPinned,
+                  })}
+                  onClick={(e) => onPinClick(e, hashtag)}
+                  aria-label={isPinned ? "Unpin hashtag" : "Pin hashtag"}
+                >
+                  <div className={hashtagSidebarStyles.PinIcon}>
+                    <PinCustomIcon size={11} />
+                  </div>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" align="center" sideOffset={4}>
+                {isPinned ? "Unpin hashtag" : "Pin hashtag"}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
+        <div className={styles.TreeItemButtons}>
+          {!isPinned && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghostSmooth"
+                    className={cn(hashtagSidebarStyles.PinButton, {
+                      [hashtagSidebarStyles.Pinned]: isPinned,
+                      [hashtagSidebarStyles.Unpinned]: !isPinned,
+                    })}
+                    onClick={(e) => onPinClick(e, hashtag)}
+                    aria-label={isPinned ? "Unpin hashtag" : "Pin hashtag"}
+                  >
+                    <div className={hashtagSidebarStyles.PinIcon}>
+                      <PinCustomIcon size={11} />
+                    </div>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center" sideOffset={4}>
+                  {isPinned ? "Unpin hashtag" : "Pin hashtag"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
         <span className={styles.NodeCount}>{relationCount}</span>
       </div>
     </div>
@@ -227,9 +249,18 @@ const TreeElement = observer(function TreeElement({ object }: TreeElementProps) 
             <Button variant="ghost" className={styles.IconButton} onClick={handleMainClick}>
               <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
-            <Button variant="ghostSmooth" className={styles.IconButton} onClick={(e) => handleMaximizeClick(e)}>
-              <Maximize2 size={13} />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghostSmooth" className={styles.IconButton} onClick={(e) => handleMaximizeClick(e)}>
+                    <Maximize2 size={13} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" align="center" sideOffset={4}>
+                  Open in Main View
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 

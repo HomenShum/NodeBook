@@ -3,6 +3,7 @@ import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { defaultRelationTypes } from "@/app/graph/constants";
@@ -34,21 +35,8 @@ interface HashtagItemProps {
 }
 
 const HashtagItem = observer(function HashtagItem({ hashtag, onChildClick, onExpandClick }: HashtagItemProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
-    <div
-      key={hashtag.id}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        width: "100%",
-        minWidth: 0,
-      }}
-      onPointerEnter={() => setIsHovered(true)}
-      onPointerLeave={() => setIsHovered(false)}
-    >
+    <div key={hashtag.id} className={styles.TreeItem}>
       <Button
         variant="ghost"
         className={cn(styles.Button)}
@@ -58,16 +46,25 @@ const HashtagItem = observer(function HashtagItem({ hashtag, onChildClick, onExp
       >
         {hashtag.text}
       </Button>
-      {isHovered && (
-        <Button
-          variant="ghostSmooth"
-          className={cn(styles.IconButton)}
-          onClick={(e) => onExpandClick(e, hashtag)}
-          aria-label="Expand hashtag"
-        >
-          <Maximize2 size={13} />
-        </Button>
-      )}
+      <div className={styles.TreeItemButtons}>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghostSmooth"
+                className={cn(styles.IconButton)}
+                onClick={(e) => onExpandClick(e, hashtag)}
+                aria-label="Expand hashtag"
+              >
+                <Maximize2 size={13} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="center" sideOffset={4}>
+              Open in Main View
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 });

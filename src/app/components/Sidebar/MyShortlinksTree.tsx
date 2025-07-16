@@ -98,6 +98,7 @@ export const MyShortlinksTree = observer(function MyShortlinksTree() {
                   width: "100%",
                 }}
                 className={cn(styles.Button)}
+                title={`/${slug}`}
               >
                 /{slug}
               </Button>

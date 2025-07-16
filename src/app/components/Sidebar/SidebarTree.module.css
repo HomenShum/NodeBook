@@ -256,3 +256,40 @@
 .IconButton:hover {
   background-color: var(--gray-3);
 }
+
+/* Tree item hover states */
+.TreeItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+}
+
+.TreeItemButtons {
+  display: none;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.TreeItemButtonsVisible {
+  display: flex !important;
+}
+
+.TreeItem:hover .TreeItemButtons {
+  display: flex;
+}
+
+.TreeItemButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Keep hover state active on the main button when hovering over child buttons */
+.TreeItem:hover .Button {
+  background-color: var(--gray-a2);
+  color: var(--teal-11);
+}
