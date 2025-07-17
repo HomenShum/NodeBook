@@ -2,7 +2,6 @@ import { and, eq } from "drizzle-orm";
 
 import { SerializedRelation } from "@/app/persistence/SerializedData";
 import { graphRelationTable, relationListsTable } from "@/db/schema";
-import { SyncError } from "@/db/SyncError";
 import { MewDbTransaction } from "@/db/types";
 import { USERS_TO_USER_RELATION_ID_PREFIX } from "@/lib/constants";
 
@@ -23,7 +22,9 @@ export const createRelations = async (tx: MewDbTransaction, relations: Serialize
     )
     .returning({ createdId: graphRelationTable.id });
   if (newRelations.length !== relations.length) {
-    throw new SyncError("Unable to create all relations", { actionName: "createRelations", data: { relations } });
+    // throw new SyncError("Unable to create all relations", { actionName: "createRelations", data: { relations } });
+    console.error("Unable to create all relations", { actionName: "createRelations", data: { relations } });
+    return false;
   }
 };
 
@@ -54,7 +55,8 @@ export const updateRelation = async (
     )
     .returning({ updatedId: graphRelationTable.id });
   if (updated.length === 0) {
-    throw new SyncError("Relation to update not found", { actionName: "updateRelation", data: { oldProps, newProps } });
+    console.error("Relation to update not found", { actionName: "updateRelation", data: { oldProps, newProps } });
+    return false;
   }
   if (!oldProps.isPublic && newProps.isPublic) {
     // When making a relation public, update all relationLists entries that reference this relation to be public.
@@ -70,10 +72,15 @@ export const updateRelation = async (
 
 export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
   if (relation.id.startsWith(USERS_TO_USER_RELATION_ID_PREFIX)) {
-    throw new SyncError("Cannot delete relation from global to user", {
+    // throw new SyncError("Cannot delete relation from global to user", {
+    //   actionName: "deleteRelation",
+    //   data: { relation },
+    // });
+    console.error("Cannot delete relation from global to user", {
       actionName: "deleteRelation",
       data: { relation },
     });
+    return false;
   }
 
   // Delete all relationLists entries that reference this relation

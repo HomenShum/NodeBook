@@ -2,7 +2,6 @@ import { and, eq } from "drizzle-orm";
 
 import { GraphRelationType } from "@/app/graph/types";
 import { relationTypeTable } from "@/db/schema";
-import { SyncError } from "@/db/SyncError";
 import { MewDbTransaction } from "@/db/types";
 
 export const createRelationTypes = async (tx: MewDbTransaction, relTypes: GraphRelationType[]) => {
@@ -21,10 +20,12 @@ export const createRelationTypes = async (tx: MewDbTransaction, relTypes: GraphR
     .returning({ createdId: relationTypeTable.id });
 
   if (newRelTypes.length !== relTypes.length) {
-    throw new SyncError("Unable to create all relation types", {
-      actionName: "createRelationTypes",
-      data: { relTypes },
-    });
+    // throw new SyncError("Unable to create all relation types", {
+    //   actionName: "createRelationTypes",
+    //   data: { relTypes },
+    // });
+    console.error("Unable to create all relation types", { actionName: "createRelationTypes", data: { relTypes } });
+    return false;
   }
 };
 
@@ -52,10 +53,15 @@ export const updateRelationType = async (
     )
     .returning({ updatedId: relationTypeTable.id });
   if (updated.length === 0) {
-    throw new SyncError("Relation type to update not found", {
+    // throw new SyncError("Relation type to update not found", {
+    //   actionName: "updateRelationType",
+    //   data: { oldProps, newProps },
+    // });
+    console.error("Relation type to update not found", {
       actionName: "updateRelationType",
       data: { oldProps, newProps },
     });
+    return false;
   }
 };
 
@@ -73,9 +79,14 @@ export const deleteRelationType = async (tx: MewDbTransaction, relType: GraphRel
 
   // If there was no row for the relation type in the table, log an error and rollback the transaction
   if (deletedRelationType.length === 0) {
-    throw new SyncError("Relation type to delete not found", {
+    // throw new SyncError("Relation type to delete not found", {
+    //   actionName: "deleteRelationType",
+    //   data: { relType },
+    // });
+    console.error("Relation type to delete not found", {
       actionName: "deleteRelationType",
       data: { relType },
     });
+    return false;
   }
 };

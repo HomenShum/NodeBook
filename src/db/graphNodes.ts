@@ -2,7 +2,6 @@ import { and, eq } from "drizzle-orm";
 
 import { SerializedNode } from "@/app/persistence/SerializedData";
 import { graphNodeTable, relationListsTable } from "@/db/schema";
-import { SyncError } from "@/db/SyncError";
 import { MewDbTransaction } from "@/db/types";
 import {
   GLOBAL_ROOT_ID,
@@ -36,6 +35,7 @@ export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[])
     .onConflictDoNothing();
   if (newNodes.length !== nodes.length) {
     // throw new SyncError("Unable to create all nodes", { actionName: "createNodes", data: { nodes } });
+    console.error("Unable to create all nodes", { actionName: "createNodes", data: { nodes } });
     return false;
   }
   return true;
@@ -54,32 +54,61 @@ const contentNotEqual = (a: SerializedNode, b: SerializedNode) => {
 };
 
 export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode, newProps: SerializedNode) => {
-  if (newProps.id === GLOBAL_ROOT_ID && !(oldProps.content.length === 1 && newProps.content.length === 1 && oldProps.content[0].type === "text" && newProps.content[0].type === "text" && oldProps.content[0].value ===  newProps.content[0].value )) {
-    throw new SyncError("Cannot update global root node content", { actionName: "updateNode", data: { oldProps, newProps } });
+  if (
+    newProps.id === GLOBAL_ROOT_ID &&
+    !(
+      oldProps.content.length === 1 &&
+      newProps.content.length === 1 &&
+      oldProps.content[0].type === "text" &&
+      newProps.content[0].type === "text" &&
+      oldProps.content[0].value === newProps.content[0].value
+    )
+  ) {
+    // throw new SyncError("Cannot update global root node content", {
+    //   actionName: "updateNode",
+    //   data: { oldProps, newProps },
+    // });
+    console.error("Cannot update global root node content", { actionName: "updateNode", data: { oldProps, newProps } });
+    return false;
   }
   if (oldProps.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
-    throw new SyncError('Cannot update content of user\'s "My Hashtags" node', {
+    // throw new SyncError('Cannot update content of user\'s "My Hashtags" node', {
+    //   actionName: "updateNode",
+    //   data: { oldProps, newProps },
+    // });
+    console.error("Cannot update content of user's 'My Hashtags' node", {
       actionName: "updateNode",
       data: { oldProps, newProps },
     });
+    return false;
   }
   if (oldProps.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
-    throw new SyncError('Cannot update content of user\'s "My Favorites" node', {
-      actionName: "updateNode",
-      data: { oldProps, newProps },
-    });
+    // throw new SyncError('Cannot update content of user\'s "My Favorites" node', {
+    //   actionName: "updateNode",
+    //   data: { oldProps, newProps },
+    // });
   }
   if (oldProps.id.startsWith(USER_MY_STREAM_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
-    throw new SyncError('Cannot update content of user\'s "My Stream" node', {
+    // throw new SyncError('Cannot update content of user\'s "My Stream" node', {
+    //   actionName: "updateNode",
+    //   data: { oldProps, newProps },
+    // });
+    console.error("Cannot update content of user's 'My Stream' node", {
       actionName: "updateNode",
       data: { oldProps, newProps },
     });
+    return false;
   }
   if (oldProps.id.startsWith(USER_MY_TEMPLATES_NODE_ID_PREFIX) && contentNotEqual(oldProps, newProps)) {
-    throw new SyncError('Cannot update content of user\'s "My Templates" node', {
+    // throw new SyncError('Cannot update content of user\'s "My Templates" node', {
+    //   actionName: "updateNode",
+    //   data: { oldProps, newProps },
+    // });
+    console.error("Cannot update content of user's 'My Templates' node", {
       actionName: "updateNode",
       data: { oldProps, newProps },
     });
+    return false;
   }
   const updated = await tx
     .update(graphNodeTable)
@@ -100,6 +129,7 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
     .where(and(eq(graphNodeTable.authorId, oldProps.authorId), eq(graphNodeTable.id, oldProps.id)))
     .returning({ updatedId: graphNodeTable.id });
   if (updated.length === 0) {
+    console.error("Node to update not found", { actionName: "updateNode", data: { oldProps, newProps } });
     return false;
   }
   return true;
@@ -107,19 +137,29 @@ export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode,
 
 export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => {
   if (node.id === GLOBAL_ROOT_ID) {
-    throw new SyncError("Cannot delete global root node", { actionName: "deleteNode", data: { node } });
+    // throw new SyncError("Cannot delete global root node", { actionName: "deleteNode", data: { node } });
+    console.error("Cannot delete global root node", { actionName: "deleteNode", data: { node } });
+    return false;
   }
   if (node.id.startsWith(USER_ROOT_ID_PREFIX)) {
-    throw new SyncError("Cannot delete user root node", { actionName: "deleteNode", data: { node } });
+    // throw new SyncError("Cannot delete user root node", { actionName: "deleteNode", data: { node } });
+    console.error("Cannot delete user root node", { actionName: "deleteNode", data: { node } });
+    return false;
   }
   if (node.id.startsWith(USER_MY_HASHTAGS_NODE_ID_PREFIX)) {
-    throw new SyncError('Cannot delete user\'s "My Hashtags" node', { actionName: "deleteNode", data: { node } });
+    // throw new SyncError('Cannot delete user\'s "My Hashtags" node', { actionName: "deleteNode", data: { node } });
+    console.error("Cannot delete user's 'My Hashtags' node", { actionName: "deleteNode", data: { node } });
+    return false;
   }
   if (node.id.startsWith(USER_MY_TEMPLATES_NODE_ID_PREFIX)) {
-    throw new SyncError('Cannot delete user\'s "My Templates" node', { actionName: "deleteNode", data: { node } });
+    // throw new SyncError('Cannot delete user\'s "My Templates" node', { actionName: "deleteNode", data: { node } });
+    console.error("Cannot delete user's 'My Templates' node", { actionName: "deleteNode", data: { node } });
+    return false;
   }
   if (node.id.startsWith(USER_MY_FAVORITES_NODE_ID_PREFIX)) {
-    throw new SyncError('Cannot delete user\'s "My Favorites" node', { actionName: "deleteNode", data: { node } });
+    // throw new SyncError('Cannot delete user\'s "My Favorites" node', { actionName: "deleteNode", data: { node } });
+    console.error("Cannot delete user's 'My Favorites' node", { actionName: "deleteNode", data: { node } });
+    return false;
   }
 
   // Delete all relationLists entries that reference this node
