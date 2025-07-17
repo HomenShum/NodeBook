@@ -61,8 +61,9 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
           }
         } else {
           addToast({
-            title: "Disconnected mention",
-            description: "The mention is disconnected from this node. Do you want to jump to it?",
+            title: "Disconnected inline relation",
+            description:
+              "The inline relation is referring to an object that's either hidden or disconnected from this node. Do you want to jump to it?",
             action: {
               label: "Jump to node",
               onClick: () => {
