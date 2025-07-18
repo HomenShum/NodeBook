@@ -241,6 +241,7 @@ export const DevTools = observer(function DevTools() {
           />
           Enable new user mode (show simplified UI)
         </label>
+
         <div className={styles.DevToolsDropdownContainer}>
           <label>Trigger search and replace dropdown:</label>
           <SelectSearchAndReplaceDropdown />
@@ -256,6 +257,9 @@ export const DevTools = observer(function DevTools() {
         {env.env !== "production" && (
           <>
             <h2>Dev tools</h2>
+            <Button size="default" variant="default" onClick={() => settingsStore.resetNewUserHints()}>
+              Reset new user hints
+            </Button>
             <Button
               size="default"
               onClick={() => {

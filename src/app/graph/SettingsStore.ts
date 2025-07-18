@@ -18,6 +18,10 @@ import {
   SerializedUserSettings,
 } from "@/db/schema";
 
+export enum NewUserHint {
+  CtrlClickToExpandInlineRelation = "ctrl-click-to-expand-inline-relation",
+}
+
 export class SettingsStore {
   private user: MewUser;
   public addAllNewNodesAsChildrenOfUserNode = false;
@@ -56,9 +60,11 @@ export class SettingsStore {
   public sidebarExpandedMyShortlinks: boolean = false;
   public sidebarExpandedLocalHashtags: boolean = false;
   public sidebarExpandedLocalMentions: boolean = false;
+  public newUserHints: Set<string> = new Set();
   public viewModePreference: SerializedUserSettings["viewModePreferences"] = {};
   public newUser: boolean = true;
   private stopAutosave: () => void;
+  private defaultNewUserHints: Set<NewUserHint> = new Set([NewUserHint.CtrlClickToExpandInlineRelation]);
 
   constructor(user = MOCK_MEW_USER) {
     this.user = user;
@@ -121,6 +127,7 @@ export class SettingsStore {
     this.sidebarExpandedLocalMentions = false;
     this.viewModePreference = {};
     this.newUser = true;
+    this.newUserHints = this.defaultNewUserHints;
   }
 
   private async syncToServer() {
@@ -351,8 +358,20 @@ export class SettingsStore {
     this.sidebarExpandedLocalMentions = value;
   }
 
+  removeNewUserHint(hint: string) {
+    this.newUserHints.delete(hint);
+  }
+
+  addNewUserHint(hint: string) {
+    this.newUserHints.add(hint);
+  }
+
   setShowGraphRoot(value: boolean) {
     this.showGraphRoot = value;
+  }
+
+  resetNewUserHints() {
+    this.newUserHints = this.defaultNewUserHints;
   }
 
   getViewMode(nodeId: string): ViewType {

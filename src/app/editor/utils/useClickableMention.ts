@@ -1,8 +1,11 @@
 import { useCallback } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
+import { NewUserHint } from "@/app/graph/SettingsStore";
 import { useDoubleClick } from "@/app/hooks/useDoubleClick";
 import { useToast } from "@/app/hooks/useToast";
+import { modKeyName } from "@/app/hotkeys";
 import { DescendantTreeNode, RootTreeNode } from "@/app/tree/nodes";
 import { useSetMainRoot } from "@/app/tree/utils";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -11,6 +14,7 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
   const graphStore = useGraphStore();
   const viewStore = useViewStore();
   const { addToast } = useToast();
+  const settingsStore = useSettingsStore();
   const setRoot = useSetMainRoot();
   const tree = treeNode.tree;
 
@@ -54,6 +58,19 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
         });
 
         if (mentionTreeNode) {
+          if (settingsStore.newUserHints.has(NewUserHint.CtrlClickToExpandInlineRelation)) {
+            addToast({
+              title: `${modKeyName} + click to zoom into the referenced object`,
+              description: `Did you mean to zoom into the referenced object? If so, please do ${modKeyName} + click.`,
+              action: {
+                label: "Don't show again",
+                onClick: () => {
+                  settingsStore.removeNewUserHint(NewUserHint.CtrlClickToExpandInlineRelation);
+                },
+              },
+            });
+          }
+
           if (!isTopLevelExpanded) {
             tree.setPathExpanded(mentionTreeNode.path, true); // If we just expanded the top level
           } else {
