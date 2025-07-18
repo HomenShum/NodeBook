@@ -5,7 +5,7 @@ import { useContext, useEffect, useRef } from "react";
 import { MainView } from "@/app/components/MainView";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useLoading, useSetLoading } from "@/app/contexts/LoadingContext";
-import { useSetMainRoot } from "@/app/tree/utils";
+import { useSetMainRoot, useSetMainRootInitial } from "@/app/tree/utils";
 import { parsePathArray } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
@@ -14,6 +14,7 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
   const viewStore = useViewStore();
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
+  const setRootInitial = useSetMainRootInitial();
   const isLoading = useLoading();
   const setIsLoading = useSetLoading();
   const hasProcessedPath = useRef(false);
@@ -129,14 +130,14 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
       const object = graphStore.getNode(lastId);
       if (object) {
         logger.debug("Found object, setting root", { objectId: object.id });
-        setRoot(object);
+        setRootInitial(object);
       } else {
         // Only redirect to default root if we're not coming from Auth0 redirect AND the path is empty or just /g
         const isAtRootOrEmpty = currentPath === "/" || currentPath === "/g" || currentPath === "";
 
         if (!isFromAuth0Redirect.current && isAtRootOrEmpty) {
           logger.debug("Could not find object and at root/empty path, redirecting to home", pathArray);
-          setRoot(graphStore.getDefaultRootForUser());
+          setRootInitial(graphStore.getDefaultRootForUser());
         } else {
           logger.debug("Could not find object but staying on current path", {
             pathArray,
@@ -152,6 +153,7 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
     // To match that, we only run this effect when viewStore or graphStore are instantiated
     // and specifically exclude path as a dependency here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+
   };
 
   return <MainView tree={viewStore.mainView}></MainView>;

@@ -73,6 +73,18 @@ export class ViewStore {
   @observable.shallow
   selectionStates: Map<string, SelectionState> = new Map();
 
+  /**
+   * Tracks whether the user can navigate back in browser history.
+   * This is updated when navigating within the app.
+   */
+  public canGoBack: boolean = false;
+
+  /**
+   * Counter to track navigation depth within the app.
+   * Incremented on each internal navigation, decremented on back navigation.
+   */
+  private navigationDepth: number = 0;
+
   constructor(settingsStore: SettingsStore, graphStore: GraphStore) {
     this.isCommandBarOpen = false;
     this.makeObservable();
@@ -102,6 +114,9 @@ export class ViewStore {
     this.quickCaptureTree = new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.myStreamNode, {
       viewType: this.quickCaptureViewType,
     });
+
+    // Initialize navigation state
+    this.resetNavigationState();
 
     // Set up event listener for selection state tracking from Tree operations
     if (typeof window !== "undefined") {
@@ -192,6 +207,11 @@ export class ViewStore {
         selectionStates: observable.shallow,
         trackSelectionState: action,
         restoreSelectionStateByTransactionId: action,
+        canGoBack: observable,
+        setCanGoBack: action,
+        incrementNavigationDepth: action,
+        decrementNavigationDepth: action,
+        resetNavigationState: action,
       });
     }
   }
@@ -587,5 +607,36 @@ export class ViewStore {
         if (sidePanelTree) return sidePanelTree;
         return null;
     }
+  }
+
+  /**
+   * Sets whether the user can navigate back
+   */
+  setCanGoBack(canGoBack: boolean) {
+    this.canGoBack = canGoBack;
+  }
+
+  /**
+   * Increments navigation depth when navigating forward within the app
+   */
+  incrementNavigationDepth() {
+    this.navigationDepth++;
+    this.canGoBack = this.navigationDepth > 0;
+  }
+
+  /**
+   * Decrements navigation depth when navigating back
+   */
+  decrementNavigationDepth() {
+    this.navigationDepth = Math.max(0, this.navigationDepth - 1);
+    this.canGoBack = this.navigationDepth > 0;
+  }
+
+  /**
+   * Resets navigation state to initial values
+   */
+  resetNavigationState() {
+    this.navigationDepth = 0;
+    this.canGoBack = false;
   }
 }

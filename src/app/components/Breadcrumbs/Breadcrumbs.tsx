@@ -162,9 +162,16 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
           size="icon"
           className={cn(s.ShowTooltip, s.BottomAlign)}
           data-tooltip="Go back"
+          disabled={!viewStore.canGoBack}
           onClick={() => {
+            if (!viewStore.canGoBack) return;
+
             // Get the current object ID before navigating back
             const currentObjectId = treeNode.object.id;
+
+            // Track back navigation
+            viewStore.decrementNavigationDepth();
+
             router.back();
             // After navigation, restore scroll position
             // We need to wait for the navigation to complete
