@@ -1,6 +1,6 @@
 "use client";
 import { observer } from "mobx-react-lite";
-import { useContext, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { MainView } from "@/app/components/MainView";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -91,12 +91,14 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
     logger.debug("Processing path", { pathArray, isFromAuth0Redirect: isFromAuth0Redirect.current });
     const currentPath = window.location.pathname;
     const path = parsePathArray(currentPath.split("/").slice(2), graphStore);
-    const lastId = currentPath.split("/").slice(-1)[0];
+    // If the last id contains special characters, we need to decode it
+    const lastId = decodeURIComponent(currentPath.split("/").slice(-1)[0]);
     graphStore.layerManager.loadWithIds([lastId]).then(() => {
       const object = graphStore.getNode(lastId);
       if (object) {
         logger.debug("Found object, setting root", { objectId: object.id });
         setRoot(object);
+        setIsLoading(false);
       } else {
         // Only redirect to default root if we're not coming from Auth0 redirect AND the path is empty or just /g
         const isAtRootOrEmpty = currentPath === "/" || currentPath === "/g" || currentPath === "";
@@ -104,8 +106,9 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
         if (!isFromAuth0Redirect.current && isAtRootOrEmpty) {
           logger.debug("Could not find object and at root/empty path, redirecting to home", pathArray);
           setRoot(graphStore.getDefaultRootForUser());
+          setIsLoading(false);
         } else {
-          logger.debug("Could not find object but staying on current path", {
+          logger.debug(`Could not find object ${lastId} but staying on current path: ${currentPath}`, {
             pathArray,
             currentPath,
             isFromAuth0Redirect: isFromAuth0Redirect.current,
@@ -113,7 +116,6 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
           });
         }
       }
-      setIsLoading(false);
     });
     // // If the path is valid, keep the path, and update our view state to match
     // // Otherwise, we redirect to the specified object or the default root
@@ -131,6 +133,7 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
       if (object) {
         logger.debug("Found object, setting root", { objectId: object.id });
         setRootInitial(object);
+        setIsLoading(false);
       } else {
         // Only redirect to default root if we're not coming from Auth0 redirect AND the path is empty or just /g
         const isAtRootOrEmpty = currentPath === "/" || currentPath === "/g" || currentPath === "";
@@ -138,6 +141,7 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
         if (!isFromAuth0Redirect.current && isAtRootOrEmpty) {
           logger.debug("Could not find object and at root/empty path, redirecting to home", pathArray);
           setRootInitial(graphStore.getDefaultRootForUser());
+          setIsLoading(false);
         } else {
           logger.debug("Could not find object but staying on current path", {
             pathArray,
@@ -153,7 +157,6 @@ function Page({ params: { path: pathArray } }: { params: { path: string[] | unde
     // To match that, we only run this effect when viewStore or graphStore are instantiated
     // and specifically exclude path as a dependency here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-
   };
 
   return <MainView tree={viewStore.mainView}></MainView>;
