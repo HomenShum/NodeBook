@@ -181,11 +181,13 @@
 .EmptySpaceClickArea {
   flex: 1;
   min-height: 100px;
+  z-index: 30;
 }
 
 .EmptySpaceClickAreaInSidePanel {
   border-bottom: 1px solid var(--gray-6);
   min-height: 80px;
+  z-index: 30;
 }
 
 .MainAndSidebarContainer {
@@ -247,8 +249,12 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: transform 0.2s ease, background-color 0.2s ease;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
   z-index: 100;
 }
 

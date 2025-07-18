@@ -341,13 +341,20 @@ function OutlineContent({ tree }: Props) {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            // Set focus to last part of final root node
+            // Check if the last node is empty (no text and no children)
             const lastNode = treeRoot.visibleChildren[treeRoot.visibleChildren.length - 1];
-            // If the last node is note content, create a child at the end of the tree instead.
-            if (!lastNode || lastNode.object.noteContentRelationsList.size > 0 || lastNode.visibleChildren.length > 0) {
-              tree.createChildOfRootAndFocus({ atBottom: true });
-            } else {
+            const isLastNodeEmpty =
+              lastNode &&
+              lastNode.object instanceof GraphNode &&
+              !lastNode.object.text.trim() &&
+              lastNode.childCount === 0;
+
+            if (isLastNodeEmpty) {
+              // Focus on the existing empty node instead of creating a new one
               tree.setFocusedNode(lastNode.path, "end");
+            } else {
+              // Create a new node at the bottom when clicking empty space
+              tree.createChildOfRootAndFocus({ atBottom: true });
             }
           }}
         />
