@@ -1,5 +1,6 @@
 "use client";
 import React, { createContext, useCallback, useContext, useState } from "react";
+import { Lightbulb } from "lucide-react";
 
 import {
   Toast,
@@ -21,6 +22,7 @@ type ToastType = {
     onClick: () => void;
   };
   closing?: boolean; // Add this line
+  isHint?: boolean;
 };
 
 type ToastContextType = {
@@ -70,6 +72,33 @@ export const ToastContextProvider: React.FC<{ children: React.ReactNode }> = ({ 
             className={toast.closing ? "closing" : ""}
           >
             <div>
+              {toast.isHint && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <Lightbulb
+                    style={{
+                      height: "16px",
+                      width: "16px",
+                      color: "var(--amber-9)",
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: "var(--font-size-xs)",
+                      fontWeight: "500",
+                      color: "var(--amber-11)",
+                    }}
+                  >
+                    Hint
+                  </span>
+                </div>
+              )}
               <ToastTitle>{toast.title}</ToastTitle>
               {toast.description && <ToastDescription>{toast.description}</ToastDescription>}
               {toast.action && (

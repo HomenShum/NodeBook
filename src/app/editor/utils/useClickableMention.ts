@@ -60,8 +60,9 @@ export const useClickableMention = (treeNode: DescendantTreeNode | RootTreeNode)
         if (mentionTreeNode) {
           if (settingsStore.newUserHints.has(NewUserHint.CtrlClickToExpandInlineRelation)) {
             addToast({
-              title: `${modKeyName} + click to zoom into the referenced object`,
-              description: `Did you mean to zoom into the referenced object? If so, please do ${modKeyName} + click.`,
+              title: `You just clicked on an inline relation`,
+              description: `Did you mean to zoom into the referenced object? If so, please do ${modKeyName} + click instead.`,
+              isHint: true,
               action: {
                 label: "Don't show again",
                 onClick: () => {
