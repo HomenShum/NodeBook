@@ -1,21 +1,21 @@
 import {
-  BellIcon,
-  FileSpreadsheet,
-  Globe,
-  History,
-  Home,
-  Key,
-  Keyboard,
-  LogIn,
-  LogOut,
-  Mail,
-  Mic,
-  MoonIcon,
-  Newspaper,
-  Search,
-  SettingsIcon,
-  SunIcon,
-  User,
+    BellIcon,
+    FileSpreadsheet,
+    Globe,
+    History,
+    Home,
+    Key,
+    Keyboard,
+    LogIn,
+    LogOut,
+    Mail,
+    Mic,
+    MoonIcon,
+    Newspaper,
+    Search,
+    SettingsIcon,
+    SunIcon,
+    User,
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -36,11 +36,11 @@ import { MyHashtagsTree } from "@/app/components/Sidebar/MyHashtagsTree";
 import { MyShortlinksTree } from "@/app/components/Sidebar/MyShortlinksTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { DevTools } from "@/app/components/dev/DevTools";
@@ -365,56 +365,60 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </span>
               <span className={styles.ButtonText}>Global Hub</span>
             </Button>
-            <Button
-              variant="ghost"
-              className={cn(styles.Button, currentTab === "yourRoot" && styles.Selected)}
-              onMouseEnter={() => {
-                graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
-              }}
-              onClick={(e) => {
-                setLastClickedTab("yourRoot");
-                if (e.shiftKey) {
-                  viewStore.createSidePanelTree(graphStore.getDefaultRootForUser());
-                } else if (e.metaKey) {
-                  openNewTab(graphStore.getDefaultRootForUser());
-                } else {
-                  handleNavigation(() => {
-                    setRoot(graphStore.getDefaultRootForUser());
-                    viewStore.setViewType(ViewType.Outline);
-                  });
-                }
-              }}
-            >
-              <span>
-                <Home size={16} strokeWidth={1.5} />
-              </span>
-              <span className={styles.ButtonText}>Home</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className={cn(styles.Button, currentTab === "yourStream" && styles.Selected)}
-              onMouseEnter={() => {
-                graphStore.layerManager.lazyLoadWithIds([graphStore.myStreamNodeId]);
-              }}
-              onClick={(e) => {
-                setLastClickedTab("yourStream");
-                if (e.shiftKey) {
-                  viewStore.createSidePanelTree(graphStore.myStreamNode);
-                } else if (e.metaKey) {
-                  openNewTab(graphStore.myStreamNode);
-                } else {
-                  handleNavigation(() => {
-                    setRoot(graphStore.myStreamNode);
-                    viewStore.setViewType(ViewType.Note);
-                  });
-                }
-              }}
-            >
-              <span>
-                <QuickCaptureIcon />
-              </span>
-              <span className={styles.ButtonText}>My Stream</span>
-            </Button>
+            {!user.isAnonymous && (
+              <>
+                <Button
+                  variant="ghost"
+                  className={cn(styles.Button, currentTab === "yourRoot" && styles.Selected)}
+                  onMouseEnter={() => {
+                    graphStore.layerManager.lazyLoadWithIds([graphStore.userRoot.id]);
+                  }}
+                  onClick={(e) => {
+                    setLastClickedTab("yourRoot");
+                    if (e.shiftKey) {
+                      viewStore.createSidePanelTree(graphStore.getDefaultRootForUser());
+                    } else if (e.metaKey) {
+                      openNewTab(graphStore.getDefaultRootForUser());
+                    } else {
+                      handleNavigation(() => {
+                        setRoot(graphStore.getDefaultRootForUser());
+                        viewStore.setViewType(ViewType.Outline);
+                      });
+                    }
+                  }}
+                >
+                  <span>
+                    <Home size={16} strokeWidth={1.5} />
+                  </span>
+                  <span className={styles.ButtonText}>Home</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={cn(styles.Button, currentTab === "yourStream" && styles.Selected)}
+                  onMouseEnter={() => {
+                    graphStore.layerManager.lazyLoadWithIds([graphStore.myStreamNodeId]);
+                  }}
+                  onClick={(e) => {
+                    setLastClickedTab("yourStream");
+                    if (e.shiftKey) {
+                      viewStore.createSidePanelTree(graphStore.myStreamNode);
+                    } else if (e.metaKey) {
+                      openNewTab(graphStore.myStreamNode);
+                    } else {
+                      handleNavigation(() => {
+                        setRoot(graphStore.myStreamNode);
+                        viewStore.setViewType(ViewType.Note);
+                      });
+                    }
+                  }}
+                >
+                  <span>
+                    <QuickCaptureIcon />
+                  </span>
+                  <span className={styles.ButtonText}>My Stream</span>
+                </Button>
+              </>
+            )}
             <Button
               variant="ghost"
               className={cn(styles.Button, currentTab === "aiQuery" && styles.Selected)}
