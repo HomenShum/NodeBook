@@ -117,8 +117,10 @@ export class LayerManager {
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => {
-      this.loadedIds.add(id);
-      this.graphStore.setNodeLayerLoadingStatus(id, true);
+      if (!forceIds.includes(id)) {
+        this.loadedIds.add(id);
+        this.graphStore.setNodeLayerLoadingStatus(id, true);
+      }
     });
     const loadedIds = await this.fetchAndLoad(
       `/api/layer`,

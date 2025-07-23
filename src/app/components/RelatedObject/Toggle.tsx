@@ -27,18 +27,24 @@ const Toggle = observer(function Toggle() {
       const totalRelations = treeNode.object.relationCount ?? 0;
       const loadedRelations = treeNode.object.relations.length;
 
-      if(graphStore.nodesInLayerLoading.has(treeNode.object.id)){
+      if (graphStore.nodesInLayerLoading.has(treeNode.object.id)) {
         return true;
       }
 
-      if(graphStore.layerManager.loadedIds.has(treeNode.object.id)){
+      if (graphStore.layerManager.loadedIds.has(treeNode.object.id)) {
         return false;
       }
 
       return totalRelations > loadedRelations;
     }
     return false;
-  }, [graphStore.nodesInLayerLoading.size, graphStore.layerManager.loadedIds.size, treeNode.object, graphStore.nodesInLayerLoading, graphStore.layerManager.loadedIds])
+  }, [
+    graphStore.nodesInLayerLoading.size,
+    graphStore.layerManager.loadedIds.size,
+    treeNode.object,
+    graphStore.nodesInLayerLoading,
+    graphStore.layerManager.loadedIds,
+  ]);
 
   const handleToggleClick = useCallback(
     (event: React.MouseEvent) => {
