@@ -25,7 +25,7 @@ module.exports = {
   },
   testEnvironment: 'jsdom',
   testMatch: [
-    '/**/*.test.ts?(x)',
+    '**/*.test.ts?(x)',
   ],
   setupFiles: ['./jest.setup.js'],
 };
