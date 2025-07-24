@@ -1,8 +1,7 @@
-import { Play } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useMemo } from "react";
 
-import { CyclicIcon } from "@/app/components/CustomIcons";
+import { CyclicIcon, TriangleIcon } from "@/app/components/CustomIcons";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
@@ -117,14 +116,14 @@ const Toggle = observer(function Toggle() {
       {treeNode.instanceCountInPath <= 1 ? (
         // Default toggle button
         <button className={styles.ToggleButton} onPointerDown={(e) => handleToggleClick(e)}>
-          <Play
-            className={`${cn(styles.Icon, {
+          <TriangleIcon
+            className={cn(styles.Icon, {
               [styles.IconNoChildren]: !hasChildren,
               [styles.IconHasChildren]: hasChildren,
               [styles.IconPublicNode]: treeNode.object.isPublic,
               [styles.IconPrivateNode]: !treeNode.object.isPublic,
               [styles.ToggleExpanded]: treeNode.isExpanded,
-            })}`}
+            })}
           />
         </button>
       ) : (

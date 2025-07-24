@@ -1,10 +1,10 @@
-import { CornerDownRight, Link, LoaderCircle, Maximize2, Play } from "lucide-react";
+import { CornerDownRight, Link, LoaderCircle, Maximize2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useState } from "react";
 
 import { Card } from "@/app/components/Card";
 import { Checkbox } from "@/app/components/Checkbox/Checkbox";
-import { PinCustomIcon } from "@/app/components/CustomIcons";
+import { PinCustomIcon, TriangleIcon } from "@/app/components/CustomIcons";
 import { NoteContentPrefix } from "@/app/components/RelatedObject/NoteContentPrefix";
 import { NoteContentSuffix } from "@/app/components/RelatedObject/NoteContentSuffix";
 import { RelatedRelationView } from "@/app/components/RelatedObject/RelatedRelationView";
@@ -104,7 +104,10 @@ function RelationsToggle({ treeNode }: { treeNode: DescendantTreeNode }) {
         tree.setPathExpanded(treeNode.id, !treeNode.isExpanded);
       }}
     >
-      <Play size={7} className={`${stylesToggle.Icon} ${treeNode.isExpanded ? stylesToggle.ToggleExpanded : ""}`} />
+      <TriangleIcon
+        size={8}
+        className={`${stylesToggle.Icon} ${treeNode.isExpanded ? stylesToggle.ToggleExpanded : ""}`}
+      />
       <span>
         {treeNode.childCount} relation{treeNode.childCount === 1 ? "" : "s"}
       </span>

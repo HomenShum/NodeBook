@@ -1,7 +1,8 @@
-import { Maximize2, Play } from "lucide-react";
+import { Maximize2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
+import { TriangleIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -212,7 +213,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
           <span>Local Hashtags</span>
           <div className={styles.HeaderControls}>
             <Button variant="ghost" className={styles.IconButton} onClick={handleMainClick}>
-              <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+              <TriangleIcon size={9} className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
           </div>
         </div>

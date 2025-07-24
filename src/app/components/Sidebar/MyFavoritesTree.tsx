@@ -1,7 +1,8 @@
-import { Maximize2, Play, X } from "lucide-react";
+import { Maximize2, X } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useCallback, useState } from "react";
 
+import { TriangleIcon } from "@/app/components/CustomIcons";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -65,7 +66,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
               className={styles.IconButton}
               onClick={() => settingsStore.setSidebarExpandedMyFavorites(!isExpanded)}
             >
-              <Play size={8} fill="currentColor" className={cn(isExpanded && styles.IconExpanded)} />
+              <TriangleIcon size={9} className={cn(isExpanded && styles.IconExpanded)} />
             </Button>
             <TooltipProvider>
               <Tooltip>

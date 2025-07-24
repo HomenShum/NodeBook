@@ -250,3 +250,19 @@ export const CardsIcon = ({ size = 14 }: { size?: number }) => (
     </defs>
   </svg>
 );
+
+export const TriangleIcon = ({ size = 24, className }: { size?: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+    className={className}
+  >
+    <path
+      d="M7 4.13504C7 3.2872 7.98886 2.82405 8.64018 3.36682L17.1563 10.4636C18.1158 11.2631 18.1158 12.7369 17.1563 13.5364L8.64018 20.6332C7.98886 21.176 7 20.7128 7 19.865V4.13504Z"
+      fill="currentColor"
+    />
+  </svg>
+);

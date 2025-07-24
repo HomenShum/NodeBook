@@ -34,13 +34,15 @@
 .IconPublicNode.IconHasChildren {
   stroke: var(--teal-10);
   fill: var(--teal-10);
-  width: 11px;
-  height: 9px;
+  color: var(--teal-10);
+  width: 12px;
+  height: 10px;
 }
 
 .IconPublicNode.IconNoChildren {
   stroke: var(--teal-6);
   fill: var(--teal-6);
+  color: var(--teal-6);
   width: 9px;
   height: 7px;
 }
@@ -48,13 +50,15 @@
 .IconPrivateNode.IconHasChildren {
   stroke: var(--gray-11);
   fill: var(--gray-11);
-  width: 11px;
-  height: 9px;
+  color: var(--gray-11);
+  width: 12px;
+  height: 10px;
 }
 
 .IconPrivateNode.IconNoChildren {
   stroke: var(--gray-7);
   fill: var(--gray-7);
+  color: var(--gray-7);
   width: 9px;
   height: 7px;
 }
