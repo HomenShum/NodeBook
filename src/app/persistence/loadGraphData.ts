@@ -147,7 +147,7 @@ export class LayerManager {
     this.lazyLoadTimer = setTimeout(() => {
       this.loadWithIds(Array.from(this.lazyQueuedIds));
       this.lazyQueuedIds.clear();
-    }, 400);
+    }, 200);
   }
 
   public async loadCanonicalWithIds(objectIds: string[], reload = false, init: RequestInit = {}) {

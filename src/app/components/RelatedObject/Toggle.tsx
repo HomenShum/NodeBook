@@ -27,7 +27,7 @@ const Toggle = observer(function Toggle() {
       const loadedRelations = treeNode.object.relations.length;
 
       if (graphStore.nodesInLayerLoading.has(treeNode.object.id)) {
-        return true;
+        return false;
       }
 
       if (graphStore.layerManager.loadedIds.has(treeNode.object.id)) {
