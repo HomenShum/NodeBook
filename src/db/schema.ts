@@ -111,6 +111,7 @@ export const graphNodeTable = pgTable(
     updatedAt: timestamp("updated_at"),
     content: text("content"),
     contentText: text("content_text"),
+    contentTextLength: integer("content_text_length"),
     isPublic: boolean("is_public").default(false),
     isNewRelatedObjectsPublic: boolean("is_new_related_objects_public").default(false),
     canonicalRelationId: text("canonical_relation_id"),

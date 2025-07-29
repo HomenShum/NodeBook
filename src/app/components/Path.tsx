@@ -7,7 +7,15 @@ import canonicalPathCacheStore from "@/stores/CanonicalPathCacheStore";
 
 import styles from "./Path.module.css";
 
-export const Path = observer(function Path({ path, skipLast = false }: { path: ObjectPath; skipLast?: boolean }) {
+export const Path = observer(function Path({
+  path,
+  skipLast = false,
+  maxLength = 36,
+}: {
+  path: ObjectPath;
+  skipLast?: boolean;
+  maxLength?: number;
+}) {
   const { endState } = path;
   const breadcrumbs = objectPathToBreadcrumb(path);
   const cachedAncestors = canonicalPathCacheStore.cache.get(path.object.id);
@@ -21,7 +29,7 @@ export const Path = observer(function Path({ path, skipLast = false }: { path: O
           return (
             <span key={index} className={cn(styles.PathItem, isLast ? styles.Wrap : styles.NoWrap)}>
               <span className={isLast ? cn(styles.Wrap, styles.MWFull) : cn(styles.NoWrap, styles.MWAuto)}>
-                {isLast ? ancestor.label : truncateText(ancestor.label, 36)}
+                {isLast ? ancestor.label : truncateText(ancestor.label, maxLength)}
               </span>
               {index < cachedAncestors.length - 1 && <span>/</span>}
             </span>
@@ -42,7 +50,7 @@ export const Path = observer(function Path({ path, skipLast = false }: { path: O
         return (
           <span key={index} className={cn(styles.PathItem, isLast ? styles.Wrap : styles.NoWrap)}>
             <span className={isLast ? cn(styles.Wrap, styles.MWFull) : cn(styles.NoWrap, styles.MWAuto)}>
-              {isLast ? crumb : truncateText(crumb, 36)}
+              {isLast ? truncateText(crumb, maxLength + 10) : truncateText(crumb, maxLength)}
             </span>
             {index < breadcrumbs.length - 1 && <span>/</span>}
           </span>

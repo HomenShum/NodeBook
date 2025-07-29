@@ -103,7 +103,7 @@ export function getMatches(
     hasArrow = true;
     types = ["relation"];
   }
-  const results = graphStore.search({ text, filters: { types } });
+  const results = graphStore.search({ text, filters: { types }, short_text: true });
 
   const nodeScores = new Map<string, number>();
   results.nodes.forEach(({ node, score }) => nodeScores.set(node.id, score));
@@ -234,7 +234,11 @@ export const useGetRecentNodes = (maxResults: number, toFilterByNodeId?: string)
 
 function isCandidateHashtag(match: Match) {
   // Starts with hashtag, and only has alphanumeric symbols + _
-  return match.type === "node" && match.object.text.startsWith(HASHTAG_SYMBOL) && /^[a-zA-Z0-9_]+$/.test(match.object.text.slice(1));
+  return (
+    match.type === "node" &&
+    match.object.text.startsWith(HASHTAG_SYMBOL) &&
+    /^[a-zA-Z0-9_]+$/.test(match.object.text.slice(1))
+  );
 }
 export const useGetMatchesForHashtags = (maxResults: number): GetMatches => {
   const graphStore = useGraphStore();
@@ -253,7 +257,7 @@ export const useGetMatchesForHashtags = (maxResults: number): GetMatches => {
         if (match.object.id === curNodeId) return false;
         return isCandidateHashtag(match);
       });
-      
+
       // Deduplicate by node id and text content
       const indicesToRemove = new Set<number>();
       const ownedResultsTexts = new Set(ownedResults.map((result) => result.object.text));

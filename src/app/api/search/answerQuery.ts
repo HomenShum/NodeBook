@@ -12,6 +12,7 @@ export const answerQuery = async (
   sessionId = "unknown",
   region = "unknown",
   country = "unknown",
+  short_text = false,
 ): Promise<SerializedGraphStore> => {
   console.timeLog(sessionId, `[debug] Inside answerQuery, region: ${region}, country: ${country}`);
   console.timeLog(sessionId, "[debug] Inside answerQuery, before getDb()");
@@ -74,6 +75,7 @@ export const answerQuery = async (
         and(
           sql`content_text ILIKE ${query_str}`,
           or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPublic, true)),
+          ...(short_text ? [sql`${graphNodeTable.contentTextLength} < 400`] : []),
         ),
       )
       .limit(100);
@@ -86,6 +88,7 @@ export const answerQuery = async (
         and(
           sql`content_text ILIKE ${query_str}`,
           or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPublic, true)),
+          ...(short_text ? [sql`${graphNodeTable.contentTextLength} < 400`] : []),
         ),
       )
       .orderBy(desc(sql`strict_word_similarity(${query}, content_text)`))

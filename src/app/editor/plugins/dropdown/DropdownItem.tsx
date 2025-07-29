@@ -75,7 +75,7 @@ export const DropdownItem = forwardRef<HTMLLIElement, DropdownItemProps>(
                   )}
                 </div>
               </div>
-              {match.type === "node" ? <Path path={getCanonicalPath(match.object)} /> : null}
+              {match.type === "node" ? <Path path={getCanonicalPath(match.object)} maxLength={10} /> : null}
             </>
           )}
         </div>

@@ -71,7 +71,7 @@ export class LayerManager {
     }
   }
 
-  loadWithText(text: string): void {
+  loadWithText(text: string, short_text: boolean = false): void {
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
       if (this.abortController) {
@@ -85,7 +85,11 @@ export class LayerManager {
         this.graphStore.updateInFlightSearchCount("increment");
         this.searchedText.set(text, true);
         // Search only loads specific nodes without layers for performance
-        await this.fetchAndLoad(`/api/search?query=${encodeURIComponent(text)}`, {
+        const queryParams = new URLSearchParams({ query: text });
+        if (short_text) {
+          queryParams.set("short_text", "true");
+        }
+        await this.fetchAndLoad(`/api/search?${queryParams.toString()}`, {
           signal: this.abortController?.signal,
         });
         // We don't need canonical loading for search results as they're just nodes

@@ -317,7 +317,7 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
                     <RelationCounter treeNodeOrGraphObject={match.object} showTooltip={false} />
                   </div>
                 </div>
-                <Path path={getCanonicalPath(match.object)} />
+                <Path path={getCanonicalPath(match.object)} maxLength={10} />
               </>
             </div>
           </li>

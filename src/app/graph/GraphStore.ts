@@ -3238,7 +3238,7 @@ export class GraphStore {
 
   // TODO: We should make this async ASAP
   search(query: Query): SearchResults {
-    window !== undefined && this.layerManager.loadWithText(query.text);
+    window !== undefined && this.layerManager.loadWithText(query.text, query.short_text);
     const results: SearchResults = { nodes: [], relations: [], relationTypes: [] };
     const { text, filters, sort } = query;
     const procText = text?.toLowerCase().trim();
@@ -3443,6 +3443,7 @@ type Query = {
     by?: "score";
     order?: "asc" | "desc";
   };
+  short_text?: boolean;
 };
 
 type SearchResults = {

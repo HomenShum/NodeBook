@@ -281,6 +281,13 @@
       "when": 1751986775085,
       "tag": "0039_move_new_user_flag_to_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1753800732267,
+      "tag": "0040_text_content_length",
+      "breakpoints": true
     }
   ]
 }
