@@ -81,7 +81,7 @@ const SerializedUserSettingsSchema = z.object({
   sidebarExpandedLocalMentions: z.boolean().optional(),
   viewModePreferences: z.record(z.nativeEnum(ViewType)).optional(),
   newUser: z.boolean().optional(),
-  newUserHints: z.set(z.string()).optional(),
+  newUserHints: z.array(z.string()).optional(),
 });
 export type SerializedUserSettings = z.infer<typeof SerializedUserSettingsSchema>;
 

@@ -48,7 +48,7 @@ export class SettingsStore {
   public parseWithAiLinkingOption: ParseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
   public showBulletForEmptyNode: boolean = false;
   public showNotifications: boolean = true;
-  public useRoamResearchStyleMention: boolean = false;
+  public useRoamResearchStyleMention: boolean = true;
   public showOnlyTodos: boolean = false;
   public showOnlyTodosInQuickCapture: boolean = false;
   public todosFilterType: string = "all";
@@ -68,6 +68,7 @@ export class SettingsStore {
 
   constructor(user = MOCK_MEW_USER) {
     this.user = user;
+    console.log("User settings building", user);
     this.makeObservable();
     if (user.settings) {
       this.deserialize(user.settings);
@@ -114,6 +115,7 @@ export class SettingsStore {
     this.parseWithAiLinkingOption = ParseWithAiLinkingOptionEnum.enum.LinkNodesInParse;
     this.showBulletForEmptyNode = false;
     this.showNotifications = true;
+    this.useRoamResearchStyleMention = false;
     this.showOnlyTodos = false;
     this.showOnlyTodosInQuickCapture = false;
     this.todosFilterType = "all";
@@ -162,6 +164,7 @@ export class SettingsStore {
       parseWithAiLinkingOption: this.parseWithAiLinkingOption,
       showBulletForEmptyNode: this.showBulletForEmptyNode,
       showNotifications: this.showNotifications,
+      useRoamResearchStyleMention: this.useRoamResearchStyleMention,
       showOnlyTodos: this.showOnlyTodos,
       showOnlyTodosInQuickCapture: this.showOnlyTodosInQuickCapture,
       todosFilterType: this.todosFilterType,
@@ -175,6 +178,7 @@ export class SettingsStore {
       sidebarExpandedLocalMentions: this.sidebarExpandedLocalMentions,
       viewModePreferences: this.viewModePreference,
       newUser: this.newUser,
+      newUserHints: Array.from(this.newUserHints) as any,
     };
   }
 
@@ -203,6 +207,7 @@ export class SettingsStore {
     this.parseWithAiLinkingOption = data.parseWithAiLinkingOption ?? this.parseWithAiLinkingOption;
     this.showBulletForEmptyNode = data.showBulletForEmptyNode ?? this.showBulletForEmptyNode;
     this.showNotifications = data.showNotifications ?? this.showNotifications;
+    this.useRoamResearchStyleMention = data.useRoamResearchStyleMention ?? this.useRoamResearchStyleMention;
     this.showOnlyTodos = data.showOnlyTodos ?? this.showOnlyTodos;
     this.showOnlyTodosInQuickCapture = data.showOnlyTodosInQuickCapture ?? this.showOnlyTodosInQuickCapture;
     this.todosFilterType = data.todosFilterType ?? this.todosFilterType;
@@ -216,6 +221,7 @@ export class SettingsStore {
     this.sidebarExpandedLocalMentions = data.sidebarExpandedLocalMentions ?? this.sidebarExpandedLocalMentions;
     this.viewModePreference = data.viewModePreferences ?? this.viewModePreference;
     this.newUser = data.newUser ?? this.newUser;
+    this.newUserHints = data.newUserHints ? new Set(data.newUserHints as unknown as string[]) : this.newUserHints;
   }
 
   setAddAllNewNodesAsChildrenOfUserNode(value: boolean) {

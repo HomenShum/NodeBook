@@ -14,7 +14,7 @@ export const LoginScreen = () => {
       }}
     >
       <h1>Login</h1>
-      <Button onClick={() => auth?.loginWithRedirect({ appState: { returnTo: window.location.pathname + window.location.search } })}>Log in</Button>
+      <Button onClick={() => auth?.loginWithRedirect()}>Log in</Button>
     </div>
   );
 };
