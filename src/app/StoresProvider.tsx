@@ -7,6 +7,7 @@ import { LoadingContext } from "@/app/contexts/LoadingContext";
 import { NotificationProvider } from "@/app/contexts/NotificationContext";
 import { SettingsStoreContext } from "@/app/contexts/SettingsStoreContext";
 import { SlugProvider } from "@/app/contexts/SlugContext";
+import { useUser } from "@/app/contexts/UserContext";
 import { VoiceInputProvider } from "@/app/contexts/VoiceInputContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -18,7 +19,6 @@ import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
 import { GLOBAL_USERS_NODE_ID, GLOBAL_USERS_RELATION_ID } from "@/lib/constants";
 import rootLogger from "@/lib/logger";
-import { useUser } from "@/app/contexts/UserContext";
 
 export const logger = rootLogger.child({ service: "store-provider" });
 
@@ -118,7 +118,7 @@ export function StoresProvider({
       ignore = true;
       cleanupPromise.then((cleanup) => cleanup?.());
     };
-  }, [initialObjectId, user]);
+  }, [initialObjectId, user, firstRender, addToast]);
 
   useEffect(() => {
     viewStore && viewStore.startObservingMouse();

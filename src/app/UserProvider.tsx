@@ -8,11 +8,8 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const user = useSetupUser();
 
   if (!user) {
-    console.log("Loading user...");
     return <></>;
   }
-
-  console.log("Loaded user", user);
 
   return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
 };

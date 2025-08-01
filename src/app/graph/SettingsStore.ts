@@ -7,6 +7,7 @@ import ApiClient from "@/app/api/utils/client/ApiClient";
 import { MewUser, MOCK_MEW_USER } from "@/app/auth/MewUser";
 import { env } from "@/app/envFrontend";
 import { logger } from "@/app/StoresProvider";
+import { LocalStorageUser } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import {
   ParseWithAiLinkingOption,
@@ -68,7 +69,6 @@ export class SettingsStore {
 
   constructor(user = MOCK_MEW_USER) {
     this.user = user;
-    console.log("User settings building", user);
     this.makeObservable();
     if (user.settings) {
       this.deserialize(user.settings);
@@ -135,6 +135,11 @@ export class SettingsStore {
   private async syncToServer() {
     try {
       await this.persist(this.serialize());
+      const currentUser = LocalStorageUser.get();
+      if (currentUser) {
+        currentUser.settings = this.serialize();
+        LocalStorageUser.save(currentUser);
+      }
     } catch (e) {
       console.warn("Error saving user settings", e);
     }

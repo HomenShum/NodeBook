@@ -47,7 +47,7 @@ function useSetupUser(): MewUser | null {
   //If a localStorage user is absent, and a user is not already set,
   //try to load the user from Auth0 and server. Then save the user in localStorage.
   useAsyncEffect(async () => {
-    if (localStorageUser || user) return;
+    if (user) return;
 
     if (!auth) {
       if (envAllowsMockAuth()) {
