@@ -14,11 +14,11 @@ import { LexicalEditorPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes, DELETED_NODE_TEXT } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
+import { $createImageNode, $isImageNode, ImageNode } from "@/app/graph/ImageNode";
 import { $createLinkNode, $isLinkNode, LinkNode } from "@/app/graph/LinkNode";
 import { $createMentionNode, $isMentionNode, MentionNode } from "@/app/graph/MentionNode";
 import { GraphRelationType } from "@/app/graph/types";
 import { MENTION_SYMBOL } from "@/lib/utils";
-import { $createImageNode, $isImageNode, ImageNode } from "@/app/graph/ImageNode";
 
 /**
  * The content of graph nodes is a flat list of text and mention nodes.
@@ -219,7 +219,16 @@ export const getChipToNodeFn = (graphStore: GraphStore) => {
     } else if (chip.type === "link") {
       return $createLinkNode(chip.url, chip.value);
     } else if (chip.type === "text") {
-      const node = $createTextNode(chip.value);
+      // Replace leading tabs with bullet points
+      let textValue = chip.value;
+      if (textValue.startsWith("\t")) {
+        // if the next non-space character is not the bullet point, we should add the bullet point
+        if (!textValue.trimStart().startsWith("•")) {
+          textValue = "•" + textValue;
+        }
+      }
+
+      const node = $createTextNode(textValue);
       if (chip.styles) {
         node.setFormat(chip.styles);
       }

@@ -1,21 +1,21 @@
 import {
-    BellIcon,
-    FileSpreadsheet,
-    Globe,
-    History,
-    Home,
-    Key,
-    Keyboard,
-    LogIn,
-    LogOut,
-    Mail,
-    Mic,
-    MoonIcon,
-    Newspaper,
-    Search,
-    SettingsIcon,
-    SunIcon,
-    User,
+  BellIcon,
+  FileSpreadsheet,
+  Globe,
+  History,
+  Home,
+  Key,
+  Keyboard,
+  LogIn,
+  LogOut,
+  Mail,
+  Mic,
+  MoonIcon,
+  Newspaper,
+  Search,
+  SettingsIcon,
+  SunIcon,
+  User,
 } from "lucide-react";
 import { action } from "mobx";
 import { observer } from "mobx-react-lite";
@@ -36,11 +36,11 @@ import { MyHashtagsTree } from "@/app/components/Sidebar/MyHashtagsTree";
 import { MyShortlinksTree } from "@/app/components/Sidebar/MyShortlinksTree";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { DevTools } from "@/app/components/dev/DevTools";
@@ -334,30 +334,32 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             </DropdownMenu>
           </div>
           <div className={styles.TopContent}>
-            <Button
-              variant="ghost"
-              className={cn(styles.Button, currentTab === "globalRoot" && styles.Selected)}
-              onMouseEnter={() => {
-                graphStore.layerManager.lazyLoadWithIds([GLOBAL_ROOT_ID]);
-              }}
-              onClick={(e) => {
-                setLastClickedTab("globalRoot");
-                if (e.shiftKey) {
-                  viewStore.createSidePanelTree(graphStore.globalRoot);
-                } else if (e.metaKey) {
-                  openNewTab(graphStore.globalRoot);
-                } else {
-                  handleNavigation(() => {
-                    setRoot(graphStore.globalRoot);
-                  });
-                }
-              }}
-            >
-              <span>
-                <Globe size={16} strokeWidth={1.5} />
-              </span>
-              <span className={styles.ButtonText}>Global Hub</span>
-            </Button>
+            {!settingsStore.newUser && (
+              <Button
+                variant="ghost"
+                className={cn(styles.Button, currentTab === "globalRoot" && styles.Selected)}
+                onMouseEnter={() => {
+                  graphStore.layerManager.lazyLoadWithIds([GLOBAL_ROOT_ID]);
+                }}
+                onClick={(e) => {
+                  setLastClickedTab("globalRoot");
+                  if (e.shiftKey) {
+                    viewStore.createSidePanelTree(graphStore.globalRoot);
+                  } else if (e.metaKey) {
+                    openNewTab(graphStore.globalRoot);
+                  } else {
+                    handleNavigation(() => {
+                      setRoot(graphStore.globalRoot);
+                    });
+                  }
+                }}
+              >
+                <span>
+                  <Globe size={16} strokeWidth={1.5} />
+                </span>
+                <span className={styles.ButtonText}>Global Hub</span>
+              </Button>
+            )}
             {!user.isAnonymous && (
               <>
                 <Button
@@ -408,52 +410,56 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   <span>
                     <QuickCaptureIcon />
                   </span>
-                  <span className={styles.ButtonText}>My Stream</span>
+                  <span className={styles.ButtonText}>My Notes</span>
                 </Button>
               </>
             )}
-            <Button
-              variant="ghost"
-              className={cn(styles.Button, currentTab === "aiQuery" && styles.Selected)}
-              onClick={(e) => {
-                setLastClickedTab("aiQuery");
-                if (e.metaKey) {
-                  window.open("/query", "_blank");
-                } else {
-                  handleNavigation(() => router.push("/query"));
-                }
-              }}
-            >
-              <span>
-                <Search size={16} strokeWidth={1.5} />
-              </span>
-              <span className={styles.ButtonText}>AI Query</span>
-            </Button>
-            <>
-              <div className={styles.SidebarSectionHeader}>Feeds</div>
+            {!settingsStore.newUser && (
               <Button
                 variant="ghost"
-                className={cn(styles.Button, currentTab === "globalNewsFeed" && styles.Selected)}
+                className={cn(styles.Button, currentTab === "aiQuery" && styles.Selected)}
                 onClick={(e) => {
-                  setLastClickedTab("globalNewsFeed");
-                  if (e.shiftKey) {
-                    viewStore.createSidePanelTree(graphStore.globalRoot);
-                  } else if (e.metaKey) {
-                    openNewTab(graphStore.globalRoot);
+                  setLastClickedTab("aiQuery");
+                  if (e.metaKey) {
+                    window.open("/query", "_blank");
                   } else {
-                    handleNavigation(() => {
-                      setRoot(graphStore.globalRoot);
-                      viewStore.setFlattenSublists(true);
-                    });
+                    handleNavigation(() => router.push("/query"));
                   }
                 }}
               >
                 <span>
-                  <Newspaper size={16} strokeWidth={1.5} />
+                  <Search size={16} strokeWidth={1.5} />
                 </span>
-                <span className={styles.ButtonText}>Global News Feed</span>
+                <span className={styles.ButtonText}>AI Query</span>
               </Button>
-            </>
+            )}
+            {!settingsStore.newUser && (
+              <>
+                <div className={styles.SidebarSectionHeader}>Feeds</div>
+                <Button
+                  variant="ghost"
+                  className={cn(styles.Button, currentTab === "globalNewsFeed" && styles.Selected)}
+                  onClick={(e) => {
+                    setLastClickedTab("globalNewsFeed");
+                    if (e.shiftKey) {
+                      viewStore.createSidePanelTree(graphStore.globalRoot);
+                    } else if (e.metaKey) {
+                      openNewTab(graphStore.globalRoot);
+                    } else {
+                      handleNavigation(() => {
+                        setRoot(graphStore.globalRoot);
+                        viewStore.setFlattenSublists(true);
+                      });
+                    }
+                  }}
+                >
+                  <span>
+                    <Newspaper size={16} strokeWidth={1.5} />
+                  </span>
+                  <span className={styles.ButtonText}>Global News Feed</span>
+                </Button>
+              </>
+            )}
             <Button
               variant="ghost"
               className={cn(styles.Button, currentTab === "recentlyCreatedNotes" && styles.Selected)}

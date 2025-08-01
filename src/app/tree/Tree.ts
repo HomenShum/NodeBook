@@ -1153,6 +1153,12 @@ export class Tree {
     // indent multiline note when focused on first line
     if (selection.type === "editor") {
       const node = selection.treeNode;
+      // If we are in new user mode, we only add a tab to the beginning of the text
+      if (this.settingsStore.newUser) {
+        const newContent = "\t" + node.object.text;
+        await this.graphStore.updateNode({ nodeId: node.object.id, nodeProps: { content: newContent } });
+        return true;
+      }
       if (node instanceof DescendantTreeNode && node.parentGroup.id === "noteContent") {
         const parent = node.parent;
         if (parent instanceof DescendantTreeNode) {
@@ -1424,7 +1430,12 @@ export class Tree {
    * and split the node, you expect the mention text to get split accordingly.
    * So we let the editor determine the split content and pass it to this method.
    */
-  async split(treeNode: TreeNode, chips?: { before: Chip[]; after: Chip[] }) {
+  async split(
+    treeNode: TreeNode,
+    chips?: { before: Chip[]; after: Chip[] },
+    newPosition?: TreeNodeContentSelectionPosition,
+  ) {
+    console.log("Split to position", treeNode.object.text, newPosition);
     if (!(treeNode.object instanceof GraphNode) && chips !== undefined) {
       logger.warn("Chips are ignored when splitting non-node objects", { chips });
       chips = undefined;
@@ -1661,7 +1672,7 @@ export class Tree {
       }
     }
     if (changes.newNodePath) {
-      this.setFocusedNode(changes.newNodePath, "start", true);
+      this.setFocusedNode(changes.newNodePath, newPosition ?? "start", true);
     }
   }
 
@@ -1953,7 +1964,9 @@ export class Tree {
 
     this.graphStore.applyCombinedTransaction(txs);
     const position = this.selection?.type === "editor" ? this.selection.position : "end";
-    this.setFocusedNode(createPath(noteParent.path, "all", noteRootRelation.id), position);
+    setTimeout(() => {
+      this.setFocusedNode(createPath(noteParent.path, "all", noteRootRelation.id), position);
+    }, 0);
     return true;
   }
 

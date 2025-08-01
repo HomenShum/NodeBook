@@ -3,6 +3,7 @@ import { $getSelection, COMMAND_PRIORITY_NORMAL, INSERT_LINE_BREAK_COMMAND, KEY_
 import { action } from "mobx";
 import { useCallback, useEffect } from "react";
 
+import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { $getChipsAroundSelection } from "@/app/editor/utils/selection";
 import { Chip } from "@/app/graph/GraphNode";
 import { useToast } from "@/app/hooks/useToast";
@@ -19,7 +20,8 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
   const viewStore = useViewStore();
 
   return useCallback(
-    (e: KeyboardEvent, chips?: { before: Chip[]; after: Chip[] }) => {
+    (e: KeyboardEvent, chips?: { before: Chip[]; after: Chip[] }, newPosition?: number) => {
+      console.log("Received handleEnterKey with new position", newPosition);
       if (e.key !== "Enter") return false;
       e.preventDefault();
       e.stopPropagation();
@@ -139,7 +141,6 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
             if (updateManager) {
               updateManager.nextUpdateHasSelectionState = true;
             }
-
             // Perform the operation
             tree.split(treeNode, chips);
 
@@ -248,7 +249,12 @@ export function useHandleEnterKey(tree: Tree, treeNode: TreeNode) {
         }
 
         // Perform the operation
-        tree.split(treeNode, chips);
+        console.log("Calling split with new position", newPosition);
+        tree.split(
+          treeNode,
+          chips,
+          newPosition !== undefined ? { anchorOffset: newPosition, focusOffset: newPosition } : undefined,
+        );
 
         // Get the transaction ID and track the selection state
         if (updateManager?.lastTransactionId) {
@@ -282,6 +288,7 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
   const [editor] = useLexicalComposerContext();
   const tree = treeNode.tree;
   const handleEnterKey = useHandleEnterKey(tree, treeNode);
+  const settingsStore = useSettingsStore();
 
   useEffect(() => {
     return editor.registerCommand(
@@ -298,11 +305,33 @@ export const EnterKeyPlugin = ({ treeNode }: { treeNode: TreeNode }) => {
         const selection = $getSelection();
         if (!selection || !selection.getNodes() || !selection.getStartEndPoints()) return false;
         const { chipsBefore, chipsAfter } = $getChipsAroundSelection(selection);
+
+        // Check if we should continue bullet points for new users
+        if (settingsStore.newUser && chipsBefore.length > 0) {
+          // Check if the content before cursor starts with " *•  " pattern
+          const beforeText = chipsBefore.map((chip) => (chip.type === "text" ? chip.value : "")).join("");
+
+          // Match pattern: starts with " *•  " (space, asterisk, bullet, two spaces)
+          const bulletPattern = /^ *\t*• *\t/;
+          const match = bulletPattern.exec(beforeText);
+          if (match) {
+            // Add the same bullet pattern to the beginning of the new line
+            const bulletChip: Chip = {
+              type: "text",
+              value: match[0],
+            };
+
+            chipsAfter.unshift(bulletChip);
+            console.log("Called handleEnterKey with new position", match[0].length);
+            return handleEnterKey(event, { before: chipsBefore, after: chipsAfter }, match[0].length);
+          }
+        }
+
         return handleEnterKey(event, { before: chipsBefore, after: chipsAfter });
       }),
       COMMAND_PRIORITY_NORMAL,
     );
-  }, [editor, handleEnterKey]);
+  }, [editor, handleEnterKey, settingsStore]);
 
   return null;
 };
