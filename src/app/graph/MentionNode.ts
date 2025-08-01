@@ -11,6 +11,7 @@ import {
 } from "lexical";
 
 import styles from "@/app/editor/Editor.module.css";
+import { truncateText } from "@/app/util";
 import { MENTION_SYMBOL, MentionTrigger } from "@/lib/utils";
 
 // Much of this implementation is copied from:
@@ -58,7 +59,7 @@ export class MentionNode extends TextNode {
       serializedNode.mentionedGraphNodeText,
       serializedNode.mentionTrigger,
     );
-    node.setTextContent(serializedNode.text);
+    node.setTextContent(truncateText(serializedNode.text, 100));
     node.setFormat(serializedNode.format);
     node.setDetail(serializedNode.detail);
     node.setMode(serializedNode.mode);
@@ -73,7 +74,8 @@ export class MentionNode extends TextNode {
     __key?: NodeKey,
   ) {
     // The __key parameter is required when cloning a node
-    super(mentionTrigger === MENTION_SYMBOL ? "@" + mentionedGraphNodeText : mentionedGraphNodeText, __key);
+    const truncatedText = truncateText(mentionedGraphNodeText, 50);
+    super(mentionTrigger === MENTION_SYMBOL ? "@" + truncatedText : truncatedText, __key);
     this.mentionedGraphNodeId = mentionedGraphNodeId;
     this.mentionedGraphNodeText = mentionedGraphNodeText;
     this.mentionTrigger = mentionTrigger;
