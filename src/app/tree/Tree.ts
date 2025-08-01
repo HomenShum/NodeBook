@@ -1318,6 +1318,18 @@ export class Tree {
     // dedent multiline note when focused on first line
     if (selection.type === "editor") {
       const node = selection.treeNode;
+
+      if (this.settingsStore.newUser && (node.object.text.startsWith("\t") || node.object.text.startsWith("•\t"))) {
+        let newContent = node.object.text;
+        if (node.object.text.startsWith("\t")) {
+          newContent = node.object.text.slice(1);
+        } else if (node.object.text.startsWith("•\t")) {
+          newContent = node.object.text.slice(2);
+        }
+        await this.graphStore.updateNode({ nodeId: node.object.id, nodeProps: { content: newContent } });
+        return true;
+      }
+
       if (node instanceof DescendantTreeNode && node.parentGroup.id === "noteContent") {
         const parent = node.parent;
         if (parent instanceof DescendantTreeNode) {
