@@ -1,9 +1,10 @@
 import { eq } from "drizzle-orm";
-import dynamic from "next/dynamic";
 import { headers } from "next/headers";
 import React from "react";
+import dynamic from "next/dynamic";
 
 import { AuthProvider } from "@/app/auth/AuthProvider";
+import { UserProvider } from "@/app/UserProvider";
 import { FilteredNodesProvider } from "@/app/components/RelatedObject/contexts/FilteredNodesContext";
 import { ToastContextProvider } from "@/app/hooks/useToast";
 import { getDb } from "@/db";
@@ -73,11 +74,13 @@ export default async function LayoutClient({
   return (
     <ToastContextProvider>
       <AuthProvider>
-        <StoresProvider initialObjectId={objectId}>
-          <FilteredNodesProvider>
-            <App>{children}</App>
-          </FilteredNodesProvider>
-        </StoresProvider>
+        <UserProvider>
+          <StoresProvider initialObjectId={objectId}>
+            <FilteredNodesProvider>
+              <App>{children}</App>
+            </FilteredNodesProvider>
+          </StoresProvider>
+        </UserProvider>
       </AuthProvider>
     </ToastContextProvider>
   );

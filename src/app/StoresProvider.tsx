@@ -2,18 +2,15 @@
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
 import React, { useEffect, useRef, useState } from "react";
 
-import { UNLOGGED_USER } from "@/app/auth/MewUser";
 import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
 import { LoadingContext } from "@/app/contexts/LoadingContext";
 import { NotificationProvider } from "@/app/contexts/NotificationContext";
 import { SettingsStoreContext } from "@/app/contexts/SettingsStoreContext";
 import { SlugProvider } from "@/app/contexts/SlugContext";
-import { UserContext } from "@/app/contexts/UserContext";
 import { VoiceInputProvider } from "@/app/contexts/VoiceInputContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import useSetupUser from "@/app/hooks/useSetupUser";
 import { useToast } from "@/app/hooks/useToast";
 import { localLocalData } from "@/app/persistence/loadGraphData";
 import { toast } from "@/app/util";
@@ -21,6 +18,7 @@ import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
 import { GLOBAL_USERS_NODE_ID, GLOBAL_USERS_RELATION_ID } from "@/lib/constants";
 import rootLogger from "@/lib/logger";
+import { useUser } from "@/app/contexts/UserContext";
 
 export const logger = rootLogger.child({ service: "store-provider" });
 
@@ -30,14 +28,12 @@ export function StoresProvider({
 }: Readonly<{ children: React.ReactNode; initialObjectId: string | null }>) {
   const [isLoading, setIsLoading] = useState(true);
   const [firstRender, setFirstRender] = useState(true);
+  const user = useUser();
 
   // instantiate empty stores with unlogged user
-  const user = useSetupUser();
-  const [settingsStore, setSettingsStore] = useState<SettingsStore>(
-    new SettingsStore(user === null ? UNLOGGED_USER : user),
-  );
-  const [graphStore, setGraphStore] = useState<GraphStore>(new GraphStore(UNLOGGED_USER, settingsStore));
-  const [viewStore, setViewStore] = useState<ViewStore>(new ViewStore(settingsStore, graphStore));
+  const [settingsStore, setSettingsStore] = useState<SettingsStore | null>(null);
+  const [graphStore, setGraphStore] = useState<GraphStore | null>(null);
+  const [viewStore, setViewStore] = useState<ViewStore | null>(null);
   const { addToast } = useToast();
   const renderCounter = useRef(0);
 
@@ -125,27 +121,29 @@ export function StoresProvider({
   }, [initialObjectId, user]);
 
   useEffect(() => {
-    viewStore.startObservingMouse();
+    viewStore && viewStore.startObservingMouse();
     return () => {
-      viewStore.stopObservingMouse();
+      viewStore && viewStore.stopObservingMouse();
     };
   }, [viewStore]);
 
+  if (!settingsStore || !viewStore || !graphStore) {
+    return <></>;
+  }
+
   return (
     <LoadingContext.Provider value={isLoading}>
-      <UserContext.Provider value={user || UNLOGGED_USER}>
-        <SettingsStoreContext.Provider value={settingsStore}>
-          <GraphStoreProvider value={graphStore}>
-            <ViewStoreProvider value={viewStore}>
-              <SlugProvider>
-                <NotificationProvider>
-                  <VoiceInputProvider>{children}</VoiceInputProvider>
-                </NotificationProvider>
-              </SlugProvider>
-            </ViewStoreProvider>
-          </GraphStoreProvider>
-        </SettingsStoreContext.Provider>
-      </UserContext.Provider>
+      <SettingsStoreContext.Provider value={settingsStore}>
+        <GraphStoreProvider value={graphStore}>
+          <ViewStoreProvider value={viewStore}>
+            <SlugProvider>
+              <NotificationProvider>
+                <VoiceInputProvider>{children}</VoiceInputProvider>
+              </NotificationProvider>
+            </SlugProvider>
+          </ViewStoreProvider>
+        </GraphStoreProvider>
+      </SettingsStoreContext.Provider>
     </LoadingContext.Provider>
   );
 }
