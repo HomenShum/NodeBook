@@ -163,6 +163,7 @@ export const defaultRelationTypes: Record<DefaultRelationType, GraphRelationType
 };
 
 export const hiddenRelationTypeIds = new Set([defaultRelationTypes.dataSource.id]);
+export const hiddenObjectPrefixes = ["user-relation-types-node-id-", "user-card-statuses-node-id-"];
 
 export const MAX_PREFIX_LENGTH = 3;
 export const DELETED_NODE_TEXT = "Unloaded Node";

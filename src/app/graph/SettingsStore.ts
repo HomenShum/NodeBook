@@ -54,7 +54,7 @@ export class SettingsStore {
   public showOnlyTodosInQuickCapture: boolean = false;
   public todosFilterType: string = "all";
   public todosInQuickCaptureFilterType: string = "all";
-  public showHiddenRelations: boolean = false;
+  public showHiddenObjects: boolean = false;
   public hideHashtagRelations: boolean = false;
   public sidebarExpandedMyFavorites: boolean = true;
   public sidebarExpandedMyHashtags: boolean = true;
@@ -120,7 +120,7 @@ export class SettingsStore {
     this.showOnlyTodosInQuickCapture = false;
     this.todosFilterType = "all";
     this.todosInQuickCaptureFilterType = "all";
-    this.showHiddenRelations = false;
+    this.showHiddenObjects = false;
     this.hideHashtagRelations = false;
     this.sidebarExpandedMyFavorites = true;
     this.sidebarExpandedMyHashtags = true;
@@ -174,7 +174,7 @@ export class SettingsStore {
       showOnlyTodosInQuickCapture: this.showOnlyTodosInQuickCapture,
       todosFilterType: this.todosFilterType,
       todosInQuickCaptureFilterType: this.todosInQuickCaptureFilterType,
-      showHiddenRelations: this.showHiddenRelations,
+      showHiddenObjects: this.showHiddenObjects,
       hideHashtagRelations: this.hideHashtagRelations,
       sidebarExpandedMyFavorites: this.sidebarExpandedMyFavorites,
       sidebarExpandedMyHashtags: this.sidebarExpandedMyHashtags,
@@ -217,7 +217,7 @@ export class SettingsStore {
     this.showOnlyTodosInQuickCapture = data.showOnlyTodosInQuickCapture ?? this.showOnlyTodosInQuickCapture;
     this.todosFilterType = data.todosFilterType ?? this.todosFilterType;
     this.todosInQuickCaptureFilterType = data.todosInQuickCaptureFilterType ?? this.todosInQuickCaptureFilterType;
-    this.showHiddenRelations = data.showHiddenRelations ?? this.showHiddenRelations;
+    this.showHiddenObjects = data.showHiddenObjects ?? this.showHiddenObjects;
     this.hideHashtagRelations = data.hideHashtagRelations ?? this.hideHashtagRelations;
     this.sidebarExpandedMyFavorites = data.sidebarExpandedMyFavorites ?? this.sidebarExpandedMyFavorites;
     this.sidebarExpandedMyHashtags = data.sidebarExpandedMyHashtags ?? this.sidebarExpandedMyHashtags;
@@ -345,8 +345,8 @@ export class SettingsStore {
     this.hideHashtagRelations = value;
   }
 
-  setShowHiddenRelations(value: boolean) {
-    this.showHiddenRelations = value;
+  setShowHiddenObjects(value: boolean) {
+    this.showHiddenObjects = value;
   }
 
   setSidebarExpandedMyFavorites(value: boolean) {

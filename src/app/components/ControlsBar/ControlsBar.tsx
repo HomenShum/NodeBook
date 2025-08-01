@@ -540,11 +540,11 @@ export const ControlsBar = observer(function ControlsBar({ tree }: Props) {
                 />
               </div>
               <div className={s.SwitchItem}>
-                <label htmlFor="show-hidden-relations">Show hidden relations</label>
+                <label htmlFor="show-hidden-objects">Show hidden objects</label>
                 <Switch
-                  id="show-hidden-relations"
-                  checked={settingsStore.showHiddenRelations}
-                  onCheckedChange={(checked: boolean) => settingsStore.setShowHiddenRelations(checked)}
+                  id="show-hidden-objects"
+                  checked={settingsStore.showHiddenObjects}
+                  onCheckedChange={(checked: boolean) => settingsStore.setShowHiddenObjects(checked)}
                 />
               </div>
 

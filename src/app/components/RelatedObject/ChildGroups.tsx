@@ -8,7 +8,7 @@ import { formatNoteSeparatorDate } from "@/app/components/RelatedObject/utils/he
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { useUser } from "@/app/contexts/UserContext";
-import { hiddenRelationTypeIds } from "@/app/graph/constants";
+import { hiddenObjectPrefixes, hiddenRelationTypeIds } from "@/app/graph/constants";
 import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
 import {
   AllGroup,
@@ -279,7 +279,11 @@ const AllSection = observer(function AllSection({ parentNode, group }: AllSectio
     const show =
       node.object.objectType !== "placeholder" &&
       (!settingsStore.hidePinnedItems || !node.parent.object.isRelationPinned(node.relationWithParent)) &&
-      !(!settingsStore.showHiddenRelations && hiddenRelationTypeIds.has(node.relationWithParent.relationTypeId));
+      !(
+        !settingsStore.showHiddenObjects &&
+        (hiddenRelationTypeIds.has(node.relationWithParent.relationTypeId) ||
+          hiddenObjectPrefixes.some((prefix) => node.object.id.startsWith(prefix)))
+      );
     if (!show) {
       tree.addFilteredRelation(node.relationWithParent.id);
     } else {
