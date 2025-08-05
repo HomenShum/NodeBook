@@ -1154,7 +1154,7 @@ export class Tree {
     if (selection.type === "editor") {
       const node = selection.treeNode;
       // If we are in new user mode, we only add a tab to the beginning of the text
-      if (this.settingsStore.newUser) {
+      if (this.settingsStore.newUser && this.viewType === ViewType.Note) {
         const newContent = "\t" + node.object.text;
         await this.graphStore.updateNode({ nodeId: node.object.id, nodeProps: { content: newContent } });
         return true;
