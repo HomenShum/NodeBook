@@ -102,7 +102,10 @@ export class ViewStore {
     });
     this.settingsStore = settingsStore;
     this.graphStore = graphStore;
-    this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser(), { isMainTree: true });
+    this.treeView = new Tree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser(), {
+      isMainTree: true,
+    });
+
     this.sublistView = new SublistTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser());
     this.searchView = new SearchTree(graphStore, this.settingsStore, graphStore.getDefaultRootForUser(), true);
     this.quickCaptureSearchView = new QuickCaptureSearchTree(
@@ -114,6 +117,8 @@ export class ViewStore {
     this.quickCaptureTree = new QuickCaptureTree(this.graphStore, this.settingsStore, this.graphStore.myStreamNode, {
       viewType: this.quickCaptureViewType,
     });
+
+    this.setViewType(this.viewType);
 
     // Initialize navigation state
     this.resetNavigationState();
@@ -230,9 +235,11 @@ export class ViewStore {
 
   setViewType(viewType: ViewType): void {
     this.settingsStore.setViewMode(this.mainView.rootObjectId, viewType);
+    this.mainView.viewType = viewType;
   }
 
   get viewType(): ViewType {
+    this.mainView.viewType = this.settingsStore.getViewMode(this.mainView.rootObjectId);
     return this.settingsStore.getViewMode(this.mainView.rootObjectId);
   }
 
