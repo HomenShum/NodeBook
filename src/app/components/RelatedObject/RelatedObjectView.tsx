@@ -292,10 +292,14 @@ const Content = observer(function Content() {
                 id={treeNode.id + "-noteContent"}
               >
                 {/* Border elements for click handling */}
-                <div className={styles.BorderTop} onPointerDown={handleBorderClick} />
-                <div className={styles.BorderRight} onPointerDown={handleBorderClick} />
-                <div className={styles.BorderBottom} onPointerDown={handleBorderClick} />
-                <div className={styles.BorderLeft} onPointerDown={handleBorderClick} />
+                {treeViewType === "outline" && (
+                  <>
+                    <div className={styles.BorderTop} onPointerDown={handleBorderClick} />
+                    <div className={styles.BorderRight} onPointerDown={handleBorderClick} />
+                    <div className={styles.BorderBottom} onPointerDown={handleBorderClick} />
+                    <div className={styles.BorderLeft} onPointerDown={handleBorderClick} />
+                  </>
+                )}
 
                 <NoteContentSection parentNode={treeNode} group={treeNode.childrenGroupsById.noteContent} />
                 <div
