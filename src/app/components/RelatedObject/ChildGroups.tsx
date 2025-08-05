@@ -140,17 +140,73 @@ export const NoteContentSection = observer(function NoteContentSection({ parentN
     parentNode.tree instanceof QuickCaptureTree || parentNode.tree instanceof QuickCaptureSearchTree
       ? viewStore.quickCaptureViewType
       : viewStore.viewType;
+
   if (parentNode instanceof DescendantTreeNode && parentNode.instanceCountInPath > 1) {
     return <div>Circular reference to {`"${parentNode.object.text}"`}</div>;
   }
-  if (group.nodes.length === 0) {
-    return null;
-  }
+
+  const tree = parentNode.tree;
+  const hasSearch = tree.search !== "";
   const topLevelNote = viewType === "note" && parentNode.parent instanceof RootTreeNode;
   const rootNote = parentNode instanceof RootTreeNode;
-  return (
-    <div>
-      {group.nodes
+
+  // If no nodes and no filtered nodes, return null
+  if (group.nodes.length === 0 && (!hasSearch || !(tree instanceof SearchTree))) {
+    return null;
+  }
+
+  const renderContent = () => {
+    if (hasSearch && tree instanceof SearchTree) {
+      // Get filtered positions for this group
+      const filteredPositions = tree.getFilteredGroupPositions(parentNode.path, group.id);
+      const visibleNodes = group.nodes.filter((node) => node.object.objectType !== "placeholder");
+
+      // Combine visible nodes and filtered groups
+      const combinedItems: CombinedItem[] = [
+        ...visibleNodes.map((node) => ({
+          type: "node" as const,
+          node,
+          position: node.position,
+        })),
+        ...filteredPositions.map(({ position, groupIndex }: { position: any; groupIndex: number }) => ({
+          type: "filteredGroup" as const,
+          position,
+          groupIndex,
+        })),
+      ].sort((a, b) => comparePositions(a.position, b.position));
+
+      return combinedItems.map((item, i) => {
+        if (item.type === "node") {
+          return (
+            <div
+              key={item.node.path}
+              style={{
+                marginLeft: topLevelNote || rootNote ? "0px" : "-20px",
+                paddingBottom:
+                  i === combinedItems.length - 1 &&
+                  item.node.childrenGroupsById.all.nodes[0]?.childrenGroupsById.noteContent?.nodes.length > 0
+                    ? "20px"
+                    : "1px",
+              }}
+            >
+              <RelatedObjectView treeNode={item.node} />
+            </div>
+          );
+        } else {
+          return (
+            <FilteredNodesPlaceholder
+              key={`${parentNode.path}-${group.id}-filtered-${item.groupIndex}`}
+              tree={tree}
+              parentPath={parentNode.path}
+              groupId={group.id}
+              groupIndex={item.groupIndex}
+            />
+          );
+        }
+      });
+    } else {
+      // Original non-search rendering logic
+      return group.nodes
         .filter((node) => node.object.objectType !== "placeholder")
         .map((treeNode, i) => {
           return (
@@ -168,9 +224,11 @@ export const NoteContentSection = observer(function NoteContentSection({ parentN
               <RelatedObjectView treeNode={treeNode} />
             </div>
           );
-        })}
-    </div>
-  );
+        });
+    }
+  };
+
+  return <div>{renderContent()}</div>;
 });
 
 interface PinnedSectionProps {
