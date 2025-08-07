@@ -25,6 +25,7 @@
 body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  zoom: 1.1;
 }
 
 input,
@@ -96,8 +97,9 @@ body,
 :root,
 .light,
 .light-theme {
-  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Fira Sans", "Droid Sans", sans-serif;
+  --font-inter:
+    "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Fira Sans",
+    "Droid Sans", sans-serif;
   --teal-1: #f3f6f7;
   --teal-2: #ecf3f4;
   --teal-3: #d9eef3;
@@ -185,8 +187,9 @@ body,
 /* Dark mode */
 .dark,
 .dark-theme {
-  --font-inter: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
-    "Fira Sans", "Droid Sans", sans-serif;
+  --font-inter:
+    "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Fira Sans",
+    "Droid Sans", sans-serif;
   --teal-1: #0a1315;
   --teal-2: #111b1d;
   --teal-3: #102b31;
