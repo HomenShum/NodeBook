@@ -8,8 +8,10 @@
   display: flex;
   align-items: start;
   position: relative;
-  min-height: 32px;
   padding-top: 3px;
+  cursor: text;
+  height: fit-content;
+  align-content: center;
 }
 
 /* 
