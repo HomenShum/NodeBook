@@ -4,6 +4,9 @@ on:
   push:
     branches: [ main ]
 
+env:
+  VERCEL_ENV: "production"
+
 jobs:
   build:
     runs-on: ubuntu-latest
