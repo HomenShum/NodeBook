@@ -1,0 +1,25 @@
+version: '3.9'
+
+x-app: &app
+  image: ghcr.io/IdeaFlowCo/mew:${IMAGE_TAG:-latest}
+  restart: unless-stopped
+  env_file:
+    - .env.common
+
+services:
+  mew-main:
+    <<: *app
+    container_name: mew-edge
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+
+  mew-test:
+    <<: *app
+    container_name: mew-test
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3001:3000"
+

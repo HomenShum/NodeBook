@@ -10,30 +10,10 @@ export const answerQuery = async (
   userId: string,
   query: string,
   sessionId = "unknown",
-  region = "unknown",
-  country = "unknown",
   short_text = false,
 ): Promise<SerializedGraphStore> => {
-  console.timeLog(sessionId, `[debug] Inside answerQuery, region: ${region}, country: ${country}`);
   console.timeLog(sessionId, "[debug] Inside answerQuery, before getDb()");
-  let db;
-  console.log(`env.NEON_DB_ARIZ_REPLICA_MEW_LITE length: ${env.NEON_DB_ARIZ_REPLICA_MEW_LITE.length}`);
-  console.log(`env.STAGE: ${env.STAGE}`);
-  console.log(
-    `env.POSTGRES_CONNECTION_STRING includes mew_lite: ${env.POSTGRES_CONNECTION_STRING.includes("mew_lite")}`,
-  );
-  console.log(`region.includes("sfo"): ${region.includes("sfo")}`);
-  if (
-    region.includes("sfo") &&
-    env.NEON_DB_ARIZ_REPLICA_MEW_LITE.length > 0 &&
-    env.POSTGRES_CONNECTION_STRING.includes("mew_lite")
-  ) {
-    console.timeLog(sessionId, "[debug] Inside answerQuery, using NEON_DB_ARIZ_REPLICA_MEW_LITE");
-    db = getDb(env.NEON_DB_ARIZ_REPLICA_MEW_LITE);
-  } else {
-    console.timeLog(sessionId, "[debug] Inside answerQuery, using POSTGRES_CONNECTION_STRING");
-    db = getDb();
-  }
+  const db = getDb();
   console.timeLog(sessionId, "[debug] Inside answerQuery, after getDb()");
   if (query.length < 3) {
     return {

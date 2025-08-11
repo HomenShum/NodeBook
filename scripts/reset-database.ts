@@ -1,7 +1,7 @@
 import readline from "readline";
 
 import { sql } from "drizzle-orm";
-import { migrate } from "drizzle-orm/vercel-postgres/migrator";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 
 import { end, getDb } from "@/db";
 import { env } from "@/envBackend";

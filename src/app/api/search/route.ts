@@ -1,5 +1,4 @@
 import { uuid4 } from "@sentry/utils";
-import { geolocation } from "@vercel/functions";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -47,8 +46,7 @@ async function getHandler(req: NextAuthenticatedRequest) {
   if (!query || decodeURIComponent(query).length < 3) {
     throw Error("Missing search query or query too short");
   }
-  const geo = geolocation(req);
 
-  const data = await answerQuery(userId, decodeURIComponent(query), sessionId, geo.region, geo.country, short_text);
+  const data = await answerQuery(userId, decodeURIComponent(query), sessionId, short_text);
   return NextResponse.json({ data });
 }

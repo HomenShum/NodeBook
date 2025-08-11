@@ -1,6 +1,6 @@
 import readline from "readline";
 
-import { migrate } from "drizzle-orm/vercel-postgres/migrator";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 
 import { getDb } from "@/db";
 import { env } from "@/envBackend";
