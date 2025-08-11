@@ -41,7 +41,7 @@ jobs:
             set -e
             export IMAGE_TAG=${{ github.sha }}
             cd /home/ubuntu/deployments
-            echo "${{ secrets.GH_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GH_TOKEN }}" | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin
             IMAGE_TAG=${{ github.sha }} docker compose pull
 #            Uncomment after we have our first container running.
 #            IMAGE_TAG=${{ github.sha }} docker compose up -d
