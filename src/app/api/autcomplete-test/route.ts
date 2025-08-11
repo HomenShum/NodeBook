@@ -11,11 +11,6 @@ function parseRedisFieldArray(arr) {
   return obj;
 }
 
-//Don't you just love hard coding secrets?
-const client = await createClient({
-  url: "redis://default:S0KsG4fKZkzYio3iTfDbiHfGCR1SB493@redis-19335.c24.us-east-mz-1.ec2.redns.redis-cloud.com:19335",
-}).connect();
-
 export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.get("query");
 
@@ -30,6 +25,11 @@ export async function GET(req: NextRequest) {
 
   const results = [];
   try {
+    //Don't you just love hard coding secrets?
+    const client = await createClient({
+      url: "redis://default:S0KsG4fKZkzYio3iTfDbiHfGCR1SB493@redis-19335.c24.us-east-mz-1.ec2.redns.redis-cloud.com:19335",
+    }).connect();
+
     const raw = await client.sendCommand(["FT.SEARCH", "idx", `@text:${query}*`]);
     //      console.log(raw);
     // @ts-ignore

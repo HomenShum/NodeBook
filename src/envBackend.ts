@@ -9,7 +9,9 @@ const processEnvSchema = z
     AUTH0_DOMAIN: z.string().optional(),
     AUTH0_API_AUDIENCE: z.string().optional(),
     AUTH0_JWT_PUBLIC_KEY: z.string().optional(),
-    VERCEL_ENV: z.union([z.literal("development"), z.literal("preview"), z.literal("production")]),
+    VERCEL_ENV: z
+      .union([z.literal("development"), z.literal("preview"), z.literal("production")])
+      .default("production"),
     NEXT_PUBLIC_HARDCODED_USER_ID: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
     EXTRACT_ENTITIES_OPENAI_MODEL: z.string().optional(),
@@ -17,8 +19,12 @@ const processEnvSchema = z
     PINECONE_API_KEY: z.string().optional(),
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
+    SKIP_DATABASE_URL: z.string().optional(),
   })
-  .refine((data) => data.POSTGRES_CUSTOM_URL || data.POSTGRES_URL, "POSTGRES_URL or POSTGRES_CUSTOM_URL is required");
+  .refine(
+    (data) => data.POSTGRES_CUSTOM_URL || data.POSTGRES_URL || data.SKIP_DATABASE_URL === "true",
+    "POSTGRES_URL or POSTGRES_CUSTOM_URL is required",
+  );
 processEnvSchema.parse(process.env);
 declare global {
   namespace NodeJS {

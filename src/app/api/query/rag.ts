@@ -166,21 +166,21 @@ function parseChipsFromText(
   return chips;
 }
 
-const pinecone = new Pinecone({ apiKey: env.PINECONE_API_KEY });
-const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-const indexName = pgConnectionStringToPineconeIndexName(env.POSTGRES_CONNECTION_STRING);
+const getPinecone = () => new Pinecone({ apiKey: env.PINECONE_API_KEY });
+const getOpenAI = () => new OpenAI({ apiKey: env.OPENAI_API_KEY });
+const getIndexName = () => pgConnectionStringToPineconeIndexName(env.POSTGRES_CONNECTION_STRING);
 
 const MAX_QUERIES = 5;
 
 async function queryIndex(query: string, topK: number = 3, userId: string | undefined = undefined) {
-  const response = await pinecone.inference.embed("multilingual-e5-large", [query], {
+  const response = await getPinecone().inference.embed("multilingual-e5-large", [query], {
     inputType: "query",
   });
   const vector = response.data[0].values;
   if (!vector) {
     return [];
   }
-  const index = pinecone.Index(indexName);
+  const index = getPinecone().Index(getIndexName());
   const publicResults = await index.namespace("public").query({ vector, topK, includeMetadata: true });
   const matches = publicResults.matches;
   if (userId !== undefined) {
@@ -338,7 +338,7 @@ export async function ask(query: string, debug: boolean = false, userId: undefin
       logger.debug("-".repeat(50));
     }
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: MODEL_NAME,
       messages,
       temperature: 0,
@@ -406,7 +406,7 @@ export async function ask(query: string, debug: boolean = false, userId: undefin
     content: `You have used all available additional queries. Please provide your final answer addressing the original query "${query}" now, citing nodes with [[Entity Name]] and standard Markdown for web links.`,
   });
 
-  const finalResponse = await openai.chat.completions.create({
+  const finalResponse = await getOpenAI().chat.completions.create({
     model: MODEL_NAME,
     messages,
     temperature: 0,
