@@ -1,7 +1,7 @@
 version: '3.9'
 
 x-app: &app
-  image: ghcr.io/IdeaFlowCo/mew:${IMAGE_TAG:-latest}
+  image: ghcr.io/ideaflowco/mew:${IMAGE_TAG:-latest}
   restart: unless-stopped
   env_file:
     - .env.common
