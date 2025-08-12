@@ -80,9 +80,10 @@ const renderItemsForSearch = (
     if (item.type === "node") {
       const previousItem = combinedItems[i - 1] as VisibleNodeItem;
       const showDate =
-        i == 0 ||
-        (previousItem.type === "node" &&
-          item.node.object.createdAt.toDateString() !== previousItem.node.object.createdAt.toDateString());
+        noteView &&
+        (i == 0 ||
+          (previousItem.type === "node" &&
+            item.node.object.createdAt.toDateString() !== previousItem.node.object.createdAt.toDateString()));
       return (
         <div key={item.node.path}>
           {noteView && <Separator i={i} date={showDate ? item.node.object.createdAt : null} />}
@@ -293,12 +294,8 @@ const PinnedSection = observer(function PinnedSection({ parentNode, group }: Pin
               return group.nodes
                 .filter((node) => node.object.objectType !== "placeholder")
                 .map((treeNode, i) => {
-                  const showDate =
-                    i == 0 ||
-                    treeNode.object.createdAt.toDateString() !== group.nodes[i - 1].object.createdAt.toDateString();
                   return (
                     <div key={treeNode.path}>
-                      {noteView && <Separator i={i} date={showDate ? treeNode.object.createdAt : null} />}
                       <RelatedObjectView treeNode={treeNode} />
                     </div>
                   );
