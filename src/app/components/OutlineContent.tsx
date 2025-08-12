@@ -140,11 +140,6 @@ function OutlineContent({ tree }: Props) {
           viewStore.mainView.root.childrenGroupsById.all.nodes[0] ?? viewStore.mainView.createChildOfRootAndFocus();
         viewStore.mainView.setFocusedNode(topChild.path, "end", true, true);
       }
-      if (tree.isMainTree && tree.selection === null && isEscapeSelectionHotkey(event)) {
-        wasEventHandled = true;
-        setRoot(graphStore.getDefaultRootForUser());
-        viewStore.setViewType(ViewType.Outline);
-      }
       if (!wasEventHandled) {
         wasEventHandled = handleTreeHotkeys(event, tree, addToast);
       }
