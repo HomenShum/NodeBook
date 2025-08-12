@@ -169,13 +169,13 @@ export function MentionDropdown({
           // Double bracket mention has to and from relations flipped compared
           // to normal mention/parentRelation logic.
           const hasDoubleBracketRelation = treeNode.object.relations.some(
-              (r) =>
-                  (r.relationType == defaultRelationTypes.relatedTo &&
-                      r.from.id === graphNodeId &&
-                      r.to.id === treeNode.object.id) ||
-                  (r.relationType.id === defaultRelationTypes.child.id &&
-                      r.to.id === treeNode.object.id &&
-                      r.from.id === graphNodeId),
+            (r) =>
+              (r.relationType == defaultRelationTypes.relatedTo &&
+                r.from.id === graphNodeId &&
+                r.to.id === treeNode.object.id) ||
+              (r.relationType.id === defaultRelationTypes.child.id &&
+                r.to.id === treeNode.object.id &&
+                r.from.id === graphNodeId),
           );
           if (!hasDoubleBracketRelation) {
             await graphStore.addRelation({
@@ -248,7 +248,9 @@ export class MentionTypeaheadOption extends MenuOption {
       typeof value === "string" ? { type: "new", text: value, trigger } : { type: "existing", object: value, trigger };
   }
   get name() {
-    return this.value.type === "new" ? `Create new node: ${this.value.text.trim()}` : this.value.object.text;
+    console.log("this.value.trigger", this.value.trigger);
+    let createNewPrompt = this.value.trigger === HASHTAG_SYMBOL ? "Create new hashtag: " : "Create new node: ";
+    return this.value.type === "new" ? createNewPrompt + this.value.text.trim() : this.value.object.text;
   }
 }
 
@@ -357,7 +359,9 @@ export function getMenuRenderFn(
                 }}
               >
                 <div className={styles.DropdownItem}>
-                  {`Create new node: ${option.value.text.trim()}`}
+                  {option.value.trigger === HASHTAG_SYMBOL
+                    ? `Create new hashtag: #${option.value.text.trim()}`
+                    : `Create new node: ${option.value.text.trim()}`}
                   {option.value.type === "new" && ` (${isMac ? "⌘" : "Ctrl"} + Enter )`}
                 </div>
               </li>
