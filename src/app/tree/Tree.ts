@@ -2370,13 +2370,14 @@ export class Tree {
    *
    */
   escapeSelection() {
-    if (this.selection === null) return;
+    if (this.selection === null) return false;
 
     if (this.selection.type === "node") {
       this.setFocusedNode(this.selection.headNodeId);
-      return;
+      return true;
     }
-    this.setFocusedNode(null);
+    // this.setFocusedNode(null);
+    return false;
   }
 
   /**
