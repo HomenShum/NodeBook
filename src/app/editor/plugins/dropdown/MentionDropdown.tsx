@@ -126,7 +126,10 @@ export function MentionDropdown({
         }
         spaceAfter.selectEnd();
         if (opt.value.type === "new") {
-          const newNodeText = opt.name.slice("Create new node: ".length);
+          let newNodeText = opt.name.slice("Create new node: ".length);
+          if (dropdown.mentionTrigger === HASHTAG_SYMBOL) {
+            newNodeText = opt.name.slice("Create new hashtag: ".length);
+          }
           const newNodeIsHashtag = dropdown.mentionTrigger === HASHTAG_SYMBOL;
           const parentId = newNodeIsHashtag ? graphStore.myHashtagsNodeId : graphStore.userRootId;
           await graphStore.addChildNode({
@@ -360,7 +363,7 @@ export function getMenuRenderFn(
               >
                 <div className={styles.DropdownItem}>
                   {option.value.trigger === HASHTAG_SYMBOL
-                    ? `Create new hashtag: #${option.value.text.trim()}`
+                    ? `Create new hashtag: ${option.value.text.trim()}`
                     : `Create new node: ${option.value.text.trim()}`}
                   {option.value.type === "new" && ` (${isMac ? "⌘" : "Ctrl"} + Enter )`}
                 </div>
