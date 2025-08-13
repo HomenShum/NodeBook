@@ -348,6 +348,30 @@ export function $getCaretPosition(): null | {
   const nativeSelection = window.getSelection();
   const editorElement = $getEditor().getRootElement();
   if (!$isRangeSelection(selection) || !nativeSelection || !editorElement) return null;
+
+  // Simple and reliable approach: check actual content position
+  const startEndPoints = selection.getStartEndPoints();
+  if (startEndPoints) {
+    const [start, end] = startEndPoints;
+    const nodes = selection.getNodes();
+
+    // Check if we're at the very beginning (top)
+    const isAtTop = start.offset === 0 && end.offset === 0 && nodes.length > 0 && nodes[0].getIndexWithinParent() === 0;
+
+    // Check if we're at the very end (bottom) by looking at the last node
+    const lastNode = nodes[nodes.length - 1];
+    const isAtBottom = lastNode && end.offset === lastNode.getTextContentSize() && lastNode.getNextSibling() === null;
+
+    if (isAtTop || isAtBottom) {
+      return {
+        lineCount: 1, // We know it's single line if we can determine top/bottom this way
+        lineNumber: 1,
+        isAtTop,
+        isAtBottom: isAtBottom || false,
+      };
+    }
+  }
+
   const range = nativeSelection.getRangeAt(0);
   let lineNumber = 1;
   let lineCount = 1;
