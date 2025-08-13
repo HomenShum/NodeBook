@@ -65,7 +65,7 @@ export function StoresProvider({
 
       // create new stores (shorter names to distinguish from the state variables)
       const settings = new SettingsStore(user);
-      let graph = new GraphStore(user, settings, addToast);
+      let graph = new GraphStore(user, settings);
       const view = new ViewStore(settings, graph);
 
       // load and start sync
@@ -92,7 +92,7 @@ export function StoresProvider({
         }
       } catch (e) {
         toast("Failed to load data from server. Starting with an empty graph.");
-        graph = new GraphStore(user, settings, addToast);
+        graph = new GraphStore(user, settings);
         logger.error("Failed sync setup", e);
       }
 

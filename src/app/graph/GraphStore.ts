@@ -104,20 +104,10 @@ export class GraphStore {
   nodesInLayerLoading: Set<string> = new Set([]);
 
   cappedKeywordIndex: CappedKeywordIndex;
-  addToast?: (toast: { title: string; description?: string; action?: { label: string; onClick: () => void } }) => void;
 
-  constructor(
-    user: MewUser = UNLOGGED_USER,
-    settings?: SettingsStore,
-    addToast?: (toast: {
-      title: string;
-      description?: string;
-      action?: { label: string; onClick: () => void };
-    }) => void,
-  ) {
+  constructor(user: MewUser = UNLOGGED_USER, settings?: SettingsStore) {
     this.user = user;
     this.settings = settings;
-    this.addToast = addToast;
     this.updateManager = new UpdateManager(
       user.id,
       (data: SerializedGraphStore) => this.resetAndLoad(data),
@@ -607,18 +597,7 @@ export class GraphStore {
           if (relations.length > 0) {
             const hashtagNode = this.nodesById.get(relations[0].to.id);
             if (hashtagNode && relations.length === hashtagNode.relationCount - 1) {
-              // If the hashtag node has no relations left, notify the user with a toast that gives
-              // them the option to delete it.
-              this.addToast?.({
-                title: `Hashtag node has no hashtag relations left`,
-                description: `Would you like to delete ${hashtagNode.text}?`,
-                action: {
-                  label: "Delete",
-                  onClick: () => {
-                    this.removeNode({ nodeId: hashtagNode.id });
-                  },
-                },
-              });
+              this.removeNode({ nodeId: hashtagNode.id });
             }
           }
 
