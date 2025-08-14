@@ -25,6 +25,8 @@
 body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  tab-size: 4;
+  -moz-tab-size: 4;
 }
 
 input,

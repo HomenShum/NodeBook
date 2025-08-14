@@ -1213,6 +1213,45 @@ export class Tree {
       return true;
     }
 
+    // In Note view, when we have multiple nodes selected, just add tab indentation to each node's content
+    // instead of changing the graph structure
+    if (selection.type === "node" && this.viewType === ViewType.Note) {
+      // Create combined transaction for all tab operations
+      const txCombined: TxCombined = [];
+
+      for (const node of selection.subtreeRoots) {
+        if (node.object instanceof GraphNode) {
+          const currentText = node.object.text;
+          let newContent: string;
+
+          // If the text already starts with a bullet + tab pattern, add tab before the bullet
+          if (currentText.startsWith("•\t")) {
+            newContent = "\t" + currentText;
+          } else if (currentText.startsWith("\t")) {
+            // Text already starts with tab(s) - add another tab at the beginning
+            newContent = "\t" + currentText;
+          } else {
+            // Text has no leading tabs - need to add bullet + tab to prevent auto-conversion issues
+            // When we add "\t•", the content processor won't add another bullet since it already sees one
+            newContent = "•\t" + currentText;
+          }
+
+          txCombined.push({
+            type: "updateNode",
+            transaction: {
+              nodeId: node.object.id,
+              nodeProps: { content: newContent },
+            },
+          });
+        }
+      }
+
+      if (txCombined.length > 0) {
+        this.graphStore.applyCombinedTransaction(txCombined);
+      }
+      return true;
+    }
+
     for (const nodes of groupSiblings(selection?.subtreeRoots ?? [])) {
       if (nodes.length === 0) continue;
       const { parentGroup, siblingAbove } = nodes[0];
@@ -1373,6 +1412,48 @@ export class Tree {
           }
         }
       }
+    }
+
+    // In Note view, when we have multiple nodes selected, just remove tab indentation from each node's content
+    // instead of changing the graph structure
+    if (selection.type === "node" && this.viewType === ViewType.Note) {
+      // Create combined transaction for all dedent operations
+      const txCombined: TxCombined = [];
+
+      for (const node of selection.subtreeRoots) {
+        if (node.object instanceof GraphNode) {
+          const currentText = node.object.text;
+          let newContent: string;
+
+          // Remove one level of indentation
+          if (currentText.startsWith("\t•\t")) {
+            // Remove the leading tab before the bullet
+            newContent = currentText.slice(1);
+          } else if (currentText.startsWith("•\t")) {
+            // Remove bullet and tab (•\ttext -> text)
+            newContent = currentText.slice(2);
+          } else if (currentText.startsWith("\t")) {
+            // Remove one leading tab
+            newContent = currentText.slice(1);
+          } else {
+            // No leading tabs to remove, skip this node
+            continue;
+          }
+
+          txCombined.push({
+            type: "updateNode",
+            transaction: {
+              nodeId: node.object.id,
+              nodeProps: { content: newContent },
+            },
+          });
+        }
+      }
+
+      if (txCombined.length > 0) {
+        this.graphStore.applyCombinedTransaction(txCombined);
+      }
+      return true;
     }
 
     // dedent regular nodes selection
