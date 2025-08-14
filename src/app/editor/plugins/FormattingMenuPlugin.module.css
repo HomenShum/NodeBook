@@ -1,0 +1,46 @@
+.FormattingMenu {
+  position: fixed;
+  z-index: 1000;
+  background-color: var(--gray-1);
+  border: 1px solid var(--gray-6);
+  border-radius: 6px;
+  box-shadow: var(--shadow-lg);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  height: 28px;
+  line-height: 0;
+  gap: 2px;
+  transform: translate(-50%, -100%);
+}
+
+.FormattingMenuInner {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.FormatButton {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.15s;
+  background-color: transparent;
+  cursor: pointer;
+  border: none;
+}
+
+.FormatButton:hover {
+  background-color: var(--gray-3);
+}
+
+.FormatButton.active {
+  background-color: var(--gray-4);
+}
+
+.FormatButton.active:hover {
+  background-color: var(--gray-4);
+}

@@ -16,6 +16,7 @@ export type Chip =
       type: "text";
       value: string;
       styles?: number;
+      style?: string;
     }
   | {
       type: "mention";

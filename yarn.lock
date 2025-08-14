@@ -13065,6 +13065,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.758.0"
     "@aws-sdk/s3-presigned-post": "npm:^3.758.0"
     "@lexical/react": "npm:^0.27.1"
+    "@lexical/selection": "npm:0.27.1"
     "@lexical/utils": "npm:^0.27.1"
     "@pinecone-database/pinecone": "npm:^4.0.0"
     "@radix-ui/colors": "npm:^3.0.0"

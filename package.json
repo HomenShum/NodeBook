@@ -30,6 +30,7 @@
     "@aws-sdk/client-s3": "^3.758.0",
     "@aws-sdk/s3-presigned-post": "^3.758.0",
     "@lexical/react": "^0.27.1",
+    "@lexical/selection": "0.27.1",
     "@lexical/utils": "^0.27.1",
     "@pinecone-database/pinecone": "^4.0.0",
     "@radix-ui/colors": "^3.0.0",

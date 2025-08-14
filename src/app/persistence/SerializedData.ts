@@ -18,6 +18,7 @@ const SerializedChipSchema = z.discriminatedUnion("type", [
     type: z.literal("text"),
     value: z.string(),
     styles: z.number().default(0).optional(),
+    style: z.string().optional(),
   }),
   z.object({
     type: z.literal("mention"),

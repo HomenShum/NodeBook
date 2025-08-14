@@ -1,0 +1,101 @@
+.ColorPicker {
+  position: fixed;
+  z-index: 1001; /* Higher than formatting menu */
+  background-color: var(--gray-1);
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  padding: 16px;
+  min-width: 320px;
+  transform: translateX(-50%); /* Center horizontally only */
+}
+
+.TabHeader {
+  display: flex;
+  background-color: var(--gray-2);
+  border-radius: 4px;
+  margin-bottom: 12px;
+  padding: 2px;
+}
+
+.Tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--gray-11);
+  transition: all 0.15s;
+}
+
+.Tab:hover {
+  background-color: var(--gray-3);
+}
+
+.Tab.active {
+  background-color: var(--gray-1);
+  color: var(--gray-12);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ColorGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+.ColorButton {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.ColorButton:hover {
+  transform: scale(1.15);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.ColorButton.active {
+  box-shadow: 0 0 0 2px var(--teal-8);
+  transform: scale(1.1);
+}
+
+.ColorButton.transparent {
+  background: repeating-conic-gradient(var(--gray-4) 0% 25%, transparent 0% 50%) 50% / 8px 8px;
+}
+
+.ColorButton.inherit {
+  background: linear-gradient(45deg, var(--gray-3), var(--gray-5));
+}
+
+.ColorPreview {
+  font-weight: 600;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.ColorButton.transparent .ColorPreview {
+  color: var(--gray-9);
+  text-shadow: none;
+}
+
+.ColorButton.inherit .ColorPreview {
+  color: var(--gray-11);
+  text-shadow: none;
+}

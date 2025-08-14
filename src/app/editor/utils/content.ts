@@ -87,10 +87,12 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
       return;
     }
     if (i === from.index && i === toDefined.index) {
+      const textNode = node instanceof TextNode ? node : null;
       chips.push({
         type: "text",
         value: node.getTextContent().slice(from.offset, toDefined.offset),
-        styles: node instanceof TextNode ? node.getFormat() : undefined,
+        styles: textNode ? textNode.getFormat() : undefined,
+        ...(textNode?.getStyle() ? { style: textNode.getStyle() } : {}),
       });
     } else if (i === from.index) {
       // handle start
@@ -119,7 +121,12 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
       } else if ($isTextNode(node)) {
         const text = node.getTextContent();
         if (from.offset < text.length) {
-          chips.push({ type: "text", value: text.slice(from.offset), styles: node.getFormat() });
+          chips.push({ 
+            type: "text", 
+            value: text.slice(from.offset), 
+            styles: node.getFormat(),
+            ...(node.getStyle() ? { style: node.getStyle() } : {})
+          });
         } else {
           // skip the text node
         }
@@ -135,7 +142,12 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
         if (toDefined.offset >= text.length) {
           chips.push(nodeToChip(node));
         } else if (toDefined.offset > 0) {
-          chips.push({ type: "text", value: text.slice(0, toDefined.offset), styles: node.getFormat() });
+          chips.push({ 
+            type: "text", 
+            value: text.slice(0, toDefined.offset), 
+            styles: node.getFormat(),
+            ...(node.getStyle() ? { style: node.getStyle() } : {})
+          });
         } else {
           console.error("Unexpected offset", toDefined);
         }
@@ -151,7 +163,12 @@ export function $getChips(from?: LexicalEditorPosition, to?: LexicalEditorPositi
       } else if ($isTextNode(node)) {
         const text = node.getTextContent();
         if (toDefined.offset > 0) {
-          chips.push({ type: "text", value: text.slice(0, toDefined.offset), styles: node.getFormat() });
+          chips.push({ 
+            type: "text", 
+            value: text.slice(0, toDefined.offset), 
+            styles: node.getFormat(),
+            ...(node.getStyle() ? { style: node.getStyle() } : {})
+          });
         } else {
           // skip the text node
         }
@@ -232,6 +249,9 @@ export const getChipToNodeFn = (graphStore: GraphStore) => {
       if (chip.styles) {
         node.setFormat(chip.styles);
       }
+      if (chip.style) {
+        node.setStyle(chip.style);
+      }
       return node;
     } else if (chip.type === "image") {
       return $createImageNode({ src: chip.url });
@@ -255,7 +275,13 @@ export function nodeToChip(node: LexicalNode): Chip {
   } else if (node instanceof LinkNode) {
     return { type: "link", value: node.getTextContent(), url: node.getURL() };
   } else if (node instanceof TextNode) {
-    return { type: "text", value: node.getTextContent(), styles: node.getFormat() };
+    const style = node.getStyle();
+    return { 
+      type: "text", 
+      value: node.getTextContent(), 
+      styles: node.getFormat(),
+      ...(style ? { style } : {}) // Include style string if present
+    };
   } else if (node instanceof LineBreakNode) {
     return { type: "linebreak", value: node.getTextContent() };
   } else if (node instanceof ImageNode) {

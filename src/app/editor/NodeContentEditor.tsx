@@ -1,13 +1,11 @@
 import { ClearEditorPlugin } from "@lexical/react/LexicalClearEditorPlugin";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { COMMAND_PRIORITY_HIGH, KEY_BACKSPACE_COMMAND, KEY_DOWN_COMMAND } from "lexical";
 import { observer } from "mobx-react-lite";
-import { RefObject, useEffect } from "react";
+import { RefObject } from "react";
 
 import { createConfig } from "@/app/editor/createConfig";
 import { ArrowKeyPlugin } from "@/app/editor/plugins/ArrowKeyPlugin";
@@ -16,6 +14,7 @@ import { ContextualGenerationPlugin } from "@/app/editor/plugins/ContextualGener
 import { DropdownPlugin } from "@/app/editor/plugins/dropdown/DropdownPlugin";
 import { EnterKeyPlugin } from "@/app/editor/plugins/EnterKeyPlugin";
 import { FormatKeyPlugin } from "@/app/editor/plugins/FormatKeyPlugin";
+import { FormattingMenuPlugin } from "@/app/editor/plugins/FormattingMenuPlugin";
 import { IgnoreModShiftAPlugin } from "@/app/editor/plugins/IgnoreModShiftAPlugin";
 import { LinkPlugin } from "@/app/editor/plugins/LinkPlugin";
 import { MinusKeyPlugin } from "@/app/editor/plugins/MinusKeyPlugin";
@@ -95,6 +94,7 @@ export const NodeEditor = observer(function NodeEditor({ treeNode, isEditorEdita
         {isEditorEditable && <ContextualGenerationPlugin treeNode={treeNode} />}
         {isEditorEditable && <TodoPlugin treeNode={treeNode} />}
         {isEditorEditable && tree.isNodeFocused(treeNode.id) && <DropdownPlugin treeNode={treeNode} />}
+        {isEditorEditable && <FormattingMenuPlugin/>}
         <ToggleEditablePlugin treeNode={treeNode} editable={isEditorEditable} />
         <NodeEventPlugin nodeType={MentionNode} eventType={"click"} eventListener={handleMentionNodeClick} />
         <NodeEventPlugin nodeType={ImageNode} eventType={"click"} eventListener={handleImageClick} />

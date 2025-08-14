@@ -95,6 +95,116 @@ body,
   font-family: var(--font-inter);
 }
 
+/* Text Formatting Styles */
+/* Light mode styles */
+:root, .light, .light-theme {
+  /* Highlight */
+  mark {
+    background-color: var(--highlight-bg);
+    color: var(--highlight-color);
+    padding: 0 0.2em;
+    border-radius: 0.2em;
+  }
+
+  /* Code */
+  code {
+    background-color: var(--code-bg);
+    color: var(--code-color);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9em;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25em;
+    border: 1px solid var(--code-border);
+  }
+
+  /* Uppercase, Lowercase, Capitalize */
+  .uppercase {
+    text-transform: uppercase;
+  }
+
+  .lowercase {
+    text-transform: lowercase;
+  }
+
+  .capitalize {
+    text-transform: capitalize;
+  }
+}
+
+/* Dark mode overrides */
+.dark, .dark-theme {
+  /* Highlight */
+  mark {
+    background-color: var(--highlight-bg-dark);
+    color: var(--highlight-color-dark);
+  }
+
+  /* Code */
+  code {
+    background-color: var(--code-bg-dark);
+    color: var(--code-color-dark);
+    border-color: var(--code-border-dark);
+  }
+}
+
+/* Ensure proper spacing for formatted text */
+[data-lexical-editor] {
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+/* Fix for subscript and superscript alignment */
+sub, sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/* Text decorations */
+s, del {
+  text-decoration: line-through;
+}
+
+/* Ensure proper contrast for all text formats */
+[data-lexical-editor] * {
+  color: inherit;
+}
+
+/* Lexical text formatting */
+.underline {
+  text-decoration: underline;
+}
+
+.line-through {
+  text-decoration: line-through;
+}
+
+.underline.line-through {
+  text-decoration: underline line-through;
+}
+
+/* Code block styling */
+code {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.9em;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25em;
+  background-color: var(--gray-2);
+}
+
+.dark code {
+  background-color: var(--gray-8);
+}
+
 :root,
 .light,
 .light-theme {
@@ -267,4 +377,65 @@ body,
 /* Utility Classes */
 .long-title {
   font-size: var(--font-size-h3) !important;
+}
+
+/* Lexical Editor Text Formatting */
+.editor-text-bold {
+  font-weight: bold;
+}
+
+.editor-text-italic {
+  font-style: italic;
+}
+
+.editor-text-underline {
+  text-decoration: underline;
+}
+
+.editor-text-strikethrough {
+  text-decoration: line-through;
+}
+
+.editor-text-underline-strikethrough {
+  text-decoration: underline line-through;
+}
+
+.editor-text-code {
+  font-family: 'Roboto Mono', monospace;
+  background-color: var(--gray-3);
+  color: var(--gray-12);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.editor-text-uppercase {
+  text-transform: uppercase;
+}
+
+.editor-text-lowercase {
+  text-transform: lowercase;
+}
+
+.editor-text-capitalize {
+  text-transform: capitalize;
+}
+
+.editor-text-highlight {
+  background-color: var(--teal-3);
+  color: var(--gray-12);
+  padding: 0 0.125rem;
+  border-radius: 0.125rem;
+}
+
+.editor-text-subscript {
+  vertical-align: sub;
+  font-size: 0.75em;
+  line-height: 1;
+}
+
+.editor-text-superscript {
+  vertical-align: super;
+  font-size: 0.75em;
+  line-height: 1;
 }

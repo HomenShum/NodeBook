@@ -1,10 +1,13 @@
 import { InitialConfigType } from "@lexical/react/LexicalComposer";
 import { $createParagraphNode, $createTextNode, $getRoot } from "lexical";
 
+import { ImageNode } from "@/app/graph/ImageNode";
 import { LinkNode } from "@/app/graph/LinkNode";
 import { MentionNode } from "@/app/graph/MentionNode";
 import { TreeNode } from "@/app/tree/nodes";
-import { ImageNode } from "@/app/graph/ImageNode";
+import logger from "@/lib/logger";
+
+import { theme } from "./theme";
 
 export const createConfig = ({
   namespace,
@@ -17,8 +20,8 @@ export const createConfig = ({
 }): InitialConfigType => {
   return {
     namespace,
-    theme: {},
-    onError: (e: any) => console.error(e),
+    theme,
+    onError: (e: Error) => logger.error('Editor error', { error: e }),
     nodes: [LinkNode, MentionNode, ImageNode],
     editorState: () => {
       const paragraph = $createParagraphNode();

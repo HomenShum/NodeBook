@@ -171,3 +171,7 @@
   width: 60%;
   flex-grow: initial !important;
 }
+
+.FormattingMenuIcon {
+  color: var(--gray-11);
+}
