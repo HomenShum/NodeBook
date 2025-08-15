@@ -97,7 +97,9 @@ body,
 
 /* Text Formatting Styles */
 /* Light mode styles */
-:root, .light, .light-theme {
+:root,
+.light,
+.light-theme {
   /* Highlight */
   mark {
     background-color: var(--highlight-bg);
@@ -110,7 +112,7 @@ body,
   code {
     background-color: var(--code-bg);
     color: var(--code-color);
-    font-family: 'Roboto Mono', monospace;
+    font-family: "Roboto Mono", monospace;
     font-size: 0.9em;
     padding: 0.2em 0.4em;
     border-radius: 0.25em;
@@ -132,7 +134,8 @@ body,
 }
 
 /* Dark mode overrides */
-.dark, .dark-theme {
+.dark,
+.dark-theme {
   /* Highlight */
   mark {
     background-color: var(--highlight-bg-dark);
@@ -154,7 +157,8 @@ body,
 }
 
 /* Fix for subscript and superscript alignment */
-sub, sup {
+sub,
+sup {
   font-size: 75%;
   line-height: 0;
   position: relative;
@@ -170,14 +174,15 @@ sup {
 }
 
 /* Text decorations */
-s, del {
+s,
+del {
   text-decoration: line-through;
 }
 
 /* Ensure proper contrast for all text formats */
-[data-lexical-editor] * {
+/* [data-lexical-editor] * {
   color: inherit;
-}
+} */
 
 /* Lexical text formatting */
 .underline {
@@ -194,7 +199,7 @@ s, del {
 
 /* Code block styling */
 code {
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Roboto Mono", monospace;
   font-size: 0.9em;
   padding: 0.2em 0.4em;
   border-radius: 0.25em;
@@ -401,7 +406,7 @@ code {
 }
 
 .editor-text-code {
-  font-family: 'Roboto Mono', monospace;
+  font-family: "Roboto Mono", monospace;
   background-color: var(--gray-3);
   color: var(--gray-12);
   padding: 0.125rem 0.375rem;
