@@ -180,6 +180,7 @@ del {
 }
 
 /* Ensure proper contrast for all text formats */
+/* This causes issues with mention chips not displaying with the correct color, commenting out for now */
 /* [data-lexical-editor] * {
   color: inherit;
 } */
