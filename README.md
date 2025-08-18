@@ -47,7 +47,7 @@ yarn dev
 
 _Note: This is only necessary for changes that modify the existing database schema_
 
-- Go to `mew-postgres` database in vercel: https://vercel.com/ideaflowco/mew/stores/postgres/store_lxFSgFAtApzk0tud/data
+- Go to `mew-postgres` database in vercel: https://vercel.com/ideaflowco/mew/stores/integration/neon/store_lxFSgFAtApzk0tud/guides
 - In the data tab, run `create database <db-name>` to create a new database for your local development
 - Update the `POSTGRES_CUSTOM_URL` in `.env.local` with the new database name. For example, if the current url ends with `/development`, change it to `/<db-name>`
 - Run `yarn db:migrate` to create the tables in the new database
