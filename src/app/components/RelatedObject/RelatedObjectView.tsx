@@ -139,6 +139,10 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
     graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
   }, [graphStore.layerManager, treeNode.object.id]);
 
+  const openRelComboBox = useCallback(() => {
+    setRelationComboboxIsOpen(true);
+  }, [setRelationComboboxIsOpen]);
+
   return (
     <TreeNodeProvider
       value={{
@@ -149,6 +153,7 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
         setUpdatingRelationType,
         viewType,
         setViewType,
+        openRelComboBox,
       }}
     >
       <div className={styles.RelatedObjectContent} onMouseEnter={handleMouseEnter}>

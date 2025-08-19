@@ -20,6 +20,7 @@ const TreeNodeContext = createContext<{
   setUpdatingRelationType: (updating: boolean) => void;
   viewType: RelatedObjectViewType;
   setViewType: (viewType: RelatedObjectViewType) => void;
+  openRelComboBox: () => void;
 } | null>(null);
 
 export const useTreeNode = () => {

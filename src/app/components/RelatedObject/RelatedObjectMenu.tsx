@@ -495,8 +495,14 @@ interface Props {
 }
 
 const UpdateRelationType = observer(({ setUpdatingRelationType }: Props) => {
+  const { openRelComboBox } = useTreeNode();
   return (
-    <DropdownMenuItem onSelect={() => setUpdatingRelationType(true)}>
+    <DropdownMenuItem
+      onSelect={() => {
+        setUpdatingRelationType(true);
+        openRelComboBox();
+      }}
+    >
       <RefreshCcwDot size={14} />
       Change relation type
     </DropdownMenuItem>
