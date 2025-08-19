@@ -109,9 +109,26 @@ export const BackspaceMergeNodesPlugin = () => {
           // Merge into sibling above's last node above, or sibling above if it has no children
           const nextNodeAbove = getNextAbove(treeNode);
 
-          // Don't allow merge if the node above is edit restricted.
+          // Handle non-editable node above cases
           if (nextNodeAbove && nextNodeAbove.object.isEditRestricted) {
-            return false;
+            // If we have content, do nothing
+            if (treeNode.object.text.length > 0) {
+              return false;
+            }
+
+            // If we're empty, delete this node and try to focus on the node below
+            const siblingBelow = treeNode.siblingBelow;
+            graphStore.removeNode({
+              nodeId: treeNode.object.id,
+            });
+
+            // Try to focus on sibling below if it exists and is editable
+            if (siblingBelow && !siblingBelow.object.isEditRestricted) {
+              setTimeout(() => {
+                tree.setFocusedNode(siblingBelow.id, "start");
+              }, 100);
+            }
+            return true;
           }
 
           handled = mergeNodes(treeNode, nextNodeAbove || treeNode.siblingAbove);
