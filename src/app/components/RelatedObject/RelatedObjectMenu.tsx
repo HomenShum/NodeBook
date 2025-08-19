@@ -29,6 +29,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -636,9 +637,9 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
             <UpdateRelationType setUpdatingRelationType={setUpdatingRelationType} />
             <MakeDefaultPath />
             <ParseWithAi />
-            {/* <DropdownMenuSeparator /> These features are also not used much, so hiding for now
+            <DropdownMenuSeparator />
             <ExportSubtree />
-            <ExportSubtreeToIdeapad /> */}
+            <ExportSubtreeToIdeapad />
           </>
         )}
       </DropdownMenuContent>
