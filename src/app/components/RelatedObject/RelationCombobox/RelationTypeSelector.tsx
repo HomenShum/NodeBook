@@ -118,7 +118,12 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
         .filter(({ label }) => label.toLowerCase().includes(search.toLowerCase())),
     );
 
-    if (search.length > 0 && parent !== null && relation.relationType.label !== search) {
+    if (
+      search.length > 0 &&
+      parent !== null &&
+      relation.relationType.label !== search &&
+      !(relation.relationType.id in defaultRelationTypes)
+    ) {
       tmpItems.push({
         key: "rename",
         label: getRenameLabel(relation.relationType.label, search),
@@ -197,8 +202,8 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
       }
     }
 
-    document.addEventListener('pointerdown', handleGlobalPointerDown, true);
-    return () => document.removeEventListener('pointerdown', handleGlobalPointerDown, true);
+    document.addEventListener("pointerdown", handleGlobalPointerDown, true);
+    return () => document.removeEventListener("pointerdown", handleGlobalPointerDown, true);
   }, [close]);
 
   return (
@@ -317,4 +322,3 @@ export function RelationTypeSelector({ treeNode, close }: SelectorProps) {
     </PopoverContent>
   );
 }
-
