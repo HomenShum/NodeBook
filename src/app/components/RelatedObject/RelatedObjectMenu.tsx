@@ -607,7 +607,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
           <>
             <JumpTo />
             <GoToAuthorNode />
-            <ToggleFromNote />
+            {/* <ToggleFromNote />  This feature is half-baked and confusing, so hiding for now */}
             <TogglePin />
             <ToggleFavorites />
             <TogglePublic />
