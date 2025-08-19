@@ -29,7 +29,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/app/components/UIPrimitives/DropdownMenu";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -455,7 +454,17 @@ const DeleteNode = () => {
 const ReplaceNode = observer(() => {
   const { setViewType } = useTreeNode();
   return (
-    <DropdownMenuItem onSelect={() => setViewType("replace")}>
+    <DropdownMenuItem
+      onSelect={() => {
+        setViewType("replace");
+        setTimeout(() => {
+          const input = document.getElementById("replace-related-input");
+          if (input instanceof HTMLInputElement) {
+            input.focus();
+          }
+        }, 100);
+      }}
+    >
       <GitCompare size={14} />
       Replace related object
     </DropdownMenuItem>
@@ -621,9 +630,9 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
             <UpdateRelationType setUpdatingRelationType={setUpdatingRelationType} />
             <MakeDefaultPath />
             <ParseWithAi />
-            <DropdownMenuSeparator />
+            {/* <DropdownMenuSeparator /> These features are also not used much, so hiding for now
             <ExportSubtree />
-            <ExportSubtreeToIdeapad />
+            <ExportSubtreeToIdeapad /> */}
           </>
         )}
       </DropdownMenuContent>

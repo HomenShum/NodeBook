@@ -115,6 +115,7 @@ export const ReplaceRelatedNodeView = ({ treeNode }: { treeNode: DescendantTreeN
           placeholder="Search nodes..."
           autoFocus
           className={styles.ReplaceRelatedInput}
+          id="replace-related-input"
           type="text"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
