@@ -21,6 +21,7 @@ import {
 
 export enum NewUserHint {
   CtrlClickToExpandInlineRelation = "ctrl-click-to-expand-inline-relation",
+  BackspaceIntoNonEditableNode = "backspace-into-non-editable-node",
 }
 
 export class SettingsStore {

@@ -10,6 +10,8 @@ import { defaultRelationTypes } from "@/app/graph/constants";
 import { Chip, GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { TxCombinedPart } from "@/app/graph/GraphTransactionTypes";
+import { NewUserHint } from "@/app/graph/SettingsStore";
+import { useToast } from "@/app/hooks/useToast";
 import { DescendantTreeNode, PointerTreeNode, TreeNode } from "@/app/tree/nodes";
 import { TreeNodeContentSelectionPosition } from "@/app/tree/selection";
 import { SelectionState } from "@/app/tree/SelectionState";
@@ -47,6 +49,7 @@ export const BackspaceMergeNodesPlugin = () => {
   const { mergeNodes, addSiblingAboveIntoNote } = useMergers(treeNode.tree);
   const graphStore = useGraphStore();
   const user = useUser();
+  const { addToast } = useToast();
   const ignoreMergeCommand = user.isAnonymous;
 
   useEffect(() => {
@@ -111,8 +114,23 @@ export const BackspaceMergeNodesPlugin = () => {
 
           // Handle non-editable node above cases
           if (nextNodeAbove && nextNodeAbove.object.isEditRestricted) {
-            // If we have content, do nothing
+            // If we have content, show hint and do nothing
             if (treeNode.object.text.length > 0) {
+              // Only show the hint if it hasn't been shown before
+              if (!graphStore.settings?.newUserHints.has(NewUserHint.BackspaceIntoNonEditableNode)) {
+                addToast({
+                  title: "Can't merge into non-editable node",
+                  description: "This node can't be merged into the node above because the node above is not editable.",
+                  duration: 5000,
+                  isHint: true,
+                  action: {
+                    label: "Don't show again",
+                    onClick: () => {
+                      graphStore.settings?.addNewUserHint(NewUserHint.BackspaceIntoNonEditableNode);
+                    },
+                  },
+                });
+              }
               return false;
             }
 
@@ -188,6 +206,7 @@ export const BackspaceMergeNodesPlugin = () => {
     ignoreMergeCommand,
     viewStore.quickCaptureOpen,
     viewStore.quickCaptureTree.selection,
+    addToast,
   ]);
 
   return null;
