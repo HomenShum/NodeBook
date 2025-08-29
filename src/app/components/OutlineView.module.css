@@ -238,7 +238,7 @@
 .FloatingActionButton {
   position: fixed;
   bottom: 24px;
-  right: 24px;
+  right: 32px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
