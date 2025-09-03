@@ -13,7 +13,6 @@ import Toggle from "@/app/components/RelatedObject/Toggle";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
-import { env } from "@/app/envFrontend";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { GraphRelationType } from "@/app/graph/types";
 import { QuickCaptureSearchTree, QuickCaptureTree } from "@/app/tree/QuickCaptureTree";
@@ -426,20 +425,6 @@ const Content = observer(function Content() {
             </div>
           </Button>
           <TypeIndicator object={treeNode.object} />
-          {env.env !== "production" && (
-            <>
-              {treeNode.id === nodeSelectionAnchorId && (
-                <div title="Anchor" className={styles.RelationCounter}>
-                  A
-                </div>
-              )}
-              {treeNode.id === nodeSelectionHeadId && (
-                <div title="Head" className={styles.RelationCounter}>
-                  H
-                </div>
-              )}
-            </>
-          )}
           {viewType !== "replace" && !isNoteContentRoot && (
             <RelationCounter
               treeNodeOrGraphObject={treeNode}
