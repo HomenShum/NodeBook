@@ -5,6 +5,7 @@ import { MouseEvent, useRef } from "react";
 import { TreeNodeInputPrefix } from "@/app/components/RelatedObject/TreeNodeInputPrefix";
 import { TreeNodeInputSuffix } from "@/app/components/RelatedObject/TreeNodeInputSuffix";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useUser } from "@/app/contexts/UserContext";
 import { NodeEditor } from "@/app/editor/NodeContentEditor";
 import { AccessMode, GraphNode } from "@/app/graph/GraphNode";
@@ -163,18 +164,27 @@ export const RelatedNodeView = observer(function RelatedNodeView({ treeNode }: P
             <NodeEditor treeNode={treeNode} isEditorEditable={editableEditor} editorRef={editorRef} />
           )}
           {isReadOnlyReference && !user.isAnonymous && treeNode.isEditable && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className={styles.EditButton}
-              onPointerDown={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                tree.setFocusedNode(treeNode.id, "end", true);
-              }}
-            >
-              <Edit2 size={14} />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={styles.EditButton}
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      tree.setFocusedNode(treeNode.id, "end", true);
+                    }}
+                  >
+                    <Edit2 size={14} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="center" sideOffset={4}>
+                  Edit node
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
         </div>
         {(!isAtCanonicalPath || objectIsEditRestricted) && !user.isAnonymous && (

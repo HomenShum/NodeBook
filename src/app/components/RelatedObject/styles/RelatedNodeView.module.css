@@ -82,6 +82,11 @@ Tooltip
   visibility: visible;
 }
 
+.TreeNodeReference .Pill.ShowTooltip:has(.EditButton:hover)::after {
+  opacity: 0;
+  visibility: hidden;
+}
+
 .TreeNodeReference .Pill.Expanded {
   border: 0.5px solid var(--teal-8);
 }
