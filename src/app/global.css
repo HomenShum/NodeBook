@@ -293,8 +293,11 @@ code {
   --font-size-lg: 1.125rem; /* 18px */
   --font-size-xl: 2rem; /* 32px */
   --font-size-h1: 2.25rem; /* 36px */
-  --font-size-h2: 1.5rem; /* 24px */
-  --font-size-h3: 1.25rem; /* 20px */
+  --font-size-h2: 1.625rem; /* 26px */
+  --font-size-h2-step1: 1.546875rem; /* 24.75px */
+  --font-size-h2-step2: 1.46875rem; /* 23.5px */
+  --font-size-h2-step3: 1.390625rem; /* 22.25px */
+  --font-size-h3: 1.3125rem; /* 21px */
 
   --shadow-sm: 0px 1px 2px rgba(0, 0, 0, 0.05), 0px 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-md: rgba(0, 0, 0, 0.067) 0px 3px 8px, rgba(0, 0, 0, 0.067) 0px 2px 5px, rgba(0, 0, 0, 0.067) 0px 1px 1px;
@@ -380,8 +383,20 @@ code {
   background-color: var(--teal-5);
 }
 
-/* Utility Classes */
-.long-title {
+/* Utility Classes for TitleSizePlugin that adjusts the title size based on the number of lines in the title */
+.title-large {
+  font-size: var(--font-size-h2-step1) !important;
+}
+
+.title-medium {
+  font-size: var(--font-size-h2-step2) !important;
+}
+
+.title-small {
+  font-size: var(--font-size-h2-step3) !important;
+}
+
+.title-compact {
   font-size: var(--font-size-h3) !important;
 }
 

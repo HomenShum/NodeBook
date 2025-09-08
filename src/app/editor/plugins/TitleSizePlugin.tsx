@@ -21,13 +21,13 @@ export function TitleSizePlugin() {
     if (!editorElement) return;
 
     // Create a temporary element to measure text height with H2 font size
-    const measureElement = document.createElement('div');
-    measureElement.style.position = 'absolute';
-    measureElement.style.visibility = 'hidden';
-    measureElement.style.fontSize = 'var(--font-size-h2)';
-    measureElement.style.width = editorElement.offsetWidth + 'px';
+    const measureElement = document.createElement("div");
+    measureElement.style.position = "absolute";
+    measureElement.style.visibility = "hidden";
+    measureElement.style.fontSize = "var(--font-size-h2)";
+    measureElement.style.width = editorElement.offsetWidth + "px";
     measureElement.style.lineHeight = getComputedStyle(editorElement).lineHeight;
-    measureElement.textContent = editorElement.textContent || '';
+    measureElement.textContent = editorElement.textContent || "";
     document.body.appendChild(measureElement);
 
     // Calculate lines using the H2 font size
@@ -40,17 +40,30 @@ export function TitleSizePlugin() {
 
     // Find the closest h1 parent element
     let currentElement: HTMLElement | null = editorElement;
-    while (currentElement && currentElement.tagName !== 'H1') {
+    while (currentElement && currentElement.tagName !== "H1") {
       currentElement = currentElement.parentElement;
     }
 
     if (!currentElement) return;
 
-    if (numberOfLines > 6) {
-      currentElement.classList.add('long-title');
-    } else {
-      currentElement.classList.remove('long-title');
+    // Remove all existing title size classes
+    currentElement.classList.remove("title-large", "title-medium", "title-small", "title-compact");
+
+    // Apply gradual size reduction based on line count
+    if (numberOfLines > 12) {
+      // 12+ lines: most compact size (21px)
+      currentElement.classList.add("title-compact");
+    } else if (numberOfLines > 10) {
+      // 11-12 lines: small size (22.25px)
+      currentElement.classList.add("title-small");
+    } else if (numberOfLines > 8) {
+      // 9-10 lines: medium size (23.5px)
+      currentElement.classList.add("title-medium");
+    } else if (numberOfLines > 6) {
+      // 7-8 lines: large size (24.75px)
+      currentElement.classList.add("title-large");
     }
+    // 1-6 lines: default h2 size (26px - no class needed)
   }, [editor]);
 
   useEffect(() => {
@@ -63,4 +76,4 @@ export function TitleSizePlugin() {
   }, [editor, updateTitleSize]);
 
   return null;
-} 
+}
