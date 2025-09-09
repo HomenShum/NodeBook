@@ -14,6 +14,7 @@ declare const styles: {
   readonly "RightAlign": string;
   readonly "Separator": string;
   readonly "ShowTooltip": string;
+  readonly "SidebarClosed": string;
 };
 export = styles;
 

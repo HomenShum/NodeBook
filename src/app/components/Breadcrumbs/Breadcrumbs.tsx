@@ -156,7 +156,10 @@ export const Breadcrumbs = observer(function Breadcrumbs({ treeNode }: Breadcrum
 
   return (
     <>
-      <nav className={s.BreadcrumbContainer} aria-label="breadcrumb">
+      <nav
+        className={cn(s.BreadcrumbContainer, { [s.SidebarClosed]: !viewStore.leftSidebarOpen })}
+        aria-label="breadcrumb"
+      >
         <Button
           variant="default"
           size="icon"

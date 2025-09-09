@@ -50,6 +50,8 @@ const list: HotkeyItem[] = [
   // Formatting
   { name: "Toggle Bold", keys: [`${modKeyName}`, "B"] },
   { name: "Toggle Italic", keys: [`${modKeyName}`, "I"] },
+  { name: "Toggle Underline", keys: [`${modKeyName}`, "U"] },
+  { name: "Toggle Code", keys: [`${modKeyName}`, "E"] },
   { name: "Add Todo Checkbox", keys: ["[", "]"], annotation: "(at the start of the line)" },
   { name: "Toggle Todo Status", keys: [`${modKeyName}`, "Shift", "Y"] },
 

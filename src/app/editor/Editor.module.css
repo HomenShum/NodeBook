@@ -41,15 +41,6 @@
   opacity: 0.9;
 }
 
-.ContentEditable code {
-  font-size: var(--font-size-sm);
-  color: var(--gray-11);
-  padding: 2px 3px;
-  border: 1px solid var(--gray-7);
-  border-radius: 4px;
-  font-family: "Roboto Mono", monospace;
-}
-
 .LinkNode {
   color: var(--teal-11);
   text-decoration: none;

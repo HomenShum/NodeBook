@@ -11,7 +11,7 @@ export const FormatKeyPlugin = () => {
       KEY_DOWN_COMMAND,
       (event) => {
         if (!event) return false;
-        if (event.metaKey && event.key === "b") {
+        if ((event.metaKey || event.ctrlKey) && event.key === "b" && !event.shiftKey && !event.altKey) {
           event.preventDefault();
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
           return true;
@@ -28,9 +28,26 @@ export const FormatKeyPlugin = () => {
       KEY_DOWN_COMMAND,
       (event) => {
         if (!event) return false;
-        if (event.metaKey && event.key === "i") {
+        if ((event.metaKey || event.ctrlKey) && event.key === "i" && !event.shiftKey && !event.altKey) {
           event.preventDefault();
           editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+          return true;
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_NORMAL,
+    );
+  }, [editor]);
+
+  // Code shortcut
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_DOWN_COMMAND,
+      (event) => {
+        if (!event) return false;
+        if ((event.metaKey || event.ctrlKey) && event.key === "e" && !event.shiftKey && !event.altKey) {
+          event.preventDefault();
+          editor.dispatchCommand(FORMAT_TEXT_COMMAND, "code");
           return true;
         }
         return false;
