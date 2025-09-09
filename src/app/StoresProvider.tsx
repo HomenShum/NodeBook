@@ -12,7 +12,6 @@ import { VoiceInputProvider } from "@/app/contexts/VoiceInputContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { useToast } from "@/app/hooks/useToast";
 import { localLocalData } from "@/app/persistence/loadGraphData";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
@@ -34,7 +33,6 @@ export function StoresProvider({
   const [settingsStore, setSettingsStore] = useState<SettingsStore | null>(null);
   const [graphStore, setGraphStore] = useState<GraphStore | null>(null);
   const [viewStore, setViewStore] = useState<ViewStore | null>(null);
-  const { addToast } = useToast();
   const renderCounter = useRef(0);
 
   // expose stores to window for debugging
@@ -118,7 +116,7 @@ export function StoresProvider({
       ignore = true;
       cleanupPromise.then((cleanup) => cleanup?.());
     };
-  }, [initialObjectId, user, firstRender, addToast]);
+  }, [initialObjectId, user, firstRender]);
 
   useEffect(() => {
     viewStore && viewStore.startObservingMouse();
