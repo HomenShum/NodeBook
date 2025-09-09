@@ -23,19 +23,37 @@ import { useViewStore } from "@/app/view/useViewStore";
 /**
  * Concat two arrays of Chips into one.
  * Merges the chip at the end of the first array with the chip at the start of the second array.
+ * Preserves formatting (styles and style properties) when merging text chips.
  */
 const concatChips = (targetNodeChips: Chip[], sourceNodeChips: Chip[]): Chip[] => {
   const lastChip = targetNodeChips[targetNodeChips.length - 1];
   const firstChip = sourceNodeChips[0];
+
+  // Only merge if both chips are text and have compatible formatting
   if (lastChip?.type === "text" && firstChip?.type === "text") {
-    return [
-      ...targetNodeChips.slice(0, targetNodeChips.length - 1),
-      { type: "text", value: lastChip.value + firstChip.value },
-      ...sourceNodeChips.slice(1),
-    ];
-  } else {
-    return [...targetNodeChips, ...sourceNodeChips];
+    // Check if formatting is compatible (same styles and style properties)
+    const lastStyles = lastChip.styles ?? 0;
+    const firstStyles = firstChip.styles ?? 0;
+    const lastStyle = lastChip.style ?? "";
+    const firstStyle = firstChip.style ?? "";
+
+    // Only merge if formatting matches, otherwise keep them separate to preserve formatting
+    if (lastStyles === firstStyles && lastStyle === firstStyle) {
+      return [
+        ...targetNodeChips.slice(0, targetNodeChips.length - 1),
+        {
+          type: "text",
+          value: lastChip.value + firstChip.value,
+          ...(lastStyles !== 0 && { styles: lastStyles }),
+          ...(lastStyle !== "" && { style: lastStyle }),
+        },
+        ...sourceNodeChips.slice(1),
+      ];
+    }
   }
+
+  // If chips can't be merged (different types or different formatting), keep them separate
+  return [...targetNodeChips, ...sourceNodeChips];
 };
 
 /**

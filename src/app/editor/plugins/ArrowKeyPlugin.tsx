@@ -13,7 +13,7 @@ import {
 import { useEffect } from "react";
 
 import { useTreeNode } from "@/app/components/RelatedObject/RelatedObjectContext";
-import { $getCaretPosition } from "@/app/editor/utils/selection";
+import { $atEditorStart, $getCaretPosition } from "@/app/editor/utils/selection";
 import { isMoveDownHotkey, isMoveUpHotKey } from "@/app/hotkeys";
 
 /**
@@ -93,10 +93,15 @@ export const ArrowKeyPlugin = () => {
       editor.registerCommand(
         KEY_ARROW_LEFT_COMMAND,
         (event) => {
-          const selectionStart = $getSelection()?.getStartEndPoints()?.[0];
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) return false; // if not a range selection, return false
 
-          // Offset is 0 when at start of text
+          const selectionStart = selection.getStartEndPoints()?.[0];
           if (!selectionStart || selectionStart.offset !== 0) return false;
+
+          // Check if we're actually at the start of the entire editor content
+          // Not just at the start of the current text node (which could be a code block)
+          if (!$atEditorStart()) return false;
 
           // Check if we're in the first node of note content
           const isFirstNoteContentNode =

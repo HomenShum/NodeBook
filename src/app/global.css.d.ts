@@ -1,7 +1,6 @@
 declare const styles: {
   readonly "App": string;
   readonly "__next": string;
-  readonly "capitalize": string;
   readonly "dark": string;
   readonly "dark-theme": string;
   readonly "editor-text-bold": string;
@@ -19,14 +18,12 @@ declare const styles: {
   readonly "light": string;
   readonly "light-theme": string;
   readonly "line-through": string;
-  readonly "lowercase": string;
   readonly "root": string;
   readonly "title-compact": string;
   readonly "title-large": string;
   readonly "title-medium": string;
   readonly "title-small": string;
   readonly "underline": string;
-  readonly "uppercase": string;
 };
 export = styles;
 

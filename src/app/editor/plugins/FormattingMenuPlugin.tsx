@@ -91,7 +91,7 @@ const FORMAT_OPTIONS = [
     format: "code" as const,
     icon: <Code size={14} style={{ color: "var(--gray-11)" }} />,
     label: "Code",
-    hotkey: "",
+    hotkey: `${modKeyName}+E`,
   },
   {
     format: "uppercase" as const,
