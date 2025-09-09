@@ -164,7 +164,7 @@ Bullet
 Tooltip
 */
 .RelatedObjectBulletContainer::after {
-  content: attr(data-tooltip);
+  /* content: attr(data-tooltip); */
   position: absolute;
   bottom: 100%;
   left: 50%;

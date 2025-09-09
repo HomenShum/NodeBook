@@ -111,7 +111,7 @@ const Toggle = observer(function Toggle() {
         hasChildren && objectViewStyles.HasChildren,
         isLoading && objectViewStyles.Loading,
       )}
-      data-tooltip={tooltipContent}
+      // data-tooltip={tooltipContent}
     >
       {treeNode.instanceCountInPath <= 1 ? (
         // Default toggle button
