@@ -3,10 +3,14 @@
   height: 40px;
   align-items: center;
   gap: 4px;
-  padding: 0 8px 0 40px;
+  padding: 0 8px;
   color: var(--gray-9);
   border-bottom: 0.5px solid var(--gray-6);
   position: relative;
+}
+
+.SidebarClosed {
+  padding-left: 40px; /* Space for the sidebar toggle button */
 }
 
 .BreadcrumbContainer > button {
@@ -14,8 +18,8 @@
 }
 
 @media only screen and (max-width: 800px) {
-  .BreadcrumbContainer {
-    padding: 0 8px 0 38px;
+  .SidebarClosed {
+    padding-left: 38px; /* Slightly less space on mobile */
   }
   .BreadcrumbRightArea {
     margin-left: auto;

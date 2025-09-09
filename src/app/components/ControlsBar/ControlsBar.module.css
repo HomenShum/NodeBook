@@ -1,5 +1,5 @@
 .ControlsBar {
-  padding: 0 8px 0 40px;
+  padding: 0 8px;
   height: 40px;
   border-bottom: 0.5px solid var(--gray-6);
   display: flex;
