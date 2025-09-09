@@ -31,27 +31,35 @@ type ToastContextType = {
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+// Use a ref to persist toast state across navigations
+const toastState = {
+  toasts: [] as ToastType[],
+  nextId: 0,
+};
+
 export const ToastContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [toasts, setToasts] = useState<ToastType[]>([]);
-  const [nextId, setNextId] = useState(0);
+  const [toasts, setToasts] = useState<ToastType[]>(toastState.toasts);
+  const [nextId, setNextId] = useState(toastState.nextId);
 
-  const addToast = useCallback(
-    (toast: Omit<ToastType, "id">) => {
-      const id = nextId;
-      setToasts((prevToasts) => [...prevToasts, { ...toast, id }]);
-      setNextId((prevId) => prevId + 1);
+  const addToast = useCallback((toast: Omit<ToastType, "id">) => {
+    const id = toastState.nextId;
+    const newToasts = [...toastState.toasts, { ...toast, id }];
+    toastState.toasts = newToasts;
+    toastState.nextId = id + 1;
+    setToasts(newToasts);
+    setNextId(toastState.nextId);
 
-      const duration = toast.duration || 5000; // Default to 5 seconds
-      setTimeout(() => {
-        // Trigger the closing animation
-        setToasts((prevToasts) => prevToasts.map((t) => (t.id === id ? { ...t, closing: true } : t)));
-      }, duration);
-    },
-    [nextId],
-  );
+    const duration = toast.duration || 5000; // Default to 5 seconds
+    setTimeout(() => {
+      // Trigger the closing animation
+      setToasts((prevToasts) => prevToasts.map((t) => (t.id === id ? { ...t, closing: true } : t)));
+    }, duration);
+  }, []);
 
   const removeToast = useCallback((id: number) => {
-    setToasts((prevToasts) => prevToasts.filter((t) => t.id !== id));
+    const newToasts = toastState.toasts.filter((t) => t.id !== id);
+    toastState.toasts = newToasts;
+    setToasts(newToasts);
   }, []);
 
   const contextValue = { addToast };
