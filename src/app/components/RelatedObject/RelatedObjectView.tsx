@@ -1,6 +1,6 @@
 import { CornerDownRight, Link, LoaderCircle, Maximize2 } from "lucide-react";
 import { observer } from "mobx-react-lite";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { Card } from "@/app/components/Card";
 import { Checkbox } from "@/app/components/Checkbox/Checkbox";
@@ -123,15 +123,33 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
   const [updatingRelationType, setUpdatingRelationType] = useState(false);
   const [relationComboboxIsOpen, setRelationComboboxIsOpen] = useState(false);
   const [viewType, setViewType] = useState<RelatedObjectViewType>("edit");
+  const [isInView, setIsInView] = useState(false);
   const isMobile = useIsMobile();
   const graphStore = useGraphStore();
+  const elementRef = useRef<HTMLDivElement>(null);
 
-  // Move mobile loading to useEffect to avoid render-time side effects
+  // Setup intersection observer to detect when element is in view
   useEffect(() => {
-    if (isMobile) {
-      graphStore.layerManager.lazyLoadWithIds([treeNode.object.id]);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.1 }, // Trigger when at least 10% of the element is visible
+    );
+
+    if (elementRef.current) {
+      observer.observe(elementRef.current);
     }
-  }, [isMobile, graphStore.layerManager, treeNode.object.id]);
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Load data when mobile or when component comes into view
+  useEffect(() => {
+    if (isMobile || isInView) {
+      graphStore.layerManager.loadWithIds([treeNode.object.id]);
+    }
+  }, [isMobile, isInView, graphStore.layerManager, treeNode.object.id]);
 
   // Preload on mouse enter but with debouncing to avoid excessive calls
   const handleMouseEnter = useCallback(() => {
@@ -155,7 +173,7 @@ const Main = observer(function Main({ treeNode, children }: MainProps) {
         openRelComboBox,
       }}
     >
-      <div className={styles.RelatedObjectContent} onMouseEnter={handleMouseEnter}>
+      <div ref={elementRef} className={styles.RelatedObjectContent} onMouseEnter={handleMouseEnter}>
         {children}
       </div>
     </TreeNodeProvider>
