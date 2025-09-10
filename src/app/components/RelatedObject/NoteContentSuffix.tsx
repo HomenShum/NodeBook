@@ -57,6 +57,10 @@ export const NoteContentSuffix = observer(function NoteContentSuffix({ treeNode 
               e.preventDefault();
               e.stopPropagation();
               const nextNode = treeNode.siblingBelow;
+              if (isMod && e.shiftKey && e.altKey) {
+                tree.moveSelectedNodesToBottom();
+                break;
+              }
               if (isMod && e.shiftKey) {
                 tree.moveSelectedNodesDown();
                 break;
@@ -64,13 +68,21 @@ export const NoteContentSuffix = observer(function NoteContentSuffix({ treeNode 
               isMod
                 ? tree.expandAtSelection()
                 : nextNode
-                ? tree.setFocusedNode(nextNode?.id, "start")
-                : tree.moveEditorSelectionDown("start");
+                  ? tree.setFocusedNode(nextNode?.id, "start")
+                  : tree.moveEditorSelectionDown("start");
               break;
             case "ArrowUp":
               e.preventDefault();
               e.stopPropagation();
               e.nativeEvent.stopImmediatePropagation();
+              if (isMod && e.shiftKey && e.altKey) {
+                tree.moveSelectedNodesToTop();
+                break;
+              }
+              if (isMod && e.shiftKey) {
+                tree.moveSelectedNodesUp();
+                break;
+              }
               e.metaKey || e.ctrlKey ? tree.collapseAtSelection() : tree.moveEditorSelectionUp("start");
               break;
             case "ArrowLeft":

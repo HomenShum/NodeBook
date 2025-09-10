@@ -76,6 +76,10 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
             e.preventDefault();
             e.stopPropagation();
             e.nativeEvent.stopImmediatePropagation();
+            if (isMod && e.shiftKey && e.altKey) {
+              tree.moveSelectedNodesToBottom();
+              break;
+            }
             if (isMod && e.shiftKey) {
               tree.moveSelectedNodesDown();
               break;
@@ -86,6 +90,10 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
             e.preventDefault();
             e.stopPropagation();
             e.nativeEvent.stopImmediatePropagation();
+            if (isMod && e.shiftKey && e.altKey) {
+              tree.moveSelectedNodesToTop();
+              break;
+            }
             if (isMod && e.shiftKey) {
               tree.moveSelectedNodesUp();
               break;

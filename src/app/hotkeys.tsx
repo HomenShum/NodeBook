@@ -13,6 +13,8 @@ export const isMoveSelectionHeadUpHotkey = isHotkey("shift+ArrowUp");
 export const isMoveSelectionHeadDownHotkey = isHotkey("shift+ArrowDown");
 export const isMoveSelectedNodesUpHotkey = isHotkey("mod+shift+ArrowUp");
 export const isMoveSelectedNodesDownHotkey = isHotkey("mod+shift+ArrowDown");
+export const isMoveSelectedNodesToTopHotkey = isHotkey("mod+shift+alt+ArrowUp");
+export const isMoveSelectedNodesToBottomHotkey = isHotkey("mod+shift+alt+ArrowDown");
 export const isDeleteSelectionHotkey = isHotkey(["delete", "backspace"]);
 export const isDeleteRelationTypeHotkey = isHotkey("mod+shift+backspace");
 export const isIndentSelectionHotkey = isHotkey("tab");
@@ -67,6 +69,8 @@ export const treeHotkeyMapping: {
   { predicate: isMoveSelectionHeadDownHotkey, action: (tree: Tree) => tree.moveNodeSelectionHeadDown() },
   { predicate: isMoveSelectedNodesUpHotkey, action: (tree: Tree) => tree.moveSelectedNodesUp() },
   { predicate: isMoveSelectedNodesDownHotkey, action: (tree: Tree) => tree.moveSelectedNodesDown() },
+  { predicate: isMoveSelectedNodesToTopHotkey, action: (tree: Tree) => tree.moveSelectedNodesToTop() },
+  { predicate: isMoveSelectedNodesToBottomHotkey, action: (tree: Tree) => tree.moveSelectedNodesToBottom() },
   {
     predicate: (event, tree) => isDeleteSelectionHotkey(event) && tree?.selection?.type === "node",
     action: (tree: Tree) => tree.deleteSelection(),

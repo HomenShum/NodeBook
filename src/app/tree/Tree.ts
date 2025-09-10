@@ -172,6 +172,8 @@ export class Tree {
       split: action,
       moveSelectedNodesUp: action,
       moveSelectedNodesDown: action,
+      moveSelectedNodesToTop: action,
+      moveSelectedNodesToBottom: action,
       moveNodeSelectionHeadUp: action,
       moveNodeSelectionHeadDown: action,
       moveEditorSelectionUp: action,
@@ -2251,6 +2253,85 @@ export class Tree {
       return true;
     }
     return false;
+  }
+
+  /**
+   * Moves the selected or focused nodes to the top of their holding list.
+   */
+  async moveSelectedNodesToTop(): Promise<boolean> {
+    if (!this.selectionWithNodes) return false;
+    if (this.sortOption.mode !== "manual") return false;
+    const { subtreeRoots: nodes } = this.selectionWithNodes;
+
+    // Moves nodes only when they belong to same parent and same group.
+    const shouldMove = nodes.every(
+      (n) =>
+        n.parentGroup.id === nodes[0].parentGroup.id &&
+        n.parent.id === nodes[0].parent.id &&
+        !(n instanceof PointerTreeNode),
+    );
+
+    if (!shouldMove) {
+      return false;
+    }
+
+    const first = nodes[0];
+
+    // Move to the top of the list (after no object, which means first position)
+    await this.graphStore.updateRelationPositionsList({
+      containingNodeId: first.parent.object.id,
+      groupId: first.parentGroup.id,
+      objectAndRelationIds: nodes.map((root) => ({
+        objectId: extractPointedAtObjectId(root),
+        relationId: root.relationWithParent.id,
+      })),
+      afterObjectId: undefined, // No afterObjectId means move to top
+    });
+    return true;
+  }
+
+  /**
+   * Moves the selected or focused nodes to the bottom of their holding list.
+   */
+  async moveSelectedNodesToBottom(): Promise<boolean> {
+    if (!this.selectionWithNodes) return false;
+    if (this.sortOption.mode !== "manual") return false;
+    const { subtreeRoots: nodes } = this.selectionWithNodes;
+
+    // Moves nodes only when they belong to same parent and same group.
+    const shouldMove = nodes.every(
+      (n) =>
+        n.parentGroup.id === nodes[0].parentGroup.id &&
+        n.parent.id === nodes[0].parent.id &&
+        !(n instanceof PointerTreeNode),
+    );
+
+    if (!shouldMove) {
+      return false;
+    }
+
+    const first = nodes[0];
+
+    // Find the last sibling in the same group to move after
+    const parentGroup = first.parentGroup;
+    const lastSiblingInGroup = parentGroup.nodes[parentGroup.nodes.length - 1];
+
+    // If the last sibling is one of our selected nodes, we're already at the bottom
+    if (nodes.includes(lastSiblingInGroup)) {
+      return false;
+    }
+
+    // Move to the bottom of the list (after the last sibling)
+    await this.graphStore.updateRelationPositionsList({
+      containingNodeId: first.parent.object.id,
+      groupId: first.parentGroup.id,
+      objectAndRelationIds: nodes.map((root) => ({
+        objectId: extractPointedAtObjectId(root),
+        relationId: root.relationWithParent.id,
+      })),
+      afterObjectId: lastSiblingInGroup.relationWithParent.id,
+    });
+    return true;
   }
 
   /**

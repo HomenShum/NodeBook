@@ -25,6 +25,8 @@ const list: HotkeyItem[] = [
   { name: "Move Selection Head Down", keys: ["Shift", "↓"] },
   { name: "Move Selected Nodes Up", keys: [`${modKeyName}`, "Shift", "↑"] },
   { name: "Move Selected Nodes Down", keys: [`${modKeyName}`, "Shift", "↓"] },
+  { name: "Move Selected Nodes to Top", keys: [`${modKeyName}`, "Shift", `${optionKeyName}`, "↑"] },
+  { name: "Move Selected Nodes to Bottom", keys: [`${modKeyName}`, "Shift", `${optionKeyName}`, "↓"] },
 
   // Selection and Structure
   { name: "Delete Selection", keys: ["Delete/Backspace"] },
