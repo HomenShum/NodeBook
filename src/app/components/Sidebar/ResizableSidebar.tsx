@@ -92,10 +92,14 @@ export function getSelectedSidebarTab(
   if (rootId === graphStore.userRoot.id) return "yourRoot";
   if (rootId === graphStore.myStreamNode.id) return "yourStream";
 
-  // "globalRoot" and "globalNewsFeed" share the same pathName, so there's no easy way to distinguish the two.
-  // We use a react state to keep track of the last clicked tab. Technically we can remove the previous logic
-  // as well, but it might be a good redundancy if we allow navigation from somewhere not in the sidebar.
-  return lastClickedTab;
+  // Distinguish between globalRoot and globalNewsFeed using the flattenSublists view state
+  if (rootId === graphStore.globalRoot.id) {
+    return viewStore.flattenSublists ? "globalNewsFeed" : "globalRoot";
+  }
+
+  // Return null when no sidebar tab matches the current page state
+  // This ensures sidebar items are only highlighted when their respective pages are active
+  return null;
 }
 
 export const ResizableSidebar = observer(function ResizableSidebar({
@@ -350,6 +354,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   } else {
                     handleNavigation(() => {
                       setRoot(graphStore.globalRoot);
+                      viewStore.setFlattenSublists(false);
                     });
                   }
                 }}
@@ -378,6 +383,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                       handleNavigation(() => {
                         setRoot(graphStore.getDefaultRootForUser());
                         viewStore.setViewType(ViewType.Outline);
+                        viewStore.setFlattenSublists(false);
                       });
                     }
                   }}
@@ -403,6 +409,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                       handleNavigation(() => {
                         setRoot(graphStore.myStreamNode);
                         viewStore.setViewType(ViewType.Note);
+                        viewStore.setFlattenSublists(false);
                       });
                     }
                   }}
@@ -423,7 +430,10 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   if (e.metaKey) {
                     window.open("/query", "_blank");
                   } else {
-                    handleNavigation(() => router.push("/query"));
+                    handleNavigation(() => {
+                      router.push("/query");
+                      viewStore.setFlattenSublists(false);
+                    });
                   }
                 }}
               >
@@ -470,7 +480,10 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 } else if (e.metaKey) {
                   openNewTab(graphStore.globalRoot);
                 } else {
-                  handleNavigation(() => router.push("/all-nodes"));
+                  handleNavigation(() => {
+                    router.push("/all-nodes");
+                    viewStore.setFlattenSublists(false);
+                  });
                 }
               }}
             >
@@ -488,7 +501,10 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   if (e.metaKey) {
                     window.open("/updates", "_blank");
                   } else {
-                    handleNavigation(() => router.push("/updates"));
+                    handleNavigation(() => {
+                      router.push("/updates");
+                      viewStore.setFlattenSublists(false);
+                    });
                   }
                 }}
               >
@@ -508,7 +524,10 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   if (e.metaKey) {
                     window.open("/voice-operations", "_blank");
                   } else {
-                    handleNavigation(() => router.push("/voice-operations"));
+                    handleNavigation(() => {
+                      router.push("/voice-operations");
+                      viewStore.setFlattenSublists(false);
+                    });
                   }
                 }}
               >

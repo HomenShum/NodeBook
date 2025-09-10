@@ -50,6 +50,7 @@ export const MyFavoritesList = observer(function MyFavoritesList() {
         openNewTab(object);
       } else {
         setRoot(object);
+        viewStore.setFlattenSublists(false);
       }
     },
     [viewStore, object, openNewTab, setRoot],
@@ -117,6 +118,7 @@ const FavoriteItem = observer(function FavoriteItem({ object }: TreeElementProps
             openNewTab(object);
           } else {
             setRoot(object);
+            viewStore.setFlattenSublists(false);
             if (window.innerWidth <= 450) {
               viewStore.toggleLeftSidebar();
             }

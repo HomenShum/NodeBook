@@ -195,6 +195,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
         viewStore.createSidePanelTree(child);
       } else {
         setRoot(child);
+        viewStore.setFlattenSublists(false);
       }
     },
     [setRoot, viewStore],

@@ -5,8 +5,7 @@ import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphObject, isGraphObject } from "@/app/graph/GraphObject";
 import { GraphRelation } from "@/app/graph/GraphRelation";
-import { GraphStore } from "@/app/graph/GraphStore";
-import { getCanonicalPath, getOtherObjectOrThrow } from "@/app/graph/utils";
+import { getCanonicalPath } from "@/app/graph/utils";
 import { createRouteUrl, ObjectPath } from "@/app/util";
 import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
@@ -221,6 +220,10 @@ export function useSetMainRoot() {
       // See if shift key is pressed
       const objectPath = isGraphObject(obj) ? getCanonicalPath(obj) : obj;
       viewStore.setRoot(objectPath);
+
+      // Reset flattenSublists when navigating to any page
+      // The Global News Feed button will explicitly set it back to true if needed
+      viewStore.setFlattenSublists(false);
 
       // Check if we need to load the first layer for this node
       const targetObject = objectPath.object;
