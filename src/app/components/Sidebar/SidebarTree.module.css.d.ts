@@ -24,7 +24,6 @@ declare const styles: {
   readonly "SidebarTreeContainer": string;
   readonly "SidebarTreeContent": string;
   readonly "TreeItem": string;
-  readonly "TreeItemButton": string;
   readonly "TreeItemButtons": string;
   readonly "TreeItemButtonsVisible": string;
 };

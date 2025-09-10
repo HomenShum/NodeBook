@@ -410,7 +410,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                   <span>
                     <QuickCaptureIcon />
                   </span>
-                  <span className={styles.ButtonText}>My Notes</span>
+                  <span className={styles.ButtonText}>My Stream</span>
                 </Button>
               </>
             )}

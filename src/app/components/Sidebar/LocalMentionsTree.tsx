@@ -206,7 +206,7 @@ const TreeElement = observer(function TreeElement({ object, currentDepth = 0 }: 
     <>
       <div className={cn(styles.SidebarTreeBlock, styles1.SidebarSectionHeader)}>
         <div className={styles.HeaderLeft}>
-          <span>Local Mentions</span>
+          <span>Mentions in this page</span>
           <div className={styles.HeaderControls}>
             <Button variant="ghost" className={styles.IconButton} onClick={handleMainClick}>
               <TriangleIcon size={9} className={cn(isExpanded && styles.IconExpanded)} />
