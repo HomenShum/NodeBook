@@ -43,8 +43,8 @@
   stroke: var(--teal-6);
   fill: var(--teal-6);
   color: var(--teal-6);
-  width: 9px;
-  height: 7px;
+  width: 12px;
+  height: 10px;
 }
 
 .IconPrivateNode.IconHasChildren {
