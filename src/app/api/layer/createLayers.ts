@@ -418,7 +418,7 @@ export const createLayers = async (
         ),
       );
 
-    const threshold = 200;
+    const threshold = 100;
 
     // Split nodes into two groups based on relation count
     const regularNodes = nodeInfoRows
