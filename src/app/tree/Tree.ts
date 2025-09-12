@@ -710,7 +710,10 @@ export class Tree {
       const node = this.getNodeOrThrow(path);
       const layerIds: string[] = [];
       node.childrenGroups.forEach((group) => group.nodes.forEach((n) => layerIds.push(n.object.id)));
-      this.graphStore.layerManager.loadWithIds([node.object.id, node.relationWithParent.id, ...layerIds]);
+      this.graphStore.layerManager.loadWithIds([node.object.id, node.relationWithParent.id]);
+      for (const layerId of layerIds) {
+        this.graphStore.layerManager.loadWithIds([layerId]);
+      }
     }
 
     this.expansionsByPath.set(path, !currentStatus);
