@@ -24,10 +24,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import appStyles from "@/app/app.module.css";
 import { useAuth } from "@/app/auth/useAuth";
+import { QuickCaptureIcon } from "@/app/components/CustomIcons";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import { HelpModal } from "@/app/components/HelpModal/HelpModal";
-import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
 import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
 import { LocalHashtagsTree } from "@/app/components/Sidebar/LocalHashtagsTree";
 import { LocalMentionsTree } from "@/app/components/Sidebar/LocalMentionsTree";

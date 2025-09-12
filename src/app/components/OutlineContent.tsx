@@ -10,6 +10,7 @@ import s from "@/app/components/OutlineView.module.css";
 import { ChildGroups, NoteContentSection } from "@/app/components/RelatedObject/ChildGroups";
 import { NodeHeaderSettingsMenu } from "@/app/components/RelatedObject/NodeHeaderSettingsMenu";
 import { RootObjectDetails } from "@/app/components/RelatedObject/RelatedObjectDetails";
+import { nodeIconMap } from "@/app/components/RelatedObject/utils/nodeIconMap";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/app/components/UIPrimitives/Tooltip";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
@@ -28,7 +29,6 @@ import { SearchTree } from "@/app/tree/SearchTree";
 import { Tree } from "@/app/tree/Tree";
 import { treeNodeToObjectPath, useSetMainRoot } from "@/app/tree/utils";
 import { copyObjectUrlToClipboard } from "@/app/util";
-import { ViewType } from "@/app/view/types";
 import { useViewStore } from "@/app/view/useViewStore";
 import logger from "@/lib/logger";
 import { cn } from "@/lib/utils";
@@ -203,11 +203,7 @@ function OutlineContent({ tree }: Props) {
     };
   });
 
-  const hideHeader =
-    ((tree.isMainTree || (tree instanceof SearchTree && !(tree instanceof QuickCaptureSearchTree))) &&
-      viewStore.viewType === ViewType.Note) ||
-    ((tree instanceof QuickCaptureTree || tree instanceof QuickCaptureSearchTree) &&
-      viewStore.quickCaptureViewType === ViewType.Note);
+  const hideHeader = tree instanceof QuickCaptureTree || tree instanceof QuickCaptureSearchTree;
 
   return (
     <div
@@ -238,6 +234,15 @@ function OutlineContent({ tree }: Props) {
                       <HomeIcon size={20} />
                     ) : isGlobalRoot ? (
                       <Globe size={20} strokeWidth={1.8} />
+                    ) : treeRoot.object.iconString ? (
+                      (() => {
+                        const iconString = treeRoot.object.iconString;
+                        const IconComponent = nodeIconMap[iconString];
+                        if (IconComponent) {
+                          return <IconComponent size={20} />;
+                        }
+                        return null;
+                      })()
                     ) : null}
                     <TooltipTrigger asChild>
                       <div style={{ width: "100%" }}>

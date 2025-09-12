@@ -92,3 +92,12 @@
 .ContentEditable p {
   min-height: 1.5rem;
 }
+
+/* 
+ * Prevent text cursor from showing on non-editable ContentEditable elements
+ * like uneditable node headings (My Favourites, My Stream, My Hashtags, etc.)
+ */
+.ContentEditable[contenteditable="false"] {
+  cursor: default;
+  user-select: none;
+}

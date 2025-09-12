@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 import React, { useCallback } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
-import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
+import { QuickCaptureIcon } from "@/app/components/CustomIcons";
 import { SyncStatusIndicator } from "@/app/components/SyncStatus/SyncStatusIndicator";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import buttonStyles from "@/app/components/UIPrimitives/Button.module.css";

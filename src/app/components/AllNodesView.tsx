@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import AutoSizer from "react-virtualized-auto-sizer";
 import { FixedSizeList as List } from "react-window";
 
-import { QuickCaptureIcon } from "@/app/components/Icons/QuickCaptureIcon";
+import { QuickCaptureIcon } from "@/app/components/CustomIcons";
 import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
