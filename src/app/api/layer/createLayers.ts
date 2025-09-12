@@ -404,18 +404,64 @@ export const createLayers = async (
   const layersToLoadActual = loadConnectedLayers ? layersToLoad : 0;
 
   for (let currentLayer = 0; currentLayer < layersToLoadActual; currentLayer++) {
-    const relationRows = await db
-      .select()
-      .from(graphRelationTable)
+    // First, get all nodes in the next layer and their relation counts
+    const nodeInfoRows = await db
+      .select({
+        id: graphNodeTable.id,
+        relationCount: graphNodeTable.relationCount,
+      })
+      .from(graphNodeTable)
       .where(
         and(
-          or(
-            inArray(graphRelationTable.fromId, Array.from(objectsToLoadInNextLayer)),
-            inArray(graphRelationTable.toId, Array.from(objectsToLoadInNextLayer)),
-          ),
-          or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPublic, true)),
+          inArray(graphNodeTable.id, Array.from(objectsToLoadInNextLayer)),
+          or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPublic, true)),
         ),
       );
+
+    const threshold = 200;
+
+    // Split nodes into two groups based on relation count
+    const regularNodes = nodeInfoRows
+      .filter((row) => !row.relationCount || row.relationCount <= threshold)
+      .map((row) => row.id);
+    const highRelationNodes = nodeInfoRows
+      .filter((row) => row.relationCount && row.relationCount > threshold)
+      .map((row) => row.id);
+
+    // Load relations for regular nodes (all relations)
+    const regularRelationRows =
+      regularNodes.length > 0
+        ? await db
+            .select()
+            .from(graphRelationTable)
+            .where(
+              and(
+                or(inArray(graphRelationTable.fromId, regularNodes), inArray(graphRelationTable.toId, regularNodes)),
+                or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPublic, true)),
+              ),
+            )
+        : [];
+
+    // Load limited relations for high-relation nodes
+    const highRelationRows =
+      highRelationNodes.length > 0
+        ? await db
+            .select()
+            .from(graphRelationTable)
+            .where(
+              and(
+                or(
+                  inArray(graphRelationTable.fromId, highRelationNodes),
+                  inArray(graphRelationTable.toId, highRelationNodes),
+                ),
+                or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPublic, true)),
+              ),
+            )
+            .orderBy(desc(graphRelationTable.updatedAt))
+            .limit(threshold)
+        : [];
+
+    const relationRows = [...regularRelationRows, ...highRelationRows];
 
     objectsLoadedInPrevLayer = objectsToLoadInNextLayer;
     objectsToLoadInNextLayer.clear();
