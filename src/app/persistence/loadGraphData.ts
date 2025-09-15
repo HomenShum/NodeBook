@@ -184,22 +184,17 @@ export class LayerManager {
       .map((id) => (id === "home" ? this.graphStore.userRootId : id));
     if (ids.length <= 0) return;
     ids.forEach((id) => this.loadedIds.add(id));
-    const layers = await Promise.all([
-      authFetch(`/api/layer`, {
-        method: "POST",
-        body: JSON.stringify({
-          objectIds: ids,
-        }),
-      }).then((res) => res.json()),
-      authFetch(`/api/layer/relations`).then((res) => res.json()),
-    ]);
-    let parsed = SerializedGraphStoreSchema.safeParse(layers[0].data);
+    const response = await authFetch(`/api/layer`, {
+      method: "POST",
+      body: JSON.stringify({
+        objectIds: ids,
+        // userRelations: true,
+      }),
+    }).then((res) => res.json());
+
+    const parsed = SerializedGraphStoreSchema.safeParse(response.data);
     if (parsed.success) {
       this.graphStore.resetAndLoad(parsed.data);
-    }
-    parsed = SerializedGraphStoreSchema.safeParse(layers[1].data);
-    if (parsed.success) {
-      this.graphStore.load(parsed.data);
     }
   }
 

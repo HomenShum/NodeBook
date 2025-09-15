@@ -92,225 +92,6 @@ const getSerializedRelationFromDbRow = (row: typeof graphRelationTable.$inferSel
   };
 };
 
-export const createLayerWithRelation = async (userId: string): Promise<SerializedGraphStore> => {
-  const db = getDb();
-
-  const snapshot: SerializedGraphStore = {
-    usersById: {},
-    nodesById: {},
-    relationTypesById: {},
-    relationsById: {},
-    relationsByNodeId: {},
-    pinnedRelationsByNodeId: {},
-    noteContentRelationsByNodeId: {},
-  };
-
-  //Maybe can extract information from the join?
-
-  const userRelationTypeNodes = await db
-    .select({
-      id: graphNodeTable.id,
-      authorId: graphNodeTable.authorId,
-    })
-    .from(graphNodeTable)
-    .where(like(graphNodeTable.id, "user-relation-types-node-id-%"));
-
-  const sublistNodes = await db
-    .select({
-      relationId: graphRelationTable.id,
-      id: graphNodeTable.id,
-    })
-    .from(graphNodeTable)
-    .innerJoin(graphRelationTable, eq(graphRelationTable.fromId, graphNodeTable.id))
-    .where(
-      and(
-        inArray(
-          graphRelationTable.fromId,
-          userRelationTypeNodes.map((n) => n.id),
-        ),
-        eq(graphRelationTable.relationTypeId, "sublist"),
-      ),
-    );
-
-  const reverseNodes = await db
-    .select({
-      relationId: graphRelationTable.id,
-      id: graphNodeTable.id,
-    })
-    .from(graphNodeTable)
-    .innerJoin(graphRelationTable, eq(graphRelationTable.fromId, graphNodeTable.id))
-    .where(
-      and(
-        inArray(
-          graphRelationTable.fromId,
-          sublistNodes.map((n) => n.id),
-        ),
-        eq(graphRelationTable.relationTypeId, "__reverse__"),
-      ),
-    );
-
-  const objectIds = [
-    ...userRelationTypeNodes.map((n) => n.id),
-    ...sublistNodes.map((n) => n.id),
-    ...reverseNodes.map((n) => n.id),
-  ];
-
-  const relationIds = [...sublistNodes.map((n) => n.relationId), ...reverseNodes.map((n) => n.relationId)];
-
-  const authorIds = userRelationTypeNodes.map((n) => n.authorId);
-  const relationTypeIds = new Set<string>();
-
-  const nodeRows = await db
-    .select()
-    .from(graphNodeTable)
-    .where(
-      and(
-        inArray(graphNodeTable.id, Array.from(objectIds)),
-        or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPublic, true)),
-      ),
-    );
-
-  for (const row of nodeRows) {
-    snapshot.nodesById[row.id] = getSerializedNodeFromDbRow(row);
-  }
-
-  const relationRows = await db
-    .select()
-    .from(graphRelationTable)
-    .where(
-      and(
-        inArray(graphRelationTable.id, Array.from(relationIds)),
-        or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPublic, true)),
-      ),
-    );
-
-  for (const row of relationRows) {
-    // Add the relation to our snapshot
-    snapshot.relationsById[row.id] = getSerializedRelationFromDbRow(row);
-    row.relationTypeId && relationTypeIds.add(row.relationTypeId);
-  }
-
-  // Todo: Maybe we can do a inner join with nodes?
-  // Does it make sense to do another DB call separately.
-  const userRows = await db
-    .select()
-    .from(userTable)
-    .where(inArray(userTable.id, Array.from(authorIds)));
-  for (const row of userRows) {
-    const user: MewUserPublic = {
-      id: row.id,
-      username: row.username || row.email!,
-      email: row.email!,
-    };
-    snapshot.usersById[user.id] = user;
-  }
-
-  const relationListRows = await db
-    .select()
-    .from(relationListsTable)
-    .where(
-      and(
-        and(
-          inArray(relationListsTable.authorId, Array.from(authorIds)),
-          inArray(relationListsTable.relationId, Array.from(relationIds)),
-        ),
-        or(eq(relationListsTable.authorId, userId), eq(relationListsTable.isPublic, true)),
-      ),
-    );
-
-  for (const row of relationListRows) {
-    const { nodeId, relationId } = row;
-    if (!nodeId || !relationId) continue;
-    if (!snapshot.relationsById[relationId]) continue;
-    if (row.type === "pinned") {
-      if (!snapshot.pinnedRelationsByNodeId[nodeId]) {
-        snapshot.pinnedRelationsByNodeId[nodeId] = {};
-      }
-      snapshot.pinnedRelationsByNodeId[nodeId][relationId] = {
-        int: row.positionInt ?? 0,
-        frac: row.positionFrac ?? "",
-      };
-    } else if (row.type === "noteContent") {
-      if (!snapshot.noteContentRelationsByNodeId[nodeId]) {
-        snapshot.noteContentRelationsByNodeId[nodeId] = {};
-      }
-      snapshot.noteContentRelationsByNodeId[nodeId][relationId] = {
-        int: row.positionInt ?? 0,
-        frac: row.positionFrac ?? "",
-      };
-    } else {
-      if (!snapshot.relationsByNodeId[nodeId]) {
-        snapshot.relationsByNodeId[nodeId] = {};
-      }
-      snapshot.relationsByNodeId[nodeId][relationId] = {
-        int: row.positionInt ?? 0,
-        frac: row.positionFrac ?? "",
-      };
-    }
-  }
-
-  const relationTypePublicRows = await db
-    .select()
-    .from(relationTypeTable)
-    .where(
-      and(
-        inArray(relationTypeTable.id, Array.from(relationTypeIds)),
-        or(eq(relationTypeTable.isPublic, true), eq(relationTypeTable.authorId, userId)),
-      ),
-    )
-    .orderBy(desc(relationTypeTable.isPublic));
-
-  for (const row of relationTypePublicRows) {
-    snapshot.relationTypesById[row.id] = {
-      id: row.id,
-      authorId: row.authorId,
-      version: row.version,
-      label: row.label ?? "",
-      reverseLabel: row.reverseLabel ?? "",
-      isPublic: !!row.isPublic,
-    };
-  }
-
-  return snapshot;
-};
-
-export const createLayersWithBfs = async (userId: string, objectId: string): Promise<SerializedGraphStore> => {
-  const db = getDb();
-  const visitedNodeIds = new Set<string>();
-  const queuedNodeIds = new Set<string>([objectId]);
-
-  // Add limits to prevent unbounded expansion
-  const MAX_BFS_NODES = 500; // Limit total nodes loaded
-  const MAX_BFS_DEPTH = 3; // Limit depth of traversal
-  let currentDepth = 0;
-
-  while (queuedNodeIds.size > 0 && visitedNodeIds.size < MAX_BFS_NODES && currentDepth < MAX_BFS_DEPTH) {
-    const relationRows = await db
-      .select({ toId: graphRelationTable.toId })
-      .from(graphRelationTable)
-      .where(
-        and(
-          or(eq(graphRelationTable.relationTypeId, "child"), eq(graphRelationTable.relationTypeId, "sublist")),
-          or(inArray(graphRelationTable.fromId, Array.from(queuedNodeIds))),
-          or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPublic, true)),
-        ),
-      )
-      .limit(100); // Limit results per query
-
-    queuedNodeIds.forEach((id) => visitedNodeIds.add(id));
-    queuedNodeIds.clear();
-    relationRows.forEach((row) => {
-      if (row.toId && !visitedNodeIds.has(row.toId) && visitedNodeIds.size < MAX_BFS_NODES) {
-        queuedNodeIds.add(row.toId);
-      }
-    });
-    currentDepth++;
-  }
-
-  // Load the discovered nodes without additional layers to prevent further expansion
-  return createLayers(userId, Array.from(visitedNodeIds), 1, false);
-};
-
 async function fetchRelationListsInBatches(
   db: any,
   userId: string,
@@ -347,6 +128,7 @@ export const createLayers = async (
   objectIds: string[],
   layersToLoad = 1,
   loadConnectedLayers = true,
+  loadUserRelations = false,
 ): Promise<SerializedGraphStore> => {
   const snapshot: SerializedGraphStore = {
     usersById: {},
@@ -381,19 +163,7 @@ export const createLayers = async (
 
   for (const row of initialRelationRows) {
     relationIds.add(row.id);
-    snapshot.relationsById[row.id] = {
-      version: row.version,
-      id: row.id,
-      authorId: row.authorId ?? UNLOGGED_USER.id,
-      createdAt: row.createdAt ?? new Date(),
-      updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
-      fromId: row.fromId ?? "",
-      toId: row.toId ?? "",
-      relationTypeId: row.relationTypeId ?? "",
-      isPublic: !!row.isPublic,
-      canonicalRelationId: row.canonicalRelationId ?? null,
-      relationCount: row.relationCount,
-    };
+    snapshot.relationsById[row.id] = getSerializedRelationFromDbRow(row);
   }
 
   // Any initial objectIds that aren't relations must be nodes. We handle these separately.
@@ -471,19 +241,7 @@ export const createLayers = async (
       row.id && relationIds.add(row.id);
 
       // Add the relation to our snapshot
-      snapshot.relationsById[row.id] = {
-        version: row.version,
-        id: row.id,
-        authorId: row.authorId ?? UNLOGGED_USER.id,
-        createdAt: row.createdAt ?? new Date(),
-        updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
-        fromId: row.fromId ?? "",
-        toId: row.toId ?? "",
-        relationTypeId: row.relationTypeId ?? "",
-        isPublic: !!row.isPublic,
-        canonicalRelationId: row.canonicalRelationId ?? null,
-        relationCount: row.relationCount,
-      };
+      snapshot.relationsById[row.id] = getSerializedRelationFromDbRow(row);
 
       // Queue fromId and toId for next layer if we haven't seen them
       if (row.fromId && !objectsLoadedInPrevLayer.has(row.fromId)) {
@@ -543,19 +301,7 @@ export const createLayers = async (
         row.id && relationIds.add(row.id);
 
         // Add the relation to our snapshot
-        snapshot.relationsById[row.id] = {
-          version: row.version,
-          id: row.id,
-          authorId: row.authorId ?? UNLOGGED_USER.id,
-          createdAt: row.createdAt ?? new Date(),
-          updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
-          fromId: row.fromId ?? "",
-          toId: row.toId ?? "",
-          relationTypeId: row.relationTypeId ?? "",
-          isPublic: !!row.isPublic,
-          canonicalRelationId: row.canonicalRelationId ?? null,
-          relationCount: row.relationCount,
-        };
+        snapshot.relationsById[row.id] = getSerializedRelationFromDbRow(row);
       });
     }
 
@@ -575,19 +321,7 @@ export const createLayers = async (
       // Add these relations to our tracking
       for (const row of newRelationRows) {
         relationIds.add(row.id);
-        snapshot.relationsById[row.id] = {
-          version: row.version,
-          id: row.id,
-          authorId: row.authorId ?? UNLOGGED_USER.id,
-          createdAt: row.createdAt ?? new Date(),
-          updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
-          fromId: row.fromId ?? "",
-          toId: row.toId ?? "",
-          relationTypeId: row.relationTypeId ?? "",
-          isPublic: !!row.isPublic,
-          canonicalRelationId: row.canonicalRelationId ?? null,
-          relationCount: row.relationCount,
-        };
+        snapshot.relationsById[row.id] = getSerializedRelationFromDbRow(row);
       }
 
       // Any IDs that weren't found as relations must be nodes
@@ -612,21 +346,7 @@ export const createLayers = async (
     );
 
   for (const row of nodeRows) {
-    const node: SerializedNode = {
-      version: row.version,
-      id: row.id,
-      authorId: row.authorId ?? UNLOGGED_USER.id,
-      createdAt: row.createdAt!,
-      updatedAt: row.updatedAt ?? row.createdAt!,
-      content: JSON.parse(row.content ?? ""),
-      isPublic: !!row.isPublic,
-      isNewRelatedObjectsPublic: !!row.isNewRelatedObjectsPublic,
-      canonicalRelationId: row.canonicalRelationId ?? null,
-      isChecked: row.isChecked,
-      accessMode: row.accessMode,
-      attributes: row.attributes as SerializedNode["attributes"],
-      relationCount: row.relationCount,
-    };
+    const node: SerializedNode = getSerializedNodeFromDbRow(row);
     snapshot.nodesById[node.id] = node;
   }
 
@@ -640,19 +360,7 @@ export const createLayers = async (
 
     for (const row of relationChildrenRows) {
       relationIds.add(row.id);
-      snapshot.relationsById[row.id] = {
-        version: row.version,
-        id: row.id,
-        authorId: row.authorId ?? UNLOGGED_USER.id,
-        createdAt: row.createdAt ?? new Date(),
-        updatedAt: row.updatedAt ?? new Date(row.createdAt?.getTime()!) ?? new Date(),
-        fromId: row.fromId ?? "",
-        toId: row.toId ?? "",
-        relationTypeId: row.relationTypeId ?? "",
-        isPublic: !!row.isPublic,
-        canonicalRelationId: row.canonicalRelationId ?? null,
-        relationCount: row.relationCount,
-      };
+      snapshot.relationsById[row.id] = getSerializedRelationFromDbRow(row);
     }
   }
 
@@ -724,6 +432,129 @@ export const createLayers = async (
       reverseLabel: row.reverseLabel ?? "",
       isPublic: !!row.isPublic,
     };
+  }
+
+  // Load user relations if requested
+  if (loadUserRelations) {
+    const userRelationTypeNodes = await db
+      .select({
+        id: graphNodeTable.id,
+        authorId: graphNodeTable.authorId,
+      })
+      .from(graphNodeTable)
+      .where(like(graphNodeTable.id, "user-relation-types-node-id-%"));
+
+    const sublistNodes = await db
+      .select({
+        relationId: graphRelationTable.id,
+        id: graphNodeTable.id,
+      })
+      .from(graphNodeTable)
+      .innerJoin(graphRelationTable, eq(graphRelationTable.fromId, graphNodeTable.id))
+      .where(
+        and(
+          inArray(
+            graphRelationTable.fromId,
+            userRelationTypeNodes.map((n) => n.id),
+          ),
+          eq(graphRelationTable.relationTypeId, "sublist"),
+        ),
+      );
+
+    const reverseNodes = await db
+      .select({
+        relationId: graphRelationTable.id,
+        id: graphNodeTable.id,
+      })
+      .from(graphNodeTable)
+      .innerJoin(graphRelationTable, eq(graphRelationTable.fromId, graphNodeTable.id))
+      .where(
+        and(
+          inArray(
+            graphRelationTable.fromId,
+            sublistNodes.map((n) => n.id),
+          ),
+          eq(graphRelationTable.relationTypeId, "__reverse__"),
+        ),
+      );
+
+    const additionalNodeIds = [
+      ...userRelationTypeNodes.map((n) => n.id),
+      ...sublistNodes.map((n) => n.id),
+      ...reverseNodes.map((n) => n.id),
+    ];
+
+    const additionalRelationIds = [...sublistNodes.map((n) => n.relationId), ...reverseNodes.map((n) => n.relationId)];
+
+    // Load additional nodes
+    const additionalNodeRows = await db
+      .select()
+      .from(graphNodeTable)
+      .where(
+        and(
+          inArray(graphNodeTable.id, additionalNodeIds),
+          or(eq(graphNodeTable.authorId, userId), eq(graphNodeTable.isPublic, true)),
+        ),
+      );
+
+    for (const row of additionalNodeRows) {
+      snapshot.nodesById[row.id] = getSerializedNodeFromDbRow(row);
+    }
+
+    // Load additional relations
+    const additionalRelationRows = await db
+      .select()
+      .from(graphRelationTable)
+      .where(
+        and(
+          inArray(graphRelationTable.id, additionalRelationIds),
+          or(eq(graphRelationTable.authorId, userId), eq(graphRelationTable.isPublic, true)),
+        ),
+      );
+
+    for (const row of additionalRelationRows) {
+      snapshot.relationsById[row.id] = getSerializedRelationFromDbRow(row);
+      row.relationTypeId && relationTypeIds.add(row.relationTypeId);
+    }
+
+    // Load additional relation lists
+    const additionalRelationListRows = await fetchRelationListsInBatches(
+      db,
+      userId,
+      new Set([...authorIds, ...userRelationTypeNodes.map((n) => n.authorId)].filter(Boolean)),
+      new Set(additionalRelationIds),
+    );
+
+    for (const row of additionalRelationListRows) {
+      const { nodeId, relationId } = row;
+      if (!nodeId || !relationId) continue;
+      if (!snapshot.relationsById[relationId]) continue;
+      if (row.type === "pinned") {
+        if (!snapshot.pinnedRelationsByNodeId[nodeId]) {
+          snapshot.pinnedRelationsByNodeId[nodeId] = {};
+        }
+        snapshot.pinnedRelationsByNodeId[nodeId][relationId] = {
+          int: row.positionInt ?? 0,
+          frac: row.positionFrac ?? "",
+        };
+      } else if (row.type === "noteContent") {
+        if (!snapshot.noteContentRelationsByNodeId[nodeId]) {
+          snapshot.noteContentRelationsByNodeId[nodeId] = {};
+        }
+        snapshot.noteContentRelationsByNodeId[nodeId][relationId] = {
+          int: row.positionInt ?? 0,
+          frac: row.positionFrac ?? "",
+        };
+      } else {
+        if (!snapshot.relationsByNodeId[nodeId]) {
+          snapshot.relationsByNodeId[nodeId] = {};
+        }
+        snapshot.relationsByNodeId[nodeId][relationId] = {
+          int: row.positionInt ?? 0,
+          frac: row.positionFrac ?? "",
+        };
+      }
+    }
   }
 
   return snapshot;

@@ -4,7 +4,10 @@ import { z } from "zod";
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { createLayers } from "@/app/api/layer/createLayers";
 
-const bodySchema = z.object({ objectIds: z.array(z.string()) });
+const bodySchema = z.object({
+  objectIds: z.array(z.string()),
+  userRelations: z.boolean().optional(),
+});
 
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
@@ -19,7 +22,9 @@ async function postHandler(req: NextAuthenticatedRequest) {
     throw Error("Missing objects");
   }
 
+  const userRelations = body.data.userRelations ?? false;
+
   // Load connected layers for regular layer loading (not search)
-  const data = await createLayers(userId, objectIds, 1, true);
+  const data = await createLayers(userId, objectIds, 1, true, userRelations);
   return NextResponse.json({ data });
 }
