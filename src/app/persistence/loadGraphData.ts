@@ -35,12 +35,13 @@ export class LayerManager {
   private lazyLoadTimer: NodeJS.Timeout | null = null;
   private readonly graphStore: GraphStore;
   private abortController: AbortController | null = null;
-  private initialLoadComplete = false; // Track if initial load is done
+  private static initialLoadComplete = false; // Track if initial load is done
+  private static initialLoadInProgress = false;
 
   public clear() {
     this.loadedIds.clear();
     this.searchedText.clear();
-    this.initialLoadComplete = false;
+    LayerManager.initialLoadComplete = false;
     clearTimeout(this.searchDebounceTimer || -1);
     clearTimeout(this.lazyLoadTimer || -1);
   }
@@ -61,11 +62,13 @@ export class LayerManager {
    * This should be called once when the app starts up.
    */
   async loadInitial(): Promise<void> {
-    if (this.initialLoadComplete) return;
+    if (LayerManager.initialLoadComplete) return;
+    if (LayerManager.initialLoadInProgress) return;
+    LayerManager.initialLoadInProgress = true;
 
     try {
       await this.fetchAndLoad(`/api/layer/initial`);
-      this.initialLoadComplete = true;
+      LayerManager.initialLoadComplete = true;
     } catch (e) {
       logger.error("Failed to load initial layers", e);
     }
