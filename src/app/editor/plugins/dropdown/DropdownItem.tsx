@@ -37,14 +37,24 @@ export const DropdownItem = forwardRef<HTMLLIElement, DropdownItemProps>(
     return (
       <li
         ref={ref}
-        className={cn(isSelected ? styles.Selected : "", isNotOwned ? styles.NotOwned : "")}
-        onMouseEnter={onMouseEnter}
-        onClick={onClick}
-        aria-selected={isSelected}
+        className={cn(
+          isSelected ? styles.Selected : "",
+          isNotOwned ? styles.NotOwned : "",
+          match.type === "loading" ? styles.LoadingItem : "",
+        )}
+        onMouseEnter={match.type === "loading" ? undefined : onMouseEnter}
+        onClick={match.type === "loading" ? undefined : onClick}
+        aria-selected={match.type === "loading" ? false : isSelected}
         role="option"
+        style={match.type === "loading" ? { pointerEvents: "none" } : undefined}
       >
         <div className={styles.DropdownItem}>
-          {match.type === "relationType" ? (
+          {match.type === "loading" ? (
+            <div className={styles.LoadingContent}>
+              <div className={styles.Spinner} />
+              <span>Loading...</span>
+            </div>
+          ) : match.type === "relationType" ? (
             <div className={relationComboboxStyles.RelationComboboxLabel}>
               {match.isForward ? match.object.label : match.object.reverseLabel}:
             </div>

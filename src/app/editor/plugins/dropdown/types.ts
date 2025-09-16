@@ -12,8 +12,9 @@ export type GraphRelationTypeMatch = {
   isForward: boolean;
   score: number;
 };
+export type LoadingMatch = { key: string; type: "loading" };
 
-export type Match = GraphNodeMatch | GraphRelationMatch | GraphRelationTypeMatch;
+export type Match = GraphNodeMatch | GraphRelationMatch | GraphRelationTypeMatch | LoadingMatch;
 
 export type MentionDropdown = {
   type: "mention";

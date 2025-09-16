@@ -95,12 +95,25 @@ export function MentionDropdown({
         1,
       );
     }
+
+    // If there are loading matches, add them to the beginning
+    if (dropdown?.type === "mention" && dropdown.matches.some((m) => m.type === "loading")) {
+      const loadingOptions = dropdown.matches
+        .filter((m) => m.type === "loading")
+        .map((m) => new LoadingTypeaheadOption(m.key));
+      return [...loadingOptions, ...sortedOptions];
+    }
+
     return sortedOptions;
   }, [dropdown]);
 
   const onSelectOption = useCallback(
-    async (opt: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
-      if (!nodeToReplace || !dropdown || dropdown.type !== "mention") return;
+    async (
+      opt: MentionTypeaheadOption | LoadingTypeaheadOption,
+      nodeToReplace: TextNode | null,
+      closeMenu: () => void,
+    ) => {
+      if (!nodeToReplace || !dropdown || dropdown.type !== "mention" || opt.value.type === "loading") return;
       // update editor
       const graphNodeId = opt.value.type === "new" ? uuid() : opt.value.object.id;
       const text = opt.value.type === "new" ? opt.value.text : opt.value.object.text;
@@ -257,10 +270,21 @@ export class MentionTypeaheadOption extends MenuOption {
   }
 }
 
+export class LoadingTypeaheadOption extends MenuOption {
+  value: { type: "loading" };
+  constructor(key: string) {
+    super(key);
+    this.value = { type: "loading" };
+  }
+  get name() {
+    return "Loading...";
+  }
+}
+
 export function getMenuRenderFn(
-  options: MentionTypeaheadOption[],
+  options: (MentionTypeaheadOption | LoadingTypeaheadOption)[],
   forCommandBar = false,
-): MenuRenderFn<MentionTypeaheadOption> {
+): MenuRenderFn<MentionTypeaheadOption | LoadingTypeaheadOption> {
   return function MenuRenderFn(
     anchorElementRef,
     { selectedIndex, selectOptionAndCleanUp, setHighlightedIndex },
@@ -342,7 +366,23 @@ export function getMenuRenderFn(
         <LineLoader height={2} />
         <ul ref={ulRef}>
           {options.map((option, i: number) =>
-            option.value.type === "new" ? (
+            option.value.type === "loading" ? (
+              <li
+                key={option.key}
+                tabIndex={-1}
+                className={cn(selectedIndex === i ? styles.Selected : "", styles.LoadingItem)}
+                ref={option.setRefElement}
+                id={"typeahead-item-" + i}
+                style={{ pointerEvents: "none" }}
+              >
+                <div className={styles.DropdownItem}>
+                  <div className={styles.LoadingContent}>
+                    <div className={styles.Spinner} />
+                    <span>Loading...</span>
+                  </div>
+                </div>
+              </li>
+            ) : option.value.type === "new" ? (
               <li
                 key={option.key}
                 tabIndex={-1}

@@ -171,19 +171,26 @@ export const DropdownPlugin = observer(function DropdownPlugin({
     [
       dropdown?.type,
       editor,
-      getRecentNodes,
       passiveAutocompleteActive,
       textChanged,
-      labelledRelation,
       clearDropdown,
-      debouncedSearchText,
+      settingsStore.useRoamResearchStyleMention,
     ],
   );
 
   // Debounce dropdown matches to prevent spamming search requests
   useEffect(() => {
     let matches: Match[] = [];
-    if (debouncedSearchText.length === 0) {
+
+    // Check if we're in a loading state - either debounce delay or actual search in flight
+    const isDebouncing = searchText.length > 0 && searchText !== debouncedSearchText && dropdown;
+    const isSearchInFlight = graphStore.inFlightSearchCount > 0 && debouncedSearchText.length > 0;
+    const isLoading = isDebouncing || isSearchInFlight;
+
+    if (isLoading) {
+      // Add loading placeholder as first match
+      matches = [{ key: "loading", type: "loading" }];
+    } else if (debouncedSearchText.length === 0) {
       if (dropdown?.type === "mention" && dropdown.mentionTrigger === HASHTAG_SYMBOL) {
         matches = getRecentHashtags();
       } else if (dropdown?.type === "template") {
@@ -216,12 +223,20 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       };
     });
   }, [
+    searchText,
     debouncedSearchText,
     passiveAutocompleteActive,
     labelledRelation,
     getMatches,
     getRecentNodes,
+    getHashtagMatches,
+    getRecentHashtags,
+    getTemplateMatches,
+    getRecentTemplates,
     graphStore.refreshSearchTrigger,
+    graphStore.inFlightSearchCount,
+    dropdown,
+    treeNode.object.id,
   ]);
 
   // Handle state transitions which {@link triggerFn} can't handle

@@ -37,7 +37,7 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
   const state = useMemo(() => {
     return dropdown?.type === "template"
       ? {
-          matches: dropdown.matches as GraphNodeMatch[],
+          matches: dropdown.matches,
         }
       : null;
   }, [dropdown]);
@@ -88,8 +88,10 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
 
   // Reset highlighted index when options change (but only once they've been set)
   useEffect(() => {
-    if (state) {
-      setHighlightedIndex(0);
+    if (state && state.matches.length > 0) {
+      // Skip loading items when setting initial highlight
+      const firstSelectableIndex = state.matches.findIndex((match) => match.type !== "loading");
+      setHighlightedIndex(firstSelectableIndex >= 0 ? firstSelectableIndex : null);
     } else {
       setHighlightedIndex(null);
     }

@@ -1,13 +1,13 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { mergeRegister } from "@lexical/utils";
 import {
-    COMMAND_PRIORITY_HIGH,
-    COMMAND_PRIORITY_NORMAL,
-    KEY_ARROW_DOWN_COMMAND,
-    KEY_ARROW_UP_COMMAND,
-    KEY_ENTER_COMMAND,
-    KEY_ESCAPE_COMMAND,
-    KEY_TAB_COMMAND,
+  COMMAND_PRIORITY_HIGH,
+  COMMAND_PRIORITY_NORMAL,
+  KEY_ARROW_DOWN_COMMAND,
+  KEY_ARROW_UP_COMMAND,
+  KEY_ENTER_COMMAND,
+  KEY_ESCAPE_COMMAND,
+  KEY_TAB_COMMAND,
 } from "lexical";
 import { observer } from "mobx-react-lite";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -89,7 +89,9 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
   // Reset highlighted index when options change (but only once they've been set)
   useEffect(() => {
     if (state && state.matches.length > 0) {
-      setHighlightedIndex(0);
+      // Skip loading items when setting initial highlight
+      const firstSelectableIndex = state.matches.findIndex((match) => match.type !== "loading");
+      setHighlightedIndex(firstSelectableIndex >= 0 ? firstSelectableIndex : null);
     } else {
       setHighlightedIndex(null);
     }
@@ -98,6 +100,8 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
 
   const selectMatch = useCallback(
     async (match: Match) => {
+      if (match.type === "loading") return;
+
       if (match.type === "relationType") {
         const relation = treeNode.relationWithParent;
         await graphStore.updateRelation({
@@ -134,7 +138,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
         (event) => {
           const index = highlightedIndex !== null ? highlightedIndex : 0;
           const match = nodes[index];
-          if (match) {
+          if (match && match.type !== "loading") {
             if (event) {
               event.preventDefault();
               event.stopPropagation();
@@ -150,9 +154,17 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
       editor.registerCommand(
         KEY_TAB_COMMAND,
         (event) => {
+          // If there are only loading items, close the dropdown
+          if (nodes.every((match) => match.type === "loading")) {
+            event.preventDefault();
+            event.stopPropagation();
+            closeDropdown();
+            return true;
+          }
+
           const index = highlightedIndex ?? 0;
           const match = nodes[index];
-          if (match) {
+          if (match && match.type !== "loading") {
             event.preventDefault();
             event.stopPropagation();
             selectMatch(match);
@@ -182,8 +194,16 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
           if (nodes.length === 0) return false;
           event.preventDefault();
           event.stopPropagation();
-          const nextIndex =
-            highlightedIndex === null || highlightedIndex === nodes.length - 1 ? 0 : highlightedIndex + 1;
+
+          let nextIndex = highlightedIndex === null || highlightedIndex === nodes.length - 1 ? 0 : highlightedIndex + 1;
+
+          // Skip loading items
+          while (nextIndex < nodes.length && nodes[nextIndex].type === "loading") {
+            nextIndex = nextIndex === nodes.length - 1 ? 0 : nextIndex + 1;
+            // Prevent infinite loop if all items are loading
+            if (nextIndex === (highlightedIndex ?? 0)) break;
+          }
+
           setHighlightedIndex(nextIndex);
           scrollToElement(nextIndex);
           return true;
@@ -196,8 +216,16 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
           if (nodes.length === 0) return false;
           event.preventDefault();
           event.stopPropagation();
-          const nextIndex =
-            highlightedIndex === null || highlightedIndex === 0 ? nodes.length - 1 : highlightedIndex - 1;
+
+          let nextIndex = highlightedIndex === null || highlightedIndex === 0 ? nodes.length - 1 : highlightedIndex - 1;
+
+          // Skip loading items
+          while (nextIndex >= 0 && nodes[nextIndex].type === "loading") {
+            nextIndex = nextIndex === 0 ? nodes.length - 1 : nextIndex - 1;
+            // Prevent infinite loop if all items are loading
+            if (nextIndex === (highlightedIndex ?? nodes.length - 1)) break;
+          }
+
           setHighlightedIndex(nextIndex);
           scrollToElement(nextIndex);
           return true;
@@ -243,7 +271,7 @@ export const SearchAndReplaceDropdown = observer(function SearchAndReplaceDropdo
             key={match.key}
             index={index}
             isSelected={highlightedIndex === index}
-            isNotOwned={match.object.authorId !== graphStore.user.id}
+            isNotOwned={match.type !== "loading" && match.object.authorId !== graphStore.user.id}
             onMouseEnter={() => mouseMoveSinceStateChange.current && setHighlightedIndex(index)}
             onClick={(e) => selectMatch(match)}
             showTabHelper={highlightedIndex === null}
