@@ -6,6 +6,8 @@ declare const styles: {
   readonly "DropdownItemContent": string;
   readonly "DropdownItemHelper": string;
   readonly "ForCommandBar": string;
+  readonly "LoadingContent": string;
+  readonly "LoadingItem": string;
   readonly "NotOwned": string;
   readonly "RelTypeIndicator": string;
   readonly "RelatedObjectIndicator": string;
@@ -17,7 +19,9 @@ declare const styles: {
   readonly "RelationItemType": string;
   readonly "SearchAndReplace": string;
   readonly "Selected": string;
+  readonly "Spinner": string;
   readonly "TypeaheadPopover": string;
+  readonly "spin": string;
 };
 export = styles;
 

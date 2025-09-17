@@ -183,13 +183,22 @@ export const DropdownPlugin = observer(function DropdownPlugin({
     let matches: Match[] = [];
 
     // Check if we're in a loading state - either debounce delay or actual search in flight
-    const isDebouncing = searchText.length > 0 && searchText !== debouncedSearchText && dropdown;
-    const isSearchInFlight = graphStore.inFlightSearchCount > 0 && debouncedSearchText.length > 0;
-    const isLoading = isDebouncing || isSearchInFlight;
+    const isSearchInFlight =
+      (searchText.length > 0 && graphStore.inFlightSearchCount > 0) || debouncedSearchText !== searchText;
 
-    if (isLoading) {
+    if (isSearchInFlight) {
       // Add loading placeholder as first match
       matches = [{ key: "loading", type: "loading" }];
+      setDropdown((prev: Dropdown) => {
+        if (!prev) {
+          return null;
+        }
+        return {
+          ...prev,
+          matches,
+        };
+      });
+      return;
     } else if (debouncedSearchText.length === 0) {
       if (dropdown?.type === "mention" && dropdown.mentionTrigger === HASHTAG_SYMBOL) {
         matches = getRecentHashtags();
@@ -227,15 +236,16 @@ export const DropdownPlugin = observer(function DropdownPlugin({
     debouncedSearchText,
     passiveAutocompleteActive,
     labelledRelation,
-    getMatches,
-    getRecentNodes,
-    getHashtagMatches,
-    getRecentHashtags,
-    getTemplateMatches,
-    getRecentTemplates,
+    // getMatches,
+    // getRecentNodes,
+    // getHashtagMatches,
+    // getRecentHashtags,
+    // getTemplateMatches,
+    // getRecentTemplates,
     graphStore.refreshSearchTrigger,
     graphStore.inFlightSearchCount,
-    dropdown,
+    // dropdown,
+    dropdown?.type,
     treeNode.object.id,
   ]);
 
