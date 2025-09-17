@@ -1,9 +1,11 @@
 import { observer } from "mobx-react-lite";
+import { useEffect } from "react";
 
 import { objectPathToBreadcrumb } from "@/app/graph/utils";
 import { ObjectPath, truncateText } from "@/app/util";
 import { cn } from "@/lib/utils";
 import canonicalPathCacheStore from "@/stores/CanonicalPathCacheStore";
+import userNameCacheStore from "@/stores/UserNameCacheStore";
 
 import styles from "./Path.module.css";
 
@@ -19,6 +21,20 @@ export const Path = observer(function Path({
   const { endState } = path;
   const breadcrumbs = objectPathToBreadcrumb(path);
   const cachedAncestors = canonicalPathCacheStore.cache.get(path.object.id);
+  const authorId = path.object.authorId;
+  const userName = userNameCacheStore.getUserName(authorId);
+
+  // Load user name if not cached - always call this hook
+  useEffect(() => {
+    if (
+      !userName &&
+      !userNameCacheStore.isMissing(authorId) &&
+      (!endState || endState === "not-loaded") &&
+      !breadcrumbs.length
+    ) {
+      userNameCacheStore.load([authorId]);
+    }
+  }, [authorId, userName, endState, breadcrumbs.length]);
 
   if ((!endState || endState === "not-loaded") && Array.isArray(cachedAncestors)) {
     return (
@@ -35,6 +51,19 @@ export const Path = observer(function Path({
             </span>
           );
         })}
+      </div>
+    );
+  }
+
+  // If no canonical path is loaded, show the author name instead
+  if ((!endState || endState === "not-loaded") && !breadcrumbs.length) {
+    const displayText = userName || authorId;
+
+    return (
+      <div className={styles.Path}>
+        <span className={cn(styles.PathItem, styles.Wrap)}>
+          <span className={cn(styles.Wrap, styles.MWFull)}>Author: {displayText}</span>
+        </span>
       </div>
     );
   }
