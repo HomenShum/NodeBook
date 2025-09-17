@@ -23,6 +23,7 @@ import { $getText } from "@/app/editor/utils/content";
 import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
+import { useViewStore } from "@/app/view/useViewStore";
 import { checkForMentionMatch, checkForTemplateMatch, HASHTAG_SYMBOL } from "@/lib/utils";
 
 const MAX_DROPDOWN_RESULTS = 20;
@@ -57,6 +58,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
   const graphStore = useGraphStore();
   const [editor] = useLexicalComposerContext();
   const settingsStore = useSettingsStore();
+  const viewStore = useViewStore();
   const [searchText, setSearchText] = useState("");
   const debouncedSearchText = useDebounce(searchText, { wait: 150 });
   const getMatches = useGetMatchesForTreeNode(MAX_DROPDOWN_RESULTS, treeNode);
@@ -166,6 +168,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
 
       // Clear
       clearDropdown();
+      console.log("clearDropdown");
       return null;
     },
     [
@@ -180,10 +183,16 @@ export const DropdownPlugin = observer(function DropdownPlugin({
 
   // Debounce dropdown matches to prevent spamming search requests
   useEffect(() => {
+    // Clear search and replace dropdown if command bar is open
+    if (viewStore.isCommandBarOpen) {
+      clearDropdown();
+      return;
+    }
+
     let matches: Match[] = [];
 
     // Check if we're in a loading state - either debounce delay or actual search in flight
-    const isSearchInFlight =
+    let isSearchInFlight =
       (searchText.length > 0 && graphStore.inFlightSearchCount > 0) || debouncedSearchText !== searchText;
 
     if (isSearchInFlight) {
@@ -210,6 +219,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
         matches = getRecentNodes();
       }
     } else if (dropdown?.type === "searchAndReplace") {
+      console.log("debouncedSearchText", debouncedSearchText);
       matches = getMatches(
         debouncedSearchText,
         labelledRelation ? ["node", "relation"] : ["node", "relation", "relationType"],
@@ -255,6 +265,8 @@ export const DropdownPlugin = observer(function DropdownPlugin({
     // dropdown,
     dropdown?.type,
     treeNode.object.id,
+    viewStore.isCommandBarOpen,
+    clearDropdown,
   ]);
 
   // Handle state transitions which {@link triggerFn} can't handle
@@ -295,6 +307,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
         textChanged.current = true;
         if (text === "") {
           clearDropdown();
+          console.log("clearDropdown on empty text");
         }
       }),
     );
