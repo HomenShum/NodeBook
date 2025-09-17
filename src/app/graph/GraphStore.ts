@@ -50,7 +50,7 @@ import {
 import logger from "@/lib/logger";
 import { getInverseRelation } from "@/lib/relation-inverter";
 import { CappedKeywordIndex, KeywordTrieIndex } from "@/lib/trie";
-import { MentionTrigger, scoreMatch } from "@/lib/utils";
+import { scoreMatch } from "@/lib/utils";
 
 import { FractionalPositionedList, ItemWithPosition } from "./FractionalPositionedList";
 import { AccessMode, Chip, GraphNode } from "./GraphNode";
@@ -562,53 +562,53 @@ export class GraphStore {
           ? [{ type: "text", value: tx.nodeProps.content }]
           : tx.nodeProps.content;
 
-      // Find mention chips that were removed
-      const oldMentionChips = oldContent.filter(
-        (chip): chip is { type: "mention"; value: string; mentionTrigger?: MentionTrigger } => chip.type === "mention",
-      );
-      const newMentionChips = newContent.filter(
-        (chip): chip is { type: "mention"; value: string; mentionTrigger?: MentionTrigger } => chip.type === "mention",
-      );
-      const replacedMentionChips = newContent.filter(
-        (chip): chip is { type: "text"; value: string } => chip.type === "text" && chip.value[0] === "#",
-      );
+      // // Find mention chips that were removed
+      // const oldMentionChips = oldContent.filter(
+      //   (chip): chip is { type: "mention"; value: string; mentionTrigger?: MentionTrigger } => chip.type === "mention",
+      // );
+      // const newMentionChips = newContent.filter(
+      //   (chip): chip is { type: "mention"; value: string; mentionTrigger?: MentionTrigger } => chip.type === "mention",
+      // );
+      // const replacedMentionChips = newContent.filter(
+      //   (chip): chip is { type: "text"; value: string } => chip.type === "text" && chip.value[0] === "#",
+      // );
 
-      // For each removed mention chip, delete its hashtag relation
-      for (const oldChip of oldMentionChips) {
-        if (!newMentionChips.some((newChip) => newChip.value === oldChip.value)) {
-          const mentionNode = this.nodesById.get(oldChip.value);
-          if (mentionNode && replacedMentionChips.some((newChip) => newChip.value === mentionNode.text)) {
-            // If the mention chip was replaced with a text chip, don't delete the relation
-            // because the relation will be deleted when the mention node is deleted in updateNode
-            // We know when its replaced when the mention chip is replaced with a text chip with the same text
-            continue;
-          }
-          // Find and delete the hashtag relation
-          const hashtagRelations = node.relations.filter(
-            (r) => r.to.id === oldChip.value && r.relationType.label.toLowerCase() === "has hashtag",
-          );
+      // // For each removed mention chip, delete its hashtag relation
+      // for (const oldChip of oldMentionChips) {
+      //   if (!newMentionChips.some((newChip) => newChip.value === oldChip.value)) {
+      //     const mentionNode = this.nodesById.get(oldChip.value);
+      //     if (mentionNode && replacedMentionChips.some((newChip) => newChip.value === mentionNode.text)) {
+      //       // If the mention chip was replaced with a text chip, don't delete the relation
+      //       // because the relation will be deleted when the mention node is deleted in updateNode
+      //       // We know when its replaced when the mention chip is replaced with a text chip with the same text
+      //       continue;
+      //     }
+      //     // Find and delete the hashtag relation
+      //     const hashtagRelations = node.relations.filter(
+      //       (r) => r.to.id === oldChip.value && r.relationType.label.toLowerCase() === "has hashtag",
+      //     );
 
-          // Find and delete regular mention relations (relatedTo relations from mentioned node to current node)
-          const mentionRelations = node.relations.filter(
-            (r) => r.from.id === oldChip.value && r.relationType.label.toLowerCase() === "relates to",
-          );
+      //     // Find and delete regular mention relations (relatedTo relations from mentioned node to current node)
+      //     const mentionRelations = node.relations.filter(
+      //       (r) => r.from.id === oldChip.value && r.relationType.label.toLowerCase() === "relates to",
+      //     );
 
-          const relations = [...hashtagRelations, ...mentionRelations];
-          if (relations.length > 0) {
-            const hashtagNode = this.nodesById.get(relations[0].to.id);
-            if (hashtagNode && relations.length === hashtagNode.relationCount - 1) {
-              this.removeNode({ nodeId: hashtagNode.id });
-            }
-          }
+      //     const relations = [...hashtagRelations, ...mentionRelations];
+      //     if (relations.length > 0) {
+      //       const hashtagNode = this.nodesById.get(relations[0].to.id);
+      //       if (hashtagNode && relations.length === hashtagNode.relationCount - 1) {
+      //         this.removeNode({ nodeId: hashtagNode.id });
+      //       }
+      //     }
 
-          for (const relation of relations) {
-            if (this.relationsById.has(relation.id)) {
-              const { updates: deleteUpdates } = this.deleteRelation(relation);
-              updates.push(...deleteUpdates);
-            }
-          }
-        }
-      }
+      //     for (const relation of relations) {
+      //       if (this.relationsById.has(relation.id)) {
+      //         const { updates: deleteUpdates } = this.deleteRelation(relation);
+      //         updates.push(...deleteUpdates);
+      //       }
+      //     }
+      //   }
+      // }
     }
 
     node.update({ ...tx.nodeProps, canonicalRelationId });
