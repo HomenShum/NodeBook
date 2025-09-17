@@ -288,6 +288,13 @@
       "when": 1753800732267,
       "tag": "0040_text_content_length",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1758131261434,
+      "tag": "0041_fix_content_text",
+      "breakpoints": true
     }
   ]
 }
