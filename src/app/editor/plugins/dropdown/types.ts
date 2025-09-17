@@ -33,7 +33,7 @@ export type SearchAndReplaceDropdown = {
 export type TemplateDropdown = {
   type: "template";
   search: string;
-  matches: Match[];
+  matches: GraphNodeMatch[];
 };
 
 export type Dropdown = MentionDropdown | SearchAndReplaceDropdown | TemplateDropdown | null;

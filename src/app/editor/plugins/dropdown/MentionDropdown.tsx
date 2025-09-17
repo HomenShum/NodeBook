@@ -154,7 +154,7 @@ export function MentionDropdown({
             },
           });
         } else {
-          if (opt.value.object.isUserNode) {
+          if (opt.value.type === "existing" && opt.value.object.isUserNode) {
             const notificationManager = new NotificationManager();
             notificationManager.create({
               userId: opt.value.object.authorId,
@@ -244,7 +244,7 @@ export function MentionDropdown({
   );
 
   return (
-    <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
+    <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption | LoadingTypeaheadOption>
       onQueryChange={() => {}}
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}

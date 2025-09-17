@@ -10,7 +10,7 @@ import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { SearchAndReplaceDropdown } from "@/app/editor/plugins/dropdown/SearchAndReplaceDropdown";
 import { TemplateDropdown } from "@/app/editor/plugins/dropdown/TemplateDropdown";
-import { Dropdown, Match } from "@/app/editor/plugins/dropdown/types";
+import { Dropdown, GraphNodeMatch, Match } from "@/app/editor/plugins/dropdown/types";
 import {
   useGetMatchesForHashtags,
   useGetMatchesForTemplate,
@@ -159,7 +159,7 @@ export const DropdownPlugin = observer(function DropdownPlugin({
         setDropdown((prev) => ({
           type: "template",
           search: template.matchingString,
-          matches: prev?.matches ?? [],
+          matches: prev?.type === "template" ? prev.matches : [],
         }));
         return null;
       }
@@ -187,17 +187,19 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       (searchText.length > 0 && graphStore.inFlightSearchCount > 0) || debouncedSearchText !== searchText;
 
     if (isSearchInFlight) {
-      // Add loading placeholder as first match
-      matches = [{ key: "loading", type: "loading" }];
-      setDropdown((prev: Dropdown) => {
-        if (!prev) {
-          return null;
-        }
-        return {
-          ...prev,
-          matches,
-        };
-      });
+      // Add loading placeholder as first match (but not for template dropdown)
+      if (dropdown?.type !== "template") {
+        matches = [{ key: "loading", type: "loading" }];
+        setDropdown((prev: Dropdown) => {
+          if (!prev || prev.type === "template") {
+            return prev;
+          }
+          return {
+            ...prev,
+            matches,
+          };
+        });
+      }
       return;
     } else if (debouncedSearchText.length === 0) {
       if (dropdown?.type === "mention" && dropdown.mentionTrigger === HASHTAG_SYMBOL) {
@@ -225,6 +227,12 @@ export const DropdownPlugin = observer(function DropdownPlugin({
     setDropdown((prev: Dropdown) => {
       if (!prev) {
         return null;
+      }
+      if (prev.type === "template") {
+        return {
+          ...prev,
+          matches: matches.filter((m): m is GraphNodeMatch => m.type === "node"),
+        };
       }
       return {
         ...prev,

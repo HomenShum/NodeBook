@@ -5,7 +5,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { useSettingsStore } from "@/app/contexts/SettingsStoreContext";
-import { getMenuRenderFn, MentionTypeaheadOption } from "@/app/editor/plugins/dropdown/MentionDropdown";
+import {
+  getMenuRenderFn,
+  LoadingTypeaheadOption,
+  MentionTypeaheadOption,
+} from "@/app/editor/plugins/dropdown/MentionDropdown";
 import { MentionDropdown } from "@/app/editor/plugins/dropdown/types";
 import {
   useGetMatchesForCommandBar,
@@ -37,6 +41,7 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
 
   const options = dropdown
     ? [
+        ...dropdown?.matches.filter((m) => m.type === "loading").map((m) => new LoadingTypeaheadOption(m.key)),
         ...dropdown?.matches
           .filter((m) => m.type === "node")
           .map((m) => new MentionTypeaheadOption(m.object))
@@ -83,8 +88,12 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
   );
 
   const onSelectOption = useCallback(
-    async (opt: MentionTypeaheadOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
-      if (!nodeToReplace) return;
+    async (
+      opt: MentionTypeaheadOption | LoadingTypeaheadOption,
+      nodeToReplace: TextNode | null,
+      closeMenu: () => void,
+    ) => {
+      if (!nodeToReplace || opt.value.type === "loading") return;
       // update editor
       const graphNodeId = opt.value.type === "new" ? uuid() : opt.value.object.id;
       const text = opt.value.type === "new" ? opt.value.text : opt.value.object.text;
@@ -137,7 +146,7 @@ export function CommandBarMentionDropdown({ dropdownContainerRef }: Props) {
   }, [editor]);
 
   return (
-    <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
+    <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption | LoadingTypeaheadOption>
       onQueryChange={() => {}}
       onSelectOption={onSelectOption}
       triggerFn={triggerFn}

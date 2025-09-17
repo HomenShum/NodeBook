@@ -89,9 +89,7 @@ export const TemplateDropdown = observer(function TemplateDropdown({ treeNode, c
   // Reset highlighted index when options change (but only once they've been set)
   useEffect(() => {
     if (state && state.matches.length > 0) {
-      // Skip loading items when setting initial highlight
-      const firstSelectableIndex = state.matches.findIndex((match) => match.type !== "loading");
-      setHighlightedIndex(firstSelectableIndex >= 0 ? firstSelectableIndex : null);
+      setHighlightedIndex(state.matches.length > 0 ? 0 : null);
     } else {
       setHighlightedIndex(null);
     }
