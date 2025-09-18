@@ -284,6 +284,7 @@ export class Tree {
       hidePinnedSection: this.settingsStore.hidePinnedItems,
       showOnlyTodos: this.settingsStore.showOnlyTodos,
       hideHashtagRelations: this.settingsStore.hideHashtagRelations,
+      hideDataSourceRelations: !this.settingsStore.showHiddenObjects,
       todosFilterType: this.settingsStore.todosFilterType,
       ...this.partialFilter,
     };
@@ -820,6 +821,15 @@ export class Tree {
       if (
         filter.hideHashtagRelations &&
         treeNode.relationWithParent.relationType.id === defaultRelationTypes.hashtag.id
+      ) {
+        treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
+        return { visible: false, hasTodoDescendant };
+      }
+
+      // Filter dataSource relations
+      if (
+        filter.hideDataSourceRelations &&
+        treeNode.relationWithParent.relationType.id === defaultRelationTypes.dataSource.id
       ) {
         treeNode.tree.addFilteredRelation(treeNode.relationWithParent.id);
         return { visible: false, hasTodoDescendant };
@@ -2792,4 +2802,5 @@ export type Filter = {
   showOnlyTodos: boolean;
   todosFilterType?: string;
   hideHashtagRelations: boolean;
+  hideDataSourceRelations: boolean;
 };
