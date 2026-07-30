@@ -2,7 +2,18 @@ import { execSync } from "child_process";
 
 import { withSentryConfig } from "@sentry/nextjs";
 
-const gitCommitHash = execSync("git rev-parse --short HEAD").toString().trim();
+function resolveBuildIdentity() {
+  const supplied =
+    process.env.VERCEL_GIT_COMMIT_SHA || process.env.NEXT_PUBLIC_GIT_COMMIT_SHA || process.env.SOURCE_COMMIT_SHA;
+  if (supplied) return supplied.slice(0, 12);
+  try {
+    return execSync("git rev-parse --short=12 HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+  } catch {
+    return "local-unversioned";
+  }
+}
+
+const gitCommitHash = resolveBuildIdentity();
 
 /** @type {import('next').NextConfig} */
 let nextConfig = {
