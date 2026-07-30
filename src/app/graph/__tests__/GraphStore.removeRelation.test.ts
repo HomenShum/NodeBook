@@ -1,4 +1,4 @@
-import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -21,7 +21,7 @@ describe("GraphStore.removeRelation", () => {
     const NUM_RELATIONS_START = MIN_NUM_RELATIONS + 1;
 
     beforeEach(async () => {
-      graphStore = new GraphStore(MOCK_MEW_USER);
+      graphStore = new GraphStore(MOCK_NODEBOOK_USER);
 
       startNode = await graphStore.addNode({});
       endNode = await graphStore.addNode({});
@@ -142,7 +142,7 @@ describe("GraphStore.removeRelation", () => {
     const NUM_RELATIONS_START = MIN_NUM_RELATIONS + 4;
 
     beforeEach(async () => {
-      graphStore = new GraphStore(MOCK_MEW_USER);
+      graphStore = new GraphStore(MOCK_NODEBOOK_USER);
 
       nodeA = await graphStore.addNode({ nodeProps: { id: "a" } });
       nodeB = await graphStore.addNode({ nodeProps: { id: "b" } });

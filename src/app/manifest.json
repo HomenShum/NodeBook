@@ -1,8 +1,8 @@
 {
-  "title": "Zephyr (Beta)",
-  "description": "Zephyr (Beta)",
-  "name": "Zephyr (Beta)",
-  "short_name": "Zephyr (Beta)",
+  "title": "NodeBook",
+  "description": "A node-native notebook for thinking and collaboration",
+  "name": "NodeBook",
+  "short_name": "NodeBook",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

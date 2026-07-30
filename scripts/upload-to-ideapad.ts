@@ -6,10 +6,10 @@ import fetch, { Response } from "node-fetch";
 const program = new Command();
 
 const description = `
-Upload Mew ideapad export to Ideapad via api.
+Upload NodeBook ideapad export to Ideapad via api.
 
 How to use:
-1. Export your data from Mew using 'Export to Ideapad'
+1. Export your data from NodeBook using 'Export to Ideapad'
 2. Open ideapad.io and create a new board
 3. Open the network tab in the dev tools
 4. Create a new idea and copy the boardId and bearer token from the request headers

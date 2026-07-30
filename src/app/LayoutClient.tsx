@@ -1,4 +1,3 @@
-import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import React from "react";
 import dynamic from "next/dynamic";
@@ -7,8 +6,6 @@ import { AuthProvider } from "@/app/auth/AuthProvider";
 import { UserProvider } from "@/app/UserProvider";
 import { FilteredNodesProvider } from "@/app/components/RelatedObject/contexts/FilteredNodesContext";
 import { ToastContextProvider } from "@/app/hooks/useToast";
-import { getDb } from "@/db";
-import { graphNodeTable } from "@/db/schema";
 
 import { StoresProvider } from "./StoresProvider";
 
@@ -20,7 +17,7 @@ const App = dynamic(() => import("./App"), {
  * Get the object ID from the request headers.
  *
  * Background:
- * We use a middleware to set the mew-url header by intercepting the request.
+ * We use middleware to attach the current NodeBook URL to the request.
  * Even thought NextJs is run on both server and client, we have to use a middlware to read the URL
  * because apparatnly NextJS does not expose the request URL to server components.
  *
@@ -32,7 +29,7 @@ const App = dynamic(() => import("./App"), {
  */
 const getRequestedObjectId = async (): Promise<string | null> => {
   const headersList = await headers();
-  const requestedURL = headersList.get("mew-url");
+  const requestedURL = headersList.get("nodebook-url");
 
   if (!requestedURL) return null;
 
@@ -49,16 +46,7 @@ const getRequestedObjectId = async (): Promise<string | null> => {
   }
 
   if (path.startsWith("/") && parts.length == 1) {
-    const slug = parts.pop();
-    if (!slug || slug === "g") return null;
-    const db = getDb();
-    const node = await db.query.graphNodeTable.findFirst({
-      columns: {
-        id: true,
-      },
-      where: eq(graphNodeTable.slug, slug),
-    });
-    return node ? node.id : null;
+    return null;
   }
 
   return null;

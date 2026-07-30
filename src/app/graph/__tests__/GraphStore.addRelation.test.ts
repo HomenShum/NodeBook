@@ -1,4 +1,4 @@
-import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
@@ -13,7 +13,7 @@ describe("GraphStore.addRelation", () => {
 
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
-    const user = MOCK_MEW_USER;
+    const user = MOCK_NODEBOOK_USER;
     user.settings.publicMode = false;
     graphStore = new GraphStore(user, new SettingsStore(user));
 

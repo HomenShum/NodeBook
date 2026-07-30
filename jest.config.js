@@ -27,5 +27,9 @@ module.exports = {
   testMatch: [
     '**/*.test.ts?(x)',
   ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/convex/.*\\.production\\.test\\.ts$',
+  ],
   setupFiles: ['./jest.setup.js'],
 };

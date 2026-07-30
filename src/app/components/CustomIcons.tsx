@@ -73,7 +73,7 @@ export const NotesIcon = () => (
     />
   </svg>
 );
-export const UnpinIconMew = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
+export const UnpinIconNodeBook = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={size}
@@ -87,7 +87,7 @@ export const UnpinIconMew = ({ size = 16, fill = "currentColor", stroke = "curre
   </svg>
 );
 
-export const ViewsIconMew = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
+export const ViewsIconNodeBook = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width={size}

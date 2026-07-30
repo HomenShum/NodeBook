@@ -3,9 +3,12 @@ import { NextResponse } from "next/server";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { PostUserRequestSchema, PostUserResponse } from "@/app/api/types";
-import { UNLOGGED_USER } from "@/app/auth/MewUser";
-import { getDb } from "@/db";
-import { updateUserSettings } from "@/db/users";
+import { UNLOGGED_USER } from "@/app/auth/NodeBookUser";
+import {
+  getBearerToken,
+  getConvexClient,
+  updateUserSettingsReference,
+} from "@/lib/convexServer";
 
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
@@ -26,10 +29,17 @@ async function postHandler(req: NextAuthenticatedRequest) {
   }
 
   try {
-    const db = getDb();
     const { user } = result.data;
-    await updateUserSettings(db, user);
-    return NextResponse.json({ error: false, data: user } satisfies PostUserResponse);
+    const token = getBearerToken(req);
+    if (!token) {
+      return NextResponse.json({ error: true, message: "Authentication is required" } satisfies PostUserResponse, {
+        status: 401,
+      });
+    }
+    const document = await getConvexClient(token).mutation(updateUserSettingsReference, {
+      payload: JSON.stringify(user),
+    });
+    return NextResponse.json({ error: false, data: JSON.parse(document) } satisfies PostUserResponse);
   } catch (e) {
     console.error("Error creating user", e);
     captureException(e, { extra: { message: "Error updating user settings" } });

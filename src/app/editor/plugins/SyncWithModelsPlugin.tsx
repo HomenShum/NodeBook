@@ -120,7 +120,7 @@ export const SyncWithModelsPlugin = observer(function SyncWithGraphPlugin({ node
             if (!isFocused) {
               // tree.selection.scrollToCenter &&
               //   editor.getRootElement()?.scrollIntoView({
-              //     behavior: "instant", //scrollIntoView with "smooth" causes a reflow in mew
+              //     behavior: "instant", //scrollIntoView with "smooth" causes a reflow in nodebook
               //     block: "center",
               //   });
               editor.focus();

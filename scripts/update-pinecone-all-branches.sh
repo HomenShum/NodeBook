@@ -7,7 +7,7 @@
 # >>> ./update-pinecone-all-branches.sh <vercel-token>
 set -e
 
-branches=("mew-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite")
+branches=("nodebook-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite")
 vercel_token=$1
 
 # Create a copy of the original .env.local file

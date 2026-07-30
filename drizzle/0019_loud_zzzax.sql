@@ -1,1 +1,0 @@
-ALTER TABLE "mew_user" ADD COLUMN "username" text DEFAULT '' NOT NULL;

@@ -1,1 +1,0 @@
-ALTER TABLE "relation_lists" RENAME COLUMN "bigint" TO "position_int";

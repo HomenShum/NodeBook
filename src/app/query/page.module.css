@@ -11,6 +11,50 @@
   align-items: flex-start;
 }
 
+.preflight {
+  display: flex;
+  width: min(760px, calc(100% - 40px));
+  margin: 12px 20px 0 40px;
+  padding: 14px;
+  gap: 10px;
+  flex-direction: column;
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  color: var(--gray-11);
+  background: var(--background-subtle);
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.receipt {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  font-size: 0.8rem;
+}
+
+.receipt div {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.receipt dt {
+  color: var(--foreground-subtle);
+}
+
+.receipt dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .label {
   display: block;
   font-size: 0.875rem;

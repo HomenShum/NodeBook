@@ -30,8 +30,7 @@ let nextConfig = {
  * find any docs on how to access it, so I assume you can't. Instead, we inject
  * the build id into the client ourselves.
  *
- * For background, see:
- * https://linear.app/ideaflow/issue/ENT-3862/app-reloads-mid-session#comment-08a27abd
+ * This keeps the server and client on the same content-addressed build identity.
  */
 function withBuildId(nextConfig) {
   return {
@@ -51,8 +50,8 @@ const sentryConfig = {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
-  org: "ideaflow",
-  project: "mew",
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
 
   // Only print logs for uploading source maps in CI
   silent: !process.env.CI,

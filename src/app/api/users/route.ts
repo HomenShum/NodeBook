@@ -1,57 +1,26 @@
 import { captureException } from "@sentry/nextjs";
-import { inArray } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-import { GetUsersRequest, GetUsersRequestSchema, GetUsersResponse } from "@/app/api/types";
-import { MewUserPublic } from "@/app/persistence/SerializedData";
-import { getDb } from "@/db";
-import { userTable } from "@/db/schema";
+import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
+import { GetUsersRequestSchema, GetUsersResponse } from "@/app/api/types";
+import { NodeBookUserPublic } from "@/app/persistence/SerializedData";
+import { getBearerToken, getConvexClient, listUsersReference } from "@/lib/convexServer";
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
   try {
-    const body = await req.json();
-    const result = GetUsersRequestSchema.safeParse(body);
-
-    if (!result.success) {
-      console.error("Invalid request", result.error);
-      captureException(result.error, { extra: { message: "Invalid request" } });
-      return NextResponse.json(
-        { error: true, message: "Invalid request" } satisfies GetUsersResponse,
-        { status: 400 }
-      );
+    const parsed = GetUsersRequestSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: true, message: "Invalid request" } satisfies GetUsersResponse, { status: 400 });
     }
-
-    const { userIds } = result.data;
-
-    if (userIds.length === 0) {
-      return NextResponse.json({
-        error: false,
-        data: [],
-      } satisfies GetUsersResponse);
-    }
-
-    const db = getDb();
-    const userRows = await db
-      .select()
-      .from(userTable)
-      .where(inArray(userTable.id, userIds));
-
-    const users: MewUserPublic[] = userRows.map((row) => ({
-      id: row.id,
-      username: row.username || row.email!,
-      email: row.email!,
-    }));
-
-    return NextResponse.json({
-      error: false,
-      data: users,
-    } satisfies GetUsersResponse);
-  } catch (e) {
-    console.error("Error fetching users", e);
-    captureException(e, { extra: { message: "Error fetching users" } });
-    return NextResponse.json(
-      { error: true, message: "Error fetching users" } satisfies GetUsersResponse,
-      { status: 500 }
-    );
+    const documents = await getConvexClient(getBearerToken(request)).query(listUsersReference, parsed.data);
+    const data: NodeBookUserPublic[] = documents.map((document) => {
+      const user = JSON.parse(document);
+      return { id: user.id, username: user.username || user.email, email: user.email };
+    });
+    return NextResponse.json({ error: false, data } satisfies GetUsersResponse);
+  } catch (error) {
+    console.error("User lookup failed", error);
+    captureException(error, { extra: { message: "User lookup failed" } });
+    return NextResponse.json({ error: true, message: "User lookup failed" } satisfies GetUsersResponse, { status: 502 });
   }
-}
+});

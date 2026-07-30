@@ -1,4 +1,4 @@
-import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
@@ -28,7 +28,7 @@ import { Tree } from "@/app/tree/Tree";
  */
 export async function createTestTreeFromTemplate(template: TemplateNode[]) {
   const settingsStore = new SettingsStore();
-  const graphStore = new GraphStore(MOCK_MEW_USER);
+  const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
   const { node: rootNodeForTree } = await graphStore.addChildNode({
     parentId: graphStore.userRoot.id,
     nodeProps: { content: "Tree root" },

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { PersistedUser } from "@/db/schema";
+import { PersistedUser } from "@/app/domain/schema";
 
 const UserResource = {
   save: (user: PersistedUser) =>

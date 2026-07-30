@@ -1,1 +1,0 @@
-UPDATE graph_node SET is_checked = NULL WHERE is_checked = false;

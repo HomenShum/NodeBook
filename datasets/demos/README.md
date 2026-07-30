@@ -1,25 +1,25 @@
-# Mew demo datasets
+# NodeBook demo datasets
 
 This repository contains the code for creating the following demo datasets:
 
 Linkedin:
 
-- Mew full: https://lidemo.ideaflow.app/
-- Mew lite: https://lidemo-lite.ideaflow.app/
+- NodeBook full: https://lidemo.nodebook.app/
+- NodeBook lite: https://lidemo-lite.nodebook.app/
 - Ideapad full: https://ideapad.io/lidemo-2025-01-22-4/
 - Ideapad lite: https://ideapad.io/lidemo-lite-2025-02-11-1/
 
 Linkedin++:
 
-- Mew full: https://lippdemo.ideaflow.app/
-- Mew lite: https://lippdemo-lite.ideaflow.app/
+- NodeBook full: https://lippdemo.nodebook.app/
+- NodeBook lite: https://lippdemo-lite.nodebook.app/
 - Ideapad full: https://ideapad.io/lippdemo-2025-01-22-1/
 - Ideapad lite: https://ideapad.io/lippdemo-lite-2025-01-22-2/
 
 Scrapedemo:
 
-- Mew full: https://scrapedemo.ideaflow.app/
-- Mew lite: https://scrapedemo-lite.ideaflow.app/
+- NodeBook full: https://scrapedemo.nodebook.app/
+- NodeBook lite: https://scrapedemo-lite.nodebook.app/
 
 ## Setup
 
@@ -68,16 +68,16 @@ You'll find the datasets in the `data/output` folder.
 
 ## Upload datasets
 
-### Mew
+### NodeBook
 
-- **Go to mew demo instance** you want to update (links above)
+- **Go to nodebook demo instance** you want to update (links above)
 - **Clear old dataset:** In settings, click "Clear all data"
 - **Import new dataset:** Click "Import Data" in settings and wait for import to complete before closing
 
 ### Ideapad
 
-- **Uploading to Mew** first is necessary to create an ideapad compatible dataset. So make sure you've done the [above](#mew) already.
-- **Click "Export to Ideapad"** in the mew demo instance settings to download the full dataset as a json file
+- **Uploading to NodeBook** first is necessary to create an ideapad compatible dataset. So make sure you've done the [above](#nodebook) already.
+- **Click "Export to Ideapad"** in the nodebook demo instance settings to download the full dataset as a json file
 - **Go to ideapad** and **create new board** in list view (naming convention example: "lidemo-2025-02-11.1")
 - **Click "Go into board"** then **"Graph"** in the header
 - **Upload via settings:** Open right sidebar settings, click "Upload a .json file..." and select your downloaded json

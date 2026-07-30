@@ -124,7 +124,7 @@ export const TreeNodeInputSuffix = observer(function TreeNodeInputSuffix({ treeN
 
         // When a user types in the input, apply the content to the end of the
         // node and then switch back into edit mode.
-        // Requested in https://ideaflowteam.slack.com/archives/C07FU15QKTP/p1729288027846699
+        // Requested in https://nodebookteam.slack.com/archives/C07FU15QKTP/p1729288027846699
         if (treeNode.object instanceof GraphNode) {
           e.preventDefault();
           e.stopPropagation();

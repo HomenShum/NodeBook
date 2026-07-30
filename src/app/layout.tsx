@@ -10,8 +10,8 @@ import "./global.css";
 const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Zephyr (Beta)",
-  description: "A global graph for human coordination",
+  title: "NodeBook",
+  description: "A node-native notebook for thinking and collaboration",
 };
 
 export default function Layout({

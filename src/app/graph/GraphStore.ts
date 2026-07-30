@@ -1,6 +1,6 @@
 import { action, isObservable, makeObservable, observable, toJS } from "mobx";
 
-import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
+import { NodeBookUser, UNLOGGED_USER } from "@/app/auth/NodeBookUser";
 import { NodeType } from "@/app/editor/plugins/dropdown/utils";
 import { env } from "@/app/envFrontend";
 import {
@@ -19,7 +19,7 @@ import { LayerManager } from "@/app/persistence/loadGraphData";
 import { serializeMap } from "@/app/persistence/serialization";
 import {
   DeletedRelationData,
-  MewUserPublic,
+  NodeBookUserPublic,
   SerializedGraphStore,
   SerializedNode,
   SerializedPositionList,
@@ -88,11 +88,11 @@ import { PlaceholderGraphObject } from "./PlaceholderGraphObject";
 export class GraphStore {
   settings: SettingsStore | undefined;
   inFlightSearchCount: number = 0;
-  user: MewUser;
+  user: NodeBookUser;
   updateManager: UpdateManager;
   layerManager: LayerManager;
   refreshSearchTrigger: number = 0;
-  usersById: Map<string, MewUserPublic> = new Map();
+  usersById: Map<string, NodeBookUserPublic> = new Map();
   nodesById: Map<string, GraphNode> = new Map();
   relationsById: Map<string, GraphRelation> = new Map();
 
@@ -105,7 +105,7 @@ export class GraphStore {
 
   cappedKeywordIndex: CappedKeywordIndex;
 
-  constructor(user: MewUser = UNLOGGED_USER, settings?: SettingsStore) {
+  constructor(user: NodeBookUser = UNLOGGED_USER, settings?: SettingsStore) {
     this.user = user;
     this.settings = settings;
     this.updateManager = new UpdateManager(

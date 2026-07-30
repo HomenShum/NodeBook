@@ -141,17 +141,17 @@ export const DeletedRelationDataSchema: z.ZodType<DeletedRelationData, z.ZodType
     relationsList: z.lazy(() => DeletedRelationDataSchema.array()),
   });
 
-export const MewUserPublicSchema = z.object({
+export const NodeBookUserPublicSchema = z.object({
   id: z.string(),
   username: z.string(),
   email: z.string().email(),
 });
 
-export type MewUserPublic = z.infer<typeof MewUserPublicSchema>;
+export type NodeBookUserPublic = z.infer<typeof NodeBookUserPublicSchema>;
 
 export const SerializedGraphStoreSchema = z.object({
   userId: z.string().optional(),
-  usersById: z.record(MewUserPublicSchema).default({}),
+  usersById: z.record(NodeBookUserPublicSchema).default({}),
   nodesById: z.record(SerializedNodeSchema).default({}),
   relationTypesById: z.record(SerializedRelationTypeSchema).default({}),
   relationsById: z.record(SerializedRelationSchema).default({}),

@@ -1,4 +1,4 @@
-import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { SettingsStore } from "@/app/graph/SettingsStore";
@@ -16,7 +16,7 @@ describe("Tree", () => {
   describe("computing state from graph", () => {
     it("basic", async () => {
       const settingsStore = new SettingsStore();
-      const graphStore = new GraphStore(MOCK_MEW_USER);
+      const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
       const { node: root } = await graphStore.addChildNode({
         parentId: graphStore.userRoot.id,
         nodeProps: { content: "Tree root" },
@@ -302,7 +302,7 @@ describe("Tree", () => {
     });
     describe("should not lose focus", () => {
       it("when moving a subtree while anchor is a child of head", async () => {
-        //Source: https://github.com/IdeaFlowCo/mew/pull/519#pullrequestreview-2360873800
+        //Source: https://github.com/NodeBookCo/nodebook/pull/519#pullrequestreview-2360873800
         const tree = await createTestTreeFromTemplate([
           { rid: "1" },
           {
@@ -338,7 +338,7 @@ describe("Tree", () => {
     });
     describe("splitting a multiline note", () => {
       it("in a basic case", async () => {
-        const graphStore = new GraphStore(MOCK_MEW_USER);
+        const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
         const { node: root } = await graphStore.addChildNode({
           parentId: graphStore.userRoot.id,
           nodeProps: { content: "Tree root" },

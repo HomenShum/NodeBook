@@ -1,0 +1,18 @@
+{
+  "viewport": "1440x900",
+  "url": "http://127.0.0.1:4300/g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::nodebook%7C0123456789/user-root-id-SPECIAL::nodebook%7C0123456789",
+  "title": "Tyler Durden - NodeBook",
+  "visibleSignals": [
+    "Global Hub",
+    "Users",
+    "Tyler Durden",
+    "Pinned",
+    "My Stream",
+    "My Templates",
+    "My Favorites",
+    "My Hashtags"
+  ],
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "failedHttpResponses": 0
+}

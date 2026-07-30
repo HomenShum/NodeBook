@@ -1,119 +1,56 @@
-import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
-import { getDb } from "@/db";
-import { expansionStateTable } from "@/db/schema";
-import rootLogger from "@/lib/logger";
+import {
+  deleteExpansionStateReference,
+  getBearerToken,
+  getConvexClient,
+  getExpansionStateReference,
+  saveExpansionStateReference,
+} from "@/lib/convexServer";
 
-const logger = rootLogger.child({ service: "expansion-state-api" });
-
-const SaveExpansionStateSchema = z.object({
-  rootObjectId: z.string(),
-  expandedObjects: z.array(z.string()),
+const StateSchema = z.object({
+  rootObjectId: z.string().min(1).max(2048),
+  expandedObjects: z.array(z.string().max(4096)).max(10_000),
 });
 
-async function postHandler(req: NextAuthenticatedRequest) {
+export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
+  const parsed = StateSchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ error: true, message: "Invalid request body" }, { status: 400 });
   try {
-    const body = await req.json();
-    const parsedBody = SaveExpansionStateSchema.safeParse(body);
-
-    if (!parsedBody.success) {
-      return NextResponse.json({ error: true, message: "Invalid request body" }, { status: 400 });
-    }
-
-    const { rootObjectId, expandedObjects } = parsedBody.data;
-    const db = getDb();
-
-    // Check if record already exists
-    const existingState = await db
-      .select()
-      .from(expansionStateTable)
-      .where(eq(expansionStateTable.rootObjectId, rootObjectId))
-      .limit(1);
-
-    if (existingState.length > 0) {
-      // Update existing record
-      await db
-        .update(expansionStateTable)
-        .set({
-          authorId: req.userId, // Update to new author
-          expandedObjects: JSON.stringify(expandedObjects),
-          updatedAt: new Date(),
-        })
-        .where(eq(expansionStateTable.rootObjectId, rootObjectId));
-    } else {
-      // Create new record
-      await db.insert(expansionStateTable).values({
-        authorId: req.userId,
-        rootObjectId,
-        expandedObjects: JSON.stringify(expandedObjects),
-        updatedAt: new Date(),
-      });
-    }
-
+    await getConvexClient(getBearerToken(request)).mutation(saveExpansionStateReference, parsed.data);
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error("Error saving expansion state:", error);
-    return NextResponse.json({ error: true, message: "Failed to save expansion state" }, { status: 500 });
+    console.error("Expansion state save failed", error);
+    return NextResponse.json({ error: true, message: "Expansion state save failed" }, { status: 502 });
   }
-}
+});
 
-async function getHandler(req: NextAuthenticatedRequest) {
+export const GET = withAuth(async (request: NextAuthenticatedRequest) => {
+  const rootObjectId = new URL(request.url).searchParams.get("rootObjectId");
+  if (!rootObjectId) return NextResponse.json({ error: true, message: "rootObjectId is required" }, { status: 400 });
   try {
-    const { searchParams } = new URL(req.url);
-    const rootObjectId = searchParams.get("rootObjectId");
-
-    if (!rootObjectId) {
-      return NextResponse.json({ error: true, message: "rootObjectId is required" }, { status: 400 });
-    }
-
-    const db = getDb();
-    const state = await db
-      .select()
-      .from(expansionStateTable)
-      .where(eq(expansionStateTable.rootObjectId, rootObjectId))
-      .limit(1);
-
-    if (state.length === 0) {
-      return NextResponse.json({ data: null });
-    }
-
+    const row = await getConvexClient(getBearerToken(request)).query(getExpansionStateReference, { rootObjectId });
     return NextResponse.json({
-      data: {
-        authorId: state[0].authorId,
-        expandedObjects: JSON.parse(state[0].expandedObjects),
-        updatedAt: state[0].updatedAt,
-      },
+      data: row
+        ? { authorId: row.ownerId, expandedObjects: row.expandedObjects, updatedAt: row.updatedAt }
+        : null,
     });
   } catch (error) {
-    logger.error("Error fetching expansion state:", error);
-    return NextResponse.json({ error: true, message: "Failed to fetch expansion state" }, { status: 500 });
+    console.error("Expansion state read failed", error);
+    return NextResponse.json({ error: true, message: "Expansion state read failed" }, { status: 502 });
   }
-}
+});
 
-async function deleteHandler(req: NextAuthenticatedRequest) {
+export const DELETE = withAuth(async (request: NextAuthenticatedRequest) => {
+  const rootObjectId = new URL(request.url).searchParams.get("rootObjectId");
+  if (!rootObjectId) return NextResponse.json({ error: true, message: "rootObjectId is required" }, { status: 400 });
   try {
-    const { searchParams } = new URL(req.url);
-    const rootObjectId = searchParams.get("rootObjectId");
-
-    if (!rootObjectId) {
-      return NextResponse.json({ error: true, message: "rootObjectId is required" }, { status: 400 });
-    }
-
-    const db = getDb();
-
-    // Delete the record if it exists
-    const result = await db.delete(expansionStateTable).where(eq(expansionStateTable.rootObjectId, rootObjectId));
-
+    await getConvexClient(getBearerToken(request)).mutation(deleteExpansionStateReference, { rootObjectId });
     return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error("Error deleting expansion state:", error);
-    return NextResponse.json({ error: true, message: "Failed to delete expansion state" }, { status: 500 });
+    console.error("Expansion state delete failed", error);
+    return NextResponse.json({ error: true, message: "Expansion state delete failed" }, { status: 502 });
   }
-}
-
-export const POST = withAuth(postHandler);
-export const GET = withAuth(getHandler);
-export const DELETE = withAuth(deleteHandler);
+});

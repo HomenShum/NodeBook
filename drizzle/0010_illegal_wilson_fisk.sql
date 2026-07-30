@@ -1,1 +1,0 @@
-ALTER TABLE "relation_type" RENAME COLUMN "reverseLabel" TO "reverse_label";

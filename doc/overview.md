@@ -1,49 +1,23 @@
-# Mew Overview
+# NodeBook overview
 
-We’ve got a few core functions:
-1. Loading, storing & updating the graph
-2. Searching
-3. Displaying & Manipulating the shown tree views
+NodeBook is a node-native notebook. The original notebook interaction model is preserved while Auth0 supplies identity and Convex is the only graph persistence and realtime backend.
 
-I’ll go through them one by one
+## Loading, storing, and updating the graph
 
-### 1. Loading, Storing & Updating the graph
+`GraphStore.ts` owns the in-browser graph. At session start, `StoresProvider` loads bounded pages from the Convex snapshot API into the serialized model defined by `SerializedData.ts`. `GraphStore.resetAndLoad()` reconstructs nodes, relations, relation types, relation lists, and the local search index.
 
-The main graph class is `GraphStore.ts`. At a high level, at the beginning of each session we do the following:
-- Query for essential user data (see `api/layer/initial` )
-- Returns essential user data in serialized format
-- Load this data into memory as objects (`GraphNode`, `GraphRelation`)
-- Load this data into our trie index (more on this in part 2)
+Graph edits remain higher-level transactions in `GraphTransactionTypes.ts`. `UpdateManager.ts` converts them into atomic sync operations, keeps a bounded retry queue, and posts them to `api/sync/route.ts`. The Convex `graph:applySync` mutation authenticates ownership, applies the batch atomically, enforces entity versions, and returns honest idempotency or conflict status.
 
-**Note - when I refer to functions or objects without a prefix I just mean that they are a function  of GraphStore.**
+`ConvexSyncBridge.tsx` subscribes to separate owner and public realtime feeds. Deterministic stream cursors prevent simultaneous updates from being skipped, while the full snapshot remains the recovery source of truth.
 
-#### Loading
-After the query returns with JSON data, the graphstore is loaded via the `GraphStore.load()` function in a serialized JSON format specified in `SerializedData.ts`. When loading for the first time, the function `resetAndLoad()` is called instead, which calls `load()` from within along with performing some checks for or creating some default objects (`ensureDefaultObjectsCreated`).
+## Searching
 
-The class that actually performs the initial loading of graphStore (i.e. calling of  `resetAndLoad()` ) is the LayerManager.
+Client-side prefix search uses the graph's in-memory trie. Server-side search calls the bounded Convex full-text indexes for the authenticated owner's nodes and public nodes. The command bar exposes the combined result.
 
-#### Storing
+## Displaying and manipulating the tree
 
-The graph nodes are accessible via `nodesById` and `relationsById`. The object themselves are instances of `GraphNode` and `GraphRelation` respectively. They're both subclasses of `GraphObject`, which exposes some common properties like `GraphObject.relations`. Importantly, since we are working in a hypergraph structure, both relations and nodes can have relations.
+The tree and editor surfaces continue to consume the established `GraphStore` view model. Convex documents are translated at the persistence boundary, so the migration does not replace the original notebook UI or leak backend-shaped records into components.
 
-Apart from just the relations and nodes, we also need to store the position of relations relative to some other object. This is done using relation position objects, which you can find at `GraphObject.allRelationsList`, `noteContentRelationsList`, `pinnedRelationsList`, and `pointerRelationsList`.  
+## Production operations
 
-#### Updating
-
-We allow several intuitive graph operations, termed "Transactions", all of which you can find in `GraphStore.applyUpdates` or equivalently in `GraphTransactionTypes.ts`. For example, `GraphTransactionTypes.TxReplaceRelationLink` is a transaction type that replaces a relation's to or from object with a different object. However, there's an important distinction to make in these higher-level operations versus the lower-level operations that we allow to be done on the database. These can be found in `api/sync/route.ts`. These atomic operations are used *by* the aforementioned higher-level operations.
-
-Because of the complexity involved in updating the relation positions, even simple addRelation operations require multiple different atomic updates.
-
-Syncing the updates is done through Pusher via a simple queue of graph updates. This happens in `UpdateManager.ts`. We queue the updates every time we update the graphStore locally.
-
-### 2. Searching
-
-We have server-side search and client-side search, done via two different indexes. First, server-side returns the results which are then put into our local trie index (or prefix tree, same thing). You can access this search function by doing `Meta+Shift+K`.
-
-The server-side search is all in `answerQuery.ts`. We use the trigram Gini index extension built into postgres to do this, with a pretty high threshold to improve search performance. See `pg_trgm` for more info on this.
-
-TODO: expand on this
-
-### 3. Displaying & Manipulating the Tree
-
-TODO
+See `PRODUCTION_CUTOVER.md` for the rehearsal, deterministic import receipt, activation, evidence, and rollback procedure.

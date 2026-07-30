@@ -1,11 +1,11 @@
-import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 
 import { MIN_NUM_CREATED_NODES, MIN_NUM_CREATED_RELATIONS, MIN_NUM_NODES } from "./helpers";
 
 describe("GraphStore initialization", () => {
   it("should initialize with default objects", () => {
-    const graphStore = new GraphStore(MOCK_MEW_USER);
+    const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
 
     expect(graphStore.globalRoot).toBeDefined();
     expect(graphStore.usersNode).toBeDefined();
@@ -14,7 +14,7 @@ describe("GraphStore initialization", () => {
   });
 
   it("should queue GraphUpdates for the creation of default objects", () => {
-    const graphStore = new GraphStore(MOCK_MEW_USER);
+    const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
 
     expect(graphStore.updateManager.pendingUpdates).toHaveLength(1);
 
@@ -23,10 +23,10 @@ describe("GraphStore initialization", () => {
     for (const update of graphStore.updateManager.pendingUpdates[0].updates) {
       if (update.operation === "addRelation") {
         addRelationUpdates += 1;
-        expect(update.relation.authorId).toBe(MOCK_MEW_USER.id);
+        expect(update.relation.authorId).toBe(MOCK_NODEBOOK_USER.id);
       } else if (update.operation === "addNode") {
         addNodeUpdates += 1;
-        expect(update.node.authorId).toBe(MOCK_MEW_USER.id);
+        expect(update.node.authorId).toBe(MOCK_NODEBOOK_USER.id);
       }
     }
 
@@ -35,7 +35,7 @@ describe("GraphStore initialization", () => {
   });
 
   it("should use the global root as the user root for the anonymous user", () => {
-    let user = MOCK_MEW_USER;
+    let user = MOCK_NODEBOOK_USER;
     expect(user.isAnonymous).toBe(false);
 
     let graphStore = new GraphStore(user);

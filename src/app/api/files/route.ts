@@ -7,7 +7,7 @@ import { env } from "@/envBackend";
 
 const ACCESS_KEY_ID = env.AWS_ACCESS_KEY_ID;
 const SECRET_ACCESS_KEY = env.AWS_SECRET_ACCESS_KEY;
-const BUCKET_NAME = "ideaflow-mew-uploads";
+const BUCKET_NAME = "nodebook-nodebook-uploads";
 const MAX_UPLOAD_IN_BYTES = 16777216; //16 MB (in binary)
 
 const s3Client = new S3Client({

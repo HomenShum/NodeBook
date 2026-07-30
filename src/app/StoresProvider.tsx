@@ -11,8 +11,8 @@ import { useUser } from "@/app/contexts/UserContext";
 import { VoiceInputProvider } from "@/app/contexts/VoiceInputContext";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
+import { ConvexSyncBridge } from "@/app/graph/ConvexSyncBridge";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { localLocalData } from "@/app/persistence/loadGraphData";
 import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
@@ -37,7 +37,7 @@ export function StoresProvider({
 
   // expose stores to window for debugging
   if (env.env !== "production" && typeof window !== "undefined") {
-    window.mew = {
+    window.nodebook = {
       env,
       toJS,
       graphStore,
@@ -46,6 +46,7 @@ export function StoresProvider({
       getObserverTree,
       rootLogger,
     };
+    window.nodebook = window.nodebook;
   }
 
   // when auth changes, clean up current stores and setup up new ones
@@ -69,7 +70,7 @@ export function StoresProvider({
       // load and start sync
       try {
         if (env.isPersistenceEnabled) {
-          if (env.persistTo === "server") {
+          {
             const objectIds = [
               decodeURIComponent(initialObjectId || "home"),
               graph.relationTypesNodeId,
@@ -84,8 +85,6 @@ export function StoresProvider({
             graph.layerManager.clear();
             await graph.layerManager.initialize(objectIds);
             renderCounter.current++;
-          } else if (env.persistTo === "local") {
-            localLocalData(graph);
           }
         }
       } catch (e) {
@@ -136,6 +135,7 @@ export function StoresProvider({
           <ViewStoreProvider value={viewStore}>
             <SlugProvider>
               <NotificationProvider>
+                {env.isPersistenceEnabled && <ConvexSyncBridge graphStore={graphStore} />}
                 <VoiceInputProvider>{children}</VoiceInputProvider>
               </NotificationProvider>
             </SlugProvider>

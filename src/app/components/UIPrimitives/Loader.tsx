@@ -25,7 +25,7 @@ const Loader = () => {
  *
  * The build id is injected at build time. See `next.config.mjs` (or whatever the next config file is).
  *
- * For details, see: https://linear.app/ideaflow/issue/ENT-3862/app-reloads-mid-session#comment-08a27abd
+ * For details, see: https://linear.app/nodebook/issue/ENT-3862/app-reloads-mid-session#comment-08a27abd
  */
 function useNewBuild() {
   const [isNewBuild, setIsNewBuild] = useState(false);

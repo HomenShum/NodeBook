@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
 
+import { env } from "@/app/envFrontend";
 import logger from "@/lib/logger";
 
 type SlugMap = Record<string, string>;
@@ -24,8 +25,13 @@ export const SlugProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [slugs, setSlugs] = useState<SlugMap>({});
 
   const fetchAllSlugs = useCallback(async () => {
+    if (!env.isPersistenceEnabled) {
+      setSlugs({});
+      return;
+    }
     try {
       const response = await fetch("/api/slug");
+      if (!response.ok) throw new Error(`Slug request failed with HTTP ${response.status}`);
       const data: SlugApiResponse = await response.json();
       const newSlugMap: SlugMap = {};
       data.nodes.forEach((node) => {
@@ -38,6 +44,10 @@ export const SlugProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const updateSlugByNodeId = async (nodeId: string, slug: string): Promise<boolean> => {
+    if (!env.isPersistenceEnabled) {
+      setSlugs((previous) => ({ ...previous, [nodeId]: slug }));
+      return true;
+    }
     try {
       const response = await fetch(`/api/slug`, {
         method: "POST",
@@ -63,6 +73,14 @@ export const SlugProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteSlugByNodeId = async (nodeId: string): Promise<void> => {
+    if (!env.isPersistenceEnabled) {
+      setSlugs((previous) => {
+        const updated = { ...previous };
+        delete updated[nodeId];
+        return updated;
+      });
+      return;
+    }
     try {
       const response = await fetch(`/api/slug`, { method: "DELETE", body: JSON.stringify({ nodeId }) });
 

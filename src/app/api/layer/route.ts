@@ -1,30 +1,15 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 
-import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
-import { createLayers } from "@/app/api/layer/createLayers";
+import { withAuth } from "@/app/api/authMiddleware";
 
-const bodySchema = z.object({
-  objectIds: z.array(z.string()),
-  userRelations: z.boolean().optional(),
-});
+const emptyGraph = {
+  usersById: {},
+  nodesById: {},
+  relationTypesById: {},
+  relationsById: {},
+  relationsByNodeId: {},
+  pinnedRelationsByNodeId: {},
+  noteContentRelationsByNodeId: {},
+};
 
-export const POST = withAuth(postHandler);
-async function postHandler(req: NextAuthenticatedRequest) {
-  const userId = req.userId;
-  const body = bodySchema.safeParse(await req.json());
-  if (!body.success) {
-    return NextResponse.json({ error: body.error.message }, { status: 400 });
-  }
-  const objectIds = body.data.objectIds;
-
-  if (!objectIds || objectIds.length <= 0) {
-    throw Error("Missing objects");
-  }
-
-  const userRelations = body.data.userRelations ?? false;
-
-  // Load connected layers for regular layer loading (not search)
-  const data = await createLayers(userId, objectIds, 1, true, userRelations);
-  return NextResponse.json({ data });
-}
+export const POST = withAuth(async () => NextResponse.json({ data: emptyGraph }));

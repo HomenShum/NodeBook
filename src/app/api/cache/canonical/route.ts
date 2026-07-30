@@ -1,64 +1,41 @@
-import { captureException } from "@sentry/nextjs";
-import { inArray, sql } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
+import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { readCacheSchema, updateCacheSchema } from "@/app/api/cache/canonical/types";
-import { getDb } from "@/db";
-import { canonicalPathCacheTable } from "@/db/schema";
+import {
+  getBearerToken,
+  getConvexClient,
+  readCanonicalPathsReference,
+  writeCanonicalPathsReference,
+} from "@/lib/convexServer";
 
-async function putHandler(req: NextRequest) {
-  const db = getDb();
-
-  const parsedRequest = updateCacheSchema.safeParse(await req.json());
-
-  if (!parsedRequest.success) {
-    return NextResponse.json({ status: "error", message: "Invalid request" }, { status: 400 });
+export const PUT = withAuth(async (request: NextAuthenticatedRequest) => {
+  const parsed = updateCacheSchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ status: "error", message: "Invalid request" }, { status: 400 });
+  if (process.env.NEXT_PUBLIC_PERSISTENCE_ENABLED !== "true") {
+    return NextResponse.json({ status: "ok" });
   }
-
-  const objectIds = Object.keys(parsedRequest.data);
-
   try {
-    await db
-      .insert(canonicalPathCacheTable)
-      .values(
-        objectIds.map((objectId) => ({
-          objectId,
-          ancestors: parsedRequest.data[objectId],
-        })),
-      )
-      .onConflictDoUpdate({
-        target: [canonicalPathCacheTable.objectId],
-        set: { ancestors: sql`excluded.ancestors` },
-      });
-  } catch (e) {
-    console.error(e);
-    captureException(e, {
-      extra: { message: "Error updating canonical path cache" },
-    });
+    const entries = Object.entries(parsed.data).map(([objectId, ancestors]) => ({ objectId, ancestors }));
+    await getConvexClient(getBearerToken(request)).mutation(writeCanonicalPathsReference, { entries });
+    return NextResponse.json({ status: "ok" });
+  } catch (error) {
+    console.error("Canonical cache update failed", error);
+    return NextResponse.json({ status: "error", message: "Canonical cache update failed" }, { status: 502 });
   }
-  return NextResponse.json({ status: "ok" });
-}
+});
 
-async function postHandler(req: NextRequest) {
-  const db = getDb();
-
-  const parsedRequest = readCacheSchema.safeParse(await req.json());
-
-  if (!parsedRequest.success) {
-    return NextResponse.json({ status: "error", message: "Invalid request" }, { status: 400 });
+export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
+  const parsed = readCacheSchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ status: "error", message: "Invalid request" }, { status: 400 });
+  if (process.env.NEXT_PUBLIC_PERSISTENCE_ENABLED !== "true") {
+    return NextResponse.json({ status: "ok", data: [] });
   }
-
-  const objectIds = parsedRequest.data.objectIds;
-
-  const cache = await db
-    .select({
-      objectId: canonicalPathCacheTable.objectId,
-      ancestors: canonicalPathCacheTable.ancestors,
-    })
-    .from(canonicalPathCacheTable)
-    .where(inArray(canonicalPathCacheTable.objectId, objectIds));
-
-  return NextResponse.json({ status: "ok", data: cache });
-}
-
-export { postHandler as POST, putHandler as PUT };
+  try {
+    const data = await getConvexClient(getBearerToken(request)).query(readCanonicalPathsReference, parsed.data);
+    return NextResponse.json({ status: "ok", data });
+  } catch (error) {
+    console.error("Canonical cache read failed", error);
+    return NextResponse.json({ status: "error", message: "Canonical cache read failed" }, { status: 502 });
+  }
+});

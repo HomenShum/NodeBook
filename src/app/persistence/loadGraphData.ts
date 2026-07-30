@@ -6,8 +6,9 @@ import { GetUserResponseSchema, PostUserResponseSchema } from "@/app/api/types";
 import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { SerializedGraphStoreSchema, SerializedStores } from "@/app/persistence/SerializedData";
+import { fetchConvexSnapshot } from "@/app/persistence/fetchConvexSnapshot";
 import { getAuthFetch } from "@/app/util";
-import { PersistedUser } from "@/db/schema";
+import { PersistedUser } from "@/app/domain/schema";
 import logger from "@/lib/logger";
 import canonicalPathCacheStore from "@/stores/CanonicalPathCacheStore";
 
@@ -21,7 +22,7 @@ export const localLocalData = (graphStore: GraphStore) => {
     graphStore.resetAndLoad(data.graphStore);
   }
 
-  logger.debug(`Successfully loaded data from ${env.persistTo}`);
+  logger.debug("Successfully loaded data from local storage");
 };
 
 export class LayerManager {
@@ -177,25 +178,13 @@ export class LayerManager {
   // Maybe at some point, use server side rendering.
   // Adding this so we can do load the first layer and relation types in parallel
   public async initialize(objectIds: string[]): Promise<void> {
-    if (!env.isPersistenceEnabled || env.persistTo !== "server") return;
-    const authFetch = getAuthFetch();
-    const ids = objectIds
-      .filter((id) => !this.loadedIds.has(id))
-      .map((id) => (id === "home" ? this.graphStore.userRootId : id));
-    if (ids.length <= 0) return;
-    ids.forEach((id) => this.loadedIds.add(id));
-    const response = await authFetch(`/api/layer`, {
-      method: "POST",
-      body: JSON.stringify({
-        objectIds: ids,
-        // userRelations: true,
-      }),
-    }).then((res) => res.json());
+    if (!env.isPersistenceEnabled) return;
+    objectIds.forEach((id) => this.loadedIds.add(id === "home" ? this.graphStore.userRootId : id));
+    await this.loadConvexSnapshot();
+  }
 
-    const parsed = SerializedGraphStoreSchema.safeParse(response.data);
-    if (parsed.success) {
-      this.graphStore.resetAndLoad(parsed.data);
-    }
+  private async loadConvexSnapshot(): Promise<void> {
+    this.graphStore.resetAndLoad(await fetchConvexSnapshot(getAuthFetch()));
   }
 
   /**
@@ -207,7 +196,7 @@ export class LayerManager {
    * @returns A promise that resolves to an array of node IDs successfully loaded i the graph store, or an empty array if fetching or parsing fails.
    */
   private async fetchAndLoad(url: string, init: RequestInit = {}, withReset: boolean = false): Promise<string[]> {
-    if (!env.isPersistenceEnabled || env.persistTo !== "server") return [];
+    if (!env.isPersistenceEnabled || url.startsWith("/api/layer")) return [];
     const authFetch = getAuthFetch();
     const response = await authFetch(url, init);
     if (!response.ok) return [];

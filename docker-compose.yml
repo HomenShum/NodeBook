@@ -1,23 +1,23 @@
 version: '3.9'
 
 x-app: &app
-  image: ghcr.io/ideaflowco/mew:${IMAGE_TAG:-latest}
+  image: ${NODEBOOK_IMAGE:-nodebook:latest}
   restart: unless-stopped
   env_file:
     - .env.common
 
 services:
-  mew-main:
+  nodebook-main:
     <<: *app
-    container_name: mew-edge
+    container_name: nodebook-edge
     environment:
       NODE_ENV: production
     ports:
       - "3000:3000"
 
-  mew-test:
+  nodebook-test:
     <<: *app
-    container_name: mew-test
+    container_name: nodebook-test
     environment:
       NODE_ENV: production
     ports:

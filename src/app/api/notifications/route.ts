@@ -1,57 +1,48 @@
-import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
-import { getDb } from "@/db";
-import { notificationTable } from "@/db/schema";
+import {
+  createNotificationReference,
+  getBearerToken,
+  getConvexClient,
+  listNotificationsReference,
+  markNotificationsReadReference,
+} from "@/lib/convexServer";
 
-export const GET = withAuth(getHandler);
-async function getHandler(request: NextAuthenticatedRequest) {
+const CreateSchema = z.object({ nodeId: z.string().min(1).max(2048), userId: z.string().min(1).max(2048) });
+const MarkSchema = z.object({ notificationId: z.string().optional() });
+
+export const GET = withAuth(async (request: NextAuthenticatedRequest) => {
   try {
-    const db = getDb();
-    const userNotifications = await db
-      .select()
-      .from(notificationTable)
-      .where(eq(notificationTable.userId, request.userId));
-    return NextResponse.json({ status: "success", data: userNotifications });
-  } catch (e) {
-    return NextResponse.json({ error: "Invalid request body" });
+    const data = await getConvexClient(getBearerToken(request)).query(listNotificationsReference, {});
+    return NextResponse.json({ status: "success", data });
+  } catch (error) {
+    console.error("Notification read failed", error);
+    return NextResponse.json({ status: "error", message: "Notification read failed" }, { status: 502 });
   }
-}
+});
 
-export const POST = withAuth(postHandler);
-async function postHandler(request: NextAuthenticatedRequest) {
-  const body = await request.json();
-  const db = getDb();
-
-  const { nodeId, userId }: { nodeId: string; userId: string } = body;
-
-  if (!nodeId || !userId) {
-    return NextResponse.json({ error: "Invalid request body" });
+export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
+  const parsed = CreateSchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  try {
+    await getConvexClient(getBearerToken(request)).mutation(createNotificationReference, parsed.data);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Notification create failed", error);
+    return NextResponse.json({ error: "Notification create failed" }, { status: 502 });
   }
+});
 
-  await db.insert(notificationTable).values({
-    userId,
-    messageContent: { mentionedById: request.userId, nodeId },
-    isRead: false,
-    createdAt: new Date(),
-  });
-  return NextResponse.json({ success: true });
-}
-
-export const PATCH = withAuth(patchHandler);
-async function patchHandler(request: NextAuthenticatedRequest) {
-  const db = getDb();
-  const body = await request.json();
-  const notificationId: string | null | undefined = body.notificationId;
-
-  if (notificationId) {
-    await db
-      .update(notificationTable)
-      .set({ isRead: true })
-      .where(and(eq(notificationTable.id, notificationId), eq(notificationTable.userId, request.userId)));
-  } else {
-    await db.update(notificationTable).set({ isRead: true }).where(eq(notificationTable.userId, request.userId));
+export const PATCH = withAuth(async (request: NextAuthenticatedRequest) => {
+  const parsed = MarkSchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  try {
+    await getConvexClient(getBearerToken(request)).mutation(markNotificationsReadReference, parsed.data);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Notification update failed", error);
+    return NextResponse.json({ error: "Notification update failed" }, { status: 502 });
   }
-  return NextResponse.json({ success: true });
-}
+});

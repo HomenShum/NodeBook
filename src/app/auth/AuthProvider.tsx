@@ -3,6 +3,7 @@ import { Auth0Provider } from "@auth0/auth0-react";
 import { useRouter } from "next/navigation";
 
 import { env } from "@/app/envFrontend";
+import { ConvexAuthProvider } from "@/app/auth/ConvexAuthProvider";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
@@ -29,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         scope: "openid profile email offline_access",
       }}
     >
-      {children}
+      <ConvexAuthProvider>{children}</ConvexAuthProvider>
     </Auth0Provider>
   );
 };

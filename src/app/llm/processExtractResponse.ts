@@ -3,7 +3,7 @@ import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { uuid } from "@/app/util";
-import { ParseWithAiLinkingOption } from "@/db/schema";
+import { ParseWithAiLinkingOption } from "@/app/domain/schema";
 
 export const processExtractResponse = async (
   graphStore: GraphStore,

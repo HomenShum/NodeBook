@@ -1,4 +1,4 @@
-import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
@@ -15,7 +15,7 @@ describe("GraphStore.updateNode", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore(MOCK_MEW_USER);
+    graphStore = new GraphStore(MOCK_NODEBOOK_USER);
 
     node = await graphStore.addNode({
       nodeProps: {

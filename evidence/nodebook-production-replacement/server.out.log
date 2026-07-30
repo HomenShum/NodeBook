@@ -1,0 +1,13 @@
+  ▲ Next.js 14.2.25
+  - Local:        http://localhost:4300
+
+ ✓ Starting...
+ ✓ Ready in 2.8s
+ ○ Compiling /src/middleware ...
+ ✓ Compiled /src/middleware in 753ms (117 modules)
+ ○ Compiling /g/[[...path]] ...
+ ✓ Compiled /g/[[...path]] in 35.9s (8208 modules)
+ GET /g 200 in 1742ms
+ ✓ Compiled in 1223ms (3860 modules)
+ ✓ Compiled in 1310ms (3860 modules)
+[?25h

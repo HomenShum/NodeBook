@@ -1,0 +1,220 @@
+ M CLAUDE.md
+ M Dockerfile
+ M README.md
+ M datasets/demos/README.md
+ M datasets/demos/src/scratch.ipynb
+ M doc/overview.md
+ M docker-compose.yml
+D  drizzle.config.ts
+D  drizzle/0000_mixed_gamma_corps.sql
+D  drizzle/0001_bored_khan.sql
+D  drizzle/0002_grey_purple_man.sql
+D  drizzle/0003_outstanding_jigsaw.sql
+D  drizzle/0004_productive_wrecking_crew.sql
+D  drizzle/0005_steep_carnage.sql
+D  drizzle/0006_acoustic_tarot.sql
+D  drizzle/0007_sharp_night_thrasher.sql
+D  drizzle/0008_acoustic_mister_fear.sql
+D  drizzle/0009_pink_adam_destine.sql
+D  drizzle/0010_illegal_wilson_fisk.sql
+D  drizzle/0011_fat_lenny_balinger.sql
+D  drizzle/0012_common_crystal.sql
+D  drizzle/0013_rich_puck.sql
+D  drizzle/0014_complete_stryfe.sql
+D  drizzle/0015_unusual_ultimates.sql
+D  drizzle/0016_overrated_firestar.sql
+D  drizzle/0017_solid_nemesis.sql
+D  drizzle/0018_brown_whistler.sql
+D  drizzle/0019_loud_zzzax.sql
+D  drizzle/0020_hesitant_silver_sable.sql
+D  drizzle/0021_slippery_overlord.sql
+D  drizzle/0022_yielding_norman_osborn.sql
+D  drizzle/0023_colorful_luminals.sql
+D  drizzle/0024_purple_dreaming_celestial.sql
+D  drizzle/0025_solid_prima.sql
+D  drizzle/0026_powerful_mimic.sql
+D  drizzle/0027_abnormal_jean_grey.sql
+D  drizzle/0028_shocking_dust.sql
+D  drizzle/0029_confused_captain_america.sql
+D  drizzle/0030_groovy_stryfe.sql
+D  drizzle/0031_short_bullseye.sql
+D  drizzle/0032_smiling_betty_brant.sql
+D  drizzle/0033_youthful_franklin_richards.sql
+D  drizzle/0034_outstanding_triton.sql
+D  drizzle/0035_db_add_trigram_index.sql
+D  drizzle/0036_flimsy_skullbuster.sql
+D  drizzle/0037_canonical_cache.sql
+D  drizzle/0038_add_new_user_flag.sql
+D  drizzle/0039_move_new_user_flag_to_settings.sql
+D  drizzle/0040_text_content_length.sql
+D  drizzle/0041_fix_content_text.sql
+D  drizzle/meta/0000_snapshot.json
+D  drizzle/meta/0001_snapshot.json
+D  drizzle/meta/0002_snapshot.json
+D  drizzle/meta/0003_snapshot.json
+D  drizzle/meta/0004_snapshot.json
+D  drizzle/meta/0005_snapshot.json
+D  drizzle/meta/0006_snapshot.json
+D  drizzle/meta/0007_snapshot.json
+D  drizzle/meta/0008_snapshot.json
+D  drizzle/meta/0009_snapshot.json
+D  drizzle/meta/0010_snapshot.json
+D  drizzle/meta/0011_snapshot.json
+D  drizzle/meta/0012_snapshot.json
+D  drizzle/meta/0013_snapshot.json
+D  drizzle/meta/0014_snapshot.json
+D  drizzle/meta/0015_snapshot.json
+D  drizzle/meta/0016_snapshot.json
+D  drizzle/meta/0017_snapshot.json
+D  drizzle/meta/0018_snapshot.json
+D  drizzle/meta/0019_snapshot.json
+D  drizzle/meta/0020_snapshot.json
+D  drizzle/meta/0021_snapshot.json
+D  drizzle/meta/0022_snapshot.json
+D  drizzle/meta/0023_snapshot.json
+D  drizzle/meta/0024_snapshot.json
+D  drizzle/meta/0025_snapshot.json
+D  drizzle/meta/0026_snapshot.json
+D  drizzle/meta/0027_snapshot.json
+D  drizzle/meta/0028_snapshot.json
+D  drizzle/meta/0029_snapshot.json
+D  drizzle/meta/0030_snapshot.json
+D  drizzle/meta/0031_snapshot.json
+D  drizzle/meta/0032_snapshot.json
+D  drizzle/meta/0033_snapshot.json
+D  drizzle/meta/0034_snapshot.json
+D  drizzle/meta/0035_snapshot.json
+D  drizzle/meta/0036_snapshot.json
+D  drizzle/meta/0037_snapshot.json
+D  drizzle/meta/0038_snapshot.json
+D  drizzle/meta/0039_snapshot.json
+D  drizzle/meta/0040_snapshot.json
+D  drizzle/meta/0041_snapshot.json
+D  drizzle/meta/_journal.json
+ M jest.config.js
+ M next.config.mjs
+ M package.json
+ M puppeteer/test-command-bar-performance.ts
+D  scripts/check-relation-inverses.ts
+D  scripts/convert-child-to-colon.ts
+D  scripts/convert-relation-types-to-nodes.ts
+D  scripts/create_hidden_relations.ts
+D  scripts/download-relations-and-types.ts
+D  scripts/download_nodes.ts
+D  scripts/export-database.ts
+D  scripts/fix-canonical-relations.ts
+D  scripts/migrate.ts
+D  scripts/populate_relation_counts.ts
+D  scripts/repair-convert-relationtypes.ts
+D  scripts/reset-database.ts
+ M scripts/update-branches.sh
+D  scripts/update-canonical-relations.ts
+ M scripts/update-pinecone-all-branches.sh
+D  scripts/update-relation-types.ts
+D  scripts/update-user-to-stream-relation-lists.ts
+ M scripts/upload-to-ideapad.ts
+D  scripts/upload-to-pinecone.ts
+D  scripts/upload_non_existing_nodes.ts
+D  scripts/user-data.ts
+ M src/app/LayoutClient.tsx
+ M src/app/StoresProvider.tsx
+ M src/app/[slug]/page.tsx
+ M src/app/api/authMiddleware.ts
+ M src/app/api/cache/canonical/route.ts
+ M src/app/api/delete-all/route.ts
+ M src/app/api/expansion-state/route.ts
+ M src/app/api/files/route.ts
+ M src/app/api/layer/bfs/route.ts
+ M src/app/api/layer/canonical/route.ts
+ D src/app/api/layer/createLayers.ts
+ M src/app/api/layer/initial/route.ts
+ M src/app/api/layer/route.ts
+ M src/app/api/notifications/route.ts
+ D src/app/api/query/rag.ts
+ M src/app/api/query/route.ts
+ D src/app/api/search/aiSearchQuery.ts
+ D src/app/api/search/answerQuery.ts
+ D src/app/api/search/helpers.ts
+ M src/app/api/search/route.ts
+ M src/app/api/slug/route.ts
+ D src/app/api/sync/createSnapshot.ts
+ M src/app/api/sync/import-chunk/route.ts
+ D src/app/api/sync/pusher.ts
+ M src/app/api/sync/route.ts
+ M src/app/api/types.ts
+ M src/app/api/user/route.ts
+ M src/app/api/user/settings/route.ts
+ M src/app/api/users/route.ts
+ M src/app/api/utils/resources/User.ts
+ M src/app/apple-icon.png
+ M src/app/auth/AuthProvider.tsx
+ D src/app/auth/MewUser.ts
+ M src/app/components/CustomIcons.tsx
+ M src/app/components/DataDialog/ImportDialog.tsx
+ M src/app/components/PageTitleUpdater.tsx
+ M src/app/components/RelatedObject/TreeNodeInputPrefix.tsx
+ M src/app/components/RelatedObject/TreeNodeInputSuffix.tsx
+ M src/app/components/UIPrimitives/Loader.tsx
+ M src/app/components/dev/DevTools.tsx
+ M src/app/contexts/SlugContext.tsx
+ M src/app/contexts/UserContext.ts
+ M src/app/editor/plugins/PastePlugin.tsx
+ M src/app/editor/plugins/SyncWithModelsPlugin.tsx
+ M src/app/editor/plugins/__tests__/LinkPlugin.test.ts
+ M src/app/envFrontend.ts
+ M src/app/graph/GraphStore.ts
+ M src/app/graph/SettingsStore.ts
+ M src/app/graph/UpdateManager.ts
+ M src/app/graph/__tests__/GraphStore.addChildNode.test.ts
+ M src/app/graph/__tests__/GraphStore.addNode.test.ts
+ M src/app/graph/__tests__/GraphStore.addRelation.test.ts
+ M src/app/graph/__tests__/GraphStore.getAllPaths.test.ts
+ M src/app/graph/__tests__/GraphStore.load.test.ts
+ M src/app/graph/__tests__/GraphStore.removeNode.test.ts
+ M src/app/graph/__tests__/GraphStore.removeRelation.test.ts
+ M src/app/graph/__tests__/GraphStore.replaceRelationLink.test.ts
+ M src/app/graph/__tests__/GraphStore.search.test.ts
+ M src/app/graph/__tests__/GraphStore.setIsPublic.test.ts
+ M src/app/graph/__tests__/GraphStore.test.ts
+ M src/app/graph/__tests__/GraphStore.updateNode.test.ts
+ M src/app/graph/__tests__/GraphStore.updateRelation.test.ts
+ M src/app/graph/__tests__/UpdateManager.undo.test.ts
+ M src/app/hooks/useSetupUser.tsx
+ M src/app/icon.png
+ M src/app/layout.tsx
+ M src/app/llm/processExtractResponse.ts
+ M src/app/manifest.json
+ M src/app/persistence/SerializedData.ts
+ M src/app/persistence/loadGraphData.ts
+ M src/app/query/page.tsx
+ M src/app/tree/__test__/Tree.test.ts
+ M src/app/tree/__test__/helpers.ts
+ M src/app/tree/clipboard.ts
+ M src/app/util.ts
+ M src/app/window.d.ts
+D  src/db/SyncError.ts
+D  src/db/graphNodes.ts
+D  src/db/graphRelations.ts
+D  src/db/index.ts
+D  src/db/relationLists.ts
+D  src/db/relationTypes.ts
+D  src/db/schema.ts
+D  src/db/types.ts
+D  src/db/users.ts
+ M src/envBackend.ts
+ D src/lib/pusher.ts
+ M src/lib/utils.ts
+ M src/middleware.ts
+ M yarn.lock
+?? .env.example
+?? convex/
+?? doc/PRODUCTION_CUTOVER.md
+?? evidence/
+?? scripts/import-to-convex.mjs
+?? src/app/api/convex/
+?? src/app/auth/ConvexAuthProvider.tsx
+?? src/app/auth/NodeBookUser.ts
+?? src/app/domain/
+?? src/app/graph/ConvexSyncBridge.tsx
+?? src/app/persistence/fetchConvexSnapshot.ts
+?? src/lib/convexServer.ts

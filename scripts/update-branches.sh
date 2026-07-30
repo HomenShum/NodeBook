@@ -13,7 +13,7 @@
 # >>> ./update-branches.sh <vercel-token>
 set -e
 
-branches=("mew-lite" "mew-extra-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite" "geometry-vc")
+branches=("nodebook-lite" "nodebook-extra-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite" "geometry-vc")
 vercel_token=$1
 
 # Create a copy of the original .env.local file

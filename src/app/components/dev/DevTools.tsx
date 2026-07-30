@@ -18,7 +18,7 @@ import {
   PasteLinksOptionEnum,
   SearchAndReplaceDropdownOption,
   SearchAndReplaceDropdownOptionEnum,
-} from "@/db/schema";
+} from "@/app/domain/schema";
 import logger from "@/lib/logger";
 
 import styles from "./DevTools.module.css";

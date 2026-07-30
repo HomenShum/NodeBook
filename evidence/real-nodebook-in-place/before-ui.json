@@ -1,0 +1,28 @@
+{
+  "title": "Tyler Durden - Zephyr",
+  "url": "http://127.0.0.1:4300/g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "visibleContract": [
+    "Home",
+    "My Stream",
+    "Recently Created Notes",
+    "Voice Operations",
+    "My Favorites",
+    "My Hashtags",
+    "My Shortlinks",
+    "Notifications",
+    "Global Hub",
+    "Users",
+    "Filters",
+    "Sort by",
+    "AI",
+    "Expansion",
+    "List View",
+    "Display",
+    "Pinned",
+    "My Templates"
+  ]
+}

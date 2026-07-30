@@ -1,19 +1,20 @@
 import { captureException } from "@sentry/nextjs";
 import { computed, makeObservable, observable, runInAction } from "mobx";
-import Pusher from "pusher-js";
 
 import { env } from "@/app/envFrontend";
 import { generateInverseUpdates, GraphUpdate } from "@/app/graph/GraphUpdate";
 import { condenseSyncDataBatch, SyncData, SyncDataSchema } from "@/app/graph/SyncData";
 import { getEntityIdsFromUpdates } from "@/app/graph/utils";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
+import { fetchConvexSnapshot } from "@/app/persistence/fetchConvexSnapshot";
 import { uuid } from "@/app/util";
 import appLogger from "@/lib/logger";
-import { getGlobalGraphChannel, userIdToPusherChannel } from "@/lib/pusher";
 
 const logger = appLogger.child({ service: "UpdateManager" });
 
-const pusher = new Pusher(env.pusherKey, { cluster: env.pusherCluster });
+const MAX_PENDING_SYNC_ENTITIES = 10_000;
+const MAX_SYNC_QUEUE_ITEMS = 2_000;
+const SYNC_REQUEST_TIMEOUT_MS = 10_000;
 
 /**
  * Represents a transaction that can be undone/redone, potentially with selection state
@@ -64,6 +65,10 @@ export class UpdateManager {
   private removeFromDeletedRelations: (relationId: string) => void;
 
   static incrementSyncCount(entityId: string): void {
+    if (!UpdateManager.pendingNodeSyncCounts.has(entityId) && UpdateManager.pendingNodeSyncCounts.size >= MAX_PENDING_SYNC_ENTITIES) {
+      const oldest = UpdateManager.pendingNodeSyncCounts.keys().next().value;
+      if (oldest) UpdateManager.pendingNodeSyncCounts.delete(oldest);
+    }
     const currentCount = UpdateManager.pendingNodeSyncCounts.get(entityId) || 0;
     UpdateManager.pendingNodeSyncCounts.set(entityId, currentCount + 1);
   }
@@ -112,38 +117,6 @@ export class UpdateManager {
     if (!env.isPersistenceEnabled) return () => {};
     this.isSyncing = true;
 
-    // Subscribe to changes from other clients
-    const userChannel = pusher.subscribe(
-      userIdToPusherChannel({ channelPrefix: env.pusherChannelPrefix, userId: this.userId }),
-    );
-    userChannel.bind("transaction-accepted", (data: any) => {
-      const parsedSyncData = SyncDataSchema.safeParse(data);
-      if (!parsedSyncData.success) {
-        console.error("Invalid sync data received", data);
-        return;
-      }
-      if (parsedSyncData.data.clientId === this.clientId) {
-        logger.debug("ignoring sync data from this client");
-        return;
-      }
-
-      this.handleSyncData(parsedSyncData.data, true);
-    });
-    const globalChannel = pusher.subscribe(getGlobalGraphChannel(env.pusherChannelPrefix));
-    globalChannel.bind("transaction-accepted", (data: any) => {
-      const parsedSyncData = SyncDataSchema.safeParse(data);
-      if (!parsedSyncData.success) {
-        console.error("Invalid sync data received", data);
-        return;
-      }
-      if (parsedSyncData.data.userId === this.userId) {
-        // We ignore because the same data will be received on the user's channel
-        logger.debug("ignoring sync data from this user but different client.");
-        return;
-      }
-      this.handleSyncData(parsedSyncData.data, false);
-    });
-
     // Periodically send local updates to the server
     this.syncLoop();
 
@@ -163,8 +136,6 @@ export class UpdateManager {
 
   stopSync() {
     clearTimeout(this.nextSyncId);
-    pusher.unsubscribe(userIdToPusherChannel({ channelPrefix: env.pusherChannelPrefix, userId: this.userId }));
-    pusher.unsubscribe(getGlobalGraphChannel(env.pusherChannelPrefix));
     this.isSyncing = false;
   }
 
@@ -173,18 +144,13 @@ export class UpdateManager {
   }
 
   private async fetchLatestDataSnapshot() {
-    //Preserving this method temporarily since I want to see the edge cases
-    //it's used in but we don't really want to fetch all the backend data.
-    // if (!this.authedFetch) return;
-    logger.info("Skip fetching latest data snapshot from backend");
-    // const latestData = await this.authedFetch("/api/sync").then((res) => res.json());
-    // const parsed = SerializedGraphStoreSchema.safeParse(latestData.data);
-    // if (parsed.success) {
-    //   this.refetchCallback(parsed.data);
-    //   this.lastSuccessfulSync = new Date();
-    // } else {
-    //   logger.error("Failed to parse latest data snapshot", parsed.error);
-    // }
+    if (!this.authedFetch) throw new Error("Authenticated fetch is unavailable for snapshot recovery");
+    const latestData = await fetchConvexSnapshot(this.authedFetch);
+    this.refetchCallback(latestData);
+    runInAction(() => {
+      this.offlineSince = null;
+      this.lastSuccessfulSync = new Date();
+    });
   }
 
   async handleSyncData(data: SyncData, resetIfApplyFails: boolean) {
@@ -315,9 +281,7 @@ export class UpdateManager {
       updates,
     };
 
-    if (env.persistTo === "server") {
-      this.syncQueue.push(dataForSync);
-    }
+    this.enqueueSync(dataForSync);
 
     // Return the transaction ID so it can be associated with a selection state
     return transactionId;
@@ -351,9 +315,7 @@ export class UpdateManager {
       transactionId: uuid(),
       updates: inverted,
     };
-    if (env.persistTo === "server") {
-      this.syncQueue.push(dataForSync);
-    }
+    this.enqueueSync(dataForSync);
 
     // After undo is complete, try to restore the appropriate selection state if this transaction has one
     if (transaction.hasSelectionState) {
@@ -383,9 +345,7 @@ export class UpdateManager {
       transactionId: uuid(),
       updates,
     };
-    if (env.persistTo === "server") {
-      this.syncQueue.push(dataForSync);
-    }
+    this.enqueueSync(dataForSync);
   }
 
   private async sendChunkedSyncData(syncData: SyncData) {
@@ -393,7 +353,7 @@ export class UpdateManager {
     // implements the following:
     // - throws "size" error on rows larger than maxRows
     // - chunks the updates into chunks of maxChunkSize
-    const maxRows = 1000000;
+    const maxRows = 500;
     const maxChunkSize = 2000;
     const updatesLength = syncData.updates.length;
     if (updatesLength > maxRows) {
@@ -475,13 +435,20 @@ export class UpdateManager {
         let response: Response = { ok: false } as any;
         let tries = 0;
         while (!response.ok) {
-          response = await userFetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(syncData),
-          });
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort("Sync request timed out"), SYNC_REQUEST_TIMEOUT_MS);
+          try {
+            response = await userFetch(endpoint, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(syncData),
+              signal: controller.signal,
+            });
+          } finally {
+            clearTimeout(timeout);
+          }
           tries++;
           if (tries > 3) {
             break;
@@ -522,6 +489,19 @@ export class UpdateManager {
    */
   get pendingUpdates() {
     return this.syncQueue;
+  }
+
+  async acceptRemoteSync(raw: unknown) {
+    const parsed = SyncDataSchema.safeParse(raw);
+    if (!parsed.success || parsed.data.clientId === this.clientId) return;
+    await this.handleSyncData(parsed.data, parsed.data.userId === this.userId);
+  }
+
+  private enqueueSync(data: SyncData) {
+    if (this.syncQueue.length >= MAX_SYNC_QUEUE_ITEMS) {
+      throw new Error(`Sync queue exceeded its ${MAX_SYNC_QUEUE_ITEMS}-item capacity`);
+    }
+    this.syncQueue.push(data);
   }
 
   get numPendingUpdates() {

@@ -1,95 +1,62 @@
-import { and, eq, isNotNull, ne } from "drizzle-orm";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
-import { getDb } from "@/db";
-import { graphNodeTable } from "@/db/schema";
+import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
+import {
+  getBearerToken,
+  getConvexClient,
+  listSlugsReference,
+  resolveSlugReference,
+  setSlugReference,
+} from "@/lib/convexServer";
 
-//Todo: Add auth later
-export async function POST(req: NextRequest) {
-  try {
-    const db = getDb();
-    const { nodeId, slug } = await req.json();
+const SetSlugSchema = z.object({
+  nodeId: z.string().min(1).max(2048),
+  slug: z.string().trim().min(1).max(128).regex(/^[^/]+$/),
+});
+const DeleteSlugSchema = z.object({ nodeId: z.string().min(1).max(2048) });
 
-    if (!nodeId || !slug) {
-      return NextResponse.json({ error: "Both nodeId and slug are required." }, { status: 400 });
-    }
-
-    if (slug.includes("/") || slug === "home") {
-      return NextResponse.json({ error: "Slug cannot include / or be home" }, { status: 400 });
-    }
-
-    const nodes = await db
-      .select({ id: graphNodeTable.id })
-      .from(graphNodeTable)
-      .where(eq(graphNodeTable.slug, slug))
-      .limit(1);
-
-    if (nodes.length >= 1) {
-      return NextResponse.json({ error: "Slug is already in use." }, { status: 409 });
-    }
-
-    const result = await db.update(graphNodeTable).set({ slug }).where(eq(graphNodeTable.id, nodeId)).returning();
-
-    if (result.length === 0) {
-      return NextResponse.json({ error: "Node ID not found." }, { status: 404 });
-    }
-
-    return NextResponse.json({ message: "Slug updated successfully." }, { status: 200 });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
+  const parsed = SetSlugSchema.safeParse(await request.json());
+  if (!parsed.success || parsed.data.slug === "home") {
+    return NextResponse.json({ error: "Invalid node or slug." }, { status: 400 });
   }
-}
-
-export async function DELETE(req: NextRequest) {
   try {
-    const db = getDb();
-    const { nodeId } = await req.json();
-
-    if (!nodeId) {
-      return NextResponse.json({ error: "Missing nodeId" }, { status: 400 });
-    }
-
-    await db.update(graphNodeTable).set({ slug: null }).where(eq(graphNodeTable.id, nodeId));
-
-    return NextResponse.json({ message: "Deleted slug successfully." }, { status: 200 });
+    await getConvexClient(getBearerToken(request)).mutation(setSlugReference, parsed.data);
+    return NextResponse.json({ message: "Slug updated successfully." });
   } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    console.error("Slug update failed", error);
+    return NextResponse.json({ error: "Slug update failed." }, { status: 409 });
   }
-}
+});
 
-export async function GET(req: NextRequest) {
+export const DELETE = withAuth(async (request: NextAuthenticatedRequest) => {
+  const parsed = DeleteSlugSchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ error: "Missing nodeId" }, { status: 400 });
   try {
-    const db = getDb();
-    const nodeId = req.nextUrl.searchParams.get("nodeId");
-    const slug = req.nextUrl.searchParams.get("slug");
-
-    let nodes = [];
-
-    if (nodeId) {
-      nodes = await db
-        .select({ slug: graphNodeTable.slug, id: graphNodeTable.id })
-        .from(graphNodeTable)
-        .where(eq(graphNodeTable.id, nodeId))
-        .limit(1);
-    } else if (slug) {
-      nodes = await db
-        .select({ slug: graphNodeTable.slug, id: graphNodeTable.id })
-        .from(graphNodeTable)
-        .where(eq(graphNodeTable.slug, slug))
-        .limit(1);
-    } else {
-      nodes = await db
-        .select({ slug: graphNodeTable.slug, id: graphNodeTable.id })
-        .from(graphNodeTable)
-        .where(and(isNotNull(graphNodeTable.slug), ne(graphNodeTable.slug, "")));
-    }
-
-    return NextResponse.json({
-      nodes,
-    });
+    await getConvexClient(getBearerToken(request)).mutation(setSlugReference, { ...parsed.data, slug: null });
+    return NextResponse.json({ message: "Deleted slug successfully." });
   } catch (error) {
-    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
+    console.error("Slug delete failed", error);
+    return NextResponse.json({ error: "Slug delete failed." }, { status: 502 });
   }
-}
+});
+
+export const GET = withAuth(async (request: NextAuthenticatedRequest) => {
+  const url = new URL(request.url);
+  const nodeId = url.searchParams.get("nodeId");
+  const slug = url.searchParams.get("slug");
+  try {
+    const client = getConvexClient(getBearerToken(request));
+    if (slug) {
+      const document = await client.query(resolveSlugReference, { slug });
+      const node = document ? JSON.parse(document) : null;
+      return NextResponse.json({ nodes: node ? [{ id: node.id, slug: node.slug }] : [] });
+    }
+    const nodes = await client.query(listSlugsReference, {});
+    return NextResponse.json({ nodes: nodeId ? nodes.filter((node) => node.id === nodeId) : nodes });
+  } catch (error) {
+    console.error("Slug read failed", error);
+    return NextResponse.json({ error: "Slug read failed." }, { status: 502 });
+  }
+});

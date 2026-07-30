@@ -1,6 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 
-import { SearchAndReplaceDropdownOption, SearchAndReplaceDropdownOptionEnum } from "@/db/schema";
+import { SearchAndReplaceDropdownOption, SearchAndReplaceDropdownOptionEnum } from "@/app/domain/schema";
 
 // Utility function to combine class names
 export function cn(...inputs: ClassValue[]) {

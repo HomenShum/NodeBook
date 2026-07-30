@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { MewUserPublicSchema } from "@/app/persistence/SerializedData";
-import { UserSchema } from "@/db/schema";
+import { NodeBookUserPublicSchema } from "@/app/persistence/SerializedData";
+import { UserSchema } from "@/app/domain/schema";
 
 export const PostUserRequestSchema = z.object({
   user: UserSchema,
@@ -48,7 +48,7 @@ export const GetUsersResponseSchema = z.union([
   }),
   z.object({
     error: z.literal(false),
-    data: z.array(MewUserPublicSchema),
+    data: z.array(NodeBookUserPublicSchema),
   }),
 ]);
 

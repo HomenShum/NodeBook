@@ -1,0 +1,107 @@
+package.json:16:    "db:generate": "drizzle-kit generate",
+package.json:51:    "@vercel/postgres": "^0.8.0",
+package.json:60:    "drizzle-orm": "^0.38.4",
+package.json:61:    "drizzle-zod": "^0.5.1",
+package.json:76:    "pusher": "^5.2.0",
+package.json:77:    "pusher-js": "^8.4.0-rc2",
+package.json:107:    "drizzle-kit": "^0.30.2",
+src\envBackend.ts:10:    NEXT_PUBLIC_PERSIST_TO: z.enum(["local", "server", "convex"]).optional(),
+src\envBackend.ts:28:      data.NEXT_PUBLIC_PERSIST_TO === "convex" ||
+src\envBackend.ts:46:  PERSIST_TO: process.env.NEXT_PUBLIC_PERSIST_TO || "server",
+src\lib\pusher.ts:5:export const userIdToPusherChannel = ({ channelPrefix, userId }: { channelPrefix: string; userId: string }) => {
+src\lib\pusher.ts:7:  // https://pusher.com/docs/channels/using_channels/channels/#channel-naming-conventions
+src\db\users.ts:1:import { eq } from "drizzle-orm";
+src\db\types.ts:1:import { ExtractTablesWithRelations } from "drizzle-orm";
+src\db\types.ts:2:import { PgTransaction } from "drizzle-orm/pg-core";
+src\db\types.ts:3:import { NodePgDatabase, NodePgQueryResultHKT } from "drizzle-orm/node-postgres";
+src\db\schema.ts:16:} from "drizzle-orm/pg-core";
+src\db\schema.ts:17:import { createSelectSchema } from "drizzle-zod";
+src\db\relationTypes.ts:1:import { and, eq } from "drizzle-orm";
+src\app\api\cache\canonical\route.ts:2:import { inArray, sql } from "drizzle-orm";
+src\app\api\cache\canonical\route.ts:10:  const db = getDb();
+src\app\api\cache\canonical\route.ts:43:  const db = getDb();
+src\db\relationLists.ts:1:import { and, eq } from "drizzle-orm";
+src\db\index.ts:2:import { drizzle } from "drizzle-orm/node-postgres";
+src\db\index.ts:21:    db = drizzle(client, { schema });
+src\db\graphRelations.ts:1:import { and, eq } from "drizzle-orm";
+src\db\graphNodes.ts:1:import { and, eq } from "drizzle-orm";
+src\app\api\expansion-state\route.ts:1:import { eq } from "drizzle-orm";
+src\app\api\expansion-state\route.ts:27:    const db = getDb();
+src\app\api\expansion-state\route.ts:72:    const db = getDb();
+src\app\api\expansion-state\route.ts:105:    const db = getDb();
+src\app\api\delete-all\route.ts:2:import { eq, not } from "drizzle-orm";
+src\app\api\delete-all\route.ts:21:  const db = getDb();
+src\app\api\layer\createLayers.ts:1:import { and, desc, eq, inArray, like, or } from "drizzle-orm";
+src\app\api\layer\createLayers.ts:14:  const db = getDb();
+src\app\api\layer\createLayers.ts:196:  const db = getDb();
+src\app\api\layer\createLayers.ts:236:  const db = getDb();
+src\app\api\layer\createLayers.ts:362:  const db = getDb();
+src\app\api\layer\createLayers.ts:808:  const db = getDb();
+src\app\envFrontend.ts:4:  NEXT_PUBLIC_PERSIST_TO: z.union([z.literal("local"), z.literal("server"), z.literal("convex")]).optional(),
+src\app\envFrontend.ts:44:  pusherKey: string;
+src\app\envFrontend.ts:45:  pusherCluster: string;
+src\app\envFrontend.ts:46:  pusherChannelPrefix: string;
+src\app\envFrontend.ts:50:  persistTo: process.env.NEXT_PUBLIC_PERSIST_TO || "server",
+src\app\envFrontend.ts:63:  pusherKey: process.env.NEXT_PUBLIC_PUSHER_KEY || "",
+src\app\envFrontend.ts:64:  pusherCluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || "",
+src\app\envFrontend.ts:65:  pusherChannelPrefix: process.env.NEXT_PUBLIC_PUSHER_CHANNEL_PREFIX || "",
+src\app\api\notifications\route.ts:1:import { and, eq } from "drizzle-orm";
+src\app\api\notifications\route.ts:11:    const db = getDb();
+src\app\api\notifications\route.ts:25:  const db = getDb();
+src\app\api\notifications\route.ts:44:  const db = getDb();
+src\app\api\slug\route.ts:1:import { and, eq, isNotNull, ne } from "drizzle-orm";
+src\app\api\slug\route.ts:10:    const db = getDb();
+src\app\api\slug\route.ts:46:    const db = getDb();
+src\app\api\slug\route.ts:64:    const db = getDb();
+src\app\api\query\rag.ts:2:import { eq } from "drizzle-orm";
+src\app\api\query\rag.ts:203:  const db = getDb();
+src\app\api\users\route.ts:2:import { inArray } from "drizzle-orm";
+src\app\api\users\route.ts:33:    const db = getDb();
+src\app\[slug]\page.tsx:1:import { eq } from "drizzle-orm";
+src\app\[slug]\page.tsx:9:  const db = getDb();
+src\app\api\user\route.ts:37:    if (env.PERSIST_TO === "convex") {
+src\app\api\user\route.ts:49:    const db = getDb();
+src\app\api\user\route.ts:70:    if (env.PERSIST_TO === "convex") {
+src\app\api\user\route.ts:83:    const db = getDb();
+src\app\api\search\helpers.ts:2:import { and, eq, inArray, or, sql } from "drizzle-orm";
+src\app\api\search\helpers.ts:3:import { alias } from "drizzle-orm/pg-core";
+src\app\api\search\helpers.ts:272:  const db = getDb();
+src\app\api\search\helpers.ts:337:  const db = getDb();
+src\app\api\user\settings\route.ts:36:    if (env.PERSIST_TO === "convex") {
+src\app\api\user\settings\route.ts:48:    const db = getDb();
+src\app\api\search\answerQuery.ts:1:import { and, desc, eq, or, sql } from "drizzle-orm";
+src\app\api\search\answerQuery.ts:15:  console.timeLog(sessionId, "[debug] Inside answerQuery, before getDb()");
+src\app\api\search\answerQuery.ts:16:  const db = getDb();
+src\app\api\search\answerQuery.ts:17:  console.timeLog(sessionId, "[debug] Inside answerQuery, after getDb()");
+src\app\api\sync\route.ts:6:import { broadcastSyncSuccess } from "@/app/api/sync/pusher";
+src\app\api\sync\route.ts:52:  if (env.PERSIST_TO === "convex") {
+src\app\api\sync\route.ts:72:  const db = getDb();
+src\app\api\sync\pusher.ts:1:import Pusher from "pusher";
+src\app\api\sync\pusher.ts:6:import { getGlobalGraphChannel, userIdToPusherChannel } from "@/lib/pusher";
+src\app\api\sync\pusher.ts:8:// Pusher has a 10KB limit on message size, so we need to chunk updates into smaller pieces
+src\app\api\sync\pusher.ts:9:// https://pusher.com/docs/channels/library_auth_reference/rest-api/#post-event-trigger-an-event
+src\app\api\sync\pusher.ts:61:const broadcastUpdateChunk = async (pusher: Pusher, channel: string, msgData: SyncData) => {
+src\app\api\sync\pusher.ts:65:      await pusher.trigger(channel, "transaction-accepted", msgData);
+src\app\api\sync\pusher.ts:69:      console.warn("Failed to send pusher message", e);
+src\app\api\sync\pusher.ts:73:    throw new Error("Failed to send pusher message after 3 attempts");
+src\app\api\sync\pusher.ts:78:  const pusher = new Pusher({
+src\app\api\sync\pusher.ts:85:  const userChannel = userIdToPusherChannel({ channelPrefix: env.PUSHER_CHANNEL_PREFIX, userId });
+src\app\api\sync\pusher.ts:89:    console.log(`[sync][${userId}] Broadcasting ${chunk.length} updates through Pusher...`);
+src\app\api\sync\pusher.ts:91:    broadcastUpdateChunk(pusher, userChannel, { clientId, userId, transactionId, updates: chunk });
+src\app\api\sync\pusher.ts:96:      broadcastUpdateChunk(pusher, globalChannel, { clientId, userId, transactionId, updates: publicUpdates });
+src\app\api\sync\import-chunk\route.ts:4:import { broadcastSyncSuccess } from "@/app/api/sync/pusher";
+src\app\api\sync\import-chunk\route.ts:36:  const db = getDb();
+src\app\api\sync\createSnapshot.ts:1:import { eq, or } from "drizzle-orm";
+src\app\api\sync\createSnapshot.ts:19:  const db = getDb();
+src\app\graph\UpdateManager.ts:3:import Pusher from "pusher-js";
+src\app\graph\UpdateManager.ts:12:import { getGlobalGraphChannel, userIdToPusherChannel } from "@/lib/pusher";
+src\app\graph\UpdateManager.ts:16:const pusher =
+src\app\graph\UpdateManager.ts:17:  env.persistTo === "server" && env.pusherKey ? new Pusher(env.pusherKey, { cluster: env.pusherCluster }) : null;
+src\app\graph\UpdateManager.ts:124:    if (pusher) {
+src\app\graph\UpdateManager.ts:125:      const userChannel = pusher.subscribe(
+src\app\graph\UpdateManager.ts:126:        userIdToPusherChannel({ channelPrefix: env.pusherChannelPrefix, userId: this.userId }),
+src\app\graph\UpdateManager.ts:140:      const globalChannel = pusher.subscribe(getGlobalGraphChannel(env.pusherChannelPrefix));
+src\app\graph\UpdateManager.ts:174:    pusher?.unsubscribe(userIdToPusherChannel({ channelPrefix: env.pusherChannelPrefix, userId: this.userId }));
+src\app\graph\UpdateManager.ts:175:    pusher?.unsubscribe(getGlobalGraphChannel(env.pusherChannelPrefix));
+src\app\LayoutClient.tsx:1:import { eq } from "drizzle-orm";
+src\app\LayoutClient.tsx:54:    const db = getDb();

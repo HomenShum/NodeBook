@@ -27,7 +27,7 @@ export const ImportDialog = observer(function ImportDialog() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [serializedGraphStore, setSerializedGraphStore] = useState<SerializedGraphStore | null>(null);
-  const [importType, setImportType] = useState<"mew" | "ideapad" | null>(null);
+  const [importType, setImportType] = useState<"nodebook" | "ideapad" | null>(null);
 
   const onSelectFile = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,8 +95,8 @@ export const ImportDialog = observer(function ImportDialog() {
       onBack={() => viewStore.setActiveModal("devTools")}
     >
       <div className={styles.ImportTypeButtons}>
-        <Button size="sm" variant={importType === "mew" ? "default" : "outline"} onClick={() => setImportType("mew")}>
-          Import Mew/Text File
+        <Button size="sm" variant={importType === "nodebook" ? "default" : "outline"} onClick={() => setImportType("nodebook")}>
+          Import NodeBook/Text File
         </Button>
         <Button
           size="sm"

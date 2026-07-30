@@ -1,4 +1,4 @@
-import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { GraphNode } from "@/app/graph/GraphNode";
 import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
@@ -21,7 +21,7 @@ describe("GraphStore.replaceRelationLink", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore(MOCK_MEW_USER);
+    graphStore = new GraphStore(MOCK_NODEBOOK_USER);
 
     nodeA = await graphStore.addNode({ nodeProps: { id: "a" } });
     nodeB = await graphStore.addNode({ nodeProps: { id: "b" } });
@@ -82,7 +82,7 @@ describe("GraphStore.replaceRelationLink", () => {
       [
         {
           operation: "updateRelationList",
-          authorId: "SPECIAL::mew|0123456789",
+          authorId: "SPECIAL::nodebook|0123456789",
           newIsPublic: false,
           newPosition: null,
           nodeId: "a",
@@ -195,7 +195,7 @@ describe("GraphStore.replaceRelationLink", () => {
         { operation: "addNode", node: { ...serializedNewNode, canonicalRelationId: null, relationCount: 0 } },
         {
           operation: "updateRelationList",
-          authorId: "SPECIAL::mew|0123456789",
+          authorId: "SPECIAL::nodebook|0123456789",
           newIsPublic: false,
           newPosition: null,
           nodeId: "a",

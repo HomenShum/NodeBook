@@ -134,7 +134,7 @@ async function testCommandBarPerformance(queriesFilePath: string): Promise<Query
 
     // Navigate to the app
     console.log("Navigating to http://localhost:3000...");
-    await page.goto("https://mew-ec2.ideaflow.app", {
+    await page.goto("https://nodebook-ec2.nodebook.app", {
       waitUntil: "networkidle2",
       timeout: 30000,
     });

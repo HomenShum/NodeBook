@@ -1,4 +1,4 @@
-import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { PlaceholderGraphObject } from "@/app/graph/PlaceholderGraphObject";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
@@ -15,7 +15,7 @@ describe("GraphStore.load", () => {
   beforeEach(async () => {
     jest.useFakeTimers({ now: new Date(2024, 5, 4) });
 
-    graphStore = new GraphStore(MOCK_MEW_USER);
+    graphStore = new GraphStore(MOCK_NODEBOOK_USER);
     graphStore.updateManager.cleanup();
   });
 

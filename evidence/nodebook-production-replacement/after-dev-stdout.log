@@ -1,0 +1,65 @@
+  ▲ Next.js 14.2.25
+  - Local:        http://localhost:4300
+
+ ✓ Starting...
+ ✓ Ready in 4.2s
+ ✓ Compiled /src/middleware in 372ms (117 modules)
+ ○ Compiling /g/[[...path]] ...
+ ✓ Compiled /g/[[...path]] in 27.4s (8208 modules)
+ GET /g 200 in 29948ms
+ ○ Compiling /manifest.json ...
+ ✓ Compiled /manifest.json in 11.1s (3941 modules)
+ GET /manifest.json 200 in 11402ms
+ ✓ Compiled in 2s (7801 modules)
+ GET /g 200 in 2122ms
+ GET /manifest.json 200 in 43ms
+ ○ Compiling /api/cache/canonical ...
+ ✓ Compiled /api/cache/canonical in 637ms (3943 modules)
+ ✓ Compiled /api/slug in 1ms (4113 modules)
+ ✓ Compiled in 0ms (4115 modules)
+ ✓ Compiled in 1ms (4115 modules)
+ GET /favicon.ico 200 in 3139ms
+ ✓ Compiled in 1ms (4115 modules)
+ POST /api/cache/canonical 502 in 3130ms
+ POST /api/cache/canonical 502 in 3651ms
+ GET /api/slug 200 in 3568ms
+ GET /g 200 in 3500ms
+ ✓ Compiled in 1ms (4115 modules)
+ GET /manifest.json 200 in 1318ms
+ POST /api/cache/canonical 502 in 42ms
+ GET /api/slug 502 in 41ms
+ GET /api/slug 502 in 103ms
+ POST /api/cache/canonical 502 in 42ms
+ POST /api/cache/canonical 502 in 29ms
+ GET /manifest.json 200 in 17ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::nodebook%7C0123456789/user-root-id-SPECIAL::nodebook%7C0123456789 200 in 314ms
+ GET /manifest.json 200 in 29ms
+ GET /favicon.ico 200 in 38ms
+ POST /api/cache/canonical 502 in 28ms
+ GET /api/slug 502 in 35ms
+ POST /api/cache/canonical 502 in 50ms
+ GET /api/slug 502 in 41ms
+ POST /api/cache/canonical 502 in 33ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::nodebook%7C0123456789/user-root-id-SPECIAL::nodebook%7C0123456789 200 in 51ms
+ GET /manifest.json 200 in 28ms
+ POST /api/cache/canonical 502 in 22ms
+ GET /api/slug 502 in 38ms
+ POST /api/cache/canonical 502 in 41ms
+ GET /api/slug 502 in 49ms
+ POST /api/cache/canonical 502 in 39ms
+ GET /favicon.ico 200 in 53ms
+ ✓ Compiled in 4.6s (7975 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::nodebook%7C0123456789/user-root-id-SPECIAL::nodebook%7C0123456789?_rsc=1pfdo 200 in 1613ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::nodebook%7C0123456789/user-root-id-SPECIAL::nodebook%7C0123456789 200 in 1666ms
+ GET /manifest.json 200 in 44ms
+ GET /favicon.ico 200 in 27ms
+ POST /api/cache/canonical 200 in 93ms
+ POST /api/cache/canonical 200 in 23ms
+ POST /api/cache/canonical 200 in 20ms
+ GET /g 200 in 77ms
+ GET /manifest.json 200 in 47ms
+ POST /api/cache/canonical 200 in 24ms
+ POST /api/cache/canonical 200 in 26ms
+ POST /api/cache/canonical 200 in 28ms
+ GET /manifest.json 200 in 22ms
+[?25h

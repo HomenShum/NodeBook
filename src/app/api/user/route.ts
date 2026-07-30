@@ -3,9 +3,13 @@ import { NextResponse } from "next/server";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { GetUserResponse, PostUserRequestSchema, PostUserResponse } from "@/app/api/types";
-import { UNLOGGED_USER } from "@/app/auth/MewUser";
-import { getDb } from "@/db";
-import { getOrCreateUser, getUser } from "@/db/users";
+import { UNLOGGED_USER } from "@/app/auth/NodeBookUser";
+import {
+  getBearerToken,
+  getConvexClient,
+  getOrCreateUserReference,
+  getUserReference,
+} from "@/lib/convexServer";
 
 export const POST = withAuth(postHandler);
 async function postHandler(req: NextAuthenticatedRequest) {
@@ -26,16 +30,17 @@ async function postHandler(req: NextAuthenticatedRequest) {
   }
 
   try {
-    const db = getDb();
     const { user } = result.data;
-    const retrievedOrCreatedUser = await getOrCreateUser(db, user);
-    return NextResponse.json({
-      error: false,
-      data: {
-        ...retrievedOrCreatedUser,
-        settings: JSON.parse(retrievedOrCreatedUser.settings),
-      },
-    } satisfies PostUserResponse);
+    const token = getBearerToken(req);
+    if (!token) {
+      return NextResponse.json({ error: true, message: "Authentication is required" } satisfies PostUserResponse, {
+        status: 401,
+      });
+    }
+    const document = await getConvexClient(token).mutation(getOrCreateUserReference, {
+      payload: JSON.stringify(user),
+    });
+    return NextResponse.json({ error: false, data: JSON.parse(document) } satisfies PostUserResponse);
   } catch (e) {
     console.error("Error creating user", e);
     captureException(e, { extra: { message: "Error creating user" } });
@@ -48,15 +53,17 @@ async function postHandler(req: NextAuthenticatedRequest) {
 export const GET = withAuth(getHandler);
 async function getHandler(req: NextAuthenticatedRequest) {
   try {
-    const db = getDb();
-    const user = await getUser(db, req.userId);
-    if (!user) {
+    const token = getBearerToken(req);
+    if (!token) {
+      return NextResponse.json({ error: true, message: "Authentication is required" } satisfies GetUserResponse, {
+        status: 401,
+      });
+    }
+    const document = await getConvexClient(token).query(getUserReference, {});
+    if (!document) {
       return NextResponse.json({ error: true, message: "User not found" } satisfies GetUserResponse, { status: 404 });
     }
-    return NextResponse.json({
-      error: false,
-      data: { ...user, settings: JSON.parse(user.settings) },
-    } satisfies GetUserResponse);
+    return NextResponse.json({ error: false, data: JSON.parse(document) } satisfies GetUserResponse);
   } catch (e) {
     console.error("Error getting user", e);
     captureException(e, { extra: { message: "Error getting user" } });

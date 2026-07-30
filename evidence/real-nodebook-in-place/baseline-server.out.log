@@ -1,0 +1,209 @@
+  ▲ Next.js 14.2.25
+  - Local:        http://localhost:4300
+
+ ✓ Starting...
+ ✓ Ready in 4.3s
+ ✓ Compiled /src/middleware in 362ms
+ ✓ Compiled (117 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 26.4s (2829 modules)
+ HEAD / 200 in 10193ms
+ GET / 200 in 27774ms
+ GET /_next/static/webpack/a06d24713ea52520.webpack.hot-update.json 404 in 27853ms
+ GET / 200 in 55ms
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 1616ms (1726 modules)
+ ✓ Compiled in 37.9s (4187 modules)
+ GET /favicon.ico 200 in 40037ms
+ POST /api/cache/canonical 500 in 40350ms
+ POST /api/cache/canonical 500 in 40525ms
+ GET /api/slug 500 in 40499ms
+ GET /api/slug 500 in 54ms
+ GET /g 200 in 36186ms
+ ○ Compiling /manifest.json ...
+ ✓ Compiled /manifest.json in 5.4s (4559 modules)
+ GET /manifest.json 200 in 6375ms
+ GET /favicon.ico 200 in 3359ms
+ POST /api/cache/canonical 500 in 3613ms
+ POST /api/cache/canonical 500 in 3424ms
+ GET /api/slug 500 in 3475ms
+ GET /favicon.ico 200 in 49ms
+ GET /api/slug 500 in 79ms
+ POST /api/cache/canonical 500 in 34ms
+ GET /favicon.ico 200 in 22ms
+ POST /api/cache/canonical 500 in 20ms
+ GET /favicon.ico 200 in 20ms
+ GET /g 200 in 530ms
+ GET /manifest.json 200 in 30ms
+ GET /favicon.ico 200 in 45ms
+ POST /api/cache/canonical 500 in 28ms
+ GET /api/slug 500 in 17ms
+ GET /api/slug 500 in 50ms
+ POST /api/cache/canonical 500 in 29ms
+ POST /api/cache/canonical 500 in 24ms
+ GET /manifest.json 200 in 20ms
+ ✓ Compiled in 3.9s (8241 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=1114v 200 in 4099ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=1114v 200 in 4110ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=1114v 200 in 72ms
+ ○ Compiling /api/cache/canonical ...
+ ✓ Compiled /api/cache/canonical in 2.5s (4266 modules)
+ ✓ Compiled (4528 modules)
+ POST /api/cache/canonical 500 in 3679ms
+ POST /api/cache/canonical 500 in 3598ms
+ POST /api/cache/canonical 500 in 3455ms
+ GET /api/slug 500 in 3691ms
+ GET /api/slug 500 in 3754ms
+ GET /api/slug 500 in 35ms
+ GET /api/slug 500 in 38ms
+ GET /api/slug 500 in 22ms
+ GET /api/slug 500 in 25ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 223ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 223ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 1033ms
+ ○ Compiling /api/slug ...
+ ✓ Compiled /api/slug in 7.2s (8360 modules)
+ GET /api/slug 500 in 7028ms
+ GET /api/slug 500 in 6489ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 6554ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 6518ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 168ms
+ GET /api/slug 500 in 157ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 255ms
+ ○ Compiling /manifest.json ...
+ ✓ Compiled /manifest.json in 2.4s (4294 modules)
+ GET /manifest.json 200 in 2513ms
+ ○ Compiling /api/cache/canonical ...
+ ✓ Compiled /api/cache/canonical in 752ms (4296 modules)
+ ✓ Compiled in 1ms (4558 modules)
+ ✓ Compiled in 1ms (4558 modules)
+ ✓ Compiled in 0ms (4558 modules)
+ GET /favicon.ico 200 in 3117ms
+ GET /favicon.ico 200 in 3955ms
+ ✓ Compiled in 0ms (4558 modules)
+ GET /api/slug 500 in 3938ms
+ GET /api/slug 500 in 3940ms
+ POST /api/cache/canonical 500 in 4559ms
+ POST /api/cache/canonical 500 in 3953ms
+ POST /api/cache/canonical 500 in 3955ms
+ POST /api/cache/canonical 500 in 3957ms
+ POST /api/cache/canonical 500 in 3958ms
+ POST /api/cache/canonical 500 in 3936ms
+ POST /api/cache/canonical 500 in 3938ms
+ ✓ Compiled in 0ms (4558 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 3090ms
+ ✓ Compiled in 1ms (4558 modules)
+ POST /api/cache/canonical 500 in 2505ms
+ ✓ Compiled in 1ms (4558 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 2326ms
+ ✓ Compiled in 1ms (4558 modules)
+ GET /favicon.ico 200 in 3155ms
+ GET /api/slug 500 in 3165ms
+ GET /api/slug 500 in 3172ms
+ POST /api/cache/canonical 500 in 3180ms
+ ✓ Compiled in 0ms (4558 modules)
+ ✓ Compiled in 0ms (4558 modules)
+ GET /manifest.json 200 in 2855ms
+ GET /favicon.ico 200 in 2859ms
+ ✓ Compiled in 1ms (4558 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 2810ms
+ GET /favicon.ico 200 in 2687ms
+ GET /api/slug 500 in 2698ms
+ GET /api/slug 500 in 2701ms
+ GET /favicon.ico 200 in 1448ms
+ GET /favicon.ico 200 in 57ms
+ GET /api/slug 500 in 81ms
+ GET /api/slug 500 in 84ms
+ GET /favicon.ico 200 in 71ms
+ GET /api/slug 500 in 22ms
+ GET /api/slug 500 in 27ms
+ GET /api/slug 500 in 24ms
+ GET /api/slug 500 in 23ms
+ ✓ Compiled in 1477ms (8535 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 970ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 974ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 207ms
+ GET /manifest.json 200 in 140ms
+ GET /favicon.ico 200 in 49ms
+ POST /api/cache/canonical 500 in 46ms
+ GET /api/slug 500 in 50ms
+ POST /api/cache/canonical 500 in 46ms
+ GET /api/slug 500 in 47ms
+ POST /api/cache/canonical 500 in 49ms
+ POST /api/cache/canonical 500 in 39ms
+ GET /favicon.ico 200 in 39ms
+ GET /api/slug 500 in 71ms
+ POST /api/cache/canonical 500 in 91ms
+ POST /api/cache/canonical 500 in 157ms
+ POST /api/cache/canonical 500 in 160ms
+ GET /api/slug 500 in 156ms
+ GET /favicon.ico 200 in 138ms
+ POST /api/cache/canonical 500 in 116ms
+ POST /api/cache/canonical 500 in 76ms
+ GET /api/slug 500 in 39ms
+ GET /api/slug 500 in 23ms
+ ✓ Compiled in 2.2s (8535 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 1981ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 1985ms
+ ✓ Compiled in 2.8s (8535 modules)
+ GET /manifest.json 200 in 2572ms
+ GET /favicon.ico 200 in 455ms
+ GET /favicon.ico 200 in 457ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 3158ms
+ POST /api/cache/canonical 500 in 55ms
+ GET /api/slug 500 in 66ms
+ POST /api/cache/canonical 500 in 82ms
+ POST /api/cache/canonical 500 in 114ms
+ GET /api/slug 500 in 78ms
+ GET /favicon.ico 200 in 55ms
+ ✓ Compiled in 2.9s (8535 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 265ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 373ms
+ POST /api/cache/canonical 500 in 42ms
+ GET /api/slug 500 in 58ms
+ POST /api/cache/canonical 500 in 99ms
+ POST /api/cache/canonical 500 in 90ms
+ GET /api/slug 500 in 72ms
+ GET /favicon.ico 200 in 69ms
+ ✓ Compiled in 1667ms (8559 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 145ms
+ GET /api/slug 500 in 38ms
+ GET /favicon.ico 200 in 71ms
+ GET /api/slug 500 in 78ms
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 405ms
+ GET /manifest.json 200 in 49ms
+ POST /api/cache/canonical 500 in 42ms
+ GET /api/slug 500 in 38ms
+ POST /api/cache/canonical 500 in 51ms
+ GET /api/slug 500 in 55ms
+ POST /api/cache/canonical 500 in 47ms
+ GET /favicon.ico 200 in 53ms
+ GET /g 200 in 91ms
+ ✓ Compiled in 1040ms (4240 modules)
+ ✓ Compiled in 1292ms (8007 modules)
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789?_rsc=tjzwh 200 in 1379ms
+ ○ Compiling /_not-found ...
+ GET /g/all/global-root-to-users/all/users-to-user-relation-id-SPECIAL::mew%7C0123456789/user-root-id-SPECIAL::mew%7C0123456789 200 in 1135ms
+ ✓ Compiled /manifest.json in 2s (8010 modules)
+ ✓ Compiled (8041 modules)
+ GET /_next/static/css/app/g/%5B%5B...path%5D%5D/page.css?v=1785388113510 404 in 3104ms
+ GET /_next/static/css/app/layout.css?v=1785388113510 404 in 3108ms
+ GET /manifest.json 200 in 2850ms
+ GET /_next/static/chunks/main-app.js?v=1785388113510 404 in 3128ms
+ GET /_next/static/chunks/app-pages-internals.js 404 in 3128ms
+ GET /_next/static/chunks/app/global-error.js 404 in 21ms
+ ✓ Compiled /favicon.ico in 391ms (4066 modules)
+ GET /favicon.ico 200 in 465ms
+ ✓ Compiled in 3s (8197 modules)
+ ✓ Compiled in 1096ms (8197 modules)
+  ▲ Next.js 14.2.25
+  - Local:        http://localhost:4300
+
+ ✓ Starting...
+ ✓ Ready in 4.2s
+  ▲ Next.js 14.2.25
+  - Local:        http://localhost:4300
+
+ ✓ Starting...
+ ✓ Ready in 3s
+[?25h

@@ -3,6 +3,7 @@ declare const styles: {
   readonly "citationLink": string;
   readonly "clearButton": string;
   readonly "configGrid": string;
+  readonly "consent": string;
   readonly "error": string;
   readonly "errorHeader": string;
   readonly "errorIcon": string;
@@ -16,6 +17,8 @@ declare const styles: {
   readonly "label": string;
   readonly "linkText": string;
   readonly "loadingIcon": string;
+  readonly "preflight": string;
+  readonly "receipt": string;
   readonly "response": string;
   readonly "responseLine": string;
   readonly "responseLinkIcon": string;

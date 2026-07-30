@@ -1,39 +1,24 @@
-import { captureException } from "@sentry/nextjs";
-import { eq, not } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
-import { getDb } from "@/db";
-import { graphNodeTable, graphRelationTable, relationListsTable, relationTypeTable } from "@/db/schema";
 import { env } from "@/envBackend";
-import { GLOBAL_ADMIN_USER_ID } from "@/lib/constants";
+import { deleteOwnerDataPageReference, getBearerToken, getConvexClient } from "@/lib/convexServer";
 
-export const POST = withAuth(postHandler);
-async function postHandler(req: NextAuthenticatedRequest) {
+export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
   if (env.STAGE === "production") {
-    return NextResponse.json(
-      { status: "error", message: "This endpoint is not available in production" },
-      { status: 403 },
-    );
+    return NextResponse.json({ status: "error", message: "This endpoint is disabled in production" }, { status: 403 });
   }
-
-  const userId = req.userId;
-  const db = getDb();
-
   try {
-    await db.transaction(async (tx) => {
-      await tx.delete(graphNodeTable).where(not(eq(graphNodeTable.authorId, GLOBAL_ADMIN_USER_ID)));
-      await tx.delete(graphRelationTable).where(not(eq(graphRelationTable.authorId, GLOBAL_ADMIN_USER_ID)));
-      await tx.delete(relationListsTable).where(not(eq(relationListsTable.authorId, GLOBAL_ADMIN_USER_ID)));
-      await tx.delete(relationTypeTable).where(not(eq(relationTypeTable.authorId, GLOBAL_ADMIN_USER_ID)));
-    });
-    return NextResponse.json({ status: "ok" });
-  } catch (e) {
-    console.error(e);
-    captureException(e, {
-      user: { id: userId },
-      extra: { message: "Error deleting all data" },
-    });
-    return NextResponse.json({ status: "error", message: "Error deleting all data" }, { status: 500 });
+    const client = getConvexClient(getBearerToken(request));
+    let deleted = 0;
+    for (let page = 0; page < 20; page++) {
+      const result = await client.mutation(deleteOwnerDataPageReference, {});
+      deleted += result.deleted;
+      if (!result.hasMore) return NextResponse.json({ status: "ok", deleted });
+    }
+    return NextResponse.json({ status: "error", message: "Deletion page budget exhausted", deleted }, { status: 409 });
+  } catch (error) {
+    console.error("Delete-all failed", error);
+    return NextResponse.json({ status: "error", message: "Delete-all failed" }, { status: 502 });
   }
-}
+});

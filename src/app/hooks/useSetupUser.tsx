@@ -2,7 +2,7 @@ import { useAsyncEffect } from "ahooks";
 import axios from "axios";
 import { useEffect, useState } from "react";
 
-import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
+import { NodeBookUser, MOCK_NODEBOOK_USER, UNLOGGED_USER } from "@/app/auth/NodeBookUser";
 import { useAuth } from "@/app/auth/useAuth";
 import { env } from "@/app/envFrontend";
 import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
@@ -20,13 +20,13 @@ const getIsValidToken = (token: string | null): boolean => {
 
 /**
  * Custom hook to setup the user.
- * @returns null while the user is loading or an object of type MewUser.
+ * @returns null while the user is loading or an object of type NodeBookUser.
  * If a user is returned, it won't be changed for the lifetime of the app.
  */
-function useSetupUser(): MewUser | null {
+function useSetupUser(): NodeBookUser | null {
   const auth = useAuth();
-  const localStorageUser: MewUser | null = LocalStorageUser.get();
-  const [user, setUser] = useState<MewUser | null>(localStorageUser);
+  const localStorageUser: NodeBookUser | null = LocalStorageUser.get();
+  const [user, setUser] = useState<NodeBookUser | null>(localStorageUser);
 
   useEffect(() => {
     if (!localStorageUser) return;
@@ -51,7 +51,7 @@ function useSetupUser(): MewUser | null {
 
     if (!auth) {
       if (envAllowsMockAuth()) {
-        return setUser(MOCK_MEW_USER);
+        return setUser(MOCK_NODEBOOK_USER);
       }
       return setUser(UNLOGGED_USER);
     }
@@ -69,14 +69,14 @@ function useSetupUser(): MewUser | null {
       if (env.env !== "production" && env.hardcodedUserId) {
         const data = await fetchGetUser(authedFetch);
         if (!data) throw new Error("fetchGetUser returned null");
-        const user0 = new MewUser({ ...data });
+        const user0 = new NodeBookUser({ ...data });
         LocalStorageUser.save(user0);
         return setUser(user0);
       }
       if (auth.user) {
         const data = await fetchGetOrCreateUser(auth.user, authedFetch);
         if (!data) throw new Error("fetchGetOrCreateUser returned null");
-        const user0 = new MewUser({ ...data });
+        const user0 = new NodeBookUser({ ...data });
         LocalStorageUser.save(user0);
         return setUser(user0);
       }

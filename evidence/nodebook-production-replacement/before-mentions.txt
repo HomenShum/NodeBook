@@ -1,0 +1,326 @@
+.\CLAUDE.md:30:**Mew** is a knowledge graph application built with Next.js 14 App Router, TypeScript, and MobX for state management. The core concept is a hypergraph where both nodes and relations can have relations to other entities.
+.\CLAUDE.md:77:4. Change `POSTGRES_CUSTOM_URL` to point to `mew_lite` for development database
+.\docker-compose.yml:4:  image: ghcr.io/ideaflowco/mew:${IMAGE_TAG:-latest}
+.\docker-compose.yml:10:  mew-main:
+.\docker-compose.yml:12:    container_name: mew-edge
+.\docker-compose.yml:18:  mew-test:
+.\docker-compose.yml:20:    container_name: mew-test
+.\doc\overview.md:1:# Mew Overview
+.\datasets\demos\README.md:1:# Mew demo datasets
+.\datasets\demos\README.md:7:- Mew full: https://lidemo.ideaflow.app/
+.\datasets\demos\README.md:8:- Mew lite: https://lidemo-lite.ideaflow.app/
+.\datasets\demos\README.md:14:- Mew full: https://lippdemo.ideaflow.app/
+.\datasets\demos\README.md:15:- Mew lite: https://lippdemo-lite.ideaflow.app/
+.\datasets\demos\README.md:21:- Mew full: https://scrapedemo.ideaflow.app/
+.\datasets\demos\README.md:22:- Mew lite: https://scrapedemo-lite.ideaflow.app/
+.\datasets\demos\README.md:71:### Mew
+.\datasets\demos\README.md:73:- **Go to mew demo instance** you want to update (links above)
+.\datasets\demos\README.md:79:- **Uploading to Mew** first is necessary to create an ideapad compatible dataset. So make sure you've done the [above](#mew) already.
+.\datasets\demos\README.md:80:- **Click "Export to Ideapad"** in the mew demo instance settings to download the full dataset as a json file
+.\README.md:36:Moreover, you'll want to change `POSTGRES_CUSTOM_URL` in `.env.local` to point to `mew_lite` instead of `verceldb` to link your local app to our main development database (i.e. to work with the same backend as `edge.globalbrain.ai`). See below for how to set up your own development database.
+.\README.md:50:- Go to `mew-postgres` database in vercel: https://vercel.com/ideaflowco/mew/stores/integration/neon/store_lxFSgFAtApzk0tud/guides
+.\README.md:54:- When you're done, you can delete the database by running `drop database <db-name>` in the [vercel data tab](https://vercel.com/ideaflowco/mew/stores/postgres/store_lxFSgFAtApzk0tud/data)
+.\README.md:72:Every 12 hours (12AM/12PM UTC) backups are stored in mew-vercel-backup (us-west-1).
+.\README.md:76:1. Download the backup from s3: https://us-west-1.console.aws.amazon.com/s3/buckets/mew-vercel-backup
+.\next.config.mjs:34: * https://linear.app/ideaflow/issue/ENT-3862/app-reloads-mid-session#comment-08a27abd
+.\next.config.mjs:54:  org: "ideaflow",
+.\next.config.mjs:55:  project: "mew",
+.\package.json:22:    "vercel:link": "yarn vercel link --cwd . -p mew --scope ideaflowco -y",
+.\Dockerfile:11:ENV NEXT_PUBLIC_AUTH0_API_AUDIENCE="https://ideaflow-mew.us.auth0.com/api/v2/"
+.\Dockerfile:13:ENV NEXT_PUBLIC_AUTH0_DOMAIN="ideaflow-mew.us.auth0.com"
+.\scripts\download-relations-and-types.ts:85:      fs.writeFileSync("mew-big-relations-and-types.json", JSON.stringify({ relations, allRelationTypes }));
+.\scripts\fix-canonical-relations.ts:8:import { MewDatabase } from "@/db/types";
+.\scripts\fix-canonical-relations.ts:38:async function getData(db: MewDatabase) {
+.\src\envBackend.ts:47:  NEON_DB_ARIZ_REPLICA_MEW_LITE: process.env.NEON_DB_ARIZ_REPLICA_MEW_LITE || "",
+.\src\middleware.ts:5:  requestHeaders.set("mew-url", request.url);
+.\src\db\graphRelations.ts:5:import { MewDbTransaction } from "@/db/types";
+.\src\db\graphRelations.ts:8:export const createRelations = async (tx: MewDbTransaction, relations: SerializedRelation[]) => {
+.\src\db\graphRelations.ts:32:  tx: MewDbTransaction,
+.\src\db\graphRelations.ts:73:export const deleteRelation = async (tx: MewDbTransaction, relation: SerializedRelation) => {
+.\src\db\graphNodes.ts:5:import { MewDbTransaction } from "@/db/types";
+.\src\db\graphNodes.ts:15:export const createNodes = async (tx: MewDbTransaction, nodes: SerializedNode[]) => {
+.\src\db\graphNodes.ts:56:export const updateNode = async (tx: MewDbTransaction, oldProps: SerializedNode, newProps: SerializedNode) => {
+.\src\db\graphNodes.ts:138:export const deleteNode = async (tx: MewDbTransaction, node: SerializedNode) => {
+.\src\db\index.ts:4:import { MewDatabase } from "@/db/types";
+.\src\db\index.ts:13:let db: MewDatabase;
+.\src\db\relationTypes.ts:5:import { MewDbTransaction } from "@/db/types";
+.\src\db\relationTypes.ts:7:export const createRelationTypes = async (tx: MewDbTransaction, relTypes: GraphRelationType[]) => {
+.\src\db\relationTypes.ts:33:  tx: MewDbTransaction,
+.\src\db\relationTypes.ts:68:export const deleteRelationType = async (tx: MewDbTransaction, relType: GraphRelationType) => {
+.\src\db\relationLists.ts:6:import { MewDbTransaction } from "@/db/types";
+.\src\db\relationLists.ts:9:  tx: MewDbTransaction,
+.\src\db\schema.ts:88:export const userTable = pgTable("mew_user", {
+.\src\db\types.ts:7:export type MewDatabase = NodePgDatabase<typeof schema>;
+.\src\db\types.ts:9:export type MewDbSchema = typeof schema;
+.\src\db\types.ts:12:export type MewDbTransaction = PgTransaction<
+.\src\db\types.ts:14:  MewDbSchema,
+.\src\db\types.ts:15:  ExtractTablesWithRelations<MewDbSchema>
+.\src\db\users.ts:4:import { MewDatabase, MewDbTransaction } from "@/db/types";
+.\src\db\users.ts:6:export const getOrCreateUser = async (db: MewDatabase, user: PersistedUser) => {
+.\src\db\users.ts:17:export const getUser = async (db: MewDatabase, userId: string) => {
+.\src\db\users.ts:22:const createUser = async (tx: MewDbTransaction, user: PersistedUser) => {
+.\src\db\users.ts:39:export const updateUserSettings = async (db: MewDatabase, user: PersistedUser) => {
+.\src\app\api\authMiddleware.ts:4:import { UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\auth\MewUser.ts:3:export class MewUser {
+.\src\app\auth\MewUser.ts:27:const UNLOGGED_USER_ID = "SPECIAL::mew|unlogged";
+.\src\app\auth\MewUser.ts:28:export const UNLOGGED_USER = new MewUser({
+.\src\app\auth\MewUser.ts:31:  email: "unlogged.user@ideaflow.io",
+.\src\app\auth\MewUser.ts:38:const MOCK_MEW_USER_ID = "SPECIAL::mew|0123456789";
+.\src\app\auth\MewUser.ts:39:export const MOCK_MEW_USER = new MewUser({
+.\src\app\auth\MewUser.ts:40:  id: MOCK_MEW_USER_ID,
+.\src\app\auth\MewUser.ts:42:  email: "mock.user@ideaflow.io",
+.\src\app\api\files\route.ts:10:const BUCKET_NAME = "ideaflow-mew-uploads";
+.\src\app\api\query\route.ts:20:    if (userId === "SPECIAL::mew|unlogged") {
+.\src\app\api\query\rag.ts:263:using an advanced knowledge graph system called Mew. For any given query, you will also be provided with a set of nodes retrieved 
+.\src\app\api\query\rag.ts:264:from Mew using the user's query. The nodes will be delimited by XML tags and presented to you with their 
+.\src\app\api\query\rag.ts:266:the node "Calvin Xu" is retrieved from Mew. It will be presented to you as follows, where under RELATIONSHIPS, all entities related
+.\src\app\api\query\rag.ts:277:each retrieving up to k nodes from Mew. To do so, respond with: ADDITIONAL_QUERY_<k>: <your query>. In this example, \`ADDITIONAL_QUERY_3: "Syrgkanis Lab"\` will retrieve up to 3 related nodes:
+.\src\app\api\search\helpers.ts:242:  //Check if labelled nodes are being used somewhere else
+.\src\app\api\layer\createLayers.ts:3:import { UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\api\layer\createLayers.ts:5:  MewUserPublic,
+.\src\app\api\layer\createLayers.ts:118:    const user: MewUserPublic = {
+.\src\app\api\layer\createLayers.ts:593:    const user: MewUserPublic = {
+.\src\app\api\types.ts:3:import { MewUserPublicSchema } from "@/app/persistence/SerializedData";
+.\src\app\api\types.ts:51:    data: z.array(MewUserPublicSchema),
+.\src\app\api\users\route.ts:6:import { MewUserPublic } from "@/app/persistence/SerializedData";
+.\src\app\api\users\route.ts:39:    const users: MewUserPublic[] = userRows.map((row) => ({
+.\src\app\window.d.ts:4:  mew: any;
+.\src\app\api\user\settings\route.ts:6:import { UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\api\user\route.ts:6:import { UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\api\sync\route.ts:7:import { UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\api\sync\import-chunk\route.ts:5:import { UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\api\sync\createSnapshot.ts:3:import { UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\api\sync\createSnapshot.ts:4:import { MewUserPublic, SerializedGraphStore, SerializedNode } from "@/app/persistence/SerializedData";
+.\src\app\api\sync\createSnapshot.ts:24:    const user: MewUserPublic = {
+.\src\app\components\CustomIcons.tsx:76:export const UnpinIconMew = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
+.\src\app\components\CustomIcons.tsx:90:export const ViewsIconMew = ({ size = 16, fill = "currentColor", stroke = "currentColor", strokeWidth = 2 }) => (
+.\src\app\components\DataDialog\ImportDialog.tsx:30:  const [importType, setImportType] = useState<"mew" | "ideapad" | null>(null);
+.\src\app\components\DataDialog\ImportDialog.tsx:98:        <Button size="sm" variant={importType === "mew" ? "default" : "outline"} onClick={() => setImportType("mew")}>
+.\src\app\util.ts:18:import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\util.ts:369: * It was implemented as part of https://github.com/IdeaFlowCo/mew/pull/762 and I made it
+.\src\app\util.ts:561:  get: (): MewUser | null => {
+.\src\app\util.ts:564:      return new MewUser(JSON.parse(stringifiedUser));
+.\src\app\util.ts:568:  save: (user: MewUser) => {
+.\src\app\components\RelatedObject\TreeNodeInputSuffix.tsx:127:        // Requested in https://ideaflowteam.slack.com/archives/C07FU15QKTP/p1729288027846699
+.\src\app\components\RelatedObject\TreeNodeInputPrefix.tsx:180:        // Requested in https://ideaflowteam.slack.com/archives/C07FU15QKTP/p1729288027846699
+.\src\app\tree\__test__\Tree.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\tree\__test__\Tree.test.ts:19:      const graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\tree\__test__\Tree.test.ts:305:        //Source: https://github.com/IdeaFlowCo/mew/pull/519#pullrequestreview-2360873800
+.\src\app\tree\__test__\Tree.test.ts:341:        const graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\tree\__test__\helpers.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\tree\__test__\helpers.ts:31:  const graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\components\UIPrimitives\Loader.tsx:28: * For details, see: https://linear.app/ideaflow/issue/ENT-3862/app-reloads-mid-session#comment-08a27abd
+.\src\app\tree\clipboard.ts:14:export const MEW_CLIPBOARD_MIMETYPE = "application/x-mew-graphstore";
+.\src\app\tree\clipboard.ts:77:  clipboardData.setData(MEW_CLIPBOARD_MIMETYPE, JSON.stringify(chipParts));
+.\src\app\StoresProvider.tsx:49:    window.mew = window.nodebook;
+.\src\app\hooks\useSetupUser.tsx:5:import { MewUser, MOCK_MEW_USER, UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\hooks\useSetupUser.tsx:23: * @returns null while the user is loading or an object of type MewUser.
+.\src\app\hooks\useSetupUser.tsx:26:function useSetupUser(): MewUser | null {
+.\src\app\hooks\useSetupUser.tsx:28:  const localStorageUser: MewUser | null = LocalStorageUser.get();
+.\src\app\hooks\useSetupUser.tsx:29:  const [user, setUser] = useState<MewUser | null>(localStorageUser);
+.\src\app\hooks\useSetupUser.tsx:54:        return setUser(MOCK_MEW_USER);
+.\src\app\hooks\useSetupUser.tsx:72:        const user0 = new MewUser({ ...data });
+.\src\app\hooks\useSetupUser.tsx:79:        const user0 = new MewUser({ ...data });
+.\src\app\LayoutClient.tsx:23: * We use a middleware to set the mew-url header by intercepting the request.
+.\src\app\LayoutClient.tsx:35:  const requestedURL = headersList.get("mew-url");
+.\src\app\query\page.tsx:18:import { UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\query\page.tsx:137:const MewQueryInterface = observer(function MewQueryInterface() {
+.\src\app\query\page.tsx:345:export default MewQueryInterface;
+.\src\app\graph\GraphStore.ts:3:import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\graph\GraphStore.ts:22:  MewUserPublic,
+.\src\app\graph\GraphStore.ts:91:  user: MewUser;
+.\src\app\graph\GraphStore.ts:95:  usersById: Map<string, MewUserPublic> = new Map();
+.\src\app\graph\GraphStore.ts:108:  constructor(user: MewUser = UNLOGGED_USER, settings?: SettingsStore) {
+.\src\app\persistence\SerializedData.ts:144:export const MewUserPublicSchema = z.object({
+.\src\app\persistence\SerializedData.ts:150:export type MewUserPublic = z.infer<typeof MewUserPublicSchema>;
+.\src\app\persistence\SerializedData.ts:154:  usersById: z.record(MewUserPublicSchema).default({}),
+.\src\app\contexts\UserContext.ts:3:import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
+.\src\app\contexts\UserContext.ts:5:export const UserContext = createContext<MewUser>(UNLOGGED_USER);
+.\src\app\graph\__tests__\GraphStore.addRelation.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.addRelation.test.ts:16:    const user = MOCK_MEW_USER;
+.\src\app\graph\SettingsStore.ts:7:import { MewUser, MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\SettingsStore.ts:28:  private user: MewUser;
+.\src\app\graph\SettingsStore.ts:71:  constructor(user = MOCK_MEW_USER) {
+.\src\app\graph\__tests__\GraphStore.addNode.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.addNode.test.ts:14:    graphStore = new GraphStore(MOCK_MEW_USER, new SettingsStore());
+.\src\app\graph\__tests__\GraphStore.addChildNode.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.addChildNode.test.ts:19:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.removeNode.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.removeNode.test.ts:25:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.replaceRelationLink.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.replaceRelationLink.test.ts:24:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.replaceRelationLink.test.ts:85:          authorId: "SPECIAL::mew|0123456789",
+.\src\app\graph\__tests__\GraphStore.replaceRelationLink.test.ts:198:          authorId: "SPECIAL::mew|0123456789",
+.\src\app\graph\__tests__\GraphStore.removeRelation.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.removeRelation.test.ts:24:      graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.removeRelation.test.ts:145:      graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.search.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.search.test.ts:24:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.load.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.load.test.ts:18:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\editor\plugins\PastePlugin.tsx:19:import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
+.\src\app\editor\plugins\PastePlugin.tsx:450:          const mewData = clipboardData.getData(MEW_CLIPBOARD_MIMETYPE);
+.\src\app\editor\plugins\PastePlugin.tsx:458:          if (mewData) {
+.\src\app\editor\plugins\PastePlugin.tsx:459:            rawLines = getLinesFromMewData(mewData, shiftKey);
+.\src\app\editor\plugins\PastePlugin.tsx:962:const getLinesFromMewData = (mewData: string, shiftKey: boolean): ChipsWithContext[] => {
+.\src\app\editor\plugins\PastePlugin.tsx:963:  const chipParts = JSON.parse(mewData) as ChipsWithContext[];
+.\src\app\graph\__tests__\GraphStore.getAllPaths.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.getAllPaths.test.ts:24:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.setIsPublic.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.setIsPublic.test.ts:23:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.updateNode.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.updateNode.test.ts:18:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.test.ts:8:    const graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.test.ts:17:    const graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\graph\__tests__\GraphStore.test.ts:26:        expect(update.relation.authorId).toBe(MOCK_MEW_USER.id);
+.\src\app\graph\__tests__\GraphStore.test.ts:29:        expect(update.node.authorId).toBe(MOCK_MEW_USER.id);
+.\src\app\graph\__tests__\GraphStore.test.ts:38:    let user = MOCK_MEW_USER;
+.\src\app\graph\__tests__\GraphStore.updateRelation.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\GraphStore.updateRelation.test.ts:23:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\src\app\editor\plugins\SyncWithModelsPlugin.tsx:123:              //     behavior: "instant", //scrollIntoView with "smooth" causes a reflow in mew
+.\src\app\editor\plugins\__tests__\LinkPlugin.test.ts:5:    const text = "Something something google.com something something ideaflow.io something";
+.\src\app\editor\plugins\__tests__\LinkPlugin.test.ts:10:    expect(matches[1].text).toEqual("ideaflow.io");
+.\src\app\editor\plugins\__tests__\LinkPlugin.test.ts:11:    expect(matches[1].url).toEqual("https://ideaflow.io");
+.\src\app\editor\plugins\__tests__\LinkPlugin.test.ts:23:    const text = "https://google.com something something ideaflow.io";
+.\src\app\editor\plugins\__tests__\LinkPlugin.test.ts:28:    expect(matches[1].text).toEqual("ideaflow.io");
+.\src\app\editor\plugins\__tests__\LinkPlugin.test.ts:29:    expect(matches[1].url).toEqual("https://ideaflow.io");
+.\src\app\editor\plugins\__tests__\LinkPlugin.test.ts:31:    const text2 = "google.com something something ideaflow.io http://google.com";
+.\src\app\editor\plugins\__tests__\LinkPlugin.test.ts:36:    expect(matches2[1].text).toEqual("ideaflow.io");
+.\src\app\editor\plugins\__tests__\LinkPlugin.test.ts:37:    expect(matches2[1].url).toEqual("https://ideaflow.io");
+.\src\app\graph\__tests__\UpdateManager.undo.test.ts:1:import { MOCK_MEW_USER } from "@/app/auth/MewUser";
+.\src\app\graph\__tests__\UpdateManager.undo.test.ts:19:    graphStore = new GraphStore(MOCK_MEW_USER);
+.\puppeteer\test-command-bar-performance.ts:137:    await page.goto("https://mew-ec2.ideaflow.app", {
+.\scripts\update-branches.sh:16:branches=("mew-lite" "mew-extra-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite" "geometry-vc")
+.\scripts\update-pinecone-all-branches.sh:10:branches=("mew-lite" "lidemo" "lidemo-lite" "lippdemo" "lippdemo-lite" "scrapedemo" "scrapedemo-lite")
+.\scripts\update-relation-types.ts:73:  const oldData = JSON.parse(fs.readFileSync("mew-big-relations-and-types.json", "utf8"));
+.\scripts\upload-to-ideapad.ts:9:Upload Mew ideapad export to Ideapad via api.
+.\scripts\upload-to-ideapad.ts:12:1. Export your data from Mew using 'Export to Ideapad'
+.\scripts\user-data.ts:6: * See https://linear.app/ideaflow/issue/ENT-4609/copy-jacobs-mew-data-to-a-password-protected-account
+.\scripts\user-data.ts:16:import { MewDatabase } from "@/db/types";
+.\scripts\user-data.ts:97:async function copyUserData(db: MewDatabase, originalAuthorId: string, newAuthorId: string) {
+.\scripts\user-data.ts:268:async function deleteUserData(db: MewDatabase, authorId: string) {
+.\scripts\upload-to-pinecone.ts:29:import { MewDatabase } from "@/db/types";
+.\scripts\upload-to-pinecone.ts:52:async function hasRecentChanges(db: MewDatabase, hours: number = 24): Promise<boolean> {
+.\scripts\upload-to-pinecone.ts:79:async function buildGraph(db: MewDatabase): Promise<Graph> {
+.\drizzle\0002_grey_purple_man.sql:1:CREATE TABLE IF NOT EXISTS "mew_user" (
+.\drizzle\0003_outstanding_jigsaw.sql:27:    (SELECT name FROM mew_user WHERE mew_user.id = graph_node.author_id),
+.\drizzle\0003_outstanding_jigsaw.sql:28:    (SELECT email FROM mew_user WHERE mew_user.id = graph_node.author_id),
+.\drizzle\0004_productive_wrecking_crew.sql:13:INSERT INTO mew_user (id, email, name, created_at)
+.\drizzle\0004_productive_wrecking_crew.sql:16:  'support@ideaflow.io',
+.\drizzle\0008_acoustic_mister_fear.sql:1:ALTER TABLE "mew_user" ADD COLUMN "settings" text DEFAULT '{}' NOT NULL;
+.\datasets\demos\src\scratch.ipynb:1017:              "  'ideaflow-inc': {'id': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:1020:              "   'content': [{'type': 'text', 'value': 'Ideaflow Inc.'}],\n",
+.\datasets\demos\src\scratch.ipynb:5638:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:5648:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:5778:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:5838:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:5868:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:5898:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:5928:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:6098:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:6268:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:6538:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:6568:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:6578:              "   'fromId': 'ideaflow-inc',\n",
+.\datasets\demos\src\scratch.ipynb:11901:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/small/intelligentcrazypeople.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:11902:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/small/CPHOF.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:11904:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/small/YC Companies_flattened.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:11905:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/small/International Olympiad Winners.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:11906:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/small/Misc Competition Winners.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:11907:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/small/MLH Top Hackers.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:11908:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/small/Scholarships and Fellowships List.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:12064:            "Saved full version to /Users/taylormitchell/Code/mew/datasets/demos/data/output/lippdemo.json\n"
+.\datasets\demos\src\scratch.ipynb:12162:        "      \"userId\": \"SPECIAL::mew|0123456789\",\n",
+.\datasets\demos\src\scratch.ipynb:12359:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/intelligentcrazypeople.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:12360:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/CPHOF.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:12362:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/YC Companies_flattened.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:12363:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/International Olympiad Winners.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:12364:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/Misc Competition Winners.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:12365:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/MLH Top Hackers.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:12366:            "Adding /Users/taylormitchell/Code/mew/datasets/demos/data/input/good-signal/Scholarships and Fellowships List.txt to graph\n",
+.\datasets\demos\src\scratch.ipynb:12662:            "Saved lite version to /Users/taylormitchell/Code/mew/datasets/demos/data/output/lippdemo-lite.json\n"
+.\drizzle\0019_loud_zzzax.sql:1:ALTER TABLE "mew_user" ADD COLUMN "username" text DEFAULT '' NOT NULL;
+.\drizzle\0038_add_new_user_flag.sql:1:ALTER TABLE "mew_user" ADD COLUMN "new_user" boolean NOT NULL DEFAULT true;
+.\drizzle\0038_add_new_user_flag.sql:2:UPDATE "mew_user" SET "new_user"=false;
+.\drizzle\0039_move_new_user_flag_to_settings.sql:1:ALTER TABLE "mew_user" DROP COLUMN "new_user";
+.\drizzle\meta\0002_snapshot.json:314:    "public.mew_user": {
+.\drizzle\meta\0002_snapshot.json:315:      "name": "mew_user",
+.\drizzle\meta\0003_snapshot.json:314:    "public.mew_user": {
+.\drizzle\meta\0003_snapshot.json:315:      "name": "mew_user",
+.\drizzle\meta\0004_snapshot.json:314:    "public.mew_user": {
+.\drizzle\meta\0004_snapshot.json:315:      "name": "mew_user",
+.\drizzle\meta\0005_snapshot.json:328:    "public.mew_user": {
+.\drizzle\meta\0005_snapshot.json:329:      "name": "mew_user",
+.\drizzle\meta\0006_snapshot.json:328:    "public.mew_user": {
+.\drizzle\meta\0006_snapshot.json:329:      "name": "mew_user",
+.\drizzle\meta\0007_snapshot.json:328:    "public.mew_user": {
+.\drizzle\meta\0007_snapshot.json:329:      "name": "mew_user",
+.\drizzle\meta\0008_snapshot.json:328:    "public.mew_user": {
+.\drizzle\meta\0008_snapshot.json:329:      "name": "mew_user",
+.\drizzle\meta\0009_snapshot.json:335:    "public.mew_user": {
+.\drizzle\meta\0009_snapshot.json:336:      "name": "mew_user",
+.\drizzle\meta\0010_snapshot.json:335:    "public.mew_user": {
+.\drizzle\meta\0010_snapshot.json:336:      "name": "mew_user",
+.\drizzle\meta\0011_snapshot.json:335:    "public.mew_user": {
+.\drizzle\meta\0011_snapshot.json:336:      "name": "mew_user",
+.\drizzle\meta\0012_snapshot.json:347:    "public.mew_user": {
+.\drizzle\meta\0012_snapshot.json:348:      "name": "mew_user",
+.\drizzle\meta\0013_snapshot.json:347:    "public.mew_user": {
+.\drizzle\meta\0013_snapshot.json:348:      "name": "mew_user",
+.\drizzle\meta\0014_snapshot.json:347:    "public.mew_user": {
+.\drizzle\meta\0014_snapshot.json:348:      "name": "mew_user",
+.\drizzle\meta\0015_snapshot.json:347:    "public.mew_user": {
+.\drizzle\meta\0015_snapshot.json:348:      "name": "mew_user",
+.\drizzle\meta\0016_snapshot.json:347:    "public.mew_user": {
+.\drizzle\meta\0016_snapshot.json:348:      "name": "mew_user",
+.\drizzle\meta\0017_snapshot.json:349:    "public.mew_user": {
+.\drizzle\meta\0017_snapshot.json:350:      "name": "mew_user",
+.\drizzle\meta\0018_snapshot.json:335:    "public.mew_user": {
+.\drizzle\meta\0018_snapshot.json:336:      "name": "mew_user",
+.\drizzle\meta\0019_snapshot.json:335:    "public.mew_user": {
+.\drizzle\meta\0019_snapshot.json:336:      "name": "mew_user",
+.\drizzle\meta\0020_snapshot.json:347:    "public.mew_user": {
+.\drizzle\meta\0020_snapshot.json:348:      "name": "mew_user",
+.\drizzle\meta\0021_snapshot.json:354:    "public.mew_user": {
+.\drizzle\meta\0021_snapshot.json:355:      "name": "mew_user",
+.\drizzle\meta\0022_snapshot.json:354:    "public.mew_user": {
+.\drizzle\meta\0022_snapshot.json:355:      "name": "mew_user",
+.\drizzle\meta\0023_snapshot.json:354:    "public.mew_user": {
+.\drizzle\meta\0023_snapshot.json:355:      "name": "mew_user",
+.\drizzle\meta\0024_snapshot.json:353:    "public.mew_user": {
+.\drizzle\meta\0024_snapshot.json:354:      "name": "mew_user",
+.\drizzle\meta\0025_snapshot.json:378:    "public.mew_user": {
+.\drizzle\meta\0025_snapshot.json:379:      "name": "mew_user",
+.\drizzle\meta\0026_snapshot.json:378:    "public.mew_user": {
+.\drizzle\meta\0026_snapshot.json:379:      "name": "mew_user",
+.\drizzle\meta\0027_snapshot.json:384:    "public.mew_user": {
+.\drizzle\meta\0027_snapshot.json:385:      "name": "mew_user",
+.\drizzle\meta\0028_snapshot.json:429:    "public.mew_user": {
+.\drizzle\meta\0028_snapshot.json:430:      "name": "mew_user",
+.\drizzle\meta\0029_snapshot.json:429:    "public.mew_user": {
+.\drizzle\meta\0029_snapshot.json:430:      "name": "mew_user",
+.\drizzle\meta\0030_snapshot.json:436:    "public.mew_user": {
+.\drizzle\meta\0030_snapshot.json:437:      "name": "mew_user",
+.\drizzle\meta\0031_snapshot.json:436:    "public.mew_user": {
+.\drizzle\meta\0031_snapshot.json:437:      "name": "mew_user",
+.\drizzle\meta\0032_snapshot.json:489:    "public.mew_user": {
+.\drizzle\meta\0032_snapshot.json:490:      "name": "mew_user",
+.\drizzle\meta\0033_snapshot.json:635:    "public.mew_user": {
+.\drizzle\meta\0033_snapshot.json:636:      "name": "mew_user",
+.\drizzle\meta\0034_snapshot.json:642:    "public.mew_user": {
+.\drizzle\meta\0034_snapshot.json:643:      "name": "mew_user",
+.\drizzle\meta\0035_snapshot.json:663:    "public.mew_user": {
+.\drizzle\meta\0035_snapshot.json:664:      "name": "mew_user",
+.\drizzle\meta\0036_snapshot.json:707:    "public.mew_user": {
+.\drizzle\meta\0036_snapshot.json:708:      "name": "mew_user",
+.\drizzle\meta\0037_snapshot.json:746:    "public.mew_user": {
+.\drizzle\meta\0037_snapshot.json:747:      "name": "mew_user",
+.\drizzle\meta\0038_snapshot.json:731:    "public.mew_user": {
+.\drizzle\meta\0038_snapshot.json:732:      "name": "mew_user",
+.\drizzle\meta\0039_snapshot.json:746:    "public.mew_user": {
+.\drizzle\meta\0039_snapshot.json:747:      "name": "mew_user",
+.\drizzle\meta\0040_snapshot.json:752:    "public.mew_user": {
+.\drizzle\meta\0040_snapshot.json:753:      "name": "mew_user",
+.\drizzle\meta\0041_snapshot.json:752:    "public.mew_user": {
+.\drizzle\meta\0041_snapshot.json:753:      "name": "mew_user",

@@ -16,11 +16,11 @@ import { GraphObject } from "@/app/graph/GraphObject";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { TxCombined } from "@/app/graph/GraphTransactionTypes";
 import { useToast } from "@/app/hooks/useToast";
-import { ChipsWithContext, MEW_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
+import { ChipsWithContext, NODEBOOK_CLIPBOARD_MIMETYPE } from "@/app/tree/clipboard";
 import { TreeNodeContentSelectionPosition, TreeSelection } from "@/app/tree/selection";
 import { getAuthFetch, toast, uuid } from "@/app/util";
 import { useViewStore } from "@/app/view/useViewStore";
-import { PasteLinksOption } from "@/db/schema";
+import { PasteLinksOption } from "@/app/domain/schema";
 import { HASHTAG_SYMBOL } from "@/lib/utils";
 
 // Helper function to extract hashtags from text content
@@ -447,7 +447,7 @@ export const PastePlugin = () => {
           const pastedNodeIds = [object.id];
 
           const rawTextContainsNewline = clipboardData.getData("text/plain").includes("\\n");
-          const mewData = clipboardData.getData(MEW_CLIPBOARD_MIMETYPE);
+          const nodebookData = clipboardData.getData(NODEBOOK_CLIPBOARD_MIMETYPE);
           const htmlData = clipboardData.getData("text/html");
           const plainText = clipboardData.getData("text/plain");
           const lexicalData = clipboardData.getData("application/x-lexical-editor");
@@ -455,8 +455,8 @@ export const PastePlugin = () => {
           let rawLines: ChipsWithContext[];
           const initialTreeSelection: TreeSelection = { ...tree.selection } as TreeSelection;
 
-          if (mewData) {
-            rawLines = getLinesFromMewData(mewData, shiftKey);
+          if (nodebookData) {
+            rawLines = getLinesFromNodeBookData(nodebookData, shiftKey);
           } else if (lexicalData) {
             const selection = $getSelection();
             if (selection) {
@@ -959,8 +959,8 @@ const getTodoStatus = (text: string): { isChecked: boolean | null; remainingText
   return { isChecked: null, remainingText: text };
 };
 
-const getLinesFromMewData = (mewData: string, shiftKey: boolean): ChipsWithContext[] => {
-  const chipParts = JSON.parse(mewData) as ChipsWithContext[];
+const getLinesFromNodeBookData = (nodebookData: string, shiftKey: boolean): ChipsWithContext[] => {
+  const chipParts = JSON.parse(nodebookData) as ChipsWithContext[];
   return shiftKey
     ? [
         // Line-up the chips for one long node with a space between each constituent original node

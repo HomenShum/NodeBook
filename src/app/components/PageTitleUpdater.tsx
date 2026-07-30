@@ -15,7 +15,7 @@ export const PageTitleUpdater = observer(function PageTitleUpdater({ tree }: Pro
       const rootNode = tree.state.root;
       if (rootNode.object instanceof GraphNode) {
         const title = rootNode.object.text || "Untitled";
-        document.title = `${title.slice(0, 20)}${title.length > 20 ? "..." : ""} - Zephyr`;
+        document.title = `${title.slice(0, 20)}${title.length > 20 ? "..." : ""} - NodeBook`;
       }
     };
 

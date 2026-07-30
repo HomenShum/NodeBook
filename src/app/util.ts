@@ -13,9 +13,9 @@ import { GraphRelation } from "@/app/graph/GraphRelation";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { getOtherObject } from "@/app/graph/utils";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
-import { NotificationMessageContent } from "@/db/schema";
+import { NotificationMessageContent } from "@/app/domain/schema";
 import logger from "@/lib/logger";
-import { MewUser, UNLOGGED_USER } from "@/app/auth/MewUser";
+import { NodeBookUser, UNLOGGED_USER } from "@/app/auth/NodeBookUser";
 
 import { isGraphRelationType } from "./graph/isGraphRelationType";
 
@@ -366,7 +366,7 @@ export function ideapadSnapshotFromSerializedGraph(data: SerializedGraphStore, u
 
 /**
  * TODO There's no reason for this to be different from ideapadSnapshotFromSerializedGraph.
- * It was implemented as part of https://github.com/IdeaFlowCo/mew/pull/762 and I made it
+ * It was implemented as part of https://github.com/NodeBookCo/nodebook/pull/762 and I made it
  * a separate function to avoid breaking existing functions. I intended to refactor it
  * together with the function above but ran out of time so left them separate.
  */
@@ -558,14 +558,14 @@ export const envAllowsMockAuth = () => {
 };
 
 export const LocalStorageUser = {
-  get: (): MewUser | null => {
+  get: (): NodeBookUser | null => {
     const stringifiedUser = typeof localStorage !== "undefined" ? localStorage.getItem("user") : null;
     if (stringifiedUser) {
-      return new MewUser(JSON.parse(stringifiedUser));
+      return new NodeBookUser(JSON.parse(stringifiedUser));
     }
     return null;
   },
-  save: (user: MewUser) => {
+  save: (user: NodeBookUser) => {
     localStorage.setItem("user", JSON.stringify(user));
   },
   delete: () => {

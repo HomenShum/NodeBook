@@ -11,7 +11,7 @@ export type ChipsWithContext = {
   nodeId?: string | undefined;
 };
 
-export const MEW_CLIPBOARD_MIMETYPE = "application/x-mew-graphstore";
+export const NODEBOOK_CLIPBOARD_MIMETYPE = "application/x-nodebook-graphstore";
 
 const TEXT_TAB = "\t";
 
@@ -74,7 +74,7 @@ export const copyContentFromLexicalNodes = (addToEvent: ClipboardEvent, nodes: D
 
   clipboardData.setData("text/plain", plainTextParts.join("\n"));
   clipboardData.setData("text/html", plainTextParts.map(escapeHtml).join("<br/>"));
-  clipboardData.setData(MEW_CLIPBOARD_MIMETYPE, JSON.stringify(chipParts));
+  clipboardData.setData(NODEBOOK_CLIPBOARD_MIMETYPE, JSON.stringify(chipParts));
 
   return true;
 };

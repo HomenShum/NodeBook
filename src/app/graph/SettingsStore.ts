@@ -4,7 +4,7 @@ import axios from "axios";
 import { autorun, isObservable, makeAutoObservable } from "mobx";
 
 import ApiClient from "@/app/api/utils/client/ApiClient";
-import { MewUser, MOCK_MEW_USER } from "@/app/auth/MewUser";
+import { NodeBookUser, MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { env } from "@/app/envFrontend";
 import { logger } from "@/app/StoresProvider";
 import { LocalStorageUser } from "@/app/util";
@@ -17,7 +17,7 @@ import {
   SearchAndReplaceDropdownOption,
   SearchAndReplaceDropdownOptionEnum,
   SerializedUserSettings,
-} from "@/db/schema";
+} from "@/app/domain/schema";
 
 export enum NewUserHint {
   CtrlClickToExpandInlineRelation = "ctrl-click-to-expand-inline-relation",
@@ -25,7 +25,7 @@ export enum NewUserHint {
 }
 
 export class SettingsStore {
-  private user: MewUser;
+  private user: NodeBookUser;
   public addAllNewNodesAsChildrenOfUserNode = false;
   public showNodeDetails = false;
   public hideDirectParent = true;
@@ -68,7 +68,7 @@ export class SettingsStore {
   private stopAutosave: () => void;
   private defaultNewUserHints: Set<NewUserHint> = new Set([NewUserHint.CtrlClickToExpandInlineRelation]);
 
-  constructor(user = MOCK_MEW_USER) {
+  constructor(user = MOCK_NODEBOOK_USER) {
     this.user = user;
     this.makeObservable();
     if (user.settings) {
