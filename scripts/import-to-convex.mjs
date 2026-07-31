@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const MAX_BATCH_ROWS = 50;
 const MAX_BATCH_BYTES = 700 * 1024;
+const MAX_REQUEST_BYTES = 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 const TABLES = ["users", "nodes", "relations", "relationTypes", "relationLists"];
@@ -135,16 +136,20 @@ for (const table of TABLES) {
   for (let index = 0; index < rows.length;) {
     let batch = rows.slice(index, index + MAX_BATCH_ROWS);
     while (batch.length > 1 && new TextEncoder().encode(JSON.stringify(batch)).byteLength > MAX_BATCH_BYTES) batch = batch.slice(0, -1);
-    const rowsJson = JSON.stringify(batch);
+    let rowsJson = JSON.stringify(batch);
     if (new TextEncoder().encode(rowsJson).byteLength > MAX_BATCH_BYTES) throw new Error(`${table} contains an oversized row`);
-    const digest = createHash("sha256").update(rowsJson).digest("hex");
-    const result = await postBatch(siteUrl, secret, {
-      sourceKey,
-      batchKey: `${table}:${index}`,
-      digest,
-      table,
-      rowsJson,
-    });
+    let digest = createHash("sha256").update(rowsJson).digest("hex");
+    let requestBody = { sourceKey, batchKey: `${table}:${index}`, digest, table, rowsJson };
+    while (batch.length > 1 && new TextEncoder().encode(JSON.stringify(requestBody)).byteLength > MAX_REQUEST_BYTES) {
+      batch = batch.slice(0, -1);
+      rowsJson = JSON.stringify(batch);
+      digest = createHash("sha256").update(rowsJson).digest("hex");
+      requestBody = { sourceKey, batchKey: `${table}:${index}`, digest, table, rowsJson };
+    }
+    if (new TextEncoder().encode(JSON.stringify(requestBody)).byteLength > MAX_REQUEST_BYTES) {
+      throw new Error(`${table} contains a row whose encoded request exceeds 1 MiB`);
+    }
+    const result = await postBatch(siteUrl, secret, requestBody);
     imported += result.imported;
     batches += 1;
     if (result.replayed === true) replayedBatches += 1;
