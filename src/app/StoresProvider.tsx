@@ -1,6 +1,6 @@
 "use client";
 import { getDependencyTree, getObserverTree, toJS } from "mobx";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { GraphStoreProvider } from "@/app/contexts/GraphStoreContext";
 import { LoadingContext } from "@/app/contexts/LoadingContext";
@@ -13,7 +13,6 @@ import { env } from "@/app/envFrontend";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { ConvexSyncBridge } from "@/app/graph/ConvexSyncBridge";
 import { SettingsStore } from "@/app/graph/SettingsStore";
-import { toast } from "@/app/util";
 import { ViewStoreProvider } from "@/app/view/useViewStore";
 import { ViewStore } from "@/app/view/ViewStore";
 import { GLOBAL_USERS_NODE_ID, GLOBAL_USERS_RELATION_ID } from "@/lib/constants";
@@ -26,14 +25,14 @@ export function StoresProvider({
   initialObjectId,
 }: Readonly<{ children: React.ReactNode; initialObjectId: string | null }>) {
   const [isLoading, setIsLoading] = useState(true);
-  const [firstRender, setFirstRender] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
   const user = useUser();
 
   // instantiate empty stores with unlogged user
   const [settingsStore, setSettingsStore] = useState<SettingsStore | null>(null);
   const [graphStore, setGraphStore] = useState<GraphStore | null>(null);
   const [viewStore, setViewStore] = useState<ViewStore | null>(null);
-  const renderCounter = useRef(0);
 
   // expose stores to window for debugging
   if (env.env !== "production" && typeof window !== "undefined") {
@@ -51,20 +50,18 @@ export function StoresProvider({
 
   // when auth changes, clean up current stores and setup up new ones
   useEffect(() => {
-    if (!user || renderCounter.current > 1) return;
+    if (!user) return;
     let ignore = false;
     async function setupStores() {
       let syncCleanup = () => {};
       if (!user) return syncCleanup;
       logger.debug("Starting to setup stores");
-      if (firstRender) {
-        setFirstRender(false);
-        setIsLoading(true);
-      }
+      setIsLoading(true);
+      setLoadError(null);
 
       // create new stores (shorter names to distinguish from the state variables)
       const settings = new SettingsStore(user);
-      let graph = new GraphStore(user, settings);
+      const graph = new GraphStore(user, settings);
       const view = new ViewStore(settings, graph);
 
       // load and start sync
@@ -84,13 +81,18 @@ export function StoresProvider({
             ];
             graph.layerManager.clear();
             await graph.layerManager.initialize(objectIds);
-            renderCounter.current++;
           }
         }
       } catch (e) {
-        toast("Failed to load data from server. Starting with an empty graph.");
-        graph = new GraphStore(user, settings);
         logger.error("Failed sync setup", e);
+        if (!ignore) {
+          setLoadError("NodeBook could not load your notebook. Your stored data was not changed.");
+          setIsLoading(false);
+        }
+        graph.cleanup();
+        settings.cleanup();
+        view.cleanup();
+        return syncCleanup;
       }
 
       // Set up stores. (unless we are unmounting, in which case ignore the result)
@@ -115,7 +117,7 @@ export function StoresProvider({
       ignore = true;
       cleanupPromise.then((cleanup) => cleanup?.());
     };
-  }, [initialObjectId, user, firstRender]);
+  }, [initialObjectId, retryNonce, user]);
 
   useEffect(() => {
     viewStore && viewStore.startObservingMouse();
@@ -124,8 +126,37 @@ export function StoresProvider({
     };
   }, [viewStore]);
 
+  if (loadError) {
+    return (
+      <main
+        aria-labelledby="nodebook-load-error-title"
+        data-testid="notebook-load-error"
+        style={{
+          alignItems: "center",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          height: "100vh",
+          justifyContent: "center",
+          padding: "24px",
+          textAlign: "center",
+        }}
+      >
+        <h1 id="nodebook-load-error-title">Notebook unavailable</h1>
+        <p>{loadError}</p>
+        <button type="button" onClick={() => setRetryNonce((value) => value + 1)}>
+          Retry
+        </button>
+      </main>
+    );
+  }
+
   if (!settingsStore || !viewStore || !graphStore) {
-    return <></>;
+    return (
+      <main aria-busy="true" aria-label="Loading notebook">
+        Loading notebook…
+      </main>
+    );
   }
 
   return (

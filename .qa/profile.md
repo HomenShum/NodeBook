@@ -4,7 +4,7 @@
 
 | Thing | Value |
 |---|---|
-| Production URL | `https://nodebook.vercel.app` |
+| Production URL | `https://nodebook-rho.vercel.app` |
 | Repo root | `D:\VSCode Projects\Ideaflow\nodebook-real` |
 | Dev command + port | `npm run dev`; `http://127.0.0.1:3000` |
 | Backend | Dedicated Convex project `nodebook`; separate development and production deployments |
@@ -43,4 +43,3 @@
 - Do not describe a run as live from labels alone; require a rendered response plus durable receipt and server-side ledger evidence.
 - Do not claim the migration complete until source/destination counts and digests are reconciled, or explicitly mark legacy data unavailable.
 - The Auth0 trial banner is not a product failure, but plan status must be resolved before the trial expires.
-
