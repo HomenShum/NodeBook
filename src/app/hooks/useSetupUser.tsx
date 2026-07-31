@@ -29,16 +29,18 @@ export const getIsValidToken = (token: string | null): boolean => {
  */
 function useSetupUser(): NodeBookUser | null {
   const auth = useAuth();
-  const localStorageUser: NodeBookUser | null = LocalStorageUser.get();
+  // LocalStorageUser.get() hydrates a new NodeBookUser instance on every call.
+  // Reading it during every render makes the object identity change, which
+  // retriggers both effects below and continuously rebuilds the graph stores.
+  const [localStorageUser] = useState<NodeBookUser | null>(() => LocalStorageUser.get());
   const [user, setUser] = useState<NodeBookUser | null>(env.isAuthEnabled ? null : localStorageUser);
 
   useEffect(() => {
     if (!localStorageUser) return;
     const token = localStorage.getItem(JWT_LOCAL_STORAGE_KEY);
     const isValidToken = getIsValidToken(token);
-    //Our JWT is valid for 10 days. Sometimes the user might have an expired token.
-    //If we have a valid localStorage user, with a valid token, use the token
-    //Otherwise, delete the localStorage user.
+    // If we have a cached user and a still-valid token, restore both once.
+    // Otherwise discard the stale cached profile.
     if (isValidToken) {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       setUser(localStorageUser);
