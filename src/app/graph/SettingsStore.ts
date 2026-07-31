@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { autorun, isObservable, makeAutoObservable } from "mobx";
+import { comparer, isObservable, makeAutoObservable, reaction } from "mobx";
 
 import ApiClient from "@/app/api/utils/client/ApiClient";
 import { NodeBookUser, MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
@@ -66,6 +66,9 @@ export class SettingsStore {
   public viewModePreference: SerializedUserSettings["viewModePreferences"] = {};
   public newUser: boolean = true;
   private stopAutosave: () => void;
+  private pendingSettings: SerializedUserSettings | null = null;
+  private persistInFlight = false;
+  private persistTimer: ReturnType<typeof setTimeout> | null = null;
   private defaultNewUserHints: Set<NewUserHint> = new Set([NewUserHint.CtrlClickToExpandInlineRelation]);
 
   constructor(user = MOCK_NODEBOOK_USER) {
@@ -74,7 +77,11 @@ export class SettingsStore {
     if (user.settings) {
       this.deserialize(user.settings);
     }
-    this.stopAutosave = autorun(() => this.syncToServer());
+    this.stopAutosave = reaction(
+      () => this.serialize(),
+      (settings) => this.scheduleSync(settings),
+      { equals: comparer.structural, fireImmediately: false },
+    );
   }
 
   makeObservable() {
@@ -133,16 +140,34 @@ export class SettingsStore {
     this.newUserHints = this.defaultNewUserHints;
   }
 
-  private async syncToServer() {
+  private scheduleSync(settings: SerializedUserSettings) {
+    this.pendingSettings = settings;
+    if (this.persistTimer) clearTimeout(this.persistTimer);
+    this.persistTimer = setTimeout(() => {
+      this.persistTimer = null;
+      void this.flushSync();
+    }, 300);
+  }
+
+  private async flushSync() {
+    if (this.persistInFlight) return;
+    this.persistInFlight = true;
     try {
-      await this.persist(this.serialize());
-      const currentUser = LocalStorageUser.get();
-      if (currentUser) {
-        currentUser.settings = this.serialize();
-        LocalStorageUser.save(currentUser);
+      while (this.pendingSettings) {
+        const settings = this.pendingSettings;
+        this.pendingSettings = null;
+        await this.persist(settings);
+        const currentUser = LocalStorageUser.get();
+        if (currentUser) {
+          currentUser.settings = settings;
+          LocalStorageUser.save(currentUser);
+        }
       }
     } catch (e) {
       console.warn("Error saving user settings", e);
+    } finally {
+      this.persistInFlight = false;
+      if (this.pendingSettings) this.scheduleSync(this.pendingSettings);
     }
   }
 
@@ -406,5 +431,8 @@ export class SettingsStore {
 
   cleanup() {
     this.stopAutosave();
+    if (this.persistTimer) clearTimeout(this.persistTimer);
+    this.persistTimer = null;
+    if (this.pendingSettings) void this.flushSync();
   }
 }
