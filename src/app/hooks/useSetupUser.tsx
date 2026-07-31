@@ -10,12 +10,16 @@ import { fetchGetOrCreateUser, fetchGetUser } from "@/app/persistence/loadGraphD
 import { logger } from "@/app/StoresProvider";
 import { envAllowsMockAuth, getAuthFetch, LocalStorageUser } from "@/app/util";
 
-const getIsValidToken = (token: string | null): boolean => {
+export const getIsValidToken = (token: string | null): boolean => {
   if (!token) return false;
-  const decodedToken = JSON.parse(atob(token.split(".")[1]));
-  //Consider tokens expired a day before, so Auth0 can automatically
-  //refresh the token.
-  return decodedToken.exp > Math.floor(Date.now() / 1000) + 86400;
+  try {
+    const decodedToken = JSON.parse(atob(token.split(".")[1]));
+    // Leave five minutes for an Auth0 refresh without rejecting normal one-hour
+    // access tokens immediately after a successful login.
+    return typeof decodedToken.exp === "number" && decodedToken.exp > Math.floor(Date.now() / 1000) + 300;
+  } catch {
+    return false;
+  }
 };
 
 /**
