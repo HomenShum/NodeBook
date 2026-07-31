@@ -67,15 +67,16 @@ describe("NodeBook durable agent scenarios", () => {
         reason: "Store one independently reviewable finding.",
       })),
     ];
+    const provider = jest.fn().mockResolvedValue({
+      result: { ...baseResult, response: "I prepared a proposal for your review.", operations },
+      sources: ["https://example.com/evidence", "https://example.com/evidence"],
+      usage,
+    });
     const result = await executeWorkflowAgent(
       { query: "Research and structure launch risks", mode: "agent", rootNodeId: "root", webResearch: true, contextNodes: [node] },
       {
         model: "gpt-5-mini",
-        runProvider: async () => ({
-          result: { ...baseResult, response: "I prepared a proposal for your review.", operations },
-          sources: ["https://example.com/evidence", "https://example.com/evidence"],
-          usage,
-        }),
+        runProvider: provider,
         runId: () => "run-proposal",
         proposalId: () => "proposal-1",
       },
@@ -85,6 +86,7 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.proposalDigest).toMatch(/^[a-f0-9]{64}$/);
     expect(result.sourceUrls).toEqual(["https://example.com/evidence"]);
     expect(result.content).toContain("proposal");
+    expect(provider.mock.calls[0][0].timeoutMs).toBe(42_000);
   });
 
   test("an adversarial note cannot authorize out-of-scope writes; one repair is required", async () => {
@@ -118,6 +120,8 @@ describe("NodeBook durable agent scenarios", () => {
 
     expect(provider).toHaveBeenCalledTimes(2);
     expect(provider.mock.calls[1][0].webResearch).toBe(false);
+    expect(provider.mock.calls[0][0].timeoutMs + provider.mock.calls[1][0].timeoutMs).toBeLessThan(60_000);
+    expect(provider.mock.calls[1][0].timeoutMs).toBe(10_000);
     expect(result.operations).toEqual([]);
     expect(result.steps[2]).toEqual(expect.objectContaining({ tool: "repair_proposal", status: "repaired" }));
   });

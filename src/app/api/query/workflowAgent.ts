@@ -344,7 +344,9 @@ export async function executeWorkflowAgent(
     instructions: AGENT_INSTRUCTIONS,
     model: dependencies.model,
     webResearch: args.webResearch,
-    timeoutMs: 30_000,
+    // Structured write plans take longer than read-only answers, but the
+    // primary + one bounded repair must still fit inside the 60s route budget.
+    timeoutMs: args.mode === "ask" ? 30_000 : 42_000,
   });
   let parsed = ModelResultSchema.parse(provider.result);
   let errors = semanticErrors(parsed, args.mode, args.rootNodeId, context);
@@ -368,7 +370,7 @@ export async function executeWorkflowAgent(
       instructions: `${AGENT_INSTRUCTIONS}\nRepair every validation error. Do not add new scope.`,
       model: dependencies.model,
       webResearch: false,
-      timeoutMs: 15_000,
+      timeoutMs: 10_000,
     });
     parsed = ModelResultSchema.parse(repair.result);
     errors = semanticErrors(parsed, args.mode, args.rootNodeId, context);
