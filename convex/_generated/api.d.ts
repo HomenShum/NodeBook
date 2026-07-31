@@ -13,6 +13,7 @@ import type * as agentWorkflows from "../agentWorkflows.js";
 import type * as graph from "../graph.js";
 import type * as http from "../http.js";
 import type * as migration from "../migration.js";
+import type * as nodeDocuments from "../nodeDocuments.js";
 import type * as server from "../server.js";
 
 import type {
@@ -27,6 +28,7 @@ declare const fullApi: ApiFromModules<{
   graph: typeof graph;
   http: typeof http;
   migration: typeof migration;
+  nodeDocuments: typeof nodeDocuments;
   server: typeof server;
 }>;
 
