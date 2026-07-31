@@ -98,6 +98,33 @@ describe("NodeBook Convex production contract", () => {
     expect(outcomes.filter((outcome) => outcome.status === "rejected")).toHaveLength(1);
   });
 
+  test("a new owner's bootstrap can update only derived graph state at the creation version", async () => {
+    const t = convexTest(schema, modules).withIdentity({ subject: owner });
+    const derivedNode = {
+      ...baseNode,
+      relationCount: 1,
+      canonicalRelationId: "relation-1",
+      updatedAt: "2026-07-30T00:00:01.000Z",
+    };
+    await expect(t.mutation(applySync, {
+      payload: syncPayload("tx-bootstrap", [
+        { operation: "addNode", node: baseNode },
+        { operation: "updateNode", oldProps: baseNode, newProps: derivedNode },
+      ]),
+    })).resolves.toMatchObject({ status: "ok", applied: 2 });
+
+    await expect(t.mutation(applySync, {
+      payload: syncPayload("tx-same-version-content-tamper", [{
+        operation: "updateNode",
+        oldProps: derivedNode,
+        newProps: {
+          ...derivedNode,
+          content: [{ type: "text", value: "Changed without a version advance" }],
+        },
+      }]),
+    })).rejects.toThrow(/INVALID_VERSION/);
+  });
+
   test("two owners publishing in the same millisecond remain visible on independent realtime cursors", async () => {
     vi.spyOn(Date, "now").mockReturnValue(1_800_000_000_000);
     const database = convexTest(schema, modules);

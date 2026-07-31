@@ -34,6 +34,67 @@ describe("GraphStore initialization", () => {
     expect(addNodeUpdates).toBe(MIN_NUM_CREATED_NODES);
   });
 
+  it("queues a backend-valid bootstrap transaction for a brand-new owner", () => {
+    const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
+    const [bootstrap] = graphStore.updateManager.pendingUpdates;
+    const serializedState = new Map<string, string>();
+
+    for (const update of bootstrap.updates) {
+      if (update.operation === "addNode") {
+        serializedState.set(update.node.id, JSON.stringify(update.node));
+      }
+      if (update.operation === "addRelation") {
+        serializedState.set(update.relation.id, JSON.stringify(update.relation));
+      }
+      if (update.operation === "updateNode") {
+        const current = JSON.parse(serializedState.get(update.oldProps.id) ?? "{}");
+        const stableKeys = Object.keys(update.oldProps).filter(
+          (key) => !["canonicalRelationId", "relationCount", "updatedAt"].includes(key),
+        );
+        expect(stableKeys.every((key) =>
+          JSON.stringify(current[key]) === JSON.stringify(update.oldProps[key as keyof typeof update.oldProps]),
+        )).toBe(true);
+        serializedState.set(update.newProps.id, JSON.stringify(update.newProps));
+        expect(update.newProps.id).toBe(update.oldProps.id);
+        if (update.newProps.version === update.oldProps.version) {
+          const changedKeys = Object.keys(update.newProps).filter(
+            (key) =>
+              JSON.stringify(update.newProps[key as keyof typeof update.newProps])
+              !== JSON.stringify(update.oldProps[key as keyof typeof update.oldProps]),
+          );
+          expect(changedKeys.every((key) =>
+            ["canonicalRelationId", "relationCount", "updatedAt"].includes(key),
+          )).toBe(true);
+        } else {
+          expect(update.newProps.version).toBe(update.oldProps.version + 1);
+        }
+      }
+      if (update.operation === "updateRelation") {
+        const current = JSON.parse(serializedState.get(update.oldProps.id) ?? "{}");
+        const stableKeys = Object.keys(update.oldProps).filter(
+          (key) => !["canonicalRelationId", "relationCount", "updatedAt"].includes(key),
+        );
+        expect(stableKeys.every((key) =>
+          JSON.stringify(current[key]) === JSON.stringify(update.oldProps[key as keyof typeof update.oldProps]),
+        )).toBe(true);
+        serializedState.set(update.newProps.id, JSON.stringify(update.newProps));
+        expect(update.newProps.id).toBe(update.oldProps.id);
+        if (update.newProps.version === update.oldProps.version) {
+          const changedKeys = Object.keys(update.newProps).filter(
+            (key) =>
+              JSON.stringify(update.newProps[key as keyof typeof update.newProps])
+              !== JSON.stringify(update.oldProps[key as keyof typeof update.oldProps]),
+          );
+          expect(changedKeys.every((key) =>
+            ["canonicalRelationId", "relationCount", "updatedAt"].includes(key),
+          )).toBe(true);
+        } else {
+          expect(update.newProps.version).toBe(update.oldProps.version + 1);
+        }
+      }
+    }
+  });
+
   it("should use the global root as the user root for the anonymous user", () => {
     let user = MOCK_NODEBOOK_USER;
     expect(user.isAnonymous).toBe(false);

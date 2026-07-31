@@ -128,6 +128,19 @@ function serializeEntity(entity: Entity) {
   return document;
 }
 
+function isDerivedSameVersionUpdate(oldEntity: Entity, newEntity: Entity) {
+  const derivedKeys = new Set(["canonicalRelationId", "relationCount", "updatedAt"]);
+  const keys = new Set([...Object.keys(oldEntity), ...Object.keys(newEntity)]);
+  for (const key of keys) {
+    if (derivedKeys.has(key)) continue;
+    if (JSON.stringify((oldEntity as Record<string, unknown>)[key])
+      !== JSON.stringify((newEntity as Record<string, unknown>)[key])) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function entityContentText(entity: Entity) {
   if (!Array.isArray(entity.content)) return "";
   return entity.content
@@ -193,12 +206,29 @@ async function updateEntity(
 ) {
   assertOwnedEntity(oldEntity, owner, `old ${table}`);
   assertOwnedEntity(newEntity, owner, `new ${table}`);
-  if (oldEntity.id !== newEntity.id || newEntity.version !== oldEntity.version + 1) {
+  const advancesVersion = newEntity.version === oldEntity.version + 1;
+  const updatesDerivedStateAtSameVersion =
+    newEntity.version === oldEntity.version && isDerivedSameVersionUpdate(oldEntity, newEntity);
+  if (oldEntity.id !== newEntity.id || (!advancesVersion && !updatesDerivedStateAtSameVersion)) {
     fail("INVALID_VERSION", `${table} update must advance the same entity by exactly one version`);
   }
   const current = await existingEntity(ctx, table, owner, oldEntity.id);
+  const oldDocument = serializeEntity(oldEntity);
   if (!current || current.version !== oldEntity.version) {
     fail("VERSION_CONFLICT", `${table} update is based on a stale version`);
+  }
+  if (
+    advancesVersion
+    && current.document !== oldDocument
+    && !isDerivedSameVersionUpdate(JSON.parse(current.document) as Entity, oldEntity)
+  ) {
+    fail("VERSION_CONFLICT", `${table} update is based on stale entity content`);
+  }
+  if (
+    updatesDerivedStateAtSameVersion
+    && !isDerivedSameVersionUpdate(JSON.parse(current.document) as Entity, newEntity)
+  ) {
+    fail("VERSION_CONFLICT", `${table} derived update conflicts with current entity content`);
   }
   await ctx.db.patch(current._id, {
     version: newEntity.version,
