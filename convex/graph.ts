@@ -35,7 +35,7 @@ type SyncUpdate =
       nodeId: string;
       relationId: string;
       type: "pinned" | "noteContent" | "all";
-      newPosition: { int: number; frac: string };
+      newPosition: { int: number; frac: string } | null;
       newIsPublic: boolean;
     };
 
@@ -270,6 +270,10 @@ async function updateRelationList(
     .query("relationLists")
     .withIndex("by_owner_source", (q) => q.eq("ownerId", owner).eq("sourceId", sourceId))
     .unique();
+  if (update.newPosition === null) {
+    if (current) await ctx.db.delete(current._id);
+    return;
+  }
   const value = {
     ownerId: owner,
     sourceId,
@@ -283,6 +287,32 @@ async function updateRelationList(
   if (current) await ctx.db.replace(current._id, value);
   else await ctx.db.insert("relationLists", value);
 }
+
+export const cleanupRelationListTombstones = mutation({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const authenticatedOwner = await ownerId(ctx);
+    const limit = Math.min(Math.max(args.limit ?? 100, 1), 100);
+    const rows = await ctx.db
+      .query("relationLists")
+      .withIndex("by_owner", (q) => q.eq("ownerId", authenticatedOwner))
+      .take(limit);
+    let deleted = 0;
+    for (const row of rows) {
+      let document: { newPosition?: unknown } | null = null;
+      try {
+        document = JSON.parse(row.document);
+      } catch {
+        // Malformed derived rows are not safe to hydrate.
+      }
+      if (!document || document.newPosition === null || document.newPosition === undefined) {
+        await ctx.db.delete(row._id);
+        deleted++;
+      }
+    }
+    return { inspected: rows.length, deleted };
+  },
+});
 
 export const applySync = mutation({
   args: { payload: v.string() },

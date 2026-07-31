@@ -11,7 +11,12 @@ const modules = import.meta.glob("./**/!(*.test).*s");
 const applySync = makeFunctionReference<"mutation", { payload: string }, any>("graph:applySync");
 const snapshotPage = makeFunctionReference<
   "query",
-  { table: "nodes"; visibility: "owned" | "public"; cursor: null; limit?: number },
+  {
+    table: "nodes" | "relationLists";
+    visibility: "owned" | "public";
+    cursor: null;
+    limit?: number;
+  },
   any
 >("graph:snapshotPage");
 const importBatch = makeFunctionReference<"mutation", any, any>("migration:importBatch");
@@ -123,6 +128,32 @@ describe("NodeBook Convex production contract", () => {
         },
       }]),
     })).rejects.toThrow(/INVALID_VERSION/);
+  });
+
+  test("undo removes relation-list positions instead of persisting invalid null tombstones", async () => {
+    const t = convexTest(schema, modules).withIdentity({ subject: owner });
+    const positioned = {
+      operation: "updateRelationList",
+      authorId: owner,
+      nodeId: "root",
+      relationId: "relation-1",
+      type: "all",
+      newPosition: { int: 1, frac: "a" },
+      newIsPublic: false,
+    };
+    await t.mutation(applySync, {
+      payload: syncPayload("tx-position", [positioned]),
+    });
+    await t.mutation(applySync, {
+      payload: syncPayload("tx-unposition", [{ ...positioned, newPosition: null }]),
+    });
+    const page = await t.query(snapshotPage, {
+      table: "relationLists",
+      visibility: "owned",
+      cursor: null,
+      limit: 10,
+    });
+    expect(page.items).toEqual([]);
   });
 
   test("two owners publishing in the same millisecond remain visible on independent realtime cursors", async () => {

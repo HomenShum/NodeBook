@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
-import { getBearerToken, getConvexClient, snapshotPageReference } from "@/lib/convexServer";
+import {
+  cleanupRelationListTombstonesReference,
+  getBearerToken,
+  getConvexClient,
+  snapshotPageReference,
+} from "@/lib/convexServer";
 
 const RequestSchema = z.object({
   table: z.enum(["nodes", "relations", "relationTypes", "relationLists"]),
@@ -25,6 +30,13 @@ async function getHandler(request: NextAuthenticatedRequest) {
 
   try {
     const client = getConvexClient(getBearerToken(request));
+    if (
+      parsed.data.table === "relationLists"
+      && parsed.data.visibility === "owned"
+      && parsed.data.cursor === null
+    ) {
+      await client.mutation(cleanupRelationListTombstonesReference, { limit: 100 });
+    }
     const page = await client.query(snapshotPageReference, parsed.data);
     return NextResponse.json({ status: "ok", data: page });
   } catch (error) {

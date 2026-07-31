@@ -51,6 +51,12 @@ export const snapshotPageReference = makeFunctionReference<
   { items: string[]; continueCursor: string; isDone: boolean }
 >("graph:snapshotPage");
 
+export const cleanupRelationListTombstonesReference = makeFunctionReference<
+  "mutation",
+  { limit?: number },
+  { inspected: number; deleted: number }
+>("graph:cleanupRelationListTombstones");
+
 export const getUserReference = makeFunctionReference<"query", Record<string, never>, string | null>("graph:getUser");
 
 export const getOrCreateUserReference = makeFunctionReference<
