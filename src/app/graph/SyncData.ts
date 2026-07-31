@@ -18,6 +18,15 @@ export const SyncDataSchema = z.object({
 });
 export type SyncData = z.infer<typeof SyncDataSchema>;
 
+export const ChunkedNodeSyncEventSchema = z.object({
+  kind: z.literal("chunkedNodeUpdate"),
+  clientId: z.string(),
+  userId: z.string(),
+  transactionId: z.string(),
+  nodeId: z.string(),
+  version: z.number().int().positive(),
+});
+
 export const ImportChunkDataSchema = z.object({
   clientId: z.string(),
   userId: z.string(),

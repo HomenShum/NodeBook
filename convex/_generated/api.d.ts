@@ -10,6 +10,7 @@
 
 import type * as agentRuns from "../agentRuns.js";
 import type * as agentWorkflows from "../agentWorkflows.js";
+import type * as chunkedNodeUpdates from "../chunkedNodeUpdates.js";
 import type * as graph from "../graph.js";
 import type * as http from "../http.js";
 import type * as migration from "../migration.js";
@@ -25,6 +26,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   agentRuns: typeof agentRuns;
   agentWorkflows: typeof agentWorkflows;
+  chunkedNodeUpdates: typeof chunkedNodeUpdates;
   graph: typeof graph;
   http: typeof http;
   migration: typeof migration;

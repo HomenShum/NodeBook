@@ -37,6 +37,36 @@ export default defineSchema({
   })
     .index("by_owner_source", ["ownerId", "sourceId"])
     .index("by_owner_node", ["ownerId", "nodeId"]),
+  chunkedNodeWriteSessions: defineTable({
+    ownerId: v.string(),
+    uploadId: v.string(),
+    transactionId: v.string(),
+    clientId: v.string(),
+    nodeId: v.string(),
+    expectedVersion: v.number(),
+    targetVersion: v.number(),
+    oldEntityHash: v.string(),
+    newDocumentDigest: v.string(),
+    chunkCount: v.number(),
+    totalBytes: v.number(),
+    metadataHash: v.string(),
+    status: v.union(v.literal("pending"), v.literal("finalized")),
+    createdAtMs: v.number(),
+    expiresAtMs: v.number(),
+  })
+    .index("by_owner_upload", ["ownerId", "uploadId"])
+    .index("by_owner_created", ["ownerId", "createdAtMs"]),
+  chunkedNodeWriteParts: defineTable({
+    ownerId: v.string(),
+    uploadId: v.string(),
+    sourceId: v.string(),
+    chunkIndex: v.number(),
+    document: v.string(),
+    digest: v.string(),
+    bytes: v.number(),
+  })
+    .index("by_owner_source", ["ownerId", "sourceId"])
+    .index("by_owner_upload", ["ownerId", "uploadId"]),
   relations: defineTable(graphEntity)
     .index("by_owner_source", ["ownerId", "sourceId"])
     .index("by_owner", ["ownerId"])

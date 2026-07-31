@@ -40,6 +40,18 @@ export const applySyncReference = makeFunctionReference<
   { status: "ok"; replayed: boolean; applied: number }
 >("graph:applySync");
 
+export const beginChunkedNodeUpdateReference = makeFunctionReference<"mutation", any, { status: "ok"; replayed: boolean }>(
+  "chunkedNodeUpdates:begin",
+);
+export const uploadChunkedNodePartReference = makeFunctionReference<"mutation", any, { status: "ok"; replayed: boolean }>(
+  "chunkedNodeUpdates:uploadPart",
+);
+export const finalizeChunkedNodeUpdateReference = makeFunctionReference<
+  "mutation",
+  { uploadId: string },
+  { status: "ok"; replayed: boolean; applied: number }
+>("chunkedNodeUpdates:finalize");
+
 export const snapshotPageReference = makeFunctionReference<
   "query",
   {

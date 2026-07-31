@@ -28,6 +28,9 @@ const recentTransactions = makeFunctionReference<
 >("graph:recentTransactions");
 const recordAgentRun = makeFunctionReference<"mutation", any, any>("agentRuns:record");
 const recentAgentRuns = makeFunctionReference<"query", { limit?: number }, any[]>("agentRuns:recent");
+const beginChunkedNodeUpdate = makeFunctionReference<"mutation", any, any>("chunkedNodeUpdates:begin");
+const uploadChunkedNodePart = makeFunctionReference<"mutation", any, any>("chunkedNodeUpdates:uploadPart");
+const finalizeChunkedNodeUpdate = makeFunctionReference<"mutation", any, any>("chunkedNodeUpdates:finalize");
 
 const owner = "auth0|owner-a";
 const otherOwner = "auth0|owner-b";
@@ -48,6 +51,46 @@ const baseNode = {
 
 function syncPayload(transactionId: string, updates: unknown[], userId = owner) {
   return JSON.stringify({ clientId: "browser-a", userId, transactionId, updates });
+}
+
+function canonical(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`).join(",")}}`;
+}
+
+function canonicalEntityForCas(entity: Record<string, unknown>) {
+  const {
+    canonicalRelationId: _canonicalRelationId,
+    relationCount: _relationCount,
+    slug: _slug,
+    updatedAt: _updatedAt,
+    ...stable
+  } = entity;
+  return canonical(stable);
+}
+
+function hash(value: string) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function uploadMetadata(transactionId: string, oldEntity: unknown, newEntity: typeof baseNode) {
+  const document = JSON.stringify(newEntity);
+  const chunks = document.match(/[\s\S]{1,96000}/g) ?? [];
+  const metadata = {
+    uploadId: `node:${transactionId}`,
+    transactionId,
+    clientId: "browser-a",
+    nodeId: newEntity.id,
+    expectedVersion: (oldEntity as { version: number }).version,
+    targetVersion: newEntity.version,
+    oldEntityHash: hash(canonicalEntityForCas(oldEntity as Record<string, unknown>)),
+    newDocumentDigest: hash(document),
+    chunkCount: chunks.length,
+    totalBytes: Buffer.byteLength(document),
+  };
+  return { chunks, metadata: { ...metadata, metadataHash: hash(canonical(metadata)) } };
 }
 
 describe("NodeBook Convex production contract", () => {
@@ -121,6 +164,137 @@ describe("NodeBook Convex production contract", () => {
       limit: 10,
     });
     expect(page.items).toEqual([fullDocument]);
+  });
+
+  test("an owner edits a 2.12 MiB migrated note with verified chunks and idempotent finalize", async () => {
+    const database = convexTest(schema, modules);
+    const oldEntity = { ...baseNode, content: [{ type: "text", value: "A".repeat(2_120_000) }] };
+    const oldDocument = JSON.stringify(oldEntity);
+    const migratedDocument = JSON.stringify({ ...oldEntity, slug: "legacy-slug" });
+    const oldChunks = migratedDocument.match(/[\s\S]{1,100000}/g) ?? [];
+    await database.run(async (ctx) => {
+      await ctx.db.insert("nodes", {
+        ownerId: owner,
+        sourceId: oldEntity.id,
+        version: 1,
+        isPublic: false,
+        document: JSON.stringify({
+          __nodebookChunked: true,
+          chunkCount: oldChunks.length,
+          documentDigest: hash(migratedDocument),
+          id: oldEntity.id,
+          authorId: owner,
+          version: 1,
+          isPublic: false,
+        }),
+        slug: "legacy-slug",
+        updatedAt: oldEntity.updatedAt,
+      });
+      for (const [chunkIndex, document] of oldChunks.entries()) {
+        await ctx.db.insert("nodeChunks", {
+          ownerId: owner,
+          sourceId: `${oldEntity.id}:${chunkIndex}`,
+          nodeId: oldEntity.id,
+          chunkIndex,
+          document,
+          updatedAt: oldEntity.updatedAt,
+        });
+      }
+    });
+    const newEntity = {
+      ...oldEntity,
+      version: 2,
+      updatedAt: "2026-07-30T00:00:01.000Z",
+      content: [{ type: "text", value: `${"A".repeat(2_119_990)} edited` }],
+    };
+    const { chunks, metadata } = uploadMetadata("tx-large-edit", oldEntity, newEntity);
+    const session = database.withIdentity({ subject: owner });
+    await session.mutation(beginChunkedNodeUpdate, metadata);
+    for (const [chunkIndex, document] of chunks.entries()) {
+      await session.mutation(uploadChunkedNodePart, {
+        uploadId: metadata.uploadId,
+        chunkIndex,
+        document,
+        digest: hash(document),
+      });
+    }
+    expect(await session.mutation(finalizeChunkedNodeUpdate, { uploadId: metadata.uploadId }))
+      .toMatchObject({ status: "ok", replayed: false, applied: 1 });
+    expect(await session.mutation(finalizeChunkedNodeUpdate, { uploadId: metadata.uploadId }))
+      .toMatchObject({ status: "ok", replayed: true, applied: 1 });
+    const page = await session.query(snapshotPage, { table: "nodes", visibility: "owned", cursor: null, limit: 10 });
+    expect(hash(page.items[0])).toBe(hash(JSON.stringify(newEntity)));
+    expect(JSON.parse(page.items[0]).version).toBe(2);
+    expect(await database.run(async (ctx) => (await ctx.db.query("nodes").first())?.slug)).toBe("legacy-slug");
+
+    const undo = uploadMetadata("tx-large-undo", newEntity, oldEntity);
+    await session.mutation(beginChunkedNodeUpdate, undo.metadata);
+    for (const [chunkIndex, document] of undo.chunks.entries()) {
+      await session.mutation(uploadChunkedNodePart, {
+        uploadId: undo.metadata.uploadId,
+        chunkIndex,
+        document,
+        digest: hash(document),
+      });
+    }
+    await session.mutation(finalizeChunkedNodeUpdate, { uploadId: undo.metadata.uploadId });
+    const undonePage = await session.query(snapshotPage, { table: "nodes", visibility: "owned", cursor: null, limit: 10 });
+    expect(hash(undonePage.items[0])).toBe(hash(oldDocument));
+    expect(JSON.parse(undonePage.items[0]).version).toBe(1);
+  });
+
+  test("missing or corrupt upload parts fail without changing the live node", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: owner });
+    await session.mutation(applySync, {
+      payload: syncPayload("tx-create-before-incomplete-upload", [{ operation: "addNode", node: baseNode }]),
+    });
+    const newEntity = {
+      ...baseNode,
+      version: 2,
+      updatedAt: "2026-07-30T00:00:01.000Z",
+      content: [{ type: "text", value: "B".repeat(210_000) }],
+    };
+    const { chunks, metadata } = uploadMetadata("tx-incomplete", baseNode, newEntity);
+    await session.mutation(beginChunkedNodeUpdate, metadata);
+    await session.mutation(uploadChunkedNodePart, {
+      uploadId: metadata.uploadId,
+      chunkIndex: 0,
+      document: chunks[0]!,
+      digest: hash(chunks[0]!),
+    });
+    await expect(session.mutation(finalizeChunkedNodeUpdate, { uploadId: metadata.uploadId }))
+      .rejects.toThrow(/UPLOAD_INCOMPLETE/);
+    await expect(session.mutation(uploadChunkedNodePart, {
+      uploadId: metadata.uploadId,
+      chunkIndex: 1,
+      document: chunks[1]!,
+      digest: "0".repeat(64),
+    })).rejects.toThrow(/DIGEST_MISMATCH/);
+    const page = await session.query(snapshotPage, { table: "nodes", visibility: "owned", cursor: null, limit: 10 });
+    expect(JSON.parse(page.items[0]).version).toBe(1);
+  });
+
+  test("two tabs finalizing oversized edits preserve one CAS winner", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: owner });
+    await session.mutation(applySync, { payload: syncPayload("tx-create-for-large-race", [{ operation: "addNode", node: baseNode }]) });
+    const candidates = ["A", "B"].map((label) => ({
+      ...baseNode,
+      version: 2,
+      updatedAt: "2026-07-30T00:00:01.000Z",
+      content: [{ type: "text", value: label.repeat(210_000) }],
+    }));
+    const uploads = candidates.map((candidate, index) => uploadMetadata(`tx-large-tab-${index}`, baseNode, candidate));
+    for (const { chunks, metadata } of uploads) {
+      await session.mutation(beginChunkedNodeUpdate, metadata);
+      for (const [chunkIndex, document] of chunks.entries()) {
+        await session.mutation(uploadChunkedNodePart, { uploadId: metadata.uploadId, chunkIndex, document, digest: hash(document) });
+      }
+    }
+    const outcomes = await Promise.allSettled(
+      uploads.map(({ metadata }) => session.mutation(finalizeChunkedNodeUpdate, { uploadId: metadata.uploadId })),
+    );
+    expect(outcomes.filter((outcome) => outcome.status === "fulfilled")).toHaveLength(1);
+    expect(outcomes.filter((outcome) => outcome.status === "rejected")).toHaveLength(1);
   });
 
   test("two tabs editing the same note surface one winner and one honest version conflict", async () => {

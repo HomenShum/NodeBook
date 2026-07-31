@@ -3,7 +3,7 @@ import { computed, makeObservable, observable, runInAction } from "mobx";
 
 import { env } from "@/app/envFrontend";
 import { generateInverseUpdates, GraphUpdate } from "@/app/graph/GraphUpdate";
-import { condenseSyncDataBatch, SyncData, SyncDataSchema } from "@/app/graph/SyncData";
+import { ChunkedNodeSyncEventSchema, condenseSyncDataBatch, SyncData, SyncDataSchema } from "@/app/graph/SyncData";
 import { getEntityIdsFromUpdates } from "@/app/graph/utils";
 import { SerializedGraphStore } from "@/app/persistence/SerializedData";
 import { fetchConvexSnapshot } from "@/app/persistence/fetchConvexSnapshot";
@@ -15,6 +15,51 @@ const logger = appLogger.child({ service: "UpdateManager" });
 const MAX_PENDING_SYNC_ENTITIES = 10_000;
 const MAX_SYNC_QUEUE_ITEMS = 2_000;
 const SYNC_REQUEST_TIMEOUT_MS = 10_000;
+const MAX_INLINE_NODE_BYTES = 200 * 1024;
+const CHUNKED_NODE_PART_BYTES = 96 * 1024;
+
+function canonical(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (value instanceof Date) return JSON.stringify(value.toISOString());
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonical(record[key])}`).join(",")}}`;
+}
+
+function canonicalEntityForCas(entity: Record<string, unknown>) {
+  const {
+    canonicalRelationId: _canonicalRelationId,
+    relationCount: _relationCount,
+    slug: _slug,
+    updatedAt: _updatedAt,
+    ...stable
+  } = entity;
+  return canonical(stable);
+}
+
+async function sha256(value: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function splitUtf8(value: string) {
+  const encoder = new TextEncoder();
+  const chunks: string[] = [];
+  let parts: string[] = [];
+  let bytes = 0;
+  for (const character of value) {
+    const characterBytes = encoder.encode(character).byteLength;
+    if (bytes + characterBytes > CHUNKED_NODE_PART_BYTES && parts.length) {
+      chunks.push(parts.join(""));
+      parts = [];
+      bytes = 0;
+    }
+    parts.push(character);
+    bytes += characterBytes;
+  }
+  if (parts.length) chunks.push(parts.join(""));
+  return chunks;
+}
 
 /**
  * Represents a transaction that can be undone/redone, potentially with selection state
@@ -441,24 +486,28 @@ export class UpdateManager {
         outgoingEntityIds.forEach((id) => UpdateManager.incrementSyncCount(id));
 
         logger.debug("Sending sync data", syncData);
-        let endpoint = "/api/sync";
+        const chunkedNodeUpdate = this.requiresChunkedNodeUpdate(syncData);
 
         let response: Response = { ok: false } as any;
         let tries = 0;
         while (!response.ok) {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort("Sync request timed out"), SYNC_REQUEST_TIMEOUT_MS);
-          try {
-            response = await userFetch(endpoint, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(syncData),
-              signal: controller.signal,
-            });
-          } finally {
-            clearTimeout(timeout);
+          if (chunkedNodeUpdate) {
+            response = await this.sendChunkedNodeUpdate(syncData, userFetch);
+          } else {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort("Sync request timed out"), SYNC_REQUEST_TIMEOUT_MS);
+            try {
+              response = await userFetch("/api/sync", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(syncData),
+                signal: controller.signal,
+              });
+            } finally {
+              clearTimeout(timeout);
+            }
           }
           tries++;
           if (tries > 3) {
@@ -503,9 +552,71 @@ export class UpdateManager {
   }
 
   async acceptRemoteSync(raw: unknown) {
+    const chunkedEvent = ChunkedNodeSyncEventSchema.safeParse(raw);
+    if (chunkedEvent.success) {
+      if (chunkedEvent.data.clientId !== this.clientId) await this.fetchLatestDataSnapshot();
+      return;
+    }
     const parsed = SyncDataSchema.safeParse(raw);
     if (!parsed.success || parsed.data.clientId === this.clientId) return;
     await this.handleSyncData(parsed.data, parsed.data.userId === this.userId);
+  }
+
+  private requiresChunkedNodeUpdate(syncData: SyncData) {
+    if (syncData.updates.length !== 1 || syncData.updates[0].operation !== "updateNode") return false;
+    const update = syncData.updates[0];
+    const encoder = new TextEncoder();
+    return encoder.encode(JSON.stringify(update.oldProps)).byteLength > MAX_INLINE_NODE_BYTES
+      || encoder.encode(JSON.stringify(update.newProps)).byteLength > MAX_INLINE_NODE_BYTES;
+  }
+
+  private async postChunkedNodePhase(userFetch: typeof fetch, body: unknown) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort("Chunked node sync timed out"), SYNC_REQUEST_TIMEOUT_MS);
+    try {
+      return await userFetch("/api/sync/chunked-node", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private async sendChunkedNodeUpdate(syncData: SyncData, userFetch: typeof fetch) {
+    const update = syncData.updates[0];
+    if (update.operation !== "updateNode") throw new Error("Chunked sync only supports node updates");
+    const document = JSON.stringify(update.newProps);
+    const chunks = splitUtf8(document);
+    const metadata = {
+      uploadId: `node:${syncData.transactionId}`,
+      transactionId: syncData.transactionId,
+      clientId: syncData.clientId,
+      nodeId: update.newProps.id,
+      expectedVersion: update.oldProps.version,
+      targetVersion: update.newProps.version,
+      oldEntityHash: await sha256(canonicalEntityForCas(update.oldProps)),
+      newDocumentDigest: await sha256(document),
+      chunkCount: chunks.length,
+      totalBytes: new TextEncoder().encode(document).byteLength,
+    };
+    const metadataHash = await sha256(canonical(metadata));
+    let response = await this.postChunkedNodePhase(userFetch, { phase: "start", ...metadata, metadataHash });
+    if (!response.ok) return response;
+    for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+      const chunk = chunks[chunkIndex];
+      response = await this.postChunkedNodePhase(userFetch, {
+        phase: "part",
+        uploadId: metadata.uploadId,
+        chunkIndex,
+        document: chunk,
+        digest: await sha256(chunk),
+      });
+      if (!response.ok) return response;
+    }
+    return this.postChunkedNodePhase(userFetch, { phase: "finalize", uploadId: metadata.uploadId });
   }
 
   private enqueueSync(data: SyncData) {

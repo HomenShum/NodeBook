@@ -207,11 +207,11 @@ async function updateEntity(
 ) {
   assertOwnedEntity(oldEntity, owner, `old ${table}`);
   assertOwnedEntity(newEntity, owner, `new ${table}`);
-  const advancesVersion = newEntity.version === oldEntity.version + 1;
+  const changesVersionByOne = Math.abs(newEntity.version - oldEntity.version) === 1;
   const updatesDerivedStateAtSameVersion =
     newEntity.version === oldEntity.version && isDerivedSameVersionUpdate(oldEntity, newEntity);
-  if (oldEntity.id !== newEntity.id || (!advancesVersion && !updatesDerivedStateAtSameVersion)) {
-    fail("INVALID_VERSION", `${table} update must advance the same entity by exactly one version`);
+  if (oldEntity.id !== newEntity.id || (!changesVersionByOne && !updatesDerivedStateAtSameVersion)) {
+    fail("INVALID_VERSION", `${table} update must move the same entity by exactly one version`);
   }
   const current = await existingEntity(ctx, table, owner, oldEntity.id);
   const oldDocument = serializeEntity(oldEntity);
@@ -219,7 +219,7 @@ async function updateEntity(
     fail("VERSION_CONFLICT", `${table} update is based on a stale version`);
   }
   if (
-    advancesVersion
+    changesVersionByOne
     && current.document !== oldDocument
     && !isDerivedSameVersionUpdate(JSON.parse(current.document) as Entity, oldEntity)
   ) {
