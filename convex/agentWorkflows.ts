@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 
+import { hydrateNodeDocument } from "./nodeDocuments";
 import { mutation, query, QueryCtx, MutationCtx } from "./server";
 
 const MAX_AGENT_RUNS_PER_OWNER = 200;
@@ -179,13 +180,15 @@ export const contextSnapshot = query({
       ? await ctx.db.query("nodes").withIndex("by_owner", (q) => q.eq("ownerId", ownerId)).take(limit)
       : [];
     const deduped = new Map([...matched, ...indexed].map((node) => [node.sourceId, node]));
-    return [...deduped.values()].slice(0, limit).map((node) => ({
-      sourceId: node.sourceId,
-      version: node.version,
-      contentText: node.contentText ?? "",
-      document: node.document,
-      updatedAt: node.updatedAt,
-    }));
+    return Promise.all(
+      [...deduped.values()].slice(0, limit).map(async (node) => ({
+        sourceId: node.sourceId,
+        version: node.version,
+        contentText: node.contentText ?? "",
+        document: await hydrateNodeDocument(ctx, node),
+        updatedAt: node.updatedAt,
+      })),
+    );
   },
 });
 
@@ -205,7 +208,7 @@ export const bindingSnapshot = query({
           sourceId: node.sourceId,
           version: node.version,
           contentText: node.contentText ?? "",
-          document: node.document,
+          document: await hydrateNodeDocument(ctx, node),
           updatedAt: node.updatedAt,
         });
       }

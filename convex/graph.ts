@@ -1,5 +1,6 @@
 import { ConvexError, v } from "convex/values";
 
+import { hydrateNodeDocument } from "./nodeDocuments";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./server";
 
 const MAX_SYNC_BYTES = 512 * 1024;
@@ -445,8 +446,12 @@ export const snapshotPage = query({
         : base.withIndex("by_public", (q) => q.eq("isPublic", true)).paginate(pagination);
     };
     const page = await getPage(args.table);
+    const items =
+      args.table === "nodes"
+        ? await Promise.all(page.page.map((item) => hydrateNodeDocument(ctx, item)))
+        : page.page.map((item) => item.document);
     return {
-      items: page.page.map((item) => item.document),
+      items,
       continueCursor: page.continueCursor,
       isDone: page.isDone,
     };

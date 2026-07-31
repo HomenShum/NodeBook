@@ -81,6 +81,48 @@ describe("NodeBook Convex production contract", () => {
     expect(otherPage.items).toHaveLength(0);
   });
 
+  test("an owner opening a migrated oversized note receives the verified reassembled document", async () => {
+    const database = convexTest(schema, modules);
+    const fullDocument = JSON.stringify({ ...baseNode, content: [{ type: "text", value: "A".repeat(2_000) }] });
+    const chunks = [fullDocument.slice(0, 900), fullDocument.slice(900)];
+    const marker = JSON.stringify({
+      __nodebookChunked: true,
+      chunkCount: chunks.length,
+      documentDigest: createHash("sha256").update(fullDocument).digest("hex"),
+      id: baseNode.id,
+      authorId: owner,
+      version: 1,
+      isPublic: false,
+    });
+    await database.run(async (ctx) => {
+      await ctx.db.insert("nodes", {
+        ownerId: owner,
+        sourceId: baseNode.id,
+        version: 1,
+        isPublic: false,
+        document: marker,
+        updatedAt: baseNode.updatedAt,
+      });
+      for (const [chunkIndex, document] of chunks.entries()) {
+        await ctx.db.insert("nodeChunks", {
+          ownerId: owner,
+          sourceId: `${baseNode.id}\u001f${chunkIndex}`,
+          nodeId: baseNode.id,
+          chunkIndex,
+          document,
+          updatedAt: baseNode.updatedAt,
+        });
+      }
+    });
+    const page = await database.withIdentity({ subject: owner }).query(snapshotPage, {
+      table: "nodes",
+      visibility: "owned",
+      cursor: null,
+      limit: 10,
+    });
+    expect(page.items).toEqual([fullDocument]);
+  });
+
   test("two tabs editing the same note surface one winner and one honest version conflict", async () => {
     const t = convexTest(schema, modules).withIdentity({ subject: owner });
     await t.mutation(applySync, {

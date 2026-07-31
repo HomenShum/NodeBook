@@ -4,10 +4,14 @@ import { resolve } from "node:path";
 
 const MAX_BATCH_ROWS = 50;
 const MAX_BATCH_BYTES = 700 * 1024;
+const MAX_MULTI_ROW_REQUEST_BYTES = 1024 * 1024;
 const MAX_REQUEST_BYTES = 4 * 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_RESPONSE_BYTES = 1024 * 1024;
-const TABLES = ["users", "nodes", "relations", "relationTypes", "relationLists"];
+const MAX_INLINE_NODE_BYTES = 700 * 1024;
+const NODE_CHUNK_CHARACTERS = 100_000;
+const TABLES = ["users", "nodes", "relations", "relationTypes", "relationLists", "nodeChunks"];
+const derivedNodeChunks = [];
 
 function validatedSiteUrl(value) {
   const url = new URL(value);
@@ -89,6 +93,50 @@ function migrationRow(table, raw, frozenAt) {
       updatedAt: stableUpdatedAt,
     };
   }
+  if (table === "nodes") {
+    const document = JSON.stringify(raw);
+    if (new TextEncoder().encode(document).byteLength > MAX_INLINE_NODE_BYTES) {
+      const chunks = [];
+      for (let offset = 0; offset < document.length; offset += NODE_CHUNK_CHARACTERS) {
+        chunks.push(document.slice(offset, offset + NODE_CHUNK_CHARACTERS));
+      }
+      const documentDigest = createHash("sha256").update(document).digest("hex");
+      chunks.forEach((chunk, chunkIndex) => {
+        derivedNodeChunks.push({
+          ownerId: raw.authorId,
+          sourceId: `${raw.id}\u001f${chunkIndex}`,
+          nodeId: raw.id,
+          chunkIndex,
+          document: chunk,
+          updatedAt: stableUpdatedAt,
+        });
+      });
+      const contentText = Array.isArray(raw.content)
+        ? raw.content
+            .map((part) => (part && typeof part === "object" && typeof part.value === "string" ? part.value : ""))
+            .join(" ")
+            .slice(0, 32_768)
+        : "";
+      return {
+        ownerId: raw.authorId,
+        sourceId: raw.id,
+        version: Number(raw.version || 1),
+        isPublic: raw.isPublic === true,
+        document: JSON.stringify({
+          __nodebookChunked: true,
+          chunkCount: chunks.length,
+          documentDigest,
+          id: raw.id,
+          authorId: raw.authorId,
+          version: Number(raw.version || 1),
+          isPublic: raw.isPublic === true,
+          slug: raw.slug ?? null,
+        }),
+        contentText,
+        updatedAt: stableUpdatedAt,
+      };
+    }
+  }
   return {
     ownerId: raw.authorId,
     sourceId: raw.id,
@@ -130,8 +178,9 @@ const frozenAt = String(input.frozenAt || "1970-01-01T00:00:00.000Z");
 const receipt = { contract: "nodebook.migration-receipt/v1", sourceKey, tables: {}, completedAt: null };
 
 for (const table of TABLES) {
-  const normalized = normalize(input.tables?.[table] || [], sourceNamespace, targetNamespace);
-  const rows = normalized.map((row) => migrationRow(table, row, frozenAt));
+  const normalized =
+    table === "nodeChunks" ? derivedNodeChunks : normalize(input.tables?.[table] || [], sourceNamespace, targetNamespace);
+  const rows = table === "nodeChunks" ? normalized : normalized.map((row) => migrationRow(table, row, frozenAt));
   let imported = 0;
   let batches = 0;
   let replayedBatches = 0;
@@ -142,7 +191,10 @@ for (const table of TABLES) {
     if (new TextEncoder().encode(rowsJson).byteLength > MAX_BATCH_BYTES) throw new Error(`${table} contains an oversized row`);
     let digest = createHash("sha256").update(rowsJson).digest("hex");
     let requestBody = { sourceKey, batchKey: `${table}:${index}`, digest, table, rowsJson };
-    while (batch.length > 1 && new TextEncoder().encode(JSON.stringify(requestBody)).byteLength > MAX_REQUEST_BYTES) {
+    while (
+      batch.length > 1 &&
+      new TextEncoder().encode(JSON.stringify(requestBody)).byteLength > MAX_MULTI_ROW_REQUEST_BYTES
+    ) {
       batch = batch.slice(0, -1);
       rowsJson = JSON.stringify(batch);
       digest = createHash("sha256").update(rowsJson).digest("hex");
@@ -151,7 +203,12 @@ for (const table of TABLES) {
     if (new TextEncoder().encode(JSON.stringify(requestBody)).byteLength > MAX_REQUEST_BYTES) {
       throw new Error(`${table} contains a row whose encoded request exceeds 4 MiB`);
     }
-    const result = await postBatch(siteUrl, secret, requestBody);
+    let result;
+    try {
+      result = await postBatch(siteUrl, secret, requestBody);
+    } catch (error) {
+      throw new Error(`${table} batch starting at row ${index} failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
     imported += result.imported;
     batches += 1;
     if (result.replayed === true) replayedBatches += 1;

@@ -27,6 +27,16 @@ export default defineSchema({
     .index("by_slug", ["slug"])
     .searchIndex("search_content_owner", { searchField: "contentText", filterFields: ["ownerId"] })
     .searchIndex("search_content_public", { searchField: "contentText", filterFields: ["isPublic"] }),
+  nodeChunks: defineTable({
+    ownerId: v.string(),
+    sourceId: v.string(),
+    nodeId: v.string(),
+    chunkIndex: v.number(),
+    document: v.string(),
+    updatedAt: v.string(),
+  })
+    .index("by_owner_source", ["ownerId", "sourceId"])
+    .index("by_owner_node", ["ownerId", "nodeId"]),
   relations: defineTable(graphEntity)
     .index("by_owner_source", ["ownerId", "sourceId"])
     .index("by_owner", ["ownerId"])

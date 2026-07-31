@@ -35,6 +35,7 @@ export const importBatch = internalMutation({
     table: v.union(
       v.literal("users"),
       v.literal("nodes"),
+      v.literal("nodeChunks"),
       v.literal("relations"),
       v.literal("relationTypes"),
       v.literal("relationLists"),
@@ -89,12 +90,14 @@ export const importBatch = internalMutation({
       if (current) continue;
       if (args.table === "relationLists") {
         await ctx.db.insert("relationLists", row as any);
+      } else if (args.table === "nodeChunks") {
+        await ctx.db.insert("nodeChunks", row as any);
       } else if (args.table === "nodes") {
         const entity = JSON.parse(row.document);
         await ctx.db.insert("nodes", {
           ...row,
           slug: entity.slug ?? null,
-          contentText: contentText(row.document),
+          contentText: row.contentText ?? contentText(row.document),
         } as any);
       } else {
         await ctx.db.insert(args.table, row as any);
