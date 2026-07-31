@@ -1,7 +1,7 @@
 import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persistence/SerializedData";
 
 const MAX_SNAPSHOT_PAGES = 100;
-const MAX_PAGE_BYTES = 2 * 1024 * 1024;
+const MAX_PAGE_BYTES = 8 * 1024 * 1024;
 const PAGE_TIMEOUT_MS = 10_000;
 
 async function readBoundedText(response: Response) {
@@ -17,7 +17,7 @@ async function readBoundedText(response: Response) {
       total += value.byteLength;
       if (total > MAX_PAGE_BYTES) {
         await reader.cancel();
-        throw new Error("Convex snapshot page exceeded the 2 MiB client response cap");
+        throw new Error("Convex snapshot page exceeded the 8 MiB client response cap");
       }
       text += decoder.decode(value, { stream: true });
     }

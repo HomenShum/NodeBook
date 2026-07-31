@@ -434,9 +434,10 @@ export const snapshotPage = query({
   },
   handler: async (ctx, args) => {
     const authenticatedOwner = await ownerId(ctx);
+    const tableLimit = args.table === "nodes" ? 64 : MAX_PAGE_SIZE;
     const limit = Math.min(
       Number.isSafeInteger(args.limit) && (args.limit ?? 0) > 0 ? args.limit! : MAX_PAGE_SIZE,
-      MAX_PAGE_SIZE,
+      tableLimit,
     );
     const pagination = { cursor: args.cursor, numItems: limit };
     const getPage = (table: typeof args.table) => {
