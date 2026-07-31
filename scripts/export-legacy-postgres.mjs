@@ -7,10 +7,14 @@ import pg from "pg";
 const MAX_ROWS_PER_TABLE = 20_000;
 const TABLES = ["users", "nodes", "relations", "relationTypes", "relationLists"];
 const connectionString = process.env.LEGACY_DATABASE_URL;
+const legacyUserTable = process.env.LEGACY_USER_TABLE;
 const outputPath = resolve(process.argv[2] || ".migration-private/legacy-export.json");
 const manifestPath = resolve(process.argv[3] || ".migration-private/legacy-manifest.json");
 
 if (!connectionString) throw new Error("LEGACY_DATABASE_URL is required");
+if (!legacyUserTable || !/^[a-z_][a-z0-9_]*$/.test(legacyUserTable)) {
+  throw new Error("LEGACY_USER_TABLE must be a safe PostgreSQL identifier");
+}
 const parsedUrl = new URL(connectionString);
 if (parsedUrl.protocol !== "postgres:" && parsedUrl.protocol !== "postgresql:") {
   throw new Error("LEGACY_DATABASE_URL must be a PostgreSQL URL");
@@ -38,7 +42,7 @@ function normalizeDates(_key, value) {
 const queries = {
   users: `select id, username, email, name, picture,
     created_at as "createdAt", settings
-    from mew_user order by id`,
+    from ${legacyUserTable} order by id`,
   nodes: `select id, version, author_id as "authorId",
     created_at as "createdAt", coalesce(updated_at, created_at) as "updatedAt",
     content::json as content, coalesce(is_public, false) as "isPublic",

@@ -3723,15 +3723,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pinecone-database/pinecone@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "@pinecone-database/pinecone@npm:4.0.0"
-  dependencies:
-    encoding: "npm:^0.1.13"
-  checksum: 10c0/8b2c7012cd34e7740a41d492d7b0632939c0b0095072f897daeb51982fdf843256c2efd0f2b75f7329ced564b7897d43a0b676bcd07b116c51ce82f00331a303
-  languageName: node
-  linkType: hard
-
 "@pivanov/utils@npm:0.0.2":
   version: 0.0.2
   resolution: "@pivanov/utils@npm:0.0.2"
@@ -4533,51 +4524,6 @@ __metadata:
   version: 1.1.0
   resolution: "@radix-ui/rect@npm:1.1.0"
   checksum: 10c0/a26ff7f8708fb5f2f7949baad70a6b2a597d761ee4dd4aadaf1c1a33ea82ea23dfef6ce6366a08310c5d008cdd60b2e626e4ee03fa342bd5f246ddd9d427f6be
-  languageName: node
-  linkType: hard
-
-"@redis/bloom@npm:5.6.0":
-  version: 5.6.0
-  resolution: "@redis/bloom@npm:5.6.0"
-  peerDependencies:
-    "@redis/client": ^5.6.0
-  checksum: 10c0/87ce760867e5ce75d1cacbaffafb9c0817f11b3c9b0d66cdb9da739f087ad1073164fb77120d99968958167f83365404f45c15350f75a958183c0332def7ffab
-  languageName: node
-  linkType: hard
-
-"@redis/client@npm:5.6.0":
-  version: 5.6.0
-  resolution: "@redis/client@npm:5.6.0"
-  dependencies:
-    cluster-key-slot: "npm:1.1.2"
-  checksum: 10c0/d225d9021da8cee6dd69ac81c3c5909e3708fd07515754f4b490c4ae63de57f9f600d5bd2bd1e165a86fbb60a7c9887b1ffa21075f16f15ea3f734a8309906b1
-  languageName: node
-  linkType: hard
-
-"@redis/json@npm:5.6.0":
-  version: 5.6.0
-  resolution: "@redis/json@npm:5.6.0"
-  peerDependencies:
-    "@redis/client": ^5.6.0
-  checksum: 10c0/d967ada956f3a25531ae22294227d186af9dc9fb7ba39cad310f2524f7bcc5f6e8ed86c95f21b74d4ed28bbce31468d273f2c2b259bd7d3ffaeacd9ce0179e0b
-  languageName: node
-  linkType: hard
-
-"@redis/search@npm:5.6.0":
-  version: 5.6.0
-  resolution: "@redis/search@npm:5.6.0"
-  peerDependencies:
-    "@redis/client": ^5.6.0
-  checksum: 10c0/b394ce777c1274d37dde6d07831f90e2ac1f1313d4f7e85fb7e23b08ad433a196f5eed37ecfe8c728a5be1fe85f44c75bb3876d0c55e2c4df47fbfe4d4d70918
-  languageName: node
-  linkType: hard
-
-"@redis/time-series@npm:5.6.0":
-  version: 5.6.0
-  resolution: "@redis/time-series@npm:5.6.0"
-  peerDependencies:
-    "@redis/client": ^5.6.0
-  checksum: 10c0/1b21fd45b19a551c9360c03ef83180f2993da679f88f1657fead10ae54b52e121563b4f9b4a02ca12c7b1872a894b91a94242445affb41b1eab236f0075e18ee
   languageName: node
   linkType: hard
 
@@ -8273,13 +8219,6 @@ __metadata:
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
   checksum: 10c0/c4c8eb865f8c82baab07e71bfa8897c73454881c4f99d6bc81585aecd7c441746c1399d08363dc096c550cceaf97bd4ce1e8854e1771e9998d9f94c4fe075839
-  languageName: node
-  linkType: hard
-
-"cluster-key-slot@npm:1.1.2":
-  version: 1.1.2
-  resolution: "cluster-key-slot@npm:1.1.2"
-  checksum: 10c0/d7d39ca28a8786e9e801eeb8c770e3c3236a566625d7299a47bb71113fb2298ce1039596acb82590e598c52dbc9b1f088c8f587803e697cb58e1867a95ff94d3
   languageName: node
   linkType: hard
 
@@ -13809,7 +13748,6 @@ __metadata:
     "@lexical/react": "npm:^0.27.1"
     "@lexical/selection": "npm:0.27.1"
     "@lexical/utils": "npm:^0.27.1"
-    "@pinecone-database/pinecone": "npm:^4.0.0"
     "@radix-ui/colors": "npm:^3.0.0"
     "@radix-ui/react-dialog": "npm:^1.0.5"
     "@radix-ui/react-dropdown-menu": "npm:^2.0.6"
@@ -13879,7 +13817,6 @@ __metadata:
     react-scan: "npm:^0.2.14"
     react-virtualized-auto-sizer: "npm:^1.0.24"
     react-window: "npm:^1.8.10"
-    redis: "npm:^5.6.0"
     ts-jest: "npm:^29.1.4"
     tsx: "npm:^4.7.1"
     typed-css-modules: "npm:^0.9.1"
@@ -15210,19 +15147,6 @@ __metadata:
   dependencies:
     picomatch: "npm:^2.2.1"
   checksum: 10c0/6fa848cf63d1b82ab4e985f4cf72bd55b7dcfd8e0a376905804e48c3634b7e749170940ba77b32804d5fe93b3cc521aa95a8d7e7d725f830da6d93f3669ce66b
-  languageName: node
-  linkType: hard
-
-"redis@npm:^5.6.0":
-  version: 5.6.0
-  resolution: "redis@npm:5.6.0"
-  dependencies:
-    "@redis/bloom": "npm:5.6.0"
-    "@redis/client": "npm:5.6.0"
-    "@redis/json": "npm:5.6.0"
-    "@redis/search": "npm:5.6.0"
-    "@redis/time-series": "npm:5.6.0"
-  checksum: 10c0/eb0b8860265ec08eb2dcd723c60f45d31e6c1ec888921324df3b8b589cab029496e6b7514a8d1253fa1ab790461e23af47c8705cd180c45d00d830a37b156a02
   languageName: node
   linkType: hard
 

@@ -15,7 +15,6 @@ const processEnvSchema = z
     AGENT_MODEL: z.string().optional(),
     EXTRACT_ENTITIES_OPENAI_MODEL: z.string().optional(),
     EXTRACT_ENTITIES_OPENAI_TEMP: z.string().optional(),
-    PINECONE_API_KEY: z.string().optional(),
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     SKIP_PERSISTENCE_REQUIREMENT: z.string().optional(),
@@ -46,7 +45,6 @@ export const env = Object.freeze({
     process.env.EXTRACT_ENTITIES_OPENAI_TEMP && !isNaN(parseFloat(process.env.EXTRACT_ENTITIES_OPENAI_TEMP))
       ? parseFloat(process.env.EXTRACT_ENTITIES_OPENAI_TEMP)
       : null,
-  PINECONE_API_KEY: process.env.PINECONE_API_KEY ?? "",
   AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID || "",
   AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY || "",
 });

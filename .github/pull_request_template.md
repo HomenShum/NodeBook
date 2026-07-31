@@ -12,4 +12,4 @@ Provide steps on how to test the fix/feature (which you know, because you tested
 
 - [ ] I followed the [style guide](https://www.notion.so/Style-guide-08041425021b49b28a0734f4e8105c33).
 - [ ] I tested my contribution.
-- [ ] I added new environment variables to [Vercel](https://vercel.com/ideaflowco/mew/settings/environment-variables).
+- [ ] I added new environment variables to the NodeBook Vercel project.

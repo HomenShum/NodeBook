@@ -5,7 +5,7 @@
 | Thing | Value |
 |---|---|
 | Production URL | `https://nodebook-rho.vercel.app` |
-| Repo root | `D:\VSCode Projects\Ideaflow\nodebook-real` |
+| Repo root | `<workspace>/nodebook-real` |
 | Dev command + port | `npm run dev`; `http://127.0.0.1:3000` |
 | Backend | Dedicated Convex project `nodebook`; separate development and production deployments |
 | Auth | Auth0 SPA `NodeBook` and API audience `https://api.nodebook.app` |
@@ -28,7 +28,7 @@
 
 ## Journey mapping
 
-- A0 Smoke: open production; original node notebook shell renders; no Mew/Ideaflow product copy; no console crash.
+- A0 Smoke: open production; original node notebook shell renders; no legacy product copy; no console crash.
 - A1 Core notebook: authenticate, create and edit nested notes, reload, verify Convex persistence and original notebook interactions.
 - A2 Live agent: run Ask, Agent, and Organization; inspect egress preflight; verify visible tool trace and `finish_work`; accept one proposal and reject another.
 - A3 Provenance: match response receipt to the authenticated owner's run/proposal/step ledgers; verify model, status, source bindings, web sources, and honest token values.
