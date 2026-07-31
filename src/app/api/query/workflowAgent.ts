@@ -161,6 +161,7 @@ function compactContext(nodes: AgentContextNode[]) {
 function semanticErrors(
   result: ModelResult,
   mode: AgentMode,
+  query: string,
   rootNodeId: string,
   context: { id: string; version: number; text: string; document: unknown }[],
 ) {
@@ -168,6 +169,13 @@ function semanticErrors(
   if (mode === "ask" && result.operations.length) errors.push("Ask mode cannot propose graph writes.");
   if (mode === "organize" && result.operations.length === 0) {
     errors.push("Organization mode must return reviewable graph operations, not prose-only changes.");
+  }
+  if (
+    mode === "agent" &&
+    result.operations.length === 0 &&
+    /\b(create|add|update|edit|delete|remove|move|organize|clone|link|relate)\b/i.test(query)
+  ) {
+    errors.push("Agent mode must return machine operations for an explicit write request, not prose-only changes.");
   }
   const knownIds = new Set([rootNodeId, ...context.map((node) => node.id)]);
   const tempIds = new Set<string>();
@@ -352,7 +360,7 @@ export async function executeWorkflowAgent(
     timeoutMs: args.mode === "ask" ? 30_000 : 38_000,
   });
   let parsed = ModelResultSchema.parse(provider.result);
-  let errors = semanticErrors(parsed, args.mode, args.rootNodeId, context);
+  let errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
   let providerFinishedAt = now().toISOString();
   steps.push(makeStep(
     2,
@@ -376,7 +384,7 @@ export async function executeWorkflowAgent(
       timeoutMs: 14_000,
     });
     parsed = ModelResultSchema.parse(repair.result);
-    errors = semanticErrors(parsed, args.mode, args.rootNodeId, context);
+    errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
     const repairFinishedAt = now().toISOString();
     steps.push(makeStep(
       3,

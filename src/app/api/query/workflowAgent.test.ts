@@ -183,6 +183,45 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.steps[2]).toEqual(expect.objectContaining({ tool: "repair_proposal", status: "repaired" }));
   });
 
+  test("an explicit agent write request repairs prose-only output into a machine proposal", async () => {
+    const createOperation = {
+      ...emptyFields,
+      kind: "create_node" as const,
+      parentId: "root",
+      tempId: "sentinel",
+      content: "Production E2E Clip Sentinel\nLive migrated write proof.",
+      reason: "Create the explicitly requested proof note.",
+    };
+    const provider = jest
+      .fn()
+      .mockResolvedValueOnce({ result: { ...baseResult, response: "I propose creating the note." }, sources: [], usage })
+      .mockResolvedValueOnce({
+        result: { ...baseResult, response: "I prepared the machine proposal.", operations: [createOperation] },
+        sources: [],
+        usage,
+      });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Create one child note titled Production E2E Clip Sentinel",
+        mode: "agent",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [node],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: provider,
+        runId: () => "run-write-repair",
+        proposalId: () => "proposal-write-repair",
+      },
+    );
+
+    expect(provider).toHaveBeenCalledTimes(2);
+    expect(result.proposalId).toBe("proposal-write-repair");
+    expect(result.operations).toEqual([createOperation]);
+    expect(result.steps[2]).toEqual(expect.objectContaining({ tool: "repair_proposal", status: "repaired" }));
+  });
+
   test("a sustained oversized notebook context is capped before provider egress", async () => {
     const provider = jest.fn().mockResolvedValue({ result: baseResult, sources: [], usage });
     const contextNodes = Array.from({ length: 1_000 }, (_, index) => ({
