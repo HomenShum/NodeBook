@@ -30,6 +30,7 @@ yarn-error.log*
 tsconfig.tsbuildinfo
 .idea
 .serena/
+.migration-private/
 
 # Sentry Config File
 .env.sentry-build-plugin

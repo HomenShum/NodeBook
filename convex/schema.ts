@@ -102,6 +102,16 @@ export default defineSchema({
     rowCount: v.number(),
     importedAt: v.string(),
   }).index("by_source_batch", ["sourceKey", "batchKey"]),
+  migrationResets: defineTable({
+    operationId: v.string(),
+    ownerId: v.string(),
+    deletedUsers: v.number(),
+    deletedNodes: v.number(),
+    deletedRelations: v.number(),
+    deletedRelationTypes: v.number(),
+    deletedRelationLists: v.number(),
+    resetAt: v.string(),
+  }).index("by_operation", ["operationId"]),
   agentRuns: defineTable({
     ownerId: v.string(),
     runId: v.string(),

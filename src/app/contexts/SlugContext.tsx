@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
 
 import { env } from "@/app/envFrontend";
+import { getAuthFetch } from "@/app/util";
 import logger from "@/lib/logger";
 
 type SlugMap = Record<string, string>;
@@ -30,7 +31,7 @@ export const SlugProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     try {
-      const response = await fetch("/api/slug");
+      const response = await getAuthFetch()("/api/slug");
       if (!response.ok) throw new Error(`Slug request failed with HTTP ${response.status}`);
       const data: SlugApiResponse = await response.json();
       const newSlugMap: SlugMap = {};
@@ -49,7 +50,7 @@ export const SlugProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
     }
     try {
-      const response = await fetch(`/api/slug`, {
+      const response = await getAuthFetch()(`/api/slug`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slug, nodeId }),
@@ -82,7 +83,7 @@ export const SlugProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     try {
-      const response = await fetch(`/api/slug`, { method: "DELETE", body: JSON.stringify({ nodeId }) });
+      const response = await getAuthFetch()(`/api/slug`, { method: "DELETE", body: JSON.stringify({ nodeId }) });
 
       if (!response.ok) {
         logger.error("Failed to delete slug");

@@ -20,6 +20,7 @@ const snapshotPage = makeFunctionReference<
   any
 >("graph:snapshotPage");
 const importBatch = makeFunctionReference<"mutation", any, any>("migration:importBatch");
+const clearOwnerGraph = makeFunctionReference<"mutation", any, any>("migration:clearOwnerGraph");
 const recentTransactions = makeFunctionReference<
   "query",
   { ownerCursor: string; publicCursor: string; limit?: number },
@@ -259,6 +260,46 @@ describe("NodeBook Convex production contract", () => {
     await expect(
       t.mutation(importBatch, { ...args, digest: "0".repeat(64) }),
     ).rejects.toThrow(/DIGEST_MISMATCH|IDEMPOTENCY_CONFLICT/);
+  });
+
+  test("a cutover operator can clear only an exactly matched staging graph before the first migration batch", async () => {
+    const database = convexTest(schema, modules);
+    await database.run(async (ctx) => {
+      await ctx.db.insert("users", { ownerId: owner, document: JSON.stringify({ id: owner }), updatedAt: baseNode.updatedAt });
+      await ctx.db.insert("nodes", {
+        ownerId: owner,
+        sourceId: baseNode.id,
+        version: 1,
+        isPublic: false,
+        document: JSON.stringify(baseNode),
+        updatedAt: baseNode.updatedAt,
+      });
+      await ctx.db.insert("nodes", {
+        ownerId: otherOwner,
+        sourceId: "other-node",
+        version: 1,
+        isPublic: false,
+        document: JSON.stringify({ ...baseNode, id: "other-node", authorId: otherOwner }),
+        updatedAt: baseNode.updatedAt,
+      });
+    });
+    const expected = { users: 1, nodes: 1, relations: 0, relationTypes: 0, relationLists: 0 };
+    await expect(
+      database.mutation(clearOwnerGraph, {
+        operationId: "cutover-owner-a",
+        ownerId: owner,
+        expected: { ...expected, nodes: 2 },
+      }),
+    ).rejects.toThrow(/RESET_PRECONDITION_FAILED/);
+
+    expect(
+      await database.mutation(clearOwnerGraph, { operationId: "cutover-owner-a", ownerId: owner, expected }),
+    ).toMatchObject({ status: "ok", replayed: false, deletedUsers: 1, deletedNodes: 1 });
+    expect(
+      await database.mutation(clearOwnerGraph, { operationId: "cutover-owner-a", ownerId: owner, expected }),
+    ).toMatchObject({ status: "ok", replayed: true, deletedUsers: 1, deletedNodes: 1 });
+    const survivingOwners = await database.run(async (ctx) => (await ctx.db.query("nodes").collect()).map((row) => row.ownerId));
+    expect(survivingOwners).toEqual([otherOwner]);
   });
 
   test("a sustained agent user retains a bounded private receipt ledger with idempotent run IDs", async () => {

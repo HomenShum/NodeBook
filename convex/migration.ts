@@ -93,3 +93,69 @@ export const importBatch = internalMutation({
     return { status: "ok" as const, replayed: false, imported: rows.length };
   },
 });
+
+export const clearOwnerGraph = internalMutation({
+  args: {
+    operationId: v.string(),
+    ownerId: v.string(),
+    expected: v.object({
+      users: v.number(),
+      nodes: v.number(),
+      relations: v.number(),
+      relationTypes: v.number(),
+      relationLists: v.number(),
+    }),
+  },
+  handler: async (ctx, args) => {
+    if (!args.operationId || !args.ownerId) fail("INVALID_RESET", "operationId and ownerId are required");
+    const replay = await ctx.db
+      .query("migrationResets")
+      .withIndex("by_operation", (q) => q.eq("operationId", args.operationId))
+      .unique();
+    if (replay) return { status: "ok" as const, replayed: true, ...replay };
+    if ((await ctx.db.query("migrationBatches").take(1)).length) {
+      fail("MIGRATION_STARTED", "owner graph cannot be cleared after migration batches exist");
+    }
+
+    const users = await ctx.db.query("users").withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId)).take(2);
+    const nodes = await ctx.db.query("nodes").withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId)).take(501);
+    const relations = await ctx.db.query("relations").withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId)).take(501);
+    const relationTypes = await ctx.db
+      .query("relationTypes")
+      .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
+      .take(501);
+    const relationLists = await ctx.db
+      .query("relationLists")
+      .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
+      .take(501);
+    const actual = {
+      users: users.length,
+      nodes: nodes.length,
+      relations: relations.length,
+      relationTypes: relationTypes.length,
+      relationLists: relationLists.length,
+    };
+    const countsMatch =
+      actual.users === args.expected.users &&
+      actual.nodes === args.expected.nodes &&
+      actual.relations === args.expected.relations &&
+      actual.relationTypes === args.expected.relationTypes &&
+      actual.relationLists === args.expected.relationLists;
+    if (Object.values(actual).some((count) => count > 500) || !countsMatch) {
+      fail("RESET_PRECONDITION_FAILED", "owner graph counts do not match the exact reset precondition");
+    }
+    for (const row of [...relationLists, ...relations, ...relationTypes, ...nodes, ...users]) await ctx.db.delete(row._id);
+    const receipt = {
+      operationId: args.operationId,
+      ownerId: args.ownerId,
+      deletedUsers: users.length,
+      deletedNodes: nodes.length,
+      deletedRelations: relations.length,
+      deletedRelationTypes: relationTypes.length,
+      deletedRelationLists: relationLists.length,
+      resetAt: new Date().toISOString(),
+    };
+    await ctx.db.insert("migrationResets", receipt);
+    return { status: "ok" as const, replayed: false, ...receipt };
+  },
+});
