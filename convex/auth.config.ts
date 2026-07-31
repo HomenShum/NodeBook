@@ -1,8 +1,15 @@
+import { AuthConfig } from "convex/server";
+
+const issuer = process.env.AUTH0_DOMAIN!;
+
 export default {
   providers: [
     {
-      domain: process.env.AUTH0_DOMAIN!,
+      type: "customJwt",
       applicationID: process.env.AUTH0_APPLICATION_ID!,
+      issuer,
+      jwks: `${issuer}.well-known/jwks.json`,
+      algorithm: "RS256",
     },
   ],
-};
+} satisfies AuthConfig;
