@@ -86,7 +86,7 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.proposalDigest).toMatch(/^[a-f0-9]{64}$/);
     expect(result.sourceUrls).toEqual(["https://example.com/evidence"]);
     expect(result.content).toContain("proposal");
-    expect(provider.mock.calls[0][0].timeoutMs).toBe(42_000);
+    expect(provider.mock.calls[0][0].timeoutMs).toBe(38_000);
   });
 
   test("an adversarial note cannot authorize out-of-scope writes; one repair is required", async () => {
@@ -121,8 +121,65 @@ describe("NodeBook durable agent scenarios", () => {
     expect(provider).toHaveBeenCalledTimes(2);
     expect(provider.mock.calls[1][0].webResearch).toBe(false);
     expect(provider.mock.calls[0][0].timeoutMs + provider.mock.calls[1][0].timeoutMs).toBeLessThan(60_000);
-    expect(provider.mock.calls[1][0].timeoutMs).toBe(10_000);
+    expect(provider.mock.calls[1][0].timeoutMs).toBe(14_000);
     expect(result.operations).toEqual([]);
+    expect(result.steps[2]).toEqual(expect.objectContaining({ tool: "repair_proposal", status: "repaired" }));
+  });
+
+  test("an organizer cannot substitute prose for a container-first machine proposal", async () => {
+    const containerFirst = [
+      {
+        ...emptyFields,
+        kind: "create_node" as const,
+        parentId: "root",
+        tempId: "launch-review",
+        content: "Launch Review",
+        reason: "Create the requested container.",
+      },
+      ...["Risks", "Decisions"].map((content, index) => ({
+        ...emptyFields,
+        kind: "create_node" as const,
+        parentId: "launch-review",
+        tempId: `child-${index}`,
+        content,
+        reason: `Create the requested ${content} child.`,
+      })),
+    ];
+    const provider = jest
+      .fn()
+      .mockResolvedValueOnce({
+        result: { ...baseResult, response: "I described changes only.", operations: [] },
+        sources: [],
+        usage,
+      })
+      .mockResolvedValueOnce({
+        result: { ...baseResult, response: "I prepared the hierarchy.", operations: containerFirst },
+        sources: [],
+        usage,
+      });
+
+    const result = await executeWorkflowAgent(
+      {
+        query: "Create Launch Review with Risks and Decisions",
+        mode: "organize",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [node],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: provider,
+        runId: () => "run-organize",
+        proposalId: () => "proposal-organize",
+      },
+    );
+
+    expect(provider).toHaveBeenCalledTimes(2);
+    expect(result.operations.map((operation) => operation.parentId)).toEqual([
+      "root",
+      "launch-review",
+      "launch-review",
+    ]);
     expect(result.steps[2]).toEqual(expect.objectContaining({ tool: "repair_proposal", status: "repaired" }));
   });
 
@@ -136,7 +193,7 @@ describe("NodeBook durable agent scenarios", () => {
     }));
 
     const result = await executeWorkflowAgent(
-      { query: "Summarize everything", mode: "organize", rootNodeId: "root", webResearch: false, contextNodes },
+      { query: "Summarize everything", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes },
       { model: "gpt-5-mini", runProvider: provider, runId: () => "run-bounded" },
     );
 

@@ -166,6 +166,9 @@ function semanticErrors(
 ) {
   const errors: string[] = [];
   if (mode === "ask" && result.operations.length) errors.push("Ask mode cannot propose graph writes.");
+  if (mode === "organize" && result.operations.length === 0) {
+    errors.push("Organization mode must return reviewable graph operations, not prose-only changes.");
+  }
   const knownIds = new Set([rootNodeId, ...context.map((node) => node.id)]);
   const tempIds = new Set<string>();
   const protectedIds = new Set([rootNodeId]);
@@ -220,12 +223,12 @@ function semanticErrors(
   });
 
   const creates = result.operations.filter((operation) => operation.kind === "create_node");
-  if (creates.length > 3) {
+  if (creates.length >= 2) {
     const container = creates[0];
     if (container.parentId !== rootNodeId || !container.tempId) {
       errors.push("Multi-part work must create one container under the current root first.");
-    } else if (creates.slice(1).every((operation) => operation.parentId !== container.tempId)) {
-      errors.push("Multi-part work must place result nodes under the reviewed container.");
+    } else if (creates.slice(1).some((operation) => operation.parentId !== container.tempId)) {
+      errors.push("Multi-part work must place every result node under the reviewed container.");
     }
   }
   return [...new Set(errors)].slice(0, 20);
@@ -346,7 +349,7 @@ export async function executeWorkflowAgent(
     webResearch: args.webResearch,
     // Structured write plans take longer than read-only answers, but the
     // primary + one bounded repair must still fit inside the 60s route budget.
-    timeoutMs: args.mode === "ask" ? 30_000 : 42_000,
+    timeoutMs: args.mode === "ask" ? 30_000 : 38_000,
   });
   let parsed = ModelResultSchema.parse(provider.result);
   let errors = semanticErrors(parsed, args.mode, args.rootNodeId, context);
@@ -370,7 +373,7 @@ export async function executeWorkflowAgent(
       instructions: `${AGENT_INSTRUCTIONS}\nRepair every validation error. Do not add new scope.`,
       model: dependencies.model,
       webResearch: false,
-      timeoutMs: 10_000,
+      timeoutMs: 14_000,
     });
     parsed = ModelResultSchema.parse(repair.result);
     errors = semanticErrors(parsed, args.mode, args.rootNodeId, context);
