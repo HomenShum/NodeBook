@@ -1,4 +1,4 @@
-.agentView {
+.agentView[data-testid="nodebook-agent"] {
   height: calc(100dvh - 16px);
   min-height: calc(100dvh - 16px);
   overflow-x: hidden;
