@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import { useEffect, useMemo, useState } from "react";
 
@@ -16,17 +16,23 @@ const recentTransactionsReference = makeFunctionReference<
 >("graph:recentTransactions");
 
 export function ConvexSyncBridge({ graphStore }: { graphStore: GraphStore }) {
+  const { isAuthenticated } = useConvexAuth();
   const initialCursor = useMemo(
     () => (Date.now() - 5 * 60_000).toString().padStart(16, "0"),
     [],
   );
   const [ownerCursor, setOwnerCursor] = useState(initialCursor);
   const [publicCursor, setPublicCursor] = useState(initialCursor);
-  const transactions = useQuery(recentTransactionsReference, {
-    ownerCursor,
-    publicCursor,
-    limit: 20,
-  });
+  const transactions = useQuery(
+    recentTransactionsReference,
+    isAuthenticated
+      ? {
+        ownerCursor,
+        publicCursor,
+        limit: 20,
+      }
+      : "skip",
+  );
   const signature = useMemo(
     () => transactions
       ? [...transactions.own, ...transactions.shared]

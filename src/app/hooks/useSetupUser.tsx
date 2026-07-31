@@ -30,7 +30,7 @@ export const getIsValidToken = (token: string | null): boolean => {
 function useSetupUser(): NodeBookUser | null {
   const auth = useAuth();
   const localStorageUser: NodeBookUser | null = LocalStorageUser.get();
-  const [user, setUser] = useState<NodeBookUser | null>(localStorageUser);
+  const [user, setUser] = useState<NodeBookUser | null>(env.isAuthEnabled ? null : localStorageUser);
 
   useEffect(() => {
     if (!localStorageUser) return;
@@ -41,6 +41,7 @@ function useSetupUser(): NodeBookUser | null {
     //Otherwise, delete the localStorage user.
     if (isValidToken) {
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      setUser(localStorageUser);
     } else {
       axios.defaults.headers.common["Authorization"] = null;
       LocalStorageUser.delete();
