@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "agentView": string;
   readonly "actions": string;
   readonly "button": string;
   readonly "citationLink": string;

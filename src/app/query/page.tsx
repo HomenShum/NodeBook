@@ -201,7 +201,10 @@ const NodeBookQueryInterface = observer(function NodeBookQueryInterface() {
   });
 
   return (
-    <div className={cn(appStyles.ViewContainer, appStyles.ViewContainerFull)} data-testid="nodebook-agent">
+    <div
+      className={cn(appStyles.ViewContainer, appStyles.ViewContainerFull, styles.agentView)}
+      data-testid="nodebook-agent"
+    >
       <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void executeQuery(); }}>
         <div className={styles.searchContainer}>
           {state.isLoading ? <Loader2 className={styles.loadingIcon} size={14} /> : <Search size={14} />}
