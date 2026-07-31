@@ -2,10 +2,12 @@ import { SerializedGraphStore, SerializedGraphStoreSchema } from "@/app/persiste
 
 const MAX_SNAPSHOT_PAGES = 100;
 const MAX_PAGE_BYTES = 8 * 1024 * 1024;
+const MAX_SNAPSHOT_BYTES = 128 * 1024 * 1024;
+const MAX_SNAPSHOT_DOCUMENTS = 50_000;
 const PAGE_TIMEOUT_MS = 10_000;
 
 async function readBoundedText(response: Response) {
-  if (!response.body) return "";
+  if (!response.body) return { text: "", bytes: 0 };
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let text = "";
@@ -21,13 +23,73 @@ async function readBoundedText(response: Response) {
       }
       text += decoder.decode(value, { stream: true });
     }
-    return text + decoder.decode();
+    return { text: text + decoder.decode(), bytes: total };
   } finally {
     reader.releaseLock();
   }
 }
 
-export async function fetchConvexSnapshot(authFetch: typeof fetch): Promise<SerializedGraphStore> {
+type SnapshotTable = "nodes" | "relations" | "relationTypes" | "relationLists";
+type SnapshotVisibility = "public" | "owned";
+
+type SnapshotBudget = { bytes: number; documents: number };
+
+async function fetchSnapshotStream(
+  authFetch: typeof fetch,
+  table: SnapshotTable,
+  visibility: SnapshotVisibility,
+  budget: SnapshotBudget,
+  externalSignal?: AbortSignal,
+) {
+  const documents: string[] = [];
+  let cursor: string | null = null;
+  let pageCount = 0;
+  do {
+    pageCount++;
+    if (pageCount > MAX_SNAPSHOT_PAGES) {
+      throw new Error(`Convex ${table}/${visibility} snapshot exceeded its page budget`);
+    }
+    if (externalSignal?.aborted) throw externalSignal.reason ?? new DOMException("Snapshot aborted", "AbortError");
+    const controller = new AbortController();
+    const abortFromCaller = () => controller.abort(externalSignal?.reason ?? "Snapshot aborted");
+    externalSignal?.addEventListener("abort", abortFromCaller, { once: true });
+    const timeout = setTimeout(() => controller.abort("Convex snapshot page timed out"), PAGE_TIMEOUT_MS);
+    let response: Response;
+    try {
+      const params = new URLSearchParams({ table, visibility });
+      if (cursor) params.set("cursor", cursor);
+      response = await authFetch(`/api/convex/snapshot?${params}`, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+      externalSignal?.removeEventListener("abort", abortFromCaller);
+    }
+    if (!response.ok) throw new Error(`Convex snapshot page failed with HTTP ${response.status}`);
+    const page = await readBoundedText(response);
+    budget.bytes += page.bytes;
+    if (budget.bytes > MAX_SNAPSHOT_BYTES) {
+      throw new Error("Convex snapshot exceeded the 128 MiB client memory budget");
+    }
+    const envelope = JSON.parse(page.text) as {
+      status: "ok";
+      data: { items: string[]; continueCursor: string; isDone: boolean };
+    };
+    if (envelope.status !== "ok" || !Array.isArray(envelope.data?.items)) {
+      throw new Error("Convex snapshot page returned an invalid envelope");
+    }
+    budget.documents += envelope.data.items.length;
+    if (budget.documents > MAX_SNAPSHOT_DOCUMENTS) {
+      throw new Error("Convex snapshot exceeded the 50,000-document client budget");
+    }
+    documents.push(...envelope.data.items);
+    cursor = envelope.data.isDone ? null : envelope.data.continueCursor;
+  } while (cursor);
+  return { documents, table, visibility };
+}
+
+export async function fetchConvexSnapshot(
+  authFetch: typeof fetch,
+  options: { signal?: AbortSignal } = {},
+): Promise<SerializedGraphStore> {
   const snapshot: SerializedGraphStore = {
     usersById: {},
     nodesById: {},
@@ -37,37 +99,19 @@ export async function fetchConvexSnapshot(authFetch: typeof fetch): Promise<Seri
     pinnedRelationsByNodeId: {},
     noteContentRelationsByNodeId: {},
   };
-  const tables = ["nodes", "relations", "relationTypes", "relationLists"] as const;
-  const visibilities = ["public", "owned"] as const;
+  const tables: SnapshotTable[] = ["nodes", "relations", "relationTypes", "relationLists"];
+  const visibilities: SnapshotVisibility[] = ["public", "owned"];
+  const budget: SnapshotBudget = { bytes: 0, documents: 0 };
+  const streams = await Promise.all(
+    tables.flatMap((table) =>
+      visibilities.map((visibility) => fetchSnapshotStream(authFetch, table, visibility, budget, options.signal)),
+    ),
+  );
 
   for (const table of tables) {
     for (const visibility of visibilities) {
-      let cursor: string | null = null;
-      let pageCount = 0;
-      do {
-        pageCount++;
-        if (pageCount > MAX_SNAPSHOT_PAGES) {
-          throw new Error(`Convex ${table}/${visibility} snapshot exceeded its page budget`);
-        }
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort("Convex snapshot page timed out"), PAGE_TIMEOUT_MS);
-        let response: Response;
-        try {
-          const params = new URLSearchParams({ table, visibility });
-          if (cursor) params.set("cursor", cursor);
-          response = await authFetch(`/api/convex/snapshot?${params}`, { signal: controller.signal });
-        } finally {
-          clearTimeout(timeout);
-        }
-        if (!response.ok) throw new Error(`Convex snapshot page failed with HTTP ${response.status}`);
-        const envelope = JSON.parse(await readBoundedText(response)) as {
-          status: "ok";
-          data: { items: string[]; continueCursor: string; isDone: boolean };
-        };
-        if (envelope.status !== "ok" || !Array.isArray(envelope.data?.items)) {
-          throw new Error("Convex snapshot page returned an invalid envelope");
-        }
-        for (const document of envelope.data.items) {
+      const stream = streams.find((candidate) => candidate.table === table && candidate.visibility === visibility)!;
+      for (const document of stream.documents) {
           const value = JSON.parse(document);
           if (table === "nodes") snapshot.nodesById[value.id] = value;
           else if (table === "relations") snapshot.relationsById[value.id] = value;
@@ -82,9 +126,7 @@ export async function fetchConvexSnapshot(authFetch: typeof fetch): Promise<Seri
             target[value.nodeId] ??= {};
             target[value.nodeId][value.relationId] = value.newPosition;
           }
-        }
-        cursor = envelope.data.isDone ? null : envelope.data.continueCursor;
-      } while (cursor);
+      }
     }
   }
 

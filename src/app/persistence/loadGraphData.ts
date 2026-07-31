@@ -177,14 +177,14 @@ export class LayerManager {
   // Todo: I don't like this method and this class can be improved.
   // Maybe at some point, use server side rendering.
   // Adding this so we can do load the first layer and relation types in parallel
-  public async initialize(objectIds: string[]): Promise<void> {
+  public async initialize(objectIds: string[], signal?: AbortSignal): Promise<void> {
     if (!env.isPersistenceEnabled) return;
     objectIds.forEach((id) => this.loadedIds.add(id === "home" ? this.graphStore.userRootId : id));
-    await this.loadConvexSnapshot();
+    await this.loadConvexSnapshot(signal);
   }
 
-  private async loadConvexSnapshot(): Promise<void> {
-    this.graphStore.resetAndLoad(await fetchConvexSnapshot(getAuthFetch()));
+  private async loadConvexSnapshot(signal?: AbortSignal): Promise<void> {
+    this.graphStore.resetAndLoad(await fetchConvexSnapshot(getAuthFetch(), { signal }));
   }
 
   /**

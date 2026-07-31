@@ -6,7 +6,7 @@ import { mutation, query, type MutationCtx, type QueryCtx } from "./server";
 const MAX_SYNC_BYTES = 512 * 1024;
 const MAX_SYNC_UPDATES = 500;
 const MAX_ENTITY_BYTES = 256 * 1024;
-const MAX_PAGE_SIZE = 128;
+const MAX_SNAPSHOT_PAGE_SIZE = 512;
 const MAX_ID_LENGTH = 2_048;
 const MAX_SYNC_TRANSACTIONS_PER_OWNER = 1_000;
 const MAX_SYNC_FEED_ITEMS_PER_OWNER = 20;
@@ -434,9 +434,9 @@ export const snapshotPage = query({
   },
   handler: async (ctx, args) => {
     const authenticatedOwner = await ownerId(ctx);
-    const tableLimit = args.table === "nodes" ? 64 : MAX_PAGE_SIZE;
+    const tableLimit = MAX_SNAPSHOT_PAGE_SIZE;
     const limit = Math.min(
-      Number.isSafeInteger(args.limit) && (args.limit ?? 0) > 0 ? args.limit! : MAX_PAGE_SIZE,
+      Number.isSafeInteger(args.limit) && (args.limit ?? 0) > 0 ? args.limit! : MAX_SNAPSHOT_PAGE_SIZE,
       tableLimit,
     );
     const pagination = { cursor: args.cursor, numItems: limit };

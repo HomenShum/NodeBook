@@ -52,6 +52,10 @@ export function StoresProvider({
   useEffect(() => {
     if (!user) return;
     let ignore = false;
+    const setupController = new AbortController();
+    const navigationStartedAt = typeof performance === "undefined" ? Date.now() : performance.timeOrigin;
+    document.documentElement.dataset.nodebookHydrationState = "loading";
+    delete document.documentElement.dataset.nodebookHydrationMs;
     async function setupStores() {
       let syncCleanup = () => {};
       if (!user) return syncCleanup;
@@ -80,12 +84,13 @@ export function StoresProvider({
               graph.myStreamNodeId,
             ];
             graph.layerManager.clear();
-            await graph.layerManager.initialize(objectIds);
+            await graph.layerManager.initialize(objectIds, setupController.signal);
           }
         }
       } catch (e) {
         logger.error("Failed sync setup", e);
         if (!ignore) {
+          document.documentElement.dataset.nodebookHydrationState = "error";
           setLoadError("NodeBook could not load your notebook. Your stored data was not changed.");
           setIsLoading(false);
         }
@@ -103,6 +108,8 @@ export function StoresProvider({
       setSettingsStore(settings);
       setViewStore(view);
       setIsLoading(false);
+      document.documentElement.dataset.nodebookHydrationState = "ready";
+      document.documentElement.dataset.nodebookHydrationMs = String(Math.round(Date.now() - navigationStartedAt));
       return () => {
         logger.debug("Cleaning up stores");
         graph.cleanup();
@@ -115,6 +122,7 @@ export function StoresProvider({
     const cleanupPromise = setupStores();
     return () => {
       ignore = true;
+      setupController.abort("Store setup superseded");
       cleanupPromise.then((cleanup) => cleanup?.());
     };
   }, [initialObjectId, retryNonce, user]);
