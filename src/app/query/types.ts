@@ -57,3 +57,18 @@ export type AgentQueryResponse =
       receipt: AgentReceipt;
     }
   | { error: string };
+
+export type DurableAgentProposal = {
+  id: string;
+  digest: string;
+  status: "pending" | "accepted" | "applied" | "rejected" | "failed" | "undone";
+  mode: Exclude<AgentMode, "ask">;
+  understanding: string;
+  plan: string[];
+  summary: string;
+  operations: AgentOperation[];
+  inverseUpdates: unknown[] | null;
+  error: string | null;
+  steps: AgentStep[];
+  receipt: AgentReceipt;
+};

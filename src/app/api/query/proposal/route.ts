@@ -61,6 +61,9 @@ function parsedNodeForDigest(node: {
 }
 
 function publicProposal(record: any) {
+  const sourceNodeIds = JSON.parse(record.proposal.sourceBindingsJson).map(
+    (binding: { sourceId: string }) => binding.sourceId,
+  );
   return {
     id: record.proposal.proposalId,
     digest: record.proposal.proposalDigest,
@@ -75,6 +78,23 @@ function publicProposal(record: any) {
       : null,
     error: record.proposal.error ?? null,
     steps: record.steps,
+    receipt: {
+      runId: record.proposal.runId,
+      status: "proposed",
+      provider: "openai",
+      model: record.run?.model ?? "unknown",
+      mode: record.proposal.mode,
+      startedAt: record.run?.startedAt ?? record.proposal.createdAt,
+      completedAt: record.run?.completedAt ?? record.proposal.createdAt,
+      sourceNodeIds,
+      sourceUrls: record.run?.sourceUrls ?? [],
+      usage: {
+        inputTokens: record.run?.inputTokens ?? null,
+        outputTokens: record.run?.outputTokens ?? null,
+        totalTokens: record.run?.totalTokens ?? null,
+      },
+      persisted: true,
+    },
   };
 }
 

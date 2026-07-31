@@ -142,7 +142,11 @@ export const getProposal = query({
       .withIndex("by_owner_run_sequence", (q) => q.eq("ownerId", ownerId).eq("runId", proposal.runId))
       .order("asc")
       .take(MAX_AGENT_STEPS_PER_RUN);
-    return { proposal, steps };
+    const run = await ctx.db
+      .query("agentRuns")
+      .withIndex("by_owner_run", (q) => q.eq("ownerId", ownerId).eq("runId", proposal.runId))
+      .unique();
+    return { proposal, run, steps };
   },
 });
 

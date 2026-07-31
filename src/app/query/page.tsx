@@ -4,7 +4,7 @@ import { captureException } from "@sentry/nextjs";
 import { Check, Loader2, RotateCcw, Search, X } from "lucide-react";
 import { action, observable } from "mobx";
 import { observer } from "mobx-react-lite";
-import React from "react";
+import React, { useEffect } from "react";
 
 import appStyles from "@/app/app.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
@@ -13,7 +13,7 @@ import { getAuthFetch } from "@/app/util";
 import { cn } from "@/lib/utils";
 
 import { applyAgentOperations, undoAgentOperations } from "./applyProposal";
-import { AgentMode, AgentOperation, AgentQueryResponse, AgentReceipt, AgentStep } from "./types";
+import { AgentMode, AgentOperation, AgentQueryResponse, AgentReceipt, AgentStep, DurableAgentProposal } from "./types";
 
 import styles from "./page.module.css";
 
@@ -52,8 +52,49 @@ async function proposalTransition(body: Record<string, unknown>) {
   return data;
 }
 
+function setProposalUrl(proposalId: string | null) {
+  const url = new URL(window.location.href);
+  if (proposalId) url.searchParams.set("proposalId", proposalId);
+  else url.searchParams.delete("proposalId");
+  window.history.replaceState({}, "", url);
+}
+
 const NodeBookQueryInterface = observer(function NodeBookQueryInterface() {
   const graphStore = useGraphStore();
+
+  useEffect(() => {
+    const proposalId = new URLSearchParams(window.location.search).get("proposalId")?.trim();
+    if (!proposalId) return;
+    let cancelled = false;
+    state.isLoading = true;
+    state.error = "";
+    void getAuthFetch()(`/api/query/proposal?proposalId=${encodeURIComponent(proposalId)}`)
+      .then(async (response) => {
+        const data = (await response.json()) as { proposal?: DurableAgentProposal; error?: string };
+        if (!response.ok || !data.proposal) throw new Error(data.error || `Proposal load failed (${response.status})`);
+        if (cancelled) return;
+        const proposal = data.proposal;
+        action(() => {
+          state.query = proposal.understanding;
+          state.content = proposal.summary;
+          state.understanding = proposal.understanding;
+          state.plan = proposal.plan;
+          state.operations = proposal.operations;
+          state.steps = proposal.steps;
+          state.receipt = proposal.receipt;
+          state.proposal = { id: proposal.id, digest: proposal.digest, status: proposal.status };
+          state.inverseUpdates = proposal.inverseUpdates;
+          state.mode = proposal.mode;
+        })();
+      })
+      .catch((error) => {
+        if (!cancelled) action(() => { state.error = error instanceof Error ? error.message : "Proposal load failed"; })();
+      })
+      .finally(() => {
+        if (!cancelled) action(() => { state.isLoading = false; })();
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   const executeQuery = action(async () => {
     if (!state.consent) {
@@ -86,6 +127,7 @@ const NodeBookQueryInterface = observer(function NodeBookQueryInterface() {
       state.steps = data.steps;
       state.receipt = data.receipt;
       state.proposal = data.proposal;
+      setProposalUrl(data.proposal?.id ?? null);
     } catch (error) {
       captureException(error, { extra: { query: state.query, message: "NodeBook agent request failed" } });
       state.error = error instanceof Error ? error.message : "The agent run failed. No graph changes were made.";
@@ -167,7 +209,7 @@ const NodeBookQueryInterface = observer(function NodeBookQueryInterface() {
             placeholder="Ask NodeBook or propose work on your graph…" type="search" value={state.query}
             onChange={action((event) => { state.query = event.target.value; })} />
           {state.query && <Button aria-label="Clear query" className={styles.clearButton} type="button" variant="ghost"
-            onClick={action(() => { state.query = ""; state.content = ""; state.proposal = null; })}><X size={14} /></Button>}
+            onClick={action(() => { state.query = ""; state.content = ""; state.proposal = null; setProposalUrl(null); })}><X size={14} /></Button>}
         </div>
         <div className={styles.modeTabs} aria-label="Agent mode">
           {(["ask", "agent", "organize"] as AgentMode[]).map((mode) => (
