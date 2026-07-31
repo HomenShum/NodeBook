@@ -1,0 +1,39 @@
+import { AgentOperation } from "./types";
+
+type AppliedReceipt = {
+  appliedUpdates: unknown[];
+  inverseUpdates: unknown[];
+};
+
+type ProposalLifecycleDependencies = {
+  accept: () => Promise<{ operations: AgentOperation[] }>;
+  apply: (operations: AgentOperation[]) => Promise<AppliedReceipt>;
+  markApplied: (receipt: AppliedReceipt) => Promise<void>;
+  markFailed: (message: string) => Promise<void>;
+};
+
+export async function runProposalApplyLifecycle({
+  accept,
+  apply,
+  markApplied,
+  markFailed,
+}: ProposalLifecycleDependencies): Promise<AppliedReceipt> {
+  let acceptedByThisClient = false;
+  try {
+    const accepted = await accept();
+    acceptedByThisClient = true;
+    const receipt = await apply(accepted.operations);
+    await markApplied(receipt);
+    return receipt;
+  } catch (error) {
+    if (acceptedByThisClient) {
+      const message = error instanceof Error ? error.message : "Apply failed";
+      try {
+        await markFailed(message);
+      } catch {
+        // The original failure remains authoritative and visible.
+      }
+    }
+    throw error;
+  }
+}

@@ -13,6 +13,7 @@ import { getAuthFetch } from "@/app/util";
 import { cn } from "@/lib/utils";
 
 import { applyAgentOperations, undoAgentOperations } from "./applyProposal";
+import { runProposalApplyLifecycle } from "./proposalLifecycle";
 import { AgentMode, AgentOperation, AgentQueryResponse, AgentReceipt, AgentStep, DurableAgentProposal } from "./types";
 
 import styles from "./page.module.css";
@@ -154,33 +155,32 @@ const NodeBookQueryInterface = observer(function NodeBookQueryInterface() {
     state.isTransitioning = true;
     state.error = "";
     try {
-      const accepted = await proposalTransition({
-        action: "accept",
-        proposalId: state.proposal.id,
-        proposalDigest: state.proposal.digest,
-      });
-      const receipt = await applyAgentOperations(graphStore, accepted.operations);
-      await proposalTransition({
-        action: "applied",
-        proposalId: state.proposal.id,
-        proposalDigest: state.proposal.digest,
-        ...receipt,
+      const proposal = state.proposal;
+      const receipt = await runProposalApplyLifecycle({
+        accept: () => proposalTransition({
+          action: "accept",
+          proposalId: proposal.id,
+          proposalDigest: proposal.digest,
+        }),
+        apply: (operations) => applyAgentOperations(graphStore, operations),
+        markApplied: (appliedReceipt) => proposalTransition({
+          action: "applied",
+          proposalId: proposal.id,
+          proposalDigest: proposal.digest,
+          ...appliedReceipt,
+        }).then(() => undefined),
+        markFailed: (message) => proposalTransition({
+          action: "failed",
+          proposalId: proposal.id,
+          proposalDigest: proposal.digest,
+          error: message,
+        }).then(() => undefined),
       });
       state.inverseUpdates = receipt.inverseUpdates;
       state.proposal.status = "applied";
     } catch (error) {
       const message = error instanceof Error ? error.message : "Apply failed";
       state.error = message;
-      try {
-        await proposalTransition({
-          action: "failed",
-          proposalId: state.proposal.id,
-          proposalDigest: state.proposal.digest,
-          error: message,
-        });
-      } catch {
-        // Keep the original failure visible.
-      }
     } finally {
       state.isTransitioning = false;
     }
