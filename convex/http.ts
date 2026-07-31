@@ -2,7 +2,7 @@ import { httpRouter, makeFunctionReference } from "convex/server";
 import { httpActionGeneric } from "convex/server";
 
 const http = httpRouter();
-const MAX_REQUEST_BYTES = 1024 * 1024;
+const MAX_REQUEST_BYTES = 4 * 1024 * 1024;
 const importBatchReference = makeFunctionReference<"mutation">("migration:importBatch");
 const clearOwnerGraphReference = makeFunctionReference<"mutation">("migration:clearOwnerGraph");
 

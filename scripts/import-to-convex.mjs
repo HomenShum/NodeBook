@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 
 const MAX_BATCH_ROWS = 50;
 const MAX_BATCH_BYTES = 700 * 1024;
-const MAX_REQUEST_BYTES = 1024 * 1024;
+const MAX_REQUEST_BYTES = 4 * 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 const TABLES = ["users", "nodes", "relations", "relationTypes", "relationLists"];
@@ -149,7 +149,7 @@ for (const table of TABLES) {
       requestBody = { sourceKey, batchKey: `${table}:${index}`, digest, table, rowsJson };
     }
     if (new TextEncoder().encode(JSON.stringify(requestBody)).byteLength > MAX_REQUEST_BYTES) {
-      throw new Error(`${table} contains a row whose encoded request exceeds 1 MiB`);
+      throw new Error(`${table} contains a row whose encoded request exceeds 4 MiB`);
     }
     const result = await postBatch(siteUrl, secret, requestBody);
     imported += result.imported;
