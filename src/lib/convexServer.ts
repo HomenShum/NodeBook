@@ -90,6 +90,31 @@ export const recordAgentRunReference = makeFunctionReference<
   },
   any
 >("agentRuns:record");
+export const agentContextSnapshotReference = makeFunctionReference<
+  "query",
+  { text: string; mode: "ask" | "agent" | "organize"; limit?: number },
+  { sourceId: string; version: number; contentText: string; document: string; updatedAt: string }[]
+>("agentWorkflows:contextSnapshot");
+export const agentBindingSnapshotReference = makeFunctionReference<
+  "query",
+  { sourceIds: string[] },
+  { sourceId: string; version: number; contentText: string; document: string; updatedAt: string }[]
+>("agentWorkflows:bindingSnapshot");
+export const recordAgentWorkflowReference = makeFunctionReference<
+  "mutation",
+  any,
+  { replayed: boolean; runId: string }
+>("agentWorkflows:recordResult");
+export const getAgentProposalReference = makeFunctionReference<
+  "query",
+  { proposalId: string },
+  any
+>("agentWorkflows:getProposal");
+export const transitionAgentProposalReference = makeFunctionReference<
+  "mutation",
+  any,
+  { status: string }
+>("agentWorkflows:transitionProposal");
 export const resolveSlugReference = makeFunctionReference<"query", { slug: string }, string | null>("graph:resolveSlug");
 export const listSlugsReference = makeFunctionReference<"query", Record<string, never>, { id: string; slug: string }[]>(
   "graph:listSlugs",

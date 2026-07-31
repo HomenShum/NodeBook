@@ -287,6 +287,17 @@ export class UpdateManager {
     return transactionId;
   }
 
+  /**
+   * Replays a previously reviewed, schema-validated transaction and records it
+   * as one undoable/syncable action. Used by durable agent rollback receipts.
+   */
+  applyDurableTransaction(updates: GraphUpdate[]) {
+    if (!updates.length) throw new Error("A durable transaction must contain at least one update");
+    if (updates.length > 500) throw new Error("A durable transaction cannot exceed 500 updates");
+    this.applyGraphUpdates(updates);
+    return this.queueUpdates(updates);
+  }
+
   undo() {
     const transaction = this.undoStack.pop();
     if (!transaction) {

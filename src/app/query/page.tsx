@@ -1,180 +1,223 @@
 "use client";
 
 import { captureException } from "@sentry/nextjs";
-import { Loader2, Search, X } from "lucide-react";
+import { Check, Loader2, RotateCcw, Search, X } from "lucide-react";
 import { action, observable } from "mobx";
 import { observer } from "mobx-react-lite";
 import React from "react";
 
 import appStyles from "@/app/app.module.css";
 import { Button } from "@/app/components/UIPrimitives/Button";
+import { useGraphStore } from "@/app/contexts/GraphStoreContext";
 import { getAuthFetch } from "@/app/util";
 import { cn } from "@/lib/utils";
 
-import { AgentQueryResponse, AgentReceipt } from "./types";
+import { applyAgentOperations, undoAgentOperations } from "./applyProposal";
+import { AgentMode, AgentOperation, AgentQueryResponse, AgentReceipt, AgentStep } from "./types";
 
 import styles from "./page.module.css";
 
-const EXAMPLE_QUERIES = [
+const EXAMPLES = [
   "What themes recur across my recent notes?",
-  "Which ideas mention customer interviews?",
-  "What evidence do I have for my current product hypothesis?",
+  "Create a project container and organize my customer interview notes under it.",
+  "Find duplicate idea clusters and propose a cleaner hierarchy.",
 ];
 
 const state = observable({
   query: "",
   content: "",
+  understanding: "",
+  plan: [] as string[],
+  operations: [] as AgentOperation[],
+  steps: [] as AgentStep[],
   receipt: null as AgentReceipt | null,
+  proposal: null as { id: string; digest: string; status: string } | null,
+  inverseUpdates: null as unknown[] | null,
   error: "",
   isLoading: false,
+  isTransitioning: false,
   consent: false,
+  webResearch: false,
+  mode: "ask" as AgentMode,
 });
 
-const executeQuery = action(async () => {
-  if (!state.consent) {
-    state.error = "Confirm the read-only AI run before continuing.";
-    return;
-  }
-  state.isLoading = true;
-  state.error = "";
-  state.content = "";
-  state.receipt = null;
-  try {
-    const response = await getAuthFetch()("/api/query", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: state.query, consent: true }),
-    });
-    const data = (await response.json()) as AgentQueryResponse;
-    if ("error" in data) {
-      state.error = data.error;
-      return;
-    }
-    if (!response.ok) {
-      state.error = `Agent run failed (${response.status})`;
-      return;
-    }
-    state.content = data.content;
-    state.receipt = data.receipt;
-  } catch (error) {
-    captureException(error, { extra: { query: state.query, message: "NodeBook agent request failed" } });
-    state.error = "The agent could not complete this run. No graph changes were made.";
-  } finally {
-    state.isLoading = false;
-  }
-});
+async function proposalTransition(body: Record<string, unknown>) {
+  const response = await getAuthFetch()("/api/query/proposal", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  if (!response.ok || data.error) throw new Error(data.error || `Proposal transition failed (${response.status})`);
+  return data;
+}
 
 const NodeBookQueryInterface = observer(function NodeBookQueryInterface() {
+  const graphStore = useGraphStore();
+
+  const executeQuery = action(async () => {
+    if (!state.consent) {
+      state.error = "Approve the provider preflight before continuing.";
+      return;
+    }
+    state.isLoading = true;
+    state.error = "";
+    state.content = "";
+    state.proposal = null;
+    state.operations = [];
+    try {
+      const response = await getAuthFetch()("/api/query", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: state.query,
+          consent: true,
+          mode: state.mode,
+          webResearch: state.webResearch,
+          rootNodeId: state.mode === "ask" ? undefined : graphStore.userRoot.id,
+        }),
+      });
+      const data = (await response.json()) as AgentQueryResponse;
+      if ("error" in data || !response.ok) throw new Error("error" in data ? data.error : `Run failed (${response.status})`);
+      state.content = data.content;
+      state.understanding = data.understanding;
+      state.plan = data.plan;
+      state.operations = data.operations;
+      state.steps = data.steps;
+      state.receipt = data.receipt;
+      state.proposal = data.proposal;
+    } catch (error) {
+      captureException(error, { extra: { query: state.query, message: "NodeBook agent request failed" } });
+      state.error = error instanceof Error ? error.message : "The agent run failed. No graph changes were made.";
+    } finally {
+      state.isLoading = false;
+    }
+  });
+
+  const reject = action(async () => {
+    if (!state.proposal) return;
+    state.isTransitioning = true;
+    try {
+      await proposalTransition({ action: "reject", proposalId: state.proposal.id, proposalDigest: state.proposal.digest });
+      state.proposal.status = "rejected";
+    } catch (error) {
+      state.error = error instanceof Error ? error.message : "Reject failed";
+    } finally {
+      state.isTransitioning = false;
+    }
+  });
+
+  const acceptAndApply = action(async () => {
+    if (!state.proposal) return;
+    state.isTransitioning = true;
+    state.error = "";
+    try {
+      const accepted = await proposalTransition({
+        action: "accept",
+        proposalId: state.proposal.id,
+        proposalDigest: state.proposal.digest,
+      });
+      const receipt = await applyAgentOperations(graphStore, accepted.operations);
+      await proposalTransition({
+        action: "applied",
+        proposalId: state.proposal.id,
+        proposalDigest: state.proposal.digest,
+        ...receipt,
+      });
+      state.inverseUpdates = receipt.inverseUpdates;
+      state.proposal.status = "applied";
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Apply failed";
+      state.error = message;
+      try {
+        await proposalTransition({
+          action: "failed",
+          proposalId: state.proposal.id,
+          proposalDigest: state.proposal.digest,
+          error: message,
+        });
+      } catch {
+        // Keep the original failure visible.
+      }
+    } finally {
+      state.isTransitioning = false;
+    }
+  });
+
+  const undo = action(async () => {
+    if (!state.proposal || !state.inverseUpdates) return;
+    state.isTransitioning = true;
+    try {
+      await undoAgentOperations(graphStore, state.inverseUpdates as never[]);
+      await proposalTransition({ action: "undo", proposalId: state.proposal.id, proposalDigest: state.proposal.digest });
+      state.proposal.status = "undone";
+    } catch (error) {
+      state.error = error instanceof Error ? error.message : "Undo failed";
+    } finally {
+      state.isTransitioning = false;
+    }
+  });
+
   return (
     <div className={cn(appStyles.ViewContainer, appStyles.ViewContainerFull)} data-testid="nodebook-agent">
-      <form
-        className={styles.form}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void executeQuery();
-        }}
-      >
+      <form className={styles.form} onSubmit={(event) => { event.preventDefault(); void executeQuery(); }}>
         <div className={styles.searchContainer}>
           {state.isLoading ? <Loader2 className={styles.loadingIcon} size={14} /> : <Search size={14} />}
-          <input
-            aria-label="Ask NodeBook"
-            className={styles.searchInput}
-            disabled={state.isLoading}
-            placeholder="Ask your NodeBook graph..."
-            type="search"
-            value={state.query}
-            onChange={action((event) => {
-              state.query = event.target.value;
-            })}
-          />
-          {state.query && (
-            <Button
-              aria-label="Clear query"
-              className={styles.clearButton}
-              type="button"
-              variant="ghost"
-              onClick={action(() => {
-                state.query = "";
-                state.content = "";
-                state.receipt = null;
-              })}
-            >
-              <X size={14} />
-            </Button>
-          )}
+          <input aria-label="Ask NodeBook" className={styles.searchInput} disabled={state.isLoading}
+            placeholder="Ask NodeBook or propose work on your graph…" type="search" value={state.query}
+            onChange={action((event) => { state.query = event.target.value; })} />
+          {state.query && <Button aria-label="Clear query" className={styles.clearButton} type="button" variant="ghost"
+            onClick={action(() => { state.query = ""; state.content = ""; state.proposal = null; })}><X size={14} /></Button>}
+        </div>
+        <div className={styles.modeTabs} aria-label="Agent mode">
+          {(["ask", "agent", "organize"] as AgentMode[]).map((mode) => (
+            <button className={state.mode === mode ? styles.modeActive : styles.mode} key={mode} type="button"
+              onClick={action(() => { state.mode = mode; })}>{mode === "ask" ? "Ask" : mode === "agent" ? "Agent" : "Organization"}</button>
+          ))}
         </div>
         <div className={styles.preflight} data-testid="agent-preflight">
-          <strong>Read-only agent preflight</strong>
-          <span>Provider: OpenAI · Model: gpt-5-mini · Context: matching nodes · Graph writes: none</span>
-          <label className={styles.consent}>
-            <input
-              type="checkbox"
-              checked={state.consent}
-              onChange={action((event) => {
-                state.consent = event.target.checked;
-              })}
-            />
-            I approve sending this query and matching NodeBook context to OpenAI for this run.
-          </label>
+          <strong>{state.mode === "ask" ? "Read-only run" : "Review-first proposal"}</strong>
+          <span>OpenAI receives the query and bounded matching NodeBook context. Writes require a separate Accept action.</span>
+          <label className={styles.consent}><input type="checkbox" checked={state.webResearch}
+            onChange={action((event) => { state.webResearch = event.target.checked; })} />Allow web research for this run</label>
+          <label className={styles.consent}><input type="checkbox" checked={state.consent}
+            onChange={action((event) => { state.consent = event.target.checked; })} />I approve this one-time context egress to OpenAI.</label>
           <Button disabled={state.isLoading || !state.query.trim() || !state.consent} type="submit">
-            {state.isLoading ? "Running…" : "Run read-only agent"}
+            {state.isLoading ? "Running…" : state.mode === "ask" ? "Ask NodeBook" : "Generate proposal"}
           </Button>
         </div>
       </form>
 
-      {!state.query && !state.error && (
-        <div className={styles.searchResults}>
-          <div>Example queries</div>
-          {EXAMPLE_QUERIES.map((query) => (
-            <button
-              className={styles.exampleQuery}
-              key={query}
-              type="button"
-              onClick={action(() => {
-                state.query = query;
-              })}
-            >
-              <Search size={14} />
-              <span>{query}</span>
-            </button>
-          ))}
-        </div>
-      )}
-      {state.error && (
-        <div className={styles.error} role="alert">
-          <strong>Run not completed</strong>
-          <p>{state.error}</p>
-        </div>
-      )}
-      {state.content && (
-        <article className={styles.response} data-testid="agent-response">
-          <p className={styles.responseText}>{state.content}</p>
-          {state.receipt && (
-            <dl className={styles.receipt} data-testid="agent-receipt">
-              <div>
-                <dt>Run</dt>
-                <dd>{state.receipt.runId}</dd>
-              </div>
-              <div>
-                <dt>Status</dt>
-                <dd>{state.receipt.status}</dd>
-              </div>
-              <div>
-                <dt>Evidence nodes</dt>
-                <dd>{state.receipt.sourceNodeIds.length}</dd>
-              </div>
-              <div>
-                <dt>Tokens</dt>
-                <dd>{state.receipt.usage.totalTokens ?? "unreported"}</dd>
-              </div>
-              <div>
-                <dt>Receipt stored</dt>
-                <dd>{state.receipt.persisted ? "yes" : "no — response is not durably receipted"}</dd>
-              </div>
-            </dl>
-          )}
-        </article>
-      )}
+      {!state.query && !state.error && <div className={styles.searchResults}><div>Examples</div>{EXAMPLES.map((query) => (
+        <button className={styles.exampleQuery} key={query} type="button" onClick={action(() => { state.query = query; })}>
+          <Search size={14} /><span>{query}</span>
+        </button>))}</div>}
+      {state.error && <div className={styles.error} role="alert"><strong>Not completed</strong><p>{state.error}</p></div>}
+      {state.content && <article className={styles.response} data-testid="agent-response">
+        <p className={styles.responseText}>{state.content}</p>
+        {state.plan.length > 0 && <section><h3>Plan</h3><ol>{state.plan.map((item) => <li key={item}>{item}</li>)}</ol></section>}
+        {state.steps.length > 0 && <section data-testid="agent-steps"><h3>Tool trace</h3>{state.steps.map((step) => (
+          <div className={styles.step} key={`${step.sequence}-${step.tool}`}><Check size={14} /><strong>{step.tool}</strong><span>{step.summary}</span></div>
+        ))}</section>}
+        {state.operations.length > 0 && <section data-testid="agent-proposal"><h3>Proposed changes</h3>{state.operations.map((operation, index) => (
+          <div className={styles.operation} key={`${operation.kind}-${index}`}><strong>{operation.kind.replaceAll("_", " ")}</strong><span>{operation.reason}</span></div>
+        ))}
+          {state.proposal?.status === "pending" && <div className={styles.actions}>
+            <Button disabled={state.isTransitioning} variant="ghost" onClick={() => void reject()}>Reject</Button>
+            <Button disabled={state.isTransitioning} onClick={() => void acceptAndApply()}>Accept and apply</Button>
+          </div>}
+          {state.proposal?.status === "applied" && <Button disabled={state.isTransitioning} variant="ghost" onClick={() => void undo()}>
+            <RotateCcw size={14} /> Undo applied proposal
+          </Button>}
+          {state.proposal && <p data-testid="proposal-status">Status: {state.proposal.status}</p>}
+        </section>}
+        {state.receipt && <dl className={styles.receipt} data-testid="agent-receipt">
+          <div><dt>Run</dt><dd>{state.receipt.runId}</dd></div>
+          <div><dt>Status</dt><dd>{state.proposal?.status ?? state.receipt.status}</dd></div>
+          <div><dt>Evidence</dt><dd>{state.receipt.sourceNodeIds.length} nodes · {state.receipt.sourceUrls.length} web sources</dd></div>
+          <div><dt>Receipt</dt><dd>{state.receipt.persisted ? "durable" : "not persisted"}</dd></div>
+        </dl>}
+      </article>}
     </div>
   );
 });

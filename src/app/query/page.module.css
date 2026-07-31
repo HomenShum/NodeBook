@@ -24,6 +24,47 @@
   background: var(--background-subtle);
 }
 
+.modeTabs {
+  display: flex;
+  gap: 6px;
+  margin: 0 20px 0 40px;
+}
+
+.mode,
+.modeActive {
+  border: 1px solid var(--gray-6);
+  border-radius: 999px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--gray-11);
+}
+
+.modeActive {
+  background: var(--gray-4);
+  color: var(--gray-12);
+  font-weight: 600;
+}
+
+.step,
+.operation {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 180px) minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-5);
+}
+
+.operation {
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+}
+
 .consent {
   display: flex;
   align-items: flex-start;

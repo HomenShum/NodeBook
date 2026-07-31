@@ -1,4 +1,5 @@
 declare const styles: {
+  readonly "actions": string;
   readonly "button": string;
   readonly "citationLink": string;
   readonly "clearButton": string;
@@ -17,6 +18,10 @@ declare const styles: {
   readonly "label": string;
   readonly "linkText": string;
   readonly "loadingIcon": string;
+  readonly "mode": string;
+  readonly "modeActive": string;
+  readonly "modeTabs": string;
+  readonly "operation": string;
   readonly "preflight": string;
   readonly "receipt": string;
   readonly "response": string;
@@ -34,6 +39,7 @@ declare const styles: {
   readonly "sliderGroup": string;
   readonly "sliderValue": string;
   readonly "spin": string;
+  readonly "step": string;
   readonly "subtleConfig": string;
   readonly "textarea": string;
   readonly "title": string;
