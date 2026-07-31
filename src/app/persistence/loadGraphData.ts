@@ -224,7 +224,7 @@ export const fetchGetOrCreateUser = async (user: User, userFetch: typeof fetch):
       user: {
         id: user.sub,
         email: user.email ?? "",
-        username: user.preferred_username ?? "",
+        username: user.preferred_username ?? user.nickname ?? user.name ?? "NodeBook User",
         name: user.name ?? user.nickname ?? "The Nameless One",
         picture: user.picture ?? "",
         createdAt: user.updated_at ?? new Date().toISOString(),
