@@ -130,6 +130,8 @@ for (const table of TABLES) {
   const normalized = normalize(input.tables?.[table] || [], sourceNamespace, targetNamespace);
   const rows = normalized.map((row) => migrationRow(table, row));
   let imported = 0;
+  let batches = 0;
+  let replayedBatches = 0;
   for (let index = 0; index < rows.length;) {
     let batch = rows.slice(index, index + MAX_BATCH_ROWS);
     while (batch.length > 1 && new TextEncoder().encode(JSON.stringify(batch)).byteLength > MAX_BATCH_BYTES) batch = batch.slice(0, -1);
@@ -144,11 +146,15 @@ for (const table of TABLES) {
       rowsJson,
     });
     imported += result.imported;
+    batches += 1;
+    if (result.replayed === true) replayedBatches += 1;
     index += batch.length;
   }
   receipt.tables[table] = {
     sourceCount: rows.length,
     importedCount: imported,
+    batches,
+    replayedBatches,
     digest: createHash("sha256").update(canonical(rows)).digest("hex"),
   };
 }
