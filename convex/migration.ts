@@ -54,10 +54,10 @@ export const importBatch = internalMutation({
     if (existingBatch) {
       if (existingBatch.digest !== args.digest) {
         const replayRows = JSON.parse(args.rowsJson) as Record<string, any>[];
-        if (!Array.isArray(replayRows) || replayRows.length !== existingBatch.rowCount) {
+        if (!Array.isArray(replayRows) || replayRows.length < existingBatch.rowCount) {
           fail("IDEMPOTENCY_CONFLICT", "batch key was reused with different data");
         }
-        for (const row of replayRows) {
+        for (const row of replayRows.slice(0, existingBatch.rowCount)) {
           const current =
             args.table === "users"
               ? await ctx.db.query("users").withIndex("by_owner", (q) => q.eq("ownerId", row.ownerId)).unique()

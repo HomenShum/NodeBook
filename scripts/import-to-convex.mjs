@@ -8,7 +8,7 @@ const MAX_MULTI_ROW_REQUEST_BYTES = 1024 * 1024;
 const MAX_REQUEST_BYTES = 4 * 1024 * 1024;
 const REQUEST_TIMEOUT_MS = 15_000;
 const MAX_RESPONSE_BYTES = 1024 * 1024;
-const MAX_INLINE_NODE_BYTES = 700 * 1024;
+const MAX_INLINE_NODE_BYTES = 500 * 1024;
 const NODE_CHUNK_CHARACTERS = 100_000;
 const TABLES = ["users", "nodes", "relations", "relationTypes", "relationLists", "nodeChunks"];
 const derivedNodeChunks = [];
@@ -188,7 +188,9 @@ for (const table of TABLES) {
     let batch = rows.slice(index, index + MAX_BATCH_ROWS);
     while (batch.length > 1 && new TextEncoder().encode(JSON.stringify(batch)).byteLength > MAX_BATCH_BYTES) batch = batch.slice(0, -1);
     let rowsJson = JSON.stringify(batch);
-    if (new TextEncoder().encode(rowsJson).byteLength > MAX_BATCH_BYTES) throw new Error(`${table} contains an oversized row`);
+    if (new TextEncoder().encode(rowsJson).byteLength > MAX_BATCH_BYTES) {
+      throw new Error(`${table} row ${index} exceeds the encoded batch limit`);
+    }
     let digest = createHash("sha256").update(rowsJson).digest("hex");
     let requestBody = { sourceKey, batchKey: `${table}:${index}`, digest, table, rowsJson };
     while (
@@ -212,7 +214,7 @@ for (const table of TABLES) {
     imported += result.imported;
     batches += 1;
     if (result.replayed === true) replayedBatches += 1;
-    index += batch.length;
+    index += result.replayed === true ? result.imported : batch.length;
   }
   receipt.tables[table] = {
     sourceCount: rows.length,
