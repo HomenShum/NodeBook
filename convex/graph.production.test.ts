@@ -257,6 +257,22 @@ describe("NodeBook Convex production contract", () => {
     };
     expect(await t.mutation(importBatch, args)).toMatchObject({ status: "ok", replayed: false, imported: 1 });
     expect(await t.mutation(importBatch, args)).toMatchObject({ status: "ok", replayed: true, imported: 1 });
+    const clockOnlyRows = JSON.stringify([{ ...JSON.parse(rowsJson)[0], updatedAt: "2026-07-31T00:00:00.000Z" }]);
+    expect(
+      await t.mutation(importBatch, {
+        ...args,
+        rowsJson: clockOnlyRows,
+        digest: createHash("sha256").update(clockOnlyRows).digest("hex"),
+      }),
+    ).toMatchObject({ status: "ok", replayed: true, imported: 1 });
+    const changedRows = JSON.stringify([{ ...JSON.parse(rowsJson)[0], document: JSON.stringify({ ...baseNode, version: 2 }) }]);
+    await expect(
+      t.mutation(importBatch, {
+        ...args,
+        rowsJson: changedRows,
+        digest: createHash("sha256").update(changedRows).digest("hex"),
+      }),
+    ).rejects.toThrow(/IDEMPOTENCY_CONFLICT/);
     await expect(
       t.mutation(importBatch, { ...args, digest: "0".repeat(64) }),
     ).rejects.toThrow(/DIGEST_MISMATCH|IDEMPOTENCY_CONFLICT/);

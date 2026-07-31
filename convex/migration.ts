@@ -51,7 +51,24 @@ export const importBatch = internalMutation({
       .withIndex("by_source_batch", (q) => q.eq("sourceKey", args.sourceKey).eq("batchKey", args.batchKey))
       .unique();
     if (existingBatch) {
-      if (existingBatch.digest !== args.digest) fail("IDEMPOTENCY_CONFLICT", "batch key was reused with different data");
+      if (existingBatch.digest !== args.digest) {
+        const replayRows = JSON.parse(args.rowsJson) as Record<string, any>[];
+        if (!Array.isArray(replayRows) || replayRows.length !== existingBatch.rowCount) {
+          fail("IDEMPOTENCY_CONFLICT", "batch key was reused with different data");
+        }
+        for (const row of replayRows) {
+          const current =
+            args.table === "users"
+              ? await ctx.db.query("users").withIndex("by_owner", (q) => q.eq("ownerId", row.ownerId)).unique()
+              : await ctx.db
+                  .query(args.table)
+                  .withIndex("by_owner_source", (q) => q.eq("ownerId", row.ownerId).eq("sourceId", row.sourceId))
+                  .unique();
+          if (!current || current.document !== row.document) {
+            fail("IDEMPOTENCY_CONFLICT", "batch key was reused with different data");
+          }
+        }
+      }
       return { status: "ok" as const, replayed: true, imported: existingBatch.rowCount };
     }
     const rows = JSON.parse(args.rowsJson) as Record<string, any>[];

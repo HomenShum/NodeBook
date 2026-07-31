@@ -59,12 +59,13 @@ function normalize(value, sourceNamespace, targetNamespace) {
   return value;
 }
 
-function migrationRow(table, raw) {
+function migrationRow(table, raw, frozenAt) {
+  const stableUpdatedAt = raw.updatedAt || raw.createdAt || frozenAt;
   if (table === "users") {
     return {
       ownerId: raw.id,
       document: JSON.stringify(raw),
-      updatedAt: new Date().toISOString(),
+      updatedAt: stableUpdatedAt,
     };
   }
   if (table === "relationLists") {
@@ -85,7 +86,7 @@ function migrationRow(table, raw) {
         newPosition: { int: Number(raw.positionInt || 0), frac: raw.positionFrac || "" },
         newIsPublic: raw.isPublic === true,
       }),
-      updatedAt: new Date().toISOString(),
+      updatedAt: stableUpdatedAt,
     };
   }
   return {
@@ -94,7 +95,7 @@ function migrationRow(table, raw) {
     version: Number(raw.version || 1),
     isPublic: raw.isPublic === true,
     document: JSON.stringify(raw),
-    updatedAt: new Date().toISOString(),
+    updatedAt: stableUpdatedAt,
   };
 }
 
@@ -125,11 +126,12 @@ const sourceNamespace = process.env.SOURCE_NAMESPACE || "";
 const targetNamespace = process.env.TARGET_NAMESPACE || "nodebook";
 const input = JSON.parse(await readFile(resolve(inputArg), "utf8"));
 const sourceKey = String(input.sourceKey || createHash("sha256").update(canonical(input)).digest("hex"));
+const frozenAt = String(input.frozenAt || "1970-01-01T00:00:00.000Z");
 const receipt = { contract: "nodebook.migration-receipt/v1", sourceKey, tables: {}, completedAt: null };
 
 for (const table of TABLES) {
   const normalized = normalize(input.tables?.[table] || [], sourceNamespace, targetNamespace);
-  const rows = normalized.map((row) => migrationRow(table, row));
+  const rows = normalized.map((row) => migrationRow(table, row, frozenAt));
   let imported = 0;
   let batches = 0;
   let replayedBatches = 0;
