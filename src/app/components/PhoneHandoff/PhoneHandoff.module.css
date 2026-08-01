@@ -1,0 +1,141 @@
+.handoff {
+  color: var(--gray-12);
+  font-size: var(--font-size-sm);
+  z-index: 45;
+}
+
+.floating {
+  position: fixed;
+  right: 76px;
+  bottom: 18px;
+}
+
+.inline {
+  position: relative;
+  margin-top: 4px;
+}
+
+.summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 0.5px solid var(--gray-7);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--gray-1) 92%, transparent);
+  box-shadow: var(--shadow-sm);
+  color: var(--gray-11);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  backdrop-filter: blur(12px);
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary:hover,
+.summary:focus-visible,
+.handoff[open] .summary {
+  border-color: var(--teal-8);
+  color: var(--teal-11);
+  outline: none;
+}
+
+.panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  display: grid;
+  width: 248px;
+  gap: 12px;
+  padding: 16px;
+  border: 0.5px solid var(--gray-7);
+  border-radius: 12px;
+  background: var(--gray-1);
+  box-shadow: var(--shadow-lg);
+}
+
+.inline .panel {
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+}
+
+.panel strong,
+.panel p,
+.panel small {
+  display: block;
+}
+
+.panel p {
+  margin-top: 3px;
+  color: var(--gray-11);
+  font-size: var(--font-size-xs);
+  line-height: 1.45;
+}
+
+.panel small {
+  color: var(--gray-10);
+  font-size: var(--font-size-micro);
+  line-height: 1.4;
+}
+
+.qr {
+  width: 160px;
+  height: 160px;
+  margin: 0 auto;
+  border: 8px solid #fff;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.fallback {
+  display: grid;
+  min-height: 160px;
+  place-items: center;
+  padding: 20px;
+  border: 1px dashed var(--gray-7);
+  border-radius: 8px;
+  background: var(--gray-2);
+  text-align: center;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.actions a,
+.actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 34px;
+  border: 0.5px solid var(--gray-7);
+  border-radius: 7px;
+  background: var(--gray-2);
+  color: var(--gray-12);
+  font-size: var(--font-size-xs);
+}
+
+.actions a:hover,
+.actions a:focus-visible,
+.actions button:hover,
+.actions button:focus-visible {
+  border-color: var(--teal-8);
+  outline: none;
+}
+
+@media (max-width: 767px) {
+  .handoff {
+    display: none;
+  }
+}

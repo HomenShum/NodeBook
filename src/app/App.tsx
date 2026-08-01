@@ -9,6 +9,7 @@ import CommandBar from "@/app/components/CommandBar/CommandBar";
 import { SidebarIcon } from "@/app/components/CustomIcons";
 import ImageViewer from "@/app/components/ImageViewer/ImageViewer";
 import OfflineWarning from "@/app/components/OfflineWarning/OfflineWarning";
+import PhoneHandoff from "@/app/components/PhoneHandoff/PhoneHandoff";
 import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { useNotifications } from "@/app/contexts/NotificationContext";
@@ -116,6 +117,7 @@ export default observer(function App({ children }: Props) {
           <ImageViewer />
           <ResizableSidebar isOpen={viewStore.leftSidebarOpen} onResizeStateChange={setIsResizing} />
           <CommandBar />
+          <PhoneHandoff />
           <div className={styles.Container}>
             <Button
               data-tooltip={`Toggle sidebar · ${modKeyName}+⇧+B`}

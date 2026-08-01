@@ -1,4 +1,5 @@
 import { useAuth } from "@/app/auth/useAuth";
+import PhoneHandoff from "@/app/components/PhoneHandoff/PhoneHandoff";
 import { Button } from "@/app/components/UIPrimitives/Button";
 
 export const LoginScreen = () => {
@@ -27,6 +28,7 @@ export const LoginScreen = () => {
       >
         Sign in
       </Button>
+      <PhoneHandoff variant="inline" />
     </main>
   );
 };
