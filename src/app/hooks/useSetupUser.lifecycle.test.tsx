@@ -4,6 +4,7 @@ import { createRoot, Root } from "react-dom/client";
 import { useAuth } from "@/app/auth/useAuth";
 import useSetupUser from "@/app/hooks/useSetupUser";
 import { LocalStorageUser } from "@/app/util";
+import { JWT_LOCAL_STORAGE_KEY } from "@/app/graph/constants";
 
 jest.mock("@/app/auth/useAuth", () => ({ useAuth: jest.fn() }));
 jest.mock("@/app/util", () => {
@@ -62,5 +63,28 @@ describe("NodeBook authenticated store lifecycle", () => {
 
     expect(mockedStoredUserGet).toHaveBeenCalledTimes(1);
     expect(container.querySelector("output")?.getAttribute("data-render")).toBe("3");
+  });
+
+  it("returns an expired signed-in browser session to the login boundary instead of loading forever", async () => {
+    const logout = jest.fn(async () => undefined);
+    mockedUseAuth.mockReturnValue({
+      isLoading: false,
+      user: { sub: "auth0|returning-owner" },
+      getAccessTokenSilently: jest.fn(async () => { throw new Error("Missing Refresh Token"); }),
+      logout,
+    } as never);
+    localStorage.setItem(JWT_LOCAL_STORAGE_KEY, "expired-token");
+
+    await act(async () => {
+      root.render(<UserProbe renderNumber={1} />);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(LocalStorageUser.delete).toHaveBeenCalled();
+    expect(localStorage.getItem(JWT_LOCAL_STORAGE_KEY)).toBeNull();
+    expect(logout).toHaveBeenCalledWith({
+      logoutParams: { returnTo: window.location.origin },
+    });
   });
 });

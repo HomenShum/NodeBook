@@ -66,9 +66,18 @@ function useSetupUser(): NodeBookUser | null {
     if (auth.isLoading) return;
 
     if (auth.user) {
-      const token = await auth.getAccessTokenSilently();
-      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-      localStorage.setItem(JWT_LOCAL_STORAGE_KEY, token);
+      try {
+        const token = await auth.getAccessTokenSilently();
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        localStorage.setItem(JWT_LOCAL_STORAGE_KEY, token);
+      } catch (error) {
+        logger.error("Auth0 session cannot be refreshed; returning to sign in", error);
+        axios.defaults.headers.common["Authorization"] = null;
+        localStorage.removeItem(JWT_LOCAL_STORAGE_KEY);
+        LocalStorageUser.delete();
+        await auth.logout({ logoutParams: { returnTo: window.location.origin } });
+        return;
+      }
     }
 
     const authedFetch = getAuthFetch();
