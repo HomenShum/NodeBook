@@ -129,7 +129,7 @@ export class Tree {
     this.isMainTree = isMainTree;
     this.viewType = viewType;
     this.remoteHydrationEnabled = remoteHydrationEnabled;
-    this.expansionStateManager = new ExpansionStateManager();
+    this.expansionStateManager = new ExpansionStateManager(env.isPersistenceEnabled && !graphStore.user.isAnonymous);
     this.filteredRelations = new Set();
     this.makeObservable();
 

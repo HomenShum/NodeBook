@@ -11,11 +11,26 @@ type CachedExpansionState = {
 export class ExpansionStateManager {
   private cache: Map<string, CachedExpansionState> = new Map();
   private readonly CACHE_TTL_MS = 10000; // 10 seconds
+  private readonly MAX_CACHE_ENTRIES = 100;
+
+  constructor(private readonly persistenceEnabled = true) {}
+
+  private setCached(rootObjectId: string, paths: string[] | null) {
+    if (!this.cache.has(rootObjectId) && this.cache.size >= this.MAX_CACHE_ENTRIES) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) this.cache.delete(oldestKey);
+    }
+    this.cache.set(rootObjectId, { paths, timestamp: Date.now() });
+  }
 
   /**
    * Saves the current expansion state to the server for all users
    */
   async saveExpansionState(rootObjectId: string, expandedPaths: string[]): Promise<boolean> {
+    if (!this.persistenceEnabled) {
+      this.setCached(rootObjectId, expandedPaths);
+      return true;
+    }
     try {
       const authFetch = getAuthFetch();
       const response = await authFetch("/api/expansion-state", {
@@ -36,10 +51,7 @@ export class ExpansionStateManager {
       }
 
       // Update cache after successful save
-      this.cache.set(rootObjectId, {
-        paths: expandedPaths,
-        timestamp: Date.now(),
-      });
+      this.setCached(rootObjectId, expandedPaths);
       return true;
     } catch (error) {
       logger.error("Error saving expansion state:", error);
@@ -51,6 +63,7 @@ export class ExpansionStateManager {
    * Loads expansion state from the server
    */
   async loadExpansionState(rootObjectId: string): Promise<string[] | null> {
+    if (!this.persistenceEnabled) return this.cache.get(rootObjectId)?.paths ?? null;
     try {
       // Check cache first
       const cached = this.cache.get(rootObjectId);
@@ -70,18 +83,12 @@ export class ExpansionStateManager {
       const result = await response.json();
       if (!result.data) {
         // Cache the null result too
-        this.cache.set(rootObjectId, {
-          paths: null,
-          timestamp: Date.now(),
-        });
+        this.setCached(rootObjectId, null);
         return null;
       }
 
       // Update cache with new data
-      this.cache.set(rootObjectId, {
-        paths: result.data.expandedObjects,
-        timestamp: Date.now(),
-      });
+      this.setCached(rootObjectId, result.data.expandedObjects);
       return result.data.expandedObjects;
     } catch (error) {
       logger.error("Error loading expansion state:", error);
@@ -93,6 +100,10 @@ export class ExpansionStateManager {
    * Clears the expansion state for a given root object
    */
   async clearExpansionState(rootObjectId: string): Promise<boolean> {
+    if (!this.persistenceEnabled) {
+      this.cache.delete(rootObjectId);
+      return true;
+    }
     try {
       const authFetch = getAuthFetch();
       const response = await authFetch(`/api/expansion-state?rootObjectId=${rootObjectId}`, {

@@ -3,6 +3,9 @@
 import React, { act, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
+import { MOCK_NODEBOOK_USER, UNLOGGED_USER } from "@/app/auth/NodeBookUser";
+import { UserContext } from "@/app/contexts/UserContext";
+
 import { SlugProvider, useSlugs } from "./SlugContext";
 
 const authFetch = jest.fn();
@@ -43,9 +46,11 @@ describe("SlugProvider authenticated production scenarios", () => {
     const root = createRoot(container);
     await act(async () => {
       root.render(
-        <SlugProvider>
-          <Harness />
-        </SlugProvider>,
+        <UserContext.Provider value={MOCK_NODEBOOK_USER}>
+          <SlugProvider>
+            <Harness />
+          </SlugProvider>
+        </UserContext.Provider>,
       );
     });
 
@@ -71,6 +76,41 @@ describe("SlugProvider authenticated production scenarios", () => {
       "/api/slug",
       expect.objectContaining({ method: "DELETE", body: JSON.stringify({ nodeId: "node-1" }) }),
     );
+
+    await act(async () => root.unmount());
+  });
+
+  test("an anonymous evaluator can use local shortlinks without any authenticated API traffic", async () => {
+    let context: ReturnType<typeof useSlugs> | undefined;
+    function Harness() {
+      const value = useSlugs();
+      useEffect(() => {
+        context = value;
+      }, [value]);
+      return null;
+    }
+
+    const container = document.createElement("div");
+    const root = createRoot(container);
+    await act(async () => {
+      root.render(
+        <UserContext.Provider value={UNLOGGED_USER}>
+          <SlugProvider>
+            <Harness />
+          </SlugProvider>
+        </UserContext.Provider>,
+      );
+    });
+
+    await act(async () => context!.fetchAllSlugs());
+    await act(async () => {
+      expect(await context!.updateSlugByNodeId("guest-node", "private-draft")).toBe(true);
+    });
+    expect(context!.slugs).toEqual({ "guest-node": "private-draft" });
+
+    await act(async () => context!.deleteSlugByNodeId("guest-node"));
+    expect(context!.slugs).toEqual({});
+    expect(authFetch).not.toHaveBeenCalled();
 
     await act(async () => root.unmount());
   });

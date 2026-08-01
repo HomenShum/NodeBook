@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
 
+import { useUser } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
 import { getAuthFetch } from "@/app/util";
 import logger from "@/lib/logger";
@@ -24,9 +25,11 @@ const SlugContext = createContext<SlugContextType | undefined>(undefined);
 
 export const SlugProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [slugs, setSlugs] = useState<SlugMap>({});
+  const user = useUser();
+  const isCloudPersistenceEnabled = env.isPersistenceEnabled && !user.isAnonymous;
 
   const fetchAllSlugs = useCallback(async () => {
-    if (!env.isPersistenceEnabled) {
+    if (!isCloudPersistenceEnabled) {
       setSlugs({});
       return;
     }
@@ -42,10 +45,10 @@ export const SlugProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Failed to fetch slugs:", error);
     }
-  }, []);
+  }, [isCloudPersistenceEnabled]);
 
   const updateSlugByNodeId = async (nodeId: string, slug: string): Promise<boolean> => {
-    if (!env.isPersistenceEnabled) {
+    if (!isCloudPersistenceEnabled) {
       setSlugs((previous) => ({ ...previous, [nodeId]: slug }));
       return true;
     }
@@ -74,7 +77,7 @@ export const SlugProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteSlugByNodeId = async (nodeId: string): Promise<void> => {
-    if (!env.isPersistenceEnabled) {
+    if (!isCloudPersistenceEnabled) {
       setSlugs((previous) => {
         const updated = { ...previous };
         delete updated[nodeId];
