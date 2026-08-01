@@ -22,6 +22,7 @@ import {
 import { $getText } from "@/app/editor/utils/content";
 import { getLexicalSelectionPosition } from "@/app/editor/utils/selection";
 import { defaultRelationTypes } from "@/app/graph/constants";
+import { invokeNodeAgent, parseNodeAgentCommand } from "@/app/query/nodeAgentEvents";
 import { DescendantTreeNode, TreeNode } from "@/app/tree/nodes";
 import { useViewStore } from "@/app/view/useViewStore";
 import { checkForMentionMatch, checkForTemplateMatch, HASHTAG_SYMBOL } from "@/lib/utils";
@@ -276,6 +277,18 @@ export const DropdownPlugin = observer(function DropdownPlugin({
       editor.registerCommand(
         KEY_DOWN_COMMAND,
         (event) => {
+          const nodeAgentQuery = event.key === "Enter" ? parseNodeAgentCommand(treeNode.object.text) : null;
+          if (nodeAgentQuery) {
+            event.preventDefault();
+            viewStore.setAiSearchState({ isSidebarOpen: true });
+            invokeNodeAgent({ query: nodeAgentQuery, currentNodeId: treeNode.object.id });
+            void graphStore.updateNode({
+              nodeId: treeNode.object.id,
+              nodeProps: { content: `🤖 NodeAgent: "${nodeAgentQuery}"` },
+            });
+            clearDropdown();
+            return true;
+          }
           if (
             // On mod-semi-colon hotkey
             ((event.key === ";" && (event.metaKey || event.ctrlKey) && dropdown === null) ||

@@ -21,7 +21,7 @@ const runArgs = {
     v.literal("applied"),
     v.literal("undone"),
   ),
-  provider: v.literal("openai"),
+    provider: v.union(v.literal("openai"), v.literal("openrouter")),
   model: v.string(),
   mode: v.union(v.literal("read-only"), v.literal("ask"), v.literal("agent"), v.literal("organize")),
   query: v.string(),

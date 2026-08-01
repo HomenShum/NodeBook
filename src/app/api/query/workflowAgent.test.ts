@@ -42,13 +42,13 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.operations).toEqual([]);
     expect(result.steps.map((step) => step.tool)).toEqual([
       "find_nodes",
-      "plan_from_notebook",
+      "synthesize_from_notebook",
       "validate_proposal",
       "finish_work",
     ]);
   });
 
-  test("a researcher planning multi-part work gets a container-first proposal, never an auto-apply claim", async () => {
+  test("a researcher in Auto mode gets a durable low-risk checkpoint marked for immediate client execution", async () => {
     const operations = [
       {
         ...emptyFields,
@@ -73,7 +73,14 @@ describe("NodeBook durable agent scenarios", () => {
       usage,
     });
     const result = await executeWorkflowAgent(
-      { query: "Research and structure launch risks", mode: "agent", rootNodeId: "root", webResearch: true, contextNodes: [node] },
+      {
+        query: "Research and structure launch risks",
+        mode: "agent",
+        executionMode: "auto",
+        rootNodeId: "root",
+        webResearch: true,
+        contextNodes: [node],
+      },
       {
         model: "gpt-5-mini",
         runProvider: provider,
@@ -86,7 +93,69 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.proposalDigest).toMatch(/^[a-f0-9]{64}$/);
     expect(result.sourceUrls).toEqual(["https://example.com/evidence"]);
     expect(result.content).toContain("proposal");
-    expect(provider.mock.calls[0][0].timeoutMs).toBe(38_000);
+    expect(result.executionDisposition).toBe("auto_apply");
+    expect(result.risk).toEqual({ level: "low", requiresApproval: false, reasons: [] });
+    expect(provider.mock.calls[0][0].timeoutMs).toBe(28_000);
+  });
+
+  test("a cautious organizer can choose Plan and receive the same typed operations without automatic execution", async () => {
+    const createOperation = {
+      ...emptyFields,
+      kind: "create_node" as const,
+      parentId: "root",
+      tempId: "planned-container",
+      content: "Planned container",
+      reason: "Preview the requested container.",
+    };
+    const result = await executeWorkflowAgent(
+      {
+        query: "Plan a new container",
+        mode: "organize",
+        executionMode: "plan",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [node],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, operations: [createOperation] }, sources: [], usage }),
+        runId: () => "run-plan",
+        proposalId: () => "proposal-plan",
+      },
+    );
+
+    expect(result.operations).toEqual([createOperation]);
+    expect(result.executionMode).toBe("plan");
+    expect(result.executionDisposition).toBe("preview_only");
+  });
+
+  test("Auto mode pauses at a destructive boundary instead of deleting a leaf without approval", async () => {
+    const deleteOperation = {
+      ...emptyFields,
+      kind: "delete_node" as const,
+      nodeId: "evidence-1",
+      reason: "Remove the explicitly selected obsolete note.",
+    };
+    const result = await executeWorkflowAgent(
+      {
+        query: "Delete the obsolete evidence note",
+        mode: "agent",
+        executionMode: "auto",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [node],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, operations: [deleteOperation] }, sources: [], usage }),
+        runId: () => "run-risk",
+        proposalId: () => "proposal-risk",
+      },
+    );
+
+    expect(result.executionDisposition).toBe("approval_required");
+    expect(result.risk.requiresApproval).toBe(true);
+    expect(result.risk.reasons.join(" ")).toMatch(/Deleting notebook content/);
   });
 
   test("an adversarial note cannot authorize out-of-scope writes; one repair is required", async () => {
@@ -121,9 +190,45 @@ describe("NodeBook durable agent scenarios", () => {
     expect(provider).toHaveBeenCalledTimes(2);
     expect(provider.mock.calls[1][0].webResearch).toBe(false);
     expect(provider.mock.calls[0][0].timeoutMs + provider.mock.calls[1][0].timeoutMs).toBeLessThan(60_000);
-    expect(provider.mock.calls[1][0].timeoutMs).toBe(14_000);
+    expect(provider.mock.calls[1][0].timeoutMs).toBe(8_000);
     expect(result.operations).toEqual([]);
     expect(result.steps[2]).toEqual(expect.objectContaining({ tool: "repair_proposal", status: "repaired" }));
+  });
+
+  test("a knowledge worker follows an actual search to graph-neighbor to detail loop before synthesis", async () => {
+    const planner = jest
+      .fn()
+      .mockResolvedValueOnce({ result: { tool: "find_nodes", query: "customer evidence", nodeId: null, workflow: null, rationale: "Find the initial clue." }, usage })
+      .mockResolvedValueOnce({ result: { tool: "find_related_nodes_via_graph", query: null, nodeId: "evidence-1", workflow: null, rationale: "Traverse the clue's graph neighborhood." }, usage })
+      .mockResolvedValueOnce({ result: { tool: "get_node_details", query: null, nodeId: "related-1", workflow: null, rationale: "Inspect the related evidence before answering." }, usage })
+      .mockResolvedValueOnce({ result: { tool: "finish_investigation", query: null, nodeId: null, workflow: null, rationale: "The evidence is sufficient." }, usage });
+    const result = await executeWorkflowAgent(
+      {
+        query: "What does the customer evidence imply?", mode: "ask", rootNodeId: "root", webResearch: false,
+        contextNodes: [
+          { ...node, retrievalSignals: ["full_text"] },
+          { ...node, sourceId: "related-1", contentText: "Adoption depends on trust", retrievalSignals: ["graph_neighbor"] },
+        ],
+      },
+      { model: "gpt-5-mini", runProvider: async () => ({ result: baseResult, sources: [], usage }), runToolPlanner: planner, runId: () => "run-loop" },
+    );
+
+    expect(result.steps.map((step) => step.tool)).toEqual([
+      "find_nodes", "find_nodes", "find_related_nodes_via_graph", "get_node_details", "finish_investigation",
+      "synthesize_from_notebook", "validate_proposal", "finish_work",
+    ]);
+    expect(result.usage).toEqual({ inputTokens: 100, outputTokens: 50, totalTokens: 150 });
+  });
+
+  test("a degraded model repeating the same tool call is stopped at a checkpoint instead of looping", async () => {
+    const repeated = { tool: "find_nodes", query: "evidence", nodeId: null, workflow: null, rationale: "Search again." };
+    const planner = jest.fn().mockResolvedValue({ result: repeated, usage });
+    const result = await executeWorkflowAgent(
+      { query: "Find evidence", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes: [node] },
+      { model: "gpt-5-mini", runProvider: async () => ({ result: baseResult, sources: [], usage }), runToolPlanner: planner, runId: () => "run-repeat" },
+    );
+    expect(planner).toHaveBeenCalledTimes(2);
+    expect(result.steps).toContainEqual(expect.objectContaining({ tool: "checkpoint", status: "failed" }));
   });
 
   test("an organizer cannot substitute prose for a container-first machine proposal", async () => {

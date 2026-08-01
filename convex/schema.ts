@@ -163,7 +163,7 @@ export default defineSchema({
       v.literal("applied"),
       v.literal("undone"),
     ),
-    provider: v.literal("openai"),
+    provider: v.union(v.literal("openai"), v.literal("openrouter")),
     model: v.string(),
     mode: v.union(v.literal("read-only"), v.literal("ask"), v.literal("agent"), v.literal("organize")),
     query: v.string(),
@@ -201,6 +201,8 @@ export default defineSchema({
     summary: v.string(),
     operationsJson: v.string(),
     sourceBindingsJson: v.string(),
+    executionMode: v.optional(v.union(v.literal("auto"), v.literal("plan"))),
+    riskReasons: v.optional(v.array(v.string())),
     appliedUpdatesJson: v.optional(v.string()),
     inverseUpdatesJson: v.optional(v.string()),
     decisionAt: v.optional(v.string()),
@@ -212,6 +214,63 @@ export default defineSchema({
     .index("by_owner_proposal", ["ownerId", "proposalId"])
     .index("by_owner_created", ["ownerId", "createdAtMs"])
     .index("by_owner_run", ["ownerId", "runId"]),
+  agentMemories: defineTable({
+    ownerId: v.string(),
+    memoryId: v.string(),
+    runId: v.string(),
+    taskClass: v.string(),
+    summary: v.string(),
+    query: v.string(),
+    toolSequence: v.array(v.string()),
+    sourceNodeIds: v.array(v.string()),
+    outcome: v.union(v.literal("success"), v.literal("failure"), v.literal("rejected"), v.literal("undone")),
+    durationMs: v.number(),
+    pinned: v.boolean(),
+    createdAt: v.string(),
+    createdAtMs: v.number(),
+    lastUsedAtMs: v.number(),
+  })
+    .index("by_owner_memory", ["ownerId", "memoryId"])
+    .index("by_owner_run", ["ownerId", "runId"])
+    .index("by_owner_created", ["ownerId", "createdAtMs"])
+    .searchIndex("search_summary_owner", { searchField: "summary", filterFields: ["ownerId"] }),
+  agentPatterns: defineTable({
+    ownerId: v.string(),
+    patternId: v.string(),
+    taskClass: v.string(),
+    toolSequence: v.array(v.string()),
+    successCount: v.number(),
+    failureCount: v.number(),
+    totalDurationMs: v.number(),
+    useCount: v.number(),
+    updatedAtMs: v.number(),
+  })
+    .index("by_owner_pattern", ["ownerId", "patternId"])
+    .index("by_owner_updated", ["ownerId", "updatedAtMs"]),
+  agentModelRoutes: defineTable({
+    routeId: v.string(),
+    primaryModel: v.optional(v.string()),
+    fallbackModels: v.array(v.string()),
+    catalogFingerprint: v.optional(v.string()),
+    consecutiveFailures: v.number(),
+    lastFailureAtMs: v.optional(v.number()),
+    lastBenchmarkedAtMs: v.optional(v.number()),
+    benchmarkStatus: v.union(v.literal("never"), v.literal("running"), v.literal("ready"), v.literal("failed")),
+    updatedAtMs: v.number(),
+  }).index("by_route", ["routeId"]),
+  agentModelEvaluations: defineTable({
+    modelId: v.string(),
+    catalogCreatedAt: v.number(),
+    benchmarkVersion: v.string(),
+    passedCases: v.number(),
+    totalCases: v.number(),
+    score: v.number(),
+    medianLatencyMs: v.number(),
+    failureReasons: v.array(v.string()),
+    testedAtMs: v.number(),
+  })
+    .index("by_model", ["modelId"])
+    .index("by_tested", ["testedAtMs"]),
   agentSteps: defineTable({
     ownerId: v.string(),
     runId: v.string(),

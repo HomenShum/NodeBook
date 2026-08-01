@@ -27,6 +27,7 @@ describe("NodeBook production authentication scenarios", () => {
   });
 
   beforeEach(() => {
+    sessionStorage.clear();
     container = document.createElement("div");
     document.body.appendChild(container);
     root = createRoot(container);
@@ -57,8 +58,21 @@ describe("NodeBook production authentication scenarios", () => {
 
     expect(container.textContent).toContain("NodeBook");
     expect(container.textContent).toContain("Sign in");
+    expect(container.textContent).toContain("Continue as guest");
     expect(container.textContent).not.toContain("private notebook");
     expect(container.querySelectorAll('[data-testid="nodebook-login"]')).toHaveLength(1);
+  });
+
+  it("lets a phone tester enter an isolated ephemeral notebook without exposing authenticated data", () => {
+    mockedUseAuth.mockReturnValue({ isLoading: false, user: undefined, loginWithRedirect: jest.fn() } as never);
+    mockedUseSetupUser.mockReturnValue(null);
+    act(() => {
+      root.render(<UserProvider><div>ephemeral notebook</div></UserProvider>);
+    });
+    const guestButton = [...container.querySelectorAll("button")].find((button) => button.textContent === "Continue as guest");
+    act(() => guestButton?.click());
+    expect(container.textContent).toBe("ephemeral notebook");
+    expect(sessionStorage.getItem("nodebook:guest-session")).toBe("1");
   });
 
   it("shows an honest loading state while Auth0 restores an existing session", () => {

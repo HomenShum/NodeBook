@@ -1,7 +1,9 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 
 import { LoginScreen } from "@/app/auth/LoginScreen";
+import { hasGuestSession, startGuestSession } from "@/app/auth/guestSession";
+import { UNLOGGED_USER } from "@/app/auth/NodeBookUser";
 import { useAuth } from "@/app/auth/useAuth";
 import { UserContext } from "@/app/contexts/UserContext";
 import { env } from "@/app/envFrontend";
@@ -10,6 +12,7 @@ import useSetupUser from "@/app/hooks/useSetupUser";
 export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   const auth = useAuth();
   const user = useSetupUser();
+  const [guest, setGuest] = useState(() => hasGuestSession());
 
   if (env.isAuthEnabled && (!auth || auth.isLoading)) {
     return (
@@ -19,11 +22,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (env.isAuthEnabled && !auth?.user) {
-    return <LoginScreen />;
+  if (env.isAuthEnabled && !auth?.user && !guest) {
+    return <LoginScreen onContinueAsGuest={() => {
+      startGuestSession();
+      setGuest(true);
+    }} />;
   }
 
-  if (!user) {
+  if (!user && !guest) {
     return (
       <main aria-busy="true" aria-label="Loading your notebook" style={centeredPageStyle}>
         <p>Loading your notebook…</p>
@@ -31,7 +37,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  return <UserContext.Provider value={user}>{children}</UserContext.Provider>;
+  return <UserContext.Provider value={guest ? UNLOGGED_USER : user!}>{children}</UserContext.Provider>;
 };
 
 const centeredPageStyle: React.CSSProperties = {

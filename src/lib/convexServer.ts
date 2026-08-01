@@ -93,7 +93,7 @@ export const recordAgentRunReference = makeFunctionReference<
   {
     runId: string;
     status: "completed" | "failed";
-    provider: "openai";
+    provider: "openai" | "openrouter";
     model: string;
     mode: "read-only";
     query: string;
@@ -110,9 +110,48 @@ export const recordAgentRunReference = makeFunctionReference<
 >("agentRuns:record");
 export const agentContextSnapshotReference = makeFunctionReference<
   "query",
-  { text: string; mode: "ask" | "agent" | "organize"; limit?: number },
-  { sourceId: string; version: number; contentText: string; document: string; updatedAt: string }[]
+  { text: string; mode: "ask" | "agent" | "organize"; limit?: number; rootNodeId?: string },
+  { sourceId: string; version: number; contentText: string; document: string; updatedAt: string; retrievalSignals: string[] }[]
 >("agentWorkflows:contextSnapshot");
+export const agentMemoryContextReference = makeFunctionReference<
+  "query",
+  { text: string; limit?: number },
+  {
+    memories: Array<{
+      memoryId: string;
+      taskClass: string;
+      summary: string;
+      toolSequence: string[];
+      outcome: "success" | "failure" | "rejected" | "undone";
+      sourceNodeIds: string[];
+      pinned: boolean;
+    }>;
+    patterns: Array<{
+      taskClass: string;
+      toolSequence: string[];
+      successCount: number;
+      failureCount: number;
+      successRate: number;
+      averageDurationMs: number;
+      useCount: number;
+    }>;
+  }
+>("agentWorkflows:memoryContext");
+export const agentModelRouteReference = makeFunctionReference<
+  "query",
+  Record<string, never>,
+  { primaryModel?: string; fallbackModels: string[]; benchmarkStatus: "never" | "running" | "ready" | "failed" } | null
+>("modelRouting:currentRoute");
+export const reportAgentModelOutcomeReference = makeFunctionReference<
+  "mutation",
+  { success: boolean; modelId?: string },
+  { consecutiveFailures: number; rerunScheduled: boolean }
+>("modelRouting:reportOutcome");
+export const updateAgentMemoryReference = makeFunctionReference<
+  "mutation",
+  { memoryId: string; action: "pin" | "unpin" | "forget" },
+  { status: string }
+>("agentWorkflows:updateMemory");
 export const agentBindingSnapshotReference = makeFunctionReference<
   "query",
   { sourceIds: string[] },

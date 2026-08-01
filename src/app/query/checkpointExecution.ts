@@ -5,19 +5,19 @@ type AppliedReceipt = {
   inverseUpdates: unknown[];
 };
 
-type ProposalLifecycleDependencies = {
+type CheckpointExecutionDependencies = {
   accept: () => Promise<{ operations: AgentOperation[] }>;
   apply: (operations: AgentOperation[]) => Promise<AppliedReceipt>;
   markApplied: (receipt: AppliedReceipt) => Promise<void>;
   markFailed: (message: string) => Promise<void>;
 };
 
-export async function runProposalApplyLifecycle({
+export async function runCheckpointExecutionLifecycle({
   accept,
   apply,
   markApplied,
   markFailed,
-}: ProposalLifecycleDependencies): Promise<AppliedReceipt> {
+}: CheckpointExecutionDependencies): Promise<AppliedReceipt> {
   let acceptedByThisClient = false;
   try {
     const accepted = await accept();

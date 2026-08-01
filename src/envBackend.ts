@@ -12,6 +12,7 @@ const processEnvSchema = z
       .default("production"),
     NEXT_PUBLIC_HARDCODED_USER_ID: z.string().optional(),
     OPENAI_API_KEY: z.string().optional(),
+    OPENROUTER_API_KEY: z.string().optional(),
     AGENT_MODEL: z.string().optional(),
     EXTRACT_ENTITIES_OPENAI_MODEL: z.string().optional(),
     EXTRACT_ENTITIES_OPENAI_TEMP: z.string().optional(),
@@ -39,6 +40,7 @@ export const env = Object.freeze({
   AUTH0_API_AUDIENCE: process.env.AUTH0_API_AUDIENCE ?? "",
   NEXT_PUBLIC_HARDCODED_USER_ID: process.env.NEXT_PUBLIC_HARDCODED_USER_ID ?? "",
   OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? "",
+  OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY ?? "",
   AGENT_MODEL: process.env.AGENT_MODEL || "gpt-5-mini",
   EXTRACT_ENTITIES_OPENAI_MODEL: process.env.EXTRACT_ENTITIES_OPENAI_MODEL ?? "",
   EXTRACT_ENTITIES_OPENAI_TEMP:

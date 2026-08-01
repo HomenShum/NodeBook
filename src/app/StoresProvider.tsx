@@ -70,7 +70,7 @@ export function StoresProvider({
 
       // load and start sync
       try {
-        if (env.isPersistenceEnabled) {
+        if (env.isPersistenceEnabled && !user.isAnonymous) {
           {
             const objectIds = [
               decodeURIComponent(initialObjectId || "home"),
@@ -103,7 +103,7 @@ export function StoresProvider({
       // Set up stores. (unless we are unmounting, in which case ignore the result)
       if (ignore) return;
       logger.debug("Starting sync");
-      syncCleanup = graph.updateManager.startSync();
+      syncCleanup = user.isAnonymous ? () => {} : graph.updateManager.startSync();
       setGraphStore(graph);
       setSettingsStore(settings);
       setViewStore(view);
@@ -174,7 +174,7 @@ export function StoresProvider({
           <ViewStoreProvider value={viewStore}>
             <SlugProvider>
               <NotificationProvider>
-                {env.isPersistenceEnabled && <ConvexSyncBridge graphStore={graphStore} />}
+                {env.isPersistenceEnabled && !user.isAnonymous && <ConvexSyncBridge graphStore={graphStore} />}
                 <VoiceInputProvider>{children}</VoiceInputProvider>
               </NotificationProvider>
             </SlugProvider>

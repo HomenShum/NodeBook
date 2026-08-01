@@ -1,4 +1,4 @@
-import { runProposalApplyLifecycle } from "./proposalLifecycle";
+import { runCheckpointExecutionLifecycle } from "./checkpointExecution";
 
 const operation = {
   kind: "create_node" as const,
@@ -14,16 +14,16 @@ const operation = {
   reason: "Live two-tab production validation",
 };
 
-describe("proposal apply lifecycle", () => {
-  test("two authenticated tabs racing one pending proposal produce one write and never let the loser mark the winner failed", async () => {
+describe("checkpoint execution lifecycle", () => {
+  test("two authenticated tabs racing one pending checkpoint produce one write and never let the loser mark the winner failed", async () => {
     let status: "pending" | "accepted" | "applied" | "failed" = "pending";
     let writes = 0;
     let failedTransitions = 0;
 
-    const actor = () => runProposalApplyLifecycle({
+    const actor = () => runCheckpointExecutionLifecycle({
       accept: async () => {
         await Promise.resolve();
-        if (status !== "pending") throw new Error(`Proposal is already ${status}`);
+        if (status !== "pending") throw new Error(`Checkpoint is already ${status}`);
         status = "accepted";
         return { operations: [operation] };
       },
@@ -50,7 +50,7 @@ describe("proposal apply lifecycle", () => {
   test("an accepted actor whose local graph write fails records one honest durable failure", async () => {
     const markFailed = jest.fn(async () => undefined);
 
-    await expect(runProposalApplyLifecycle({
+    await expect(runCheckpointExecutionLifecycle({
       accept: async () => ({ operations: [operation] }),
       apply: async () => { throw new Error("Graph synchronization failed"); },
       markApplied: async () => undefined,

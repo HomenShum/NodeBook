@@ -61,7 +61,8 @@ function parsedNodeForDigest(node: {
 }
 
 function publicProposal(record: any) {
-  const sourceNodeIds = JSON.parse(record.proposal.sourceBindingsJson).map(
+  const sourceBindings = JSON.parse(record.proposal.sourceBindingsJson) as Array<{ sourceId: string; version: number; digest: string }>;
+  const sourceNodeIds = sourceBindings.map(
     (binding: { sourceId: string }) => binding.sourceId,
   );
   return {
@@ -77,6 +78,8 @@ function publicProposal(record: any) {
       ? JSON.parse(record.proposal.inverseUpdatesJson)
       : null,
     error: record.proposal.error ?? null,
+    executionMode: record.proposal.executionMode ?? "plan",
+    riskReasons: record.proposal.riskReasons ?? [],
     steps: record.steps,
     receipt: {
       runId: record.proposal.runId,
@@ -87,6 +90,7 @@ function publicProposal(record: any) {
       startedAt: record.run?.startedAt ?? record.proposal.createdAt,
       completedAt: record.run?.completedAt ?? record.proposal.createdAt,
       sourceNodeIds,
+      sourceBindings,
       sourceUrls: record.run?.sourceUrls ?? [],
       usage: {
         inputTokens: record.run?.inputTokens ?? null,

@@ -424,23 +424,16 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             {!settingsStore.newUser && (
               <Button
                 variant="ghost"
-                className={cn(styles.Button, currentTab === "aiQuery" && styles.Selected)}
-                onClick={(e) => {
+                className={cn(styles.Button, viewStore.aiSearchStore.isSidebarOpen && styles.Selected)}
+                onClick={() => {
                   setLastClickedTab("aiQuery");
-                  if (e.metaKey) {
-                    window.open("/query", "_blank");
-                  } else {
-                    handleNavigation(() => {
-                      router.push("/query");
-                      viewStore.setFlattenSublists(false);
-                    });
-                  }
+                  viewStore.setAiSearchState({ isSidebarOpen: !viewStore.aiSearchStore.isSidebarOpen });
                 }}
               >
                 <span>
                   <Search size={16} strokeWidth={1.5} />
                 </span>
-                <span className={styles.ButtonText}>AI Query</span>
+                <span className={styles.ButtonText}>NodeAgent</span>
               </Button>
             )}
             {!settingsStore.newUser && (

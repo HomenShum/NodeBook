@@ -7,7 +7,7 @@ import { AgentOperation } from "./types";
 const MAX_CLONED_NODES = 100;
 
 function resolveId(id: string | null, temporaryIds: Map<string, string>) {
-  if (!id) throw new Error("The proposal is missing a required node ID.");
+  if (!id) throw new Error("The checkpoint is missing a required node ID.");
   return temporaryIds.get(id) ?? id;
 }
 
@@ -38,7 +38,7 @@ async function cloneHierarchy(
 }
 
 export async function applyAgentOperations(graphStore: GraphStore, operations: AgentOperation[]) {
-  if (operations.length > 30) throw new Error("Proposal exceeds the 30-operation safety limit.");
+  if (operations.length > 30) throw new Error("Checkpoint exceeds the 30-operation safety limit.");
   const firstTransaction = graphStore.updateManager.sessionUpdates.length;
   const temporaryIds = new Map<string, string>();
 

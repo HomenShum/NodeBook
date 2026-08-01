@@ -1,8 +1,10 @@
 declare const styles: {
   readonly "agentView": string;
+  readonly "agentEmbedded": string;
   readonly "actions": string;
   readonly "button": string;
   readonly "citationLink": string;
+  readonly "citationList": string;
   readonly "clearButton": string;
   readonly "configGrid": string;
   readonly "consent": string;
@@ -19,6 +21,7 @@ declare const styles: {
   readonly "label": string;
   readonly "linkText": string;
   readonly "loadingIcon": string;
+  readonly "memory": string;
   readonly "mode": string;
   readonly "modeActive": string;
   readonly "modeTabs": string;

@@ -1,4 +1,5 @@
 export type AgentMode = "ask" | "agent" | "organize";
+export type AgentExecutionMode = "auto" | "plan";
 
 export type AgentOperation = {
   kind:
@@ -30,12 +31,13 @@ export type AgentStep = {
 export type AgentReceipt = {
   runId: string;
   status: "completed" | "proposed";
-  provider: "openai";
+  provider: "openai" | "openrouter";
   model: string;
   mode: AgentMode;
   startedAt: string;
   completedAt: string;
   sourceNodeIds: string[];
+  sourceBindings: Array<{ sourceId: string; version: number; digest: string }>;
   sourceUrls: string[];
   usage: {
     inputTokens: number | null;
@@ -53,6 +55,31 @@ export type AgentQueryResponse =
       plan: string[];
       operations: AgentOperation[];
       proposal: { id: string; digest: string; status: "pending" } | null;
+      execution: {
+        mode: AgentExecutionMode;
+        disposition: "read_only" | "auto_apply" | "approval_required" | "preview_only";
+        risk: { level: "low" | "high"; requiresApproval: boolean; reasons: string[] };
+      };
+      memory: {
+        memories: Array<{
+          memoryId: string;
+          taskClass: string;
+          summary: string;
+          toolSequence: string[];
+          outcome: "success" | "failure" | "rejected" | "undone";
+          sourceNodeIds: string[];
+          pinned: boolean;
+        }>;
+        patterns: Array<{
+          taskClass: string;
+          toolSequence: string[];
+          successCount: number;
+          failureCount: number;
+          successRate: number;
+          averageDurationMs: number;
+          useCount: number;
+        }>;
+      };
       steps: AgentStep[];
       receipt: AgentReceipt;
     }
@@ -69,6 +96,8 @@ export type DurableAgentProposal = {
   operations: AgentOperation[];
   inverseUpdates: unknown[] | null;
   error: string | null;
+  executionMode: AgentExecutionMode;
+  riskReasons: string[];
   steps: AgentStep[];
   receipt: AgentReceipt;
 };

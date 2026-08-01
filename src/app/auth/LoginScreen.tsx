@@ -2,7 +2,7 @@ import { useAuth } from "@/app/auth/useAuth";
 import PhoneHandoff from "@/app/components/PhoneHandoff/PhoneHandoff";
 import { Button } from "@/app/components/UIPrimitives/Button";
 
-export const LoginScreen = () => {
+export const LoginScreen = ({ onContinueAsGuest }: { onContinueAsGuest?: () => void }) => {
   const auth = useAuth();
   return (
     <main
@@ -28,6 +28,16 @@ export const LoginScreen = () => {
       >
         Sign in
       </Button>
+      <Button
+        aria-label="Continue to NodeBook as a guest"
+        variant="default"
+        onClick={onContinueAsGuest}
+      >
+        Continue as guest
+      </Button>
+      <p style={{ margin: 0, maxWidth: "320px", opacity: 0.62, textAlign: "center" }}>
+        Guest notebooks stay in this tab and are not synced. Sign in to test NodeAgent writes and cloud persistence.
+      </p>
       <PhoneHandoff variant="inline" />
     </main>
   );

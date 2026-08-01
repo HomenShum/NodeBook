@@ -8,15 +8,19 @@ import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { env } from "@/envBackend";
 import {
   agentContextSnapshotReference,
+  agentMemoryContextReference,
+  agentModelRouteReference,
   getBearerToken,
   getConvexClient,
   recordAgentWorkflowReference,
+  reportAgentModelOutcomeReference,
 } from "@/lib/convexServer";
 
 import {
   AgentMode,
   executeWorkflowAgent,
   RESULT_JSON_SCHEMA,
+  TOOL_DECISION_JSON_SCHEMA,
   WorkflowUsage,
 } from "./workflowAgent";
 
@@ -26,6 +30,7 @@ const RequestSchema = z.object({
   query: z.string().trim().min(1).max(2_000),
   consent: z.literal(true),
   mode: z.enum(["ask", "agent", "organize"]).default("ask"),
+  executionMode: z.enum(["auto", "plan"]).default("auto"),
   rootNodeId: z.string().min(1).max(200).optional(),
   webResearch: z.boolean().default(false),
 });
@@ -70,26 +75,38 @@ async function runOpenAI(args: {
   model: string;
   webResearch: boolean;
   timeoutMs: number;
+  outputSchema?: Record<string, unknown>;
+  outputName?: string;
+  maxOutputTokens?: number;
+  provider?: "openai" | "openrouter";
+  fallbackModels?: string[];
 }) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort("AI provider timed out"), args.timeoutMs);
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const provider = args.provider ?? "openai";
+    const apiKey = provider === "openrouter" ? env.OPENROUTER_API_KEY : env.OPENAI_API_KEY;
+    const response = await fetch(provider === "openrouter" ? "https://openrouter.ai/api/v1/responses" : "https://api.openai.com/v1/responses", {
       method: "POST",
-      headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        ...(provider === "openrouter" ? { "HTTP-Referer": "https://nodebook.app", "X-Title": "NodeBook NodeAgent" } : {}),
+      },
       body: JSON.stringify({
         model: args.model,
+        ...(provider === "openrouter" && args.fallbackModels?.length ? { models: args.fallbackModels.slice(0, 3) } : {}),
         store: false,
-        max_output_tokens: 2_500,
+        max_output_tokens: args.maxOutputTokens ?? 2_500,
         instructions: args.instructions,
         input: args.input,
         tools: args.webResearch ? [{ type: "web_search" }] : [],
         text: {
           format: {
             type: "json_schema",
-            name: "nodebook_agent_result",
+            name: args.outputName ?? "nodebook_agent_result",
             strict: true,
-            schema: RESULT_JSON_SCHEMA,
+            schema: args.outputSchema ?? RESULT_JSON_SCHEMA,
           },
         },
       }),
@@ -110,7 +127,7 @@ async function runOpenAI(args: {
       outputTokens: typeof body.usage?.output_tokens === "number" ? body.usage.output_tokens : null,
       totalTokens: typeof body.usage?.total_tokens === "number" ? body.usage.total_tokens : null,
     };
-    return { result, sources: extractSourceUrls(body), usage };
+    return { result, sources: extractSourceUrls(body), usage, actualModel: typeof body.model === "string" ? body.model : args.model };
   } finally {
     clearTimeout(timeout);
   }
@@ -131,32 +148,64 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       { status: consentMissing ? 403 : 400 },
     );
   }
-  if (!env.OPENAI_API_KEY) return NextResponse.json({ error: "AI provider is not configured" }, { status: 503 });
+  if (!env.OPENAI_API_KEY && !env.OPENROUTER_API_KEY) return NextResponse.json({ error: "AI provider is not configured" }, { status: 503 });
   if (parsed.data.mode !== "ask" && !parsed.data.rootNodeId) {
-    return NextResponse.json({ error: "A current notebook root is required for proposed changes" }, { status: 400 });
+    return NextResponse.json({ error: "A current notebook root is required for graph changes" }, { status: 400 });
   }
 
   const token = getBearerToken(request);
   const convex = getConvexClient(token);
   const runId = randomUUID();
   const started = new Date();
+  let selectedModel = env.AGENT_MODEL;
+  let selectedProvider: "openai" | "openrouter" = "openai";
+  let providerAttempted = false;
   try {
-    const contextNodes = await convex.query(agentContextSnapshotReference, {
-      text: parsed.data.query,
-      mode: parsed.data.mode,
-      limit: parsed.data.mode === "organize" ? 200 : 40,
-    });
+    const [contextNodes, memoryContext, modelRoute] = await Promise.all([
+      convex.query(agentContextSnapshotReference, {
+        text: parsed.data.query,
+        mode: parsed.data.mode,
+        limit: parsed.data.mode === "organize" ? 200 : 40,
+        rootNodeId: parsed.data.rootNodeId,
+      }),
+      convex.query(agentMemoryContextReference, { text: parsed.data.query, limit: 8 }),
+      convex.query(agentModelRouteReference, {}),
+    ]);
+    if (env.OPENROUTER_API_KEY && modelRoute?.primaryModel && !parsed.data.webResearch) {
+      selectedModel = modelRoute.primaryModel;
+      selectedProvider = "openrouter";
+    }
+    const runProvider = (providerArgs: Parameters<typeof runOpenAI>[0]) => {
+      providerAttempted = true;
+      return runOpenAI({
+        ...providerArgs,
+        provider: selectedProvider,
+        fallbackModels: selectedProvider === "openrouter" ? modelRoute?.fallbackModels : undefined,
+      });
+    };
     const result = await executeWorkflowAgent(
       {
         query: parsed.data.query,
         mode: parsed.data.mode,
+        executionMode: parsed.data.executionMode,
         rootNodeId: parsed.data.rootNodeId ?? "home",
         webResearch: parsed.data.webResearch,
         contextNodes,
+        memoryContext,
       },
       {
-        model: env.AGENT_MODEL,
-        runProvider: runOpenAI,
+        model: selectedModel,
+        runProvider,
+        runToolPlanner: async (plannerArgs) => {
+          const planned = await runProvider({
+            ...plannerArgs,
+            webResearch: false,
+            outputSchema: TOOL_DECISION_JSON_SCHEMA as unknown as Record<string, unknown>,
+            outputName: "nodebook_agent_tool_decision",
+            maxOutputTokens: 400,
+          });
+          return { result: planned.result, usage: planned.usage };
+        },
         runId: () => runId,
       },
     );
@@ -165,11 +214,12 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       run: {
         runId: result.runId,
         status: hasProposal ? "proposed" : "completed",
-        provider: "openai",
-        model: env.AGENT_MODEL,
+        provider: selectedProvider,
+        model: result.modelUsed,
         mode: parsed.data.mode,
         query: parsed.data.query,
         sourceNodeIds: result.sourceNodeIds,
+        sourceBindings: result.sourceBindings,
         sourceUrls: result.sourceUrls,
         proposalId: result.proposalId ?? undefined,
         summary: result.finishSummary,
@@ -194,10 +244,13 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
           sourceBindingsJson: JSON.stringify(result.sourceBindings),
           createdAt: result.completedAt,
           createdAtMs: Date.parse(result.completedAt),
+          executionMode: result.executionMode,
+          riskReasons: result.risk.reasons,
         }
         : undefined,
       steps: result.steps,
     });
+    await convex.mutation(reportAgentModelOutcomeReference, { success: true, modelId: result.modelUsed });
     return NextResponse.json({
       status: hasProposal ? "proposed" : "completed",
       content: result.content,
@@ -207,12 +260,18 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       proposal: hasProposal
         ? { id: result.proposalId, digest: result.proposalDigest, status: "pending" }
         : null,
+      execution: {
+        mode: result.executionMode,
+        disposition: result.executionDisposition,
+        risk: result.risk,
+      },
+      memory: memoryContext,
       steps: result.steps,
       receipt: {
         runId: result.runId,
         status: hasProposal ? "proposed" : "completed",
-        provider: "openai",
-        model: env.AGENT_MODEL,
+        provider: selectedProvider,
+        model: result.modelUsed,
         mode: parsed.data.mode,
         startedAt: result.startedAt,
         completedAt: result.completedAt,
@@ -226,12 +285,13 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
     const completedAt = new Date().toISOString();
     const message = error instanceof Error ? error.message.slice(0, 500) : "Agent run failed";
     try {
+      if (providerAttempted) await convex.mutation(reportAgentModelOutcomeReference, { success: false, modelId: selectedModel });
       await convex.mutation(recordAgentWorkflowReference, {
         run: {
           runId,
           status: "failed",
-          provider: "openai",
-          model: env.AGENT_MODEL,
+          provider: selectedProvider,
+          model: selectedModel,
           mode: parsed.data.mode as AgentMode,
           query: parsed.data.query,
           sourceNodeIds: [],
