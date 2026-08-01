@@ -3,8 +3,16 @@ import { makeFunctionReference } from "convex/server";
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 
+import parityCorpus from "../evals/nodeagent-notion-parity.json";
 import schema from "./schema";
-import { rankEvaluations, selectFreeCandidates } from "./modelRouting";
+import {
+  NODEAGENT_PARITY_CASES,
+  isCertifiedRoute,
+  rankEvaluations,
+  scoreParityResult,
+  selectFreeCandidates,
+  shouldRunBenchmark,
+} from "./modelRouting";
 
 const modules = import.meta.glob("./**/!(*.test).*s");
 const recordResult = makeFunctionReference<"mutation", any, any>("agentWorkflows:recordResult");
@@ -175,6 +183,37 @@ describe("NodeAgent hybrid notebook retrieval", () => {
 });
 
 describe("NodeAgent automatic free-model routing", () => {
+  test("promotion certification covers every locked Notion-authored MewAgent behavior", () => {
+    expect(NODEAGENT_PARITY_CASES.map((scenario) => scenario.caseId)).toEqual(
+      parityCorpus.cases.map((scenario) => scenario.caseId),
+    );
+    for (const lockedCase of parityCorpus.cases) {
+      if (!("expectedToolOrder" in lockedCase)) continue;
+      expect(NODEAGENT_PARITY_CASES.find((scenario) => scenario.caseId === lockedCase.caseId)?.expectedToolOrder)
+        .toEqual(lockedCase.expectedToolOrder);
+    }
+  });
+
+  test("certification scores required tool order, operation shape, and autonomy boundary together", () => {
+    const scenario = NODEAGENT_PARITY_CASES[1];
+    expect(scoreParityResult(scenario, {
+      disposition: "auto_apply",
+      toolOrder: ["find_nodes", "run_specialized_workflow", "finish_investigation"],
+      operationKinds: ["create_node", "move_node", "move_node", "move_node"],
+      selectedNodeIds: ["meeting-1", "meeting-2", "meeting-3"],
+    })).toEqual({ passed: true, reasons: [] });
+
+    expect(scoreParityResult(scenario, {
+      disposition: "auto_apply",
+      toolOrder: ["find_nodes", "finish_investigation"],
+      operationKinds: ["create_node", "move_node", "move_node"],
+      selectedNodeIds: ["meeting-1", "meeting-2"],
+    })).toEqual({
+      passed: false,
+      reasons: ["tool_order", "operation_kinds", "selected_node_ids"],
+    });
+  });
+
   test("a catalog refresh admits only free, structured-output, tool-capable candidates and prioritizes new releases", () => {
     const candidates = selectFreeCandidates({ data: [
       { id: "new/free:free", created: 30, context_length: 64_000, supported_parameters: ["tools", "structured_outputs"] },
@@ -193,5 +232,19 @@ describe("NodeAgent automatic free-model routing", () => {
       { modelId: "reliable-fast", catalogCreatedAt: 10, passedCases: 3, totalCases: 3, score: 1, medianLatencyMs: 500, failureReasons: [] },
     ]);
     expect(ranked.map((evaluation) => evaluation.modelId)).toEqual(["reliable-fast", "reliable", "fast-but-wrong"]);
+  });
+
+  test("catalog polling evaluates new releases, skips an unchanged certified catalog, and failure reruns bypass the skip", () => {
+    const certified = { catalogFingerprint: "same", benchmarkVersion: "nodeagent-notion-parity-v2" };
+    expect(shouldRunBenchmark("catalog_refresh", "same", certified)).toBe(false);
+    expect(shouldRunBenchmark("catalog_refresh", "new", certified)).toBe(true);
+    expect(shouldRunBenchmark("failure_threshold", "same", certified)).toBe(true);
+    expect(shouldRunBenchmark("manual", "same", certified)).toBe(true);
+  });
+
+  test("production routing fails closed when a formerly promoted model has not passed the current parity version", () => {
+    expect(isCertifiedRoute({ primaryModel: "old-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notebook-v1" })).toBe(false);
+    expect(isCertifiedRoute({ primaryModel: "current-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notion-parity-v2" })).toBe(true);
+    expect(isCertifiedRoute({ primaryModel: "failed-free", benchmarkStatus: "failed", benchmarkVersion: "nodeagent-notion-parity-v2" })).toBe(false);
   });
 });

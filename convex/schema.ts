@@ -252,6 +252,7 @@ export default defineSchema({
     primaryModel: v.optional(v.string()),
     fallbackModels: v.array(v.string()),
     catalogFingerprint: v.optional(v.string()),
+    benchmarkVersion: v.optional(v.string()),
     consecutiveFailures: v.number(),
     lastFailureAtMs: v.optional(v.number()),
     lastBenchmarkedAtMs: v.optional(v.number()),
