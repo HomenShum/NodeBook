@@ -266,6 +266,8 @@ export default defineSchema({
     passedCases: v.number(),
     totalCases: v.number(),
     score: v.number(),
+    passedCriteria: v.optional(v.number()),
+    totalCriteria: v.optional(v.number()),
     medianLatencyMs: v.number(),
     failureReasons: v.array(v.string()),
     testedAtMs: v.number(),

@@ -19,6 +19,8 @@ type Evaluation = {
   passedCases: number;
   totalCases: number;
   score: number;
+  passedCriteria?: number;
+  totalCriteria?: number;
   medianLatencyMs: number;
   failureReasons: string[];
 };
@@ -175,7 +177,8 @@ export function scoreParityResult(scenario: ParityCase, result: ParityResult) {
     const actual = [...new Set(selectedNodeIds)].sort();
     if (JSON.stringify(actual) !== JSON.stringify(expected)) reasons.push("selected_node_ids");
   }
-  return { passed: reasons.length === 0, reasons };
+  const totalCriteria = 3 + (scenario.expectedSelectedNodeIds ? 1 : 0);
+  return { passed: reasons.length === 0, reasons, passedCriteria: totalCriteria - reasons.length, totalCriteria };
 }
 
 const benchmarkSchema = {
@@ -202,7 +205,11 @@ async function evaluateModel(modelId: string, created: number, apiKey: string): 
   const latencies: number[] = [];
   const failures: string[] = [];
   let passed = 0;
+  let passedCriteria = 0;
+  let totalCriteria = 0;
   for (const scenario of NODEAGENT_PARITY_CASES) {
+    const scenarioCriteria = 3 + (scenario.expectedSelectedNodeIds ? 1 : 0);
+    totalCriteria += scenarioCriteria;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort("benchmark timeout"), 12_000);
     const started = Date.now();
@@ -227,6 +234,7 @@ async function evaluateModel(modelId: string, created: number, apiKey: string): 
       if (!response.ok) throw new Error(`HTTP_${response.status}`);
       const parsed = JSON.parse(raw.choices?.[0]?.message?.content ?? "") as ParityResult;
       const score = scoreParityResult(scenario, parsed);
+      passedCriteria += score.passedCriteria;
       if (score.passed) passed += 1;
       else failures.push(`${scenario.caseId}:${score.reasons.join("+")}`);
     } catch (error) {
@@ -238,7 +246,9 @@ async function evaluateModel(modelId: string, created: number, apiKey: string): 
   const orderedLatency = [...latencies].sort((a, b) => a - b);
   return {
     modelId, catalogCreatedAt: created, passedCases: passed, totalCases: NODEAGENT_PARITY_CASES.length,
-    score: passed / NODEAGENT_PARITY_CASES.length,
+    score: totalCriteria ? passedCriteria / totalCriteria : 0,
+    passedCriteria,
+    totalCriteria,
     medianLatencyMs: orderedLatency[Math.floor(orderedLatency.length / 2)] ?? 12_000,
     failureReasons: failures.slice(0, NODEAGENT_PARITY_CASES.length),
   };

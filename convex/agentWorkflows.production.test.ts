@@ -201,7 +201,7 @@ describe("NodeAgent automatic free-model routing", () => {
       toolOrder: ["find_nodes", "run_specialized_workflow", "finish_investigation"],
       operationKinds: ["create_node", "move_node", "move_node", "move_node"],
       selectedNodeIds: ["meeting-1", "meeting-2", "meeting-3"],
-    })).toEqual({ passed: true, reasons: [] });
+    })).toEqual({ passed: true, reasons: [], passedCriteria: 4, totalCriteria: 4 });
 
     expect(scoreParityResult(scenario, {
       disposition: "auto_apply",
@@ -211,6 +211,8 @@ describe("NodeAgent automatic free-model routing", () => {
     })).toEqual({
       passed: false,
       reasons: ["tool_order", "operation_kinds", "selected_node_ids"],
+      passedCriteria: 1,
+      totalCriteria: 4,
     });
   });
 
