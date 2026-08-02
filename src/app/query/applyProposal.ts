@@ -146,7 +146,9 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
         relationIds.add(update.newProps.id);
       }
     } else if (update.operation === "updateRelationList") {
-      if (relationIds.has(update.relationId) && !deletedRelationIds.has(update.relationId)) listUpdates.push(update);
+      if (nodeIds.has(update.nodeId) && relationIds.has(update.relationId) && !deletedRelationIds.has(update.relationId)) {
+        listUpdates.push(update);
+      }
     } else if (update.operation === "deleteRelation") {
       if (relationIds.has(update.deleted.relation.id)) {
         relationDeletes.push(update);
