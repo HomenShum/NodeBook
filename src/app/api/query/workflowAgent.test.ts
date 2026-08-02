@@ -474,6 +474,80 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.sourceNodeIds).toEqual(["evidence-1"]);
     expect(result.sourceBindings.map((binding) => binding.sourceId)).toEqual(["evidence-1"]);
     expect(result.steps[2]).toEqual(expect.objectContaining({ tool: "repair_proposal", status: "repaired" }));
+    expect(result.usage).toEqual({ inputTokens: 40, outputTokens: 20, totalTokens: 60 });
+  });
+
+  test("a repaired run reports an honest terminal failure when observed usage crosses the ceiling", async () => {
+    const provider = jest
+      .fn()
+      .mockResolvedValueOnce({
+        result: { ...baseResult, selectedNodeIds: ["fabricated"] },
+        sources: [],
+        usage: { inputTokens: 40, outputTokens: 10, totalTokens: 50 },
+      })
+      .mockResolvedValueOnce({
+        result: baseResult,
+        sources: [],
+        usage: { inputTokens: 35, outputTokens: 15, totalTokens: 50 },
+      });
+
+    await expect(executeWorkflowAgent(
+      { query: "Use exact notebook evidence", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes: [node] },
+      { model: "gpt-5-mini", runProvider: provider, maxTotalTokens: 75, runId: () => "run-spend-ceiling" },
+    )).rejects.toThrow("AGENT_TOKEN_BUDGET_EXCEEDED observed=100 max=75");
+    expect(provider).toHaveBeenCalledTimes(2);
+  });
+
+  test("a sustained planner run at the token ceiling never starts the next provider call", async () => {
+    const planner = jest.fn().mockResolvedValue({
+      result: { tool: "finish_investigation", query: null, nodeId: null, workflow: null, rationale: "Enough evidence." },
+      usage: { inputTokens: 60, outputTokens: 15, totalTokens: 75 },
+    });
+    const provider = jest.fn();
+
+    await expect(executeWorkflowAgent(
+      { query: "Summarize the evidence", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes: [node] },
+      {
+        model: "gpt-5-mini",
+        runProvider: provider,
+        runToolPlanner: planner,
+        maxTotalTokens: 75,
+        runId: () => "run-pre-call-spend-gate",
+      },
+    )).rejects.toThrow("AGENT_TOKEN_BUDGET_EXCEEDED observed=75 max=75");
+    expect(planner).toHaveBeenCalledTimes(1);
+    expect(provider).not.toHaveBeenCalled();
+  });
+
+  test("a provider that omits token telemetry fails closed under a configured spend ceiling", async () => {
+    const provider = jest.fn().mockResolvedValue({
+      result: baseResult,
+      sources: [],
+      usage: { inputTokens: null, outputTokens: null, totalTokens: null },
+    });
+
+    await expect(executeWorkflowAgent(
+      { query: "Summarize the evidence", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes: [node] },
+      { model: "gpt-5-mini", runProvider: provider, maxTotalTokens: 75, runId: () => "run-unknown-spend" },
+    )).rejects.toThrow("AGENT_TOKEN_USAGE_UNAVAILABLE");
+    expect(provider).toHaveBeenCalledTimes(1);
+  });
+
+  test("a near-deadline run preserves the durability reserve without starting a provider call", async () => {
+    const provider = jest.fn();
+    const fixedNow = new Date("2026-08-02T12:00:00.000Z");
+
+    await expect(executeWorkflowAgent(
+      { query: "Summarize my notes", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes: [node] },
+      {
+        model: "gpt-5-mini",
+        runProvider: provider,
+        now: () => fixedNow,
+        deadlineAtMs: fixedNow.getTime() + 999,
+        runId: () => "run-deadline-reserve",
+      },
+    )).rejects.toThrow("AGENT_DEADLINE_RESERVE_REACHED");
+    expect(provider).not.toHaveBeenCalled();
   });
 
   test("a knowledge worker follows an actual search to graph-neighbor to detail loop before synthesis", async () => {

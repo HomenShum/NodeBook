@@ -38,6 +38,8 @@ import { AgentMode, AgentStep, executeWorkflowAgent, modelQualitySucceeded, TOOL
 // bounded stages so a healthy (but slower) certified model is not aborted just
 // because retrieval was enabled.
 export const maxDuration = 120;
+const PROVIDER_DEADLINE_MS = 110_000;
+const MAX_AGENT_TOTAL_TOKENS = 100_000;
 const RequestSchema = z.object({
   query: z.string().trim().min(1).max(2_000),
   consent: z.literal(true),
@@ -209,6 +211,10 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
           runId: () => runId,
           proposalId: () => `${runId}:proposal`,
           onStep,
+          // Preserve ten seconds of the platform budget for durable receipts and
+          // an honest failure response after the final provider call.
+          deadlineAtMs: started.getTime() + PROVIDER_DEADLINE_MS,
+          maxTotalTokens: MAX_AGENT_TOTAL_TOKENS,
         },
       );
       const hasProposal = Boolean(result.proposalId && result.proposalDigest);
