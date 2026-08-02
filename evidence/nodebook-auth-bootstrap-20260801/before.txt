@@ -1,0 +1,11 @@
+Observable: a previously signed-in production owner must either enter NodeBook or return to a recoverable login boundary.
+
+Production URL: https://nodebook-rho.vercel.app/query
+
+Observed before:
+- DOM remained `main[aria-label="Loading your notebook"]` after repeated waits.
+- Rendered pixels showed only `Loading your notebook...` on an otherwise blank page.
+- Vercel runtime logs contained no `/api/user` request for the session, proving startup stalled before NodeBook user provisioning.
+- `useSetupUser` awaited `auth.getAccessTokenSilently()` without an explicit or independent client deadline.
+
+Root cause: a stalled Auth0 silent-refresh promise kept `user` null indefinitely, so the top-level UserProvider could never leave its loading boundary.

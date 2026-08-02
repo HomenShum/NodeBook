@@ -10,6 +10,28 @@ import { fetchGetOrCreateUser, fetchGetUser } from "@/app/persistence/loadGraphD
 import { logger } from "@/app/StoresProvider";
 import { envAllowsMockAuth, getAuthFetch, LocalStorageUser } from "@/app/util";
 
+const AUTH_TOKEN_TIMEOUT_MS = 10_000;
+
+async function getAccessTokenWithDeadline(
+  getAccessTokenSilently: (options: { timeoutInSeconds: number }) => Promise<string>,
+): Promise<string> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(
+      () => reject(new Error("Auth0 silent refresh exceeded 10 seconds")),
+      AUTH_TOKEN_TIMEOUT_MS,
+    );
+  });
+  try {
+    return await Promise.race([
+      getAccessTokenSilently({ timeoutInSeconds: AUTH_TOKEN_TIMEOUT_MS / 1_000 }),
+      timeout,
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
 export const getIsValidToken = (token: string | null): boolean => {
   if (!token) return false;
   try {
@@ -67,7 +89,7 @@ function useSetupUser(): NodeBookUser | null {
 
     if (auth.user) {
       try {
-        const token = await auth.getAccessTokenSilently();
+        const token = await getAccessTokenWithDeadline((options) => auth.getAccessTokenSilently(options));
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
         localStorage.setItem(JWT_LOCAL_STORAGE_KEY, token);
       } catch (error) {

@@ -87,4 +87,37 @@ describe("NodeBook authenticated store lifecycle", () => {
       logoutParams: { returnTo: window.location.origin },
     });
   });
+
+  it("returns a signed-in owner to the login boundary when silent refresh stalls", async () => {
+    jest.useFakeTimers();
+    const logout = jest.fn(async () => undefined);
+    const getAccessTokenSilently = jest.fn(() => new Promise<string>(() => undefined));
+    mockedUseAuth.mockReturnValue({
+      isLoading: false,
+      user: { sub: "auth0|stalled-owner" },
+      getAccessTokenSilently,
+      logout,
+    } as never);
+
+    try {
+      await act(async () => {
+        root.render(<UserProbe renderNumber={1} />);
+        await Promise.resolve();
+      });
+
+      await act(async () => {
+        jest.advanceTimersByTime(10_000);
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(getAccessTokenSilently).toHaveBeenCalledWith({ timeoutInSeconds: 10 });
+      expect(LocalStorageUser.delete).toHaveBeenCalled();
+      expect(logout).toHaveBeenCalledWith({
+        logoutParams: { returnTo: window.location.origin },
+      });
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
