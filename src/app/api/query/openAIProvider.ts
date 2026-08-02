@@ -117,7 +117,18 @@ export async function runOpenAI(args: {
       signal: controller.signal,
     });
     const body = await readBoundedJson(response);
-    if (!response.ok) throw new Error(`AI provider rejected the run (${response.status})`);
+    if (!response.ok) {
+      const providerError = body.error && typeof body.error === "object" ? body.error as Record<string, unknown> : {};
+      const errorCode = typeof providerError.code === "string"
+        ? providerError.code
+        : typeof providerError.type === "string"
+          ? providerError.type
+          : "unknown";
+      const errorMessage = typeof providerError.message === "string"
+        ? providerError.message.replace(/\s+/g, " ").slice(0, 240)
+        : "request rejected";
+      throw new Error(`AI provider rejected the run (${response.status}:${errorCode}): ${errorMessage}`);
+    }
     const content = extractOutputText(body);
     if (!content.trim()) throw new Error("AI provider returned an empty response");
     let result: unknown;
