@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "test": "DOTENV_CONFIG_PATH=.env.test jest --setupFiles=dotenv/config --detectOpenHandles",
+    "test": "jest --setupFiles=./jest.setup-env.cjs --detectOpenHandles",
     "test:convex": "vitest run convex/graph.production.test.ts convex/agentWorkflows.production.test.ts convex/nodeEmbeddings.production.test.ts",
     "ci-tests": "yarn lint && yarn typecheck && yarn test",
     "typecheck": "tsc --noEmit",

@@ -1,4 +1,4 @@
-import { executeWorkflowAgent, sourceBindingDigest } from "./workflowAgent";
+import { executeWorkflowAgent, modelQualitySucceeded, sourceBindingDigest } from "./workflowAgent";
 
 const usage = { inputTokens: 20, outputTokens: 10, totalTokens: 30 };
 const emptyFields = {
@@ -731,6 +731,55 @@ describe("NodeBook durable agent scenarios", () => {
     );
     expect(planner).toHaveBeenCalledTimes(2);
     expect(result.steps).toContainEqual(expect.objectContaining({ tool: "checkpoint", status: "failed" }));
+  });
+
+  test("a degraded planner cannot evade the repeat guard by paraphrasing its rationale", async () => {
+    let call = 0;
+    const planner = jest.fn().mockImplementation(async () => ({
+      result: {
+        tool: "run_specialized_workflow",
+        query: null,
+        nodeId: null,
+        workflow: "update",
+        rationale: `Paraphrased create rationale ${++call}.`,
+      },
+      usage,
+    }));
+    const result = await executeWorkflowAgent(
+      {
+        query: "Review this evidence through the update workflow",
+        mode: "ask",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [node],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, operations: [] }, sources: [], usage }),
+        runToolPlanner: planner,
+        runId: () => "run-paraphrased-repeat",
+      },
+    );
+
+    expect(planner).toHaveBeenCalledTimes(2);
+    expect(result.steps.filter((step) => step.tool === "run_specialized_workflow")).toHaveLength(1);
+    expect(result.steps).toContainEqual(expect.objectContaining({ tool: "checkpoint", status: "failed" }));
+    expect(modelQualitySucceeded(result.steps)).toBe(false);
+  });
+
+  test("degraded retrieval does not falsely count as a model-routing failure", () => {
+    expect(modelQualitySucceeded([
+      {
+        sequence: 1,
+        tool: "semantic_retrieval",
+        status: "failed",
+        inputDigest: "input",
+        outputDigest: "output",
+        summary: "Embedding service unavailable; lexical retrieval continued.",
+        startedAt: "2026-08-02T00:00:00.000Z",
+        completedAt: "2026-08-02T00:00:01.000Z",
+      },
+    ])).toBe(true);
   });
 
   test("an overlong planner rationale is bounded without crashing the signed-in agent run", async () => {

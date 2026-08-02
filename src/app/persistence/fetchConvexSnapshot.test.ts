@@ -1,6 +1,6 @@
 import { TextDecoder as NodeTextDecoder } from "util";
 
-import { fetchConvexSnapshot } from "./fetchConvexSnapshot";
+import { fetchConvexSnapshot, pruneUnresolvableRelationPositions } from "./fetchConvexSnapshot";
 
 Object.defineProperty(globalThis, "TextDecoder", { value: NodeTextDecoder, configurable: true });
 
@@ -92,5 +92,28 @@ describe("production-scale Convex snapshot hydration", () => {
     ) as unknown as typeof fetch;
 
     await expect(fetchConvexSnapshot(authFetch)).rejects.toThrow("50,000-document client budget");
+  });
+
+  test("a returning migrated owner prunes inaccessible relation positions only after the full snapshot is assembled", () => {
+    const snapshot = {
+      usersById: {},
+      nodesById: {},
+      relationTypesById: {},
+      relationsById: { live: { id: "live" } as never },
+      relationsByNodeId: {
+        root: {
+          live: { int: 0, frac: "a0" },
+          deleted: { int: 1, frac: "a1" },
+        },
+      },
+      pinnedRelationsByNodeId: {
+        root: { private: { int: 0, frac: "a0" } },
+      },
+      noteContentRelationsByNodeId: {},
+    };
+
+    expect(pruneUnresolvableRelationPositions(snapshot)).toBe(2);
+    expect(snapshot.relationsByNodeId).toEqual({ root: { live: { int: 0, frac: "a0" } } });
+    expect(snapshot.pinnedRelationsByNodeId).toEqual({});
   });
 });

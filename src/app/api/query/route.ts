@@ -31,7 +31,7 @@ import { runOpenAI, runOpenAIEmbeddings } from "./openAIProvider";
 import { runJournaledProvider } from "./providerJournal";
 import { buildEmbeddingWrites, chunkEmbeddingWrites } from "./embeddingBoundary";
 import { fuseRetrievedContext, SemanticContextResult } from "./retrievalFusion";
-import { AgentMode, AgentStep, executeWorkflowAgent, TOOL_DECISION_JSON_SCHEMA } from "./workflowAgent";
+import { AgentMode, AgentStep, executeWorkflowAgent, modelQualitySucceeded, TOOL_DECISION_JSON_SCHEMA } from "./workflowAgent";
 
 // Semantic hydration and the bounded four-step investigation run before final
 // synthesis. Keep the platform budget above the sum of those independently
@@ -253,7 +253,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
           : undefined,
         steps: result.steps,
       });
-      await convex.mutation(reportAgentModelOutcomeReference, { success: true, modelId: result.modelUsed });
+      await convex.mutation(reportAgentModelOutcomeReference, { success: modelQualitySucceeded(result.steps), modelId: result.modelUsed });
       const responseBody: AgentQueryResponse = {
         status: hasProposal ? "proposed" : "completed",
         content: result.content,

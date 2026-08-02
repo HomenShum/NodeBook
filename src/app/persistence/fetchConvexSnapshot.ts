@@ -34,6 +34,26 @@ type SnapshotVisibility = "public" | "owned";
 
 type SnapshotBudget = { bytes: number; documents: number };
 
+export function pruneUnresolvableRelationPositions(snapshot: SerializedGraphStore) {
+  let pruned = 0;
+  const lists = [
+    snapshot.relationsByNodeId,
+    snapshot.pinnedRelationsByNodeId,
+    snapshot.noteContentRelationsByNodeId,
+  ];
+  for (const list of lists) {
+    for (const [nodeId, positions] of Object.entries(list)) {
+      for (const relationId of Object.keys(positions)) {
+        if (snapshot.relationsById[relationId]) continue;
+        delete positions[relationId];
+        pruned++;
+      }
+      if (Object.keys(positions).length === 0) delete list[nodeId];
+    }
+  }
+  return pruned;
+}
+
 async function fetchSnapshotStream(
   authFetch: typeof fetch,
   table: SnapshotTable,
@@ -129,6 +149,11 @@ export async function fetchConvexSnapshot(
       }
     }
   }
+
+  // Relation-list rows are derived ordering metadata. A legacy tombstone or a
+  // relation the current owner can no longer read cannot be hydrated safely;
+  // prune only those references after all owned/public streams are complete.
+  pruneUnresolvableRelationPositions(snapshot);
 
   const parsed = SerializedGraphStoreSchema.safeParse(snapshot);
   if (!parsed.success) throw new Error("Convex graph snapshot did not match the NodeBook graph contract");

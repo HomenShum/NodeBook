@@ -310,6 +310,19 @@ export function digest(value: unknown) {
   return createHash("sha256").update(canonicalJson(value)).digest("hex");
 }
 
+function semanticToolCallDigest(decision: ToolDecision) {
+  return digest({
+    tool: decision.tool,
+    query: decision.query,
+    nodeId: decision.nodeId,
+    workflow: decision.workflow,
+  });
+}
+
+export function modelQualitySucceeded(steps: AgentStep[]) {
+  return !steps.some((step) => step.tool === "checkpoint" && step.status === "failed");
+}
+
 export function sourceBindingDigest(node: {
   sourceId?: string;
   id?: string;
@@ -1055,7 +1068,9 @@ export async function executeWorkflowAgent(
         break;
       }
       const decision = enforceLegacyWorkflowStage(parsedDecision, args, context, investigation);
-      const callDigest = digest(decision);
+      // Rationale is presentation, not tool identity. A degraded planner can
+      // paraphrase the same call on every turn; execute that semantic call once.
+      const callDigest = semanticToolCallDigest(decision);
       if (seenCalls.has(callDigest)) {
         const repeatedAt = now().toISOString();
         emitStep(makeStep(steps.length + 1, "checkpoint", "failed", decision, { reason: "repeated_tool_call" }, "Stopped a repeated tool call at the bounded checkpoint.", toolStartedAt, repeatedAt));
