@@ -6,6 +6,7 @@ function node(sourceId: string, contentText = sourceId): MemoryProjectionNode {
 
 const memory = {
   memoryId: "run:research-1",
+  traceId: "research-1",
   taskClass: "research",
   summary: "Compared launch evidence across the reviewed notebook.",
   query: "Compare the launch evidence I already captured.",

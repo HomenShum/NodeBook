@@ -472,7 +472,7 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
           </div>})}
         </section>}
         {state.receipt && <dl className={styles.receipt} data-testid="agent-receipt">
-          <div><dt>Run</dt><dd>{state.receipt.runId}</dd></div>
+          <div><dt>Trace</dt><dd>{state.receipt.traceId}</dd></div>
           <div><dt>Status</dt><dd>{state.proposal?.status ?? state.receipt.status}</dd></div>
           <div><dt>Provider</dt><dd>{state.receipt.provider}</dd></div>
           <div><dt>Model</dt><dd>{state.receipt.model}</dd></div>

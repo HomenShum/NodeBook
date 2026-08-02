@@ -69,6 +69,7 @@ describe("NodeAgent runtime verification disclosure", () => {
   test("a returning owner retrying one failed case sees one-of-one progress instead of an impossible suite count", async () => {
     const failedReceipt = {
       evalId: "eval-one-failed",
+      traceId: "trace-one-failed",
       suiteId: "suite-current",
       caseId: "one",
       benchmarkVersion: "runtime-v1",

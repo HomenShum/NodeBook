@@ -47,6 +47,7 @@ function result(
   return {
     run: {
       runId,
+      traceId: runId,
       status,
       provider,
       model: "free-eval-model",
@@ -89,13 +90,20 @@ function result(
 }
 
 describe("NodeAgent typed memory", () => {
-  test("a production-shaped Ask receipt persists its exact reviewed source binding", async () => {
+  test("a production-shaped Ask receipt persists one trace spine with its exact reviewed source binding", async () => {
     const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-bindings` });
     await session.mutation(recordResult, result("binding-1", "completed", "ask"));
-    const stored = await session.run(async (ctx) => ctx.db.query("agentRuns").first());
-    expect(stored?.sourceBindings).toEqual([
+    const stored = await session.run(async (ctx) => ({
+      run: await ctx.db.query("agentRuns").first(),
+      steps: await ctx.db.query("agentSteps").collect(),
+      memory: await ctx.db.query("agentMemories").first(),
+    }));
+    expect(stored.run?.sourceBindings).toEqual([
       { sourceId: "evidence-1", version: 3, digest: "b".repeat(64) },
     ]);
+    expect(stored.run?.traceId).toBe("binding-1");
+    expect(stored.steps.map((step) => step.traceId)).toEqual(["binding-1", "binding-1"]);
+    expect(stored.memory?.traceId).toBe("binding-1");
   });
 
   test("an adversarial receipt cannot persist more than 200 source bindings", async () => {
@@ -107,6 +115,13 @@ describe("NodeAgent typed memory", () => {
       digest: index.toString(16).padStart(64, "0"),
     }));
     await expect(session.mutation(recordResult, oversized)).rejects.toThrow("SOURCE_BINDING_LIMIT_EXCEEDED");
+  });
+
+  test("an adversarial caller cannot split one run across a different trace identity", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-trace-mismatch` });
+    const mismatched = result("trace-run", "completed", "ask");
+    mismatched.run.traceId = "different-trace";
+    await expect(session.mutation(recordResult, mismatched)).rejects.toThrow("TRACE_ID_RUN_ID_MISMATCH");
   });
 
   test("an applied and a failed research run produce an honest 50% pattern instead of a hardcoded success floor", async () => {
@@ -400,6 +415,7 @@ describe("NodeAgent durable runtime evaluation receipts", () => {
   const evaluation = (index: number): { evaluation: any } => ({
     evaluation: {
       evalId: `eval-${index}`,
+      traceId: `trace-${index}`,
       suiteId: "suite-retention",
       caseId: "nodeagent-prompt-injection-boundary",
       benchmarkVersion: "nodeagent-notion-runtime-v1",
@@ -432,7 +448,7 @@ describe("NodeAgent durable runtime evaluation receipts", () => {
     expect(await session.mutation(recordRuntimeEvaluation, failed)).toEqual({ replayed: true, evalId: "eval-1" });
     const rows = await session.query(recentRuntimeEvaluations, { limit: 20 });
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ passed: false, disposition: "execution_failed", reasons: ["checkpoint validation failed"] });
+    expect(rows[0]).toMatchObject({ traceId: "trace-1", passed: false, disposition: "execution_failed", reasons: ["checkpoint validation failed"] });
 
     const other = convexTest(schema, modules).withIdentity({ subject: `${owner}-different` });
     expect(await other.query(recentRuntimeEvaluations, { limit: 20 })).toEqual([]);

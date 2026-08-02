@@ -30,6 +30,7 @@ export type AgentStep = {
 
 export type AgentReceipt = {
   runId: string;
+  traceId: string;
   status: "completed" | "proposed";
   provider: "openai" | "openrouter" | "nodebook";
   model: string;
@@ -49,6 +50,7 @@ export type AgentReceipt = {
 
 export type AgentMemory = {
   memoryId: string;
+  traceId: string;
   taskClass: string;
   summary: string;
   query: string;

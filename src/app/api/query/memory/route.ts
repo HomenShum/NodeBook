@@ -95,6 +95,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
     await convex.mutation(recordAgentWorkflowReference, {
       run: {
         runId,
+        traceId: runId,
         status: "proposed",
         provider: "nodebook",
         model: "deterministic-memory-projection-v1",
@@ -141,6 +142,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       proposal: { id: proposalId, digest: proposalDigest, status: "pending" },
       receipt: {
         runId,
+        traceId: runId,
         status: "proposed",
         provider: "nodebook",
         model: "deterministic-memory-projection-v1",

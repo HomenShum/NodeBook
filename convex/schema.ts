@@ -164,6 +164,7 @@ export default defineSchema({
   agentRuns: defineTable({
     ownerId: v.string(),
     runId: v.string(),
+    traceId: v.optional(v.string()),
     status: v.union(
       v.literal("completed"),
       v.literal("failed"),
@@ -200,6 +201,7 @@ export default defineSchema({
   agentProposals: defineTable({
     ownerId: v.string(),
     runId: v.string(),
+    traceId: v.optional(v.string()),
     proposalId: v.string(),
     proposalDigest: v.string(),
     status: v.union(
@@ -233,6 +235,7 @@ export default defineSchema({
     ownerId: v.string(),
     memoryId: v.string(),
     runId: v.string(),
+    traceId: v.optional(v.string()),
     taskClass: v.string(),
     summary: v.string(),
     query: v.string(),
@@ -292,6 +295,7 @@ export default defineSchema({
   agentRuntimeEvaluations: defineTable({
     ownerId: v.string(),
     evalId: v.string(),
+    traceId: v.optional(v.string()),
     suiteId: v.optional(v.string()),
     caseId: v.string(),
     benchmarkVersion: v.string(),
@@ -319,6 +323,7 @@ export default defineSchema({
   agentSteps: defineTable({
     ownerId: v.string(),
     runId: v.string(),
+    traceId: v.optional(v.string()),
     sequence: v.number(),
     tool: v.string(),
     status: v.union(v.literal("completed"), v.literal("failed"), v.literal("repaired")),

@@ -42,7 +42,7 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 | Retrieval | Owner-scoped lexical + graph-neighbor expansion + exact node/version digests | Context packs and JIT world-model assembly | Wrap NodeBook retrieval results in a versioned context-pack receipt |
 | Mutation | Typed graph operations, deterministic checkpoint digest, inverse updates, whole-run undo | `RoomTools` port returns conflicts as model-readable data | Define a `NotebookTools` port over the existing GraphStore/Convex operations; never bypass it |
 | Reliability | Bounded context, tools, operations, response bodies, memories, and model candidates | Deadlines, reserve budget, compaction, spend ceiling, exactly-once journal | Adopt deadline/spend/journal before increasing tool-loop depth |
-| Traceability | Durable run/step/checkpoint receipts and exact citations | One `traceId` links every durable artifact and eval | Treat NodeBook `runId` as canonical `traceId` and propagate it explicitly to memory/eval projections |
+| Traceability | Durable run/step/checkpoint receipts and exact citations | One `traceId` links every durable artifact and eval | **Implemented 2026-08-02:** NodeBook `runId` is the canonical `traceId` across new run, step, checkpoint, memory, runtime-eval, API, and UI receipts; historical rows use a non-destructive fallback. |
 | Memory | Typed, owner-scoped, bounded records with pin/forget and visible graph projection | Evidence/failure memory with invalidation and context assembly | Add freshness/invalidation metadata; keep user-visible controls |
 | Evaluation | Notion parity corpus plus automatic free-model promotion | Locked certification vs exploratory scenario generation | Split NodeBook evals into immutable parity certification and editable discovery cases |
 | Model routing | Hourly catalog-change detection, strict 6/6 Notion promotion, failure rerun, fail-closed paid fallback | Cost ledger, frontier observations, official-vs-shadow distinction | Add cost/frontier receipts to NodeBook; reuse NodeBook's small router in NodeRoom |
@@ -53,7 +53,7 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 ## NodeBook adoption order
 
 1. **Sole-engine gate (implemented):** `executeWorkflowAgent` is the only NodeAgent entrypoint; a source-scanning CI test fails if a second engine class/provider route appears or an unauthorized caller is added. Only the production route and locked eval harness may call it.
-2. **Trace spine:** make `runId` the documented `traceId` across run, step, checkpoint, memory, model evaluation, UI citation, and exported evidence.
+2. **Trace spine (implemented):** `runId` is the canonical `traceId` across run, step, checkpoint, memory, runtime evaluation, API/UI citation, and exported evidence. Convex rejects a mismatched pair; historical rows remain readable through `traceId ?? runId`.
 3. **Exactly-once journal:** persist model/tool step keys before supporting resumable or longer runs. A retry must replay a completed receipt instead of rebilling or duplicating writes.
 4. **NotebookTools boundary:** isolate reads, source validation, checkpoint claim, graph writes, receipts, and undo behind one typed port that returns conflicts as data.
 5. **Deadline and spend budget:** reserve persistence time before the platform timeout; stop with an honest resumable receipt instead of losing the run.

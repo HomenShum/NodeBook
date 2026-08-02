@@ -106,6 +106,7 @@ async function recordTerminalMemory(
   ownerId: string,
   run: {
     runId: string;
+    traceId?: string;
     query: string;
     summary?: string;
     sourceNodeIds: string[];
@@ -151,6 +152,7 @@ async function recordTerminalMemory(
     ownerId,
     memoryId: `run:${run.runId}`,
     runId: run.runId,
+    traceId: run.traceId ?? run.runId,
     taskClass,
     summary: (run.summary || `${outcome}: ${run.query}`).slice(0, 2_000),
     query: run.query.slice(0, 2_000),
@@ -196,6 +198,7 @@ async function recordTerminalMemory(
 
 const runArgs = {
   runId: v.string(),
+  traceId: v.optional(v.string()),
   status: runStatus,
   provider: v.union(v.literal("openai"), v.literal("openrouter"), v.literal("nodebook")),
   model: v.string(),
@@ -275,6 +278,8 @@ export const recordResult = mutation({
   },
   handler: async (ctx, args) => {
     const ownerId = await authenticatedOwner(ctx);
+    const traceId = args.run.traceId ?? args.run.runId;
+    if (traceId !== args.run.runId) throw new Error("TRACE_ID_RUN_ID_MISMATCH");
     if (args.steps.length > MAX_AGENT_STEPS_PER_RUN) throw new Error("AGENT_STEP_LIMIT_EXCEEDED");
     const sourceBindings = args.run.sourceBindings ?? [];
     if (sourceBindings.length > MAX_SOURCE_BINDINGS) throw new Error("SOURCE_BINDING_LIMIT_EXCEEDED");
@@ -295,12 +300,12 @@ export const recordResult = mutation({
       .unique();
     if (existing) return { replayed: true, runId: existing.runId };
 
-    await ctx.db.insert("agentRuns", { ownerId, ...args.run });
+    await ctx.db.insert("agentRuns", { ownerId, ...args.run, traceId });
     if (args.proposal) {
-      await ctx.db.insert("agentProposals", { ownerId, runId: args.run.runId, ...args.proposal });
+      await ctx.db.insert("agentProposals", { ownerId, runId: args.run.runId, traceId, ...args.proposal });
     }
     for (const step of args.steps) {
-      await ctx.db.insert("agentSteps", { ownerId, runId: args.run.runId, ...step });
+      await ctx.db.insert("agentSteps", { ownerId, runId: args.run.runId, traceId, ...step });
     }
     if (!args.proposal && args.run.status === "completed" && args.run.memoryEligible !== false) {
       await recordTerminalMemory(ctx, ownerId, args.run, "success");
@@ -312,6 +317,7 @@ export const recordResult = mutation({
 
 const runtimeEvaluationArgs = {
   evalId: v.string(),
+  traceId: v.string(),
   suiteId: v.optional(v.string()),
   caseId: v.string(),
   benchmarkVersion: v.string(),
@@ -339,7 +345,7 @@ export const recordRuntimeEvaluation = mutation({
   handler: async (ctx, args) => {
     const ownerId = await authenticatedOwner(ctx);
     const value = args.evaluation;
-    if (value.evalId.length > 100 || (value.suiteId?.length ?? 0) > 100 || value.caseId.length > 100 || value.benchmarkVersion.length > 100 || value.model.length > 200) throw new Error("RUNTIME_EVAL_STRING_LIMIT_EXCEEDED");
+    if (value.evalId.length > 100 || value.traceId.length > 100 || (value.suiteId?.length ?? 0) > 100 || value.caseId.length > 100 || value.benchmarkVersion.length > 100 || value.model.length > 200) throw new Error("RUNTIME_EVAL_STRING_LIMIT_EXCEEDED");
     if (value.reasons.length > 20 || value.toolOrder.length > 20 || value.operationKinds.length > 30 || value.selectedNodeIds.length > 200 || value.sourceBindings.length > MAX_SOURCE_BINDINGS) throw new Error("RUNTIME_EVAL_COLLECTION_LIMIT_EXCEEDED");
     if (new Set(value.sourceBindings.map((binding) => binding.sourceId)).size !== value.sourceBindings.length) throw new Error("RUNTIME_EVAL_BINDING_DUPLICATE");
     if (value.reasons.some((reason) => reason.length > 1_000) || value.toolOrder.some((tool) => tool.length > 100) || value.operationKinds.some((kind) => kind.length > 100) || value.selectedNodeIds.some((id) => id.length > 200)) throw new Error("RUNTIME_EVAL_ITEM_LIMIT_EXCEEDED");
@@ -420,6 +426,7 @@ export const memoryContext = query({
       .slice(0, limit)
       .map((memory) => ({
         memoryId: memory.memoryId,
+        traceId: memory.traceId ?? memory.runId,
         taskClass: memory.taskClass,
         summary: memory.summary,
         toolSequence: memory.toolSequence,
@@ -461,6 +468,7 @@ export const memoryDetail = query({
     if (!memory) return null;
     return {
       memoryId: memory.memoryId,
+      traceId: memory.traceId ?? memory.runId,
       taskClass: memory.taskClass,
       summary: memory.summary,
       query: memory.query,

@@ -18,6 +18,7 @@ const cases: RuntimeEvalCase[] = [
 function receipt(caseId: string, passed = true, suiteId = "suite-current"): RuntimeEvalReceipt {
   return {
     evalId: `eval-${caseId}-${passed}`,
+    traceId: `trace-${caseId}-${passed}`,
     suiteId,
     caseId,
     benchmarkVersion: "runtime-v1",

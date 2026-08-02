@@ -38,6 +38,7 @@ export const GET = withAuth(async (request: NextAuthenticatedRequest) => {
       },
       evaluations: evaluations.map((evaluation: any) => ({
         evalId: evaluation.evalId,
+        traceId: evaluation.traceId ?? evaluation.evalId,
         suiteId: evaluation.suiteId ?? null,
         caseId: evaluation.caseId,
         benchmarkVersion: evaluation.benchmarkVersion,
@@ -98,6 +99,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       observedUsage.push(response.usage);
       return response;
     };
+    const traceId = randomUUID();
     let result;
     try {
       result = await executeWorkflowAgent({
@@ -110,7 +112,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         memoryContext: { memories: [], patterns: [] },
       }, {
         model,
-        runId: randomUUID,
+        runId: () => traceId,
         proposalId: randomUUID,
         runProvider,
         runToolPlanner: async (plannerArgs) => {
@@ -132,6 +134,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       await convex.mutation(recordAgentRuntimeEvaluationReference, {
         evaluation: {
           evalId,
+          traceId,
           suiteId: parsed.data.suiteId,
           caseId: testCase.caseId,
           benchmarkVersion: LIVE_EVAL_VERSION,
@@ -156,7 +159,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       return NextResponse.json({
         status: "failed",
         caseId: testCase.caseId,
-        receipt: { evalId, suiteId: parsed.data.suiteId ?? null, caseId: testCase.caseId, benchmarkVersion: LIVE_EVAL_VERSION, provider, model: observedModel, passed: false, reasons, toolOrder: [], operationKinds: [], disposition: "execution_failed", selectedNodeIds: [], sourceBindings: [], proposalDigest: null, usage, latencyMs: completedAtMs - startedAtMs, startedAtMs, completedAtMs, persisted: true, graphMutated: false },
+        receipt: { evalId, traceId, suiteId: parsed.data.suiteId ?? null, caseId: testCase.caseId, benchmarkVersion: LIVE_EVAL_VERSION, provider, model: observedModel, passed: false, reasons, toolOrder: [], operationKinds: [], disposition: "execution_failed", selectedNodeIds: [], sourceBindings: [], proposalDigest: null, usage, latencyMs: completedAtMs - startedAtMs, startedAtMs, completedAtMs, persisted: true, graphMutated: false },
       }, { status: 422 });
     }
     const score = scoreLiveEval(testCase, result);
@@ -165,6 +168,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
     await convex.mutation(recordAgentRuntimeEvaluationReference, {
       evaluation: {
         evalId,
+        traceId,
         suiteId: parsed.data.suiteId,
         caseId: testCase.caseId,
         benchmarkVersion: LIVE_EVAL_VERSION,
@@ -190,7 +194,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
     return NextResponse.json({
       status: score.passed ? "passed" : "failed",
       caseId: testCase.caseId,
-      receipt: { evalId, suiteId: parsed.data.suiteId ?? null, caseId: testCase.caseId, benchmarkVersion: LIVE_EVAL_VERSION, provider, model: result.modelUsed, ...score, disposition: result.executionDisposition, selectedNodeIds: result.sourceNodeIds, sourceBindings: result.sourceBindings, proposalDigest: result.proposalDigest, usage: result.usage, latencyMs: completedAtMs - startedAtMs, startedAtMs, completedAtMs, persisted: true, graphMutated: false },
+      receipt: { evalId, traceId, suiteId: parsed.data.suiteId ?? null, caseId: testCase.caseId, benchmarkVersion: LIVE_EVAL_VERSION, provider, model: result.modelUsed, ...score, disposition: result.executionDisposition, selectedNodeIds: result.sourceNodeIds, sourceBindings: result.sourceBindings, proposalDigest: result.proposalDigest, usage: result.usage, latencyMs: completedAtMs - startedAtMs, startedAtMs, completedAtMs, persisted: true, graphMutated: false },
     }, { status: score.passed ? 200 : 422 });
   } catch (error) {
     console.error("NodeAgent live evaluation failed", error);

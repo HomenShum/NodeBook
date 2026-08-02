@@ -140,7 +140,7 @@ export default function RuntimeVerification() {
           return <div className={styles.runtimeCase} key={testCase.caseId}>
             <span>{receipt ? receipt.passed ? <Check size={13} /> : <AlertTriangle size={13} /> : <span className={styles.runtimeCaseEmpty} />}{testCase.title}</span>
             <strong>{receipt ? receipt.passed ? "PASS" : "FAIL" : "Not run"}</strong>
-            {receipt && <small>{receipt.disposition} / {receipt.latencyMs.toLocaleString()} ms / {receipt.evalId}<br />{receipt.reasons.join(" ") || "All locked assertions passed."}</small>}
+            {receipt && <small>{receipt.disposition} / {receipt.latencyMs.toLocaleString()} ms / trace {receipt.traceId}<br />{receipt.reasons.join(" ") || "All locked assertions passed."}</small>}
           </div>;
         })}
       </div>}

@@ -92,6 +92,7 @@ export const recordAgentRunReference = makeFunctionReference<
   "mutation",
   {
     runId: string;
+    traceId?: string;
     status: "completed" | "failed";
     provider: "openai" | "openrouter";
     model: string;
@@ -160,6 +161,7 @@ export const agentMemoryContextReference = makeFunctionReference<
   {
     memories: Array<{
       memoryId: string;
+      traceId: string;
       taskClass: string;
       summary: string;
       toolSequence: string[];
@@ -186,6 +188,7 @@ export const agentMemoryDetailReference = makeFunctionReference<
   { memoryId: string },
   {
     memoryId: string;
+    traceId: string;
     taskClass: string;
     summary: string;
     query: string;

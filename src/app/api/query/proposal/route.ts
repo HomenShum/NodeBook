@@ -68,6 +68,7 @@ function publicProposal(record: any) {
     steps: record.steps,
     receipt: {
       runId: record.proposal.runId,
+      traceId: record.proposal.traceId ?? record.proposal.runId,
       status: "proposed",
       provider: record.run?.provider ?? "openai",
       model: record.run?.model ?? "unknown",

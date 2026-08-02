@@ -194,6 +194,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       await convex.mutation(recordAgentWorkflowReference, {
         run: {
           runId: result.runId,
+          traceId: result.runId,
           status: hasProposal ? "proposed" : "completed",
           provider: selectedProvider,
           model: result.modelUsed,
@@ -248,6 +249,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         steps: result.steps,
         receipt: {
           runId: result.runId,
+          traceId: result.runId,
           status: hasProposal ? "proposed" : "completed",
           provider: selectedProvider,
           model: result.modelUsed,
@@ -271,6 +273,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         await convex.mutation(recordAgentWorkflowReference, {
           run: {
             runId,
+            traceId: runId,
             status: "failed",
             provider: selectedProvider,
             model: selectedModel,

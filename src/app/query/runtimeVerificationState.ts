@@ -2,6 +2,7 @@ export type RuntimeEvalCase = { caseId: string; title: string };
 
 export type RuntimeEvalReceipt = {
   evalId: string;
+  traceId: string;
   suiteId: string | null;
   caseId: string;
   benchmarkVersion: string;
