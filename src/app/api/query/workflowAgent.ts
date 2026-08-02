@@ -43,6 +43,33 @@ const ModelResultSchema = z.object({
 });
 type ModelResult = z.infer<typeof ModelResultSchema>;
 
+function normalizeModelResultText(value: unknown) {
+  if (!value || typeof value !== "object") return value;
+  const candidate = value as Record<string, unknown>;
+  return {
+    ...candidate,
+    understanding: typeof candidate.understanding === "string" ? candidate.understanding.slice(0, 2_000) : candidate.understanding,
+    plan: Array.isArray(candidate.plan)
+      ? candidate.plan.map((item) => typeof item === "string" ? item.slice(0, 500) : item)
+      : candidate.plan,
+    response: typeof candidate.response === "string" ? candidate.response.slice(0, 20_000) : candidate.response,
+    finishSummary: typeof candidate.finishSummary === "string" ? candidate.finishSummary.slice(0, 2_000) : candidate.finishSummary,
+    selectedNodeIds: Array.isArray(candidate.selectedNodeIds)
+      ? candidate.selectedNodeIds.map((item) => typeof item === "string" ? item.slice(0, 200) : item)
+      : candidate.selectedNodeIds,
+    operations: Array.isArray(candidate.operations)
+      ? candidate.operations.map((item) => item && typeof item === "object"
+        ? {
+            ...(item as Record<string, unknown>),
+            reason: typeof (item as Record<string, unknown>).reason === "string"
+              ? ((item as Record<string, unknown>).reason as string).slice(0, 500)
+              : (item as Record<string, unknown>).reason,
+          }
+        : item)
+      : candidate.operations,
+  };
+}
+
 function flattenStructuredNodeContent(value: string | null) {
   if (!value) return value;
   if (value.length > 10_000) return value;
@@ -416,11 +443,11 @@ const RESULT_JSON_SCHEMA = {
   additionalProperties: false,
   required: ["understanding", "plan", "response", "finishSummary", "selectedNodeIds", "operations"],
   properties: {
-    understanding: { type: "string" },
-    plan: { type: "array", minItems: 1, maxItems: 20, items: { type: "string" } },
-    response: { type: "string" },
-    finishSummary: { type: "string" },
-    selectedNodeIds: { type: "array", maxItems: 200, items: { type: "string" } },
+    understanding: { type: "string", maxLength: 2_000 },
+    plan: { type: "array", minItems: 1, maxItems: 20, items: { type: "string", maxLength: 500 } },
+    response: { type: "string", maxLength: 20_000 },
+    finishSummary: { type: "string", maxLength: 2_000 },
+    selectedNodeIds: { type: "array", maxItems: 200, items: { type: "string", maxLength: 200 } },
     operations: {
       type: "array",
       maxItems: 30,
@@ -461,7 +488,7 @@ const RESULT_JSON_SCHEMA = {
           tempId: { type: ["string", "null"] },
           content: { type: ["string", "null"] },
           newContent: { type: ["string", "null"] },
-          reason: { type: "string" },
+          reason: { type: "string", maxLength: 500 },
         },
       },
     },
@@ -587,7 +614,7 @@ export async function executeWorkflowAgent(
     // primary + one bounded repair must still fit inside the 60s route budget.
     timeoutMs: args.mode === "ask" ? 24_000 : 28_000,
   });
-  let parsed = normalizeOperationContent(ModelResultSchema.parse(provider.result));
+  let parsed = normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(provider.result)));
   let errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
   let providerFinishedAt = now().toISOString();
   steps.push(makeStep(
@@ -611,7 +638,7 @@ export async function executeWorkflowAgent(
       webResearch: false,
       timeoutMs: 8_000,
     });
-    parsed = normalizeOperationContent(ModelResultSchema.parse(repair.result));
+    parsed = normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(repair.result)));
     errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
     const repairFinishedAt = now().toISOString();
     steps.push(makeStep(

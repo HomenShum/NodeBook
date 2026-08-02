@@ -258,6 +258,24 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.steps.at(-1)).toEqual(expect.objectContaining({ tool: "finish_work", status: "completed" }));
   });
 
+  test("an overlong final plan item is bounded without turning a valid checkpoint into a generic failure", async () => {
+    const result = await executeWorkflowAgent(
+      { query: "Prepare a bounded plan", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes: [node] },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({
+          result: { ...baseResult, plan: ["Review evidence", "Explain the boundary. ".repeat(40)] },
+          sources: [],
+          usage,
+        }),
+        runId: () => "run-long-plan-item",
+      },
+    );
+
+    expect(result.plan[1]).toHaveLength(500);
+    expect(result.steps.at(-1)).toEqual(expect.objectContaining({ tool: "finish_work", status: "completed" }));
+  });
+
   test("a model that fabricates a citation ID is repaired to exact reviewed evidence", async () => {
     const provider = jest
       .fn()
