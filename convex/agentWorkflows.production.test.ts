@@ -39,6 +39,7 @@ function result(runId: string, status: "completed" | "proposed", mode: "ask" | "
       mode,
       query: "Research launch evidence",
       sourceNodeIds: ["evidence-1"],
+      sourceBindings: [{ sourceId: "evidence-1", version: 3, digest: "b".repeat(64) }],
       sourceUrls: [],
       proposalId: proposal ? `proposal-${runId}` : undefined,
       summary: `Completed ${runId}`,
@@ -73,6 +74,26 @@ function result(runId: string, status: "completed" | "proposed", mode: "ask" | "
 }
 
 describe("NodeAgent typed memory", () => {
+  test("a production-shaped Ask receipt persists its exact reviewed source binding", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-bindings` });
+    await session.mutation(recordResult, result("binding-1", "completed", "ask"));
+    const stored = await session.run(async (ctx) => ctx.db.query("agentRuns").first());
+    expect(stored?.sourceBindings).toEqual([
+      { sourceId: "evidence-1", version: 3, digest: "b".repeat(64) },
+    ]);
+  });
+
+  test("an adversarial receipt cannot persist more than 200 source bindings", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-binding-bound` });
+    const oversized = result("binding-oversized", "completed", "ask");
+    oversized.run.sourceBindings = Array.from({ length: 201 }, (_, index) => ({
+      sourceId: `source-${index}`,
+      version: 1,
+      digest: index.toString(16).padStart(64, "0"),
+    }));
+    await expect(session.mutation(recordResult, oversized)).rejects.toThrow("SOURCE_BINDING_LIMIT_EXCEEDED");
+  });
+
   test("an applied and a failed research run produce an honest 50% pattern instead of a hardcoded success floor", async () => {
     const session = convexTest(schema, modules).withIdentity({ subject: owner });
     await session.mutation(recordResult, result("1", "proposed", "agent", true));

@@ -15,6 +15,7 @@ const MAX_PINNED_MEMORIES = 20;
 const MAX_RETRIEVAL_CANDIDATES = 200;
 const MAX_RETRIEVAL_RELATIONS = 1_000;
 const MAX_RETRIEVAL_TOKENS = 24;
+const MAX_SOURCE_BINDINGS = 200;
 
 function retrievalTokens(value: string) {
   return [...new Set(value
@@ -199,6 +200,11 @@ const runArgs = {
   mode: v.union(v.literal("ask"), workflowMode),
   query: v.string(),
   sourceNodeIds: v.array(v.string()),
+  sourceBindings: v.optional(v.array(v.object({
+    sourceId: v.string(),
+    version: v.number(),
+    digest: v.string(),
+  }))),
   sourceUrls: v.array(v.string()),
   proposalId: v.optional(v.string()),
   summary: v.string(),
@@ -267,6 +273,16 @@ export const recordResult = mutation({
   handler: async (ctx, args) => {
     const ownerId = await authenticatedOwner(ctx);
     if (args.steps.length > MAX_AGENT_STEPS_PER_RUN) throw new Error("AGENT_STEP_LIMIT_EXCEEDED");
+    const sourceBindings = args.run.sourceBindings ?? [];
+    if (sourceBindings.length > MAX_SOURCE_BINDINGS) throw new Error("SOURCE_BINDING_LIMIT_EXCEEDED");
+    if (new Set(sourceBindings.map((binding) => binding.sourceId)).size !== sourceBindings.length) {
+      throw new Error("SOURCE_BINDING_DUPLICATE");
+    }
+    if (sourceBindings.some((binding) => !Number.isInteger(binding.version)
+      || binding.version < 0
+      || !/^[a-f0-9]{64}$/i.test(binding.digest))) {
+      throw new Error("SOURCE_BINDING_INVALID");
+    }
     if (args.proposal && args.run.proposalId !== args.proposal.proposalId) {
       throw new Error("PROPOSAL_ID_MISMATCH");
     }

@@ -168,6 +168,11 @@ export default defineSchema({
     mode: v.union(v.literal("read-only"), v.literal("ask"), v.literal("agent"), v.literal("organize")),
     query: v.string(),
     sourceNodeIds: v.array(v.string()),
+    sourceBindings: v.optional(v.array(v.object({
+      sourceId: v.string(),
+      version: v.number(),
+      digest: v.string(),
+    }))),
     sourceUrls: v.optional(v.array(v.string())),
     proposalId: v.optional(v.string()),
     summary: v.optional(v.string()),

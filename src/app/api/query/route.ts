@@ -278,6 +278,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         startedAt: result.startedAt,
         completedAt: result.completedAt,
         sourceNodeIds: result.sourceNodeIds,
+        sourceBindings: result.sourceBindings,
         sourceUrls: result.sourceUrls,
         usage: result.usage,
         persisted: true,
