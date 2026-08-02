@@ -607,6 +607,7 @@ export const RelatedObjectMenu = observer(function RelatedObjectMenu({ setUpdati
     <DropdownMenu open={menuOpen} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger
         ref={triggerRef}
+        aria-label={`Actions for node ${treeNode.object.id}`}
         className={cn(styles.TrailMenuTrigger, menuOpen && styles.TrailMenuTriggerVisible)}
       >
         <Ellipsis size={16} className={styles.TrailMenuIcon} />

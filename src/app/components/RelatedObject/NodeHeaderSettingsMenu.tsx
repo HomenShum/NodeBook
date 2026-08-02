@@ -45,7 +45,10 @@ export const NodeHeaderSettingsMenu = observer(function NodeHeaderSettingsMenu({
     <div className={styles.MenuTrigger}>
       <div className={styles.MenuIcon}>
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-          <DropdownMenuTrigger className={cn(styles.MenuTrigger, menuOpen && styles.MenuTriggerVisible)}>
+          <DropdownMenuTrigger
+            aria-label={`Node actions for ${treeNode.object.id}`}
+            className={cn(styles.MenuTrigger, menuOpen && styles.MenuTriggerVisible)}
+          >
             <Ellipsis size={16} className={styles.MenuIcon} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" alignOffset={-5} onCloseAutoFocus={(e) => e.preventDefault()}>
