@@ -5,7 +5,10 @@ describe("NodeAgent durable execution-failure evidence", () => {
     const crossRealmLikeError = { message: "Agent checkpoint failed validation: create_node requires tempId, parentId, and content." };
     expect(boundedExecutionFailureReason(crossRealmLikeError)).toBe(crossRealmLikeError.message);
     expect(boundedExecutionFailureReason({ message: "x".repeat(1_500) })).toHaveLength(1_000);
-    expect(boundedExecutionFailureReason("opaque failure")).toBe("NodeAgent execution failed");
+    expect(boundedExecutionFailureReason("Agent checkpoint failed validation: string-shaped failure.")).toBe("Agent checkpoint failed validation: string-shaped failure.");
+    expect(boundedExecutionFailureReason({ error: { message: "Nested runtime failure" } })).toBe("Nested runtime failure");
+    expect(boundedExecutionFailureReason({ cause: "Nested string failure" })).toBe("Nested string failure");
+    expect(boundedExecutionFailureReason(42)).toBe("NodeAgent execution failed");
   });
 
   test("a multi-step failed run reports usage only when every observed provider response reports it", () => {

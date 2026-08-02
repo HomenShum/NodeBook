@@ -31,6 +31,7 @@ export default function RuntimeVerification() {
   const [suiteId, setSuiteId] = useState<string | null>(null);
   const [receipts, setReceipts] = useState<RuntimeEvalReceipt[]>([]);
   const [currentCase, setCurrentCase] = useState<RuntimeEvalCase | null>(null);
+  const [runProgress, setRunProgress] = useState<{ current: number; total: number } | null>(null);
   const [isRunning, setIsRunning] = useState(false);
   const [stopped, setStopped] = useState(false);
   const [error, setError] = useState("");
@@ -78,6 +79,7 @@ export default function RuntimeVerification() {
     setIsRunning(true);
     setStopped(false);
     setError("");
+    setRunProgress({ current: 1, total: cases.length });
     stopAfterCurrent.current = false;
     try {
       const outcome = await runRuntimeEvalCases({
@@ -85,7 +87,10 @@ export default function RuntimeVerification() {
         suiteId: activeSuiteId,
         fetchCase,
         shouldStop: () => stopAfterCurrent.current,
-        onCaseStart: (testCase) => setCurrentCase(testCase),
+        onCaseStart: (testCase, index) => {
+          setCurrentCase(testCase);
+          setRunProgress({ current: index + 1, total: cases.length });
+        },
         onReceipt: (receipt) => setReceipts((current) => [receipt, ...current.filter((item) => item.caseId !== receipt.caseId)]),
       });
       setStopped(outcome.stopped);
@@ -93,6 +98,7 @@ export default function RuntimeVerification() {
       setError(reason instanceof Error ? reason.message : "Evaluation stopped before a durable receipt");
     } finally {
       setCurrentCase(null);
+      setRunProgress(null);
       setIsRunning(false);
     }
   };
@@ -102,7 +108,7 @@ export default function RuntimeVerification() {
   const retryFailed = () => void runCases(selectFailedCases(history?.cases ?? [], receipts), true);
 
   const label = isRunning
-    ? `Running ${summary.completed + 1} of ${history?.cases.length ?? 6}`
+    ? `Running ${runProgress?.current ?? 1} of ${runProgress?.total ?? 1}`
     : receipts.length === 0
       ? history ? "Not run" : error ? "Unavailable" : "Loading"
       : `${summary.passed}/${history?.cases.length ?? 6} passed`;
@@ -126,7 +132,7 @@ export default function RuntimeVerification() {
       </dl>}
       {error && <div className={styles.runtimeError} role="alert"><AlertTriangle size={14} /><div><strong>Verification stopped</strong><p>{error}</p></div></div>}
       {isRunning && currentCase && <div className={styles.runtimeCurrent} data-testid="runtime-eval-running">
-        <Loader2 className={styles.loadingIcon} size={14} /><span><strong>{summary.completed + 1} of {history?.cases.length}</strong>{currentCase.title}</span>
+        <Loader2 className={styles.loadingIcon} size={14} /><span><strong>{runProgress?.current ?? 1} of {runProgress?.total ?? 1}</strong>{currentCase.title}</span>
       </div>}
       {history && <div className={styles.runtimeCases} data-testid="runtime-eval-cases">
         {history.cases.map((testCase) => {

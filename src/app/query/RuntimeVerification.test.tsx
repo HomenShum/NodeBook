@@ -65,4 +65,40 @@ describe("NodeAgent runtime verification disclosure", () => {
     expect(details?.open).toBe(false);
     expect(container.querySelector('[data-testid="mock-runtime-map"]')).toBeNull();
   });
+
+  test("a returning owner retrying one failed case sees one-of-one progress instead of an impossible suite count", async () => {
+    const failedReceipt = {
+      evalId: "eval-one-failed",
+      suiteId: "suite-current",
+      caseId: "one",
+      benchmarkVersion: "runtime-v1",
+      provider: "openai" as const,
+      model: "gpt-test",
+      disposition: "execution_failed" as const,
+      passed: false,
+      reasons: ["Agent checkpoint failed validation"],
+      toolOrder: [], operationKinds: [], selectedNodeIds: [], sourceBindings: [], proposalDigest: null,
+      usage: { inputTokens: 10, outputTokens: 5, totalTokens: 15 },
+      latencyMs: 100, startedAtMs: 1, completedAtMs: 101, persisted: true as const, graphMutated: false as const,
+    };
+    let finishRetry!: (value: unknown) => void;
+    mockAuthFetch.mockImplementation((url: string, options?: RequestInit) => {
+      if (!options) return Promise.resolve({ ok: true, status: 200, json: async () => ({ ...history, evaluations: [failedReceipt] }) });
+      return new Promise((resolve) => { finishRetry = resolve; });
+    });
+    await act(async () => {
+      root.render(<RuntimeVerification />);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const retry = [...container.querySelectorAll("button")].find((button) => button.textContent?.includes("Retry failed"));
+    await act(async () => { retry?.click(); });
+    expect(container.querySelector("summary strong")?.textContent).toBe("Running 1 of 1");
+    expect(container.querySelector('[data-testid="runtime-eval-running"] strong')?.textContent).toBe("1 of 1");
+
+    await act(async () => {
+      finishRetry({ ok: true, status: 200, json: async () => ({ receipt: { ...failedReceipt, evalId: "eval-one-passed", passed: true, reasons: [] } }) });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  });
 });
