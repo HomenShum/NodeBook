@@ -10,6 +10,7 @@ import {
   BENCHMARK_MAX_OUTPUT_TOKENS,
   NODEAGENT_PARITY_CASES,
   isCertifiedRoute,
+  modelFailureTransition,
   rankEvaluations,
   scoreParityResult,
   selectFreeCandidates,
@@ -278,6 +279,24 @@ describe("NodeAgent automatic free-model routing", () => {
   test("a verbose free model gets the live planner's bounded structured-output budget", () => {
     expect(BENCHMARK_MAX_OUTPUT_TOKENS).toBe(400);
     expect(BENCHMARK_CASE_TIMEOUT_MS).toBe(20_000);
+  });
+
+  test("a burst of 25 failed runs schedules exactly one benchmark until that run leaves running state", () => {
+    const now = 2 * 60 * 60 * 1_000;
+    let consecutiveFailures = 0;
+    let benchmarkStatus = "ready";
+    let scheduled = 0;
+    for (let index = 0; index < 25; index += 1) {
+      const transition = modelFailureTransition({ success: false, consecutiveFailures, benchmarkStatus, lastBenchmarkedAtMs: 0, now: now + index });
+      consecutiveFailures = transition.consecutiveFailures;
+      if (transition.rerunScheduled) {
+        scheduled += 1;
+        benchmarkStatus = "running";
+      }
+    }
+    expect(consecutiveFailures).toBe(25);
+    expect(scheduled).toBe(1);
+    expect(modelFailureTransition({ success: true, consecutiveFailures, benchmarkStatus, lastBenchmarkedAtMs: 0, now: now + 30 })).toEqual({ consecutiveFailures: 0, rerunScheduled: false });
   });
 });
 

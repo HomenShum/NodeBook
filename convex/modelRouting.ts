@@ -101,6 +101,21 @@ export function isCertifiedRoute(route: {
   );
 }
 
+export function modelFailureTransition(args: {
+  success: boolean;
+  consecutiveFailures: number;
+  benchmarkStatus?: string;
+  lastBenchmarkedAtMs?: number;
+  now: number;
+}) {
+  const consecutiveFailures = args.success ? 0 : args.consecutiveFailures + 1;
+  const rerunScheduled = !args.success
+    && consecutiveFailures >= FAILURE_TRIGGER
+    && args.benchmarkStatus !== "running"
+    && args.now - (args.lastBenchmarkedAtMs ?? 0) >= MIN_RERUN_INTERVAL_MS;
+  return { consecutiveFailures, rerunScheduled };
+}
+
 export const NODEAGENT_PARITY_CASES: ParityCase[] = [
   {
     caseId: "nodeagent-research-container-first",
@@ -281,12 +296,29 @@ export const reportOutcome = mutation({
     await authenticatedOwner(ctx);
     const now = Date.now();
     const route = await ctx.db.query("agentModelRoutes").withIndex("by_route", (q) => q.eq("routeId", ROUTE_ID)).unique();
-    const failures = args.success ? 0 : (route?.consecutiveFailures ?? 0) + 1;
-    if (route) await ctx.db.patch(route._id, { consecutiveFailures: failures, lastFailureAtMs: args.success ? route.lastFailureAtMs : now, updatedAtMs: now });
-    else await ctx.db.insert("agentModelRoutes", { routeId: ROUTE_ID, fallbackModels: [], consecutiveFailures: failures, lastFailureAtMs: args.success ? undefined : now, benchmarkStatus: "never", updatedAtMs: now });
-    const canRerun = failures >= FAILURE_TRIGGER && now - (route?.lastBenchmarkedAtMs ?? 0) >= MIN_RERUN_INTERVAL_MS;
-    if (canRerun) await ctx.scheduler.runAfter(0, benchmarkReference, { reason: "failure_threshold" });
-    return { consecutiveFailures: failures, rerunScheduled: canRerun, reportedModelId: args.modelId };
+    const transition = modelFailureTransition({
+      success: args.success,
+      consecutiveFailures: route?.consecutiveFailures ?? 0,
+      benchmarkStatus: route?.benchmarkStatus,
+      lastBenchmarkedAtMs: route?.lastBenchmarkedAtMs,
+      now,
+    });
+    if (route) await ctx.db.patch(route._id, {
+      consecutiveFailures: transition.consecutiveFailures,
+      lastFailureAtMs: args.success ? route.lastFailureAtMs : now,
+      benchmarkStatus: transition.rerunScheduled ? "running" : route.benchmarkStatus,
+      updatedAtMs: now,
+    });
+    else await ctx.db.insert("agentModelRoutes", {
+      routeId: ROUTE_ID,
+      fallbackModels: [],
+      consecutiveFailures: transition.consecutiveFailures,
+      lastFailureAtMs: args.success ? undefined : now,
+      benchmarkStatus: transition.rerunScheduled ? "running" : "never",
+      updatedAtMs: now,
+    });
+    if (transition.rerunScheduled) await ctx.scheduler.runAfter(0, benchmarkReference, { reason: "failure_threshold" });
+    return { ...transition, reportedModelId: args.modelId };
   },
 });
 
