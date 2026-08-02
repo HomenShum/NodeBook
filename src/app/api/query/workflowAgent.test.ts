@@ -789,7 +789,7 @@ describe("NodeBook durable agent scenarios", () => {
   });
 
   test("a connection request preserves the legacy search-traverse-detail loop and emits a typed explanation relation", async () => {
-    const planner = jest.fn().mockResolvedValue({ result: { tool: "find_nodes", query: "Mamba", nodeId: null, workflow: null, rationale: "Search." }, usage });
+    const planner = jest.fn().mockRejectedValue(new Error("AI provider timed out"));
     const result = await executeWorkflowAgent(
       {
         query: "Find Mamba and State Space Models and link them with an explanation",
@@ -797,8 +797,9 @@ describe("NodeBook durable agent scenarios", () => {
         rootNodeId: "ai-research",
         webResearch: false,
         contextNodes: [
-          { ...node, sourceId: "mamba", contentText: "Mamba architecture", retrievalSignals: ["full_text", "current_node"] },
-          { ...node, sourceId: "ssm", contentText: "State Space Models", retrievalSignals: ["graph_neighbor"] },
+          { ...node, sourceId: "root", contentText: "AI research", retrievalSignals: ["current_node"] },
+          { ...node, sourceId: "ssm", contentText: "State Space Models", retrievalSignals: ["semantic"] },
+          { ...node, sourceId: "mamba", contentText: "Mamba architecture", retrievalSignals: ["full_text"] },
         ],
       },
       {
@@ -817,6 +818,7 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.operations[0]).toMatchObject({ parentId: "mamba", tempId: "connection-explanation" });
     expect(result.operations[1]).toMatchObject({ fromNodeId: "connection-explanation", toNodeId: "ssm", relationType: "relatedTo" });
     expect(result.sourceNodeIds).toEqual(["mamba", "ssm"]);
+    expect(planner).not.toHaveBeenCalled();
   });
 
   test("an investor workflow reuses one reviewed complete hierarchy and creates only the missing profile", async () => {
@@ -849,6 +851,7 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.operations[1]).toMatchObject({ nodeId: "investor-existing", newParentId: "profiles-container" });
     expect(result.sourceNodeIds).toEqual(["investor-existing"]);
     expect(result.executionDisposition).toBe("approval_required");
+    expect(planner).not.toHaveBeenCalled();
   });
 
   test("a degraded model repeating the same tool call is stopped at a checkpoint instead of looping", async () => {
