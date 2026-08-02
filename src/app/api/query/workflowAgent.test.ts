@@ -934,9 +934,11 @@ describe("NodeBook durable agent scenarios", () => {
     expect(provider).not.toHaveBeenCalled();
   });
 
-  test("a profile gap-fill request refuses a same-title section whose parent is unverified", async () => {
-    const provider = jest.fn();
-    await expect(executeWorkflowAgent(
+  test("a profile gap-fill request ignores an unverified same-title node and creates inside the exact profile", async () => {
+    const provider = jest.fn().mockImplementation(async (request: { outputName?: string }) => request.outputName === "nodebook_deep_research_finding"
+      ? { result: { query: "QA Acme Profile Leadership", finding: "Acme leadership is documented in the bounded source." }, sources: ["https://example.com/acme-leadership"], usage }
+      : { result: { ...baseResult, selectedNodeIds: ["profile-acme"], operations: [] }, sources: [], usage });
+    const result = await executeWorkflowAgent(
       {
         query: "Research and fill the \"Leadership\" section marked Unknown in existing profile \"QA Acme Profile\".",
         mode: "agent",
@@ -947,9 +949,13 @@ describe("NodeBook durable agent scenarios", () => {
           { ...node, sourceId: "ambiguous-leadership", contentText: "Leadership\nUnknown", retrievalSignals: ["semantic"] },
         ],
       },
-      { model: "gpt-5-mini", runProvider: provider, runId: () => "run-profile-gap-unverified" },
-    )).rejects.toThrow("PROFILE_GAP_FILL_SECTION_PARENT_UNVERIFIED");
-    expect(provider).not.toHaveBeenCalled();
+      { model: "gpt-5-mini", runProvider: provider, runToolPlanner: jest.fn(), runId: () => "run-profile-gap-unverified" },
+    );
+    expect(result.operations).toEqual([
+      expect.objectContaining({ kind: "create_node", parentId: "profile-acme", tempId: "profile-gap-section", content: "Leadership" }),
+      expect.objectContaining({ kind: "create_node", parentId: "profile-gap-section", tempId: "profile-gap-evidence", content: "Acme leadership is documented in the bounded source." }),
+    ]);
+    expect(result.sourceNodeIds).toEqual(["profile-acme"]);
   });
 
   test("a degraded model repeating the same tool call is stopped at a checkpoint instead of looping", async () => {

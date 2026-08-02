@@ -542,6 +542,9 @@ function selectProfileGapNodes(query: string, context: ReturnType<typeof compact
     ?? context.find((node) => /\bprofile\b/i.test(nodeTitle(node.text)));
   const titledSections = context.filter((node) => titleEquals(node, request.sectionTitle) && node.id !== profile?.id);
   const sectionCandidates = titledSections
+    // Parent identity is authoritative. Same-title nodes with missing or other
+    // ancestry are ignored; a new section can still be created safely under
+    // the exact reviewed profile without mutating those ambiguous nodes.
     .filter((node) => profile && node.parentSourceIds.includes(profile.id))
     .sort((left, right) => {
       const score = (node: (typeof context)[number]) =>
@@ -551,9 +554,6 @@ function selectProfileGapNodes(query: string, context: ReturnType<typeof compact
       return score(right) - score(left) || left.id.localeCompare(right.id);
     });
   const section: (typeof context)[number] | undefined = sectionCandidates.length > 0 ? sectionCandidates[0] : undefined;
-  if (!section && titledSections.some((node) => node.parentSourceIds.length === 0)) {
-    throw new Error("PROFILE_GAP_FILL_SECTION_PARENT_UNVERIFIED");
-  }
   return { request, profile, section };
 }
 
