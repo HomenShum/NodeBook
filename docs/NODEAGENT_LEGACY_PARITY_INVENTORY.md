@@ -84,7 +84,7 @@ Disposition meanings:
 | Legacy workflow | Required preserved behavior | Current state |
 |---|---|---|
 | Search broadly → inspect clues → traverse graph → specialize → finish | Iterative, bounded, notebook-first sensemaking | Deterministic stage enforcement now prevents repeated searches from exhausting the four-step budget; production trace proof pending. |
-| SOP A: hybrid synthesis | Combine multiple existing notes without duplication | Ported in instructions/retrieval; live Notion proof pending. |
+| SOP A: hybrid synthesis | Combine multiple existing notes without duplication | Live in production: lexical/current-root anchors, vector similarity, graph expansion, recency/scope fusion, exact citations, and a durable semantic-retrieval receipt. Signed Notion-derived case matched 4 semantic notes and refreshed 24 owner-scoped embeddings on 2026-08-02. |
 | SOP B: deep knowledge organization | Create one container before children and preserve hierarchy | Typed specialized operation contract implemented; live Notion proof pending. |
 | SOP C: multi-entity research | Reuse existing entity profiles and research only gaps | Typed clone/create operation contract implemented; live Notion proof pending. |
 | Organization | Find exact bounded matches, create folder, move only matches | Subject-filtered operation contract passes scenario coverage; live three-meeting case pending. |
@@ -139,7 +139,7 @@ The current HTTP route returns the bounded completed result rather than SSE. Dur
 
 Implementation is not behavioral proof. Completion still requires one authenticated production evidence set covering:
 
-1. The six locked Notion cases now have a bounded authenticated `/api/query/evals` runner through the actual NodeAgent planner, validator, risk classifier, source binding, and digest pipeline; executing all six against production and capturing their durable receipts remains pending.
+1. The six locked Notion cases run through the bounded authenticated `/api/query/evals` production runner and currently report 6/6. Keep the corpus immutable; add newly discovered cases to the exploratory suite rather than weakening certification.
 2. Live checkpoint-race proof remains; Ask, Plan, safe Auto, destructive approval pause, applied receipt, reload, and whole-run Undo are production-proven.
 3. Model/usage presentation remains; exact steps/citations and honest provider failure are production-proven.
 4. Refresh the final desktop, tablet, and phone end-to-end clips after the latest live-session hardening.
