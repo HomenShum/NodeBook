@@ -41,7 +41,7 @@ Signed owner session, exact existing notes: `QA-20260802 Mamba architecture` (`f
 
 This closes the locked connection case with real unconnected notes. The runtime verifier's earlier synthetic 6/6 badge was not accepted as proof after the first live replay contradicted it.
 
-## Profile gap-fill causal closure in progress
+## Profile gap-fill causal closure
 
 Initial signed replay trace: `21b04639-610a-45ab-9194-b916cbb820b9`.
 
@@ -51,7 +51,13 @@ Initial signed replay trace: `21b04639-610a-45ab-9194-b916cbb820b9`.
 - Upstream cause: `contextSnapshot` discarded child-relation direction and type after using relations for neighbor expansion.
 - Missing guard: the scenario had a competing semantic profile but no same-titled sibling with a different parent.
 - Rollback: the applied receipt was undone through its visible `Undo this run` control; reload of the sibling showed no evidence child and no stale count.
-- Repair under test: owner-scoped bounded context now carries sorted `parentSourceIds`; they are included in deterministic source digests. Gap-fill accepts a section only when its exact parent is the reviewed profile, creates a missing section when same-titled nodes have verified different parents, and fails closed when parent identity is unavailable.
+- Repair: owner-scoped bounded context now carries sorted `parentSourceIds`; they are included in deterministic source digests. Gap-fill accepts a section only when its exact parent is the reviewed profile and safely creates a missing section beneath that exact profile while ignoring same-titled nodes with other or incomplete ancestry.
+- Second live symptom: the first corrected apply placed `Leadership` beneath the exact profile, but inspecting the created subtree advanced derived node version/relation metadata. Undo initially refused with `changed after the checkpoint`.
+- Rollback root cause: reconciliation compared derived node metadata even though the relation receipt is the authoritative structural boundary. The repaired comparator protects created-node content and visibility, validates relation endpoints/type/publicity independently, and rebases deletion to the current version. Adversarial scenarios still reject a real content edit and a user move.
+- Final clean signed trace: `55fcc436-25b1-4a85-9545-3def6ed08f98` on profile `QA-20260802 OpenAI Profile Gap Rollback Fixture` (`f9568379`).
+- The applied receipt emitted exactly two operations, created `Leadership` (`fbcaaf4b`) under that profile, and created exactly one evidence child. A separate fresh tab loaded the exact child URL and rendered the evidence.
+- After that hydration churn, the URL-bound durable receipt rehydrated from `proposalId`, Undo changed the checkpoint to `undone`, and the profile immediately lost the `Leadership` row. A clean production reload still showed the profile with no `Leadership` child.
+- Production deployment: `dpl_4CEPmTSWrdxnE6MimQdF958y9jm3`, commit `5ac0a094`; alias returned HTTP 200 with `NodeBook=true`, `Mew=false`, and `Ideaflow=false`.
 
 ## Earlier integrated workflow observations
 
@@ -63,4 +69,4 @@ Initial signed replay trace: `21b04639-610a-45ab-9194-b916cbb820b9`.
 
 - The Mamba/SSM mutation was removed through the supported durable Undo path; both retained QA source fixtures remain for repeatability.
 - Earlier rollback/organization fixtures remain in the signed notebook and are named with the `QA-20260802` prefix.
-- Continuous tablet/phone video proof and live clone/gap-fill workflow proof remain open.
+- Continuous tablet/phone video proof and the live existing-profile clone/reuse workflow remain open.
