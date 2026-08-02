@@ -13,7 +13,7 @@ The earlier ledger used **Replaced** too broadly. A generic instruction or adjac
 | Specialized research/organization/profile behavior was ported through instructions | Until 2026-08-02, `run_specialized_workflow` returned only candidate IDs and the final model had to invent all operation structure. It now has deterministic legacy SOP stages plus typed operation contracts; scenario tests pass and renewed production receipts remain required. |
 | `create_knowledge_map` was replaced by the connect workflow | **Missing.** A two-node connection is not semantic embedding, clustering, and knowledge-map materialization. The React Flow verification map is evidence UI, not a replacement for this workflow. |
 | Company/person deep dives and report outline/population were replaced by generic research | **Partial or missing.** Container-first graph operations exist, but the named multi-search, structured entity synthesis, and two-stage report behaviors have not been demonstrated. |
-| Durable steps fully ported streaming events | **Partial.** Durable replay, digests, timestamps, and recovery are stronger, but progressive `thought`/`tool_call`/`tool_result` rendering during execution is absent. |
+| Durable steps fully ported streaming events | **Ported.** The sole `/api/query` engine now emits bounded `thought`, `tool_call`, `tool_result`, `client_action`, `final_summary`, `error`, and `end` SSE events while preserving the durable step/receipt record. Authenticated production proof captured the tool trace before the final receipt on 2026-08-02. |
 | Typed memory fully replaced legacy memory UX | **Partial.** Bounded owner-scoped typed records exist, but visible graph projections plus complete inspect/pin/forget user flows remain unfinished. |
 | Rename followed parity | **Contradicted.** Product code already says NodeAgent while behavioral parity is incomplete; this historical sequencing error cannot be retroactively made true. |
 
@@ -100,16 +100,24 @@ The legacy SSE contract was `client_action`, `thought`, `tool_call`, `tool_resul
 
 | Legacy event | Current equivalent | Status |
 |---|---|---|
-| `client_action` | Typed checkpoint operations plus execution disposition | Durable replacement; no optimistic mutation stream. |
-| `thought` | Human-readable bounded step summary | Replaced; private chain-of-thought is not rendered or persisted. |
-| `tool_call` | Durable step input digest, tool name, sequence, timestamps | Ported after each bounded investigation. |
-| `tool_result` | Durable step output digest and summary | Ported after each bounded investigation. |
+| `client_action` | Typed checkpoint operations plus execution disposition | Ported only after a durable checkpoint exists; it never performs an optimistic graph write. |
+| `thought` | Human-readable bounded step rationale | Ported as a safe summary; private chain-of-thought is never rendered or persisted. |
+| `tool_call` | Durable step input digest, tool name, sequence, timestamps | Ported progressively from the sole engine. |
+| `tool_result` | Durable step output digest and summary | Ported progressively from the sole engine. |
 | `self_eval` | Deterministic validation and optional repaired step | Replaced; model self-judgment cannot certify itself. |
-| `final_summary` | `finishSummary`, response, source citations, durable receipt | Ported. |
-| `end` | Terminal run/proposal status | Ported. |
-| `error` | Honest HTTP error plus durable failed run/checkpoint where available | Ported; authenticated provider-timeout and invalid-checkpoint paths observed as `Not completed` with no graph write. |
+| `final_summary` | `finishSummary`, response, source citations, durable receipt | Ported as the final bounded SSE payload. |
+| `end` | Terminal run/proposal status | Ported as the terminal stream event. |
+| `error` | Honest stream error plus durable failed run/checkpoint where available | Ported; authenticated provider-timeout and invalid-checkpoint paths remain `Not completed` with no graph write. |
 
-The current HTTP route returns the bounded completed result rather than SSE. Durable steps preserve semantics and reloadability, but progressive live rendering is a remaining UX gap—not evidence of missing execution.
+The current HTTP route uses content negotiation: JSON clients retain the bounded completed response, while the NodeBook UI requests SSE from the same `executeWorkflowAgent` execution path. There is no parallel streaming agent. Progressive UI events are observational; mutations still require a durable checkpoint and retain the existing receipt/undo lifecycle.
+
+## Graph rendering decision
+
+NodeBook uses pinned `@xyflow/react` 12.11.2 for interactive node/edge rendering. The runtime synapse map is composed from React Flow nodes and edges; it does not hand-draw a graph with SVG. This is the default for editable notebook mind maps because it provides React-native custom nodes, viewport behavior, selection, handles, and accessible interaction without a second rendering architecture.
+
+- Add `elkjs` only when graph size or directed hierarchy makes deterministic automatic layout necessary; it is a layout engine, not a renderer.
+- Consider Sigma.js only for a future read-only, thousands-of-nodes exploration mode where WebGL scale outweighs embedded React controls.
+- Do not introduce D3 or bespoke SVG graph rendering for the NodeAgent UI. Existing inline SVG icon glyphs are outside this graph-rendering boundary.
 
 ## Inline interaction inventory
 
@@ -142,4 +150,4 @@ Implementation is not behavioral proof. Completion still requires one authentica
 1. The six locked Notion cases run through the bounded authenticated `/api/query/evals` production runner and currently report 6/6. Keep the corpus immutable; add newly discovered cases to the exploratory suite rather than weakening certification.
 2. Live checkpoint-race proof remains; Ask, Plan, safe Auto, destructive approval pause, applied receipt, reload, and whole-run Undo are production-proven.
 3. Model/usage presentation remains; exact steps/citations and honest provider failure are production-proven.
-4. Refresh the final desktop, tablet, and phone end-to-end clips after the latest live-session hardening.
+4. Refresh the final desktop, tablet, and phone end-to-end clips after the latest live-session hardening. The 2026-08-02 authenticated desktop proof now covers progressive trace-before-receipt behavior; responsive clips remain.

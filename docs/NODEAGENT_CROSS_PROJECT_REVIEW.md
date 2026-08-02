@@ -49,7 +49,7 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 
 ## NodeBook adoption order
 
-1. **Sole-engine gate:** keep `executeWorkflowAgent` as the only NodeAgent entrypoint; fail CI if an unreferenced second engine appears.
+1. **Sole-engine gate (implemented):** `executeWorkflowAgent` is the only NodeAgent entrypoint; a source-scanning CI test fails if a second engine class/provider route appears or an unauthorized caller is added. Only the production route and locked eval harness may call it.
 2. **Trace spine:** make `runId` the documented `traceId` across run, step, checkpoint, memory, model evaluation, UI citation, and exported evidence.
 3. **Exactly-once journal:** persist model/tool step keys before supporting resumable or longer runs. A retry must replay a completed receipt instead of rebilling or duplicating writes.
 4. **NotebookTools boundary:** isolate reads, source validation, checkpoint claim, graph writes, receipts, and undo behind one typed port that returns conflicts as data.
