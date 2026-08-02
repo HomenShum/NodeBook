@@ -107,8 +107,8 @@ export default function RuntimeVerification() {
       ? history ? "Not run" : error ? "Unavailable" : "Loading"
       : `${summary.passed}/${history?.cases.length ?? 6} passed`;
 
-  return <details className={styles.runtimeVerification} data-testid="nodeagent-runtime-verification" open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)}>
-    <summary><span><ChevronRight size={14} /> Runtime verification</span><strong>{label}</strong></summary>
+  return <details className={styles.runtimeVerification} data-testid="nodeagent-runtime-verification" open={isOpen}>
+    <summary onClick={(event) => { event.preventDefault(); setIsOpen((current) => !current); }}><span><ChevronRight size={14} /> Runtime verification</span><strong>{label}</strong></summary>
     <div className={styles.runtimeVerificationBody} aria-live="polite">
       <p>Six locked legacy-parity cases run through the production NodeAgent engine using synthetic fixtures. They never apply graph changes.</p>
       {history && isOpen && <>

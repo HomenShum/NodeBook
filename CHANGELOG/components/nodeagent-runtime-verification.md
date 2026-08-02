@@ -1,7 +1,7 @@
 # NodeAgent runtime verification
 
 ## 2026-08-02 — Fit the graph after its disclosure opens
-Mount React Flow only after the runtime disclosure has a visible container, preventing a zero-size first measurement from translating the graph off-canvas.
+Let React own the summary toggle and mount React Flow only after the runtime disclosure has a visible container, preventing both native-toggle races and a zero-size first measurement from translating the graph off-canvas.
 **Commit**: `this commit`. **Author**: Codex.
 **Touches**: `evidence/nodeagent-live-eval-ui-20260802/pre-fix-react-flow-closed-container.png`
 
