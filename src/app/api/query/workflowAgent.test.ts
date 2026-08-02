@@ -222,7 +222,7 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.executionDisposition).toBe("auto_apply");
     expect(result.risk).toEqual({ level: "low", requiresApproval: false, reasons: [] });
     expect(provider).toHaveBeenCalledTimes(7);
-    expect(provider.mock.calls.slice(0, 6).every(([args]) => args.timeoutMs === 15_000 && args.webResearch)).toBe(true);
+    expect(provider.mock.calls.slice(0, 6).every(([args]) => args.timeoutMs === 30_000 && args.webResearch)).toBe(true);
     expect(provider.mock.calls[6][0]).toEqual(expect.objectContaining({ timeoutMs: 50_000, webResearch: false }));
     expect(result.steps.map((step) => step.tool)).toEqual(expect.arrayContaining([
       "generate_targeted_queries", "parallel_web_research", "synthesize_structured_research",
@@ -251,7 +251,7 @@ describe("NodeBook durable agent scenarios", () => {
     )).rejects.toThrow("DEEP_RESEARCH_ALL_SEARCHES_FAILED");
     expect(provider.mock.calls.length).toBeGreaterThanOrEqual(4);
     expect(provider.mock.calls.length).toBeLessThanOrEqual(6);
-    expect(provider.mock.calls.every(([args]) => args.webResearch === true && args.timeoutMs === 15_000)).toBe(true);
+    expect(provider.mock.calls.every(([args]) => args.webResearch === true && args.timeoutMs === 30_000)).toBe(true);
   });
 
   test("a cautious organizer can choose Plan and receive the same typed operations without automatic execution", async () => {
@@ -349,7 +349,7 @@ describe("NodeBook durable agent scenarios", () => {
     expect(provider).toHaveBeenCalledTimes(2);
     expect(provider.mock.calls[1][0].webResearch).toBe(false);
     expect(provider.mock.calls[0][0].timeoutMs + provider.mock.calls[1][0].timeoutMs).toBeLessThan(120_000);
-    expect(provider.mock.calls[1][0].timeoutMs).toBe(12_000);
+    expect(provider.mock.calls[1][0].timeoutMs).toBe(25_000);
     expect(result.operations).toEqual([]);
     expect(result.sourceNodeIds).toEqual(["evidence-1"]);
     expect(result.sourceBindings.map((binding) => binding.sourceId)).toEqual(["evidence-1"]);
