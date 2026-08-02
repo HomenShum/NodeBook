@@ -6,11 +6,12 @@ import { z } from "zod";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { runOpenAI } from "@/app/api/query/openAIProvider";
-import { executeWorkflowAgent, TOOL_DECISION_JSON_SCHEMA, WorkflowUsage } from "@/app/api/query/workflowAgent";
+import { executeWorkflowAgent, TOOL_DECISION_JSON_SCHEMA, type WorkflowUsage } from "@/app/api/query/workflowAgent";
 import { env } from "@/envBackend";
 import { agentModelRouteReference, getBearerToken, getConvexClient, recentAgentRuntimeEvaluationsReference, recordAgentRuntimeEvaluationReference } from "@/lib/convexServer";
 
 import { getLiveEvalCase, LIVE_EVAL_CASES, LIVE_EVAL_VERSION, scoreLiveEval } from "./liveEval";
+import { boundedExecutionFailureReason, combineObservedUsage } from "./runtimeEvalFailure";
 
 export const maxDuration = 60;
 const RequestSchema = z.object({
@@ -18,18 +19,6 @@ const RequestSchema = z.object({
   consent: z.literal(true),
   suiteId: z.string().min(1).max(100).optional(),
 });
-
-function combineObservedUsage(parts: WorkflowUsage[]): WorkflowUsage {
-  const total = (field: keyof WorkflowUsage) => parts.length > 0 && parts.every((part) => typeof part[field] === "number")
-    ? parts.reduce((sum, part) => sum + (part[field] ?? 0), 0)
-    : null;
-  return { inputTokens: total("inputTokens"), outputTokens: total("outputTokens"), totalTokens: total("totalTokens") };
-}
-
-function boundedExecutionFailureReason(error: unknown) {
-  const message = error instanceof Error ? error.message : "NodeAgent execution failed";
-  return message.slice(0, 1_000);
-}
 
 export const GET = withAuth(async (request: NextAuthenticatedRequest) => {
   try {
