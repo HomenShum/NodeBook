@@ -6,6 +6,8 @@ import { describe, expect, test } from "vitest";
 import parityCorpus from "../evals/nodeagent-notion-parity.json";
 import schema from "./schema";
 import {
+  BENCHMARK_CASE_TIMEOUT_MS,
+  BENCHMARK_MAX_OUTPUT_TOKENS,
   NODEAGENT_PARITY_CASES,
   isCertifiedRoute,
   rankEvaluations,
@@ -260,7 +262,7 @@ describe("NodeAgent automatic free-model routing", () => {
   });
 
   test("catalog polling evaluates new releases, skips an unchanged certified catalog, and failure reruns bypass the skip", () => {
-    const certified = { catalogFingerprint: "same", benchmarkVersion: "nodeagent-notion-parity-v2" };
+    const certified = { catalogFingerprint: "same", benchmarkVersion: "nodeagent-notion-parity-v3" };
     expect(shouldRunBenchmark("catalog_refresh", "same", certified)).toBe(false);
     expect(shouldRunBenchmark("catalog_refresh", "new", certified)).toBe(true);
     expect(shouldRunBenchmark("failure_threshold", "same", certified)).toBe(true);
@@ -269,8 +271,13 @@ describe("NodeAgent automatic free-model routing", () => {
 
   test("production routing fails closed when a formerly promoted model has not passed the current parity version", () => {
     expect(isCertifiedRoute({ primaryModel: "old-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notebook-v1" })).toBe(false);
-    expect(isCertifiedRoute({ primaryModel: "current-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notion-parity-v2" })).toBe(true);
-    expect(isCertifiedRoute({ primaryModel: "failed-free", benchmarkStatus: "failed", benchmarkVersion: "nodeagent-notion-parity-v2" })).toBe(false);
+    expect(isCertifiedRoute({ primaryModel: "current-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notion-parity-v3" })).toBe(true);
+    expect(isCertifiedRoute({ primaryModel: "failed-free", benchmarkStatus: "failed", benchmarkVersion: "nodeagent-notion-parity-v3" })).toBe(false);
+  });
+
+  test("a verbose free model gets the live planner's bounded structured-output budget", () => {
+    expect(BENCHMARK_MAX_OUTPUT_TOKENS).toBe(400);
+    expect(BENCHMARK_CASE_TIMEOUT_MS).toBe(20_000);
   });
 });
 

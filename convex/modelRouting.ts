@@ -4,13 +4,15 @@ import { v } from "convex/values";
 import { internalAction, internalMutation, internalQuery, mutation, query, MutationCtx, QueryCtx } from "./server";
 
 const ROUTE_ID = "nodeagent-free-v1";
-const BENCHMARK_VERSION = "nodeagent-notion-parity-v2";
+const BENCHMARK_VERSION = "nodeagent-notion-parity-v3";
 const MAX_CANDIDATES = 4;
 const MAX_EVALUATIONS = 100;
 const FAILURE_TRIGGER = 3;
 const MIN_RERUN_INTERVAL_MS = 60 * 60 * 1_000;
 const CATALOG_MAX_BYTES = 2 * 1024 * 1024;
 const RESPONSE_MAX_BYTES = 256 * 1024;
+export const BENCHMARK_MAX_OUTPUT_TOKENS = 400;
+export const BENCHMARK_CASE_TIMEOUT_MS = 20_000;
 
 type Candidate = { id: string; created: number; context_length: number; supported_parameters?: string[] };
 type Evaluation = {
@@ -211,7 +213,7 @@ async function evaluateModel(modelId: string, created: number, apiKey: string): 
     const scenarioCriteria = 3 + (scenario.expectedSelectedNodeIds ? 1 : 0);
     totalCriteria += scenarioCriteria;
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort("benchmark timeout"), 12_000);
+    const timeout = setTimeout(() => controller.abort("benchmark timeout"), BENCHMARK_CASE_TIMEOUT_MS);
     const started = Date.now();
     try {
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -224,7 +226,7 @@ async function evaluateModel(modelId: string, created: number, apiKey: string): 
             { role: "user", content: scenario.prompt },
           ],
           temperature: 0,
-          max_tokens: 100,
+          max_tokens: BENCHMARK_MAX_OUTPUT_TOKENS,
           response_format: { type: "json_schema", json_schema: { name: "nodeagent_eval", strict: true, schema: benchmarkSchema } },
         }),
         signal: controller.signal,
@@ -249,7 +251,7 @@ async function evaluateModel(modelId: string, created: number, apiKey: string): 
     score: totalCriteria ? passedCriteria / totalCriteria : 0,
     passedCriteria,
     totalCriteria,
-    medianLatencyMs: orderedLatency[Math.floor(orderedLatency.length / 2)] ?? 12_000,
+    medianLatencyMs: orderedLatency[Math.floor(orderedLatency.length / 2)] ?? BENCHMARK_CASE_TIMEOUT_MS,
     failureReasons: failures.slice(0, NODEAGENT_PARITY_CASES.length),
   };
 }
