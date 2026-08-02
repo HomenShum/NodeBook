@@ -40,9 +40,9 @@ Disposition meanings:
 | Legacy tool or client action | Generation | Current disposition | Current implementation or reason |
 |---|---|---|---|
 | `display_debug_information` | Google | Replaced | Durable `AgentStep` digests and receipt UI replace graph-writing debug text. |
-| `execute_multi_step_research_plan` | Both | Replaced / live proof pending | The sole engine now performs bounded query planning, parallel evidence gathering, structured synthesis, semantic depth validation, and one repair; authenticated production multi-level research remains the final proof. |
+| `execute_multi_step_research_plan` | Both | Replaced / production-proven 2026-08-02 | The sole engine performs bounded query planning, parallel evidence gathering, structured synthesis, semantic depth validation, and one repair. A signed Web3 run completed five of six searches, applied seven structured operations with 16 sources, survived reload, and was absent after Undo plus clean reload. |
 | `generate_report_outline` | Both | Replaced | Structured plan and typed `create_node` sequence; no separate outline tool is exposed. |
-| `populate_report_from_outline` | Both | Replaced / proof pending | Container-first graph operations cover the work product; production hierarchy quality remains a live case. |
+| `populate_report_from_outline` | Both | Replaced / production-proven 2026-08-02 | Container-first graph operations materialized the Web3 and person/company multi-section work products in signed production runs. |
 | `execute_direct_request` | Both | Ported | Ask/Agent modes synthesize from bounded notebook context; Ask is read-only. |
 | `evaluate_and_enhance_report` | Both | Replaced | Deterministic semantic validation plus one bounded repair. The old free-form self-score is not trusted. |
 | `find_nodes` | Google internal SOP | Ported | Owner-scoped full-text + lexical retrieval and current-root weighting in `contextSnapshot`; iterative planner can choose it. |
@@ -53,12 +53,12 @@ Disposition meanings:
 | `get_notes_with_content` | Google internal | Replaced | Hydrated, chunk-aware Convex documents with response/context byte caps. |
 | `research_company_deep_dive` | Both | Replaced / production-proven 2026-08-02 | A signed Auto run completed six of six searches, deterministically materialized the five exact requested aspects from their evidence receipts, applied six operations, persisted the receipt, and left no company profile after Undo plus reload. |
 | `research_person_deep_dive` | Both | Replaced / production-proven 2026-08-02 | A signed Auto run completed five of six searches, synthesized all five requested profile aspects, applied a seven-operation hierarchy, persisted its receipt, and left no created profile after Undo plus reload. |
-| `research_and_update_profile_section` | Both | Partial / proof pending | Typed updates and exact source bindings exist; the targeted research-and-fill workflow is not yet demonstrated. |
+| `research_and_update_profile_section` | Both | Ported / live proof pending | The sole engine now selects the exact reviewed profile/Unknown section, runs one bounded consented web query, and appends one evidence child; if the section is absent it creates the section first. Existing, absent, competing-semantic-match, and no-consent scenarios pass. Signed production apply/reload/Undo remains. |
 | `get_company_profile` | Google | Replaced | Existing-note retrieval and exact-node inspection supersede a domain-specific getter. |
 | `get_person_profile` | Google | Replaced | Existing-note retrieval and exact-node inspection supersede a domain-specific getter. |
-| `research_and_create_notes` | Google | Replaced / proof pending | Research workflow emits typed container/child operations. |
+| `research_and_create_notes` | Google | Replaced / production-proven 2026-08-02 | Signed research workflows emitted typed container/child operations, persisted them across reload, and removed them through whole-run Undo. |
 | `create_knowledge_map` | Both | Ported and live-proven | Owner-scoped `text-embedding-3-small` vectors feed deterministic 2–5 cluster construction over at most 12 notes. The sole workflow emits one bounded typed create/move contract; production proved 12 evidence nodes, 2 clusters, 15 operations, durable Auto apply, reload, Undo, and clean reload. |
-| `analyze_and_reorganize_notes` | Google internal | Replaced / proof pending | Organization workflow operates on a bounded index; meeting-note live case remains pending. |
+| `analyze_and_reorganize_notes` | Google internal | Replaced / production-proven 2026-08-02 | The signed meeting-note run selected the three exact prefixed notes, emitted one folder plus three moves, and preserved the unrelated control note. |
 | `find_and_intelligently_clone_nodes` | Google | Replaced / proof pending | Search/reuse policy plus typed `clone_node_hierarchy`; existing-profile live case remains pending. |
 | `batch_clone_nodes` | Google internal | Replaced | One bounded typed operation list and whole-run checkpoint replace an unbounded batch helper. |
 | `clone_node_hierarchy` | Google client/internal | Ported, approval-gated | Typed operation exists; expansion risk requires approval. |
@@ -71,7 +71,7 @@ Disposition meanings:
 | `delete_node` | Both | Ported, approval-gated | Typed operation; deletion never auto-applies. |
 | `move_node` | Both | Ported | Typed operation; same-notebook reversible moves auto-apply after checkpoint. |
 | `add_relation` | Both | Ported | Typed relation kinds; authorship changes require approval. |
-| `create_hierarchy_and_move_nodes` | Legacy client composite | Replaced / proof pending | Ordered `create_node` + `move_node` operations execute as one checkpointed transaction. |
+| `create_hierarchy_and_move_nodes` | Legacy client composite | Replaced / production-proven 2026-08-02 | Ordered `create_node` + `move_node` operations executed as one checkpointed meeting-note transaction and were structurally restored by Undo. |
 | `update_profile_section` | Legacy client composite | Replaced | Typed update operations and source bindings. |
 | `create_hierarchy_from_outline` | Legacy client composite | Replaced | Ordered temporary-ID graph operations. |
 | `create_profile_from_json` | Legacy client composite | Replaced | Typed bounded graph operations; arbitrary JSON-to-graph mutation is intentionally not restored. |
@@ -87,8 +87,8 @@ Disposition meanings:
 | SOP A: hybrid synthesis | Combine multiple existing notes without duplication | Live in production: lexical/current-root anchors, vector similarity, graph expansion, recency/scope fusion, exact citations, and a durable semantic-retrieval receipt. Signed Notion-derived case matched 4 semantic notes and refreshed 24 owner-scoped embeddings on 2026-08-02. |
 | SOP B: deep knowledge organization | Create one container before children and preserve hierarchy | Typed specialized operation contract implemented; live Notion proof pending. |
 | SOP C: multi-entity research | Reuse existing entity profiles and research only gaps | Typed clone/create operation contract implemented; live Notion proof pending. |
-| Organization | Find exact bounded matches, create folder, move only matches | Subject-filtered operation contract passes scenario coverage; live three-meeting case pending. |
-| Connection | Reuse both nodes, create explanation child, add relation | Search→traverse→detail enforcement plus typed explanation/relation passes scenario coverage; live Mamba/SSM case pending. |
+| Organization | Find exact bounded matches, create folder, move only matches | Production-proven with the signed three-meeting case: three exact citations, one folder, three moves, unrelated control preserved, and durable Undo. |
+| Connection | Reuse both nodes, create explanation child, add relation | Production-proven with two initially unconnected notes. Trace `3e3485c5-0233-4d8b-ab96-ee103958a986` searched, traversed, inspected exact details, applied one child plus one `relatedTo` edge, survived reload, and was absent after durable Undo plus reload. |
 | Draft → self-evaluate → revise | Do not accept malformed, out-of-scope, or low-integrity writes | Replaced by schema parsing, semantic validation, and one bounded repair. No hidden self-score is treated as proof. |
 | Sequential mutation queue | Avoid client synchronization races and preserve order | Ported as one grouped GraphStore transaction plus single-winner Convex checkpoint claim. |
 | Pattern learning | Learn from success and failure without inflated scores | Replaced by bounded typed memories and patterns with success/failure counts. |

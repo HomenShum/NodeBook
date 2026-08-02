@@ -854,6 +854,83 @@ describe("NodeBook durable agent scenarios", () => {
     expect(planner).not.toHaveBeenCalled();
   });
 
+  test("a researcher fills one reviewed Unknown profile section without duplicating the profile or section", async () => {
+    const planner = jest.fn().mockRejectedValue(new Error("AI provider timed out"));
+    const provider = jest.fn().mockImplementation(async (request: { outputName?: string }) => request.outputName === "nodebook_deep_research_finding"
+      ? { result: { query: "QA Acme Profile Leadership", finding: "Acme is led by founder Ada Example and COO Ben Example." }, sources: ["https://example.com/acme-leadership"], usage }
+      : { result: { ...baseResult, response: "Filled the reviewed Leadership gap from bounded web evidence.", operations: [] }, sources: [], usage });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Research and fill the \"Leadership\" section marked Unknown in existing profile \"QA Acme Profile\".",
+        mode: "agent",
+        rootNodeId: "profile-acme",
+        webResearch: true,
+        contextNodes: [
+          { ...node, sourceId: "profile-acme", contentText: "QA Acme Profile", retrievalSignals: ["current_node", "full_text"] },
+          { ...node, sourceId: "section-leadership", contentText: "Leadership\nUnknown", retrievalSignals: ["graph_neighbor", "full_text"] },
+          { ...node, sourceId: "other-profile", contentText: "QA Other Profile\nLeadership complete", retrievalSignals: ["semantic"] },
+        ],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: provider,
+        runToolPlanner: planner,
+        runId: () => "run-profile-gap",
+        proposalId: () => "proposal-profile-gap",
+      },
+    );
+
+    expect(result.steps.map((step) => step.tool)).toEqual([
+      "find_nodes", "run_specialized_workflow", "finish_investigation", "generate_targeted_queries", "parallel_web_research", "synthesize_structured_research", "validate_proposal", "finish_work",
+    ]);
+    expect(result.operations).toEqual([expect.objectContaining({
+      kind: "create_node",
+      parentId: "section-leadership",
+      tempId: "profile-gap-evidence",
+      content: "Acme is led by founder Ada Example and COO Ben Example.",
+    })]);
+    expect(result.sourceNodeIds).toEqual(["profile-acme", "section-leadership"]);
+    expect(result.sourceUrls).toEqual(["https://example.com/acme-leadership"]);
+    expect(planner).not.toHaveBeenCalled();
+  });
+
+  test("a researcher creates one missing profile section before appending bounded evidence", async () => {
+    const provider = jest.fn().mockImplementation(async (request: { outputName?: string }) => request.outputName === "nodebook_deep_research_finding"
+      ? { result: { query: "QA Acme Profile Board", finding: "The board includes Ada Example and Cal Example." }, sources: ["https://example.com/acme-board"], usage }
+      : { result: { ...baseResult, operations: [] }, sources: [], usage });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Research and fill the \"Board\" section marked Unknown in existing profile \"QA Acme Profile\".",
+        mode: "agent",
+        rootNodeId: "profile-acme",
+        webResearch: true,
+        contextNodes: [{ ...node, sourceId: "profile-acme", contentText: "QA Acme Profile", retrievalSignals: ["current_node", "full_text"] }],
+      },
+      { model: "gpt-5-mini", runProvider: provider, runToolPlanner: jest.fn(), runId: () => "run-profile-gap-missing" },
+    );
+
+    expect(result.operations).toEqual([
+      expect.objectContaining({ kind: "create_node", parentId: "profile-acme", tempId: "profile-gap-section", content: "Board" }),
+      expect.objectContaining({ kind: "create_node", parentId: "profile-gap-section", tempId: "profile-gap-evidence", content: "The board includes Ada Example and Cal Example." }),
+    ]);
+    expect(result.sourceNodeIds).toEqual(["profile-acme"]);
+  });
+
+  test("a profile gap-fill request fails closed without explicit web research consent", async () => {
+    const provider = jest.fn();
+    await expect(executeWorkflowAgent(
+      {
+        query: "Research and fill the \"Leadership\" section marked Unknown in existing profile \"QA Acme Profile\".",
+        mode: "agent",
+        rootNodeId: "profile-acme",
+        webResearch: false,
+        contextNodes: [{ ...node, sourceId: "profile-acme", contentText: "QA Acme Profile", retrievalSignals: ["current_node"] }],
+      },
+      { model: "gpt-5-mini", runProvider: provider, runId: () => "run-profile-gap-no-consent" },
+    )).rejects.toThrow("PROFILE_GAP_FILL_REQUIRES_WEB_RESEARCH");
+    expect(provider).not.toHaveBeenCalled();
+  });
+
   test("a degraded model repeating the same tool call is stopped at a checkpoint instead of looping", async () => {
     const repeated = { tool: "find_nodes", query: "evidence", nodeId: null, workflow: null, rationale: "Search again." };
     const planner = jest.fn().mockResolvedValue({ result: repeated, usage });

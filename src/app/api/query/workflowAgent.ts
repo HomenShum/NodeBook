@@ -465,7 +465,7 @@ const operation = (kind: AgentOperation["kind"], values: Partial<AgentOperation>
 });
 
 type LegacyWorkflowContract = {
-  kind: "research" | "organize" | "profile" | "knowledge_map";
+  kind: "research" | "organize" | "profile" | "profile_gap_fill" | "knowledge_map";
   selectedNodeIds: string[];
   operations: AgentOperation[];
 };
@@ -516,6 +516,43 @@ function buildDeepResearchPlan(query: string): DeepResearchPlan {
   return { subject, entityKind, aspects, queries };
 }
 
+function profileGapFillRequest(query: string) {
+  if (!/\b(?:research|find)\b/i.test(query) || !/\b(?:fill|complete|update)\b/i.test(query) || !/\b(?:section|field)\b/i.test(query)) return null;
+  const sectionTitle = query.match(/["“]([^"”]{2,100})["”]\s+(?:section|field)\b/i)?.[1]?.trim()
+    ?? query.match(/\b(?:unknown|missing|tbd)\s+([\p{L}\p{N}][\p{L}\p{N} &'/-]{1,99}?)\s+(?:section|field)\b/iu)?.[1]?.trim()
+    ?? query.match(/\b(?:section|field)\s+(?:titled|named)\s+["“]?([^"”.,;]{2,100})/i)?.[1]?.trim();
+  const profileTitle = query.match(/\bprofile\s+["“]([^"”]{2,150})["”]/i)?.[1]?.trim() ?? null;
+  return sectionTitle ? { sectionTitle, profileTitle } : null;
+}
+
+function selectProfileGapNodes(query: string, context: ReturnType<typeof compactContext>) {
+  const request = profileGapFillRequest(query);
+  if (!request) return { request: null, profile: undefined, section: undefined };
+  const titleEquals = (node: (typeof context)[number], title: string) => nodeTitle(node.text).localeCompare(title, undefined, { sensitivity: "accent" }) === 0;
+  const sectionCandidates = context
+    .filter((node) => titleEquals(node, request.sectionTitle))
+    .sort((left, right) => {
+      const score = (node: (typeof context)[number]) =>
+        (node.retrievalSignals.includes("graph_neighbor") ? 4 : 0)
+        + (node.retrievalSignals.includes("full_text") ? 2 : 0)
+        + (/\b(?:unknown|missing|tbd)\b/i.test(node.text) ? 1 : 0);
+      return score(right) - score(left) || left.id.localeCompare(right.id);
+    });
+  const section: (typeof context)[number] | undefined = sectionCandidates.length > 0 ? sectionCandidates[0] : undefined;
+  const profile = (request.profileTitle ? context.find((node) => titleEquals(node, request.profileTitle!)) : undefined)
+    ?? context.find((node) => node.retrievalSignals.includes("current_node") && node.id !== section?.id)
+    ?? context.find((node) => /\bprofile\b/i.test(nodeTitle(node.text)) && node.id !== section?.id);
+  return { request, profile, section };
+}
+
+function buildProfileGapResearchPlan(query: string, context: ReturnType<typeof compactContext>): DeepResearchPlan {
+  const { request, profile } = selectProfileGapNodes(query, context);
+  if (!request || !profile) throw new Error("PROFILE_GAP_FILL_TARGET_NOT_FOUND");
+  const subject = nodeTitle(profile.text).slice(0, 200);
+  const aspect = request.sectionTitle.slice(0, 100);
+  return { subject, entityKind: /\b(person|founder|executive|investor)\b/i.test(profile.text) ? "person" : "company", aspects: [aspect], queries: [`${subject} ${aspect}`] };
+}
+
 function researchProductCoversAspect(product: z.infer<typeof ResearchWorkProductSchema>, aspect: string) {
   const significantTokens = aspect.toLowerCase().match(/[a-z0-9]+/g)?.filter((token) => !["and", "the", "of"].includes(token)) ?? [];
   const searchableTokens = new Set(`${product.title} ${product.content}`.toLowerCase().match(/[a-z0-9]+/g) ?? []);
@@ -526,6 +563,7 @@ function researchProductCoversAspect(product: z.infer<typeof ResearchWorkProduct
 function legacyWorkflowKind(mode: AgentMode, query: string) {
   if (/\bknowledge\s+map\b|\bsemantic\s+(?:map|clusters?)\b|\bcluster\s+(?:my\s+)?notes?\b/i.test(query)) return "knowledge_map" as const;
   if (mode === "organize") return "organize" as const;
+  if (profileGapFillRequest(query)) return "profile_gap_fill" as const;
   if (/\b(research|deep[ -]?dive|report)\b/i.test(query)) return "research" as const;
   if (/\b(investors?|profiles?)\b/i.test(query)) return "profile" as const;
   return null;
@@ -745,6 +783,11 @@ function buildLegacyWorkflowContract(
       ],
     };
   }
+  if (kind === "profile_gap_fill") {
+    const { profile, section } = selectProfileGapNodes(run.query, context);
+    if (!profile) throw new Error("PROFILE_GAP_FILL_TARGET_NOT_FOUND");
+    return { kind, selectedNodeIds: [profile.id, ...(section ? [section.id] : [])], operations: [] };
+  }
   const topic = run.query.replace(/^\s*(?:research|create (?:a )?report (?:on|about))\s+/i, "").trim() || "Research";
   return {
     kind,
@@ -807,6 +850,23 @@ function applyLegacyWorkflowContract(
   const receipt = investigation.find((item) => ["run_specialized_workflow", "create_knowledge_map"].includes(item.decision.tool))?.output as { operationContract?: LegacyWorkflowContract | null } | undefined;
   const contract = receipt?.operationContract;
   if (contract) {
+    if (contract.kind === "profile_gap_fill") {
+      const { request, profile, section } = selectProfileGapNodes(run.query, context);
+      if (!request || !profile) throw new Error("PROFILE_GAP_FILL_TARGET_NOT_FOUND");
+      const finding = deepResearchReceipts[0]?.finding?.trim();
+      if (!finding) throw new Error("PROFILE_GAP_FILL_EVIDENCE_MISSING");
+      const sectionTempId = "profile-gap-section";
+      return {
+        ...result,
+        selectedNodeIds: contract.selectedNodeIds,
+        operations: section
+          ? [operation("create_node", { parentId: section.id, tempId: "profile-gap-evidence", content: finding.slice(0, 10_000), reason: `Append bounded research evidence to the reviewed ${request.sectionTitle} section.` })]
+          : [
+            operation("create_node", { parentId: profile.id, tempId: sectionTempId, content: request.sectionTitle, reason: `Create the missing reviewed ${request.sectionTitle} section.` }),
+            operation("create_node", { parentId: sectionTempId, tempId: "profile-gap-evidence", content: finding.slice(0, 10_000), reason: `Append bounded research evidence to the new ${request.sectionTitle} section.` }),
+          ],
+      };
+    }
     if (contract.kind === "research") {
       const entityProducts = entityWorkProductsFromReceipts(buildDeepResearchPlan(run.query), deepResearchReceipts);
       const structuredResult = entityProducts ? { ...result, workProducts: entityProducts } : result;
@@ -944,7 +1004,7 @@ function semanticErrors(
       errors.push("Organization moves must target the newly created destination container.");
     }
   }
-  if (creates.length >= 2) {
+  if (creates.length >= 2 && legacyWorkflowKind(mode, query) !== "profile_gap_fill") {
     const container = creates[0];
     if (container.parentId !== rootNodeId || !container.tempId) {
       errors.push("Multi-part work must create one container under the current root first.");
@@ -1113,6 +1173,9 @@ export async function executeWorkflowAgent(
     return Math.min(requestedMs, remainingMs);
   };
   const context = compactContext(args.contextNodes);
+  if (legacyWorkflowKind(args.mode, args.query) === "profile_gap_fill" && !args.webResearch) {
+    throw new Error("PROFILE_GAP_FILL_REQUIRES_WEB_RESEARCH");
+  }
   if (legacyWorkflowKind(args.mode, args.query) === "knowledge_map" && args.knowledgeMap?.status !== "ready") {
     throw new Error(`KNOWLEDGE_MAP_INSUFFICIENT_NODES candidates=${args.knowledgeMap?.candidateCount ?? 0} selected=${args.knowledgeMap?.selectedCount ?? 0}`);
   }
@@ -1211,7 +1274,11 @@ export async function executeWorkflowAgent(
   const deepResearchSources: string[] = [];
   const deepResearchReceipts: Array<{ query: string; finding: string; sourceCount: number }> = [];
   const workflowKind = legacyWorkflowKind(args.mode, args.query);
-  const researchPlan = args.webResearch && workflowKind === "research" ? buildDeepResearchPlan(args.query) : null;
+  const researchPlan = args.webResearch && workflowKind === "research"
+    ? buildDeepResearchPlan(args.query)
+    : args.webResearch && workflowKind === "profile_gap_fill"
+      ? buildProfileGapResearchPlan(args.query, context)
+      : null;
   if (researchPlan) {
     const plannedAt = now().toISOString();
     emitStep(makeStep(
