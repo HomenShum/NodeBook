@@ -16,6 +16,7 @@ import {
   reportAgentModelOutcomeReference,
 } from "@/lib/convexServer";
 
+import { reasoningConfig } from "./providerConfig";
 import {
   AgentMode,
   executeWorkflowAgent,
@@ -95,6 +96,7 @@ async function runOpenAI(args: {
       },
       body: JSON.stringify({
         model: args.model,
+        ...reasoningConfig(provider, args.model),
         ...(provider === "openrouter" && args.fallbackModels?.length ? { models: args.fallbackModels.slice(0, 3) } : {}),
         store: false,
         max_output_tokens: args.maxOutputTokens ?? 2_500,

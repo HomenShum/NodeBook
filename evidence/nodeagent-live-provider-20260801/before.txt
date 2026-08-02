@@ -1,0 +1,16 @@
+Observable: an authenticated owner can complete a read-only NodeAgent Ask run against the production notebook.
+
+Production prompt:
+`What major areas recur across my root notebook? Answer only from notebook evidence and cite the exact supporting notes.`
+
+Observed before:
+- Authenticated owner-scoped notebook loaded successfully.
+- Integrated NodeAgent Ask surface opened inside the original NodeBook notebook UI.
+- Consent was granted and the run was submitted without web research.
+- UI returned an honest `Not completed` state with `Agent run failed before completion`.
+- Production logs recorded `POST /api/query` and `NodeBook agent run failed AI provider timed out` exactly at the 24-second provider deadline.
+
+Root cause:
+- The configured paid fallback is `gpt-5-mini`.
+- The Responses API request omitted `reasoning.effort`, so this pre-5.1 GPT-5 family used its medium default for a deterministic structured graph task.
+- The request exhausted the bounded deadline before producing a structured response.
