@@ -28,7 +28,10 @@ export function fuseRetrievedContext(
   const lexicalAnchors = primary
     .filter((node) => (node.retrievalSignals ?? []).some((signal) => signal === "current_node" || signal === "full_text"))
     .slice(0, 16);
-  const orderedIds = [...lexicalAnchors, ...semantic.nodes, ...primary].map((node) => node.sourceId);
+  const workflowAnchors = primary
+    .filter((node) => (node.retrievalSignals ?? []).includes("semantic_cluster"))
+    .slice(0, 12);
+  const orderedIds = [...workflowAnchors, ...lexicalAnchors, ...semantic.nodes, ...primary].map((node) => node.sourceId);
   const seen = new Set<string>();
   return orderedIds
     .filter((sourceId) => !seen.has(sourceId) && Boolean(seen.add(sourceId)))

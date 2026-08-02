@@ -44,6 +44,27 @@ describe("NodeAgent hybrid retrieval fusion", () => {
     expect(rows[0].retrievalSignals).toEqual(["current_node", "full_text", "semantic"]);
   });
 
+  test("a knowledge-map run keeps its bounded cluster evidence ahead of general retrieval context", () => {
+    const semantic: SemanticContextResult = {
+      status: "ready",
+      model: "text-embedding-3-small",
+      indexedCount: 0,
+      nodes: [{ ...node("semantic-general", ["semantic"]), semanticScore: 0.91 }],
+    };
+    const rows = fuseRetrievedContext([
+      node("large-lexical-anchor", ["full_text"]),
+      node("cluster-a", ["semantic_cluster"]),
+      node("cluster-b", ["semantic_cluster"]),
+    ], semantic, 40);
+
+    expect(rows.map((row) => row.sourceId)).toEqual([
+      "cluster-a",
+      "cluster-b",
+      "large-lexical-anchor",
+      "semantic-general",
+    ]);
+  });
+
   test("a noisy sustained notebook cannot expand provider context beyond the mode bound", () => {
     const semantic: SemanticContextResult = {
       status: "ready",
