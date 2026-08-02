@@ -215,6 +215,7 @@ export type WorkflowAgentDependencies = {
   now?: () => Date;
   runId?: () => string;
   proposalId?: () => string;
+  onStep?: (step: AgentStep) => void;
 };
 
 const MAX_CONTEXT_BYTES = 80_000;
@@ -692,8 +693,12 @@ export async function executeWorkflowAgent(
     digest: digest(node),
   }));
   const steps: AgentStep[] = [];
+  const emitStep = (step: AgentStep) => {
+    steps.push(step);
+    dependencies.onStep?.(step);
+  };
   const contextFinishedAt = now().toISOString();
-  steps.push(makeStep(
+  emitStep(makeStep(
     1,
     "find_nodes",
     "completed",
@@ -706,7 +711,7 @@ export async function executeWorkflowAgent(
   if (args.retrievalStatus) {
     const semanticAt = now().toISOString();
     const ready = args.retrievalStatus.semantic === "ready";
-    steps.push(makeStep(
+    emitStep(makeStep(
       steps.length + 1,
       "semantic_retrieval",
       ready ? "completed" : "failed",
@@ -741,7 +746,7 @@ export async function executeWorkflowAgent(
       const parsedDecision = parseBoundedToolDecision(planned.result);
       if (!parsedDecision) {
         const invalidAt = now().toISOString();
-        steps.push(makeStep(
+        emitStep(makeStep(
           steps.length + 1,
           "checkpoint",
           "failed",
@@ -757,14 +762,14 @@ export async function executeWorkflowAgent(
       const callDigest = digest(decision);
       if (seenCalls.has(callDigest)) {
         const repeatedAt = now().toISOString();
-        steps.push(makeStep(steps.length + 1, "checkpoint", "failed", decision, { reason: "repeated_tool_call" }, "Stopped a repeated tool call at the bounded checkpoint.", toolStartedAt, repeatedAt));
+        emitStep(makeStep(steps.length + 1, "checkpoint", "failed", decision, { reason: "repeated_tool_call" }, "Stopped a repeated tool call at the bounded checkpoint.", toolStartedAt, repeatedAt));
         break;
       }
       seenCalls.add(callDigest);
       const output = executeInvestigationTool(decision, context, args);
       investigation.push({ decision, output });
       const toolFinishedAt = now().toISOString();
-      steps.push(makeStep(steps.length + 1, decision.tool, "completed", decision, output, decision.rationale, toolStartedAt, toolFinishedAt));
+      emitStep(makeStep(steps.length + 1, decision.tool, "completed", decision, output, decision.rationale, toolStartedAt, toolFinishedAt));
       if (decision.tool === "finish_investigation") break;
     }
   }
@@ -797,7 +802,7 @@ export async function executeWorkflowAgent(
   );
   let errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
   let providerFinishedAt = now().toISOString();
-  steps.push(makeStep(
+  emitStep(makeStep(
     steps.length + 1,
     args.webResearch ? "synthesize_with_web_search" : "synthesize_from_notebook",
     "completed",
@@ -826,7 +831,7 @@ export async function executeWorkflowAgent(
     );
     errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
     const repairFinishedAt = now().toISOString();
-    steps.push(makeStep(
+    emitStep(makeStep(
       steps.length + 1,
       "repair_proposal",
       errors.length ? "failed" : "repaired",
@@ -839,7 +844,7 @@ export async function executeWorkflowAgent(
     if (errors.length) throw new Error(`Agent checkpoint failed validation: ${errors.join(" ")}`);
     providerFinishedAt = repairFinishedAt;
   } else {
-    steps.push(makeStep(
+    emitStep(makeStep(
       steps.length + 1,
       "validate_proposal",
       "completed",
@@ -872,7 +877,7 @@ export async function executeWorkflowAgent(
       : risk.requiresApproval
         ? "approval_required"
         : "auto_apply";
-  steps.push(makeStep(
+  emitStep(makeStep(
     steps.length + 1,
     "finish_work",
     "completed",

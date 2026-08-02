@@ -31,12 +31,14 @@ const node = {
 describe("NodeBook durable agent scenarios", () => {
   test("an analyst asking a question receives a read-only, explicitly finished receipt", async () => {
     const provider = jest.fn().mockResolvedValue({ result: baseResult, sources: [], usage });
+    const streamedSteps: string[] = [];
     const result = await executeWorkflowAgent(
       { query: "What evidence supports launch?", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes: [node] },
       {
         model: "gpt-5-mini",
         runProvider: provider,
         runId: () => "run-ask",
+        onStep: (step) => streamedSteps.push(step.tool),
       },
     );
 
@@ -49,6 +51,7 @@ describe("NodeBook durable agent scenarios", () => {
       "validate_proposal",
       "finish_work",
     ]);
+    expect(streamedSteps).toEqual(result.steps.map((step) => step.tool));
   });
 
   test("a knowledge worker sees an honest semantic retrieval receipt before synthesis", async () => {

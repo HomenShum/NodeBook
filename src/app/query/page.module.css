@@ -392,6 +392,19 @@
   animation: spin 1s linear infinite;
 }
 
+.liveStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  background: var(--background-subtle);
+  color: var(--foreground-subtle);
+  font-size: 0.875rem;
+}
+
 .responseLine {
   margin-bottom: 1rem;
   line-height: 1.5;

@@ -14,6 +14,7 @@ import { getAuthFetch } from "@/app/util";
 import { cn } from "@/lib/utils";
 
 import { applyAgentOperations, undoAgentOperations } from "./applyProposal";
+import { consumeNodeAgentEventStream } from "./agentStreamProtocol";
 import { NodeAgentEmbeddingContext } from "./NodeAgentEmbeddingContext";
 import RuntimeVerification from "./RuntimeVerification";
 import { runCheckpointExecutionLifecycle } from "./checkpointExecution";
@@ -49,6 +50,7 @@ const state = observable({
   error: "",
   isLoading: false,
   isTransitioning: false,
+  liveMessage: "",
   consent: false,
   webResearch: false,
   mode: "ask" as AgentMode,
@@ -184,10 +186,13 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
     state.content = "";
     state.proposal = null;
     state.operations = [];
+    state.steps = [];
+    state.receipt = null;
+    state.liveMessage = "Starting NodeAgent…";
     try {
       const response = await getAuthFetch()("/api/query", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { Accept: "text/event-stream", "Content-Type": "application/json" },
         body: JSON.stringify({
           query: state.query,
           consent: true,
@@ -197,8 +202,29 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
           rootNodeId: state.mode === "ask" ? undefined : state.rootNodeId ?? graphStore.userRoot.id,
         }),
       });
-      const data = (await response.json()) as AgentQueryResponse;
-      if ("error" in data || !response.ok) throw new Error("error" in data ? data.error : `Run failed (${response.status})`);
+      if (!response.ok) {
+        const failure = await response.json() as { error?: string };
+        throw new Error(failure.error || `Run failed (${response.status})`);
+      }
+      let streamedData: unknown = null;
+      let streamError = "";
+      await consumeNodeAgentEventStream(response, action((event) => {
+        if (event.type === "thought") state.liveMessage = event.data.message;
+        if (event.type === "tool_call") state.liveMessage = `Running ${event.data.name.replaceAll("_", " ")}…`;
+        if (event.type === "tool_result") {
+          state.steps = [...state.steps.filter((step) => step.sequence !== event.data.step.sequence), event.data.step]
+            .sort((left, right) => left.sequence - right.sequence);
+          state.liveMessage = event.data.step.summary;
+        }
+        if (event.type === "client_action") {
+          state.liveMessage = `Checkpoint ready for ${event.data.operationCount} graph change${event.data.operationCount === 1 ? "" : "s"}.`;
+        }
+        if (event.type === "error") streamError = event.data.message;
+        if (event.type === "final_summary") streamedData = event.data.result;
+      }));
+      const data = streamedData as AgentQueryResponse | null;
+      if (!data) throw new Error(streamError || "NodeAgent stream ended without a durable result");
+      if ("error" in data) throw new Error(data.error);
       state.content = data.content;
       state.understanding = data.understanding;
       state.plan = data.plan;
@@ -208,6 +234,7 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
       state.proposal = data.proposal;
       state.riskReasons = data.execution.risk.reasons;
       state.memories = data.memory.memories;
+      state.liveMessage = "";
       setProposalUrl(data.proposal?.id ?? null);
       if (data.proposal && data.execution.disposition === "auto_apply") {
         await applyDurableProposal(data.proposal);
@@ -217,6 +244,7 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
       state.error = error instanceof Error ? error.message : "The agent run failed. No graph changes were made.";
     } finally {
       state.isLoading = false;
+      state.liveMessage = "";
     }
   });
 
@@ -332,13 +360,18 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
 
       <RuntimeVerification />
 
+      {state.isLoading && <div className={styles.liveStatus} role="status" aria-live="polite">
+        <Loader2 className={styles.loadingIcon} size={14} />
+        <span>{state.liveMessage || "NodeAgent is working…"}</span>
+      </div>}
+
       {!state.query && !state.error && <div className={styles.searchResults}><div>Examples</div>{EXAMPLES.map((query) => (
         <button className={styles.exampleQuery} key={query} type="button" onClick={action(() => { state.query = query; })}>
           <Search size={14} /><span>{query}</span>
         </button>))}</div>}
       {state.error && <div className={styles.error} role="alert"><strong>Not completed</strong><p>{state.error}</p></div>}
-      {state.content && <article className={styles.response} data-testid="agent-response">
-        <p className={styles.responseText}>{state.content}</p>
+      {(state.content || state.steps.length > 0) && <article className={styles.response} data-testid="agent-response">
+        {state.content && <p className={styles.responseText}>{state.content}</p>}
         {state.plan.length > 0 && <section><h3>Plan</h3><ol>{state.plan.map((item) => <li key={item}>{item}</li>)}</ol></section>}
         {state.steps.length > 0 && <section data-testid="agent-steps"><h3>Tool trace</h3>{state.steps.map((step) => (
           <div className={styles.step} key={`${step.sequence}-${step.tool}`}><Check size={14} /><strong>{step.tool}</strong><span>{step.summary}</span></div>

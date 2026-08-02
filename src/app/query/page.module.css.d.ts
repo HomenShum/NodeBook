@@ -21,6 +21,7 @@ declare const styles: {
   readonly "label": string;
   readonly "linkText": string;
   readonly "loadingIcon": string;
+  readonly "liveStatus": string;
   readonly "memory": string;
   readonly "mode": string;
   readonly "modeActive": string;
