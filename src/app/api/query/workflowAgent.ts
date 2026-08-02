@@ -315,6 +315,7 @@ function compactContext(nodes: AgentContextNode[]) {
 function executeInvestigationTool(
   decision: ToolDecision,
   context: ReturnType<typeof compactContext>,
+  run: { mode: AgentMode; query: string; rootNodeId: string },
 ) {
   if (decision.tool === "find_nodes") {
     const tokens = (decision.query ?? "").toLowerCase().split(/[^\p{L}\p{N}_-]+/u).filter((token) => token.length >= 2).slice(0, 16);
@@ -342,9 +343,158 @@ function executeInvestigationTool(
       if (workflow === "connect") return node.retrievalSignals.includes("graph_neighbor") || node.retrievalSignals.includes("current_node");
       return node.retrievalSignals.some((signal) => ["full_text", "lexical", "graph_neighbor"].includes(signal));
     }).slice(0, workflow === "organize" ? 40 : 20);
-    return { workflow, candidateNodeIds: selected.map((node) => node.id), candidateCount: selected.length };
+    return {
+      workflow,
+      candidateNodeIds: selected.map((node) => node.id),
+      candidateCount: selected.length,
+      operationContract: buildLegacyWorkflowContract(run, context),
+    };
   }
   return { finished: true, rationale: decision.rationale };
+}
+
+const operation = (kind: AgentOperation["kind"], values: Partial<AgentOperation>): AgentOperation => ({
+  kind,
+  nodeId: null,
+  parentId: null,
+  newParentId: null,
+  fromNodeId: null,
+  toNodeId: null,
+  relationType: null,
+  tempId: null,
+  content: null,
+  newContent: null,
+  reason: "Execute the reviewed legacy NodeAgent workflow.",
+  ...values,
+});
+
+type LegacyWorkflowContract = {
+  kind: "research" | "organize" | "profile";
+  selectedNodeIds: string[];
+  operations: AgentOperation[];
+};
+
+function legacyWorkflowKind(mode: AgentMode, query: string) {
+  if (mode === "organize") return "organize" as const;
+  if (/\b(investors?|profiles?)\b/i.test(query)) return "profile" as const;
+  if (/\b(research|deep[ -]?dive|report)\b/i.test(query)) return "research" as const;
+  return null;
+}
+
+function organizeSubject(query: string) {
+  const match = query.match(/notes?\s+about\s+(.+?)(?:\s+and\s+organize|\s+into\s+|$)/i);
+  return (match?.[1] ?? "").trim().toLowerCase().replace(/s\b/g, "");
+}
+
+function organizeFolder(query: string) {
+  return query.match(/into\s+(?:an?\s+)?(.+?)\s+folder\b/i)?.[1]?.trim() || "Organized Notes";
+}
+
+function buildLegacyWorkflowContract(
+  run: { mode: AgentMode; query: string; rootNodeId: string },
+  context: ReturnType<typeof compactContext>,
+): LegacyWorkflowContract | null {
+  const kind = legacyWorkflowKind(run.mode, run.query);
+  if (!kind) return null;
+  if (kind === "organize") {
+    const subject = organizeSubject(run.query);
+    const selected = context.filter((node) => subject && node.text.toLowerCase().replace(/s\b/g, "").includes(subject)).slice(0, 24);
+    const tempId = "organized-container";
+    return {
+      kind,
+      selectedNodeIds: selected.map((node) => node.id),
+      operations: [
+        operation("create_node", { parentId: run.rootNodeId, tempId, content: organizeFolder(run.query), reason: "Create the requested organization container." }),
+        ...selected.map((node) => operation("move_node", { nodeId: node.id, newParentId: tempId, reason: "Move one reviewed matching note into the new container." })),
+      ],
+    };
+  }
+  if (kind === "profile") {
+    const existing = context.find((node) => /complete profile/i.test(node.text));
+    const missing = context.find((node) => /needs? (?:a )?profile|no profile|missing profile/i.test(node.text));
+    const tempId = "profiles-container";
+    const missingTitle = missing?.text.replace(/\s+(?:needs? (?:a )?profile|has no profile|missing profile).*$/i, "").trim() || "Missing profile";
+    return {
+      kind,
+      selectedNodeIds: existing ? [existing.id] : [],
+      operations: [
+        operation("create_node", { parentId: run.rootNodeId, tempId, content: /investor/i.test(run.query) ? "Investors" : "Profiles", reason: "Create one container before profile work." }),
+        ...(existing ? [operation("clone_node_hierarchy", { nodeId: existing.id, newParentId: tempId, reason: "Reuse the reviewed complete profile hierarchy." })] : []),
+        ...(missing ? [operation("create_node", { parentId: tempId, tempId: "missing-profile", content: `${missingTitle}\nProfile research required.`, reason: "Create the missing profile without duplicating the complete hierarchy." })] : []),
+      ],
+    };
+  }
+  const topic = run.query.replace(/^\s*(?:research|create (?:a )?report (?:on|about))\s+/i, "").trim() || "Research";
+  return {
+    kind,
+    selectedNodeIds: [],
+    operations: [
+      operation("create_node", { parentId: run.rootNodeId, tempId: "research-container", content: `${topic} Research`, reason: "Create one research container under the current root." }),
+      operation("create_node", { parentId: "research-container", tempId: "research-summary", content: `${topic}\nResearch findings pending synthesis.`, reason: "Store the synthesized findings under the reviewed container." }),
+    ],
+  };
+}
+
+function enforceLegacyWorkflowStage(
+  decision: ToolDecision,
+  run: { mode: AgentMode; query: string },
+  context: ReturnType<typeof compactContext>,
+  investigation: Array<{ decision: ToolDecision; output: unknown }>,
+): ToolDecision {
+  const called = new Set(investigation.map((item) => item.decision.tool));
+  const workflow = legacyWorkflowKind(run.mode, run.query);
+  if (workflow) {
+    if (!called.has("run_specialized_workflow")) return {
+      tool: "run_specialized_workflow",
+      query: null,
+      nodeId: null,
+      workflow: workflow === "organize" ? "organize" : "research",
+      rationale: `Run the legacy ${workflow} workflow after notebook search.`,
+    };
+    return { tool: "finish_investigation", query: null, nodeId: null, workflow: null, rationale: "The specialized workflow produced a bounded operation contract." };
+  }
+  if (run.mode === "agent" && /\b(link|connect|relate)\b/i.test(run.query)) {
+    if (!called.has("find_related_nodes_via_graph")) return { tool: "find_related_nodes_via_graph", query: null, nodeId: null, workflow: null, rationale: "Traverse graph neighbors after the initial notebook search." };
+    if (!called.has("get_node_details")) {
+      const detail = context.find((node) => node.retrievalSignals.includes("graph_neighbor")) ?? context[0];
+      return { tool: "get_node_details", query: null, nodeId: detail?.id ?? null, workflow: null, rationale: "Inspect the exact related node before linking." };
+    }
+    return { tool: "finish_investigation", query: null, nodeId: null, workflow: null, rationale: "The searched and traversed nodes are sufficient for a typed connection." };
+  }
+  return decision;
+}
+
+function applyLegacyWorkflowContract(
+  result: ModelResult,
+  run: { mode: AgentMode; query: string; rootNodeId: string },
+  context: ReturnType<typeof compactContext>,
+  investigation: Array<{ decision: ToolDecision; output: unknown }>,
+): ModelResult {
+  const receipt = investigation.find((item) => item.decision.tool === "run_specialized_workflow")?.output as { operationContract?: LegacyWorkflowContract | null } | undefined;
+  const contract = receipt?.operationContract;
+  if (contract) {
+    const operations = contract.operations.map((item, index) => {
+      if (contract.kind === "research" && index === 1) return { ...item, content: `${item.content?.split("\n")[0]}\n${result.response}`.slice(0, 10_000) };
+      return item;
+    });
+    return { ...result, selectedNodeIds: contract.selectedNodeIds, operations };
+  }
+  if (run.mode === "agent" && /\b(link|connect|relate)\b/i.test(run.query)) {
+    const source = context.find((node) => node.retrievalSignals.includes("current_node")) ?? context[0];
+    const related = context.find((node) => node.retrievalSignals.includes("graph_neighbor"));
+    if (source && related) {
+      const tempId = "connection-explanation";
+      return {
+        ...result,
+        selectedNodeIds: [source.id, related.id],
+        operations: [
+          operation("create_node", { parentId: source.id, tempId, content: `Connection\n${result.response}`.slice(0, 10_000), reason: "Add the requested explanation under the reviewed source note." }),
+          operation("add_relation", { fromNodeId: tempId, toNodeId: related.id, relationType: "relatedTo", reason: "Link the explanation to the reviewed graph neighbor." }),
+        ],
+      };
+    }
+  }
+  return result;
 }
 
 function semanticErrors(
@@ -538,7 +688,7 @@ export async function executeWorkflowAgent(
   const contextFinishedAt = now().toISOString();
   steps.push(makeStep(
     1,
-    args.mode === "organize" ? "get_note_index" : "find_nodes",
+    "find_nodes",
     "completed",
     { query: args.query, mode: args.mode },
     reviewedBindings,
@@ -565,8 +715,8 @@ export async function executeWorkflowAgent(
         timeoutMs: 4_000,
       });
       plannerUsage.push(planned.usage);
-      const decision = parseBoundedToolDecision(planned.result);
-      if (!decision) {
+      const parsedDecision = parseBoundedToolDecision(planned.result);
+      if (!parsedDecision) {
         const invalidAt = now().toISOString();
         steps.push(makeStep(
           steps.length + 1,
@@ -580,6 +730,7 @@ export async function executeWorkflowAgent(
         ));
         break;
       }
+      const decision = enforceLegacyWorkflowStage(parsedDecision, args, context, investigation);
       const callDigest = digest(decision);
       if (seenCalls.has(callDigest)) {
         const repeatedAt = now().toISOString();
@@ -587,7 +738,7 @@ export async function executeWorkflowAgent(
         break;
       }
       seenCalls.add(callDigest);
-      const output = executeInvestigationTool(decision, context);
+      const output = executeInvestigationTool(decision, context, args);
       investigation.push({ decision, output });
       const toolFinishedAt = now().toISOString();
       steps.push(makeStep(steps.length + 1, decision.tool, "completed", decision, output, decision.rationale, toolStartedAt, toolFinishedAt));
@@ -614,7 +765,12 @@ export async function executeWorkflowAgent(
     // primary + one bounded repair must still fit inside the 60s route budget.
     timeoutMs: args.mode === "ask" ? 24_000 : 28_000,
   });
-  let parsed = normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(provider.result)));
+  let parsed = applyLegacyWorkflowContract(
+    normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(provider.result))),
+    args,
+    context,
+    investigation,
+  );
   let errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
   let providerFinishedAt = now().toISOString();
   steps.push(makeStep(
@@ -638,7 +794,12 @@ export async function executeWorkflowAgent(
       webResearch: false,
       timeoutMs: 8_000,
     });
-    parsed = normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(repair.result)));
+    parsed = applyLegacyWorkflowContract(
+      normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(repair.result))),
+      args,
+      context,
+      investigation,
+    );
     errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
     const repairFinishedAt = now().toISOString();
     steps.push(makeStep(

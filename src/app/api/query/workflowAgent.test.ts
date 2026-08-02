@@ -226,6 +226,131 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.usage).toEqual({ inputTokens: 100, outputTokens: 50, totalTokens: 150 });
   });
 
+  test("a researcher gets the legacy container-first workflow even when the planner repeats search and the model returns prose only", async () => {
+    const repeatedSearch = { tool: "find_nodes", query: "Web3", nodeId: null, workflow: null, rationale: "Search again." };
+    const planner = jest.fn().mockResolvedValue({ result: repeatedSearch, usage });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Research Web3 and its core components",
+        mode: "agent",
+        rootNodeId: "research-root",
+        webResearch: false,
+        contextNodes: [{ ...node, sourceId: "unrelated", contentText: "Grocery list", retrievalSignals: ["lexical"] }],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, response: "Web3 uses decentralized networks and programmable contracts.", operations: [] }, sources: [], usage }),
+        runToolPlanner: planner,
+        runId: () => "run-legacy-research",
+        proposalId: () => "proposal-legacy-research",
+      },
+    );
+
+    expect(result.steps.map((step) => step.tool)).toEqual([
+      "find_nodes", "run_specialized_workflow", "finish_investigation", "synthesize_from_notebook", "validate_proposal", "finish_work",
+    ]);
+    expect(result.operations.map((item) => [item.kind, item.parentId])).toEqual([
+      ["create_node", "research-root"],
+      ["create_node", "research-container"],
+    ]);
+    expect(result.sourceNodeIds).toEqual([]);
+    expect(result.executionDisposition).toBe("auto_apply");
+  });
+
+  test("an organizer deterministically moves only the searched meeting notes into one new container", async () => {
+    const planner = jest.fn().mockResolvedValue({ result: { tool: "get_node_details", query: null, nodeId: "plan-1", workflow: null, rationale: "Inspect a node." }, usage });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Find all my notes about meetings and organize them into a Project Meetings folder",
+        mode: "organize",
+        rootNodeId: "project-alpha",
+        webResearch: false,
+        contextNodes: [
+          { ...node, sourceId: "meeting-1", contentText: "Meeting with design" },
+          { ...node, sourceId: "plan-1", contentText: "Project Alpha plan" },
+          { ...node, sourceId: "meeting-2", contentText: "Weekly meeting notes" },
+        ],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, operations: [] }, sources: [], usage }),
+        runToolPlanner: planner,
+        runId: () => "run-legacy-organize",
+        proposalId: () => "proposal-legacy-organize",
+      },
+    );
+
+    expect(result.steps.map((step) => step.tool)).toEqual([
+      "find_nodes", "run_specialized_workflow", "finish_investigation", "synthesize_from_notebook", "validate_proposal", "finish_work",
+    ]);
+    expect(result.operations.map((item) => item.kind)).toEqual(["create_node", "move_node", "move_node"]);
+    expect(result.operations.slice(1).map((item) => item.nodeId)).toEqual(["meeting-1", "meeting-2"]);
+    expect(result.sourceNodeIds).toEqual(["meeting-1", "meeting-2"]);
+  });
+
+  test("a connection request preserves the legacy search-traverse-detail loop and emits a typed explanation relation", async () => {
+    const planner = jest.fn().mockResolvedValue({ result: { tool: "find_nodes", query: "Mamba", nodeId: null, workflow: null, rationale: "Search." }, usage });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Find Mamba and State Space Models and link them with an explanation",
+        mode: "agent",
+        rootNodeId: "ai-research",
+        webResearch: false,
+        contextNodes: [
+          { ...node, sourceId: "mamba", contentText: "Mamba architecture", retrievalSignals: ["full_text", "current_node"] },
+          { ...node, sourceId: "ssm", contentText: "State Space Models", retrievalSignals: ["graph_neighbor"] },
+        ],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, response: "Mamba applies selective state-space updates.", operations: [] }, sources: [], usage }),
+        runToolPlanner: planner,
+        runId: () => "run-legacy-connect",
+        proposalId: () => "proposal-legacy-connect",
+      },
+    );
+
+    expect(result.steps.map((step) => step.tool)).toEqual([
+      "find_nodes", "find_related_nodes_via_graph", "get_node_details", "finish_investigation", "synthesize_from_notebook", "validate_proposal", "finish_work",
+    ]);
+    expect(result.operations.map((item) => item.kind)).toEqual(["create_node", "add_relation"]);
+    expect(result.operations[0]).toMatchObject({ parentId: "mamba", tempId: "connection-explanation" });
+    expect(result.operations[1]).toMatchObject({ fromNodeId: "connection-explanation", toNodeId: "ssm", relationType: "relatedTo" });
+    expect(result.sourceNodeIds).toEqual(["mamba", "ssm"]);
+  });
+
+  test("an investor workflow reuses one reviewed complete hierarchy and creates only the missing profile", async () => {
+    const planner = jest.fn().mockResolvedValue({ result: { tool: "find_nodes", query: "investors", nodeId: null, workflow: null, rationale: "Search." }, usage });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Find the investors and create profiles for each",
+        mode: "agent",
+        rootNodeId: "fundraising",
+        webResearch: false,
+        contextNodes: [
+          { ...node, sourceId: "investor-existing", contentText: "Investor Ada Ventures complete profile with thesis" },
+          { ...node, sourceId: "investor-child", contentText: "Ada Ventures contact notes", retrievalSignals: ["graph_neighbor"] },
+          { ...node, sourceId: "investor-missing", contentText: "Investor Beacon Capital needs a profile" },
+        ],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, operations: [] }, sources: [], usage }),
+        runToolPlanner: planner,
+        runId: () => "run-legacy-profile",
+        proposalId: () => "proposal-legacy-profile",
+      },
+    );
+
+    expect(result.steps.map((step) => step.tool)).toEqual([
+      "find_nodes", "run_specialized_workflow", "finish_investigation", "synthesize_from_notebook", "validate_proposal", "finish_work",
+    ]);
+    expect(result.operations.map((item) => item.kind)).toEqual(["create_node", "clone_node_hierarchy", "create_node"]);
+    expect(result.operations[1]).toMatchObject({ nodeId: "investor-existing", newParentId: "profiles-container" });
+    expect(result.sourceNodeIds).toEqual(["investor-existing"]);
+    expect(result.executionDisposition).toBe("approval_required");
+  });
+
   test("a degraded model repeating the same tool call is stopped at a checkpoint instead of looping", async () => {
     const repeated = { tool: "find_nodes", query: "evidence", nodeId: null, workflow: null, rationale: "Search again." };
     const planner = jest.fn().mockResolvedValue({ result: repeated, usage });

@@ -4,6 +4,21 @@ Date: 2026-08-01
 
 This is the durable migration ledger for the in-place MewAgent-to-NodeAgent port. It inventories both recoverable legacy generations and records whether each behavior is ported, intentionally replaced, or still requires live proof. Historical names appear here only as provenance; shipped product copy and commands use NodeBook and NodeAgent.
 
+## 2026-08-02 evidence correction
+
+The earlier ledger used **Replaced** too broadly. A generic instruction or adjacent capability is not behavioral parity. Direct source inspection of both agent generations, Git commit `fdf6a105`, the inline client, current runtime receipts, and the six locked cases produced these binding corrections:
+
+| Prior claim | Correct current state |
+|---|---|
+| Specialized research/organization/profile behavior was ported through instructions | Until 2026-08-02, `run_specialized_workflow` returned only candidate IDs and the final model had to invent all operation structure. It now has deterministic legacy SOP stages plus typed operation contracts; scenario tests pass and renewed production receipts remain required. |
+| `create_knowledge_map` was replaced by the connect workflow | **Missing.** A two-node connection is not semantic embedding, clustering, and knowledge-map materialization. The React Flow verification map is evidence UI, not a replacement for this workflow. |
+| Company/person deep dives and report outline/population were replaced by generic research | **Partial or missing.** Container-first graph operations exist, but the named multi-search, structured entity synthesis, and two-stage report behaviors have not been demonstrated. |
+| Durable steps fully ported streaming events | **Partial.** Durable replay, digests, timestamps, and recovery are stronger, but progressive `thought`/`tool_call`/`tool_result` rendering during execution is absent. |
+| Typed memory fully replaced legacy memory UX | **Partial.** Bounded owner-scoped typed records exist, but visible graph projections plus complete inspect/pin/forget user flows remain unfinished. |
+| Rename followed parity | **Contradicted.** Product code already says NodeAgent while behavioral parity is incomplete; this historical sequencing error cannot be retroactively made true. |
+
+For completion claims, **proven** now means executable scenario coverage plus the appropriate live production observation. Instructions, schemas, or a neighboring capability alone are insufficient.
+
 ## Authoritative sources
 
 - Google generation: `D:\VSCode Projects\Ideaflow\prod-push-mew\mew` at Git `0de15d79`, including uncommitted forensic work in `src/app/api/llm/google-genai/agent/`.
@@ -36,13 +51,13 @@ Disposition meanings:
 | `get_note_index` | Google | Ported | Organization mode loads a bounded owner-scoped index and emits a durable step. |
 | `get_all_notes_raw` | Google | Replaced | Owner-scoped bounded Convex snapshot; the model never receives an unbounded raw dump. |
 | `get_notes_with_content` | Google internal | Replaced | Hydrated, chunk-aware Convex documents with response/context byte caps. |
-| `research_company_deep_dive` | Both | Replaced / proof pending | Generic research workflow and container-first operations; dedicated company algorithm is not copied. |
-| `research_person_deep_dive` | Both | Replaced / proof pending | Generic research workflow and reuse instructions; dedicated person algorithm is not copied. |
-| `research_and_update_profile_section` | Both | Replaced / proof pending | Update workflow plus exact source bindings; live profile case remains pending. |
+| `research_company_deep_dive` | Both | Deferred / missing | Container-first operations do not reproduce multi-query company research and structured synthesis. |
+| `research_person_deep_dive` | Both | Deferred / missing | Container-first operations do not reproduce multi-query person research and structured synthesis. |
+| `research_and_update_profile_section` | Both | Partial / proof pending | Typed updates and exact source bindings exist; the targeted research-and-fill workflow is not yet demonstrated. |
 | `get_company_profile` | Google | Replaced | Existing-note retrieval and exact-node inspection supersede a domain-specific getter. |
 | `get_person_profile` | Google | Replaced | Existing-note retrieval and exact-node inspection supersede a domain-specific getter. |
 | `research_and_create_notes` | Google | Replaced / proof pending | Research workflow emits typed container/child operations. |
-| `create_knowledge_map` | Both | Replaced / proof pending | Connect workflow emits typed nodes and relations; Mamba/SSM live case remains pending. |
+| `create_knowledge_map` | Both | Deferred / missing | No integrated embedding, clustering, and hierarchy-materialization workflow exists. |
 | `analyze_and_reorganize_notes` | Google internal | Replaced / proof pending | Organization workflow operates on a bounded index; meeting-note live case remains pending. |
 | `find_and_intelligently_clone_nodes` | Google | Replaced / proof pending | Search/reuse policy plus typed `clone_node_hierarchy`; existing-profile live case remains pending. |
 | `batch_clone_nodes` | Google internal | Replaced | One bounded typed operation list and whole-run checkpoint replace an unbounded batch helper. |
@@ -68,12 +83,12 @@ Disposition meanings:
 
 | Legacy workflow | Required preserved behavior | Current state |
 |---|---|---|
-| Search broadly → inspect clues → traverse graph → specialize → finish | Iterative, bounded, notebook-first sensemaking | Ported as at most four planner decisions plus final synthesis; production trace proof pending. |
+| Search broadly → inspect clues → traverse graph → specialize → finish | Iterative, bounded, notebook-first sensemaking | Deterministic stage enforcement now prevents repeated searches from exhausting the four-step budget; production trace proof pending. |
 | SOP A: hybrid synthesis | Combine multiple existing notes without duplication | Ported in instructions/retrieval; live Notion proof pending. |
-| SOP B: deep knowledge organization | Create one container before children and preserve hierarchy | Ported in typed operations/instructions; live Notion proof pending. |
-| SOP C: multi-entity research | Reuse existing entity profiles and research only gaps | Ported in instructions/clone operation; live Notion proof pending. |
-| Organization | Find exact bounded matches, create folder, move only matches | Ported; live three-meeting case pending. |
-| Connection | Reuse both nodes, create explanation child, add relation | Ported; live Mamba/SSM case pending. |
+| SOP B: deep knowledge organization | Create one container before children and preserve hierarchy | Typed specialized operation contract implemented; live Notion proof pending. |
+| SOP C: multi-entity research | Reuse existing entity profiles and research only gaps | Typed clone/create operation contract implemented; live Notion proof pending. |
+| Organization | Find exact bounded matches, create folder, move only matches | Subject-filtered operation contract passes scenario coverage; live three-meeting case pending. |
+| Connection | Reuse both nodes, create explanation child, add relation | Search→traverse→detail enforcement plus typed explanation/relation passes scenario coverage; live Mamba/SSM case pending. |
 | Draft → self-evaluate → revise | Do not accept malformed, out-of-scope, or low-integrity writes | Replaced by schema parsing, semantic validation, and one bounded repair. No hidden self-score is treated as proof. |
 | Sequential mutation queue | Avoid client synchronization races and preserve order | Ported as one grouped GraphStore transaction plus single-winner Convex checkpoint claim. |
 | Pattern learning | Learn from success and failure without inflated scores | Replaced by bounded typed memories and patterns with success/failure counts. |
