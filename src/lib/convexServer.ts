@@ -115,23 +115,27 @@ export const agentContextSnapshotReference = makeFunctionReference<
 >("agentWorkflows:contextSnapshot");
 export const agentSemanticContextReference = makeFunctionReference<
   "action",
-  { text: string; limit?: number },
-  {
-    status: "ready" | "degraded";
-    reason?: string;
-    model: string;
-    indexedCount: number;
-    nodes: Array<{
-      sourceId: string;
-      version: number;
-      contentText: string;
-      document: string;
-      updatedAt: string;
-      retrievalSignals: string[];
-      semanticScore: number;
-    }>;
-  }
+  { queryEmbedding: number[]; limit?: number },
+  Array<{
+    sourceId: string;
+    version: number;
+    contentText: string;
+    document: string;
+    updatedAt: string;
+    retrievalSignals: string[];
+    semanticScore: number;
+  }>
 >("nodeEmbeddings:semanticContext");
+export const agentEmbeddingWorkReference = makeFunctionReference<
+  "query",
+  { limit?: number },
+  Array<{ sourceId: string; version: number; contentText: string }>
+>("nodeEmbeddings:embeddingWork");
+export const storeAgentEmbeddingsReference = makeFunctionReference<
+  "mutation",
+  { items: Array<{ sourceId: string; version: number; embedding: number[] }> },
+  { stored: number }
+>("nodeEmbeddings:storeEmbeddings");
 export const agentMemoryContextReference = makeFunctionReference<
   "query",
   { text: string; limit?: number },

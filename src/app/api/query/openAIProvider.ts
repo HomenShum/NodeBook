@@ -1,9 +1,13 @@
 import { env } from "@/envBackend";
 
+import { OPENAI_EMBEDDING_DIMENSIONS, OPENAI_EMBEDDING_MODEL, parseEmbeddingResponse } from "./embeddingBoundary";
 import { reasoningConfig } from "./providerConfig";
 import { RESULT_JSON_SCHEMA, WorkflowUsage } from "./workflowAgent";
 
 const MAX_OPENAI_RESPONSE_BYTES = 2 * 1024 * 1024;
+const MAX_EMBEDDING_INPUTS = 25;
+const MAX_EMBEDDING_INPUT_CHARS = 4_000;
+const MAX_EMBEDDING_BATCH_CHARS = 100_000;
 
 async function readBoundedJson(response: Response) {
   const declaredLength = Number(response.headers.get("content-length") || "0");
@@ -37,6 +41,35 @@ function extractSourceUrls(body: Record<string, any>) {
     }
   }
   return [...urls].slice(0, 20);
+}
+
+export async function runOpenAIEmbeddings(args: { input: string[]; timeoutMs: number }) {
+  if (!env.OPENAI_API_KEY) throw new Error("embedding_not_configured");
+  if (args.input.length < 1 || args.input.length > MAX_EMBEDDING_INPUTS) throw new Error("embedding_batch_limit");
+  const input = args.input.map((value) => value.slice(0, MAX_EMBEDDING_INPUT_CHARS));
+  if (input.reduce((sum, value) => sum + value.length, 0) > MAX_EMBEDDING_BATCH_CHARS) {
+    throw new Error("embedding_input_too_large");
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort("embedding_timeout"), Math.min(Math.max(args.timeoutMs, 1_000), 10_000));
+  try {
+    const response = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: OPENAI_EMBEDDING_MODEL,
+        input,
+        dimensions: OPENAI_EMBEDDING_DIMENSIONS,
+        encoding_format: "float",
+      }),
+      signal: controller.signal,
+    });
+    const body = await readBoundedJson(response);
+    if (!response.ok) throw new Error(`embedding_provider_${response.status}`);
+    return { model: OPENAI_EMBEDDING_MODEL, embeddings: parseEmbeddingResponse(body, input.length) };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function runOpenAI(args: {

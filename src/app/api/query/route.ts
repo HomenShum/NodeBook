@@ -8,6 +8,7 @@ import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { env } from "@/envBackend";
 import {
   agentContextSnapshotReference,
+  agentEmbeddingWorkReference,
   agentMemoryContextReference,
   agentModelRouteReference,
   agentSemanticContextReference,
@@ -15,10 +16,11 @@ import {
   getConvexClient,
   recordAgentWorkflowReference,
   reportAgentModelOutcomeReference,
+  storeAgentEmbeddingsReference,
 } from "@/lib/convexServer";
 
-import { runOpenAI } from "./openAIProvider";
-import { fuseRetrievedContext } from "./retrievalFusion";
+import { runOpenAI, runOpenAIEmbeddings } from "./openAIProvider";
+import { fuseRetrievedContext, SemanticContextResult } from "./retrievalFusion";
 import {
   AgentMode,
   executeWorkflowAgent,
@@ -34,6 +36,15 @@ const RequestSchema = z.object({
   rootNodeId: z.string().min(1).max(200).optional(),
   webResearch: z.boolean().default(false),
 });
+
+function semanticDegradedReason(error: unknown) {
+  if (error instanceof Error) {
+    if (error.name === "AbortError" || error.message.includes("timeout")) return "provider_timeout";
+    if (/embedding_provider_\d+/.test(error.message)) return error.message;
+    if (error.message.startsWith("embedding_")) return error.message;
+  }
+  return "embedding_unavailable";
+}
 
 export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
   let body: unknown;
@@ -63,17 +74,47 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
   let selectedProvider: "openai" | "openrouter" = "openai";
   let providerAttempted = false;
   try {
-    const [primaryContextNodes, semanticContext, memoryContext, modelRoute] = await Promise.all([
+    const [primaryContextNodes, embeddingWork, memoryContext, modelRoute] = await Promise.all([
       convex.query(agentContextSnapshotReference, {
         text: parsed.data.query,
         mode: parsed.data.mode,
         limit: parsed.data.mode === "organize" ? 200 : 40,
         rootNodeId: parsed.data.rootNodeId,
       }),
-      convex.action(agentSemanticContextReference, { text: parsed.data.query, limit: 12 }),
+      convex.query(agentEmbeddingWorkReference, { limit: 24 }),
       convex.query(agentMemoryContextReference, { text: parsed.data.query, limit: 8 }),
       convex.query(agentModelRouteReference, {}),
     ]);
+    let semanticContext: SemanticContextResult;
+    try {
+      const embeddingResult = await runOpenAIEmbeddings({
+        input: [parsed.data.query, ...embeddingWork.map((item) => item.contentText)],
+        timeoutMs: 8_000,
+      });
+      const stored = embeddingWork.length > 0
+        ? await convex.mutation(storeAgentEmbeddingsReference, {
+          items: embeddingWork.map((item, index) => ({ ...item, embedding: embeddingResult.embeddings[index + 1] })),
+        })
+        : { stored: 0 };
+      const semanticNodes = await convex.action(agentSemanticContextReference, {
+        queryEmbedding: embeddingResult.embeddings[0],
+        limit: 12,
+      });
+      semanticContext = {
+        status: "ready",
+        model: embeddingResult.model,
+        indexedCount: stored.stored,
+        nodes: semanticNodes,
+      };
+    } catch (error) {
+      semanticContext = {
+        status: "degraded",
+        reason: semanticDegradedReason(error),
+        model: "text-embedding-3-small",
+        indexedCount: 0,
+        nodes: [],
+      };
+    }
     const contextNodes = fuseRetrievedContext(
       primaryContextNodes,
       semanticContext,
