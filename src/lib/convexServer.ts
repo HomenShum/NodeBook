@@ -166,6 +166,9 @@ export const agentMemoryContextReference = makeFunctionReference<
       outcome: "success" | "failure" | "rejected" | "undone";
       sourceNodeIds: string[];
       pinned: boolean;
+      query: string;
+      durationMs: number;
+      createdAt: string;
     }>;
     patterns: Array<{
       taskClass: string;
@@ -178,6 +181,22 @@ export const agentMemoryContextReference = makeFunctionReference<
     }>;
   }
 >("agentWorkflows:memoryContext");
+export const agentMemoryDetailReference = makeFunctionReference<
+  "query",
+  { memoryId: string },
+  {
+    memoryId: string;
+    taskClass: string;
+    summary: string;
+    query: string;
+    toolSequence: string[];
+    sourceNodeIds: string[];
+    outcome: "success" | "failure" | "rejected" | "undone";
+    durationMs: number;
+    pinned: boolean;
+    createdAt: string;
+  } | null
+>("agentWorkflows:memoryDetail");
 export const agentModelRouteReference = makeFunctionReference<
   "query",
   Record<string, never>,

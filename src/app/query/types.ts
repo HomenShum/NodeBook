@@ -31,7 +31,7 @@ export type AgentStep = {
 export type AgentReceipt = {
   runId: string;
   status: "completed" | "proposed";
-  provider: "openai" | "openrouter";
+  provider: "openai" | "openrouter" | "nodebook";
   model: string;
   mode: AgentMode;
   startedAt: string;
@@ -45,6 +45,19 @@ export type AgentReceipt = {
     totalTokens: number | null;
   };
   persisted: boolean;
+};
+
+export type AgentMemory = {
+  memoryId: string;
+  taskClass: string;
+  summary: string;
+  query: string;
+  toolSequence: string[];
+  outcome: "success" | "failure" | "rejected" | "undone";
+  sourceNodeIds: string[];
+  pinned: boolean;
+  durationMs: number;
+  createdAt: string;
 };
 
 export type AgentQueryResponse =
@@ -61,15 +74,7 @@ export type AgentQueryResponse =
         risk: { level: "low" | "high"; requiresApproval: boolean; reasons: string[] };
       };
       memory: {
-        memories: Array<{
-          memoryId: string;
-          taskClass: string;
-          summary: string;
-          toolSequence: string[];
-          outcome: "success" | "failure" | "rejected" | "undone";
-          sourceNodeIds: string[];
-          pinned: boolean;
-        }>;
+        memories: AgentMemory[];
         patterns: Array<{
           taskClass: string;
           toolSequence: string[];

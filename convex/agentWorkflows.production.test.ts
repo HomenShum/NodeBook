@@ -23,6 +23,8 @@ const transitionProposal = makeFunctionReference<"mutation", any, any>("agentWor
 const memoryContext = makeFunctionReference<"query", { text: string; limit?: number }, any>(
   "agentWorkflows:memoryContext",
 );
+const memoryDetail = makeFunctionReference<"query", { memoryId: string }, any>("agentWorkflows:memoryDetail");
+const updateMemory = makeFunctionReference<"mutation", { memoryId: string; action: "pin" | "unpin" | "forget" }, any>("agentWorkflows:updateMemory");
 const contextSnapshot = makeFunctionReference<
   "query",
   { text: string; mode: "ask" | "agent" | "organize"; limit?: number; rootNodeId?: string },
@@ -33,13 +35,20 @@ const recentRuntimeEvaluations = makeFunctionReference<"query", { limit?: number
 
 const owner = "auth0|nodeagent-memory-owner";
 
-function result(runId: string, status: "completed" | "proposed", mode: "ask" | "agent", proposal = false) {
+function result(
+  runId: string,
+  status: "completed" | "proposed",
+  mode: "ask" | "agent",
+  proposal = false,
+  provider: "openai" | "nodebook" = "openai",
+  memoryEligible: boolean | undefined = undefined,
+) {
   const startedAtMs = Date.parse("2026-08-01T00:00:00.000Z") + Number(runId.replace(/\D/g, "") || 0);
   return {
     run: {
       runId,
       status,
-      provider: "openai" as const,
+      provider,
       model: "free-eval-model",
       mode,
       query: "Research launch evidence",
@@ -47,6 +56,7 @@ function result(runId: string, status: "completed" | "proposed", mode: "ask" | "
       sourceBindings: [{ sourceId: "evidence-1", version: 3, digest: "b".repeat(64) }],
       sourceUrls: [],
       proposalId: proposal ? `proposal-${runId}` : undefined,
+      memoryEligible,
       summary: `Completed ${runId}`,
       stepCount: 2,
       inputTokens: 10,
@@ -126,6 +136,71 @@ describe("NodeAgent typed memory", () => {
     }));
   });
 
+  test("an owner can inspect provenance while another owner cannot read the same typed memory", async () => {
+    const database = convexTest(schema, modules);
+    const ownerSession = database.withIdentity({ subject: `${owner}-inspect` });
+    const otherSession = database.withIdentity({ subject: `${owner}-other` });
+    await ownerSession.mutation(recordResult, result("inspect-1", "completed", "ask"));
+
+    await expect(ownerSession.query(memoryDetail, { memoryId: "run:inspect-1" })).resolves.toEqual(expect.objectContaining({
+      query: "Research launch evidence",
+      durationMs: 100,
+      sourceNodeIds: ["evidence-1"],
+      createdAt: expect.any(String),
+    }));
+    await expect(otherSession.query(memoryDetail, { memoryId: "run:inspect-1" })).resolves.toBeNull();
+  });
+
+  test("an internal checkpointed projection does not recursively create another learned memory", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-projection` });
+    const projection = result("projection-1", "proposed", "agent", true, "nodebook", false);
+    await session.mutation(recordResult, projection);
+    await session.mutation(transitionProposal, {
+      proposalId: "proposal-projection-1", proposalDigest: "a".repeat(64), fromStatus: "pending", toStatus: "accepted", at: "2026-08-02T00:00:01.000Z",
+    });
+    await session.mutation(transitionProposal, {
+      proposalId: "proposal-projection-1", proposalDigest: "a".repeat(64), fromStatus: "accepted", toStatus: "applied", at: "2026-08-02T00:00:02.000Z", appliedUpdatesJson: "[]", inverseUpdatesJson: "[]",
+    });
+
+    const memories = await session.run(async (ctx) => ctx.db.query("agentMemories").collect());
+    expect(memories).toEqual([]);
+  });
+
+  test("a user can inspect, pin, unpin, and forget one memory without affecting another owner", async () => {
+    const database = convexTest(schema, modules);
+    const ownerSession = database.withIdentity({ subject: `${owner}-controls` });
+    const otherSession = database.withIdentity({ subject: `${owner}-controls-other` });
+    await ownerSession.mutation(recordResult, result("controls-1", "completed", "ask"));
+
+    await expect(ownerSession.mutation(updateMemory, { memoryId: "run:controls-1", action: "pin" }))
+      .resolves.toEqual({ status: "pinned" });
+    await expect(ownerSession.query(memoryDetail, { memoryId: "run:controls-1" }))
+      .resolves.toEqual(expect.objectContaining({ pinned: true }));
+    await expect(otherSession.mutation(updateMemory, { memoryId: "run:controls-1", action: "forget" }))
+      .rejects.toThrow("MEMORY_NOT_FOUND");
+    await expect(ownerSession.mutation(updateMemory, { memoryId: "run:controls-1", action: "unpin" }))
+      .resolves.toEqual({ status: "unpinned" });
+    await expect(ownerSession.mutation(updateMemory, { memoryId: "run:controls-1", action: "forget" }))
+      .resolves.toEqual({ status: "forgotten" });
+    await expect(ownerSession.query(memoryDetail, { memoryId: "run:controls-1" })).resolves.toBeNull();
+  });
+
+  test("a concurrent pin burst preserves the 20-memory cap", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-pin-burst` });
+    for (let index = 0; index < 21; index += 1) {
+      await session.mutation(recordResult, result(`pin-${index}`, "completed", "ask"));
+    }
+    const outcomes = await Promise.allSettled(Array.from({ length: 21 }, (_, index) => session.mutation(updateMemory, {
+      memoryId: `run:pin-${index}`,
+      action: "pin",
+    })));
+    const pinned = await session.run(async (ctx) => (await ctx.db.query("agentMemories").collect()).filter((item) => item.pinned));
+
+    expect(outcomes.filter((outcome) => outcome.status === "fulfilled")).toHaveLength(20);
+    expect(outcomes.filter((outcome) => outcome.status === "rejected")).toHaveLength(1);
+    expect(pinned).toHaveLength(20);
+  });
+
   test("a sustained 225-run notebook session evicts old unpinned episodes and never exceeds the 200-memory bound", async () => {
     const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-sustained` });
     for (let index = 0; index < 225; index += 1) {
@@ -139,7 +214,7 @@ describe("NodeAgent typed memory", () => {
       .first());
     expect(count).toBe(200);
     expect(oldest?.runId).toBe("run-25");
-  });
+  }, 15_000);
 });
 
 describe("NodeAgent hybrid notebook retrieval", () => {

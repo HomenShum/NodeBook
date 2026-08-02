@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>NodeAgent memory projection change boundary</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 2560px; height: 1431px; overflow: hidden; background: #fff; }
+    .capture { position: relative; width: 2560px; height: 1431px; }
+    .capture > img { display: block; width: 2560px; height: 1431px; }
+    .box { position: absolute; border: 4px solid; border-radius: 12px; background: color-mix(in srgb, currentColor 7%, transparent); }
+    .box > strong { position: absolute; top: -34px; left: -4px; padding: 7px 10px; border-radius: 8px 8px 0 0; color: white; font: 800 15px/1.1 Inter, Arial, sans-serif; white-space: nowrap; }
+    .box > strong span { color: white; }
+    .a { left: 2024px; top: 510px; width: 518px; height: 360px; color: #2563eb; }
+    .a > strong { background: #2563eb; }
+    .b { left: 630px; top: 430px; width: 800px; height: 180px; color: #7c3aed; border-style: dashed; }
+    .b > strong { background: #7c3aed; }
+    .c { left: 2024px; top: 910px; width: 518px; height: 470px; color: #059669; }
+    .c > strong { background: #059669; }
+    .legend { position: absolute; left: 630px; top: 635px; width: 800px; padding: 10px 14px; border: 2px solid #111827; border-radius: 8px; background: rgba(255,255,255,.96); color: #111827; font: 700 14px/1.35 Inter, Arial, sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="capture">
+    <img src="before.png" alt="Untouched signed production NodeBook screenshot before memory projection changes" />
+    <div class="box a"><strong><span>CHANGE A - Recalled memory cards</span></strong></div>
+    <div class="box b"><strong><span>CHANGE B - Projected memory node</span></strong></div>
+    <div class="box c"><strong><span>CHANGE C - Checkpoint receipt and Undo</span></strong></div>
+    <div class="legend">OUT OF SCOPE: the original notebook outline, navigation, search, mode controls, and runtime-verification map. Graph rendering remains library-backed by @xyflow/react.</div>
+  </div>
+</body>
+</html>

@@ -69,12 +69,12 @@ function publicProposal(record: any) {
     receipt: {
       runId: record.proposal.runId,
       status: "proposed",
-      provider: "openai",
+      provider: record.run?.provider ?? "openai",
       model: record.run?.model ?? "unknown",
       mode: record.proposal.mode,
       startedAt: record.run?.startedAt ?? record.proposal.createdAt,
       completedAt: record.run?.completedAt ?? record.proposal.createdAt,
-      sourceNodeIds,
+      sourceNodeIds: record.run?.sourceNodeIds ?? sourceNodeIds,
       sourceBindings,
       sourceUrls: record.run?.sourceUrls ?? [],
       usage: {

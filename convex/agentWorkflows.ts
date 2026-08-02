@@ -197,7 +197,7 @@ async function recordTerminalMemory(
 const runArgs = {
   runId: v.string(),
   status: runStatus,
-  provider: v.union(v.literal("openai"), v.literal("openrouter")),
+  provider: v.union(v.literal("openai"), v.literal("openrouter"), v.literal("nodebook")),
   model: v.string(),
   mode: v.union(v.literal("ask"), workflowMode),
   query: v.string(),
@@ -209,6 +209,7 @@ const runArgs = {
   }))),
   sourceUrls: v.array(v.string()),
   proposalId: v.optional(v.string()),
+  memoryEligible: v.optional(v.boolean()),
   summary: v.string(),
   stepCount: v.number(),
   inputTokens: v.union(v.number(), v.null()),
@@ -301,7 +302,7 @@ export const recordResult = mutation({
     for (const step of args.steps) {
       await ctx.db.insert("agentSteps", { ownerId, runId: args.run.runId, ...step });
     }
-    if (!args.proposal && args.run.status === "completed") {
+    if (!args.proposal && args.run.status === "completed" && args.run.memoryEligible !== false) {
       await recordTerminalMemory(ctx, ownerId, args.run, "success");
     }
     await pruneOwnerHistory(ctx, ownerId);
@@ -425,6 +426,9 @@ export const memoryContext = query({
         outcome: memory.outcome,
         sourceNodeIds: memory.sourceNodeIds,
         pinned: memory.pinned,
+        query: memory.query,
+        durationMs: memory.durationMs,
+        createdAt: memory.createdAt,
       }));
     const patterns = await ctx.db
       .query("agentPatterns")
@@ -442,6 +446,30 @@ export const memoryContext = query({
         averageDurationMs: pattern.useCount ? pattern.totalDurationMs / pattern.useCount : 0,
         useCount: pattern.useCount,
       })),
+    };
+  },
+});
+
+export const memoryDetail = query({
+  args: { memoryId: v.string() },
+  handler: async (ctx, args) => {
+    const ownerId = await authenticatedOwner(ctx);
+    const memory = await ctx.db
+      .query("agentMemories")
+      .withIndex("by_owner_memory", (q) => q.eq("ownerId", ownerId).eq("memoryId", args.memoryId))
+      .unique();
+    if (!memory) return null;
+    return {
+      memoryId: memory.memoryId,
+      taskClass: memory.taskClass,
+      summary: memory.summary,
+      query: memory.query,
+      toolSequence: memory.toolSequence,
+      sourceNodeIds: memory.sourceNodeIds,
+      outcome: memory.outcome,
+      durationMs: memory.durationMs,
+      pinned: memory.pinned,
+      createdAt: memory.createdAt,
     };
   },
 });
@@ -658,6 +686,7 @@ export const transitionProposal = mutation({
       .unique();
     if (run && ["rejected", "applied", "failed", "undone"].includes(args.toStatus)) {
       await ctx.db.patch(run._id, { status: args.toStatus as "rejected" | "applied" | "failed" | "undone" });
+      if (run.memoryEligible === false) return { status: args.toStatus };
       const outcome: "success" | "failure" | "rejected" | "undone" = args.toStatus === "applied"
         ? "success"
         : args.toStatus === "failed"

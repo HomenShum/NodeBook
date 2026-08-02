@@ -1,7 +1,7 @@
 "use client";
 
 import { captureException } from "@sentry/nextjs";
-import { Brain, Check, Loader2, Pin, RotateCcw, Search, Trash2, X } from "lucide-react";
+import { Brain, Check, ChevronDown, Loader2, Pin, RotateCcw, Search, Trash2, X } from "lucide-react";
 import { action, observable } from "mobx";
 import { observer } from "mobx-react-lite";
 import React, { useContext, useEffect } from "react";
@@ -21,6 +21,7 @@ import { runCheckpointExecutionLifecycle } from "./checkpointExecution";
 import { NODE_AGENT_INVOKE_EVENT, NodeAgentInvocation } from "./nodeAgentEvents";
 import {
   AgentExecutionMode,
+  AgentMemory,
   AgentMode,
   AgentOperation,
   AgentQueryResponse,
@@ -57,16 +58,23 @@ const state = observable({
   executionMode: "auto" as AgentExecutionMode,
   riskReasons: [] as string[],
   rootNodeId: null as string | null,
-  memories: [] as Array<{
-    memoryId: string;
-    taskClass: string;
-    summary: string;
-    toolSequence: string[];
-    outcome: "success" | "failure" | "rejected" | "undone";
-    sourceNodeIds: string[];
-    pinned: boolean;
-  }>,
+  memories: [] as AgentMemory[],
+  expandedMemoryIds: [] as string[],
+  memoryActionId: null as string | null,
+  memoryActionLabel: "",
+  memoryErrors: {} as Record<string, string>,
 });
+
+type MemoryProjectionResponse = {
+  content: string;
+  understanding: string;
+  plan: string[];
+  operations: AgentOperation[];
+  steps: AgentStep[];
+  proposal: { id: string; digest: string; status: "pending" };
+  receipt: AgentReceipt;
+  error?: string;
+};
 
 async function proposalTransition(body: Record<string, unknown>) {
   const response = await getAuthFetch()("/api/query/proposal", {
@@ -169,6 +177,7 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
       state.inverseUpdates = receipt.inverseUpdates;
       if (state.proposal?.id === proposal.id) state.proposal.status = "applied";
     } catch (error) {
+      if (state.proposal?.id === proposal.id) state.proposal.status = "failed";
       state.error = error instanceof Error ? error.message : "Apply failed";
       throw error;
     } finally {
@@ -282,7 +291,9 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
   });
 
   const updateMemory = action(async (memoryId: string, memoryAction: "pin" | "unpin" | "forget") => {
-    state.isTransitioning = true;
+    state.memoryActionId = memoryId;
+    state.memoryActionLabel = memoryAction === "forget" ? "Forgetting memory…" : memoryAction === "pin" ? "Pinning memory…" : "Unpinning memory…";
+    state.memoryErrors = { ...state.memoryErrors, [memoryId]: "" };
     try {
       const response = await getAuthFetch()("/api/query/memory", {
         method: "POST",
@@ -291,28 +302,55 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
       });
       const data = await response.json();
       if (!response.ok || data.error) throw new Error(data.error || "Memory action failed");
-      if (memoryAction === "forget") state.memories = state.memories.filter((memory) => memory.memoryId !== memoryId);
+      if (memoryAction === "forget") {
+        state.memories = state.memories.filter((memory) => memory.memoryId !== memoryId);
+        state.expandedMemoryIds = state.expandedMemoryIds.filter((id) => id !== memoryId);
+      }
       else state.memories = state.memories.map((memory) => memory.memoryId === memoryId
         ? { ...memory, pinned: memoryAction === "pin" }
         : memory);
     } catch (error) {
-      state.error = error instanceof Error ? error.message : "Memory action failed";
+      state.memoryErrors = { ...state.memoryErrors, [memoryId]: error instanceof Error ? error.message : "Memory action failed" };
     } finally {
-      state.isTransitioning = false;
+      state.memoryActionId = null;
+      state.memoryActionLabel = "";
     }
   });
 
-  const projectMemoryToGraph = action(async (summary: string) => {
-    state.isTransitioning = true;
+  const projectMemoryToGraph = action(async (memory: AgentMemory) => {
+    state.memoryActionId = memory.memoryId;
+    state.memoryActionLabel = "Creating a durable checkpoint…";
+    state.memoryErrors = { ...state.memoryErrors, [memory.memoryId]: "" };
     try {
-      await graphStore.addChildNode({
-        parentId: state.rootNodeId ?? graphStore.userRoot.id,
-        nodeProps: { content: `🧠 NodeAgent Memory\n${summary}` },
+      const response = await getAuthFetch()("/api/query/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memoryId: memory.memoryId,
+          action: "project",
+          rootNodeId: state.rootNodeId ?? graphStore.userRoot.id,
+        }),
       });
+      const data = await response.json() as MemoryProjectionResponse;
+      if (!response.ok || data.error) throw new Error(data.error || "Memory projection failed");
+      state.content = data.content;
+      state.understanding = data.understanding;
+      state.plan = data.plan;
+      state.operations = data.operations;
+      state.steps = data.steps;
+      state.receipt = data.receipt;
+      state.proposal = data.proposal;
+      state.riskReasons = [];
+      setProposalUrl(data.proposal.id);
+      state.memoryActionLabel = "Applying the checkpoint…";
+      await applyDurableProposal(data.proposal);
     } catch (error) {
-      state.error = error instanceof Error ? error.message : "Memory projection failed";
+      const message = error instanceof Error ? error.message : "Memory projection failed";
+      state.memoryErrors = { ...state.memoryErrors, [memory.memoryId]: message };
+      state.error = message;
     } finally {
-      state.isTransitioning = false;
+      state.memoryActionId = null;
+      state.memoryActionLabel = "";
     }
   });
 
@@ -391,20 +429,47 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
           {state.proposal && <p data-testid="checkpoint-status">Checkpoint: {state.proposal.status}</p>}
         </section>}
         {state.memories.length > 0 && <section data-testid="nodeagent-memory"><h3><Brain size={14} /> Recalled memory</h3>
-          {state.memories.map((memory) => <div className={styles.memory} key={memory.memoryId}>
-            <div><strong>{memory.taskClass}</strong><span>{memory.summary}</span></div>
-            <small>{memory.outcome} · {memory.toolSequence.join(" → ") || "no tools"}</small>
+          {state.memories.map((memory) => {
+            const expanded = state.expandedMemoryIds.includes(memory.memoryId);
+            const busy = state.memoryActionId === memory.memoryId;
+            const detailsId = `memory-details-${memory.memoryId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+            return <div className={styles.memory} data-memory-id={memory.memoryId} key={memory.memoryId}>
+            <div className={styles.memoryHeader}><strong>{memory.taskClass}</strong><span>{memory.summary}</span></div>
+            <small className={styles.memoryMeta}>{memory.outcome} · {memory.toolSequence.join(" → ") || "no tools"} · {memory.sourceNodeIds.length} source{memory.sourceNodeIds.length === 1 ? "" : "s"}</small>
             <div className={styles.actions}>
-              <Button size="sm" variant="ghost" disabled={state.isTransitioning}
+              <Button aria-controls={detailsId} aria-expanded={expanded} aria-label={`${expanded ? "Hide" : "Inspect"} memory ${memory.taskClass}`}
+                size="sm" variant="ghost" disabled={busy}
+                onClick={action(() => { state.expandedMemoryIds = expanded
+                  ? state.expandedMemoryIds.filter((id) => id !== memory.memoryId)
+                  : [...state.expandedMemoryIds, memory.memoryId]; })}>
+                <ChevronDown className={cn(expanded && styles.memoryChevronExpanded)} size={12} /> Inspect
+              </Button>
+              <Button aria-label={`${memory.pinned ? "Unpin" : "Pin"} memory ${memory.taskClass}`} size="sm" variant="ghost" disabled={busy}
                 onClick={() => void updateMemory(memory.memoryId, memory.pinned ? "unpin" : "pin")}>
                 <Pin size={12} /> {memory.pinned ? "Unpin" : "Pin"}
               </Button>
-              <Button size="sm" variant="ghost" disabled={state.isTransitioning}
-                onClick={() => void projectMemoryToGraph(memory.summary)}>Add to graph</Button>
-              <Button aria-label="Forget memory" size="sm" variant="ghost" disabled={state.isTransitioning}
+              <Button aria-label={`Add memory ${memory.taskClass} to graph`} size="sm" variant="ghost" disabled={busy}
+                onClick={() => void projectMemoryToGraph(memory)}>Add to graph</Button>
+              <Button aria-label={`Forget memory ${memory.taskClass}`} size="sm" variant="ghost" disabled={busy}
                 onClick={() => void updateMemory(memory.memoryId, "forget")}><Trash2 size={12} /></Button>
             </div>
-          </div>)}
+            {busy && <div className={styles.memoryStatus} role="status"><Loader2 className={styles.loadingIcon} size={12} />{state.memoryActionLabel}</div>}
+            {state.memoryErrors[memory.memoryId] && <div className={styles.memoryError} role="alert"><strong>Not completed</strong><span>{state.memoryErrors[memory.memoryId]}</span></div>}
+            {expanded && <div className={styles.memoryDetails} id={detailsId}>
+              <dl>
+                <div><dt>Original request</dt><dd>{memory.query}</dd></div>
+                <div><dt>Recorded</dt><dd><time dateTime={memory.createdAt}>{memory.createdAt}</time></dd></div>
+                <div><dt>Duration</dt><dd>{Math.max(0, Math.round(memory.durationMs)).toLocaleString()} ms</dd></div>
+                <div><dt>Evidence</dt><dd>{memory.sourceNodeIds.length} exact notebook source{memory.sourceNodeIds.length === 1 ? "" : "s"}</dd></div>
+              </dl>
+              {memory.sourceNodeIds.length > 0 && <div className={styles.memoryEvidence}>{memory.sourceNodeIds.slice(0, 12).map((sourceId) => {
+                const node = graphStore.nodesById.get(sourceId);
+                return <button className={styles.citationLink} disabled={!node} key={sourceId} type="button"
+                  title={node ? `Open cited node ${node.text}` : "Cited node is not loaded"}
+                  onClick={() => { if (node) setRoot(node); }}><span>{node?.text || "Source not currently loaded"}</span></button>;
+              })}</div>}
+            </div>}
+          </div>})}
         </section>}
         {state.receipt && <dl className={styles.receipt} data-testid="agent-receipt">
           <div><dt>Run</dt><dd>{state.receipt.runId}</dd></div>
@@ -415,9 +480,9 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
           <div><dt>Evidence</dt><dd>{state.receipt.sourceNodeIds.length} nodes · {state.receipt.sourceUrls.length} web sources</dd></div>
           <div><dt>Receipt</dt><dd>{state.receipt.persisted ? "durable" : "not persisted"}</dd></div>
         </dl>}
-        {(state.receipt?.sourceBindings?.length ?? 0) > 0 && <section data-testid="agent-citations">
+        {(state.receipt?.sourceBindings?.some((binding) => state.receipt?.sourceNodeIds.includes(binding.sourceId)) ?? false) && <section data-testid="agent-citations">
           <h3>Notebook citations</h3>
-          <div className={styles.citationList}>{state.receipt?.sourceBindings?.map((binding) => {
+          <div className={styles.citationList}>{state.receipt?.sourceBindings?.filter((binding) => state.receipt?.sourceNodeIds.includes(binding.sourceId)).map((binding) => {
             const node = graphStore.nodesById.get(binding.sourceId);
             return <button className={styles.citationLink} key={`${binding.sourceId}:${binding.version}`} type="button"
               title={`Open node ${binding.sourceId} at reviewed version ${binding.version}`}

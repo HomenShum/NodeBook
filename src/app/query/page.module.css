@@ -112,6 +112,7 @@
 
 .actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin: 14px 0;
 }
@@ -139,9 +140,73 @@
   border-bottom: 1px solid var(--gray-5);
 }
 
-.memory > div:first-child {
+.memoryHeader {
   display: grid;
   gap: 4px;
+}
+
+.memoryMeta {
+  color: var(--foreground-subtle);
+  overflow-wrap: anywhere;
+}
+
+.memoryChevronExpanded {
+  transform: rotate(180deg);
+}
+
+.memoryStatus,
+.memoryError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.memoryError {
+  align-items: flex-start;
+  flex-direction: column;
+  padding: 8px;
+  border: 1px solid var(--red-7);
+  border-radius: 6px;
+  color: var(--red-11);
+  background: var(--red-2);
+}
+
+.memoryDetails {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  background: var(--background-subtle);
+  overflow: hidden;
+}
+
+.memoryDetails dl {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+}
+
+.memoryDetails dl > div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.memoryDetails dt {
+  color: var(--foreground-subtle);
+}
+
+.memoryDetails dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.memoryEvidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .receipt div {

@@ -23,6 +23,13 @@ declare const styles: {
   readonly "loadingIcon": string;
   readonly "liveStatus": string;
   readonly "memory": string;
+  readonly "memoryChevronExpanded": string;
+  readonly "memoryDetails": string;
+  readonly "memoryError": string;
+  readonly "memoryEvidence": string;
+  readonly "memoryHeader": string;
+  readonly "memoryMeta": string;
+  readonly "memoryStatus": string;
   readonly "mode": string;
   readonly "modeActive": string;
   readonly "modeTabs": string;
