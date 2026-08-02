@@ -1,7 +1,8 @@
+import { MOCK_NODEBOOK_USER } from "@/app/auth/NodeBookUser";
 import { GraphStore } from "@/app/graph/GraphStore";
 import { GraphUpdate } from "@/app/graph/GraphUpdate";
 
-import { reconcileInverseUpdates } from "./applyProposal";
+import { applyAgentOperations, reconcileInverseUpdates, undoAgentOperations } from "./applyProposal";
 
 const node = (id: string) => ({ id });
 const relation = (id: string, fromId: string, toId: string) => ({
@@ -18,6 +19,90 @@ const relation = (id: string, fromId: string, toId: string) => ({
 });
 
 describe("durable agent rollback reconciliation", () => {
+  test("an organizer can create one folder, move three siblings, and restore the exact original hierarchy", async () => {
+    const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
+    const { node: fixture } = await graphStore.addChildNode({ parentId: graphStore.userRoot.id, nodeProps: { content: "QA Fixture" } });
+    const meetings = await Promise.all(["Alpha", "Beta", "Gamma"].map(async (suffix) => (
+      await graphStore.addChildNode({ parentId: fixture.id, nodeProps: { content: `QA Meeting ${suffix}` } })
+    ).node));
+    const { node: control } = await graphStore.addChildNode({ parentId: fixture.id, nodeProps: { content: "QA Grocery Control" } });
+    graphStore.updateManager.cleanup();
+    jest.spyOn(graphStore.updateManager, "beginDurableWork").mockResolvedValue(false);
+    jest.spyOn(graphStore.updateManager, "flushDurableUpdates").mockResolvedValue(undefined);
+
+    const receipt = await applyAgentOperations(graphStore, [
+      {
+        kind: "create_node", nodeId: null, parentId: fixture.id, newParentId: null, fromNodeId: null, toNodeId: null,
+        relationType: null, tempId: "meeting-folder", content: "QA Project Meetings", newContent: null, reason: "Create exact folder.",
+      },
+      ...meetings.map((meeting) => ({
+        kind: "move_node" as const, nodeId: meeting.id, parentId: null, newParentId: "meeting-folder", fromNodeId: null, toNodeId: null,
+        relationType: null, tempId: null, content: null, newContent: null, reason: "Move exact meeting.",
+      })),
+    ]);
+
+    expect(fixture.children.map((child) => child.id)).toEqual(expect.arrayContaining([control.id]));
+    expect(fixture.children).toHaveLength(2);
+
+    const reloadedInverse = JSON.parse(JSON.stringify(receipt.inverseUpdates)) as GraphUpdate[];
+    await undoAgentOperations(graphStore, reloadedInverse);
+
+    expect(fixture.children.map((child) => child.id)).toEqual(expect.arrayContaining([control.id, ...meetings.map((meeting) => meeting.id)]));
+    expect(fixture.children).toHaveLength(4);
+  });
+
+  test("a returning organizer restores the exact hierarchy from a persisted graph and receipt", async () => {
+    const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
+    const { node: fixture } = await graphStore.addChildNode({ parentId: graphStore.userRoot.id, nodeProps: { content: "QA Fixture" } });
+    const meetings = await Promise.all(["Alpha", "Beta", "Gamma"].map(async (suffix) => (
+      await graphStore.addChildNode({ parentId: fixture.id, nodeProps: { content: `QA Meeting ${suffix}` } })
+    ).node));
+    const { node: control } = await graphStore.addChildNode({ parentId: fixture.id, nodeProps: { content: "QA Grocery Control" } });
+    const originalFixture = fixture.serialize();
+    const originalMeetings = meetings.map((meeting) => meeting.serialize());
+    graphStore.updateManager.cleanup();
+    jest.spyOn(graphStore.updateManager, "beginDurableWork").mockResolvedValue(false);
+    jest.spyOn(graphStore.updateManager, "flushDurableUpdates").mockResolvedValue(undefined);
+
+    const receipt = await applyAgentOperations(graphStore, [
+      {
+        kind: "create_node", nodeId: null, parentId: fixture.id, newParentId: null, fromNodeId: null, toNodeId: null,
+        relationType: null, tempId: "meeting-folder", content: "QA Project Meetings", newContent: null, reason: "Create exact folder.",
+      },
+      ...meetings.map((meeting) => ({
+        kind: "move_node" as const, nodeId: meeting.id, parentId: null, newParentId: "meeting-folder", fromNodeId: null, toNodeId: null,
+        relationType: null, tempId: null, content: null, newContent: null, reason: "Move exact meeting.",
+      })),
+    ]);
+
+    const reloadedStore = new GraphStore(MOCK_NODEBOOK_USER);
+    reloadedStore.resetAndLoad(JSON.parse(JSON.stringify(graphStore.serialize())));
+    reloadedStore.updateManager.cleanup();
+    jest.spyOn(reloadedStore.updateManager, "beginDurableWork").mockResolvedValue(false);
+    jest.spyOn(reloadedStore.updateManager, "flushDurableUpdates").mockResolvedValue(undefined);
+
+    await undoAgentOperations(
+      reloadedStore,
+      JSON.parse(JSON.stringify(receipt.inverseUpdates)) as GraphUpdate[],
+    );
+
+    const restoredFixture = reloadedStore.getNode(fixture.id);
+    expect(restoredFixture?.children.map((child) => child.id)).toEqual(
+      expect.arrayContaining([control.id, ...meetings.map((meeting) => meeting.id)]),
+    );
+    expect(restoredFixture?.children).toHaveLength(4);
+    expect(restoredFixture?.serialize()).toMatchObject({
+      relationCount: originalFixture.relationCount,
+      canonicalRelationId: originalFixture.canonicalRelationId,
+    });
+    for (const originalMeeting of originalMeetings) {
+      expect(reloadedStore.getNode(originalMeeting.id)?.serialize()).toMatchObject({
+        relationCount: originalMeeting.relationCount,
+        canonicalRelationId: originalMeeting.canonicalRelationId,
+      });
+    }
+  });
+
   test("a partially synced knowledge map restores an absent moved relation and skips an already absent cluster", () => {
     const originalRelation = relation("note-parent", "original-parent", "reviewed-note");
     const missingClusterRelation = relation("map-to-missing-cluster", "knowledge-map", "missing-cluster");

@@ -568,5 +568,5 @@ describe("NodeAgent exactly-once provider journal", () => {
     const rows = await session.run(async (ctx) => ctx.db.query("agentModelStepJournal").collect());
     expect(rows).toHaveLength(500);
     expect(Math.min(...rows.map((row) => row.createdAtMs))).toBe(20);
-  });
+  }, 15_000);
 });

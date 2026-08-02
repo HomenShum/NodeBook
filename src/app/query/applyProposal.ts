@@ -25,19 +25,17 @@ function serializedGraphObject(value: unknown) {
   return value;
 }
 
-function checkpointComparable(value: unknown) {
+function rollbackComparable(value: unknown) {
   const serialized = serializedGraphObject(value);
   if (!serialized || typeof serialized !== "object" || Array.isArray(serialized)) return serialized;
-  const { createdAt, updatedAt, canonicalRelationId, relationCount, ...comparable } = serialized as Record<string, unknown>;
+  const { createdAt, updatedAt, ...comparable } = serialized as Record<string, unknown>;
   void createdAt;
   void updatedAt;
-  void canonicalRelationId;
-  void relationCount;
   return comparable;
 }
 
 function isSameGraphEntity(current: unknown, expected: unknown) {
-  return canonicalJson(checkpointComparable(current)) === canonicalJson(checkpointComparable(expected));
+  return canonicalJson(rollbackComparable(current)) === canonicalJson(rollbackComparable(expected));
 }
 
 function resolveId(id: string | null, temporaryIds: Map<string, string>) {
@@ -156,6 +154,8 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
   const listUpdates: GraphUpdate[] = [];
   const relationDeletes: GraphUpdate[] = [];
   const nodeDeletes: GraphUpdate[] = [];
+  const virtualNodes = new Map<string, unknown>(graphStore.nodesById);
+  const virtualRelations = new Map<string, unknown>(graphStore.relationsById);
   for (const update of inverseUpdates) {
     if (update.operation !== "updateRelation") continue;
     const current = graphStore.relationsById.get(update.newProps.id);
@@ -186,39 +186,55 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
     };
   };
 
-  for (const update of inverseUpdates) {
+  for (const [updateIndex, update] of inverseUpdates.entries()) {
     if (update.operation === "addNode") {
       if (!nodeIds.has(update.node.id)) {
         entityUpdates.push(update);
         nodeIds.add(update.node.id);
+        virtualNodes.set(update.node.id, update.node);
       }
     } else if (update.operation === "updateNode") {
-      const current = graphStore.nodesById.get(update.newProps.id);
+      const current = virtualNodes.get(update.newProps.id);
       if (current && isSameGraphEntity(current, update.newProps)) {
         // Already restored by an earlier retry.
       } else if (current && isSameGraphEntity(current, update.oldProps)) {
         entityUpdates.push(update);
+        virtualNodes.set(update.newProps.id, update.newProps);
+      } else if (current && inverseUpdates.slice(updateIndex + 1).some((candidate) =>
+        candidate.operation === "updateNode"
+        && candidate.newProps.id === update.newProps.id
+        && isSameGraphEntity(current, candidate.newProps))) {
+        // A partial durable retry already advanced this entity beyond this step.
       } else if (current) {
         throw new Error(`Rollback cannot restore node ${update.newProps.id}; it changed after the checkpoint.`);
       }
     } else if (update.operation === "addRelation") {
       if (!relationIds.has(update.relation.id)) {
-        entityUpdates.push({ ...update, relation: repairMissingEndpoint(update.relation) });
+        const repaired = repairMissingEndpoint(update.relation);
+        entityUpdates.push({ ...update, relation: repaired });
         relationIds.add(update.relation.id);
+        virtualRelations.set(update.relation.id, repaired);
       }
     } else if (update.operation === "updateRelation") {
       const newProps = repairMissingEndpoint(update.newProps);
-      const current = graphStore.relationsById.get(update.newProps.id);
+      const current = virtualRelations.get(update.newProps.id);
       if (current && isSameGraphEntity(current, newProps)) {
         // A previous durable retry already restored this relation. Replaying the
         // stale old -> new transition would correctly fail Convex CAS.
       } else if (current && isSameGraphEntity(current, update.oldProps)) {
         entityUpdates.push({ ...update, newProps });
+        virtualRelations.set(update.newProps.id, newProps);
+      } else if (current && inverseUpdates.slice(updateIndex + 1).some((candidate) =>
+        candidate.operation === "updateRelation"
+        && candidate.newProps.id === update.newProps.id
+        && isSameGraphEntity(current, candidate.newProps))) {
+        // A partial durable retry already advanced this entity beyond this step.
       } else if (current) {
         throw new Error(`Rollback cannot restore relation ${update.newProps.id}; it changed after the checkpoint.`);
       } else {
         entityUpdates.push({ operation: "addRelation", relation: newProps });
         relationIds.add(update.newProps.id);
+        virtualRelations.set(update.newProps.id, newProps);
       }
     } else if (update.operation === "updateRelationList") {
       if (nodeIds.has(update.nodeId) && !scaffoldedNodeIds.has(update.nodeId) && relationIds.has(update.relationId) && !deletedRelationIds.has(update.relationId)) {
@@ -228,11 +244,13 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
       if (relationIds.has(update.deleted.relation.id)) {
         relationDeletes.push(update);
         relationIds.delete(update.deleted.relation.id);
+        virtualRelations.delete(update.deleted.relation.id);
       }
     } else if (update.operation === "deleteNode") {
       if (nodeIds.has(update.node.id)) {
         nodeDeletes.push(update);
         nodeIds.delete(update.node.id);
+        virtualNodes.delete(update.node.id);
       }
     }
   }
