@@ -1,0 +1,24 @@
+- generic [active] [ref=e1] [box=0,0,1249,1381]:
+  - generic [ref=e15] [box=0,0,1249,1381]:
+    - complementary [ref=e16] [box=-268,0,268,1381]:
+      - generic [ref=e17] [box=-268,1,268,1380]:
+        - generic [ref=e18] [box=-256,17,244,24]
+        - button "Recently Created Notes" [ref=e35] [cursor=pointer] [box=-256,54,244,28]
+        - generic [ref=e41] [box=-268,95,268,1246]
+        - generic [ref=e98] [box=-256,1341,244,32]
+    - generic [ref=e104] [box=-441,9,432,24]:
+      - generic [ref=e105] [box=-441,-1,118,44]: Notifications
+      - generic [ref=e110] [box=-137,-1,128,44]:
+        - button [ref=e111] [cursor=pointer] [box=-127,9,24,24]
+        - button [ref=e115] [cursor=pointer] [box=-99,9,24,24]
+        - button [ref=e117] [cursor=pointer] [box=-71,9,24,24]
+        - button [ref=e121] [cursor=pointer] [box=-43,9,24,24]
+    - group [ref=e125] [box=1029,1326,144,37]:
+      - generic "Open NodeBook on your phone" [ref=e126] [cursor=pointer] [box=1029,1326,144,37]: Open on phone
+    - generic [ref=e130] [box=0,0,1249,1397]:
+      - button [ref=e131] [cursor=pointer] [box=16,16,24,24]
+      - main [ref=e135] [box=0,0,1249,1397]:
+        - generic [ref=e136] [box=8,8,1233,1381]
+  - region "Notifications (F8)" [box=0,1381,1249,0]:
+    - list [box=859,1333,390,48]
+  - alert [ref=e13] [box=-1,1380,1,1]: Global Hub - NodeBook

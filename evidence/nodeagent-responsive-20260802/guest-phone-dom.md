@@ -1,0 +1,22 @@
+- generic [active] [ref=e1] [box=0,0,390,844]:
+  - generic [ref=e15] [box=0,0,390,844]:
+    - complementary [ref=e16] [box=-300,0,300,844]:
+      - generic [ref=e17] [box=-300,1,300,843]:
+        - generic [ref=e18] [box=-288,17,276,24]
+        - button "Recently Created Notes" [ref=e35] [cursor=pointer] [box=-288,54,276,28]
+        - generic [ref=e41] [box=-300,95,300,709]
+        - generic [ref=e98] [box=-288,804,276,32]
+    - generic [ref=e104] [box=-441,9,432,24]:
+      - generic [ref=e105] [box=-441,-1,118,44]: Notifications
+      - generic [ref=e110] [box=-137,-1,128,44]:
+        - button [ref=e111] [cursor=pointer] [box=-127,9,24,24]
+        - button [ref=e115] [cursor=pointer] [box=-99,9,24,24]
+        - button [ref=e117] [cursor=pointer] [box=-71,9,24,24]
+        - button [ref=e121] [cursor=pointer] [box=-43,9,24,24]
+    - generic [ref=e130] [box=0,0,390,860]:
+      - button [ref=e131] [cursor=pointer] [box=16,16,24,24]
+      - main [ref=e135] [box=0,0,390,860]:
+        - generic [ref=e136] [box=8,8,374,844]
+  - region "Notifications (F8)" [box=0,844,390,0]:
+    - list [box=0,796,390,48]
+  - alert [ref=e13] [box=-1,843,1,1]: Global Hub - NodeBook
