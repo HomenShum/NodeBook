@@ -10,6 +10,7 @@ import {
   agentContextSnapshotReference,
   agentMemoryContextReference,
   agentModelRouteReference,
+  agentSemanticContextReference,
   getBearerToken,
   getConvexClient,
   recordAgentWorkflowReference,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/convexServer";
 
 import { runOpenAI } from "./openAIProvider";
+import { fuseRetrievedContext } from "./retrievalFusion";
 import {
   AgentMode,
   executeWorkflowAgent,
@@ -61,16 +63,22 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
   let selectedProvider: "openai" | "openrouter" = "openai";
   let providerAttempted = false;
   try {
-    const [contextNodes, memoryContext, modelRoute] = await Promise.all([
+    const [primaryContextNodes, semanticContext, memoryContext, modelRoute] = await Promise.all([
       convex.query(agentContextSnapshotReference, {
         text: parsed.data.query,
         mode: parsed.data.mode,
         limit: parsed.data.mode === "organize" ? 200 : 40,
         rootNodeId: parsed.data.rootNodeId,
       }),
+      convex.action(agentSemanticContextReference, { text: parsed.data.query, limit: 12 }),
       convex.query(agentMemoryContextReference, { text: parsed.data.query, limit: 8 }),
       convex.query(agentModelRouteReference, {}),
     ]);
+    const contextNodes = fuseRetrievedContext(
+      primaryContextNodes,
+      semanticContext,
+      parsed.data.mode === "organize" ? 200 : 40,
+    );
     if (env.OPENROUTER_API_KEY && modelRoute?.primaryModel && !parsed.data.webResearch) {
       selectedModel = modelRoute.primaryModel;
       selectedProvider = "openrouter";
@@ -92,6 +100,13 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         webResearch: parsed.data.webResearch,
         contextNodes,
         memoryContext,
+        retrievalStatus: {
+          semantic: semanticContext.status,
+          reason: semanticContext.reason,
+          model: semanticContext.model,
+          indexedCount: semanticContext.indexedCount,
+          matchedCount: semanticContext.nodes.length,
+        },
       },
       {
         model: selectedModel,

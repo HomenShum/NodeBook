@@ -113,6 +113,25 @@ export const agentContextSnapshotReference = makeFunctionReference<
   { text: string; mode: "ask" | "agent" | "organize"; limit?: number; rootNodeId?: string },
   { sourceId: string; version: number; contentText: string; document: string; updatedAt: string; retrievalSignals: string[] }[]
 >("agentWorkflows:contextSnapshot");
+export const agentSemanticContextReference = makeFunctionReference<
+  "action",
+  { text: string; limit?: number },
+  {
+    status: "ready" | "degraded";
+    reason?: string;
+    model: string;
+    indexedCount: number;
+    nodes: Array<{
+      sourceId: string;
+      version: number;
+      contentText: string;
+      document: string;
+      updatedAt: string;
+      retrievalSignals: string[];
+      semanticScore: number;
+    }>;
+  }
+>("nodeEmbeddings:semanticContext");
 export const agentMemoryContextReference = makeFunctionReference<
   "query",
   { text: string; limit?: number },

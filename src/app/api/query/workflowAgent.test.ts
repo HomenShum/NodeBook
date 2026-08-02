@@ -49,6 +49,73 @@ describe("NodeBook durable agent scenarios", () => {
     ]);
   });
 
+  test("a knowledge worker sees an honest semantic retrieval receipt before synthesis", async () => {
+    const result = await executeWorkflowAgent(
+      {
+        query: "Which evidence suggests users keep returning?",
+        mode: "ask",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [{ ...node, sourceId: "retention-evidence", retrievalSignals: ["semantic"] }],
+        retrievalStatus: {
+          semantic: "ready",
+          model: "text-embedding-3-small",
+          indexedCount: 12,
+          matchedCount: 1,
+        },
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, selectedNodeIds: ["retention-evidence"] }, sources: [], usage }),
+        runId: () => "run-semantic-ready",
+      },
+    );
+
+    expect(result.steps.map((step) => step.tool)).toEqual([
+      "find_nodes",
+      "semantic_retrieval",
+      "synthesize_from_notebook",
+      "validate_proposal",
+      "finish_work",
+    ]);
+    expect(result.steps[1]).toEqual(expect.objectContaining({
+      status: "completed",
+      summary: "Matched 1 semantic note(s) and refreshed 12 embedding(s).",
+    }));
+    expect(result.sourceNodeIds).toEqual(["retention-evidence"]);
+  });
+
+  test("an embedding outage is disclosed while bounded lexical and graph retrieval continue", async () => {
+    const result = await executeWorkflowAgent(
+      {
+        query: "What launch evidence exists?",
+        mode: "ask",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [{ ...node, retrievalSignals: ["full_text"] }],
+        retrievalStatus: {
+          semantic: "degraded",
+          reason: "provider_timeout",
+          model: "text-embedding-3-small",
+          indexedCount: 0,
+          matchedCount: 0,
+        },
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: baseResult, sources: [], usage }),
+        runId: () => "run-semantic-degraded",
+      },
+    );
+
+    expect(result.steps[1]).toEqual(expect.objectContaining({
+      tool: "semantic_retrieval",
+      status: "failed",
+      summary: "Semantic retrieval degraded (provider_timeout); continued with bounded lexical and graph context.",
+    }));
+    expect(result.executionDisposition).toBe("read_only");
+  });
+
   test("a researcher in Auto mode gets a durable low-risk checkpoint marked for immediate client execution", async () => {
     const operations = [
       {

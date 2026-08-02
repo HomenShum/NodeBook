@@ -669,6 +669,13 @@ export async function executeWorkflowAgent(
     webResearch: boolean;
     contextNodes: AgentContextNode[];
     memoryContext?: unknown;
+    retrievalStatus?: {
+      semantic: "ready" | "degraded";
+      reason?: string;
+      model: string;
+      indexedCount: number;
+      matchedCount: number;
+    };
   },
   dependencies: WorkflowAgentDependencies,
 ): Promise<WorkflowAgentResult> {
@@ -696,6 +703,22 @@ export async function executeWorkflowAgent(
     startedAt,
     contextFinishedAt,
   ));
+  if (args.retrievalStatus) {
+    const semanticAt = now().toISOString();
+    const ready = args.retrievalStatus.semantic === "ready";
+    steps.push(makeStep(
+      steps.length + 1,
+      "semantic_retrieval",
+      ready ? "completed" : "failed",
+      { model: args.retrievalStatus.model, query: args.query },
+      args.retrievalStatus,
+      ready
+        ? `Matched ${args.retrievalStatus.matchedCount} semantic note(s) and refreshed ${args.retrievalStatus.indexedCount} embedding(s).`
+        : `Semantic retrieval degraded (${args.retrievalStatus.reason ?? "unavailable"}); continued with bounded lexical and graph context.`,
+      contextFinishedAt,
+      semanticAt,
+    ));
+  }
 
   const investigation: Array<{ decision: ToolDecision; output: unknown }> = [];
   const plannerUsage: WorkflowUsage[] = [];

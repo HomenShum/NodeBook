@@ -17,6 +17,7 @@ import type * as http from "../http.js";
 import type * as migration from "../migration.js";
 import type * as modelRouting from "../modelRouting.js";
 import type * as nodeDocuments from "../nodeDocuments.js";
+import type * as nodeEmbeddings from "../nodeEmbeddings.js";
 import type * as server from "../server.js";
 
 import type {
@@ -35,6 +36,7 @@ declare const fullApi: ApiFromModules<{
   migration: typeof migration;
   modelRouting: typeof modelRouting;
   nodeDocuments: typeof nodeDocuments;
+  nodeEmbeddings: typeof nodeEmbeddings;
   server: typeof server;
 }>;
 

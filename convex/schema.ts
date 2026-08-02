@@ -20,11 +20,20 @@ export default defineSchema({
     ...graphEntity,
     slug: v.optional(v.union(v.string(), v.null())),
     contentText: v.optional(v.string()),
+    embedding: v.optional(v.array(v.float64())),
+    embeddingVersion: v.optional(v.number()),
+    embeddingModel: v.optional(v.string()),
+    embeddingUpdatedAtMs: v.optional(v.number()),
   })
     .index("by_owner_source", ["ownerId", "sourceId"])
     .index("by_owner", ["ownerId"])
     .index("by_public", ["isPublic"])
     .index("by_slug", ["slug"])
+    .vectorIndex("by_owner_embedding", {
+      vectorField: "embedding",
+      dimensions: 1536,
+      filterFields: ["ownerId"],
+    })
     .searchIndex("search_content_owner", { searchField: "contentText", filterFields: ["ownerId"] })
     .searchIndex("search_content_public", { searchField: "contentText", filterFields: ["isPublic"] }),
   nodeChunks: defineTable({
