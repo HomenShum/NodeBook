@@ -9,6 +9,7 @@
  */
 
 import type * as agentRuns from "../agentRuns.js";
+import type * as agentStepJournal from "../agentStepJournal.js";
 import type * as agentWorkflows from "../agentWorkflows.js";
 import type * as chunkedNodeUpdates from "../chunkedNodeUpdates.js";
 import type * as crons from "../crons.js";
@@ -28,6 +29,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agentRuns: typeof agentRuns;
+  agentStepJournal: typeof agentStepJournal;
   agentWorkflows: typeof agentWorkflows;
   chunkedNodeUpdates: typeof chunkedNodeUpdates;
   crons: typeof crons;
