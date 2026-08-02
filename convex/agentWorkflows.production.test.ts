@@ -291,6 +291,7 @@ describe("NodeAgent hybrid notebook retrieval", () => {
     expect(rows.map((row: any) => row.sourceId)).toContain("hidden-spec");
     expect(rows.find((row: any) => row.sourceId === "launch-clue").retrievalSignals).toContain("current_node");
     expect(rows.find((row: any) => row.sourceId === "hidden-spec").retrievalSignals).toContain("graph_neighbor");
+    expect(rows.find((row: any) => row.sourceId === "hidden-spec").parentSourceIds).toEqual(["launch-clue"]);
   });
 
   test("an adversarial cross-owner relation cannot leak another notebook and noisy sustained state stays bounded", async () => {

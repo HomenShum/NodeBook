@@ -35,9 +35,9 @@ function lexicalScore(content: string, tokens: string[]) {
 function relationEndpoints(document: string) {
   if (document.length > 64 * 1024) return null;
   try {
-    const parsed = JSON.parse(document) as { fromId?: unknown; toId?: unknown };
+    const parsed = JSON.parse(document) as { fromId?: unknown; toId?: unknown; relationTypeId?: unknown };
     return typeof parsed.fromId === "string" && typeof parsed.toId === "string"
-      ? { fromId: parsed.fromId, toId: parsed.toId }
+      ? { fromId: parsed.fromId, toId: parsed.toId, relationTypeId: typeof parsed.relationTypeId === "string" ? parsed.relationTypeId : null }
       : null;
   } catch {
     return null;
@@ -576,6 +576,7 @@ export const contextSnapshot = query({
     }
 
     const signals = new Map<string, Set<string>>();
+    const parentSourceIds = new Map<string, Set<string>>();
     const addSignal = (sourceId: string, signal: string) => {
       const existing = signals.get(sourceId) ?? new Set<string>();
       existing.add(signal);
@@ -600,6 +601,11 @@ export const contextSnapshot = query({
       for (const relation of relations) {
         const endpoints = relationEndpoints(relation.document);
         if (!endpoints) continue;
+        if (endpoints.relationTypeId === "child") {
+          const parents = parentSourceIds.get(endpoints.toId) ?? new Set<string>();
+          if (parents.size < 20) parents.add(endpoints.fromId);
+          parentSourceIds.set(endpoints.toId, parents);
+        }
         if (graphSeeds.has(endpoints.fromId)) neighborIds.add(endpoints.toId);
         if (graphSeeds.has(endpoints.toId)) neighborIds.add(endpoints.fromId);
         if (neighborIds.size >= 80) break;
@@ -646,6 +652,7 @@ export const contextSnapshot = query({
         document: await hydrateNodeDocument(ctx, node),
         updatedAt: node.updatedAt,
         retrievalSignals,
+        parentSourceIds: [...(parentSourceIds.get(node.sourceId) ?? [])].sort(),
       })),
     );
   },

@@ -180,6 +180,7 @@ export type AgentContextNode = {
   document: string;
   updatedAt: string;
   retrievalSignals?: string[];
+  parentSourceIds?: string[];
 };
 
 export type KnowledgeMapPlan = {
@@ -377,7 +378,7 @@ function makeStep(
 }
 
 function compactContext(nodes: AgentContextNode[]) {
-  const selected: { id: string; version: number; text: string; document: unknown; retrievalSignals: string[] }[] = [];
+  const selected: { id: string; version: number; text: string; document: unknown; retrievalSignals: string[]; parentSourceIds: string[] }[] = [];
   let bytes = 0;
   for (const node of nodes.slice(0, MAX_CONTEXT_NODES)) {
     let document: unknown = null;
@@ -386,7 +387,14 @@ function compactContext(nodes: AgentContextNode[]) {
     } catch {
       document = { content: node.contentText };
     }
-    const item = { id: node.sourceId, version: node.version, text: node.contentText, document, retrievalSignals: node.retrievalSignals ?? [] };
+    const item = {
+      id: node.sourceId,
+      version: node.version,
+      text: node.contentText,
+      document,
+      retrievalSignals: node.retrievalSignals ?? [],
+      parentSourceIds: [...new Set(node.parentSourceIds ?? [])].sort().slice(0, 20),
+    };
     const encoded = JSON.stringify(item);
     const itemBytes = Buffer.byteLength(encoded, "utf8");
     if (bytes + itemBytes > MAX_CONTEXT_BYTES) break;
@@ -529,8 +537,12 @@ function selectProfileGapNodes(query: string, context: ReturnType<typeof compact
   const request = profileGapFillRequest(query);
   if (!request) return { request: null, profile: undefined, section: undefined };
   const titleEquals = (node: (typeof context)[number], title: string) => nodeTitle(node.text).localeCompare(title, undefined, { sensitivity: "accent" }) === 0;
-  const sectionCandidates = context
-    .filter((node) => titleEquals(node, request.sectionTitle))
+  const profile = (request.profileTitle ? context.find((node) => titleEquals(node, request.profileTitle!)) : undefined)
+    ?? context.find((node) => node.retrievalSignals.includes("current_node"))
+    ?? context.find((node) => /\bprofile\b/i.test(nodeTitle(node.text)));
+  const titledSections = context.filter((node) => titleEquals(node, request.sectionTitle) && node.id !== profile?.id);
+  const sectionCandidates = titledSections
+    .filter((node) => profile && node.parentSourceIds.includes(profile.id))
     .sort((left, right) => {
       const score = (node: (typeof context)[number]) =>
         (node.retrievalSignals.includes("graph_neighbor") ? 4 : 0)
@@ -539,9 +551,9 @@ function selectProfileGapNodes(query: string, context: ReturnType<typeof compact
       return score(right) - score(left) || left.id.localeCompare(right.id);
     });
   const section: (typeof context)[number] | undefined = sectionCandidates.length > 0 ? sectionCandidates[0] : undefined;
-  const profile = (request.profileTitle ? context.find((node) => titleEquals(node, request.profileTitle!)) : undefined)
-    ?? context.find((node) => node.retrievalSignals.includes("current_node") && node.id !== section?.id)
-    ?? context.find((node) => /\bprofile\b/i.test(nodeTitle(node.text)) && node.id !== section?.id);
+  if (!section && titledSections.some((node) => node.parentSourceIds.length === 0)) {
+    throw new Error("PROFILE_GAP_FILL_SECTION_PARENT_UNVERIFIED");
+  }
   return { request, profile, section };
 }
 

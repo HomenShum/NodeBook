@@ -867,8 +867,8 @@ describe("NodeBook durable agent scenarios", () => {
         webResearch: true,
         contextNodes: [
           { ...node, sourceId: "profile-acme", contentText: "QA Acme Profile", retrievalSignals: ["current_node", "full_text"] },
-          { ...node, sourceId: "section-leadership", contentText: "Leadership\nUnknown", retrievalSignals: ["graph_neighbor", "full_text"] },
-          { ...node, sourceId: "other-profile", contentText: "QA Other Profile\nLeadership complete", retrievalSignals: ["semantic"] },
+          { ...node, sourceId: "section-leadership", contentText: "Leadership\nUnknown", retrievalSignals: ["graph_neighbor", "full_text"], parentSourceIds: ["profile-acme"] },
+          { ...node, sourceId: "wrong-section", contentText: "Leadership\nUnknown", retrievalSignals: ["semantic"], parentSourceIds: ["other-profile"] },
         ],
       },
       {
@@ -904,7 +904,10 @@ describe("NodeBook durable agent scenarios", () => {
         mode: "agent",
         rootNodeId: "profile-acme",
         webResearch: true,
-        contextNodes: [{ ...node, sourceId: "profile-acme", contentText: "QA Acme Profile", retrievalSignals: ["current_node", "full_text"] }],
+        contextNodes: [
+          { ...node, sourceId: "profile-acme", contentText: "QA Acme Profile", retrievalSignals: ["current_node", "full_text"] },
+          { ...node, sourceId: "root-sibling-section", contentText: "Board\nUnknown", retrievalSignals: ["full_text"], parentSourceIds: ["not-profile-acme"] },
+        ],
       },
       { model: "gpt-5-mini", runProvider: provider, runToolPlanner: jest.fn(), runId: () => "run-profile-gap-missing" },
     );
@@ -928,6 +931,24 @@ describe("NodeBook durable agent scenarios", () => {
       },
       { model: "gpt-5-mini", runProvider: provider, runId: () => "run-profile-gap-no-consent" },
     )).rejects.toThrow("PROFILE_GAP_FILL_REQUIRES_WEB_RESEARCH");
+    expect(provider).not.toHaveBeenCalled();
+  });
+
+  test("a profile gap-fill request refuses a same-title section whose parent is unverified", async () => {
+    const provider = jest.fn();
+    await expect(executeWorkflowAgent(
+      {
+        query: "Research and fill the \"Leadership\" section marked Unknown in existing profile \"QA Acme Profile\".",
+        mode: "agent",
+        rootNodeId: "profile-acme",
+        webResearch: true,
+        contextNodes: [
+          { ...node, sourceId: "profile-acme", contentText: "QA Acme Profile", retrievalSignals: ["current_node"] },
+          { ...node, sourceId: "ambiguous-leadership", contentText: "Leadership\nUnknown", retrievalSignals: ["semantic"] },
+        ],
+      },
+      { model: "gpt-5-mini", runProvider: provider, runId: () => "run-profile-gap-unverified" },
+    )).rejects.toThrow("PROFILE_GAP_FILL_SECTION_PARENT_UNVERIFIED");
     expect(provider).not.toHaveBeenCalled();
   });
 

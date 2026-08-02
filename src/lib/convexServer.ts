@@ -91,7 +91,7 @@ export const searchNodesReference = makeFunctionReference<
 export const agentContextSnapshotReference = makeFunctionReference<
   "query",
   { text: string; mode: "ask" | "agent" | "organize"; limit?: number; rootNodeId?: string },
-  { sourceId: string; version: number; contentText: string; document: string; updatedAt: string; retrievalSignals: string[] }[]
+  { sourceId: string; version: number; contentText: string; document: string; updatedAt: string; retrievalSignals: string[]; parentSourceIds: string[] }[]
 >("agentWorkflows:contextSnapshot");
 export const agentSemanticContextReference = makeFunctionReference<
   "action",

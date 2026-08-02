@@ -41,6 +41,18 @@ Signed owner session, exact existing notes: `QA-20260802 Mamba architecture` (`f
 
 This closes the locked connection case with real unconnected notes. The runtime verifier's earlier synthetic 6/6 badge was not accepted as proof after the first live replay contradicted it.
 
+## Profile gap-fill causal closure in progress
+
+Initial signed replay trace: `21b04639-610a-45ab-9194-b916cbb820b9`.
+
+- Symptom: a root-sibling `Leadership / Unknown` note received the evidence child while the requested `QA-20260802 Acme Profile Gap Fixture` remained empty.
+- Boundary: retrieval returned `graph_neighbor`/title signals but no typed parent identity to the sole workflow.
+- Mechanism: the gap selector treated exact section-title similarity as containment evidence.
+- Upstream cause: `contextSnapshot` discarded child-relation direction and type after using relations for neighbor expansion.
+- Missing guard: the scenario had a competing semantic profile but no same-titled sibling with a different parent.
+- Rollback: the applied receipt was undone through its visible `Undo this run` control; reload of the sibling showed no evidence child and no stale count.
+- Repair under test: owner-scoped bounded context now carries sorted `parentSourceIds`; they are included in deterministic source digests. Gap-fill accepts a section only when its exact parent is the reviewed profile, creates a missing section when same-titled nodes have verified different parents, and fails closed when parent identity is unavailable.
+
 ## Earlier integrated workflow observations
 
 - Multi-level Web3 research completed with notebook retrieval, five-aspect web research, a seven-operation structured checkpoint, 16 web sources, applied reload persistence, Undo, and clean-reload persistence. Trace: `7ca06baf-e2b3-476c-add8-747637bd48b0`.
