@@ -39,6 +39,7 @@ async function cloneHierarchy(
 
 export async function applyAgentOperations(graphStore: GraphStore, operations: AgentOperation[]) {
   if (operations.length > 30) throw new Error("Checkpoint exceeds the 30-operation safety limit.");
+  const shouldResumeSync = await graphStore.updateManager.beginDurableWork();
   const firstTransaction = graphStore.updateManager.sessionUpdates.length;
   const temporaryIds = new Map<string, string>();
 
@@ -90,10 +91,18 @@ export async function applyAgentOperations(graphStore: GraphStore, operations: A
         );
       }
     }
+    await graphStore.updateManager.flushDurableUpdates();
   } catch (error) {
-    const partial = graphStore.updateManager.sessionUpdates.slice(firstTransaction).flat();
-    if (partial.length) await graphStore.updateManager.applyDurableTransaction(generateInverseUpdates(partial));
+    if (!/^Graph sync failed|^Durable graph sync/.test(error instanceof Error ? error.message : "")) {
+      const partial = graphStore.updateManager.sessionUpdates.slice(firstTransaction).flat();
+      if (partial.length) {
+        graphStore.updateManager.applyDurableTransaction(generateInverseUpdates(partial));
+        await graphStore.updateManager.flushDurableUpdates();
+      }
+    }
     throw error;
+  } finally {
+    graphStore.updateManager.resumeAfterDurableWork(shouldResumeSync);
   }
 
   const appliedUpdates = graphStore.updateManager.sessionUpdates.slice(firstTransaction).flat();
@@ -101,6 +110,67 @@ export async function applyAgentOperations(graphStore: GraphStore, operations: A
   return { appliedUpdates, inverseUpdates };
 }
 
+export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: GraphUpdate[]) {
+  const nodeIds = new Set(graphStore.nodesById.keys());
+  const relationIds = new Set(graphStore.relationsById.keys());
+  const deletedRelationIds = new Set(inverseUpdates.flatMap((update) => update.operation === "deleteRelation" ? [update.deleted.relation.id] : []));
+  const entityUpdates: GraphUpdate[] = [];
+  const listUpdates: GraphUpdate[] = [];
+  const relationDeletes: GraphUpdate[] = [];
+  const nodeDeletes: GraphUpdate[] = [];
+
+  for (const update of inverseUpdates) {
+    if (update.operation === "addNode") {
+      if (!nodeIds.has(update.node.id)) {
+        entityUpdates.push(update);
+        nodeIds.add(update.node.id);
+      }
+    } else if (update.operation === "updateNode") {
+      if (nodeIds.has(update.newProps.id)) entityUpdates.push(update);
+    } else if (update.operation === "addRelation") {
+      if (!relationIds.has(update.relation.id)) {
+        if (!nodeIds.has(update.relation.fromId) || !nodeIds.has(update.relation.toId)) {
+          throw new Error(`Rollback cannot restore relation ${update.relation.id}; an original endpoint is missing.`);
+        }
+        entityUpdates.push(update);
+        relationIds.add(update.relation.id);
+      }
+    } else if (update.operation === "updateRelation") {
+      if (relationIds.has(update.newProps.id)) {
+        entityUpdates.push(update);
+      } else {
+        if (!nodeIds.has(update.newProps.fromId) || !nodeIds.has(update.newProps.toId)) {
+          throw new Error(`Rollback cannot restore relation ${update.newProps.id}; an original endpoint is missing.`);
+        }
+        entityUpdates.push({ operation: "addRelation", relation: update.newProps });
+        relationIds.add(update.newProps.id);
+      }
+    } else if (update.operation === "updateRelationList") {
+      if (relationIds.has(update.relationId) && !deletedRelationIds.has(update.relationId)) listUpdates.push(update);
+    } else if (update.operation === "deleteRelation") {
+      if (relationIds.has(update.deleted.relation.id)) {
+        relationDeletes.push(update);
+        relationIds.delete(update.deleted.relation.id);
+      }
+    } else if (update.operation === "deleteNode") {
+      if (nodeIds.has(update.node.id)) {
+        nodeDeletes.push(update);
+        nodeIds.delete(update.node.id);
+      }
+    }
+  }
+
+  return [...entityUpdates, ...listUpdates, ...relationDeletes, ...nodeDeletes];
+}
+
 export async function undoAgentOperations(graphStore: GraphStore, inverseUpdates: GraphUpdate[]) {
-  await graphStore.updateManager.applyDurableTransaction(inverseUpdates);
+  const shouldResumeSync = await graphStore.updateManager.beginDurableWork();
+  try {
+    const reconciled = reconcileInverseUpdates(graphStore, inverseUpdates);
+    if (!reconciled.length) throw new Error("The rollback receipt is already fully applied.");
+    graphStore.updateManager.applyDurableTransaction(reconciled);
+    await graphStore.updateManager.flushDurableUpdates();
+  } finally {
+    graphStore.updateManager.resumeAfterDurableWork(shouldResumeSync);
+  }
 }

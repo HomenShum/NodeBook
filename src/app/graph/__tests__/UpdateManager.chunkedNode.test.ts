@@ -1,11 +1,27 @@
 import { createHash, webcrypto } from "node:crypto";
-import { TextEncoder as NodeTextEncoder } from "node:util";
+import { ReadableStream } from "node:stream/web";
+import { TextDecoder as NodeTextDecoder, TextEncoder as NodeTextEncoder } from "node:util";
 
 import { UpdateManager } from "@/app/graph/UpdateManager";
 import { SyncData } from "@/app/graph/SyncData";
 
 Object.defineProperty(globalThis, "crypto", { value: webcrypto, configurable: true });
 Object.defineProperty(globalThis, "TextEncoder", { value: NodeTextEncoder, configurable: true });
+Object.defineProperty(globalThis, "TextDecoder", { value: NodeTextDecoder, configurable: true });
+
+function response(body: string, status: number) {
+  const bytes = new NodeTextEncoder().encode(body);
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    body: new ReadableStream({
+      start(controller) {
+        controller.enqueue(bytes);
+        controller.close();
+      },
+    }),
+  } as unknown as Response;
+}
 
 function node(version: number, value: string) {
   const createdAt = new Date("2026-07-30T00:00:00.000Z");
@@ -44,6 +60,38 @@ function canonicalEntityForCas(entity: Record<string, unknown>) {
 }
 
 describe("oversized note sync", () => {
+  test("an agent checkpoint does not report durable success after a rejected graph batch", async () => {
+    const oldProps = node(1, "before");
+    const newProps = node(2, "after");
+    const syncData: SyncData = {
+      clientId: "browser-a",
+      userId: oldProps.authorId,
+      transactionId: "tx-agent-durable",
+      updates: [{ operation: "updateNode", oldProps, newProps }],
+    };
+    let syncAttempts = 0;
+    const refetch = jest.fn();
+    const authedFetch = jest.fn(async (input: RequestInfo | URL) => {
+      if (String(input) === "/api/sync") {
+        syncAttempts += 1;
+        return response("conflict", 409);
+      }
+      return response(JSON.stringify({
+        status: "ok",
+        data: { items: [], continueCursor: "", isDone: true },
+      }), 200);
+    }) as unknown as typeof fetch;
+    const manager = new UpdateManager(oldProps.authorId, refetch, jest.fn(), jest.fn(), jest.fn(), authedFetch);
+
+    await manager.beginDurableWork();
+    manager.syncQueue.push(syncData);
+
+    await expect(manager.flushDurableUpdates()).rejects.toThrow("Graph sync failed (409)");
+    expect(syncAttempts).toBe(4);
+    expect(refetch).toHaveBeenCalledTimes(1);
+    expect(manager.pendingUpdates).toEqual([]);
+  });
+
   test("a writer uploads bounded parts and finalizes before reporting success", async () => {
     const oldProps = node(1, "A".repeat(210_000));
     const newProps = node(2, "B".repeat(210_000));

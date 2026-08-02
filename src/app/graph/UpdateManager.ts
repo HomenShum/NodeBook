@@ -75,6 +75,8 @@ export class UpdateManager {
   private userId: string;
 
   private isSyncing = false;
+  private activeSync: Promise<void> | null = null;
+  private lastSyncFailure: Error | null = null;
   private static pendingNodeSyncCounts = new Map<string, number>();
   private nextSyncId: ReturnType<typeof setTimeout> | number = 0;
 
@@ -172,10 +174,14 @@ export class UpdateManager {
 
   private syncLoop() {
     if (!this.isSyncing) return;
-    this.nextSyncId = setTimeout(async () => {
+    this.nextSyncId = setTimeout(() => {
       if (!this.authedFetch) return;
-      await this.syncLocalUpdates(this.authedFetch);
-      this.syncLoop();
+      const active = this.syncLocalUpdates(this.authedFetch);
+      this.activeSync = active;
+      void active.finally(() => {
+        if (this.activeSync === active) this.activeSync = null;
+        this.syncLoop();
+      });
     }, 500);
   }
 
@@ -186,6 +192,26 @@ export class UpdateManager {
 
   get syncRunning() {
     return this.isSyncing;
+  }
+
+  async beginDurableWork() {
+    const shouldResume = this.isSyncing;
+    this.stopSync();
+    if (this.activeSync) await this.activeSync;
+    this.lastSyncFailure = null;
+    return shouldResume;
+  }
+
+  resumeAfterDurableWork(shouldResume: boolean) {
+    if (shouldResume) this.startSync();
+  }
+
+  async flushDurableUpdates() {
+    if (!this.authedFetch) throw new Error("Authenticated fetch is unavailable for durable graph sync");
+    if (this.activeSync) await this.activeSync;
+    if (this.syncQueue.length) await this.syncLocalUpdates(this.authedFetch);
+    if (this.lastSyncFailure) throw new Error(`Graph sync failed: ${this.lastSyncFailure.message}`, { cause: this.lastSyncFailure });
+    if (this.syncQueue.length) throw new Error("Durable graph sync left pending updates");
   }
 
   private async fetchLatestDataSnapshot() {
@@ -517,6 +543,7 @@ export class UpdateManager {
 
         if (!response.ok) {
           logger.error("Sync failed", response);
+          this.lastSyncFailure = new Error(`Graph sync failed (${response.status || "unknown status"})`);
           // Revert all pending updates and the current task, moving backwards to ensure that the state is consistent.
           let lastTask = syncDataBatch.pop();
           while (lastTask) {
@@ -534,6 +561,7 @@ export class UpdateManager {
       }
     } catch (e) {
       logger.error("Failed to POST sync data to backend", e);
+      this.lastSyncFailure = e instanceof Error ? e : new Error("Graph sync failed");
       this.syncQueue = syncData ? [syncData, ...syncDataBatch] : syncDataBatch;
       this.offlineSince = this.offlineSince || new Date();
       return;
@@ -541,6 +569,7 @@ export class UpdateManager {
     runInAction(() => {
       this.offlineSince = null;
       this.lastSuccessfulSync = new Date();
+      this.lastSyncFailure = null;
     });
   }
 
