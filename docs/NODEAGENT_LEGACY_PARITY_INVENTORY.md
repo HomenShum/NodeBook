@@ -153,6 +153,8 @@ The renderer boundary is scenario-tested in `src/app/query/RuntimeSynapseMap.tes
 - Durable run, step, checkpoint, proposal, memory, and model-evaluation records.
 - Checkpoint → automatic execution for low-risk reversible work → receipt → whole-run undo.
 - Optional Plan preview and explicit approval only at high-risk boundaries.
+- One typed `NotebookTools` UI port for checkpoint claim, graph application, durable transitions, rejection, and Undo; conflicts are data and a losing tab never marks the winner failed.
+- One run-wide provider ledger that includes repair usage, fails closed on missing usage telemetry, caps observed spend, and preserves a durability deadline reserve.
 
 ## Remaining parity proof
 

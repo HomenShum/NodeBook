@@ -56,4 +56,21 @@ describe("NodeAgent sole-engine gate", () => {
     expect(writers).toEqual(["agentWorkflows.ts"]);
     expect(() => statSync(path.join(convexRoot, "agentRuns.ts"))).toThrow();
   });
+
+  test("all NodeAgent UI mutations converge on the typed NotebookTools port", () => {
+    const appRoot = path.resolve(process.cwd(), "src/app");
+    const guardedCalls = ["applyAgentOperations(", "undoAgentOperations(", "runCheckpointExecutionLifecycle("];
+    const callers = sourceFiles(appRoot)
+      .filter((file) => {
+        const source = readFileSync(file, "utf8");
+        return guardedCalls.some((call) => source.includes(call))
+          && !source.includes("export async function applyAgentOperations(")
+          && !source.includes("export async function undoAgentOperations(")
+          && !source.includes("export async function runCheckpointExecutionLifecycle(");
+      })
+      .map((file) => path.relative(appRoot, file).replaceAll("\\", "/"))
+      .sort();
+
+    expect(callers).toEqual(["query/notebookTools.ts"]);
+  });
 });

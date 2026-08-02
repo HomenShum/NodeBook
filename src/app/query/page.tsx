@@ -13,11 +13,10 @@ import { useSetMainRoot } from "@/app/tree/utils";
 import { getAuthFetch } from "@/app/util";
 import { cn } from "@/lib/utils";
 
-import { applyAgentOperations, undoAgentOperations } from "./applyProposal";
 import { consumeNodeAgentEventStream } from "./agentStreamProtocol";
 import { NodeAgentEmbeddingContext } from "./NodeAgentEmbeddingContext";
 import RuntimeVerification from "./RuntimeVerification";
-import { runCheckpointExecutionLifecycle } from "./checkpointExecution";
+import { createNotebookTools } from "./notebookTools";
 import { NODE_AGENT_INVOKE_EVENT, NodeAgentInvocation } from "./nodeAgentEvents";
 import { agentRequestFingerprint, nextAgentRequestIdentity } from "./requestIdentity";
 import {
@@ -100,6 +99,7 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
   const graphStore = useGraphStore();
   const setRoot = useSetMainRoot();
   const embedded = useContext(NodeAgentEmbeddingContext);
+  const notebookTools = createNotebookTools({ graphStore, transition: proposalTransition });
 
   useEffect(() => {
     const proposalId = new URLSearchParams(window.location.search).get("proposalId")?.trim();
@@ -156,27 +156,15 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
     state.isTransitioning = true;
     state.error = "";
     try {
-      const receipt = await runCheckpointExecutionLifecycle({
-        accept: () => proposalTransition({
-          action: "accept",
-          proposalId: proposal.id,
-          proposalDigest: proposal.digest,
-        }),
-        apply: (operations) => applyAgentOperations(graphStore, operations),
-        markApplied: (appliedReceipt) => proposalTransition({
-          action: "applied",
-          proposalId: proposal.id,
-          proposalDigest: proposal.digest,
-          ...appliedReceipt,
-        }).then(() => undefined),
-        markFailed: (message) => proposalTransition({
-          action: "failed",
-          proposalId: proposal.id,
-          proposalDigest: proposal.digest,
-          error: message,
-        }).then(() => undefined),
-      });
-      state.inverseUpdates = receipt.inverseUpdates;
+      const result = await notebookTools.executeCheckpoint(proposal);
+      if (!result.ok) {
+        if (result.conflict.code !== "checkpoint_conflict" && state.proposal?.id === proposal.id) state.proposal.status = "failed";
+        state.error = result.conflict.code === "checkpoint_conflict"
+          ? `${result.conflict.message}. Reload to see the durable checkpoint status.`
+          : result.conflict.message;
+        return;
+      }
+      state.inverseUpdates = result.value.inverseUpdates;
       if (state.proposal?.id === proposal.id) state.proposal.status = "applied";
     } catch (error) {
       if (state.proposal?.id === proposal.id) state.proposal.status = "failed";
@@ -267,7 +255,11 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
     if (!state.proposal) return;
     state.isTransitioning = true;
     try {
-      await proposalTransition({ action: "reject", proposalId: state.proposal.id, proposalDigest: state.proposal.digest });
+      const result = await notebookTools.rejectCheckpoint(state.proposal);
+      if (!result.ok) {
+        state.error = result.conflict.message;
+        return;
+      }
       state.proposal.status = "rejected";
     } catch (error) {
       state.error = error instanceof Error ? error.message : "Reject failed";
@@ -285,10 +277,13 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
     if (!state.proposal || !state.inverseUpdates) return;
     state.isTransitioning = true;
     try {
-      const rollback = await undoAgentOperations(graphStore, state.inverseUpdates as never[]);
-      await proposalTransition({ action: "undo", proposalId: state.proposal.id, proposalDigest: state.proposal.digest });
+      const result = await notebookTools.undoCheckpoint(state.proposal, state.inverseUpdates as never[]);
+      if (!result.ok) {
+        state.error = result.conflict.message;
+        return;
+      }
       state.proposal.status = "undone";
-      if (rollback.warnings.length) state.content = `${state.content}\n\nRollback note: ${rollback.warnings.join(" ")}`;
+      if (result.value.warnings.length) state.content = `${state.content}\n\nRollback note: ${result.value.warnings.join(" ")}`;
     } catch (error) {
       state.error = error instanceof Error ? error.message : "Undo failed";
     } finally {
