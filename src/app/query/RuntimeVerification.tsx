@@ -26,6 +26,7 @@ function receiptMap(receipts: RuntimeEvalReceipt[]) {
 }
 
 export default function RuntimeVerification() {
+  const [isOpen, setIsOpen] = useState(false);
   const [history, setHistory] = useState<RuntimeEvalHistory | null>(null);
   const [suiteId, setSuiteId] = useState<string | null>(null);
   const [receipts, setReceipts] = useState<RuntimeEvalReceipt[]>([]);
@@ -106,11 +107,11 @@ export default function RuntimeVerification() {
       ? history ? "Not run" : error ? "Unavailable" : "Loading"
       : `${summary.passed}/${history?.cases.length ?? 6} passed`;
 
-  return <details className={styles.runtimeVerification} data-testid="nodeagent-runtime-verification">
+  return <details className={styles.runtimeVerification} data-testid="nodeagent-runtime-verification" open={isOpen} onToggle={(event) => setIsOpen(event.currentTarget.open)}>
     <summary><span><ChevronRight size={14} /> Runtime verification</span><strong>{label}</strong></summary>
     <div className={styles.runtimeVerificationBody} aria-live="polite">
       <p>Six locked legacy-parity cases run through the production NodeAgent engine using synthetic fixtures. They never apply graph changes.</p>
-      {history && <>
+      {history && isOpen && <>
         <RuntimeSynapseMap cases={history.cases} statusForCase={statusForCase} />
         <dl className={styles.runtimeMetrics} aria-label="Runtime verification summary">
           <div><dt>Passed</dt><dd>{summary.passed}</dd></div>
