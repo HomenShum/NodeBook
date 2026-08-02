@@ -1,0 +1,7 @@
+file '../nodeagent-responsive-20260802/guest-desktop.png'
+duration 2
+file '../nodeagent-responsive-20260802/guest-tablet.png'
+duration 2
+file '../nodeagent-responsive-20260802/guest-phone.png'
+duration 2
+file '../nodeagent-responsive-20260802/guest-phone.png'

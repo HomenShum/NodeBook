@@ -1,0 +1,7 @@
+file 'signed-desktop-integrated.png'
+duration 2
+file 'signed-desktop-auto.png'
+duration 2
+file 'signed-desktop-plan.png'
+duration 2
+file 'signed-desktop-plan.png'

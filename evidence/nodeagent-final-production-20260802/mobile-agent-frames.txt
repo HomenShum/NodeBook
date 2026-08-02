@@ -1,0 +1,5 @@
+file '../nodeagent-live-eval-ui-20260802/after-mobile-390x844-opaque-agent.png'
+duration 2
+file '../nodeagent-live-eval-ui-20260802/after-mobile-390x844-runtime-open.png'
+duration 2
+file '../nodeagent-live-eval-ui-20260802/after-mobile-390x844-runtime-open.png'
