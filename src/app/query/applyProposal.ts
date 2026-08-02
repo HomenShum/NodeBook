@@ -6,6 +6,40 @@ import { AgentOperation } from "./types";
 
 const MAX_CLONED_NODES = 100;
 
+function canonicalJson(value: unknown): string {
+  if (value instanceof Date) return JSON.stringify(value.toISOString());
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .filter(([, entry]) => entry !== undefined)
+      .sort(([left], [right]) => left.localeCompare(right));
+    return `{${entries.map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function serializedGraphObject(value: unknown) {
+  if (value && typeof value === "object" && "serialize" in value && typeof value.serialize === "function") {
+    return value.serialize();
+  }
+  return value;
+}
+
+function checkpointComparable(value: unknown) {
+  const serialized = serializedGraphObject(value);
+  if (!serialized || typeof serialized !== "object" || Array.isArray(serialized)) return serialized;
+  const { createdAt, updatedAt, canonicalRelationId, relationCount, ...comparable } = serialized as Record<string, unknown>;
+  void createdAt;
+  void updatedAt;
+  void canonicalRelationId;
+  void relationCount;
+  return comparable;
+}
+
+function isSameGraphEntity(current: unknown, expected: unknown) {
+  return canonicalJson(checkpointComparable(current)) === canonicalJson(checkpointComparable(expected));
+}
+
 function resolveId(id: string | null, temporaryIds: Map<string, string>) {
   if (!id) throw new Error("The checkpoint is missing a required node ID.");
   return temporaryIds.get(id) ?? id;
@@ -124,6 +158,8 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
   const nodeDeletes: GraphUpdate[] = [];
   for (const update of inverseUpdates) {
     if (update.operation !== "updateRelation") continue;
+    const current = graphStore.relationsById.get(update.newProps.id);
+    if (current && isSameGraphEntity(current, update.newProps)) continue;
     for (const endpointId of [update.oldProps.fromId, update.oldProps.toId]) {
       const scaffold = deletedNodes.get(endpointId);
       if (!objectIds.has(endpointId) && scaffold) {
@@ -157,7 +193,14 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
         nodeIds.add(update.node.id);
       }
     } else if (update.operation === "updateNode") {
-      if (nodeIds.has(update.newProps.id)) entityUpdates.push(update);
+      const current = graphStore.nodesById.get(update.newProps.id);
+      if (current && isSameGraphEntity(current, update.newProps)) {
+        // Already restored by an earlier retry.
+      } else if (current && isSameGraphEntity(current, update.oldProps)) {
+        entityUpdates.push(update);
+      } else if (current) {
+        throw new Error(`Rollback cannot restore node ${update.newProps.id}; it changed after the checkpoint.`);
+      }
     } else if (update.operation === "addRelation") {
       if (!relationIds.has(update.relation.id)) {
         entityUpdates.push({ ...update, relation: repairMissingEndpoint(update.relation) });
@@ -165,8 +208,14 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
       }
     } else if (update.operation === "updateRelation") {
       const newProps = repairMissingEndpoint(update.newProps);
-      if (relationIds.has(update.newProps.id)) {
+      const current = graphStore.relationsById.get(update.newProps.id);
+      if (current && isSameGraphEntity(current, newProps)) {
+        // A previous durable retry already restored this relation. Replaying the
+        // stale old -> new transition would correctly fail Convex CAS.
+      } else if (current && isSameGraphEntity(current, update.oldProps)) {
         entityUpdates.push({ ...update, newProps });
+      } else if (current) {
+        throw new Error(`Rollback cannot restore relation ${update.newProps.id}; it changed after the checkpoint.`);
       } else {
         entityUpdates.push({ operation: "addRelation", relation: newProps });
         relationIds.add(update.newProps.id);

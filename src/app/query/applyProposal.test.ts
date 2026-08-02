@@ -78,6 +78,50 @@ describe("durable agent rollback reconciliation", () => {
     expect(() => reconcileInverseUpdates(graphStore, inverse)).toThrow("an original endpoint is missing");
   });
 
+  test("a retry skips a relation that production already restored in an earlier partial rollback", () => {
+    const originalRelation = relation("note-parent", "original-parent", "reviewed-note");
+    const legacyStoredRelation = {
+      ...originalRelation,
+      createdAt: null,
+      updatedAt: null,
+      relationCount: undefined,
+    };
+    const graphStore = {
+      nodesById: new Map([
+        ["original-parent", node("original-parent")],
+        ["reviewed-note", node("reviewed-note")],
+      ]),
+      relationsById: new Map([[originalRelation.id, legacyStoredRelation]]),
+      userRoot: { id: "user-root" },
+    } as unknown as GraphStore;
+    const inverse = [{
+      operation: "updateRelation",
+      oldProps: relation("note-parent", "missing-cluster", "reviewed-note"),
+      newProps: originalRelation,
+    }] as GraphUpdate[];
+
+    expect(reconcileInverseUpdates(graphStore, inverse)).toEqual([]);
+  });
+
+  test("a retry fails closed when a reviewed relation changed after the checkpoint", () => {
+    const graphStore = {
+      nodesById: new Map([
+        ["original-parent", node("original-parent")],
+        ["reviewed-note", node("reviewed-note")],
+        ["other-parent", node("other-parent")],
+      ]),
+      relationsById: new Map([["note-parent", relation("note-parent", "other-parent", "reviewed-note")]]),
+      userRoot: { id: "user-root" },
+    } as unknown as GraphStore;
+    const inverse = [{
+      operation: "updateRelation",
+      oldProps: relation("note-parent", "missing-cluster", "reviewed-note"),
+      newProps: relation("note-parent", "original-parent", "reviewed-note"),
+    }] as GraphUpdate[];
+
+    expect(() => reconcileInverseUpdates(graphStore, inverse)).toThrow("changed after the checkpoint");
+  });
+
   test("a legacy child relation with one dangling parent is restored to the notebook root with disclosure", () => {
     const graphStore = {
       nodesById: new Map([["reviewed-note", node("reviewed-note")], ["user-root", node("user-root")]]),
