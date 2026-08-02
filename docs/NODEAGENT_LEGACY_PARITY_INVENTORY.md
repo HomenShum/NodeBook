@@ -77,7 +77,7 @@ Disposition meanings:
 | Draft → self-evaluate → revise | Do not accept malformed, out-of-scope, or low-integrity writes | Replaced by schema parsing, semantic validation, and one bounded repair. No hidden self-score is treated as proof. |
 | Sequential mutation queue | Avoid client synchronization races and preserve order | Ported as one grouped GraphStore transaction plus single-winner Convex checkpoint claim. |
 | Pattern learning | Learn from success and failure without inflated scores | Replaced by bounded typed memories and patterns with success/failure counts. |
-| Final answer/work product | Leave visible output, citations, steps, status, and recovery | Ported in shared NodeAgent surface; authenticated live proof pending. |
+| Final answer/work product | Leave visible output, citations, steps, status, and recovery | Ported and authenticated in production: exact notebook citations, steps, durable receipt, reload recovery, and whole-run Undo observed. |
 
 ## Streaming event inventory
 
@@ -92,7 +92,7 @@ The legacy SSE contract was `client_action`, `thought`, `tool_call`, `tool_resul
 | `self_eval` | Deterministic validation and optional repaired step | Replaced; model self-judgment cannot certify itself. |
 | `final_summary` | `finishSummary`, response, source citations, durable receipt | Ported. |
 | `end` | Terminal run/proposal status | Ported. |
-| `error` | Honest HTTP error plus durable failed run/checkpoint where available | Ported; authenticated degraded-path proof pending. |
+| `error` | Honest HTTP error plus durable failed run/checkpoint where available | Ported; authenticated provider-timeout and invalid-checkpoint paths observed as `Not completed` with no graph write. |
 
 The current HTTP route returns the bounded completed result rather than SSE. Durable steps preserve semantics and reloadability, but progressive live rendering is a remaining UX gap—not evidence of missing execution.
 
@@ -125,6 +125,6 @@ The current HTTP route returns the bounded completed result rather than SSE. Dur
 Implementation is not behavioral proof. Completion still requires one authenticated production evidence set covering:
 
 1. The six locked Notion cases against the actual NodeAgent runtime, not only isolated model compatibility prompts.
-2. Ask, Plan, safe Auto, destructive approval pause, checkpoint race, applied receipt, reload, and whole-run undo.
-3. Exact step/citation/model/usage evidence and honest provider failure.
-4. Desktop, tablet, and phone reachability plus final end-to-end clips.
+2. Live checkpoint-race proof remains; Ask, Plan, safe Auto, destructive approval pause, applied receipt, reload, and whole-run Undo are production-proven.
+3. Model/usage presentation remains; exact steps/citations and honest provider failure are production-proven.
+4. Refresh the final desktop, tablet, and phone end-to-end clips after the latest live-session hardening.

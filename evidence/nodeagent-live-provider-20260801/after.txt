@@ -1,0 +1,26 @@
+Observable: an authenticated owner can complete read-only and checkpointed NodeAgent work inside the original production NodeBook notebook, with exact evidence, durable recovery, and destructive approval boundaries.
+
+Production Ask proof:
+- The bounded OpenAI request completed after selecting minimal reasoning for gpt-5-mini.
+- The answer cited five exact owner-scoped notebook nodes as clickable graph references.
+- Exact `{sourceId, version, digest}` bindings persisted with the durable receipt.
+
+Production mutation proof:
+- Safe Auto created one temporary child whose title and body rendered as two real notebook lines rather than serialized JSON.
+- The applied checkpoint and durable receipt survived a full reload.
+- `Undo this run` removed the child, and its absence survived another reload.
+- Plan produced a pending preview with no graph write; Reject preserved the empty graph state.
+- A deletion request first searched for and inspected one dedicated temporary leaf, then paused at `Approval required` with a pending durable checkpoint.
+- Reject left the leaf untouched. Returning to its creation receipt and using Undo removed it. A final reload verified every QA leaf was absent.
+
+Live-session hardening discovered and shipped:
+- Rich `{title, content}` model wrappers are deterministically flattened into NodeBook's single text field before proposal hashing.
+- Overlong planner rationale/query metadata is bounded; invalid planner decisions fail closed at a checkpoint instead of crashing the run.
+- Overlong final descriptive fields are bounded consistently, with matching JSON Schema limits.
+
+Verification:
+- 39 Jest suites passed, 212 scenario tests total.
+- TypeScript typecheck passed.
+- Vercel's production builder completed and the deployment reached Ready.
+- Raw production HTML returned HTTP 200 with the `NodeBook` content signal.
+- No production QA nodes remain.
