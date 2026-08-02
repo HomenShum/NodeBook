@@ -6,6 +6,7 @@ After implementation:
 - `yarn typecheck`: passed.
 - `yarn build` with temporary process-level non-secret validation values: passed; `/api/query/evals` appears in the production route manifest.
 - `npx convex deploy --yes`: schema validation complete and functions deployed to the existing production deployment.
+- FABLE knockout repair: malformed request JSON now returns 400 before provider work, and duplicate source bindings fail closed.
 
 What did not change:
 - The evaluation endpoint does not call graph apply/update mutations and reports `graphMutated: false` only after the evaluation receipt persists.

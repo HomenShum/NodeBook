@@ -339,6 +339,7 @@ export const recordRuntimeEvaluation = mutation({
     const value = args.evaluation;
     if (value.evalId.length > 100 || value.caseId.length > 100 || value.benchmarkVersion.length > 100 || value.model.length > 200) throw new Error("RUNTIME_EVAL_STRING_LIMIT_EXCEEDED");
     if (value.reasons.length > 20 || value.toolOrder.length > 20 || value.operationKinds.length > 30 || value.selectedNodeIds.length > 200 || value.sourceBindings.length > MAX_SOURCE_BINDINGS) throw new Error("RUNTIME_EVAL_COLLECTION_LIMIT_EXCEEDED");
+    if (new Set(value.sourceBindings.map((binding) => binding.sourceId)).size !== value.sourceBindings.length) throw new Error("RUNTIME_EVAL_BINDING_DUPLICATE");
     if (value.reasons.some((reason) => reason.length > 1_000) || value.toolOrder.some((tool) => tool.length > 100) || value.operationKinds.some((kind) => kind.length > 100) || value.selectedNodeIds.some((id) => id.length > 200)) throw new Error("RUNTIME_EVAL_ITEM_LIMIT_EXCEEDED");
     if (value.sourceBindings.some((binding) => binding.sourceId.length > 200 || !Number.isInteger(binding.version) || binding.version < 0 || !/^[a-f0-9]{64}$/i.test(binding.digest))) throw new Error("RUNTIME_EVAL_BINDING_INVALID");
     if (value.proposalDigest && !/^[a-f0-9]{64}$/i.test(value.proposalDigest)) throw new Error("RUNTIME_EVAL_DIGEST_INVALID");

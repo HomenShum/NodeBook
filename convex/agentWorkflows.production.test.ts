@@ -331,5 +331,8 @@ describe("NodeAgent durable runtime evaluation receipts", () => {
     const badDigest = evaluation(2);
     badDigest.evaluation.sourceBindings[0].digest = "not-a-digest";
     await expect(session.mutation(recordRuntimeEvaluation, badDigest)).rejects.toThrow("RUNTIME_EVAL_BINDING_INVALID");
+    const duplicate = evaluation(3);
+    duplicate.evaluation.sourceBindings.push({ ...duplicate.evaluation.sourceBindings[0] });
+    await expect(session.mutation(recordRuntimeEvaluation, duplicate)).rejects.toThrow("RUNTIME_EVAL_BINDING_DUPLICATE");
   });
 });

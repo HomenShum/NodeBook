@@ -17,9 +17,15 @@ const RequestSchema = z.object({ caseId: z.string().min(1).max(100), consent: z.
 
 export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
   const startedAtMs = Date.now();
+  let body: unknown;
   try {
-    const parsed = RequestSchema.safeParse(await request.json());
-    if (!parsed.success) return NextResponse.json({ error: "A valid caseId and explicit consent are required" }, { status: 400 });
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const parsed = RequestSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "A valid caseId and explicit consent are required" }, { status: 400 });
+  try {
     const testCase = getLiveEvalCase(parsed.data.caseId);
     if (!testCase) return NextResponse.json({ error: "Unknown locked evaluation case" }, { status: 404 });
     if (!env.OPENAI_API_KEY && !env.OPENROUTER_API_KEY) return NextResponse.json({ error: "AI provider is not configured" }, { status: 503 });
