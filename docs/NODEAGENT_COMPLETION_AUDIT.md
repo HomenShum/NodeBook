@@ -10,6 +10,7 @@ This audit treats prior reports as claims. A row passes only when the repository
 | --- | --- | --- |
 | Preserve the original Mew notebook UI while renaming the product to NodeBook | Signed production screenshots in `evidence/nodeagent-final-production-20260802`; raw alias HTML returned HTTP 200 with `NodeBook` and without active `Mew` or `Ideaflow` copy | PASS |
 | Use legacy MewAgent and the locked Notion behavior as the baseline | `docs/NODEAGENT_LEGACY_PARITY_INVENTORY.md`; `evals/nodeagent-notion-parity.json` | PASS |
+| Account for every declared legacy tool, streaming event, and inline command | `evals/nodeagent-legacy-capabilities.json` snapshots both preserved generations; `legacyParityInventory.test.ts` requires every capability to have an explicit disposition and rejects deferred/proof-pending parity rows | PASS |
 | One NodeAgent engine, including inline entrypoints | `src/app/api/query/soleEngine.test.ts` source-scans API entrypoints, durable workflow writers, and UI mutation callers | PASS |
 | Checkpoint -> safe Auto execution -> durable receipt -> whole-run Undo; Plan remains optional | `src/app/query/notebookTools.ts`, `src/app/query/page.tsx`, checkpoint/rollback scenario tests, signed Auto and Plan production states | PASS |
 | Typed conflict handling under races and stale state | `src/app/query/notebookTools.test.ts` proves a two-tab single winner, a retryable persistence outage, and stale-source Undo refusal | PASS |
@@ -46,7 +47,7 @@ Primary references:
 - Deployed code commit: `d3867ab5`
 - Vercel status: Ready, target production
 - Raw live DOM check: HTTP 200; `NodeBook=true`, `Mew=false`, `Ideaflow=false`
-- Regression gates: Jest 55/55 suites and 293/293 tests; Convex 49/49; TypeScript, lint (known warnings only), local build with explicit production-shaped env, and cloud build passed
+- Regression gates: Jest 56/56 suites and 295/295 tests; Convex 49/49; TypeScript, lint (known warnings only), local build with explicit production-shaped env, and cloud build passed
 
 ## Exact remaining production bar
 

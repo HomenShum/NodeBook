@@ -1,0 +1,87 @@
+{
+  "version": "nodeagent-legacy-capabilities-v1",
+  "sources": [
+    {
+      "generation": "google-genai",
+      "checkout": "prod-push-mew/mew",
+      "revision": "working-tree evidence at 0de15d79",
+      "activeTools": [
+        "add_relation",
+        "create_knowledge_map",
+        "create_node",
+        "create_node_and_get_details",
+        "delete_node",
+        "display_debug_information",
+        "evaluate_and_enhance_report",
+        "execute_direct_request",
+        "execute_multi_step_research_plan",
+        "find_and_intelligently_clone_nodes",
+        "find_related_nodes_via_graph",
+        "finish_work",
+        "generate_report_outline",
+        "get_all_notes_raw",
+        "get_company_profile",
+        "get_note_index",
+        "get_person_profile",
+        "move_node",
+        "populate_report_from_outline",
+        "research_and_create_notes",
+        "research_and_update_profile_section",
+        "research_company_deep_dive",
+        "research_person_deep_dive",
+        "update_node_content",
+        "web_search"
+      ],
+      "inactiveTools": [
+        "research_and_create_structured_report"
+      ]
+    },
+    {
+      "generation": "openai",
+      "checkout": "latest-main-mew/mew",
+      "revision": "2013d86d",
+      "activeTools": [
+        "add_relation",
+        "create_knowledge_map",
+        "create_node",
+        "create_node_and_get_details",
+        "delete_node",
+        "evaluate_and_enhance_report",
+        "execute_direct_request",
+        "execute_multi_step_research_plan",
+        "find_related_nodes_via_graph",
+        "finish_work",
+        "generate_report_outline",
+        "move_node",
+        "populate_report_from_outline",
+        "research_and_update_profile_section",
+        "research_company_deep_dive",
+        "research_person_deep_dive",
+        "search_academic",
+        "search_news",
+        "superconnector_prepare_outreach",
+        "superconnector_schedule_event",
+        "update_node_content",
+        "web_search"
+      ],
+      "inactiveTools": []
+    }
+  ],
+  "streamEvents": [
+    "client_action",
+    "thought",
+    "tool_call",
+    "tool_result",
+    "self_eval",
+    "final_summary",
+    "end",
+    "error"
+  ],
+  "inlineCommands": [
+    "/mewagent",
+    "/ai",
+    "/search",
+    "/deepresearch",
+    "/tot"
+  ]
+}
