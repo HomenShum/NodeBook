@@ -1037,7 +1037,7 @@ export async function executeWorkflowAgent(
       timeoutMs: 30_000,
       outputSchema: RESEARCH_FINDING_JSON_SCHEMA as unknown as Record<string, unknown>,
       outputName: "nodebook_deep_research_finding",
-      maxOutputTokens: 800,
+      maxOutputTokens: 1_600,
     })));
     settled.forEach((outcome, index) => {
       if (outcome.status !== "fulfilled") {

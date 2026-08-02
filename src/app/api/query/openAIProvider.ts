@@ -135,7 +135,12 @@ export async function runOpenAI(args: {
     try {
       result = JSON.parse(content);
     } catch {
-      throw new Error("AI provider returned malformed structured output");
+      const outputShape = (Array.isArray(body.output) ? body.output : []).slice(0, 12).map((item: any) => ({
+        type: typeof item?.type === "string" ? item.type : "unknown",
+        status: typeof item?.status === "string" ? item.status : "unknown",
+        contentTypes: (Array.isArray(item?.content) ? item.content : []).slice(0, 8).map((entry: any) => typeof entry?.type === "string" ? entry.type : "unknown"),
+      }));
+      throw new Error(`AI provider returned malformed structured output:${JSON.stringify(outputShape).slice(0, 500)}`);
     }
     const usage: WorkflowUsage = {
       inputTokens: typeof body.usage?.input_tokens === "number" ? body.usage.input_tokens : null,
