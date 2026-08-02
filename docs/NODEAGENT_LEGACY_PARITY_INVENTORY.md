@@ -115,6 +115,17 @@ The current HTTP route uses content negotiation: JSON clients retain the bounded
 
 NodeBook uses pinned `@xyflow/react` 12.11.2 for interactive node/edge rendering. The runtime synapse map is composed from React Flow nodes and edges; it does not hand-draw a graph with SVG. This is the default for editable notebook mind maps because it provides React-native custom nodes, viewport behavior, selection, handles, and accessible interaction without a second rendering architecture.
 
+Decision record (reviewed 2026-08-02):
+
+| Library | Best use | NodeBook decision |
+|---|---|---|
+| React Flow | Editable React node UIs with embedded controls, selection, handles, pan/zoom, and custom nodes | Adopted as the sole NodeBook/NodeAgent graph renderer. |
+| ELK.js | Deterministic layered/compound layout and edge routing | Add behind React Flow only when real graph-size evidence shows the current fixed or persisted layout is insufficient. |
+| Cytoscape.js | Graph-theory analysis, compound graphs, and many layout extensions | Reserve for a separate analysis product requirement; do not duplicate the notebook editor renderer. |
+| Sigma.js + Graphology | Read-only WebGL exploration of thousands of nodes and edges | Reserve for a proven large-graph exploration mode. |
+
+The renderer boundary is scenario-tested in `src/app/query/RuntimeSynapseMap.test.tsx`: an eight-case suite must be capped to six visible workflows and passed to React Flow as accessible nodes and edges. This prevents a future visual refresh from silently replacing the graph with bespoke SVG markup.
+
 - Add `elkjs` only when graph size or directed hierarchy makes deterministic automatic layout necessary; it is a layout engine, not a renderer.
 - Consider Sigma.js only for a future read-only, thousands-of-nodes exploration mode where WebGL scale outweighs embedded React controls.
 - Do not introduce D3 or bespoke SVG graph rendering for the NodeAgent UI. Existing inline SVG icon glyphs are outside this graph-rendering boundary.
