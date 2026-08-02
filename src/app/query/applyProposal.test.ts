@@ -28,6 +28,7 @@ describe("durable agent rollback reconciliation", () => {
         ["knowledge-map", node("knowledge-map")],
       ]),
       relationsById: new Map([[missingClusterRelation.id, missingClusterRelation]]),
+      userRoot: { id: "user-root" },
     } as unknown as GraphStore;
     const inverse = [
       {
@@ -60,15 +61,35 @@ describe("durable agent rollback reconciliation", () => {
 
   test("a rollback fails honestly when an original note parent was actually deleted", () => {
     const graphStore = {
-      nodesById: new Map([["reviewed-note", node("reviewed-note")]]),
+      nodesById: new Map(),
       relationsById: new Map(),
+      userRoot: { id: "user-root" },
     } as unknown as GraphStore;
     const inverse = [{
       operation: "updateRelation",
       oldProps: relation("note-parent", "missing-cluster", "reviewed-note"),
-      newProps: relation("note-parent", "deleted-original-parent", "reviewed-note"),
+      newProps: relation("note-parent", "deleted-original-parent", "also-deleted-note"),
     }] as GraphUpdate[];
 
     expect(() => reconcileInverseUpdates(graphStore, inverse)).toThrow("an original endpoint is missing");
+  });
+
+  test("a legacy child relation with one dangling parent is restored to the notebook root with disclosure", () => {
+    const graphStore = {
+      nodesById: new Map([["reviewed-note", node("reviewed-note")], ["user-root", node("user-root")]]),
+      relationsById: new Map([["note-parent", relation("note-parent", "cluster", "reviewed-note")]]),
+      userRoot: { id: "user-root" },
+    } as unknown as GraphStore;
+    const warnings: string[] = [];
+    const inverse = [{
+      operation: "updateRelation",
+      oldProps: relation("note-parent", "cluster", "reviewed-note"),
+      newProps: relation("note-parent", "dangling-parent", "reviewed-note"),
+    }] as GraphUpdate[];
+
+    const reconciled = reconcileInverseUpdates(graphStore, inverse, warnings);
+
+    expect(reconciled[0]).toMatchObject({ operation: "updateRelation", newProps: { fromId: "user-root", toId: "reviewed-note" } });
+    expect(warnings).toEqual(["Original endpoint dangling-parent no longer exists; restored relation note-parent to the notebook root."]);
   });
 });

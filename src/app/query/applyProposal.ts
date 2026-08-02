@@ -110,14 +110,30 @@ export async function applyAgentOperations(graphStore: GraphStore, operations: A
   return { appliedUpdates, inverseUpdates };
 }
 
-export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: GraphUpdate[]) {
+export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: GraphUpdate[], warnings: string[] = []) {
   const nodeIds = new Set(graphStore.nodesById.keys());
   const relationIds = new Set(graphStore.relationsById.keys());
+  const objectIds = new Set([...nodeIds, ...relationIds]);
   const deletedRelationIds = new Set(inverseUpdates.flatMap((update) => update.operation === "deleteRelation" ? [update.deleted.relation.id] : []));
   const entityUpdates: GraphUpdate[] = [];
   const listUpdates: GraphUpdate[] = [];
   const relationDeletes: GraphUpdate[] = [];
   const nodeDeletes: GraphUpdate[] = [];
+  const repairMissingEndpoint = <T extends { id: string; fromId: string; toId: string; relationTypeId: string }>(relation: T) => {
+    const missingFrom = !objectIds.has(relation.fromId);
+    const missingTo = !objectIds.has(relation.toId);
+    if (!missingFrom && !missingTo) return relation;
+    if (missingFrom === missingTo || relation.relationTypeId !== defaultRelationTypes.child.id) {
+      throw new Error(`Rollback cannot restore relation ${relation.id}; an original endpoint is missing.`);
+    }
+    const missingId = missingFrom ? relation.fromId : relation.toId;
+    warnings.push(`Original endpoint ${missingId} no longer exists; restored relation ${relation.id} to the notebook root.`);
+    return {
+      ...relation,
+      fromId: missingFrom ? graphStore.userRoot.id : relation.fromId,
+      toId: missingTo ? graphStore.userRoot.id : relation.toId,
+    };
+  };
 
   for (const update of inverseUpdates) {
     if (update.operation === "addNode") {
@@ -129,20 +145,15 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
       if (nodeIds.has(update.newProps.id)) entityUpdates.push(update);
     } else if (update.operation === "addRelation") {
       if (!relationIds.has(update.relation.id)) {
-        if (!nodeIds.has(update.relation.fromId) || !nodeIds.has(update.relation.toId)) {
-          throw new Error(`Rollback cannot restore relation ${update.relation.id}; an original endpoint is missing.`);
-        }
-        entityUpdates.push(update);
+        entityUpdates.push({ ...update, relation: repairMissingEndpoint(update.relation) });
         relationIds.add(update.relation.id);
       }
     } else if (update.operation === "updateRelation") {
+      const newProps = repairMissingEndpoint(update.newProps);
       if (relationIds.has(update.newProps.id)) {
-        entityUpdates.push(update);
+        entityUpdates.push({ ...update, newProps });
       } else {
-        if (!nodeIds.has(update.newProps.fromId) || !nodeIds.has(update.newProps.toId)) {
-          throw new Error(`Rollback cannot restore relation ${update.newProps.id}; an original endpoint is missing.`);
-        }
-        entityUpdates.push({ operation: "addRelation", relation: update.newProps });
+        entityUpdates.push({ operation: "addRelation", relation: newProps });
         relationIds.add(update.newProps.id);
       }
     } else if (update.operation === "updateRelationList") {
@@ -168,10 +179,12 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
 export async function undoAgentOperations(graphStore: GraphStore, inverseUpdates: GraphUpdate[]) {
   const shouldResumeSync = await graphStore.updateManager.beginDurableWork();
   try {
-    const reconciled = reconcileInverseUpdates(graphStore, inverseUpdates);
+    const warnings: string[] = [];
+    const reconciled = reconcileInverseUpdates(graphStore, inverseUpdates, warnings);
     if (!reconciled.length) throw new Error("The rollback receipt is already fully applied.");
     graphStore.updateManager.applyDurableTransaction(reconciled);
     await graphStore.updateManager.flushDurableUpdates();
+    return { warnings };
   } finally {
     graphStore.updateManager.resumeAfterDurableWork(shouldResumeSync);
   }

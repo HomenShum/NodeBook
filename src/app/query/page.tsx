@@ -270,9 +270,10 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
     if (!state.proposal || !state.inverseUpdates) return;
     state.isTransitioning = true;
     try {
-      await undoAgentOperations(graphStore, state.inverseUpdates as never[]);
+      const rollback = await undoAgentOperations(graphStore, state.inverseUpdates as never[]);
       await proposalTransition({ action: "undo", proposalId: state.proposal.id, proposalDigest: state.proposal.digest });
       state.proposal.status = "undone";
+      if (rollback.warnings.length) state.content = `${state.content}\n\nRollback note: ${rollback.warnings.join(" ")}`;
     } catch (error) {
       state.error = error instanceof Error ? error.message : "Undo failed";
     } finally {
