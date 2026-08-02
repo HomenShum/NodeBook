@@ -1,3 +1,13 @@
+.agentView[data-testid="nodebook-agent"],
+.agentEmbedded[data-testid="nodebook-agent"] {
+  --background: var(--gray-1);
+  --background-subtle: var(--gray-2);
+  --foreground-subtle: var(--gray-11);
+  --accent: var(--teal-8);
+  --accent-3: var(--teal-3);
+  --link-color: var(--teal-11);
+}
+
 .agentView[data-testid="nodebook-agent"] {
   height: calc(100dvh - 16px);
   min-height: calc(100dvh - 16px);
