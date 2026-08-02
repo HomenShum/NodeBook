@@ -539,6 +539,11 @@
   outline-offset: 3px;
 }
 
+.runtimeFlowNode :global(.react-flow__handle) {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .runtimeFlowNodeCore {
   width: 58px !important;
   height: 58px !important;
@@ -550,8 +555,8 @@
   line-height: 1.15;
 }
 
-.runtimeFlowNodeCore > div {
-  display: grid;
+.runtimeFlowNodeCore span {
+  display: block;
 }
 
 .runtimeFlowNode_running {

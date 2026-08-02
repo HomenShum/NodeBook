@@ -6,7 +6,7 @@ Let React own the summary toggle and mount React Flow only after the runtime dis
 **Touches**: `evidence/nodeagent-live-eval-ui-20260802/pre-fix-react-flow-closed-container.png`
 
 ## 2026-08-02 — Replace the graph spike with React Flow
-Remove the hand-authored SVG renderer and use the MIT-licensed React Flow 12 node, edge, viewport, fit-view, focus, and accessibility primitives. Keep the graph read-only and bounded to seven nodes and six receipt-derived edges.
+Remove the hand-authored SVG renderer and use the MIT-licensed React Flow 12 standard node, edge, viewport, fit-view, focus, and accessibility primitives. Keep its handle geometry for edge routing but make the read-only ports transparent; bound the graph to seven nodes and six receipt-derived edges.
 **Commit**: `this commit`. **Author**: Codex.
 **Touches**: `evidence/nodeagent-live-eval-ui-20260802/graph-library-decision.md`
 

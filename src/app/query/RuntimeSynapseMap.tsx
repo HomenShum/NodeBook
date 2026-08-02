@@ -27,7 +27,7 @@ export default function RuntimeSynapseMap({
     const nodes: Node[] = [
       {
         id: "nodeagent",
-        type: "group",
+        type: "default",
         position: { x: 132, y: 61 },
         data: { label: <><span>NODE</span><span>AGENT</span></> },
         className: `${styles.runtimeFlowNode} ${styles.runtimeFlowNodeCore}`,
@@ -42,7 +42,7 @@ export default function RuntimeSynapseMap({
         const stateClass = status === "idle" ? "" : styles[`runtimeFlowNode_${status}`];
         return {
           id: `case-${testCase.caseId}`,
-          type: "group",
+          type: "default",
           position: POSITIONS[index],
           data: { label: index + 1 },
           className: `${styles.runtimeFlowNode} ${stateClass}`,
