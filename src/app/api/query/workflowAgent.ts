@@ -43,6 +43,50 @@ const ModelResultSchema = z.object({
 });
 type ModelResult = z.infer<typeof ModelResultSchema>;
 
+function flattenStructuredNodeContent(value: string | null) {
+  if (!value) return value;
+  if (value.length > 10_000) return value;
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return value;
+
+  try {
+    const candidate = JSON.parse(trimmed) as { title?: unknown; content?: unknown };
+    if (!candidate || typeof candidate !== "object" || typeof candidate.title !== "string") return value;
+
+    let body: string | null = null;
+    if (typeof candidate.content === "string") {
+      body = candidate.content;
+    } else if (Array.isArray(candidate.content)) {
+      const parts: string[] = [];
+      for (const chip of candidate.content) {
+        if (!chip || typeof chip !== "object") return value;
+        const typedChip = chip as { type?: unknown; value?: unknown };
+        if (typedChip.type === "linebreak") parts.push("\n");
+        else if (typeof typedChip.value === "string") parts.push(typedChip.value);
+        else return value;
+      }
+      body = parts.join("");
+    }
+    if (body === null) return value;
+
+    const flattened = [candidate.title.trim(), body.trim()].filter(Boolean).join("\n");
+    return flattened || value;
+  } catch {
+    return value;
+  }
+}
+
+function normalizeOperationContent(result: ModelResult): ModelResult {
+  return {
+    ...result,
+    operations: result.operations.map((operation) => ({
+      ...operation,
+      content: flattenStructuredNodeContent(operation.content),
+      newContent: flattenStructuredNodeContent(operation.newContent),
+    })),
+  };
+}
+
 export const TOOL_DECISION_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -419,6 +463,7 @@ Return selectedNodeIds containing only the exact reviewed notebook nodes that su
 Ask mode is read-only and operations MUST be empty.
 Agent and Organize modes return executable graph operations. The client decides whether to auto-apply or pause at a risk boundary, so never claim an operation was applied inside your model response.
 For an explicit write request, operations MUST be non-empty. CURRENT_ROOT may be used as an operation target such as parentId, but it MUST NOT appear in selectedNodeIds unless that exact ID is present in REVIEWED_CONTEXT; use an empty selectedNodeIds array when the write needs no notebook evidence.
+NodeBook nodes have one plain-text content field. If the user supplies a title and body, encode the operation content as "Title\nBody". Never serialize an object or JSON wrapper into content or newContent.
 Prefer existing notes: inspect supplied node IDs before creating. Clone a relevant existing hierarchy instead of researching it again.
 For multi-part research, create one descriptive container under CURRENT_ROOT first, then put result nodes under that container.
 For informational work, search notebook evidence first, deepen through related graph context when clues are incomplete, then use web research only when enabled.
@@ -516,7 +561,7 @@ export async function executeWorkflowAgent(
     // primary + one bounded repair must still fit inside the 60s route budget.
     timeoutMs: args.mode === "ask" ? 24_000 : 28_000,
   });
-  let parsed = ModelResultSchema.parse(provider.result);
+  let parsed = normalizeOperationContent(ModelResultSchema.parse(provider.result));
   let errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
   let providerFinishedAt = now().toISOString();
   steps.push(makeStep(
@@ -540,7 +585,7 @@ export async function executeWorkflowAgent(
       webResearch: false,
       timeoutMs: 8_000,
     });
-    parsed = ModelResultSchema.parse(repair.result);
+    parsed = normalizeOperationContent(ModelResultSchema.parse(repair.result));
     errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
     const repairFinishedAt = now().toISOString();
     steps.push(makeStep(

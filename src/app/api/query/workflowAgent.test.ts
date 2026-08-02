@@ -366,6 +366,48 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.steps[2]).toEqual(expect.objectContaining({ tool: "repair_proposal", status: "repaired" }));
   });
 
+  test("a signed-in founder asking for a titled note never gets a serialized provider payload rendered into the graph", async () => {
+    const wrappedContent = JSON.stringify({
+      title: "NodeAgent Live QA 2026-08-01",
+      content: [{ type: "text", value: "temporary reversible production proof" }],
+      isPublic: false,
+    });
+    const operation = {
+      ...emptyFields,
+      kind: "create_node" as const,
+      parentId: "root",
+      tempId: "live-proof",
+      content: wrappedContent,
+      reason: "Create one reversible production proof note.",
+    };
+
+    const result = await executeWorkflowAgent(
+      {
+        query: "Create one child note titled NodeAgent Live QA 2026-08-01 with proof content",
+        mode: "agent",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [node],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({
+          result: { ...baseResult, selectedNodeIds: [], operations: [operation] },
+          sources: [],
+          usage,
+        }),
+        runId: () => "run-live-content-shape",
+        proposalId: () => "proposal-live-content-shape",
+      },
+    );
+
+    expect(result.operations[0].content).toBe(
+      "NodeAgent Live QA 2026-08-01\ntemporary reversible production proof",
+    );
+    expect(result.operations[0].content).not.toContain("isPublic");
+    expect(result.proposalDigest).toMatch(/^[a-f0-9]{64}$/);
+  });
+
   test("a sustained oversized notebook context is capped before provider egress", async () => {
     const provider = jest.fn().mockResolvedValue({
       result: { ...baseResult, selectedNodeIds: ["node-0000"] },
