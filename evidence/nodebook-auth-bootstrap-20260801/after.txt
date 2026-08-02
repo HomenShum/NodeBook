@@ -1,0 +1,17 @@
+Observable: a previously signed-in production owner must either enter NodeBook or return to a recoverable login boundary.
+
+Production deployment: dpl_GGBZXDBAPrngun2Kv65bbju7QxE4
+Production URL: https://nodebook-rho.vercel.app/query
+
+Observed after:
+- Fresh production deployment reported Ready and was aliased to the production domain.
+- Raw production HTML returned HTTP 200 with the NodeBook signal.
+- The same claimed Chrome tab was reloaded and observed after 12 seconds.
+- DOM reached `main[aria-label="NodeBook"]` with `Sign in to NodeBook`, `Continue to NodeBook as a guest`, and `Open NodeBook on your phone`.
+- Rendered pixels showed the recoverable NodeBook login surface instead of the indefinite loader.
+
+Verification:
+- Auth lifecycle scenarios: 3/3 passed, including a never-resolving silent-refresh promise advanced through the 10-second deadline.
+- Full application suite: 38/38 suites and 208/208 tests passed.
+- Typecheck: passed.
+- Production build: passed with pre-existing hook dependency warnings only.
