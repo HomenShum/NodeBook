@@ -119,19 +119,19 @@ export const TOOL_DECISION_JSON_SCHEMA = {
   additionalProperties: false,
   required: ["tool", "query", "nodeId", "workflow", "rationale"],
   properties: {
-    tool: { type: "string", enum: ["find_nodes", "find_related_nodes_via_graph", "get_node_details", "run_specialized_workflow", "finish_investigation"] },
+    tool: { type: "string", enum: ["find_nodes", "find_related_nodes_via_graph", "get_node_details", "run_specialized_workflow", "create_knowledge_map", "finish_investigation"] },
     query: { type: ["string", "null"], maxLength: 500 },
     nodeId: { type: ["string", "null"], maxLength: 200 },
-    workflow: { type: ["string", "null"], enum: ["research", "organize", "connect", "update", null] },
+    workflow: { type: ["string", "null"], enum: ["research", "organize", "connect", "update", "knowledge_map", null] },
     rationale: { type: "string", maxLength: 500 },
   },
 } as const;
 
 const ToolDecisionSchema = z.object({
-  tool: z.enum(["find_nodes", "find_related_nodes_via_graph", "get_node_details", "run_specialized_workflow", "finish_investigation"]),
+  tool: z.enum(["find_nodes", "find_related_nodes_via_graph", "get_node_details", "run_specialized_workflow", "create_knowledge_map", "finish_investigation"]),
   query: z.string().max(500).nullable(),
   nodeId: z.string().max(200).nullable(),
-  workflow: z.enum(["research", "organize", "connect", "update"]).nullable(),
+  workflow: z.enum(["research", "organize", "connect", "update", "knowledge_map"]).nullable(),
   rationale: z.string().min(1).max(500),
 });
 type ToolDecision = z.infer<typeof ToolDecisionSchema>;
@@ -155,6 +155,14 @@ export type AgentContextNode = {
   document: string;
   updatedAt: string;
   retrievalSignals?: string[];
+};
+
+export type KnowledgeMapPlan = {
+  status: "ready" | "insufficient_nodes";
+  model: string;
+  scannedCount: number;
+  nodes: AgentContextNode[];
+  clusters: Array<{ clusterId: string; title: string; nodeIds: string[] }>;
 };
 
 export type AgentStep = {
@@ -317,6 +325,7 @@ function executeInvestigationTool(
   decision: ToolDecision,
   context: ReturnType<typeof compactContext>,
   run: { mode: AgentMode; query: string; rootNodeId: string },
+  knowledgeMap?: KnowledgeMapPlan,
 ) {
   if (decision.tool === "find_nodes") {
     const tokens = (decision.query ?? "").toLowerCase().split(/[^\p{L}\p{N}_-]+/u).filter((token) => token.length >= 2).slice(0, 16);
@@ -336,6 +345,17 @@ function executeInvestigationTool(
   if (decision.tool === "get_node_details") {
     const node = context.find((item) => item.id === decision.nodeId);
     return node ? { found: true, ...node } : { found: false, nodeId: decision.nodeId };
+  }
+  if (decision.tool === "create_knowledge_map") {
+    if (!knowledgeMap || knowledgeMap.status !== "ready") throw new Error("KNOWLEDGE_MAP_INSUFFICIENT_NODES");
+    return {
+      status: knowledgeMap.status,
+      model: knowledgeMap.model,
+      scannedCount: knowledgeMap.scannedCount,
+      clusteredNodeCount: knowledgeMap.clusters.reduce((sum, cluster) => sum + cluster.nodeIds.length, 0),
+      clusters: knowledgeMap.clusters,
+      operationContract: buildLegacyWorkflowContract(run, context, knowledgeMap),
+    };
   }
   if (decision.tool === "run_specialized_workflow") {
     const workflow = decision.workflow ?? "research";
@@ -370,12 +390,13 @@ const operation = (kind: AgentOperation["kind"], values: Partial<AgentOperation>
 });
 
 type LegacyWorkflowContract = {
-  kind: "research" | "organize" | "profile";
+  kind: "research" | "organize" | "profile" | "knowledge_map";
   selectedNodeIds: string[];
   operations: AgentOperation[];
 };
 
 function legacyWorkflowKind(mode: AgentMode, query: string) {
+  if (/\bknowledge\s+map\b|\bsemantic\s+(?:map|clusters?)\b|\bcluster\s+(?:my\s+)?notes?\b/i.test(query)) return "knowledge_map" as const;
   if (mode === "organize") return "organize" as const;
   if (/\b(investors?|profiles?)\b/i.test(query)) return "profile" as const;
   if (/\b(research|deep[ -]?dive|report)\b/i.test(query)) return "research" as const;
@@ -394,9 +415,48 @@ function organizeFolder(query: string) {
 function buildLegacyWorkflowContract(
   run: { mode: AgentMode; query: string; rootNodeId: string },
   context: ReturnType<typeof compactContext>,
+  knowledgeMap?: KnowledgeMapPlan,
 ): LegacyWorkflowContract | null {
   const kind = legacyWorkflowKind(run.mode, run.query);
   if (!kind) return null;
+  if (kind === "knowledge_map") {
+    if (!knowledgeMap || knowledgeMap.status !== "ready") throw new Error("KNOWLEDGE_MAP_INSUFFICIENT_NODES");
+    const reviewedIds = new Set(context.map((node) => node.id));
+    const clusters = knowledgeMap.clusters
+      .map((cluster) => ({ ...cluster, nodeIds: cluster.nodeIds.filter((nodeId) => nodeId !== run.rootNodeId && reviewedIds.has(nodeId)) }))
+      .filter((cluster) => cluster.nodeIds.length > 0);
+    const selectedNodeIds = [...new Set(clusters.flatMap((cluster) => cluster.nodeIds))];
+    if (selectedNodeIds.length < 4 || clusters.length < 2) throw new Error("KNOWLEDGE_MAP_INSUFFICIENT_NODES");
+    const containerId = "knowledge-map-container";
+    return {
+      kind,
+      selectedNodeIds,
+      operations: [
+        operation("create_node", {
+          parentId: run.rootNodeId,
+          tempId: containerId,
+          content: "Knowledge Map\nSemantically clustered from reviewed NodeBook notes.",
+          reason: "Create one bounded semantic knowledge-map container under the current root.",
+        }),
+        ...clusters.flatMap((cluster, index) => {
+          const clusterTempId = `knowledge-cluster-${index + 1}`;
+          return [
+            operation("create_node", {
+              parentId: containerId,
+              tempId: clusterTempId,
+              content: `${cluster.title}\nSemantic cluster · ${cluster.nodeIds.length} reviewed note${cluster.nodeIds.length === 1 ? "" : "s"}.`,
+              reason: "Create one deterministic topic branch from the semantic cluster receipt.",
+            }),
+            ...cluster.nodeIds.map((nodeId) => operation("move_node", {
+              nodeId,
+              newParentId: clusterTempId,
+              reason: "Move one reviewed note into its reversible semantic topic branch.",
+            })),
+          ];
+        }),
+      ],
+    };
+  }
   if (kind === "organize") {
     const subject = organizeSubject(run.query);
     const selected = context.filter((node) => subject && node.text.toLowerCase().replace(/s\b/g, "").includes(subject)).slice(0, 24);
@@ -444,6 +504,17 @@ function enforceLegacyWorkflowStage(
 ): ToolDecision {
   const called = new Set(investigation.map((item) => item.decision.tool));
   const workflow = legacyWorkflowKind(run.mode, run.query);
+  if (workflow === "knowledge_map") {
+    if (!called.has("find_related_nodes_via_graph")) return {
+      tool: "find_related_nodes_via_graph", query: null, nodeId: null, workflow: null,
+      rationale: "Traverse graph neighbors before building the semantic knowledge map.",
+    };
+    if (!called.has("create_knowledge_map")) return {
+      tool: "create_knowledge_map", query: null, nodeId: null, workflow: "knowledge_map",
+      rationale: "Cluster the bounded owner-scoped embedding set and build a reversible hierarchy.",
+    };
+    return { tool: "finish_investigation", query: null, nodeId: null, workflow: null, rationale: "The semantic map produced a bounded typed operation contract." };
+  }
   if (workflow) {
     if (!called.has("run_specialized_workflow")) return {
       tool: "run_specialized_workflow",
@@ -471,7 +542,7 @@ function applyLegacyWorkflowContract(
   context: ReturnType<typeof compactContext>,
   investigation: Array<{ decision: ToolDecision; output: unknown }>,
 ): ModelResult {
-  const receipt = investigation.find((item) => item.decision.tool === "run_specialized_workflow")?.output as { operationContract?: LegacyWorkflowContract | null } | undefined;
+  const receipt = investigation.find((item) => ["run_specialized_workflow", "create_knowledge_map"].includes(item.decision.tool))?.output as { operationContract?: LegacyWorkflowContract | null } | undefined;
   const contract = receipt?.operationContract;
   if (contract) {
     const operations = contract.operations.map((item, index) => {
@@ -677,6 +748,7 @@ export async function executeWorkflowAgent(
       indexedCount: number;
       matchedCount: number;
     };
+    knowledgeMap?: KnowledgeMapPlan;
   },
   dependencies: WorkflowAgentDependencies,
 ): Promise<WorkflowAgentResult> {
@@ -687,6 +759,9 @@ export async function executeWorkflowAgent(
   const started = now();
   const startedAt = started.toISOString();
   const context = compactContext(args.contextNodes);
+  if (legacyWorkflowKind(args.mode, args.query) === "knowledge_map" && args.knowledgeMap?.status !== "ready") {
+    throw new Error("KNOWLEDGE_MAP_INSUFFICIENT_NODES");
+  }
   const reviewedBindings = context.map((node) => ({
     sourceId: node.id,
     version: node.version,
@@ -766,7 +841,7 @@ export async function executeWorkflowAgent(
         break;
       }
       seenCalls.add(callDigest);
-      const output = executeInvestigationTool(decision, context, args);
+      const output = executeInvestigationTool(decision, context, args, args.knowledgeMap);
       investigation.push({ decision, output });
       const toolFinishedAt = now().toISOString();
       emitStep(makeStep(steps.length + 1, decision.tool, "completed", decision, output, decision.rationale, toolStartedAt, toolFinishedAt));

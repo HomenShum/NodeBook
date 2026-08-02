@@ -11,6 +11,7 @@ import { env } from "@/envBackend";
 import {
   agentContextSnapshotReference,
   agentEmbeddingWorkReference,
+  agentKnowledgeMapReference,
   agentMemoryContextReference,
   agentModelRouteReference,
   agentSemanticContextReference,
@@ -47,6 +48,15 @@ function semanticDegradedReason(error: unknown) {
     if (error.message.startsWith("embedding_")) return error.message;
   }
   return "embedding_unavailable";
+}
+
+function isKnowledgeMapRequest(query: string) {
+  return /\bknowledge\s+map\b|\bsemantic\s+(?:map|clusters?)\b|\bcluster\s+(?:my\s+)?notes?\b/i.test(query);
+}
+
+function requestedKnowledgeMapClusters(query: string) {
+  const match = query.match(/\b([2-9])\s+(?:semantic\s+|topic\s+)?clusters?\b/i);
+  return match ? Math.min(Number(match[1]), 5) : undefined;
 }
 
 export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
@@ -91,6 +101,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         convex.query(agentModelRouteReference, {}),
       ]);
       let semanticContext: SemanticContextResult;
+      const knowledgeMapRequested = isKnowledgeMapRequest(parsed.data.query);
       try {
         const embeddingResult = await runOpenAIEmbeddings({
           input: [parsed.data.query, ...embeddingWork.map((item) => item.contentText)],
@@ -121,8 +132,14 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
           nodes: [],
         };
       }
+      const knowledgeMap = knowledgeMapRequested
+        ? await convex.query(agentKnowledgeMapReference, {
+            rootNodeId: parsed.data.rootNodeId ?? "home",
+            requestedClusters: requestedKnowledgeMapClusters(parsed.data.query),
+          })
+        : undefined;
       const contextNodes = fuseRetrievedContext(
-        primaryContextNodes,
+        [...(knowledgeMap?.nodes ?? []), ...primaryContextNodes],
         semanticContext,
         parsed.data.mode === "organize" ? 200 : 40,
       );
@@ -154,6 +171,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
             indexedCount: semanticContext.indexedCount,
             matchedCount: semanticContext.nodes.length,
           },
+          knowledgeMap,
         },
         {
           model: selectedModel,
@@ -277,7 +295,15 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       }
       console.error("NodeBook agent run failed", error);
       captureException(error, { user: { id: request.userId } });
-      return { status: 502 as const, body: { error: "Agent run failed before completion" } };
+      const knowledgeMapFailure = message === "KNOWLEDGE_MAP_INSUFFICIENT_NODES";
+      return {
+        status: knowledgeMapFailure ? 422 as const : 502 as const,
+        body: {
+          error: knowledgeMapFailure
+            ? "A semantic knowledge map needs at least four bounded notes with current embeddings. Run it again after indexing completes."
+            : "Agent run failed before completion",
+        },
+      };
     }
   };
 
@@ -301,7 +327,10 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         })
           .then((outcome) => {
             if (outcome.status >= 400 || "error" in outcome.body) {
-              send({ type: "error", data: { message: "Agent run failed before completion" } });
+              send({
+                type: "error",
+                data: { message: "error" in outcome.body ? outcome.body.error : "Agent run failed before completion" },
+              });
               send({ type: "end", data: { status: "failed" } });
               return;
             }

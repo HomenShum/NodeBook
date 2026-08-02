@@ -360,6 +360,83 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.sourceNodeIds).toEqual(["meeting-1", "meeting-2"]);
   });
 
+  test("a knowledge worker gets the legacy embedding-cluster-hierarchy workflow as one reversible checkpoint", async () => {
+    const clusteredNodes = [
+      { ...node, sourceId: "customer-a", contentText: "Customer interviews retention feedback", retrievalSignals: ["semantic_cluster"] },
+      { ...node, sourceId: "customer-b", contentText: "Customer research onboarding feedback", retrievalSignals: ["semantic_cluster"] },
+      { ...node, sourceId: "customer-c", contentText: "Customer discovery interview notes", retrievalSignals: ["semantic_cluster"] },
+      { ...node, sourceId: "model-a", contentText: "Model evaluation benchmark latency", retrievalSignals: ["semantic_cluster"] },
+      { ...node, sourceId: "model-b", contentText: "Model routing benchmark quality", retrievalSignals: ["semantic_cluster"] },
+      { ...node, sourceId: "model-c", contentText: "Model inference latency evaluation", retrievalSignals: ["semantic_cluster"] },
+    ];
+    const planner = jest.fn().mockResolvedValue({
+      result: { tool: "find_nodes", query: "knowledge map", nodeId: null, workflow: null, rationale: "Search again." },
+      usage,
+    });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Create a semantic knowledge map from my notes with 2 clusters",
+        mode: "agent",
+        executionMode: "auto",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: clusteredNodes,
+        knowledgeMap: {
+          status: "ready",
+          model: "text-embedding-3-small",
+          scannedCount: 40,
+          nodes: clusteredNodes,
+          clusters: [
+            { clusterId: "semantic-cluster-1", title: "Customer · Feedback · Interview", nodeIds: ["customer-a", "customer-b", "customer-c"] },
+            { clusterId: "semantic-cluster-2", title: "Model · Benchmark · Evaluation", nodeIds: ["model-a", "model-b", "model-c"] },
+          ],
+        },
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, operations: [] }, sources: [], usage }),
+        runToolPlanner: planner,
+        runId: () => "run-knowledge-map",
+        proposalId: () => "proposal-knowledge-map",
+      },
+    );
+
+    expect(result.steps.map((step) => step.tool)).toEqual([
+      "find_nodes", "find_related_nodes_via_graph", "create_knowledge_map", "finish_investigation",
+      "synthesize_from_notebook", "validate_proposal", "finish_work",
+    ]);
+    expect(result.operations.map((item) => item.kind)).toEqual([
+      "create_node", "create_node", "move_node", "move_node", "move_node",
+      "create_node", "move_node", "move_node", "move_node",
+    ]);
+    expect(result.operations[0]).toMatchObject({ parentId: "root", tempId: "knowledge-map-container" });
+    expect(result.operations[1]).toMatchObject({ parentId: "knowledge-map-container", tempId: "knowledge-cluster-1" });
+    expect(result.sourceNodeIds).toEqual(["customer-a", "customer-b", "customer-c", "model-a", "model-b", "model-c"]);
+    expect(result.executionDisposition).toBe("auto_apply");
+  });
+
+  test("a sparse notebook fails honestly instead of fabricating a semantic knowledge map", async () => {
+    const provider = jest.fn();
+    await expect(executeWorkflowAgent(
+      {
+        query: "Create a knowledge map from my notes",
+        mode: "agent",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [node],
+        knowledgeMap: {
+          status: "insufficient_nodes",
+          model: "text-embedding-3-small",
+          scannedCount: 1,
+          nodes: [],
+          clusters: [],
+        },
+      },
+      { model: "gpt-5-mini", runProvider: provider, runId: () => "run-sparse-map" },
+    )).rejects.toThrow("KNOWLEDGE_MAP_INSUFFICIENT_NODES");
+    expect(provider).not.toHaveBeenCalled();
+  });
+
   test("a connection request preserves the legacy search-traverse-detail loop and emits a typed explanation relation", async () => {
     const planner = jest.fn().mockResolvedValue({ result: { tool: "find_nodes", query: "Mamba", nodeId: null, workflow: null, rationale: "Search." }, usage });
     const result = await executeWorkflowAgent(

@@ -136,6 +136,24 @@ export const storeAgentEmbeddingsReference = makeFunctionReference<
   { items: Array<{ sourceId: string; version: number; embedding: number[] }> },
   { stored: number }
 >("nodeEmbeddings:storeEmbeddings");
+export const agentKnowledgeMapReference = makeFunctionReference<
+  "query",
+  { rootNodeId: string; requestedClusters?: number },
+  {
+    status: "ready" | "insufficient_nodes";
+    model: string;
+    scannedCount: number;
+    nodes: Array<{
+      sourceId: string;
+      version: number;
+      contentText: string;
+      document: string;
+      updatedAt: string;
+      retrievalSignals: string[];
+    }>;
+    clusters: Array<{ clusterId: string; title: string; nodeIds: string[] }>;
+  }
+>("nodeEmbeddings:knowledgeMap");
 export const agentMemoryContextReference = makeFunctionReference<
   "query",
   { text: string; limit?: number },
