@@ -254,6 +254,119 @@ describe("NodeBook durable agent scenarios", () => {
     expect(provider.mock.calls.every(([args]) => args.webResearch === true && args.timeoutMs === 30_000)).toBe(true);
   });
 
+  test("a researcher deep-diving a person profile gets all legacy profile aspects as typed work products", async () => {
+    const aspects = ["Professional background", "Education", "Major accomplishments", "Notable projects", "Current roles"];
+    const provider = jest.fn().mockImplementation(async (args: { outputName?: string; input: string }) => args.outputName === "nodebook_deep_research_finding"
+      ? {
+          result: { query: args.input.match(/SEARCH_QUERY: (.+)/)?.[1] ?? "Ada Lovelace", finding: "One bounded sourced biographical finding." },
+          sources: ["https://example.com/ada"],
+          usage,
+        }
+      : {
+          result: {
+            ...baseResult,
+            response: "Prepared a sourced professional profile.",
+            workProducts: aspects.map((title, index) => ({
+              key: `profile-section-${index + 1}`,
+              parentKey: null,
+              title,
+              content: `Evidence-backed ${title.toLowerCase()} for Ada Lovelace.`,
+            })),
+          },
+          sources: [],
+          usage,
+        });
+
+    const result = await executeWorkflowAgent(
+      {
+        query: "Deep dive profile of Ada Lovelace covering professional background, education, major accomplishments, notable projects, and current roles",
+        mode: "agent",
+        executionMode: "auto",
+        rootNodeId: "root",
+        webResearch: true,
+        contextNodes: [node],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: provider,
+        runId: () => "run-person-deep-dive",
+        proposalId: () => "proposal-person-deep-dive",
+      },
+    );
+
+    expect(provider).toHaveBeenCalledTimes(7);
+    expect(provider.mock.calls[6][0].input).toContain('"entityKind":"person"');
+    expect(result.operations).toHaveLength(6);
+    expect(result.operations[0]).toMatchObject({
+      kind: "create_node",
+      parentId: "root",
+      content: "Ada Lovelace\nStructured professional profile.",
+    });
+    expect(result.operations.slice(1).map((item) => item.content?.split("\n")[0])).toEqual(aspects);
+    expect(result.executionDisposition).toBe("auto_apply");
+  });
+
+  test("a company deep dive repairs an underspecified draft before exposing an executable profile", async () => {
+    const aspects = ["Overview and mission", "Products and business model", "Funding and financial signals", "Leadership and team", "Competitive landscape"];
+    let synthesisCalls = 0;
+    const provider = jest.fn().mockImplementation(async (args: { outputName?: string; input: string }) => {
+      if (args.outputName === "nodebook_deep_research_finding") return {
+        result: { query: args.input.match(/SEARCH_QUERY: (.+)/)?.[1] ?? "Acme Robotics", finding: "One bounded sourced company finding." },
+        sources: ["https://example.com/acme"],
+        usage,
+      };
+      synthesisCalls += 1;
+      const draftTitles = synthesisCalls === 1
+        ? ["History", "Market notes", "Recent news", "Open questions", "Sources"]
+        : aspects;
+      return {
+        result: {
+          ...baseResult,
+          response: "Prepared a sourced company profile.",
+          workProducts: draftTitles.map((title, index) => ({
+            key: `company-section-${index + 1}`,
+            parentKey: null,
+            title,
+            content: `Evidence-backed ${title.toLowerCase()} for Acme Robotics.`,
+          })),
+        },
+        sources: [],
+        usage,
+      };
+    });
+
+    const result = await executeWorkflowAgent(
+      {
+        query: "Deep dive on company Acme Robotics",
+        mode: "agent",
+        executionMode: "auto",
+        rootNodeId: "root",
+        webResearch: true,
+        contextNodes: [node],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: provider,
+        runId: () => "run-company-deep-dive",
+        proposalId: () => "proposal-company-deep-dive",
+      },
+    );
+
+    expect(provider).toHaveBeenCalledTimes(8);
+    expect(synthesisCalls).toBe(2);
+    expect(result.steps).toEqual(expect.arrayContaining([
+      expect.objectContaining({ tool: "repair_proposal", status: "repaired" }),
+    ]));
+    expect(result.operations).toHaveLength(6);
+    expect(result.operations[0]).toMatchObject({
+      kind: "create_node",
+      parentId: "root",
+      content: "Acme Robotics\nStructured company profile.",
+    });
+    expect(result.operations.slice(1).map((item) => item.content?.split("\n")[0])).toEqual(aspects);
+    expect(result.executionDisposition).toBe("auto_apply");
+  });
+
   test("a cautious organizer can choose Plan and receive the same typed operations without automatic execution", async () => {
     const createOperation = {
       ...emptyFields,

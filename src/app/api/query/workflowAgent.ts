@@ -447,6 +447,8 @@ type DeepResearchPlan = {
 function researchSubject(query: string) {
   return query
     .replace(/^\s*(?:research|deep[ -]?dive(?:\s+(?:on|into))?|create (?:a )?(?:research )?report (?:on|about))\s+/i, "")
+    .replace(/^(?:a\s+)?(?:professional\s+|person\s+)?profile\s+(?:of|on)\s+/i, "")
+    .replace(/^(?:the\s+)?(?:company|startup|business)\s+/i, "")
     .replace(/\s+(?:and\s+)?(?:include|cover|covering)\s*:?\s+.+$/i, "")
     .trim()
     .slice(0, 200) || "Research topic";
@@ -465,7 +467,7 @@ function requestedResearchAspects(query: string, entityKind: DeepResearchPlan["e
 }
 
 function buildDeepResearchPlan(query: string): DeepResearchPlan {
-  const entityKind: DeepResearchPlan["entityKind"] = /\b(person|founder|executive|investor|professional profile)\b/i.test(query)
+  const entityKind: DeepResearchPlan["entityKind"] = /\b(person|founder|executive|investor|professional profile|profile of|biograph(?:y|ical)|career of|background of)\b/i.test(query)
     ? "person"
     : /\b(company|startup|business|corporation)\b/i.test(query)
       ? "company"
@@ -479,11 +481,18 @@ function buildDeepResearchPlan(query: string): DeepResearchPlan {
   return { subject, entityKind, aspects, queries };
 }
 
+function researchProductCoversAspect(product: z.infer<typeof ResearchWorkProductSchema>, aspect: string) {
+  const significantTokens = aspect.toLowerCase().match(/[a-z0-9]+/g)?.filter((token) => !["and", "the", "of"].includes(token)) ?? [];
+  const searchableTokens = new Set(`${product.title} ${product.content}`.toLowerCase().match(/[a-z0-9]+/g) ?? []);
+  const matchedTokens = significantTokens.filter((token) => searchableTokens.has(token));
+  return matchedTokens.length >= Math.min(2, significantTokens.length);
+}
+
 function legacyWorkflowKind(mode: AgentMode, query: string) {
   if (/\bknowledge\s+map\b|\bsemantic\s+(?:map|clusters?)\b|\bcluster\s+(?:my\s+)?notes?\b/i.test(query)) return "knowledge_map" as const;
   if (mode === "organize") return "organize" as const;
-  if (/\b(investors?|profiles?)\b/i.test(query)) return "profile" as const;
   if (/\b(research|deep[ -]?dive|report)\b/i.test(query)) return "research" as const;
+  if (/\b(investors?|profiles?)\b/i.test(query)) return "profile" as const;
   return null;
 }
 
@@ -502,10 +511,15 @@ function structuredResearchOperations(
 ) {
   const containerId = "research-container";
   const plan = buildDeepResearchPlan(run.query);
+  const workProductKind = plan.entityKind === "company"
+    ? "Structured company profile."
+    : plan.entityKind === "person"
+      ? "Structured professional profile."
+      : "Structured research work product.";
   const operations: AgentOperation[] = [operation("create_node", {
     parentId: run.rootNodeId,
     tempId: containerId,
-    content: `${plan.subject}\nStructured research work product.`,
+    content: `${plan.subject}\n${workProductKind}`,
     reason: "Create one bounded research container under the current root.",
   })];
   const knownKeys = new Map<string, string>();
@@ -775,8 +789,16 @@ function semanticErrors(
   });
 
   const creates = result.operations.filter((operation) => operation.kind === "create_node");
-  if (legacyWorkflowKind(mode, query) === "research" && creates.length < 4) {
-    errors.push("Research work must create one container plus at least three substantive structured sections.");
+  if (legacyWorkflowKind(mode, query) === "research") {
+    const researchPlan = buildDeepResearchPlan(query);
+    const requiredSections = researchPlan.entityKind === "topic" ? 3 : researchPlan.aspects.length;
+    if (creates.length < requiredSections + 1) {
+      errors.push(`Research work must create one container plus at least ${requiredSections} substantive ${researchPlan.entityKind} sections.`);
+    }
+    if (researchPlan.entityKind !== "topic") {
+      const uncoveredAspects = researchPlan.aspects.filter((aspect) => !result.workProducts.some((product) => researchProductCoversAspect(product, aspect)));
+      if (uncoveredAspects.length) errors.push(`Research work is missing ${researchPlan.entityKind} aspect coverage: ${uncoveredAspects.join(", ")}.`);
+    }
   }
   if (creates.length >= 2) {
     const container = creates[0];
@@ -888,7 +910,7 @@ For an explicit write request, operations MUST be non-empty. CURRENT_ROOT may be
 NodeBook nodes have one plain-text content field. If the user supplies a title and body, encode the operation content as "Title\nBody". Never serialize an object or JSON wrapper into content or newContent.
 Prefer existing notes: inspect supplied node IDs before creating. Clone a relevant existing hierarchy instead of researching it again.
 For multi-part research, create one descriptive container under CURRENT_ROOT first, then put result nodes under that container.
-For research or deep-dive work, return 3-12 workProducts that form a useful outline. Keys must be unique lowercase slugs; parentKey may reference only an earlier item. Each item must contain substantive evidence-backed content, not "pending" placeholders. For non-research work, return an empty workProducts array.
+For research or deep-dive work, return 3-12 workProducts that form a useful outline. When DEEP_RESEARCH_PLAN identifies a company or person, cover every listed aspect with an independently readable evidence-backed workProduct. Keys must be unique lowercase slugs; parentKey may reference only an earlier item. Each item must contain substantive evidence-backed content, not "pending" placeholders. For non-research work, return an empty workProducts array.
 For informational work, search notebook evidence first, deepen through related graph context when clues are incomplete, then use web research only when enabled.
 Use web research only when it is enabled. Distinguish notebook evidence, web evidence, and inference.
 Never target IDs absent from CURRENT_ROOT or REVIEWED_CONTEXT. Never delete or move CURRENT_ROOT.
@@ -1015,8 +1037,8 @@ export async function executeWorkflowAgent(
   const deepResearchSources: string[] = [];
   const deepResearchReceipts: Array<{ query: string; finding: string; sourceCount: number }> = [];
   const workflowKind = legacyWorkflowKind(args.mode, args.query);
-  if (args.webResearch && workflowKind === "research") {
-    const researchPlan = buildDeepResearchPlan(args.query);
+  const researchPlan = args.webResearch && workflowKind === "research" ? buildDeepResearchPlan(args.query) : null;
+  if (researchPlan) {
     const plannedAt = now().toISOString();
     emitStep(makeStep(
       steps.length + 1,
@@ -1081,6 +1103,7 @@ export async function executeWorkflowAgent(
     `REVIEWED_CONTEXT:\n${JSON.stringify(context)}`,
     `RECALLED_MEMORY_DATA:\n${JSON.stringify(args.memoryContext ?? { memories: [], patterns: [] }).slice(0, 20_000)}`,
     `ACTUAL_TOOL_RECEIPTS:\n${JSON.stringify(investigation).slice(0, 30_000)}`,
+    `DEEP_RESEARCH_PLAN:\n${JSON.stringify(researchPlan)}`,
     `DEEP_RESEARCH_RECEIPTS:\n${JSON.stringify(deepResearchReceipts).slice(0, 40_000)}`,
   ].join("\n\n");
   const providerStartedAt = now().toISOString();
