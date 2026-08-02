@@ -337,7 +337,7 @@ describe("NodeBook durable agent scenarios", () => {
 
     const result = await executeWorkflowAgent(
       {
-        query: "Deep dive on company Acme Robotics",
+        query: "Deep dive on company Acme Robotics covering overview and mission, products and business model, funding and financial signals, leadership and team, and competitive landscape",
         mode: "agent",
         executionMode: "auto",
         rootNodeId: "root",
@@ -354,6 +354,11 @@ describe("NodeBook durable agent scenarios", () => {
 
     expect(provider).toHaveBeenCalledTimes(8);
     expect(synthesisCalls).toBe(2);
+    expect(provider.mock.calls[6][0]).toEqual(expect.objectContaining({ maxOutputTokens: 5_000 }));
+    expect(provider.mock.calls[7][0]).toEqual(expect.objectContaining({ maxOutputTokens: 5_000 }));
+    expect(result.steps).toEqual(expect.arrayContaining([
+      expect.objectContaining({ tool: "generate_targeted_queries", summary: "Prepared 6 bounded company research queries across 5 aspects." }),
+    ]));
     expect(result.steps).toEqual(expect.arrayContaining([
       expect.objectContaining({ tool: "repair_proposal", status: "repaired" }),
     ]));

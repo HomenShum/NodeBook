@@ -455,11 +455,13 @@ function researchSubject(query: string) {
 }
 
 function requestedResearchAspects(query: string, entityKind: DeepResearchPlan["entityKind"]) {
-  const explicit = query.match(/(?:include|cover|covering|aspects?)\s*:?[\s]+(.+)$/i)?.[1]
-    ?.split(/[,;]|\band\b/i)
-    .map((item) => item.trim().replace(/[.?!]+$/, ""))
-    .filter((item) => item.length >= 3)
-    .slice(0, 6);
+  const requested = query.match(/(?:include|cover|covering|aspects?)\s*:?\s+(.+)$/i)?.[1];
+  const explicit = requested
+    ? (/[;,]/.test(requested) ? requested.split(/[;,]/) : requested.split(/\s+and\s+/i))
+      .map((item) => item.trim().replace(/^and\s+/i, "").replace(/[.?!]+$/, ""))
+      .filter((item) => item.length >= 3)
+      .slice(0, 6)
+    : undefined;
   if (explicit && explicit.length >= 2) return explicit;
   if (entityKind === "company") return ["overview and mission", "products and business model", "funding and financial signals", "leadership and team", "competitive landscape"];
   if (entityKind === "person") return ["professional background", "education", "major accomplishments", "notable projects", "current roles and affiliations"];
@@ -910,7 +912,7 @@ For an explicit write request, operations MUST be non-empty. CURRENT_ROOT may be
 NodeBook nodes have one plain-text content field. If the user supplies a title and body, encode the operation content as "Title\nBody". Never serialize an object or JSON wrapper into content or newContent.
 Prefer existing notes: inspect supplied node IDs before creating. Clone a relevant existing hierarchy instead of researching it again.
 For multi-part research, create one descriptive container under CURRENT_ROOT first, then put result nodes under that container.
-For research or deep-dive work, return 3-12 workProducts that form a useful outline. When DEEP_RESEARCH_PLAN identifies a company or person, cover every listed aspect with an independently readable evidence-backed workProduct. Keys must be unique lowercase slugs; parentKey may reference only an earlier item. Each item must contain substantive evidence-backed content, not "pending" placeholders. For non-research work, return an empty workProducts array.
+For research or deep-dive work, return 3-12 workProducts that form a useful outline. Keep the top-level response under 1,500 characters and each workProduct content under 1,200 characters so the complete typed result fits its bounded provider budget. When DEEP_RESEARCH_PLAN identifies a company or person, cover every listed aspect with an independently readable evidence-backed workProduct. Keys must be unique lowercase slugs; parentKey may reference only an earlier item. Each item must contain substantive evidence-backed content, not "pending" placeholders. For non-research work, return an empty workProducts array.
 For informational work, search notebook evidence first, deepen through related graph context when clues are incomplete, then use web research only when enabled.
 Use web research only when it is enabled. Distinguish notebook evidence, web evidence, and inference.
 Never target IDs absent from CURRENT_ROOT or REVIEWED_CONTEXT. Never delete or move CURRENT_ROOT.
@@ -1116,6 +1118,7 @@ export async function executeWorkflowAgent(
     // cases. Real notebook synthesis carries retrieved context and tool
     // receipts, so it gets a larger but still hard-bounded production window.
     timeoutMs: args.mode === "ask" ? 45_000 : 50_000,
+    maxOutputTokens: researchPlan ? 5_000 : undefined,
   });
   let parsed = applyLegacyWorkflowContract(
     normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(provider.result))),
@@ -1145,6 +1148,7 @@ export async function executeWorkflowAgent(
       model: dependencies.model,
       webResearch: false,
       timeoutMs: 25_000,
+      maxOutputTokens: researchPlan ? 5_000 : undefined,
     });
     parsed = applyLegacyWorkflowContract(
       normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(repair.result))),
