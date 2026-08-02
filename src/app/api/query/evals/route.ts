@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { runOpenAI } from "@/app/api/query/openAIProvider";
-import { executeWorkflowAgent, TOOL_DECISION_JSON_SCHEMA } from "@/app/api/query/workflowAgent";
+import { executeWorkflowAgent, TOOL_DECISION_JSON_SCHEMA, WorkflowUsage } from "@/app/api/query/workflowAgent";
 import { env } from "@/envBackend";
 import { agentModelRouteReference, getBearerToken, getConvexClient, recentAgentRuntimeEvaluationsReference, recordAgentRuntimeEvaluationReference } from "@/lib/convexServer";
 
@@ -18,6 +18,18 @@ const RequestSchema = z.object({
   consent: z.literal(true),
   suiteId: z.string().min(1).max(100).optional(),
 });
+
+function combineObservedUsage(parts: WorkflowUsage[]): WorkflowUsage {
+  const total = (field: keyof WorkflowUsage) => parts.length > 0 && parts.every((part) => typeof part[field] === "number")
+    ? parts.reduce((sum, part) => sum + (part[field] ?? 0), 0)
+    : null;
+  return { inputTokens: total("inputTokens"), outputTokens: total("outputTokens"), totalTokens: total("totalTokens") };
+}
+
+function boundedExecutionFailureReason(error: unknown) {
+  const message = error instanceof Error ? error.message : "NodeAgent execution failed";
+  return message.slice(0, 1_000);
+}
 
 export const GET = withAuth(async (request: NextAuthenticatedRequest) => {
   try {
@@ -85,35 +97,79 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
     const modelRoute = await convex.query(agentModelRouteReference, {});
     const provider: "openai" | "openrouter" = env.OPENROUTER_API_KEY && modelRoute?.primaryModel ? "openrouter" : "openai";
     const model = provider === "openrouter" ? modelRoute!.primaryModel! : env.AGENT_MODEL;
-    const runProvider = (args: Parameters<typeof runOpenAI>[0]) => runOpenAI({
-      ...args,
-      provider,
-      fallbackModels: provider === "openrouter" ? modelRoute?.fallbackModels : undefined,
-    });
-    const result = await executeWorkflowAgent({
-      query: testCase.query,
-      mode: testCase.mode,
-      executionMode: "auto",
-      rootNodeId: testCase.rootNodeId,
-      webResearch: false,
-      contextNodes: testCase.contextNodes,
-      memoryContext: { memories: [], patterns: [] },
-    }, {
-      model,
-      runId: randomUUID,
-      proposalId: randomUUID,
-      runProvider,
-      runToolPlanner: async (plannerArgs) => {
-        const planned = await runProvider({
-          ...plannerArgs,
-          webResearch: false,
-          outputSchema: TOOL_DECISION_JSON_SCHEMA as unknown as Record<string, unknown>,
-          outputName: "nodebook_agent_tool_decision",
-          maxOutputTokens: 400,
-        });
-        return { result: planned.result, usage: planned.usage };
-      },
-    });
+    let observedModel = model;
+    const observedUsage: WorkflowUsage[] = [];
+    const runProvider = async (args: Parameters<typeof runOpenAI>[0]) => {
+      const response = await runOpenAI({
+        ...args,
+        provider,
+        fallbackModels: provider === "openrouter" ? modelRoute?.fallbackModels : undefined,
+      });
+      observedModel = response.actualModel ?? args.model;
+      observedUsage.push(response.usage);
+      return response;
+    };
+    let result;
+    try {
+      result = await executeWorkflowAgent({
+        query: testCase.query,
+        mode: testCase.mode,
+        executionMode: "auto",
+        rootNodeId: testCase.rootNodeId,
+        webResearch: false,
+        contextNodes: testCase.contextNodes,
+        memoryContext: { memories: [], patterns: [] },
+      }, {
+        model,
+        runId: randomUUID,
+        proposalId: randomUUID,
+        runProvider,
+        runToolPlanner: async (plannerArgs) => {
+          const planned = await runProvider({
+            ...plannerArgs,
+            webResearch: false,
+            outputSchema: TOOL_DECISION_JSON_SCHEMA as unknown as Record<string, unknown>,
+            outputName: "nodebook_agent_tool_decision",
+            maxOutputTokens: 400,
+          });
+          return { result: planned.result, usage: planned.usage };
+        },
+      });
+    } catch (executionError) {
+      const completedAtMs = Date.now();
+      const evalId = randomUUID();
+      const usage = combineObservedUsage(observedUsage);
+      const reasons = [boundedExecutionFailureReason(executionError)];
+      await convex.mutation(recordAgentRuntimeEvaluationReference, {
+        evaluation: {
+          evalId,
+          suiteId: parsed.data.suiteId,
+          caseId: testCase.caseId,
+          benchmarkVersion: LIVE_EVAL_VERSION,
+          provider,
+          model: observedModel,
+          mode: testCase.mode,
+          disposition: "execution_failed",
+          passed: false,
+          reasons,
+          toolOrder: [],
+          operationKinds: [],
+          selectedNodeIds: [],
+          sourceBindings: [],
+          inputTokens: usage.inputTokens,
+          outputTokens: usage.outputTokens,
+          totalTokens: usage.totalTokens,
+          latencyMs: completedAtMs - startedAtMs,
+          startedAtMs,
+          completedAtMs,
+        },
+      });
+      return NextResponse.json({
+        status: "failed",
+        caseId: testCase.caseId,
+        receipt: { evalId, suiteId: parsed.data.suiteId ?? null, caseId: testCase.caseId, benchmarkVersion: LIVE_EVAL_VERSION, provider, model: observedModel, passed: false, reasons, toolOrder: [], operationKinds: [], disposition: "execution_failed", selectedNodeIds: [], sourceBindings: [], proposalDigest: null, usage, latencyMs: completedAtMs - startedAtMs, startedAtMs, completedAtMs, persisted: true, graphMutated: false },
+      }, { status: 422 });
+    }
     const score = scoreLiveEval(testCase, result);
     const completedAtMs = Date.now();
     const evalId = randomUUID();

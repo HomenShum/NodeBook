@@ -304,12 +304,13 @@ describe("NodeAgent durable runtime evaluation receipts", () => {
     const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-runtime-evals` });
     const failed = evaluation(1);
     failed.evaluation.passed = false;
-    failed.evaluation.reasons = ["selected_node_ids"];
+    failed.evaluation.disposition = "execution_failed";
+    failed.evaluation.reasons = ["checkpoint validation failed"];
     expect(await session.mutation(recordRuntimeEvaluation, failed)).toEqual({ replayed: false, evalId: "eval-1" });
     expect(await session.mutation(recordRuntimeEvaluation, failed)).toEqual({ replayed: true, evalId: "eval-1" });
     const rows = await session.query(recentRuntimeEvaluations, { limit: 20 });
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ passed: false, reasons: ["selected_node_ids"] });
+    expect(rows[0]).toMatchObject({ passed: false, disposition: "execution_failed", reasons: ["checkpoint validation failed"] });
 
     const other = convexTest(schema, modules).withIdentity({ subject: `${owner}-different` });
     expect(await other.query(recentRuntimeEvaluations, { limit: 20 })).toEqual([]);

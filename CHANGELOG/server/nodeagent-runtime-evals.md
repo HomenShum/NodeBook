@@ -1,5 +1,10 @@
 # NodeAgent runtime evaluations
 
+## 2026-08-02 — Persist model execution failures as benchmark evidence
+After provider execution begins, convert malformed structured output, checkpoint validation failure, or provider execution failure into an HTTP 422 durable `execution_failed` receipt with the observed model, bounded reason, accumulated usage when known, and zero graph mutation. Preflight and persistence failures remain non-durable errors.
+**Commit**: `this commit`. **Author**: Codex.
+**Touches**: `CHANGELOG/db/agent-runtime-evaluations.md`, `CHANGELOG/components/nodeagent-runtime-verification.md`
+
 ## 2026-08-02 — Restore and run durable suites from the NodeAgent sidebar
 Expose an authenticated history read and bounded suite identifiers so owners can trigger the locked cases through normal product controls, stop after the current durable receipt, recover after provider failure, and restore the newest suite after reload without creating a second agent engine.
 **Commit**: `this commit`. **Author**: Codex.

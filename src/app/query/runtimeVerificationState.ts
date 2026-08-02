@@ -7,7 +7,7 @@ export type RuntimeEvalReceipt = {
   benchmarkVersion: string;
   provider: "openai" | "openrouter";
   model: string;
-  disposition: "read_only" | "auto_apply" | "approval_required" | "preview_only";
+  disposition: "read_only" | "auto_apply" | "approval_required" | "preview_only" | "execution_failed";
   passed: boolean;
   reasons: string[];
   toolOrder: string[];

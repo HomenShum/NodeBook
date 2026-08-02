@@ -1,5 +1,10 @@
 # agentRuntimeEvaluations
 
+## 2026-08-02 — Record execution-failed benchmark dispositions
+Extend evaluation-only dispositions with `execution_failed` so invalid model output and provider execution failures remain durable, owner-scoped, bounded benchmark facts instead of aborting the suite as transport failures.
+**Commit**: `this commit`. **Author**: Codex.
+**Touches**: `CHANGELOG/server/nodeagent-runtime-evals.md`
+
 ## 2026-08-02 — Group durable evaluations into bounded suites
 Persist an optional bounded suite ID on each owner-scoped evaluation receipt so the product can restore one exact run without changing the existing 100-receipt retention bound.
 **Commit**: `this commit`. **Author**: Codex.

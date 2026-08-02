@@ -288,7 +288,7 @@ export default defineSchema({
     provider: v.union(v.literal("openai"), v.literal("openrouter")),
     model: v.string(),
     mode: v.union(v.literal("ask"), v.literal("agent"), v.literal("organize")),
-    disposition: v.union(v.literal("read_only"), v.literal("auto_apply"), v.literal("approval_required"), v.literal("preview_only")),
+    disposition: v.union(v.literal("read_only"), v.literal("auto_apply"), v.literal("approval_required"), v.literal("preview_only"), v.literal("execution_failed")),
     passed: v.boolean(),
     reasons: v.array(v.string()),
     toolOrder: v.array(v.string()),

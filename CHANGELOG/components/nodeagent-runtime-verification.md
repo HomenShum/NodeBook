@@ -1,5 +1,10 @@
 # NodeAgent runtime verification
 
+## 2026-08-02 — Continue suites after durable execution failures
+Render model execution and checkpoint validation failures as exact FAIL receipts so the six-case suite can continue, preserve evidence, and offer targeted retry instead of stopping on a generic transport error.
+**Commit**: `this commit`. **Author**: Codex.
+**Touches**: `CHANGELOG/server/nodeagent-runtime-evals.md`, `CHANGELOG/db/agent-runtime-evaluations.md`
+
 ## 2026-08-02 — Fit the graph after its disclosure opens
 Let React own the summary toggle and mount React Flow only after the runtime disclosure has a visible container, preventing both native-toggle races and a zero-size first measurement from translating the graph off-canvas.
 **Commit**: `this commit`. **Author**: Codex.
