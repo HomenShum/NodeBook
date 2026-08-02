@@ -656,6 +656,61 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.sourceNodeIds).toEqual(["meeting-1", "meeting-2"]);
   });
 
+  test("an organizer scopes a natural-language title-prefix request and moves every exact match", async () => {
+    const planner = jest.fn().mockResolvedValue({ result: { tool: "get_node_details", query: null, nodeId: "meeting-alpha", workflow: null, rationale: "Inspect one exact match." }, usage });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Inside QA Fixture, find exactly the three child notes whose titles start with QA Meeting and organize only those three into a new child folder named QA Project Meetings. Leave QA Grocery Control directly under the fixture container.",
+        mode: "organize",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [
+          { ...node, sourceId: "fixture", contentText: "QA Fixture\nTemporary container" },
+          { ...node, sourceId: "meeting-alpha", contentText: "QA Meeting Alpha" },
+          { ...node, sourceId: "meeting-beta", contentText: "QA Meeting Beta" },
+          { ...node, sourceId: "meeting-gamma", contentText: "QA Meeting Gamma" },
+          { ...node, sourceId: "grocery-control", contentText: "QA Grocery Control" },
+        ],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, operations: [] }, sources: [], usage }),
+        runToolPlanner: planner,
+        runId: () => "run-natural-language-organize",
+        proposalId: () => "proposal-natural-language-organize",
+      },
+    );
+
+    expect(result.operations.map((item) => item.kind)).toEqual(["create_node", "move_node", "move_node", "move_node"]);
+    expect(result.operations[0]).toEqual(expect.objectContaining({ parentId: "fixture", content: "QA Project Meetings" }));
+    expect(result.operations.slice(1).map((item) => item.nodeId)).toEqual(["meeting-alpha", "meeting-beta", "meeting-gamma"]);
+    expect(result.operations.slice(1).every((item) => item.newParentId === "organized-container")).toBe(true);
+    expect(result.sourceNodeIds).toEqual(["meeting-alpha", "meeting-beta", "meeting-gamma"]);
+  });
+
+  test("an organizer with no exact title-prefix matches fails closed before creating an empty folder", async () => {
+    const planner = jest.fn().mockResolvedValue({ result: { tool: "finish_investigation", query: null, nodeId: null, workflow: null, rationale: "Finish after search." }, usage });
+
+    await expect(executeWorkflowAgent(
+      {
+        query: "Inside QA Fixture, find notes whose titles start with Missing Meeting and organize them into a folder named Empty Folder.",
+        mode: "organize",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [
+          { ...node, sourceId: "fixture", contentText: "QA Fixture\nTemporary container" },
+          { ...node, sourceId: "grocery-control", contentText: "QA Grocery Control" },
+        ],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: async () => ({ result: { ...baseResult, operations: [] }, sources: [], usage }),
+        runToolPlanner: planner,
+        runId: () => "run-empty-natural-language-organize",
+      },
+    )).rejects.toThrow("ORGANIZATION_NO_MATCHING_NODES");
+  });
+
   test("a knowledge worker gets the legacy embedding-cluster-hierarchy workflow as one reversible checkpoint", async () => {
     const clusteredNodes = [
       { ...node, sourceId: "customer-a", contentText: "Customer interviews retention feedback", retrievalSignals: ["semantic_cluster"] },

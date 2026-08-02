@@ -536,8 +536,26 @@ function organizeSubject(query: string) {
   return (match?.[1] ?? "").trim().toLowerCase().replace(/s\b/g, "");
 }
 
+function nodeTitle(text: string) {
+  return text.split(/\r?\n/, 1)[0]?.trim() ?? "";
+}
+
+function organizeTitlePrefix(query: string) {
+  return query.match(/titles?\s+(?:start|begin)s?\s+with\s+(.+?)(?:\s+and\s+organize|[.,;]|$)/i)?.[1]?.trim() ?? "";
+}
+
+function organizeScope(query: string) {
+  return query.match(/\b(?:inside|under)\s+(.+?)(?:,|\s+find\b|\s+organize\b|$)/i)?.[1]?.trim() ?? "";
+}
+
+function organizationRequiresExistingNotes(query: string) {
+  return /\bfind\b.*\bnotes?\b|\bmove\b|\bnotes?\s+about\b|\bwhose\s+titles?\b/i.test(query);
+}
+
 function organizeFolder(query: string) {
-  return query.match(/into\s+(?:an?\s+)?(.+?)\s+folder\b/i)?.[1]?.trim() || "Organized Notes";
+  return query.match(/folder\s+named\s+(.+?)(?:[.;]|$)/i)?.[1]?.trim()
+    || query.match(/into\s+(?:an?\s+)?(.+?)\s+folder\b/i)?.[1]?.trim()
+    || "Organized Notes";
 }
 
 function structuredResearchOperations(
@@ -648,13 +666,27 @@ function buildLegacyWorkflowContract(
   }
   if (kind === "organize") {
     const subject = organizeSubject(run.query);
-    const selected = context.filter((node) => subject && node.text.toLowerCase().replace(/s\b/g, "").includes(subject)).slice(0, 24);
+    const titlePrefix = organizeTitlePrefix(run.query).toLowerCase();
+    const requestedScope = organizeScope(run.query).toLowerCase();
+    const scopedParent = requestedScope
+      ? context.find((node) => nodeTitle(node.text).toLowerCase() === requestedScope)
+      : undefined;
+    if (requestedScope && !scopedParent) throw new Error("ORGANIZATION_SCOPE_NOT_FOUND");
+    const selected = context.filter((node) => {
+      if (node.id === run.rootNodeId || node.id === scopedParent?.id) return false;
+      const title = nodeTitle(node.text).toLowerCase();
+      if (titlePrefix) return title.startsWith(titlePrefix);
+      return Boolean(subject && node.text.toLowerCase().replace(/s\b/g, "").includes(subject));
+    }).slice(0, 24);
+    if (organizationRequiresExistingNotes(run.query) && selected.length === 0) {
+      throw new Error("ORGANIZATION_NO_MATCHING_NODES");
+    }
     const tempId = "organized-container";
     return {
       kind,
       selectedNodeIds: selected.map((node) => node.id),
       operations: [
-        operation("create_node", { parentId: run.rootNodeId, tempId, content: organizeFolder(run.query), reason: "Create the requested organization container." }),
+        operation("create_node", { parentId: scopedParent?.id ?? run.rootNodeId, tempId, content: organizeFolder(run.query), reason: "Create the requested organization container." }),
         ...selected.map((node) => operation("move_node", { nodeId: node.id, newParentId: tempId, reason: "Move one reviewed matching note into the new container." })),
       ],
     };
@@ -857,6 +889,20 @@ function semanticErrors(
     if (researchPlan.entityKind !== "topic") {
       const uncoveredAspects = researchPlan.aspects.filter((aspect) => !result.workProducts.some((product) => researchProductCoversAspect(product, aspect)));
       if (uncoveredAspects.length) errors.push(`Research work is missing ${researchPlan.entityKind} aspect coverage: ${uncoveredAspects.join(", ")}.`);
+    }
+  }
+  if (legacyWorkflowKind(mode, query) === "organize" && organizationRequiresExistingNotes(query)) {
+    const moves = result.operations.filter((operation) => operation.kind === "move_node");
+    const selected = new Set(result.selectedNodeIds);
+    const moved = new Set(moves.map((operation) => operation.nodeId).filter((id): id is string => Boolean(id)));
+    if (creates.length !== 1) errors.push("Organization work must create exactly one destination container.");
+    if (selected.size === 0) errors.push("Organization work must select at least one reviewed matching note.");
+    if (moves.length !== selected.size || [...selected].some((id) => !moved.has(id))) {
+      errors.push("Organization work must move every selected note exactly once and no unselected notes.");
+    }
+    const destinationId = creates[0]?.tempId;
+    if (!destinationId || moves.some((operation) => operation.newParentId !== destinationId)) {
+      errors.push("Organization moves must target the newly created destination container.");
     }
   }
   if (creates.length >= 2) {
