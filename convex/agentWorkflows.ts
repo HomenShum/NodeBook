@@ -252,6 +252,11 @@ async function pruneOwnerHistory(ctx: MutationCtx, ownerId: string) {
       .withIndex("by_owner_run_sequence", (q) => q.eq("ownerId", ownerId).eq("runId", expired.runId))
       .take(MAX_AGENT_STEPS_PER_RUN + 1);
     for (const step of steps) await ctx.db.delete(step._id);
+    const journalEntries = await ctx.db
+      .query("agentModelStepJournal")
+      .withIndex("by_owner_trace_step", (q) => q.eq("ownerId", ownerId).eq("traceId", expired.traceId ?? expired.runId))
+      .take(MAX_AGENT_STEPS_PER_RUN + 1);
+    for (const entry of journalEntries) await ctx.db.delete(entry._id);
     await ctx.db.delete(expired._id);
   }
 }
@@ -298,9 +303,23 @@ export const recordResult = mutation({
       .query("agentRuns")
       .withIndex("by_owner_run", (q) => q.eq("ownerId", ownerId).eq("runId", args.run.runId))
       .unique();
-    if (existing) return { replayed: true, runId: existing.runId };
-
-    await ctx.db.insert("agentRuns", { ownerId, ...args.run, traceId });
+    if (existing) {
+      if (existing.query !== args.run.query || existing.mode !== args.run.mode) throw new Error("RUN_ID_REUSE_CONFLICT");
+      if (existing.status !== "failed" || args.run.status === "failed") return { replayed: true, runId: existing.runId };
+      const failedProposals = await ctx.db
+        .query("agentProposals")
+        .withIndex("by_owner_run", (q) => q.eq("ownerId", ownerId).eq("runId", existing.runId))
+        .take(10);
+      for (const proposal of failedProposals) await ctx.db.delete(proposal._id);
+      const failedSteps = await ctx.db
+        .query("agentSteps")
+        .withIndex("by_owner_run_sequence", (q) => q.eq("ownerId", ownerId).eq("runId", existing.runId))
+        .take(MAX_AGENT_STEPS_PER_RUN + 1);
+      for (const step of failedSteps) await ctx.db.delete(step._id);
+      await ctx.db.patch(existing._id, { ...args.run, traceId, error: args.run.error ?? undefined });
+    } else {
+      await ctx.db.insert("agentRuns", { ownerId, ...args.run, traceId });
+    }
     if (args.proposal) {
       await ctx.db.insert("agentProposals", { ownerId, runId: args.run.runId, traceId, ...args.proposal });
     }
@@ -389,6 +408,19 @@ export const getProposal = query({
       .withIndex("by_owner_run", (q) => q.eq("ownerId", ownerId).eq("runId", proposal.runId))
       .unique();
     return { proposal, run, steps };
+  },
+});
+
+export const getRunIdentity = query({
+  args: { runId: v.string() },
+  handler: async (ctx, args) => {
+    const ownerId = await authenticatedOwner(ctx);
+    const run = await ctx.db
+      .query("agentRuns")
+      .withIndex("by_owner_run", (q) => q.eq("ownerId", ownerId).eq("runId", args.runId))
+      .unique();
+    if (!run) return null;
+    return { runId: run.runId, traceId: run.traceId ?? run.runId, query: run.query, mode: run.mode, status: run.status };
   },
 });
 

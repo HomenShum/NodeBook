@@ -32,6 +32,8 @@ const contextSnapshot = makeFunctionReference<
 >("agentWorkflows:contextSnapshot");
 const recordRuntimeEvaluation = makeFunctionReference<"mutation", any, any>("agentWorkflows:recordRuntimeEvaluation");
 const recentRuntimeEvaluations = makeFunctionReference<"query", { limit?: number }, any>("agentWorkflows:recentRuntimeEvaluations");
+const getJournalStep = makeFunctionReference<"query", any, any>("agentStepJournal:get");
+const recordJournalStep = makeFunctionReference<"mutation", any, any>("agentStepJournal:record");
 
 const owner = "auth0|nodeagent-memory-owner";
 
@@ -122,6 +124,25 @@ describe("NodeAgent typed memory", () => {
     const mismatched = result("trace-run", "completed", "ask");
     mismatched.run.traceId = "different-trace";
     await expect(session.mutation(recordResult, mismatched)).rejects.toThrow("TRACE_ID_RUN_ID_MISMATCH");
+  });
+
+  test("a failed trace can retry into one clean durable result without duplicate steps or proposals", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-failed-retry` });
+    const failed: any = result("retry-1", "completed", "ask");
+    failed.run.status = "failed";
+    failed.run.error = "provider timeout";
+    failed.run.summary = "failed";
+    failed.steps = [];
+    await session.mutation(recordResult, failed);
+    await session.mutation(recordResult, result("retry-1", "completed", "ask"));
+    const stored = await session.run(async (ctx) => ({
+      runs: await ctx.db.query("agentRuns").collect(),
+      steps: await ctx.db.query("agentSteps").collect(),
+    }));
+    expect(stored.runs).toHaveLength(1);
+    expect(stored.runs[0]).toMatchObject({ status: "completed", traceId: "retry-1" });
+    expect(stored.runs[0].error).toBeUndefined();
+    expect(stored.steps).toHaveLength(2);
   });
 
   test("an applied and a failed research run produce an honest 50% pattern instead of a hardcoded success floor", async () => {
@@ -474,5 +495,47 @@ describe("NodeAgent durable runtime evaluation receipts", () => {
     const duplicate = evaluation(3);
     duplicate.evaluation.sourceBindings.push({ ...duplicate.evaluation.sourceBindings[0] });
     await expect(session.mutation(recordRuntimeEvaluation, duplicate)).rejects.toThrow("RUNTIME_EVAL_BINDING_DUPLICATE");
+  });
+});
+
+describe("NodeAgent exactly-once provider journal", () => {
+  const entry = (step: number) => ({
+    traceId: "trace-journal",
+    stepKey: step.toString(16).padStart(64, "0"),
+    inputDigest: step.toString(16).padStart(64, "0"),
+    outputDigest: (step + 1).toString(16).padStart(64, "0"),
+    provider: "openai" as const,
+    model: "gpt-test",
+    responseJson: JSON.stringify({ result: { step }, sources: [], usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 }, actualModel: "gpt-test" }),
+    createdAtMs: step,
+  });
+
+  test("one owner replays the first completed step while another owner cannot observe it", async () => {
+    const database = convexTest(schema, modules);
+    const session = database.withIdentity({ subject: `${owner}-journal` });
+    const other = database.withIdentity({ subject: `${owner}-journal-other` });
+    const first = entry(1);
+    expect(await session.mutation(recordJournalStep, first)).toMatchObject({ replayed: false, responseJson: first.responseJson });
+    expect(await session.mutation(recordJournalStep, { ...first, responseJson: entry(2).responseJson, outputDigest: entry(2).outputDigest }))
+      .toMatchObject({ replayed: true, responseJson: first.responseJson });
+    expect(await session.query(getJournalStep, { traceId: first.traceId, stepKey: first.stepKey, inputDigest: first.inputDigest }))
+      .toMatchObject({ replayed: true, responseJson: first.responseJson });
+    expect(await other.query(getJournalStep, { traceId: first.traceId, stepKey: first.stepKey, inputDigest: first.inputDigest })).toBeNull();
+  });
+
+  test("a sustained trace cannot grow beyond 100 provider steps", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-journal-bound` });
+    for (let step = 0; step < 100; step += 1) await session.mutation(recordJournalStep, entry(step));
+    await expect(session.mutation(recordJournalStep, entry(100))).rejects.toThrow("JOURNAL_STEP_LIMIT_EXCEEDED");
+  });
+
+  test("sustained retry history evicts old provider receipts at the 500-step owner bound", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-journal-owner-bound` });
+    for (let step = 0; step < 520; step += 1) {
+      await session.mutation(recordJournalStep, { ...entry(step), traceId: `trace-${Math.floor(step / 100)}` });
+    }
+    const rows = await session.run(async (ctx) => ctx.db.query("agentModelStepJournal").collect());
+    expect(rows).toHaveLength(500);
+    expect(Math.min(...rows.map((row) => row.createdAtMs))).toBe(20);
   });
 });

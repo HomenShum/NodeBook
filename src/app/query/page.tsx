@@ -19,6 +19,7 @@ import { NodeAgentEmbeddingContext } from "./NodeAgentEmbeddingContext";
 import RuntimeVerification from "./RuntimeVerification";
 import { runCheckpointExecutionLifecycle } from "./checkpointExecution";
 import { NODE_AGENT_INVOKE_EVENT, NodeAgentInvocation } from "./nodeAgentEvents";
+import { agentRequestFingerprint, nextAgentRequestIdentity } from "./requestIdentity";
 import {
   AgentExecutionMode,
   AgentMemory,
@@ -63,6 +64,7 @@ const state = observable({
   memoryActionId: null as string | null,
   memoryActionLabel: "",
   memoryErrors: {} as Record<string, string>,
+  requestIdentity: null as { requestId: string; fingerprint: string } | null,
 });
 
 type MemoryProjectionResponse = {
@@ -199,17 +201,20 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
     state.receipt = null;
     state.liveMessage = "Starting NodeAgent…";
     try {
+      const requestPayload = {
+        query: state.query,
+        consent: true as const,
+        mode: state.mode,
+        executionMode: state.executionMode,
+        webResearch: state.webResearch,
+        rootNodeId: state.mode === "ask" ? undefined : state.rootNodeId ?? graphStore.userRoot.id,
+      };
+      const fingerprint = agentRequestFingerprint(requestPayload);
+      state.requestIdentity = nextAgentRequestIdentity(state.requestIdentity, fingerprint);
       const response = await getAuthFetch()("/api/query", {
         method: "POST",
         headers: { Accept: "text/event-stream", "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: state.query,
-          consent: true,
-          mode: state.mode,
-          executionMode: state.executionMode,
-          webResearch: state.webResearch,
-          rootNodeId: state.mode === "ask" ? undefined : state.rootNodeId ?? graphStore.userRoot.id,
-        }),
+        body: JSON.stringify({ ...requestPayload, requestId: state.requestIdentity.requestId }),
       });
       if (!response.ok) {
         const failure = await response.json() as { error?: string };
@@ -248,6 +253,7 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
       if (data.proposal && data.execution.disposition === "auto_apply") {
         await applyDurableProposal(data.proposal);
       }
+      state.requestIdentity = null;
     } catch (error) {
       captureException(error, { extra: { query: state.query, message: "NodeBook agent request failed" } });
       state.error = error instanceof Error ? error.message : "The agent run failed. No graph changes were made.";

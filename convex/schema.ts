@@ -320,6 +320,19 @@ export default defineSchema({
     .index("by_owner_eval", ["ownerId", "evalId"])
     .index("by_owner_created", ["ownerId", "completedAtMs"])
     .index("by_owner_case_created", ["ownerId", "caseId", "completedAtMs"]),
+  agentModelStepJournal: defineTable({
+    ownerId: v.string(),
+    traceId: v.string(),
+    stepKey: v.string(),
+    inputDigest: v.string(),
+    outputDigest: v.string(),
+    provider: v.union(v.literal("openai"), v.literal("openrouter")),
+    model: v.string(),
+    responseJson: v.string(),
+    createdAtMs: v.number(),
+  })
+    .index("by_owner_trace_step", ["ownerId", "traceId", "stepKey"])
+    .index("by_owner_created", ["ownerId", "createdAtMs"]),
   agentSteps: defineTable({
     ownerId: v.string(),
     runId: v.string(),

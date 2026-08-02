@@ -230,6 +230,25 @@ export const recordAgentRuntimeEvaluationReference = makeFunctionReference<
   any,
   { replayed: boolean; evalId: string }
 >("agentWorkflows:recordRuntimeEvaluation");
+export const getAgentModelStepReference = makeFunctionReference<
+  "query",
+  { traceId: string; stepKey: string; inputDigest: string },
+  { responseJson: string; outputDigest: string; replayed: true } | null
+>("agentStepJournal:get");
+export const recordAgentModelStepReference = makeFunctionReference<
+  "mutation",
+  {
+    traceId: string;
+    stepKey: string;
+    inputDigest: string;
+    outputDigest: string;
+    provider: "openai" | "openrouter";
+    model: string;
+    responseJson: string;
+    createdAtMs: number;
+  },
+  { responseJson: string; outputDigest: string; replayed: boolean }
+>("agentStepJournal:record");
 export const recentAgentRuntimeEvaluationsReference = makeFunctionReference<
   "query",
   { limit?: number },
@@ -240,6 +259,11 @@ export const getAgentProposalReference = makeFunctionReference<
   { proposalId: string },
   any
 >("agentWorkflows:getProposal");
+export const getAgentRunIdentityReference = makeFunctionReference<
+  "query",
+  { runId: string },
+  { runId: string; traceId: string; query: string; mode: "ask" | "agent" | "organize"; status: string } | null
+>("agentWorkflows:getRunIdentity");
 export const transitionAgentProposalReference = makeFunctionReference<
   "mutation",
   any,

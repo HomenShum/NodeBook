@@ -15,14 +15,18 @@ import {
   agentMemoryContextReference,
   agentModelRouteReference,
   agentSemanticContextReference,
+  getAgentModelStepReference,
+  getAgentRunIdentityReference,
   getBearerToken,
   getConvexClient,
+  recordAgentModelStepReference,
   recordAgentWorkflowReference,
   reportAgentModelOutcomeReference,
   storeAgentEmbeddingsReference,
 } from "@/lib/convexServer";
 
 import { runOpenAI, runOpenAIEmbeddings } from "./openAIProvider";
+import { runJournaledProvider } from "./providerJournal";
 import { buildEmbeddingWrites, chunkEmbeddingWrites } from "./embeddingBoundary";
 import { fuseRetrievedContext, SemanticContextResult } from "./retrievalFusion";
 import { AgentMode, AgentStep, executeWorkflowAgent, TOOL_DECISION_JSON_SCHEMA } from "./workflowAgent";
@@ -39,6 +43,7 @@ const RequestSchema = z.object({
   executionMode: z.enum(["auto", "plan"]).default("auto"),
   rootNodeId: z.string().min(1).max(200).optional(),
   webResearch: z.boolean().default(false),
+  requestId: z.string().uuid().optional(),
 });
 
 function semanticDegradedReason(error: unknown) {
@@ -83,7 +88,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
   const executeRun = async (onStep?: (step: AgentStep) => void) => {
     const token = getBearerToken(request);
     const convex = getConvexClient(token);
-    const runId = randomUUID();
+    const runId = parsed.data.requestId ?? randomUUID();
     const started = new Date();
     let selectedModel = env.AGENT_MODEL;
     let selectedProvider: "openai" | "openrouter" = "openai";
@@ -100,6 +105,10 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         convex.query(agentMemoryContextReference, { text: parsed.data.query, limit: 8 }),
         convex.query(agentModelRouteReference, {}),
       ]);
+      const existingRun = await convex.query(getAgentRunIdentityReference, { runId });
+      if (existingRun && (existingRun.query !== parsed.data.query || existingRun.mode !== parsed.data.mode)) {
+        throw new Error("RUN_ID_REUSE_CONFLICT");
+      }
       let semanticContext: SemanticContextResult;
       const knowledgeMapRequested = isKnowledgeMapRequest(parsed.data.query);
       try {
@@ -147,12 +156,19 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         selectedModel = modelRoute.primaryModel;
         selectedProvider = "openrouter";
       }
-      const runProvider = (providerArgs: Parameters<typeof runOpenAI>[0]) => {
+      const runProvider = async (providerArgs: Parameters<typeof runOpenAI>[0]) => {
         providerAttempted = true;
-        return runOpenAI({
+        const providerInput = {
           ...providerArgs,
           provider: selectedProvider,
           fallbackModels: selectedProvider === "openrouter" ? modelRoute?.fallbackModels : undefined,
+        };
+        return runJournaledProvider({
+          traceId: runId,
+          providerInput,
+          read: (identity) => convex.query(getAgentModelStepReference, identity),
+          run: () => runOpenAI(providerInput),
+          record: (entry) => convex.mutation(recordAgentModelStepReference, entry),
         });
       };
       const result = await executeWorkflowAgent(
@@ -187,6 +203,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
             return { result: planned.result, usage: planned.usage };
           },
           runId: () => runId,
+          proposalId: () => `${runId}:proposal`,
           onStep,
         },
       );
@@ -299,10 +316,13 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       console.error("NodeBook agent run failed", error);
       captureException(error, { user: { id: request.userId } });
       const knowledgeMapFailure = message.startsWith("KNOWLEDGE_MAP_INSUFFICIENT_NODES");
+      const requestConflict = /RUN_ID_REUSE_CONFLICT|JOURNAL_INPUT_MISMATCH/.test(message);
       return {
-        status: knowledgeMapFailure ? 422 as const : 502 as const,
+        status: requestConflict ? 409 as const : knowledgeMapFailure ? 422 as const : 502 as const,
         body: {
-          error: knowledgeMapFailure
+          error: requestConflict
+            ? "This retry identity belongs to different agent input. Start a fresh run."
+            : knowledgeMapFailure
             ? "A semantic knowledge map needs at least four bounded notes with current embeddings. Run it again after indexing completes."
             : "Agent run failed before completion",
         },
