@@ -59,6 +59,19 @@ describe("durable agent rollback reconciliation", () => {
     expect(() => reconcileInverseUpdates(graphStore, inverse)).toThrow("changed after the checkpoint");
   });
 
+  test("a user move of an agent-created note still blocks rollback", () => {
+    const expected = relation("created-parent", "agent-parent", "created-note");
+    const moved = relation("created-parent", "user-parent", "created-note");
+    const graphStore = {
+      nodesById: new Map([["agent-parent", node("agent-parent")], ["user-parent", node("user-parent")], ["created-note", node("created-note")]]),
+      relationsById: new Map([[moved.id, moved]]),
+      userRoot: { id: "user-root" },
+    } as unknown as GraphStore;
+    const inverse = [{ operation: "deleteRelation", deleted: { relation: expected, relationsList: [] } }] as GraphUpdate[];
+
+    expect(() => reconcileInverseUpdates(graphStore, inverse)).toThrow("changed after the checkpoint");
+  });
+
   test("an organizer can create one folder, move three siblings, and restore the exact original hierarchy", async () => {
     const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
     const { node: fixture } = await graphStore.addChildNode({ parentId: graphStore.userRoot.id, nodeProps: { content: "QA Fixture" } });

@@ -41,8 +41,10 @@ function isSameGraphEntity(current: unknown, expected: unknown) {
 function rollbackComparableIgnoringVersion(value: unknown) {
   const comparable = rollbackComparable(value);
   if (!comparable || typeof comparable !== "object" || Array.isArray(comparable)) return comparable;
-  const { version, ...semantic } = comparable as Record<string, unknown>;
+  const { version, relationCount, canonicalRelationId, ...semantic } = comparable as Record<string, unknown>;
   void version;
+  void relationCount;
+  void canonicalRelationId;
   return semantic;
 }
 
@@ -219,8 +221,9 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
         if (current && expected && isSameGraphEntityIgnoringVersion(current, expected)) {
           // The node did not exist before this agent run and will be deleted
           // below. Skip stale intermediate inverses after harmless client
-          // hydration increments its version; the semantic equality check still
-          // refuses real post-checkpoint edits.
+          // hydration increments its version or derived relation metadata. Node
+          // content stays protected here; relation endpoints are checked against
+          // their own durable receipts below.
         } else if (current) {
           throw new Error(`Rollback cannot restore node ${update.newProps.id}; it changed after the checkpoint.`);
         }
@@ -271,7 +274,14 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
       }
     } else if (update.operation === "deleteRelation") {
       if (relationIds.has(update.deleted.relation.id)) {
-        relationDeletes.push(update);
+        const current = virtualRelations.get(update.deleted.relation.id);
+        if (!current || !isSameGraphEntityIgnoringVersion(current, update.deleted.relation)) {
+          throw new Error(`Rollback cannot restore relation ${update.deleted.relation.id}; it changed after the checkpoint.`);
+        }
+        relationDeletes.push({
+          ...update,
+          deleted: { ...update.deleted, relation: serializedGraphObject(current) as typeof update.deleted.relation },
+        });
         relationIds.delete(update.deleted.relation.id);
         virtualRelations.delete(update.deleted.relation.id);
       }
