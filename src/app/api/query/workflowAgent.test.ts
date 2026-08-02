@@ -306,7 +306,7 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.executionDisposition).toBe("auto_apply");
   });
 
-  test("a company deep dive repairs an underspecified draft before exposing an executable profile", async () => {
+  test("a company deep dive deterministically materializes complete evidence receipts despite an underspecified draft", async () => {
     const aspects = ["Overview and mission", "Products and business model", "Funding and financial signals", "Leadership and team", "Competitive landscape"];
     let synthesisCalls = 0;
     const provider = jest.fn().mockImplementation(async (args: { outputName?: string; input: string }) => {
@@ -316,9 +316,7 @@ describe("NodeBook durable agent scenarios", () => {
         usage,
       };
       synthesisCalls += 1;
-      const draftTitles = synthesisCalls === 1
-        ? ["History", "Market notes", "Recent news", "Open questions", "Sources"]
-        : aspects;
+      const draftTitles = ["History"];
       return {
         result: {
           ...baseResult,
@@ -352,15 +350,14 @@ describe("NodeBook durable agent scenarios", () => {
       },
     );
 
-    expect(provider).toHaveBeenCalledTimes(8);
-    expect(synthesisCalls).toBe(2);
+    expect(provider).toHaveBeenCalledTimes(7);
+    expect(synthesisCalls).toBe(1);
     expect(provider.mock.calls[6][0]).toEqual(expect.objectContaining({ maxOutputTokens: 5_000 }));
-    expect(provider.mock.calls[7][0]).toEqual(expect.objectContaining({ maxOutputTokens: 5_000 }));
     expect(result.steps).toEqual(expect.arrayContaining([
       expect.objectContaining({ tool: "generate_targeted_queries", summary: "Prepared 6 bounded company research queries across 5 aspects." }),
     ]));
-    expect(result.steps).toEqual(expect.arrayContaining([
-      expect.objectContaining({ tool: "repair_proposal", status: "repaired" }),
+    expect(result.steps).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ tool: "repair_proposal" }),
     ]));
     expect(result.operations).toHaveLength(6);
     expect(result.operations[0]).toMatchObject({
@@ -369,6 +366,7 @@ describe("NodeBook durable agent scenarios", () => {
       content: "Acme Robotics\nStructured company profile.",
     });
     expect(result.operations.slice(1).map((item) => item.content?.split("\n")[0])).toEqual(aspects);
+    expect(result.operations.slice(1).every((item) => item.content?.includes("One bounded sourced company finding."))).toBe(true);
     expect(result.executionDisposition).toBe("auto_apply");
   });
 

@@ -476,10 +476,10 @@ function buildDeepResearchPlan(query: string): DeepResearchPlan {
       : "topic";
   const subject = researchSubject(query);
   const aspects = requestedResearchAspects(query, entityKind);
-  const queries = [
-    `${subject} authoritative overview`,
-    ...aspects.map((aspect) => `${subject} ${aspect}`),
-  ].slice(0, MAX_DEEP_RESEARCH_QUERIES);
+  const aspectQueries = aspects.map((aspect) => `${subject} ${aspect}`);
+  const queries = aspectQueries.length < MAX_DEEP_RESEARCH_QUERIES
+    ? [`${subject} authoritative overview`, ...aspectQueries]
+    : aspectQueries.slice(0, MAX_DEEP_RESEARCH_QUERIES);
   return { subject, entityKind, aspects, queries };
 }
 
@@ -547,6 +547,25 @@ function structuredResearchOperations(
     }));
   }
   return operations;
+}
+
+function entityWorkProductsFromReceipts(
+  plan: DeepResearchPlan,
+  receipts: Array<{ query: string; finding: string; sourceCount: number }>,
+) {
+  if (plan.entityKind === "topic") return null;
+  const receiptByQuery = new Map(receipts.map((receipt) => [receipt.query.toLowerCase(), receipt]));
+  const products = plan.aspects.map((aspect, index) => {
+    const receipt = receiptByQuery.get(`${plan.subject} ${aspect}`.toLowerCase());
+    if (!receipt) return null;
+    return {
+      key: `entity-section-${index + 1}`,
+      parentKey: null,
+      title: `${aspect.charAt(0).toUpperCase()}${aspect.slice(1)}`,
+      content: receipt.finding,
+    };
+  });
+  return products.every((product): product is NonNullable<typeof product> => product !== null) ? products : null;
 }
 
 function buildLegacyWorkflowContract(
@@ -678,12 +697,15 @@ function applyLegacyWorkflowContract(
   run: { mode: AgentMode; query: string; rootNodeId: string },
   context: ReturnType<typeof compactContext>,
   investigation: Array<{ decision: ToolDecision; output: unknown }>,
+  deepResearchReceipts: Array<{ query: string; finding: string; sourceCount: number }> = [],
 ): ModelResult {
   const receipt = investigation.find((item) => ["run_specialized_workflow", "create_knowledge_map"].includes(item.decision.tool))?.output as { operationContract?: LegacyWorkflowContract | null } | undefined;
   const contract = receipt?.operationContract;
   if (contract) {
     if (contract.kind === "research") {
-      return { ...result, selectedNodeIds: contract.selectedNodeIds, operations: structuredResearchOperations(run, result) };
+      const entityProducts = entityWorkProductsFromReceipts(buildDeepResearchPlan(run.query), deepResearchReceipts);
+      const structuredResult = entityProducts ? { ...result, workProducts: entityProducts } : result;
+      return { ...structuredResult, selectedNodeIds: contract.selectedNodeIds, operations: structuredResearchOperations(run, structuredResult) };
     }
     const operations = contract.operations.map((item) => {
       return item;
@@ -691,7 +713,9 @@ function applyLegacyWorkflowContract(
     return { ...result, selectedNodeIds: contract.selectedNodeIds, operations };
   }
   if (legacyWorkflowKind(run.mode, run.query) === "research") {
-    return { ...result, operations: structuredResearchOperations(run, result) };
+    const entityProducts = entityWorkProductsFromReceipts(buildDeepResearchPlan(run.query), deepResearchReceipts);
+    const structuredResult = entityProducts ? { ...result, workProducts: entityProducts } : result;
+    return { ...structuredResult, operations: structuredResearchOperations(run, structuredResult) };
   }
   if (run.mode === "agent" && /\b(link|connect|relate)\b/i.test(run.query)) {
     const source = context.find((node) => node.retrievalSignals.includes("current_node")) ?? context[0];
@@ -1125,6 +1149,7 @@ export async function executeWorkflowAgent(
     args,
     context,
     investigation,
+    deepResearchReceipts,
   );
   let errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
   let providerFinishedAt = now().toISOString();
@@ -1155,6 +1180,7 @@ export async function executeWorkflowAgent(
       args,
       context,
       investigation,
+      deepResearchReceipts,
     );
     errors = semanticErrors(parsed, args.mode, args.query, args.rootNodeId, context);
     const repairFinishedAt = now().toISOString();
