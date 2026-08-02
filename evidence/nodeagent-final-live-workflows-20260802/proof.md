@@ -59,6 +59,18 @@ Initial signed replay trace: `21b04639-610a-45ab-9194-b916cbb820b9`.
 - After that hydration churn, the URL-bound durable receipt rehydrated from `proposalId`, Undo changed the checkpoint to `undone`, and the profile immediately lost the `Leadership` row. A clean production reload still showed the profile with no `Leadership` child.
 - Production deployment: `dpl_4CEPmTSWrdxnE6MimQdF958y9jm3`, commit `5ac0a094`; alias returned HTTP 200 with `NodeBook=true`, `Mew=false`, and `Ideaflow=false`.
 
+## Existing-profile reuse and missing-profile creation
+
+Signed owner trace: `40a32be8-694c-4c3f-b8cf-d95d6fba9a29`.
+
+1. Exact reviewed fixtures were `QA-20260802 Ada Ventures complete profile with thesis` (`f31fde24`) and `QA-20260802 Beacon Capital needs a profile`.
+2. The sole engine emitted exactly three operations: create one `Investors` container, `clone_node_hierarchy` from the reviewed Ada profile, and create only the missing Beacon profile.
+3. Because hierarchy expansion is high impact, Auto stopped at a durable `pending` checkpoint with the explicit message that cloning requires approval. No graph write occurred before `Approve and run`.
+4. After approval, checkpoint status became `applied`. The exact `Investors` container (`fced31fd`) rendered two children: the cloned Ada profile and `QA-20260802 Beacon Capital / Profile research required.`
+5. A separate tab loaded the exact container URL and a second reload retained both children.
+6. The URL-bound receipt exposed whole-run Undo. Undo changed the checkpoint to `undone`; the root immediately lost `Investors`.
+7. A clean root reload still had both original source fixtures and no generated `Investors` container, proving reuse rather than destructive movement or duplication of the originals.
+
 ## Earlier integrated workflow observations
 
 - Multi-level Web3 research completed with notebook retrieval, five-aspect web research, a seven-operation structured checkpoint, 16 web sources, applied reload persistence, Undo, and clean-reload persistence. Trace: `7ca06baf-e2b3-476c-add8-747637bd48b0`.
@@ -69,4 +81,4 @@ Initial signed replay trace: `21b04639-610a-45ab-9194-b916cbb820b9`.
 
 - The Mamba/SSM mutation was removed through the supported durable Undo path; both retained QA source fixtures remain for repeatability.
 - Earlier rollback/organization fixtures remain in the signed notebook and are named with the `QA-20260802` prefix.
-- Continuous tablet/phone video proof and the live existing-profile clone/reuse workflow remain open.
+- Continuous tablet/phone video proof remains open.

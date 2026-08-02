@@ -2,7 +2,7 @@
 
 Date: 2026-08-02
 
-Verdict: **WARNING - the principal production contract is deployed and the major live workflows are proven, but live profile reuse, responsive clips, and the final NodeRoom comparison remain open.**
+Verdict: **WARNING - the principal production contract is deployed and the major live workflows are proven, but responsive clips and the final NodeRoom comparison remain open.**
 
 This audit treats prior reports as claims. A row passes only when the repository contains a concrete implementation, a scenario-level test or invariant, and production observation where the requirement is inherently live.
 
@@ -24,7 +24,7 @@ This audit treats prior reports as claims. A row passes only when the repository
 | Cross-learn with NodeRoom after parity | The earlier comparison against NodeRoom commit `387a924c` informed conflict handling, but the user required the final comparison after parity closure. Refresh against current NodeRoom only after the remaining behavior proofs close. | **OPEN** |
 | Authenticated production proof of legacy multi-level research | Signed Web3 research completed five of six bounded searches, materialized seven structured operations with 16 sources, survived reload, and was absent after Undo plus clean reload. | PASS |
 | Targeted research-and-fill of an existing profile section | Signed trace `55fcc436-25b1-4a85-9545-3def6ed08f98` created the missing `Leadership` section beneath the exact reviewed profile plus one evidence child. A separate fresh tab rendered the exact hierarchy; URL-bound receipt recovery, Undo after hydration churn, and a clean reload with no remaining section all passed. | PASS |
-| Live existing-profile reuse plus missing-profile creation | The clone/create contract and scenario pass; a signed production approval-gated replay with exact reuse, apply, reload, Undo, and clean reload remains. | **OPEN** |
+| Live existing-profile reuse plus missing-profile creation | Signed trace `40a32be8-694c-4c3f-b8cf-d95d6fba9a29` selected the exact complete/missing fixtures, stopped at the explicit clone approval boundary, applied one container + one clone + one missing profile after approval, retained both generated children after reload, then removed the complete generated container through Undo plus clean reload while preserving both originals. | PASS |
 | Fresh continuous signed tablet and phone end-to-end clips on the current deployment | Current signed desktop states and earlier certified responsive frames exist. The MP4s are honest frame sequences; they are not continuous current-deployment interaction recordings | **OPEN** |
 
 ## Graph renderer decision
@@ -50,8 +50,7 @@ Primary references:
 
 ## Exact remaining production bar
 
-1. Run the existing-profile reuse/missing-profile workflow signed in production through its approval boundary, apply, reload, Undo, and clean reload.
-2. Record one continuous signed interaction at tablet width and one at phone width against the current production deployment, including open NodeAgent, Ask, Auto execution, receipt, Undo, reload, and console/error evidence.
-3. Re-open current NodeRoom only after steps 1-2 and refresh the NodeBook ↔ NodeRoom comparison with exact commit evidence.
+1. Record one continuous signed interaction at tablet width and one at phone width against the current production deployment, including open NodeAgent, Ask, Auto execution, receipt, Undo, reload, and console/error evidence.
+2. Re-open current NodeRoom only after step 1 and refresh the NodeBook ↔ NodeRoom comparison with exact commit evidence.
 
-Until all three steps are observed, this project should be described as deployed with three open completion requirements, not fully production-complete.
+Until both steps are observed, this project should be described as deployed with two open completion requirements, not fully production-complete.
