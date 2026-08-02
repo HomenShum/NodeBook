@@ -311,11 +311,16 @@ export function digest(value: unknown) {
 }
 
 function semanticToolCallDigest(decision: ToolDecision) {
+  const query = decision.tool === "find_nodes" ? decision.query : null;
+  const nodeId = ["find_related_nodes_via_graph", "get_node_details"].includes(decision.tool)
+    ? decision.nodeId
+    : null;
+  const workflow = decision.tool === "run_specialized_workflow" ? decision.workflow : null;
   return digest({
     tool: decision.tool,
-    query: decision.query,
-    nodeId: decision.nodeId,
-    workflow: decision.workflow,
+    query,
+    nodeId,
+    workflow,
   });
 }
 

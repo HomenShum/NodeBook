@@ -735,16 +735,19 @@ describe("NodeBook durable agent scenarios", () => {
 
   test("a degraded planner cannot evade the repeat guard by paraphrasing its rationale", async () => {
     let call = 0;
-    const planner = jest.fn().mockImplementation(async () => ({
-      result: {
-        tool: "run_specialized_workflow",
-        query: null,
-        nodeId: null,
-        workflow: "update",
-        rationale: `Paraphrased create rationale ${++call}.`,
-      },
-      usage,
-    }));
+    const planner = jest.fn().mockImplementation(async () => {
+      const attempt = ++call;
+      return {
+        result: {
+          tool: "run_specialized_workflow",
+          query: `Paraphrased update request ${attempt}.`,
+          nodeId: null,
+          workflow: "update",
+          rationale: `Paraphrased create rationale ${attempt}.`,
+        },
+        usage,
+      };
+    });
     const result = await executeWorkflowAgent(
       {
         query: "Review this evidence through the update workflow",
