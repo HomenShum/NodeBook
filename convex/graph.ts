@@ -227,30 +227,33 @@ async function updateEntity(
   if (!current || current.version !== oldEntity.version) {
     fail("VERSION_CONFLICT", `${table} update is based on a stale version`);
   }
+  const currentEntity = JSON.parse(current.document) as Entity;
+  const effectiveNewEntity = updatesDerivedStateAtSameVersion
+    ? { ...currentEntity, ...newEntity }
+    : newEntity;
   if (
     changesVersionByOne
     && current.document !== oldDocument
-    && !isDerivedSameVersionUpdate(JSON.parse(current.document) as Entity, oldEntity)
+    && !isDerivedSameVersionUpdate(currentEntity, oldEntity)
   ) {
     fail("VERSION_CONFLICT", `${table} update is based on stale entity content`);
   }
   if (
     updatesDerivedStateAtSameVersion
-    && !isDerivedSameVersionUpdate(JSON.parse(current.document) as Entity, newEntity)
+    && !isDerivedSameVersionUpdate(currentEntity, effectiveNewEntity)
   ) {
-    const currentEntity = JSON.parse(current.document) as Entity;
     fail(
       "VERSION_CONFLICT",
-      `${table} ${oldEntity.id} derived update conflicts on ${nonDerivedDifferenceKeys(currentEntity, newEntity).join(",")}`,
+      `${table} ${oldEntity.id} derived update conflicts on ${nonDerivedDifferenceKeys(currentEntity, effectiveNewEntity).join(",")}`,
     );
   }
   await ctx.db.patch(current._id, {
-    version: newEntity.version,
-    isPublic: newEntity.isPublic === true,
-    document: serializeEntity(newEntity),
+    version: effectiveNewEntity.version,
+    isPublic: effectiveNewEntity.isPublic === true,
+    document: serializeEntity(effectiveNewEntity),
     updatedAt: new Date().toISOString(),
     ...(table === "nodes"
-      ? { slug: newEntity.slug ?? null, contentText: entityContentText(newEntity) }
+      ? { slug: effectiveNewEntity.slug ?? null, contentText: entityContentText(effectiveNewEntity) }
       : {}),
   });
 }

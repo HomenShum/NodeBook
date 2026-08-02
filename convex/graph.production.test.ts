@@ -347,6 +347,24 @@ describe("NodeBook Convex production contract", () => {
     })).rejects.toThrow(/INVALID_VERSION/);
   });
 
+  test("a migrated slug survives a same-version derived update from a client that does not serialize slugs", async () => {
+    const t = convexTest(schema, modules).withIdentity({ subject: owner });
+    await t.mutation(applySync, {
+      payload: syncPayload("tx-slug-create", [{ operation: "addNode", node: { ...baseNode, slug: "legacy-slug" } }]),
+    });
+    await expect(t.mutation(applySync, {
+      payload: syncPayload("tx-slug-derived", [{
+        operation: "updateNode",
+        oldProps: baseNode,
+        newProps: { ...baseNode, relationCount: 1, updatedAt: "2026-07-30T00:00:01.000Z" },
+      }]),
+    })).resolves.toMatchObject({ status: "ok", applied: 1 });
+
+    const page = await t.query(snapshotPage, { table: "nodes", visibility: "owned", cursor: null, limit: 10 });
+    const stored = JSON.parse(page.items[0]);
+    expect(stored).toMatchObject({ slug: "legacy-slug", relationCount: 1 });
+  });
+
   test("undo removes relation-list positions instead of persisting invalid null tombstones", async () => {
     const t = convexTest(schema, modules).withIdentity({ subject: owner });
     const positioned = {
