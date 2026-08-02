@@ -128,4 +128,3 @@ Implementation is not behavioral proof. Completion still requires one authentica
 2. Ask, Plan, safe Auto, destructive approval pause, checkpoint race, applied receipt, reload, and whole-run undo.
 3. Exact step/citation/model/usage evidence and honest provider failure.
 4. Desktop, tablet, and phone reachability plus final end-to-end clips.
-
