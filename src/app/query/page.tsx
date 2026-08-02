@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 import { applyAgentOperations, undoAgentOperations } from "./applyProposal";
 import { NodeAgentEmbeddingContext } from "./NodeAgentEmbeddingContext";
+import RuntimeVerification from "./RuntimeVerification";
 import { runCheckpointExecutionLifecycle } from "./checkpointExecution";
 import { NODE_AGENT_INVOKE_EVENT, NodeAgentInvocation } from "./nodeAgentEvents";
 import {
@@ -329,6 +330,8 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
         </div>
       </form>
 
+      <RuntimeVerification />
+
       {!state.query && !state.error && <div className={styles.searchResults}><div>Examples</div>{EXAMPLES.map((query) => (
         <button className={styles.exampleQuery} key={query} type="button" onClick={action(() => { state.query = query; })}>
           <Search size={14} /><span>{query}</span>
@@ -372,6 +375,9 @@ const NodeAgentInterface = observer(function NodeAgentInterface() {
         {state.receipt && <dl className={styles.receipt} data-testid="agent-receipt">
           <div><dt>Run</dt><dd>{state.receipt.runId}</dd></div>
           <div><dt>Status</dt><dd>{state.proposal?.status ?? state.receipt.status}</dd></div>
+          <div><dt>Provider</dt><dd>{state.receipt.provider}</dd></div>
+          <div><dt>Model</dt><dd>{state.receipt.model}</dd></div>
+          <div><dt>Usage</dt><dd>{state.receipt.usage.totalTokens === null ? "not reported" : `${state.receipt.usage.totalTokens.toLocaleString()} tokens`}</dd></div>
           <div><dt>Evidence</dt><dd>{state.receipt.sourceNodeIds.length} nodes · {state.receipt.sourceUrls.length} web sources</dd></div>
           <div><dt>Receipt</dt><dd>{state.receipt.persisted ? "durable" : "not persisted"}</dd></div>
         </dl>}

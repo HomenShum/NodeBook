@@ -167,6 +167,11 @@ export const recordAgentRuntimeEvaluationReference = makeFunctionReference<
   any,
   { replayed: boolean; evalId: string }
 >("agentWorkflows:recordRuntimeEvaluation");
+export const recentAgentRuntimeEvaluationsReference = makeFunctionReference<
+  "query",
+  { limit?: number },
+  any[]
+>("agentWorkflows:recentRuntimeEvaluations");
 export const getAgentProposalReference = makeFunctionReference<
   "query",
   { proposalId: string },

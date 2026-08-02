@@ -8,12 +8,63 @@ import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { runOpenAI } from "@/app/api/query/openAIProvider";
 import { executeWorkflowAgent, TOOL_DECISION_JSON_SCHEMA } from "@/app/api/query/workflowAgent";
 import { env } from "@/envBackend";
-import { agentModelRouteReference, getBearerToken, getConvexClient, recordAgentRuntimeEvaluationReference } from "@/lib/convexServer";
+import { agentModelRouteReference, getBearerToken, getConvexClient, recentAgentRuntimeEvaluationsReference, recordAgentRuntimeEvaluationReference } from "@/lib/convexServer";
 
-import { getLiveEvalCase, LIVE_EVAL_VERSION, scoreLiveEval } from "./liveEval";
+import { getLiveEvalCase, LIVE_EVAL_CASES, LIVE_EVAL_VERSION, scoreLiveEval } from "./liveEval";
 
 export const maxDuration = 60;
-const RequestSchema = z.object({ caseId: z.string().min(1).max(100), consent: z.literal(true) });
+const RequestSchema = z.object({
+  caseId: z.string().min(1).max(100),
+  consent: z.literal(true),
+  suiteId: z.string().min(1).max(100).optional(),
+});
+
+export const GET = withAuth(async (request: NextAuthenticatedRequest) => {
+  try {
+    const convex = getConvexClient(getBearerToken(request));
+    const [evaluations, modelRoute] = await Promise.all([
+      convex.query(recentAgentRuntimeEvaluationsReference, { limit: 100 }),
+      convex.query(agentModelRouteReference, {}),
+    ]);
+    const provider: "openai" | "openrouter" = env.OPENROUTER_API_KEY && modelRoute?.primaryModel ? "openrouter" : "openai";
+    return NextResponse.json({
+      benchmarkVersion: LIVE_EVAL_VERSION,
+      cases: LIVE_EVAL_CASES.map(({ caseId, title }) => ({ caseId, title })),
+      preflight: {
+        provider,
+        model: provider === "openrouter" ? modelRoute!.primaryModel! : env.AGENT_MODEL,
+        fallbackModels: provider === "openrouter" ? modelRoute?.fallbackModels ?? [] : [],
+      },
+      evaluations: evaluations.map((evaluation: any) => ({
+        evalId: evaluation.evalId,
+        suiteId: evaluation.suiteId ?? null,
+        caseId: evaluation.caseId,
+        benchmarkVersion: evaluation.benchmarkVersion,
+        provider: evaluation.provider,
+        model: evaluation.model,
+        mode: evaluation.mode,
+        disposition: evaluation.disposition,
+        passed: evaluation.passed,
+        reasons: evaluation.reasons,
+        toolOrder: evaluation.toolOrder,
+        operationKinds: evaluation.operationKinds,
+        selectedNodeIds: evaluation.selectedNodeIds,
+        sourceBindings: evaluation.sourceBindings,
+        proposalDigest: evaluation.proposalDigest ?? null,
+        usage: { inputTokens: evaluation.inputTokens, outputTokens: evaluation.outputTokens, totalTokens: evaluation.totalTokens },
+        latencyMs: evaluation.latencyMs,
+        startedAtMs: evaluation.startedAtMs,
+        completedAtMs: evaluation.completedAtMs,
+        persisted: true,
+        graphMutated: false,
+      })),
+    });
+  } catch (error) {
+    console.error("NodeAgent evaluation history failed", error);
+    captureException(error, { user: { id: request.userId } });
+    return NextResponse.json({ error: "NodeAgent evaluation history is unavailable" }, { status: 502 });
+  }
+});
 
 export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
   const startedAtMs = Date.now();
@@ -69,6 +120,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
     await convex.mutation(recordAgentRuntimeEvaluationReference, {
       evaluation: {
         evalId,
+        suiteId: parsed.data.suiteId,
         caseId: testCase.caseId,
         benchmarkVersion: LIVE_EVAL_VERSION,
         provider,
@@ -93,7 +145,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
     return NextResponse.json({
       status: score.passed ? "passed" : "failed",
       caseId: testCase.caseId,
-      receipt: { evalId, benchmarkVersion: LIVE_EVAL_VERSION, provider, model: result.modelUsed, ...score, disposition: result.executionDisposition, selectedNodeIds: result.sourceNodeIds, sourceBindings: result.sourceBindings, proposalDigest: result.proposalDigest, usage: result.usage, latencyMs: completedAtMs - startedAtMs, persisted: true, graphMutated: false },
+      receipt: { evalId, suiteId: parsed.data.suiteId ?? null, caseId: testCase.caseId, benchmarkVersion: LIVE_EVAL_VERSION, provider, model: result.modelUsed, ...score, disposition: result.executionDisposition, selectedNodeIds: result.sourceNodeIds, sourceBindings: result.sourceBindings, proposalDigest: result.proposalDigest, usage: result.usage, latencyMs: completedAtMs - startedAtMs, startedAtMs, completedAtMs, persisted: true, graphMutated: false },
     }, { status: score.passed ? 200 : 422 });
   } catch (error) {
     console.error("NodeAgent live evaluation failed", error);

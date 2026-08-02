@@ -1,5 +1,10 @@
 # NodeAgent runtime evaluations
 
+## 2026-08-02 — Restore and run durable suites from the NodeAgent sidebar
+Expose an authenticated history read and bounded suite identifiers so owners can trigger the locked cases through normal product controls, stop after the current durable receipt, recover after provider failure, and restore the newest suite after reload without creating a second agent engine.
+**Commit**: `this commit`. **Author**: Codex.
+**Touches**: `CHANGELOG/components/nodeagent-runtime-verification.md`, `CHANGELOG/db/agent-runtime-evaluations.md`
+
 ## 2026-08-02 — Fail malformed evaluation requests closed
 Return an honest 400 for malformed JSON before any provider work instead of collapsing client errors into a provider-style 502.
 **Commit**: `this commit`. **Author**: Codex.

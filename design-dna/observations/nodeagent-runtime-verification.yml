@@ -1,0 +1,98 @@
+observations:
+  - id: obs-mobbin-relevance-ai-agent-timeline-1
+    source:
+      url: https://mobbin.com/screens/db919f38-24cb-4151-b995-2781392d7db2
+      app: Relevance AI
+      surface: agent task timeline and details rail
+      capturedVia: mobbin-live
+    firstSeenAt: 2026-08-02
+    lastVerifiedAt: 2026-08-02
+    facts:
+      - { id: f1, kind: count, subject: task workspace, property: top-level vertical regions, value: 3, unit: regions, locatorDescription: left queue, center timeline, and right details rail }
+      - { id: f2, kind: relationship, subject: execution status, property: placement, value: adjacent to task metadata in the right details rail, unit: none, locatorDescription: right rail below Created }
+      - { id: f3, kind: relationship, subject: tool use, property: representation, value: one compact timeline row before the agent update, unit: none, locatorDescription: center timeline beneath the user request }
+      - { id: f4, kind: count, subject: completion feedback, property: persistent banners, value: 1, unit: banners, locatorDescription: bottom edge of center timeline }
+    problemTags: [agent-observability, completion-proof, dense-data-scan]
+    intentTags: [show-work, separate-status-from-output]
+    layoutTags: [timeline, details-rail]
+    interactionTags: [progressive-disclosure]
+
+  - id: obs-mobbin-gemini-thinking-steps-1
+    source:
+      url: https://mobbin.com/screens/19fa8a36-4f95-4ea2-ad23-533e31965ddb
+      app: Google Gemini
+      surface: thinking steps side panel
+      capturedVia: mobbin-live
+    firstSeenAt: 2026-08-02
+    lastVerifiedAt: 2026-08-02
+    facts:
+      - { id: f1, kind: count, subject: thinking panel, property: visible step rows, value: 2, unit: rows, locatorDescription: right panel under Thinking steps }
+      - { id: f2, kind: relationship, subject: step state, property: encoding, value: icon plus short text label, unit: none, locatorDescription: each row in the right panel }
+      - { id: f3, kind: measurement, subject: thinking panel, property: width relative to viewport, value: 27, unit: percent approximate, locatorDescription: rightmost bordered panel }
+    problemTags: [agent-observability, dense-data-scan]
+    intentTags: [compact-trace]
+    layoutTags: [side-panel, single-column-list]
+    interactionTags: [dismissible-panel]
+
+  - id: obs-mobbin-arcade-insights-1
+    source:
+      url: https://mobbin.com/screens/77048a10-83e8-4f41-aeb6-052c917c40f2
+      app: Arcade
+      surface: engagement insights summary
+      capturedVia: mobbin-live
+    firstSeenAt: 2026-08-02
+    lastVerifiedAt: 2026-08-02
+    facts:
+      - { id: f1, kind: count, subject: insight summary, property: KPI cards in one row, value: 5, unit: cards, locatorDescription: row directly below Insights heading }
+      - { id: f2, kind: relationship, subject: KPI cards, property: hierarchy, value: small label above large value above signed delta, unit: none, locatorDescription: each card in the Insights row }
+      - { id: f3, kind: relationship, subject: step performance, property: encoding, value: numbered label paired with one horizontal bar, unit: none, locatorDescription: Performance panel below KPI cards }
+    problemTags: [dense-data-scan, result-comparison]
+    intentTags: [summarize-before-detail]
+    layoutTags: [metric-strip, ranked-list]
+    interactionTags: [filterable-period]
+
+  - id: obs-mobbin-fibery-workspace-map-1
+    source:
+      url: https://mobbin.com/screens/c8802ed3-80a8-4af0-986b-2a5fe00996c3
+      app: Fibery
+      surface: workspace relationship map
+      capturedVia: mobbin-live
+    firstSeenAt: 2026-08-02
+    lastVerifiedAt: 2026-08-02
+    facts:
+      - { id: f1, kind: count, subject: visible relationship clusters, property: primary cards, value: 2, unit: cards, locatorDescription: center of workspace map }
+      - { id: f2, kind: relationship, subject: relationship edges, property: visual weight, value: thinner and lower contrast than node borders, unit: none, locatorDescription: lines connecting the two center cards and GitHub node }
+      - { id: f3, kind: relationship, subject: entity types, property: encoding, value: compact colored pills inside neutral cards, unit: none, locatorDescription: contents of both center cards }
+      - { id: f4, kind: count, subject: map controls, property: persistent viewport controls, value: 3, unit: controls, locatorDescription: vertical stack at upper-right of canvas }
+    problemTags: [relationship-scan, graph-orientation]
+    intentTags: [foreground-nodes-background-edges]
+    layoutTags: [node-link-map, sparse-canvas]
+    interactionTags: [zoom, reset]
+
+rules:
+  - id: rule-nodeagent-summary-before-trace
+    statement: A runtime verification surface is easier to scan when aggregate state precedes per-case evidence and receipt metadata follows it.
+    mechanismHypothesis: Users can decide whether to inspect a case before parsing identifiers and reasons.
+    confidence: high
+    appliesWhen: [three-or-more-cases, narrow-sidebar]
+    doesNotApplyWhen: [single-case-error]
+    evidence: [obs-mobbin-arcade-insights-1/f1, obs-mobbin-arcade-insights-1/f2, obs-mobbin-relevance-ai-agent-timeline-1/f2]
+
+  - id: rule-nodeagent-low-ink-status-map
+    statement: A compact node-link status map should use low-contrast idle edges and reserve saturated color for running or durable receipt states.
+    mechanismHypothesis: The map communicates relationship and progress without competing with receipt text.
+    confidence: medium
+    appliesWhen: [fixed-small-case-set, receipt-backed-state]
+    doesNotApplyWhen: [unbounded-knowledge-graph, decorative-activity]
+    evidence: [obs-mobbin-fibery-workspace-map-1/f2, obs-mobbin-fibery-workspace-map-1/f3, obs-mobbin-gemini-thinking-steps-1/f2]
+
+scoreReceipt:
+  id: score-nodeagent-runtime-verification-2026-08-02
+  surface: NodeAgent runtime verification disclosure
+  score: 4
+  citedFacts:
+    - obs-mobbin-relevance-ai-agent-timeline-1/f2
+    - obs-mobbin-gemini-thinking-steps-1/f2
+    - obs-mobbin-arcade-insights-1/f1
+    - obs-mobbin-fibery-workspace-map-1/f2
+  humanReview: { decision: accept, revisedScore: 4, reason: Remix stays inside the approved sidebar boundary and preserves exact textual receipts. }

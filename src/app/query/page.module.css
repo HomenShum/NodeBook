@@ -435,3 +435,321 @@
 .responseLinkIcon {
   vertical-align: middle;
 }
+
+.runtimeVerification {
+  width: min(760px, calc(100% - 40px));
+  margin: 12px 20px 0 40px;
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  background: var(--background-subtle);
+  color: var(--gray-11);
+}
+
+.agentEmbedded .runtimeVerification {
+  width: calc(100% - 24px);
+  margin: 10px 12px 0;
+}
+
+.runtimeVerification > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.runtimeVerification > summary::-webkit-details-marker {
+  display: none;
+}
+
+.runtimeVerification > summary span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gray-12);
+}
+
+.runtimeVerification > summary strong {
+  padding: 3px 8px;
+  border: 1px solid var(--gray-6);
+  border-radius: 999px;
+  background: var(--background);
+  color: var(--gray-11);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.runtimeVerification[open] > summary svg {
+  transform: rotate(90deg);
+}
+
+.runtimeVerificationBody {
+  display: grid;
+  gap: 12px;
+  padding: 0 14px 14px;
+  border-top: 1px solid var(--gray-5);
+}
+
+.runtimeVerificationBody > p {
+  margin: 12px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.runtimeMap {
+  position: relative;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--gray-6);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 50%, var(--accent-3) 0, transparent 42%),
+    var(--background);
+}
+
+.runtimeMap svg {
+  display: block;
+  width: 100%;
+  height: 178px;
+}
+
+.runtimeMapEdge {
+  stroke: var(--gray-6);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.runtimeMapEdge_running {
+  stroke: var(--teal-11);
+  stroke-width: 2.5;
+}
+
+.runtimeMapEdge_passed {
+  stroke: var(--teal-9);
+  stroke-width: 2;
+}
+
+.runtimeMapEdge_failed {
+  stroke: var(--tomato-9);
+  stroke-width: 2;
+}
+
+.runtimeMapNode {
+  fill: var(--background);
+  stroke: var(--gray-7);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.runtimeMapNode_running {
+  fill: var(--accent-3);
+  stroke: var(--teal-11);
+  stroke-width: 2.5;
+}
+
+.runtimeMapNode_passed {
+  fill: var(--teal-3);
+  stroke: var(--teal-9);
+  stroke-width: 2;
+}
+
+.runtimeMapNode_failed {
+  fill: var(--tomato-3);
+  stroke: var(--tomato-9);
+  stroke-width: 2;
+}
+
+.runtimeMapIndex {
+  fill: var(--gray-12);
+  font-size: 10px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.runtimeMapCoreHalo {
+  fill: var(--accent-3);
+  stroke: var(--accent-5);
+  stroke-width: 1;
+}
+
+.runtimeMapCore {
+  fill: var(--gray-12);
+  stroke: var(--background);
+  stroke-width: 2;
+}
+
+.runtimeMapCoreLabel {
+  fill: var(--background);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+
+.runtimeMap figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--gray-5);
+  color: var(--foreground-subtle);
+  font-size: 0.68rem;
+}
+
+.runtimeMap figcaption span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.runtimeMap figcaption i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--gray-7);
+}
+
+.runtimeMap figcaption i[data-status="running"] { background: var(--teal-11); }
+.runtimeMap figcaption i[data-status="passed"] { background: var(--teal-9); }
+.runtimeMap figcaption i[data-status="failed"] { background: var(--tomato-9); }
+
+.runtimeMetrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0;
+}
+
+.runtimeMetrics div {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--gray-6);
+  border-radius: 6px;
+  background: var(--background);
+}
+
+.runtimeMetrics dt {
+  color: var(--foreground-subtle);
+  font-size: 0.68rem;
+}
+
+.runtimeMetrics dd {
+  margin: 0;
+  color: var(--gray-12);
+  font-size: 1rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.runtimePreflight,
+.runtimeReceipt {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 10px;
+  border: 1px solid var(--gray-6);
+  border-radius: 6px;
+  background: var(--background);
+  font-size: 0.76rem;
+}
+
+.runtimePreflight div,
+.runtimeReceipt div {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.runtimePreflight dt,
+.runtimeReceipt dt {
+  color: var(--foreground-subtle);
+}
+
+.runtimePreflight dd,
+.runtimeReceipt dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.runtimeCases {
+  display: grid;
+  border-top: 1px solid var(--gray-5);
+}
+
+.runtimeCase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-5);
+  font-size: 0.78rem;
+}
+
+.runtimeCase > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--gray-12);
+}
+
+.runtimeCase > small {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.runtimeCaseEmpty {
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--gray-7);
+  border-radius: 50%;
+}
+
+.runtimeCurrent,
+.runtimeError {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--accent-3);
+}
+
+.runtimeCurrent span {
+  display: grid;
+  gap: 2px;
+}
+
+.runtimeError {
+  background: var(--tomato-3);
+  color: var(--tomato-11);
+}
+
+.runtimeError p {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.runtimeActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .runtimeVerification {
+    width: calc(100% - 24px);
+    margin: 10px 12px 0;
+  }
+
+  .runtimeActions > button {
+    min-height: 40px;
+  }
+
+  .runtimeMap svg {
+    height: 160px;
+  }
+}

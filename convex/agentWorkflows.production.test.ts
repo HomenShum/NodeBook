@@ -278,6 +278,7 @@ describe("NodeAgent durable runtime evaluation receipts", () => {
   const evaluation = (index: number): { evaluation: any } => ({
     evaluation: {
       evalId: `eval-${index}`,
+      suiteId: "suite-retention",
       caseId: "nodeagent-prompt-injection-boundary",
       benchmarkVersion: "nodeagent-notion-runtime-v1",
       provider: "openrouter" as const,

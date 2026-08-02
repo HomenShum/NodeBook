@@ -1,5 +1,10 @@
 # agentRuntimeEvaluations
 
+## 2026-08-02 — Group durable evaluations into bounded suites
+Persist an optional bounded suite ID on each owner-scoped evaluation receipt so the product can restore one exact run without changing the existing 100-receipt retention bound.
+**Commit**: `this commit`. **Author**: Codex.
+**Touches**: `CHANGELOG/server/nodeagent-runtime-evals.md`, `CHANGELOG/components/nodeagent-runtime-verification.md`
+
 ## 2026-08-02 — Reject duplicate source bindings
 Fail closed when an evaluation receipt repeats a source ID, preserving exact deterministic provenance rather than storing ambiguous citation state.
 **Commit**: `this commit`. **Author**: Codex.

@@ -311,6 +311,7 @@ export const recordResult = mutation({
 
 const runtimeEvaluationArgs = {
   evalId: v.string(),
+  suiteId: v.optional(v.string()),
   caseId: v.string(),
   benchmarkVersion: v.string(),
   provider: v.union(v.literal("openai"), v.literal("openrouter")),
@@ -337,7 +338,7 @@ export const recordRuntimeEvaluation = mutation({
   handler: async (ctx, args) => {
     const ownerId = await authenticatedOwner(ctx);
     const value = args.evaluation;
-    if (value.evalId.length > 100 || value.caseId.length > 100 || value.benchmarkVersion.length > 100 || value.model.length > 200) throw new Error("RUNTIME_EVAL_STRING_LIMIT_EXCEEDED");
+    if (value.evalId.length > 100 || (value.suiteId?.length ?? 0) > 100 || value.caseId.length > 100 || value.benchmarkVersion.length > 100 || value.model.length > 200) throw new Error("RUNTIME_EVAL_STRING_LIMIT_EXCEEDED");
     if (value.reasons.length > 20 || value.toolOrder.length > 20 || value.operationKinds.length > 30 || value.selectedNodeIds.length > 200 || value.sourceBindings.length > MAX_SOURCE_BINDINGS) throw new Error("RUNTIME_EVAL_COLLECTION_LIMIT_EXCEEDED");
     if (new Set(value.sourceBindings.map((binding) => binding.sourceId)).size !== value.sourceBindings.length) throw new Error("RUNTIME_EVAL_BINDING_DUPLICATE");
     if (value.reasons.some((reason) => reason.length > 1_000) || value.toolOrder.some((tool) => tool.length > 100) || value.operationKinds.some((kind) => kind.length > 100) || value.selectedNodeIds.some((id) => id.length > 200)) throw new Error("RUNTIME_EVAL_ITEM_LIMIT_EXCEEDED");

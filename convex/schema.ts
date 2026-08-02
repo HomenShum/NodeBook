@@ -282,6 +282,7 @@ export default defineSchema({
   agentRuntimeEvaluations: defineTable({
     ownerId: v.string(),
     evalId: v.string(),
+    suiteId: v.optional(v.string()),
     caseId: v.string(),
     benchmarkVersion: v.string(),
     provider: v.union(v.literal("openai"), v.literal("openrouter")),
