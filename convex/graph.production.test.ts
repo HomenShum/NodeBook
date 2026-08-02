@@ -12,7 +12,7 @@ const applySync = makeFunctionReference<"mutation", { payload: string }, any>("g
 const snapshotPage = makeFunctionReference<
   "query",
   {
-    table: "nodes" | "relationLists";
+    table: "nodes" | "relations" | "relationLists";
     visibility: "owned" | "public";
     cursor: null;
     limit?: number;
@@ -363,6 +363,36 @@ describe("NodeBook Convex production contract", () => {
     const page = await t.query(snapshotPage, { table: "nodes", visibility: "owned", cursor: null, limit: 10 });
     const stored = JSON.parse(page.items[0]);
     expect(stored).toMatchObject({ slug: "legacy-slug", relationCount: 1 });
+  });
+
+  test("a migrated relation keeps its authoritative creation metadata while advancing an endpoint version", async () => {
+    const t = convexTest(schema, modules).withIdentity({ subject: owner });
+    const storedRelation = {
+      id: "relation-legacy",
+      authorId: owner,
+      version: 1,
+      createdAt: null,
+      updatedAt: null,
+      fromId: "old-parent",
+      toId: "child",
+      relationTypeId: "child",
+      isPublic: false,
+      canonicalRelationId: null,
+    };
+    const hydratedOld = { ...storedRelation, createdAt: "2026-07-30T00:00:00.000Z", updatedAt: "2026-07-30T00:00:00.000Z" };
+    await t.mutation(applySync, {
+      payload: syncPayload("tx-relation-create", [{ operation: "addRelation", relation: storedRelation }]),
+    });
+    await expect(t.mutation(applySync, {
+      payload: syncPayload("tx-relation-move", [{
+        operation: "updateRelation",
+        oldProps: hydratedOld,
+        newProps: { ...hydratedOld, version: 2, fromId: "new-parent" },
+      }]),
+    })).resolves.toMatchObject({ status: "ok", applied: 1 });
+
+    const page = await t.query(snapshotPage, { table: "relations", visibility: "owned", cursor: null, limit: 10 });
+    expect(JSON.parse(page.items[0])).toMatchObject({ createdAt: null, version: 2, fromId: "new-parent" });
   });
 
   test("undo removes relation-list positions instead of persisting invalid null tombstones", async () => {

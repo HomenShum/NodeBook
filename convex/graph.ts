@@ -130,7 +130,7 @@ function serializeEntity(entity: Entity) {
 }
 
 function isDerivedSameVersionUpdate(oldEntity: Entity, newEntity: Entity) {
-  const derivedKeys = new Set(["canonicalRelationId", "relationCount", "updatedAt"]);
+  const derivedKeys = new Set(["canonicalRelationId", "createdAt", "relationCount", "slug", "updatedAt"]);
   const keys = new Set([...Object.keys(oldEntity), ...Object.keys(newEntity)]);
   for (const key of keys) {
     if (derivedKeys.has(key)) continue;
@@ -143,7 +143,7 @@ function isDerivedSameVersionUpdate(oldEntity: Entity, newEntity: Entity) {
 }
 
 function nonDerivedDifferenceKeys(oldEntity: Entity, newEntity: Entity) {
-  const derivedKeys = new Set(["canonicalRelationId", "relationCount", "updatedAt"]);
+  const derivedKeys = new Set(["canonicalRelationId", "createdAt", "relationCount", "slug", "updatedAt"]);
   return [...new Set([...Object.keys(oldEntity), ...Object.keys(newEntity)])]
     .filter((key) => !derivedKeys.has(key))
     .filter((key) => JSON.stringify((oldEntity as Record<string, unknown>)[key])
@@ -228,9 +228,14 @@ async function updateEntity(
     fail("VERSION_CONFLICT", `${table} update is based on a stale version`);
   }
   const currentEntity = JSON.parse(current.document) as Entity;
-  const effectiveNewEntity = updatesDerivedStateAtSameVersion
+  const mergedNewEntity = updatesDerivedStateAtSameVersion
     ? { ...currentEntity, ...newEntity }
     : newEntity;
+  const effectiveNewEntity = {
+    ...mergedNewEntity,
+    ...(Object.prototype.hasOwnProperty.call(currentEntity, "createdAt") ? { createdAt: (currentEntity as Record<string, unknown>).createdAt } : {}),
+    ...(newEntity.slug === undefined && currentEntity.slug !== undefined ? { slug: currentEntity.slug } : {}),
+  };
   if (
     changesVersionByOne
     && current.document !== oldDocument
