@@ -279,6 +279,28 @@ export function digest(value: unknown) {
   return createHash("sha256").update(canonicalJson(value)).digest("hex");
 }
 
+export function sourceBindingDigest(node: {
+  sourceId?: string;
+  id?: string;
+  version: number;
+  contentText?: string;
+  text?: string;
+  document: string | unknown;
+}) {
+  const id = node.sourceId ?? node.id;
+  if (!id) throw new Error("SOURCE_BINDING_ID_REQUIRED");
+  const text = node.contentText ?? node.text ?? "";
+  let document = node.document;
+  if (typeof document === "string") {
+    try {
+      document = JSON.parse(document);
+    } catch {
+      document = { content: text };
+    }
+  }
+  return digest({ id, version: node.version, text, document });
+}
+
 function makeStep(
   sequence: number,
   tool: string,
@@ -765,7 +787,7 @@ export async function executeWorkflowAgent(
   const reviewedBindings = context.map((node) => ({
     sourceId: node.id,
     version: node.version,
-    digest: digest(node),
+    digest: sourceBindingDigest(node),
   }));
   const steps: AgentStep[] = [];
   const emitStep = (step: AgentStep) => {

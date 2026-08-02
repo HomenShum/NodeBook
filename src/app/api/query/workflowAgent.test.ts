@@ -1,4 +1,4 @@
-import { executeWorkflowAgent } from "./workflowAgent";
+import { executeWorkflowAgent, sourceBindingDigest } from "./workflowAgent";
 
 const usage = { inputTokens: 20, outputTokens: 10, totalTokens: 30 };
 const emptyFields = {
@@ -29,6 +29,44 @@ const node = {
 };
 
 describe("NodeBook durable agent scenarios", () => {
+  test("an evidence-backed Auto checkpoint ignores ephemeral retrieval signals but detects real note changes", async () => {
+    const provider = jest.fn().mockResolvedValue({
+      result: {
+        ...baseResult,
+        operations: [{
+          ...emptyFields,
+          kind: "move_node",
+          nodeId: "evidence-1",
+          newParentId: "root",
+          reason: "Move the reviewed note into its semantic branch.",
+        }],
+      },
+      sources: [],
+      usage,
+    });
+    const result = await executeWorkflowAgent(
+      {
+        query: "Organize the reviewed evidence",
+        mode: "agent",
+        executionMode: "auto",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [{ ...node, retrievalSignals: ["semantic", "graph_neighbor"] }],
+      },
+      {
+        model: "gpt-5-mini",
+        runProvider: provider,
+        runId: () => "run-bound-source",
+        proposalId: () => "proposal-bound-source",
+      },
+    );
+
+    expect(result.executionDisposition).toBe("auto_apply");
+    expect(result.sourceBindings[0]?.digest).toBe(sourceBindingDigest(node));
+    expect(sourceBindingDigest({ ...node, contentText: "Changed evidence" })).not.toBe(result.sourceBindings[0]?.digest);
+    expect(sourceBindingDigest({ ...node, version: node.version + 1 })).not.toBe(result.sourceBindings[0]?.digest);
+  });
+
   test("an analyst asking a question receives a read-only, explicitly finished receipt", async () => {
     const provider = jest.fn().mockResolvedValue({ result: baseResult, sources: [], usage });
     const streamedSteps: string[] = [];

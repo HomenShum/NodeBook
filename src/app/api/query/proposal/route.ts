@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { NextAuthenticatedRequest, withAuth } from "@/app/api/authMiddleware";
 import { GraphUpdateSchema } from "@/app/graph/GraphUpdate";
-import { digest } from "@/app/api/query/workflowAgent";
+import { sourceBindingDigest } from "@/app/api/query/workflowAgent";
 import {
   agentBindingSnapshotReference,
   getAgentProposalReference,
@@ -44,21 +44,6 @@ const TransitionSchema = z.discriminatedUnion("action", [
     proposalDigest: z.string().length(64),
   }),
 ]);
-
-function parsedNodeForDigest(node: {
-  sourceId: string;
-  version: number;
-  contentText: string;
-  document: string;
-}) {
-  let document: unknown = null;
-  try {
-    document = JSON.parse(node.document);
-  } catch {
-    document = { content: node.contentText };
-  }
-  return { id: node.sourceId, version: node.version, text: node.contentText, document };
-}
 
 function publicProposal(record: any) {
   const sourceBindings = JSON.parse(record.proposal.sourceBindingsJson) as Array<{ sourceId: string; version: number; digest: string }>;
@@ -144,7 +129,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       const byId = new Map(current.map((node) => [node.sourceId, node]));
       const stale = bindings.filter((binding) => {
         const node = byId.get(binding.sourceId);
-        return !node || node.version !== binding.version || digest(parsedNodeForDigest(node)) !== binding.digest;
+        return !node || node.version !== binding.version || sourceBindingDigest(node) !== binding.digest;
       });
       if (stale.length) {
         return NextResponse.json(
