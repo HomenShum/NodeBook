@@ -6,7 +6,7 @@ export type NodeAgentInvocation = {
 };
 
 export function parseNodeAgentCommand(text: string): string | null {
-  const match = text.trim().match(/^\/(?:nodeagent|mewagent)\s+(.+)$/i);
+  const match = text.trim().match(/^\/nodeagent\s+(.+)$/i);
   return match?.[1]?.trim() || null;
 }
 

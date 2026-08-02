@@ -4,6 +4,8 @@ Date: 2026-08-01
 
 This review compares the active NodeBook in-place MewAgent port with NodeRoom's canonical NodeAgent harness. It treats working behavior and executable contracts as authoritative, not shared naming.
 
+NodeRoom source was rechecked at commit `387a924c`. Its worktree contained unrelated user-owned proof/evidence changes; this review is read-only and did not modify them. Source inspection proves architecture, not deployed NodeRoom behavior.
+
 ## Decision
 
 NodeBook should keep its graph-native operation, retrieval, checkpoint, receipt, and undo layer. It should adopt NodeRoom's trace/journal/runtime boundaries incrementally. NodeRoom should adopt NodeBook's exact graph source bindings, reversible whole-run checkpoints, visible typed memory projections, and continuously benchmarked free-model route.
@@ -18,7 +20,7 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 - `src/app/api/query/route.ts`: owner-authenticated Convex context/memory lookup, bounded provider response, durable run recording, and promoted-model routing.
 - `convex/agentWorkflows.ts`: owner-scoped runs, steps, checkpoints, typed bounded memory, hybrid retrieval, and durable state transitions.
 - `src/app/query/checkpointExecution.ts`: single-winner checkpoint claim, local graph execution, honest failure receipt, and whole-run undo integration.
-- `convex/modelRouting.ts`: daily catalog fingerprinting, bounded candidate evaluation, strict promotion, and failure-triggered reruns.
+- `convex/modelRouting.ts`: hourly catalog fingerprinting, six-case Notion certification, bounded candidate evaluation, strict promotion, and failure-triggered reruns.
 
 ### NodeRoom
 
@@ -26,6 +28,8 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 - `src/nodeagent/core/frameRunner.ts`: reasoning frame wrapper and context envelope.
 - `src/nodeagent/core/frameVerifier.ts`: deterministic frame/evidence receipt.
 - `src/nodeagent/traces/*`: trace as the foreign-key spine across context, tools, mutations, evidence, approval, final output, and eval proof.
+- `src/nodeagent/skills/notebook/notebookTools.ts`: block-level read-first notebook port, stable block IDs, CAS hashes, human-prose protection, merge dedupe, and conflicts returned as model-readable data.
+- `convex/agent.ts` and `convex/agentJobRunner.ts`: action deadline reserve, token/dollar ceilings, bounded context, checkpoint cursors, leases, and resumable job slices.
 - `AGENTS.md` and `docs/NODEAGENT_ADOPTION.md`: locked certification loop separated from open-ended exploration and a one-command adoption smoke.
 
 ## Bidirectional learnings
@@ -39,7 +43,9 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 | Traceability | Durable run/step/checkpoint receipts and exact citations | One `traceId` links every durable artifact and eval | Treat NodeBook `runId` as canonical `traceId` and propagate it explicitly to memory/eval projections |
 | Memory | Typed, owner-scoped, bounded records with pin/forget and visible graph projection | Evidence/failure memory with invalidation and context assembly | Add freshness/invalidation metadata; keep user-visible controls |
 | Evaluation | Notion parity corpus plus automatic free-model promotion | Locked certification vs exploratory scenario generation | Split NodeBook evals into immutable parity certification and editable discovery cases |
-| Model routing | Daily free-model catalog refresh, strict 3/3 promotion, failure rerun | Cost ledger, frontier observations, official-vs-shadow distinction | Add cost/frontier receipts to NodeBook; reuse NodeBook's small router in NodeRoom |
+| Model routing | Hourly catalog-change detection, strict 6/6 Notion promotion, failure rerun, fail-closed paid fallback | Cost ledger, frontier observations, official-vs-shadow distinction | Add cost/frontier receipts to NodeBook; reuse NodeBook's small router in NodeRoom |
+| Notebook editing | Graph-native node/relation operations and whole-run inverse receipt | Read-first block port, stable block IDs, CAS hashes, protected human prose, merge dedupe, conflicts as data | NodeBook should copy the conflict/result contract; NodeRoom should copy graph scope and whole-run undo |
+| Recovery | Single-winner checkpoint and whole-run undo | Durable job slices, leases, cursor handoff, per-element version restore | NodeBook adopts resumable slices before longer loops; NodeRoom adds run-level inverse grouping |
 
 ## NodeBook adoption order
 
@@ -59,6 +65,15 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 4. Retrieval that combines lexical score, graph neighborhood, current-root weighting, recency, and explicit citation targets.
 5. A small automatic free-model route that refreshes on catalog change or repeated failures and promotes only a perfect compatibility score.
 
+## Live comparison findings
+
+- The 2026-08-01 `nodeagent-notion-parity-v2` production run evaluated four current free structured/tool-capable OpenRouter models. None completed any of the six workflows, so NodeBook correctly certified no free route and fell back to its configured OpenAI model.
+- The best available free candidate satisfied 5 of 23 individual criteria (21.7%) but 0 of 6 complete workflows. Partial criteria rank diagnostics only; they never relax the perfect promotion gate.
+- NodeRoom's bounded iterative runtime, exactly-once journal, deadline reserve, spend ceiling, and trace spine remain the strongest adoption targets for NodeBook.
+- NodeBook's exact graph source bindings, typed graph operations, single-winner checkpoint, whole-run inverse receipt, owner-scoped bounded memory, and automatic release/failure certification remain the strongest adoption targets for NodeRoom.
+- NodeRoom has extensive model matrices and a manually invoked free-model gauge, but no model-catalog benchmark cron was found in `convex/crons.ts`; NodeBook's automatic catalog-change trigger is therefore additive rather than duplicative.
+- NodeRoom proves per-element restore as a new CAS write. No equivalent verified whole-agent-run inverse transaction was found; NodeBook's `Undo this run` is the stronger recovery primitive for multi-operation graph work.
+
 ## Non-adoptions
 
 - Do not import NodeRoom's domain-specific BankerToolBench behavior into NodeBook.
@@ -69,4 +84,4 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 
 ## Completion evidence required
 
-The comparison is implemented only when the sole-engine search is clean, the parity suite is executable, the production route uses the promoted model, a real notebook run leaves a durable trace/checkpoint/receipt, Undo restores the source state, and the locked certification output records the exact deployed versions.
+The comparison is implemented only when the sole-engine search is clean, the parity suite is executable, production fails closed when no model passes (or uses a fully certified promoted model), a real notebook run leaves a durable trace/checkpoint/receipt, Undo restores the source state, and the locked certification output records the exact deployed versions.
