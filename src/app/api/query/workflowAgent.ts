@@ -573,6 +573,10 @@ function researchProductCoversAspect(product: z.infer<typeof ResearchWorkProduct
 }
 
 function legacyWorkflowKind(mode: AgentMode, query: string) {
+  // Ask is a read-only product mode. Keyword matches such as "profile",
+  // "investor", "report", or "knowledge map" must not force a workflow
+  // whose deterministic contract contains graph operations.
+  if (mode === "ask") return null;
   if (/\bknowledge\s+map\b|\bsemantic\s+(?:map|clusters?)\b|\bcluster\s+(?:my\s+)?notes?\b/i.test(query)) return "knowledge_map" as const;
   if (mode === "organize") return "organize" as const;
   if (profileGapFillRequest(query)) return "profile_gap_fill" as const;
@@ -1265,7 +1269,15 @@ export async function executeWorkflowAgent(
         ));
         break;
       }
-      const decision = parsedDecision;
+      const decision = args.mode === "ask" && ["run_specialized_workflow", "create_knowledge_map"].includes(parsedDecision.tool)
+        ? {
+            tool: "finish_investigation" as const,
+            query: null,
+            nodeId: null,
+            workflow: null,
+            rationale: "Ask mode is read-only; finish with the bounded notebook evidence already reviewed.",
+          }
+        : parsedDecision;
       // Rationale is presentation, not tool identity. A degraded planner can
       // paraphrase the same call on every turn; execute that semantic call once.
       const callDigest = semanticToolCallDigest(decision);

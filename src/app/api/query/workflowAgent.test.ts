@@ -92,6 +92,49 @@ describe("NodeBook durable agent scenarios", () => {
     expect(streamedSteps).toEqual(result.steps.map((step) => step.tool));
   });
 
+  test("an investor-profile question stays read-only even when the planner requests a mutating workflow", async () => {
+    const planner = jest.fn().mockResolvedValue({
+      result: {
+        tool: "run_specialized_workflow",
+        query: null,
+        nodeId: null,
+        workflow: "research",
+        rationale: "The profile keyword suggests the legacy profile workflow.",
+      },
+      usage,
+    });
+    const provider = jest.fn().mockResolvedValue({
+      result: { ...baseResult, selectedNodeIds: ["ada", "beacon"] },
+      sources: [],
+      usage,
+    });
+
+    const result = await executeWorkflowAgent(
+      {
+        query: "Which two QA investor fixtures are visible in this notebook root?",
+        mode: "ask",
+        rootNodeId: "root",
+        webResearch: false,
+        contextNodes: [
+          { ...node, sourceId: "ada", contentText: "QA Ada complete profile" },
+          { ...node, sourceId: "beacon", contentText: "QA Beacon needs a profile" },
+        ],
+      },
+      { model: "gpt-5-mini", runProvider: provider, runToolPlanner: planner, runId: () => "run-read-only-profile" },
+    );
+
+    expect(result.executionDisposition).toBe("read_only");
+    expect(result.operations).toEqual([]);
+    expect(result.steps.map((step) => step.tool)).toEqual([
+      "find_nodes",
+      "finish_investigation",
+      "synthesize_from_notebook",
+      "validate_proposal",
+      "finish_work",
+    ]);
+    expect(result.steps.some((step) => step.tool === "run_specialized_workflow")).toBe(false);
+  });
+
   test("a knowledge worker sees an honest semantic retrieval receipt before synthesis", async () => {
     const result = await executeWorkflowAgent(
       {
@@ -986,8 +1029,8 @@ describe("NodeBook durable agent scenarios", () => {
     });
     const result = await executeWorkflowAgent(
       {
-        query: "Review this evidence through the update workflow",
-        mode: "ask",
+        query: "Analyze this evidence while the planner degrades",
+        mode: "agent",
         rootNodeId: "root",
         webResearch: false,
         contextNodes: [node],
