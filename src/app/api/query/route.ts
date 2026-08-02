@@ -20,7 +20,7 @@ import {
 } from "@/lib/convexServer";
 
 import { runOpenAI, runOpenAIEmbeddings } from "./openAIProvider";
-import { chunkEmbeddingWrites } from "./embeddingBoundary";
+import { buildEmbeddingWrites, chunkEmbeddingWrites } from "./embeddingBoundary";
 import { fuseRetrievedContext, SemanticContextResult } from "./retrievalFusion";
 import {
   AgentMode,
@@ -96,10 +96,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         input: [parsed.data.query, ...embeddingWork.map((item) => item.contentText)],
         timeoutMs: 8_000,
       });
-      const embeddingWrites = embeddingWork.map((item, index) => ({
-        ...item,
-        embedding: embeddingResult.embeddings[index + 1],
-      }));
+      const embeddingWrites = buildEmbeddingWrites(embeddingWork, embeddingResult.embeddings.slice(1));
       let storedCount = 0;
       for (const items of chunkEmbeddingWrites(embeddingWrites)) {
         const stored = await convex.mutation(storeAgentEmbeddingsReference, { items });

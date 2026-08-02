@@ -1,4 +1,5 @@
 import {
+  buildEmbeddingWrites,
   chunkEmbeddingWrites,
   EMBEDDING_STORE_CHUNK_SIZE,
   OPENAI_EMBEDDING_DIMENSIONS,
@@ -6,6 +7,16 @@ import {
 } from "./embeddingBoundary";
 
 describe("NodeBook embedding boundaries", () => {
+  test("hydration strips note content before crossing the exact Convex mutation contract", () => {
+    const writes = buildEmbeddingWrites(
+      [{ sourceId: "private-note", version: 3, contentText: "must not cross the write boundary" }],
+      [Array.from({ length: OPENAI_EMBEDDING_DIMENSIONS }, () => 0.25)],
+    );
+
+    expect(Object.keys(writes[0]).sort()).toEqual(["embedding", "sourceId", "version"]);
+    expect(writes[0]).not.toHaveProperty("contentText");
+  });
+
   test("a large notebook hydration is split into transaction-safe deterministic writes", () => {
     const items = Array.from({ length: 24 }, (_, index) => ({
       sourceId: `note-${index}`,

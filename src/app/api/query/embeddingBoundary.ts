@@ -2,6 +2,18 @@ export const OPENAI_EMBEDDING_MODEL = "text-embedding-3-small";
 export const OPENAI_EMBEDDING_DIMENSIONS = 1536;
 export const EMBEDDING_STORE_CHUNK_SIZE = 4;
 
+export function buildEmbeddingWrites<T extends { sourceId: string; version: number }>(
+  work: T[],
+  embeddings: number[][],
+) {
+  if (work.length !== embeddings.length) throw new Error("embedding_write_count_mismatch");
+  return work.map((item, index) => ({
+    sourceId: item.sourceId,
+    version: item.version,
+    embedding: embeddings[index],
+  }));
+}
+
 export function chunkEmbeddingWrites<T>(items: T[]) {
   const chunks: T[][] = [];
   for (let index = 0; index < items.length; index += EMBEDDING_STORE_CHUNK_SIZE) {
