@@ -14,6 +14,8 @@ function response(body: string, status: number) {
   return {
     ok: status >= 200 && status < 300,
     status,
+    clone: () => response(body, status),
+    json: async () => JSON.parse(body),
     body: new ReadableStream({
       start(controller) {
         controller.enqueue(bytes);
@@ -74,7 +76,7 @@ describe("oversized note sync", () => {
     const authedFetch = jest.fn(async (input: RequestInfo | URL) => {
       if (String(input) === "/api/sync") {
         syncAttempts += 1;
-        return response("conflict", 409);
+        return response(JSON.stringify({ message: "Graph sync conflict (VERSION_CONFLICT)" }), 409);
       }
       return response(JSON.stringify({
         status: "ok",
@@ -86,7 +88,7 @@ describe("oversized note sync", () => {
     await manager.beginDurableWork();
     manager.syncQueue.push(syncData);
 
-    await expect(manager.flushDurableUpdates()).rejects.toThrow("Graph sync failed (409)");
+    await expect(manager.flushDurableUpdates()).rejects.toThrow("Graph sync conflict (VERSION_CONFLICT)");
     expect(syncAttempts).toBe(4);
     expect(refetch).toHaveBeenCalledTimes(1);
     expect(manager.pendingUpdates).toEqual([]);

@@ -543,7 +543,14 @@ export class UpdateManager {
 
         if (!response.ok) {
           logger.error("Sync failed", response);
-          this.lastSyncFailure = new Error(`Graph sync failed (${response.status || "unknown status"})`);
+          let failureMessage = `Graph sync failed (${response.status || "unknown status"})`;
+          try {
+            const body = await response.clone().json() as { message?: unknown };
+            if (typeof body.message === "string" && body.message.length <= 160) failureMessage = body.message;
+          } catch {
+            // Preserve the bounded status-only fallback for non-JSON failures.
+          }
+          this.lastSyncFailure = new Error(failureMessage);
           // Revert all pending updates and the current task, moving backwards to ensure that the state is consistent.
           let lastTask = syncDataBatch.pop();
           while (lastTask) {
