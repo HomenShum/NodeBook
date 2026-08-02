@@ -148,6 +148,6 @@ NodeBook uses pinned `@xyflow/react` 12.11.2 for interactive node/edge rendering
 Implementation is not behavioral proof. Completion still requires one authenticated production evidence set covering:
 
 1. The six locked Notion cases run through the bounded authenticated `/api/query/evals` production runner and currently report 6/6. Keep the corpus immutable; add newly discovered cases to the exploratory suite rather than weakening certification.
-2. Live checkpoint-race proof remains; Ask, Plan, safe Auto, destructive approval pause, applied receipt, reload, and whole-run Undo are production-proven.
+2. Ask, Plan, safe Auto, destructive approval pause, applied receipt, reload recovery, and whole-run Undo are production-proven. On 2026-08-02, a signed streaming Auto run created exactly one disposable child, reached `Checkpoint: applied`, recovered as `Checkpoint: undone` after reload, and left the exact created graph identity absent. The separate two-tab checkpoint race remains scenario-tested but has not been replayed live under the streaming transport.
 3. Model/usage presentation remains; exact steps/citations and honest provider failure are production-proven.
 4. Refresh the final desktop, tablet, and phone end-to-end clips after the latest live-session hardening. The 2026-08-02 authenticated desktop proof now covers progressive trace-before-receipt behavior; responsive clips remain.
