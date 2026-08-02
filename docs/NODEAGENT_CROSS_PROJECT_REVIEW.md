@@ -70,6 +70,10 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 
 ## Live comparison findings
 
+- **Final post-parity recheck:** the current NodeRoom checkout was reopened read-only at commit `387a924c` only after the signed 390x844 and 768x1024 NodeBook journeys passed against deployment `dpl_6KjTw7so3SXzbXyJ7Y8CvYewqaVe`. NodeRoom's checkout contained unrelated user-owned proof/evidence changes, which were not modified. The commit is unchanged from the earlier architecture read, so the conclusions below remain current rather than inferred from a stale branch.
+- The post-parity recheck found a manually invoked free-model gauge and extensive benchmark scripts in NodeRoom, but still no catalog-change or failure-threshold benchmark scheduler in `convex/crons.ts`. NodeBook's hourly catalog fingerprint plus repeated-failure rerun remains the automatic production route the user requested.
+- The same recheck confirmed NodeRoom's stronger bounded sliced runtime, journal, lease, reserve, and cost-control seams. These remain the next additive improvements for long NodeBook research; they do not justify replacing NodeBook's original UI, graph-native operations, exact source bindings, or whole-run Undo.
+
 - The 2026-08-02 source recheck used NodeRoom commit `387a924c`: `agentJobRunner` executes bounded leased slices, derives a stable journal key before the provider call, and checkpoints a cursor for continuation. NodeBook's new deep-research composite remains single-request and must adopt that journal/checkpoint boundary before its parallel searches are made resumable.
 
 - The 2026-08-02 10:34 UTC `nodeagent-notion-parity-v4` production run evaluated four current free structured/tool-capable OpenRouter models: `google/gemma-4-26b-a4b-it:free`, `nvidia/nemotron-nano-9b-v2:free`, `nvidia/nemotron-3-super-120b-a12b:free`, and `openai/gpt-oss-20b:free`. None completed any of the six workflows, so `benchmarkStatus` is `failed`, the certified route returns no free model, and NodeBook correctly falls back to its configured OpenAI model.

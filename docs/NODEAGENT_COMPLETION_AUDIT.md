@@ -2,7 +2,7 @@
 
 Date: 2026-08-02
 
-Verdict: **WARNING - the principal production contract is deployed and the major live workflows are proven, but responsive clips and the final NodeRoom comparison remain open.**
+Verdict: **PASS - the production contract, legacy workflows, current-deployment responsive clips, and final post-parity NodeRoom comparison are complete.**
 
 This audit treats prior reports as claims. A row passes only when the repository contains a concrete implementation, a scenario-level test or invariant, and production observation where the requirement is inherently live.
 
@@ -21,11 +21,11 @@ This audit treats prior reports as claims. A row passes only when the repository
 | Agent graph UI uses a maintained renderer rather than custom SVG | `@xyflow/react` is pinned at 12.11.2; `RuntimeSynapseMap.tsx` renders React Flow nodes/edges; its test rejects hand-drawn graph SVG architecture | PASS |
 | Anonymous entry for easy evaluation | Anonymous graph-store/auth path and responsive guest evidence | PASS |
 | Convex durability and reliability substrate | Production-shaped Convex suite passed 49 scenarios; typed checkpoint port preserves exact source bindings and deterministic conflict outcomes | PASS |
-| Cross-learn with NodeRoom after parity | The earlier comparison against NodeRoom commit `387a924c` informed conflict handling, but the user required the final comparison after parity closure. Refresh against current NodeRoom only after the remaining behavior proofs close. | **OPEN** |
+| Cross-learn with NodeRoom after parity | After both current-deployment responsive journeys closed, NodeRoom was re-opened read-only at current commit `387a924c`. The final comparison confirms NodeRoom's sliced journal/runtime and NodeBook's exact graph checkpoint/whole-run Undo plus automatic catalog/failure certification as complementary, not replacement architectures. | PASS |
 | Authenticated production proof of legacy multi-level research | Signed Web3 research completed five of six bounded searches, materialized seven structured operations with 16 sources, survived reload, and was absent after Undo plus clean reload. | PASS |
 | Targeted research-and-fill of an existing profile section | Signed trace `55fcc436-25b1-4a85-9545-3def6ed08f98` created the missing `Leadership` section beneath the exact reviewed profile plus one evidence child. A separate fresh tab rendered the exact hierarchy; URL-bound receipt recovery, Undo after hydration churn, and a clean reload with no remaining section all passed. | PASS |
 | Live existing-profile reuse plus missing-profile creation | Signed trace `40a32be8-694c-4c3f-b8cf-d95d6fba9a29` selected the exact complete/missing fixtures, stopped at the explicit clone approval boundary, applied one container + one clone + one missing profile after approval, retained both generated children after reload, then removed the complete generated container through Undo plus clean reload while preserving both originals. | PASS |
-| Fresh continuous signed tablet and phone end-to-end clips on the current deployment | Current signed desktop states and earlier certified responsive frames exist. The MP4s are honest frame sequences; they are not continuous current-deployment interaction recordings | **OPEN** |
+| Fresh continuous signed tablet and phone end-to-end clips on the current deployment | The phone 390x844 and tablet 768x1024 MP4s were captured after deployment `dpl_6KjTw7so3SXzbXyJ7Y8CvYewqaVe` became Ready. Both show signed Ask, safe Auto apply, durable receipt, Undo, and clean reload. Exact viewport/overflow and zero-console-error checks passed. | PASS |
 
 ## Graph renderer decision
 
@@ -42,15 +42,12 @@ Primary references:
 ## Production observation
 
 - Alias: `https://nodebook-rho.vercel.app`
-- Deployment: `dpl_4CEPmTSWrdxnE6MimQdF958y9jm3`
-- Deployed code commit: `5ac0a094`
+- Deployment: `dpl_6KjTw7so3SXzbXyJ7Y8CvYewqaVe`
+- Deployed code commit: `d3867ab5`
 - Vercel status: Ready, target production
 - Raw live DOM check: HTTP 200; `NodeBook=true`, `Mew=false`, `Ideaflow=false`
-- Regression gates: Jest 55/55 suites and 292/292 tests; Convex 49/49; TypeScript, lint (known warnings only), local build, and cloud build passed
+- Regression gates: Jest 55/55 suites and 293/293 tests; Convex 49/49; TypeScript, lint (known warnings only), local build with explicit production-shaped env, and cloud build passed
 
 ## Exact remaining production bar
 
-1. Record one continuous signed interaction at tablet width and one at phone width against the current production deployment, including open NodeAgent, Ask, Auto execution, receipt, Undo, reload, and console/error evidence.
-2. Re-open current NodeRoom only after step 1 and refresh the NodeBook ↔ NodeRoom comparison with exact commit evidence.
-
-Until both steps are observed, this project should be described as deployed with two open completion requirements, not fully production-complete.
+No requirement from this production replacement scope remains open. Future NodeRoom-derived improvements—resumable sliced research, richer memory freshness/invalidation, and cost/frontier receipts—are product evolution items, not blockers for the completed replacement contract.

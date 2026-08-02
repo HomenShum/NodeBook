@@ -4,13 +4,28 @@ Date: 2026-08-02
 
 This ledger is populated only from signed production observations against `https://nodebook-rho.vercel.app`.
 
-## Deployment under test
+## Latest deployment under test
 
-- Commit: `6ab0fd14` (`Make legacy NodeAgent stages deterministic`)
-- Vercel deployment: `dpl_2GPofuJvZYAfWtAXwERJvEi3XURr`
+- Commit: `d3867ab5` (`Keep Ask mode read-only across workflows`)
+- Vercel deployment: `dpl_6KjTw7so3SXzbXyJ7Y8CvYewqaVe`
 - Production alias: `https://nodebook-rho.vercel.app`
 - Vercel state: `READY`
 - Raw alias response: HTTP 200; contains `NodeBook`; contains neither `Mew` nor `Ideaflow`.
+
+## Current-deployment responsive end-to-end clips
+
+Both clips use the existing signed Chrome/Auth0 session and the exact production alias after deployment `dpl_6KjTw7so3SXzbXyJ7Y8CvYewqaVe` became Ready. Each is a continuous 2 fps page capture of one uninterrupted UI journey.
+
+- Phone: `nodebook-phone-390x844-e2e.mp4`; 390x844; 50 frames; 25.0 seconds; SHA-256 `8AEDECF3AE117AA612C42D01C6A238792CD5FEA89C7ADE3D5F0FD7B0CD36018F`.
+- Tablet: `nodebook-tablet-768x1024-e2e.mp4`; 768x1024; 56 frames; 28.0 seconds; SHA-256 `4E61E0A58CA0F6E875C55ECC744315093BF7ACD7E058303B37756D6E081A2D7F`.
+- Exact formerly failing Ask query: `Which two QA investor fixtures are visible in this notebook root?`
+- Phone read-only trace: `7c5116a7-1365-462c-aa0f-bd2d80d2ea7d`; completed with two exact notebook citations, no checkpointed graph changes, a durable receipt, and 10,858 observed tokens.
+- Tablet read-only trace: `86e105f8-448d-41a9-ac6d-ce4fadc2f83c`; completed with two exact notebook citations and no checkpointed graph changes.
+- At each viewport, Agent Auto created one uniquely named temporary child, rendered `Checkpoint: applied`, exposed `Undo this run`, changed to `Checkpoint: undone`, and ended after a clean reload with the temporary child absent.
+- Final viewport checks: phone `innerWidth=390`, `innerHeight=844`, `scrollWidth=390`; tablet `innerWidth=768`, `innerHeight=1024`, `scrollWidth=768`; zero application console errors at both endpoints.
+- Visual inspection covered an in-progress applied child and the fully rehydrated final notebook at both sizes.
+
+The first phone attempt before commit `d3867ab5` exposed an honest read-only failure: the words `investor/profile` forced a mutating legacy workflow, which Ask correctly rejected. Root cause was keyword classification that ignored mode. The deployed fix makes Ask return no deterministic mutation workflow and converts any planner-requested `run_specialized_workflow` or `create_knowledge_map` tool into a bounded read-only finish. The exact failed query then passed live as the traces above.
 
 ## Durable rollback knockout
 
@@ -81,4 +96,4 @@ Signed owner trace: `40a32be8-694c-4c3f-b8cf-d95d6fba9a29`.
 
 - The Mamba/SSM mutation was removed through the supported durable Undo path; both retained QA source fixtures remain for repeatability.
 - Earlier rollback/organization fixtures remain in the signed notebook and are named with the `QA-20260802` prefix.
-- Continuous tablet/phone video proof remains open.
+- Current-deployment continuous phone/tablet proof is complete in the two MP4 artifacts above. The retained prefixed QA source fixtures remain intentionally available for repeatable regression runs.
