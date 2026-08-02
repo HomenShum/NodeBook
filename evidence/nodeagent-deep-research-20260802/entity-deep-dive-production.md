@@ -34,3 +34,26 @@ Observed in the signed production NodeBook session:
 ## Honest limitation
 
 The Chrome extension exposed signed DOM and durable graph state but did not support pixel screenshot capture for this tab. No new pixel-fidelity claim is made. Existing before/boundary/populated screenshots in this evidence directory remain the visual reference for the same NodeAgent region.
+
+## Signed company-profile scenario
+
+Request: deep-dive a named public company across overview and mission, products and business model, funding and financial signals, leadership and team, and competitive landscape.
+
+The proof intentionally retained two failed attempts as diagnostic evidence:
+
+1. All six searches succeeded, but the 2,500-token generic synthesis ceiling returned an incomplete structured response before a checkpoint.
+2. After correcting phrase parsing and raising the still-bounded entity synthesis ceiling to 5,000 tokens, both draft and repair returned only one work product. The run failed deterministic validation and performed no graph write.
+3. The final architecture materialized entity sections directly from complete aspect-search receipts instead of asking the same model to certify its own structure.
+
+Final signed production observations:
+
+- Five comma-delimited company aspects remained intact; internal `and` phrases were not split.
+- Six of six bounded searches succeeded.
+- Five exact evidence-backed aspect sections plus one company container produced six typed operations.
+- Deterministic validation passed without model self-repair.
+- `Checkpoint: applied` and a durable receipt were visible; the notebook showed one company container with five children.
+- `Undo this run` followed by reload produced `Checkpoint: undone`; the exact company container was absent.
+- No new console warning or error occurred during the final run/undo window.
+- A deterministic Auto-language normalizer removes stale model requests for per-run approval and states that the checkpoint receipt is authoritative.
+
+Final production deployment for the Auto-language correction: `dpl_3RKoPcBSXZLxaQQhQ2G7YVoJvk3Q` (`Ready`).
