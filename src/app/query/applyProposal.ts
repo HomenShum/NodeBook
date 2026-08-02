@@ -38,6 +38,18 @@ function isSameGraphEntity(current: unknown, expected: unknown) {
   return canonicalJson(rollbackComparable(current)) === canonicalJson(rollbackComparable(expected));
 }
 
+function rollbackComparableIgnoringVersion(value: unknown) {
+  const comparable = rollbackComparable(value);
+  if (!comparable || typeof comparable !== "object" || Array.isArray(comparable)) return comparable;
+  const { version, ...semantic } = comparable as Record<string, unknown>;
+  void version;
+  return semantic;
+}
+
+function isSameGraphEntityIgnoringVersion(current: unknown, expected: unknown) {
+  return canonicalJson(rollbackComparableIgnoringVersion(current)) === canonicalJson(rollbackComparableIgnoringVersion(expected));
+}
+
 function resolveId(id: string | null, temporaryIds: Map<string, string>) {
   if (!id) throw new Error("The checkpoint is missing a required node ID.");
   return temporaryIds.get(id) ?? id;
@@ -148,6 +160,13 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
   const objectIds = new Set([...nodeIds, ...relationIds]);
   const deletedRelationIds = new Set(inverseUpdates.flatMap((update) => update.operation === "deleteRelation" ? [update.deleted.relation.id] : []));
   const deletedNodes = new Map(inverseUpdates.flatMap((update) => update.operation === "deleteNode" ? [[update.node.id, update.node] as const] : []));
+  const createdNodeIds = new Set(deletedNodes.keys());
+  const createdNodeFinalState = new Map(deletedNodes);
+  for (const update of inverseUpdates) {
+    if (update.operation === "updateNode" && createdNodeIds.has(update.oldProps.id) && !createdNodeFinalState.has(`final:${update.oldProps.id}`)) {
+      createdNodeFinalState.set(`final:${update.oldProps.id}`, update.oldProps);
+    }
+  }
   const scaffoldedNodeIds = new Set<string>();
   const scaffoldUpdates: GraphUpdate[] = [];
   const entityUpdates: GraphUpdate[] = [];
@@ -195,7 +214,17 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
       }
     } else if (update.operation === "updateNode") {
       const current = virtualNodes.get(update.newProps.id);
-      if (current && isSameGraphEntity(current, update.newProps)) {
+      if (createdNodeIds.has(update.newProps.id)) {
+        const expected = createdNodeFinalState.get(`final:${update.newProps.id}`) ?? deletedNodes.get(update.newProps.id);
+        if (current && expected && isSameGraphEntityIgnoringVersion(current, expected)) {
+          // The node did not exist before this agent run and will be deleted
+          // below. Skip stale intermediate inverses after harmless client
+          // hydration increments its version; the semantic equality check still
+          // refuses real post-checkpoint edits.
+        } else if (current) {
+          throw new Error(`Rollback cannot restore node ${update.newProps.id}; it changed after the checkpoint.`);
+        }
+      } else if (current && isSameGraphEntity(current, update.newProps)) {
         // Already restored by an earlier retry.
       } else if (current && isSameGraphEntity(current, update.oldProps)) {
         entityUpdates.push(update);
@@ -248,7 +277,16 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
       }
     } else if (update.operation === "deleteNode") {
       if (nodeIds.has(update.node.id)) {
-        nodeDeletes.push(update);
+        if (scaffoldedNodeIds.has(update.node.id)) {
+          nodeDeletes.push(update);
+        } else {
+          const current = virtualNodes.get(update.node.id);
+          const expected = createdNodeFinalState.get(`final:${update.node.id}`) ?? update.node;
+          if (!current || !isSameGraphEntityIgnoringVersion(current, expected)) {
+            throw new Error(`Rollback cannot restore node ${update.node.id}; it changed after the checkpoint.`);
+          }
+          nodeDeletes.push({ operation: "deleteNode", node: serializedGraphObject(current) as typeof update.node });
+        }
         nodeIds.delete(update.node.id);
         virtualNodes.delete(update.node.id);
       }

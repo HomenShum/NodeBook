@@ -19,6 +19,46 @@ const relation = (id: string, fromId: string, toId: string) => ({
 });
 
 describe("durable agent rollback reconciliation", () => {
+  test("a viewed agent-created note can be deleted after version-only hydration churn", () => {
+    const created = {
+      id: "created-note", authorId: "auth0|owner-a", version: 1,
+      createdAt: new Date("2026-08-02T00:00:00.000Z"), updatedAt: new Date("2026-08-02T00:00:00.000Z"),
+      content: [{ type: "text" as const, value: "Leadership" }], isPublic: false,
+      isNewRelatedObjectsPublic: false, canonicalRelationId: "created-parent", isChecked: null,
+      accessMode: 0, attributes: {}, relationCount: 1,
+    };
+    const hydrated = { ...created, version: 2, updatedAt: new Date("2026-08-02T00:01:00.000Z"), serialize() { return { ...this, serialize: undefined }; } };
+    const graphStore = {
+      nodesById: new Map([[created.id, hydrated]]), relationsById: new Map(), userRoot: { id: "user-root" },
+    } as unknown as GraphStore;
+    const inverse = [
+      { operation: "updateNode", oldProps: created, newProps: { ...created, canonicalRelationId: null, relationCount: 0 } },
+      { operation: "deleteNode", node: { ...created, canonicalRelationId: null, relationCount: 0 } },
+    ] as GraphUpdate[];
+
+    const reconciled = reconcileInverseUpdates(graphStore, inverse);
+
+    expect(reconciled).toHaveLength(1);
+    expect(reconciled[0]).toMatchObject({ operation: "deleteNode", node: { id: created.id, version: 2, content: created.content } });
+  });
+
+  test("a user edit to an agent-created note still blocks rollback", () => {
+    const created = {
+      id: "created-note", authorId: "auth0|owner-a", version: 1,
+      createdAt: new Date("2026-08-02T00:00:00.000Z"), updatedAt: new Date("2026-08-02T00:00:00.000Z"),
+      content: [{ type: "text" as const, value: "Leadership" }], isPublic: false,
+      isNewRelatedObjectsPublic: false, canonicalRelationId: null, isChecked: null,
+      accessMode: 0, attributes: {}, relationCount: 0,
+    };
+    const edited = { ...created, version: 2, content: [{ type: "text" as const, value: "Leadership edited by user" }], serialize() { return { ...this, serialize: undefined }; } };
+    const graphStore = {
+      nodesById: new Map([[created.id, edited]]), relationsById: new Map(), userRoot: { id: "user-root" },
+    } as unknown as GraphStore;
+    const inverse = [{ operation: "deleteNode", node: created }] as GraphUpdate[];
+
+    expect(() => reconcileInverseUpdates(graphStore, inverse)).toThrow("changed after the checkpoint");
+  });
+
   test("an organizer can create one folder, move three siblings, and restore the exact original hierarchy", async () => {
     const graphStore = new GraphStore(MOCK_NODEBOOK_USER);
     const { node: fixture } = await graphStore.addChildNode({ parentId: graphStore.userRoot.id, nodeProps: { content: "QA Fixture" } });
