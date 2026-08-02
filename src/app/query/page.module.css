@@ -537,7 +537,7 @@
 }
 
 .runtimeMapNode {
-  fill: var(--background);
+  fill: var(--gray-1);
   stroke: var(--gray-7);
   stroke-width: 1.5;
   vector-effect: non-scaling-stroke;
@@ -576,12 +576,12 @@
 
 .runtimeMapCore {
   fill: var(--gray-12);
-  stroke: var(--background);
+  stroke: var(--gray-1);
   stroke-width: 2;
 }
 
 .runtimeMapCoreLabel {
-  fill: var(--background);
+  fill: var(--gray-1);
   font-size: 8px;
   font-weight: 700;
   letter-spacing: 0.08em;
