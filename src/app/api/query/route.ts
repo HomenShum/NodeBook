@@ -27,7 +27,11 @@ import {
   TOOL_DECISION_JSON_SCHEMA,
 } from "./workflowAgent";
 
-export const maxDuration = 60;
+// Semantic hydration and the bounded four-step investigation run before final
+// synthesis. Keep the platform budget above the sum of those independently
+// bounded stages so a healthy (but slower) certified model is not aborted just
+// because retrieval was enabled.
+export const maxDuration = 120;
 const RequestSchema = z.object({
   query: z.string().trim().min(1).max(2_000),
   consent: z.literal(true),

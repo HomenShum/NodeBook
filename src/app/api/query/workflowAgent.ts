@@ -784,9 +784,10 @@ export async function executeWorkflowAgent(
     instructions: AGENT_INSTRUCTIONS,
     model: dependencies.model,
     webResearch: args.webResearch,
-    // Structured write plans take longer than read-only answers, but the
-    // primary + one bounded repair must still fit inside the 60s route budget.
-    timeoutMs: args.mode === "ask" ? 24_000 : 28_000,
+    // Certified free models are benchmarked with a 20s budget on tiny parity
+    // cases. Real notebook synthesis carries retrieved context and tool
+    // receipts, so it gets a larger but still hard-bounded production window.
+    timeoutMs: args.mode === "ask" ? 45_000 : 50_000,
   });
   let parsed = applyLegacyWorkflowContract(
     normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(provider.result))),
@@ -815,7 +816,7 @@ export async function executeWorkflowAgent(
       instructions: `${AGENT_INSTRUCTIONS}\nRepair every validation error. Do not add new scope.`,
       model: dependencies.model,
       webResearch: false,
-      timeoutMs: 8_000,
+      timeoutMs: 12_000,
     });
     parsed = applyLegacyWorkflowContract(
       normalizeOperationContent(ModelResultSchema.parse(normalizeModelResultText(repair.result))),

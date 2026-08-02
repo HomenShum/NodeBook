@@ -30,16 +30,18 @@ const node = {
 
 describe("NodeBook durable agent scenarios", () => {
   test("an analyst asking a question receives a read-only, explicitly finished receipt", async () => {
+    const provider = jest.fn().mockResolvedValue({ result: baseResult, sources: [], usage });
     const result = await executeWorkflowAgent(
       { query: "What evidence supports launch?", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes: [node] },
       {
         model: "gpt-5-mini",
-        runProvider: async () => ({ result: baseResult, sources: [], usage }),
+        runProvider: provider,
         runId: () => "run-ask",
       },
     );
 
     expect(result.proposalId).toBeNull();
+    expect(provider.mock.calls[0][0].timeoutMs).toBe(45_000);
     expect(result.operations).toEqual([]);
     expect(result.steps.map((step) => step.tool)).toEqual([
       "find_nodes",
@@ -163,7 +165,7 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.content).toContain("proposal");
     expect(result.executionDisposition).toBe("auto_apply");
     expect(result.risk).toEqual({ level: "low", requiresApproval: false, reasons: [] });
-    expect(provider.mock.calls[0][0].timeoutMs).toBe(28_000);
+    expect(provider.mock.calls[0][0].timeoutMs).toBe(50_000);
   });
 
   test("a cautious organizer can choose Plan and receive the same typed operations without automatic execution", async () => {
@@ -260,8 +262,8 @@ describe("NodeBook durable agent scenarios", () => {
 
     expect(provider).toHaveBeenCalledTimes(2);
     expect(provider.mock.calls[1][0].webResearch).toBe(false);
-    expect(provider.mock.calls[0][0].timeoutMs + provider.mock.calls[1][0].timeoutMs).toBeLessThan(60_000);
-    expect(provider.mock.calls[1][0].timeoutMs).toBe(8_000);
+    expect(provider.mock.calls[0][0].timeoutMs + provider.mock.calls[1][0].timeoutMs).toBeLessThan(120_000);
+    expect(provider.mock.calls[1][0].timeoutMs).toBe(12_000);
     expect(result.operations).toEqual([]);
     expect(result.sourceNodeIds).toEqual(["evidence-1"]);
     expect(result.sourceBindings.map((binding) => binding.sourceId)).toEqual(["evidence-1"]);
