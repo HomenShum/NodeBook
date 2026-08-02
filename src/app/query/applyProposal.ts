@@ -115,10 +115,25 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
   const relationIds = new Set(graphStore.relationsById.keys());
   const objectIds = new Set([...nodeIds, ...relationIds]);
   const deletedRelationIds = new Set(inverseUpdates.flatMap((update) => update.operation === "deleteRelation" ? [update.deleted.relation.id] : []));
+  const deletedNodes = new Map(inverseUpdates.flatMap((update) => update.operation === "deleteNode" ? [[update.node.id, update.node] as const] : []));
+  const scaffoldedNodeIds = new Set<string>();
+  const scaffoldUpdates: GraphUpdate[] = [];
   const entityUpdates: GraphUpdate[] = [];
   const listUpdates: GraphUpdate[] = [];
   const relationDeletes: GraphUpdate[] = [];
   const nodeDeletes: GraphUpdate[] = [];
+  for (const update of inverseUpdates) {
+    if (update.operation !== "updateRelation") continue;
+    for (const endpointId of [update.oldProps.fromId, update.oldProps.toId]) {
+      const scaffold = deletedNodes.get(endpointId);
+      if (!objectIds.has(endpointId) && scaffold) {
+        scaffoldUpdates.push({ operation: "addNode", node: scaffold });
+        scaffoldedNodeIds.add(endpointId);
+        nodeIds.add(endpointId);
+        objectIds.add(endpointId);
+      }
+    }
+  }
   const repairMissingEndpoint = <T extends { id: string; fromId: string; toId: string; relationTypeId: string }>(relation: T) => {
     const missingFrom = !objectIds.has(relation.fromId);
     const missingTo = !objectIds.has(relation.toId);
@@ -157,7 +172,7 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
         relationIds.add(update.newProps.id);
       }
     } else if (update.operation === "updateRelationList") {
-      if (nodeIds.has(update.nodeId) && relationIds.has(update.relationId) && !deletedRelationIds.has(update.relationId)) {
+      if (nodeIds.has(update.nodeId) && !scaffoldedNodeIds.has(update.nodeId) && relationIds.has(update.relationId) && !deletedRelationIds.has(update.relationId)) {
         listUpdates.push(update);
       }
     } else if (update.operation === "deleteRelation") {
@@ -173,7 +188,7 @@ export function reconcileInverseUpdates(graphStore: GraphStore, inverseUpdates: 
     }
   }
 
-  return [...entityUpdates, ...listUpdates, ...relationDeletes, ...nodeDeletes];
+  return [...scaffoldUpdates, ...entityUpdates, ...listUpdates, ...relationDeletes, ...nodeDeletes];
 }
 
 export async function undoAgentOperations(graphStore: GraphStore, inverseUpdates: GraphUpdate[]) {

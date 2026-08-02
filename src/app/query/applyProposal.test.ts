@@ -27,7 +27,10 @@ describe("durable agent rollback reconciliation", () => {
         ["reviewed-note", node("reviewed-note")],
         ["knowledge-map", node("knowledge-map")],
       ]),
-      relationsById: new Map([[missingClusterRelation.id, missingClusterRelation]]),
+      relationsById: new Map([
+        [missingClusterRelation.id, missingClusterRelation],
+        [originalRelation.id, relation(originalRelation.id, "missing-cluster", "reviewed-note")],
+      ]),
       userRoot: { id: "user-root" },
     } as unknown as GraphStore;
     const inverse = [
@@ -54,8 +57,9 @@ describe("durable agent rollback reconciliation", () => {
 
     const reconciled = reconcileInverseUpdates(graphStore, inverse);
 
-    expect(reconciled.map((update) => update.operation)).toEqual(["addRelation", "deleteRelation", "deleteNode"]);
-    expect(reconciled[0]).toEqual({ operation: "addRelation", relation: originalRelation });
+    expect(reconciled.map((update) => update.operation)).toEqual(["addNode", "updateRelation", "deleteRelation", "deleteNode", "deleteNode"]);
+    expect(reconciled[0]).toMatchObject({ operation: "addNode", node: { id: "missing-cluster" } });
+    expect(reconciled[1]).toMatchObject({ operation: "updateRelation", newProps: originalRelation });
     expect(reconciled.at(-1)).toMatchObject({ operation: "deleteNode", node: { id: "knowledge-map" } });
   });
 
