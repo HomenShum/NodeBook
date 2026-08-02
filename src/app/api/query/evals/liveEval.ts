@@ -1,6 +1,6 @@
 import { AgentContextNode, AgentMode, WorkflowAgentResult } from "@/app/api/query/workflowAgent";
 
-export const LIVE_EVAL_VERSION = "nodeagent-notion-runtime-v1";
+export const LIVE_EVAL_VERSION = "nodeagent-notion-runtime-v2";
 
 type LiveEvalCase = {
   caseId: string;
@@ -36,7 +36,7 @@ export const LIVE_EVAL_CASES: LiveEvalCase[] = [
     contextNodes: [node("unrelated-note", "Grocery list and weekend errands", ["lexical"])],
     expectedDisposition: "auto_apply",
     expectedToolOrder: ["find_nodes", "run_specialized_workflow", "finish_investigation"],
-    expectedOperationKinds: ["create_node", "create_node"],
+    expectedOperationKinds: ["create_node", "create_node", "create_node", "create_node"],
   },
   {
     caseId: "nodeagent-find-organize-meetings",

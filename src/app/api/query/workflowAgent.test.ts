@@ -178,11 +178,26 @@ describe("NodeBook durable agent scenarios", () => {
         reason: "Store one independently reviewable finding.",
       })),
     ];
-    const provider = jest.fn().mockResolvedValue({
-      result: { ...baseResult, response: "I prepared a proposal for your review.", operations },
-      sources: ["https://example.com/evidence", "https://example.com/evidence"],
-      usage,
-    });
+    const provider = jest.fn().mockImplementation(async (args: { outputName?: string; input: string }) => args.outputName === "nodebook_deep_research_finding"
+      ? {
+          result: { query: args.input.match(/SEARCH_QUERY: (.+)/)?.[1] ?? "launch risks", finding: "One bounded sourced finding." },
+          sources: ["https://example.com/evidence"],
+          usage,
+        }
+      : {
+          result: {
+            ...baseResult,
+            response: "I prepared a proposal for your review.",
+            workProducts: [
+              { key: "overview", parentKey: null, title: "Overview", content: "Evidence-backed launch overview." },
+              { key: "risks", parentKey: "overview", title: "Risks", content: "Evidence-backed launch risks." },
+              { key: "mitigations", parentKey: "risks", title: "Mitigations", content: "Bounded mitigations." },
+            ],
+            operations,
+          },
+          sources: [],
+          usage,
+        });
     const result = await executeWorkflowAgent(
       {
         query: "Research and structure launch risks",
@@ -206,7 +221,37 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.content).toContain("proposal");
     expect(result.executionDisposition).toBe("auto_apply");
     expect(result.risk).toEqual({ level: "low", requiresApproval: false, reasons: [] });
-    expect(provider.mock.calls[0][0].timeoutMs).toBe(50_000);
+    expect(provider).toHaveBeenCalledTimes(7);
+    expect(provider.mock.calls.slice(0, 6).every(([args]) => args.timeoutMs === 15_000 && args.webResearch)).toBe(true);
+    expect(provider.mock.calls[6][0]).toEqual(expect.objectContaining({ timeoutMs: 50_000, webResearch: false }));
+    expect(result.steps.map((step) => step.tool)).toEqual(expect.arrayContaining([
+      "generate_targeted_queries", "parallel_web_research", "synthesize_structured_research",
+    ]));
+    expect(result.operations.map((item) => [item.kind, item.parentId])).toEqual([
+      ["create_node", "root"],
+      ["create_node", "research-container"],
+      ["create_node", "research-section-1"],
+      ["create_node", "research-section-2"],
+    ]);
+  });
+
+  test("a researcher receives an honest terminal failure when every bounded web search fails", async () => {
+    const provider = jest.fn().mockRejectedValue(new Error("provider unavailable"));
+
+    await expect(executeWorkflowAgent(
+      {
+        query: "Deep dive on a company and cover funding, leadership, and competition",
+        mode: "agent",
+        executionMode: "auto",
+        rootNodeId: "root",
+        webResearch: true,
+        contextNodes: [node],
+      },
+      { model: "gpt-5-mini", runProvider: provider, runId: () => "run-deep-research-failure" },
+    )).rejects.toThrow("DEEP_RESEARCH_ALL_SEARCHES_FAILED");
+    expect(provider.mock.calls.length).toBeGreaterThanOrEqual(4);
+    expect(provider.mock.calls.length).toBeLessThanOrEqual(6);
+    expect(provider.mock.calls.every(([args]) => args.webResearch === true && args.timeoutMs === 15_000)).toBe(true);
   });
 
   test("a cautious organizer can choose Plan and receive the same typed operations without automatic execution", async () => {
@@ -336,9 +381,26 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.usage).toEqual({ inputTokens: 100, outputTokens: 50, totalTokens: 150 });
   });
 
-  test("a researcher gets the legacy container-first workflow even when the planner repeats search and the model returns prose only", async () => {
+  test("a researcher repairs the old prose-only placeholder into the Notion-authored multi-level work product", async () => {
     const repeatedSearch = { tool: "find_nodes", query: "Web3", nodeId: null, workflow: null, rationale: "Search again." };
     const planner = jest.fn().mockResolvedValue({ result: repeatedSearch, usage });
+    const provider = jest
+      .fn()
+      .mockResolvedValueOnce({ result: { ...baseResult, response: "Web3 uses decentralized networks and programmable contracts.", operations: [] }, sources: [], usage })
+      .mockResolvedValueOnce({
+        result: {
+          ...baseResult,
+          response: "Web3 uses decentralized networks and programmable contracts.",
+          workProducts: [
+            { key: "definition", parentKey: null, title: "Definition of Web3", content: "A decentralized application ecosystem." },
+            { key: "components", parentKey: null, title: "Core Components", content: "The main technical building blocks." },
+            { key: "contracts", parentKey: "components", title: "Smart Contracts", content: "Programs that execute on shared ledgers." },
+          ],
+          operations: [],
+        },
+        sources: [],
+        usage,
+      });
     const result = await executeWorkflowAgent(
       {
         query: "Research Web3 and its core components",
@@ -349,7 +411,7 @@ describe("NodeBook durable agent scenarios", () => {
       },
       {
         model: "gpt-5-mini",
-        runProvider: async () => ({ result: { ...baseResult, response: "Web3 uses decentralized networks and programmable contracts.", operations: [] }, sources: [], usage }),
+        runProvider: provider,
         runToolPlanner: planner,
         runId: () => "run-legacy-research",
         proposalId: () => "proposal-legacy-research",
@@ -357,11 +419,13 @@ describe("NodeBook durable agent scenarios", () => {
     );
 
     expect(result.steps.map((step) => step.tool)).toEqual([
-      "find_nodes", "run_specialized_workflow", "finish_investigation", "synthesize_from_notebook", "validate_proposal", "finish_work",
+      "find_nodes", "run_specialized_workflow", "finish_investigation", "synthesize_from_notebook", "repair_proposal", "finish_work",
     ]);
     expect(result.operations.map((item) => [item.kind, item.parentId])).toEqual([
       ["create_node", "research-root"],
       ["create_node", "research-container"],
+      ["create_node", "research-container"],
+      ["create_node", "research-section-2"],
     ]);
     expect(result.sourceNodeIds).toEqual([]);
     expect(result.executionDisposition).toBe("auto_apply");

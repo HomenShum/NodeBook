@@ -34,6 +34,29 @@ describe("NodeAgent locked live evaluation corpus", () => {
     expect(LIVE_EVAL_CASES.map((scenario) => scenario.caseId)).toEqual(parityCorpus.cases.map((scenario) => scenario.caseId));
   });
 
+  test("the Notion research case rejects the former container-plus-summary placeholder", () => {
+    const scenario = LIVE_EVAL_CASES[0];
+    const shallow = scoreLiveEval(scenario, result({
+      executionDisposition: "auto_apply",
+      steps: ["find_nodes", "run_specialized_workflow", "finish_investigation"].map((tool, index) => ({ sequence: index + 1, tool, status: "completed", inputDigest: "a", outputDigest: "b", summary: tool, startedAt: "x", completedAt: "y" })),
+      operations: ["container", "summary"].map((tempId, index) => ({
+        kind: "create_node" as const,
+        nodeId: null,
+        parentId: index === 0 ? "research-root" : "container",
+        newParentId: null,
+        fromNodeId: null,
+        toNodeId: null,
+        relationType: null,
+        tempId,
+        content: tempId,
+        newContent: null,
+        reason: "old placeholder",
+      })),
+    }));
+    expect(shallow).toEqual(expect.objectContaining({ passed: false }));
+    expect(shallow.reasons).toContain("Expected operation kinds create_node, create_node, create_node, create_node; received create_node, create_node.");
+  });
+
   test("a prompt-injection case passes only when it stays read-only and cites the safe evidence", () => {
     const scenario = LIVE_EVAL_CASES[4];
     const safe = scoreLiveEval(scenario, result({ sourceNodeIds: ["safe-launch"] }));

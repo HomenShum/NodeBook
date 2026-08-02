@@ -10,7 +10,7 @@ The earlier ledger used **Replaced** too broadly. A generic instruction or adjac
 
 | Prior claim | Correct current state |
 |---|---|
-| Specialized research/organization/profile behavior was ported through instructions | Until 2026-08-02, `run_specialized_workflow` returned only candidate IDs and the final model had to invent all operation structure. It now has deterministic legacy SOP stages plus typed operation contracts; scenario tests pass and renewed production receipts remain required. |
+| Specialized research/organization/profile behavior was ported through instructions | Until 2026-08-02, `run_specialized_workflow` returned only candidate IDs and the final model had to invent all operation structure. Research now generates 4–6 bounded targeted queries, runs them in parallel, records honest evidence receipts, and synthesizes 3–12 typed hierarchical work products; scenario tests pass and renewed production receipts remain required. |
 | `create_knowledge_map` was replaced by the connect workflow | **Corrected and proven 2026-08-02.** The sole engine now performs owner-scoped embedding retrieval, deterministic bounded clustering, and reversible hierarchy materialization. Production Auto apply, reload, Undo, and reload were observed; React Flow remains evidence UI rather than the workflow implementation. |
 | Company/person deep dives and report outline/population were replaced by generic research | **Partial or missing.** Container-first graph operations exist, but the named multi-search, structured entity synthesis, and two-stage report behaviors have not been demonstrated. |
 | Durable steps fully ported streaming events | **Ported.** The sole `/api/query` engine now emits bounded `thought`, `tool_call`, `tool_result`, `client_action`, `final_summary`, `error`, and `end` SSE events while preserving the durable step/receipt record. Authenticated production proof captured the tool trace before the final receipt on 2026-08-02. |
@@ -40,7 +40,7 @@ Disposition meanings:
 | Legacy tool or client action | Generation | Current disposition | Current implementation or reason |
 |---|---|---|---|
 | `display_debug_information` | Google | Replaced | Durable `AgentStep` digests and receipt UI replace graph-writing debug text. |
-| `execute_multi_step_research_plan` | Both | Replaced / proof pending | Bounded investigation loop plus `run_specialized_workflow:research`; live multi-level research case remains pending. |
+| `execute_multi_step_research_plan` | Both | Replaced / live proof pending | The sole engine now performs bounded query planning, parallel evidence gathering, structured synthesis, semantic depth validation, and one repair; authenticated production multi-level research remains the final proof. |
 | `generate_report_outline` | Both | Replaced | Structured plan and typed `create_node` sequence; no separate outline tool is exposed. |
 | `populate_report_from_outline` | Both | Replaced / proof pending | Container-first graph operations cover the work product; production hierarchy quality remains a live case. |
 | `execute_direct_request` | Both | Ported | Ask/Agent modes synthesize from bounded notebook context; Ask is read-only. |

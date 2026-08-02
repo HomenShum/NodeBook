@@ -317,6 +317,27 @@ describe("NodeAgent automatic free-model routing", () => {
     });
   });
 
+  test("the current research benchmark rejects a model that still emits the old two-node placeholder", () => {
+    const scenario = NODEAGENT_PARITY_CASES[0];
+    expect(scoreParityResult(scenario, {
+      disposition: "auto_apply",
+      toolOrder: ["find_nodes", "run_specialized_workflow", "finish_investigation"],
+      operationKinds: ["create_node", "create_node"],
+      selectedNodeIds: [],
+      workProductCount: 2,
+    })).toEqual(expect.objectContaining({
+      passed: false,
+      reasons: ["operation_kinds", "work_product_count"],
+    }));
+    expect(scoreParityResult(scenario, {
+      disposition: "auto_apply",
+      toolOrder: ["find_nodes", "run_specialized_workflow", "finish_investigation"],
+      operationKinds: ["create_node", "create_node", "create_node", "create_node"],
+      selectedNodeIds: [],
+      workProductCount: 3,
+    })).toEqual({ passed: true, reasons: [], passedCriteria: 4, totalCriteria: 4 });
+  });
+
   test("a catalog refresh admits only free, structured-output, tool-capable candidates and prioritizes new releases", () => {
     const candidates = selectFreeCandidates({ data: [
       { id: "new/free:free", created: 30, context_length: 64_000, supported_parameters: ["tools", "structured_outputs"] },
@@ -338,7 +359,7 @@ describe("NodeAgent automatic free-model routing", () => {
   });
 
   test("catalog polling evaluates new releases, skips an unchanged certified catalog, and failure reruns bypass the skip", () => {
-    const certified = { catalogFingerprint: "same", benchmarkVersion: "nodeagent-notion-parity-v3" };
+    const certified = { catalogFingerprint: "same", benchmarkVersion: "nodeagent-notion-parity-v4" };
     expect(shouldRunBenchmark("catalog_refresh", "same", certified)).toBe(false);
     expect(shouldRunBenchmark("catalog_refresh", "new", certified)).toBe(true);
     expect(shouldRunBenchmark("failure_threshold", "same", certified)).toBe(true);
@@ -347,8 +368,8 @@ describe("NodeAgent automatic free-model routing", () => {
 
   test("production routing fails closed when a formerly promoted model has not passed the current parity version", () => {
     expect(isCertifiedRoute({ primaryModel: "old-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notebook-v1" })).toBe(false);
-    expect(isCertifiedRoute({ primaryModel: "current-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notion-parity-v3" })).toBe(true);
-    expect(isCertifiedRoute({ primaryModel: "failed-free", benchmarkStatus: "failed", benchmarkVersion: "nodeagent-notion-parity-v3" })).toBe(false);
+    expect(isCertifiedRoute({ primaryModel: "current-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notion-parity-v4" })).toBe(true);
+    expect(isCertifiedRoute({ primaryModel: "failed-free", benchmarkStatus: "failed", benchmarkVersion: "nodeagent-notion-parity-v4" })).toBe(false);
   });
 
   test("a verbose free model gets the live planner's bounded structured-output budget", () => {

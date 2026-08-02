@@ -1,6 +1,6 @@
 # NodeAgent cross-project architecture review
 
-Date: 2026-08-01
+Date: 2026-08-02
 
 This review compares the active NodeBook in-place MewAgent port with NodeRoom's canonical NodeAgent harness. It treats working behavior and executable contracts as authoritative, not shared naming.
 
@@ -15,6 +15,8 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 ## Evidence compared
 
 ### NodeBook
+
+- `src/app/api/query/workflowAgent.ts` now makes the legacy research composite explicit: 4-6 targeted parallel searches, bounded evidence receipts, one structured synthesis, and a nested graph work product. This keeps provider fan-out inside the sole engine.
 
 - `src/app/api/query/workflowAgent.ts`: bounded search → graph traversal → specialized workflow loop, typed graph operations, deterministic digests, risk classification, and model repair.
 - `src/app/api/query/route.ts`: owner-authenticated Convex context/memory lookup, bounded provider response, durable run recording, and promoted-model routing.
@@ -46,6 +48,7 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 | Model routing | Hourly catalog-change detection, strict 6/6 Notion promotion, failure rerun, fail-closed paid fallback | Cost ledger, frontier observations, official-vs-shadow distinction | Add cost/frontier receipts to NodeBook; reuse NodeBook's small router in NodeRoom |
 | Notebook editing | Graph-native node/relation operations and whole-run inverse receipt | Read-first block port, stable block IDs, CAS hashes, protected human prose, merge dedupe, conflicts as data | NodeBook should copy the conflict/result contract; NodeRoom should copy graph scope and whole-run undo |
 | Recovery | Single-winner checkpoint and whole-run undo | Durable job slices, leases, cursor handoff, per-element version restore | NodeBook adopts resumable slices before longer loops; NodeRoom adds run-level inverse grouping |
+| Composite research | Deterministic query plan, bounded parallel evidence receipts, one typed nested graph synthesis | Durable sliced jobs and exactly-once provider-step replay | Keep NodeBook's research shape; add NodeRoom's journal before allowing research to resume across slices |
 
 ## NodeBook adoption order
 
@@ -66,6 +69,8 @@ Do not replace NodeBook's integrated engine with NodeRoom's spreadsheet-oriented
 5. A small automatic free-model route that refreshes on catalog change or repeated failures and promotes only a perfect compatibility score.
 
 ## Live comparison findings
+
+- The 2026-08-02 source recheck used NodeRoom commit `387a924c`: `agentJobRunner` executes bounded leased slices, derives a stable journal key before the provider call, and checkpoints a cursor for continuation. NodeBook's new deep-research composite remains single-request and must adopt that journal/checkpoint boundary before its parallel searches are made resumable.
 
 - The 2026-08-01 `nodeagent-notion-parity-v2` production run evaluated four current free structured/tool-capable OpenRouter models. None completed any of the six workflows, so NodeBook correctly certified no free route and fell back to its configured OpenAI model.
 - The best available free candidate satisfied 5 of 23 individual criteria (21.7%) but 0 of 6 complete workflows. Partial criteria rank diagnostics only; they never relax the perfect promotion gate.
