@@ -124,7 +124,7 @@ The current HTTP route returns the bounded completed result rather than SSE. Dur
 
 Implementation is not behavioral proof. Completion still requires one authenticated production evidence set covering:
 
-1. The six locked Notion cases against the actual NodeAgent runtime, not only isolated model compatibility prompts.
+1. The six locked Notion cases now have a bounded authenticated `/api/query/evals` runner through the actual NodeAgent planner, validator, risk classifier, source binding, and digest pipeline; executing all six against production and capturing their durable receipts remains pending.
 2. Live checkpoint-race proof remains; Ask, Plan, safe Auto, destructive approval pause, applied receipt, reload, and whole-run Undo are production-proven.
 3. Model/usage presentation remains; exact steps/citations and honest provider failure are production-proven.
 4. Refresh the final desktop, tablet, and phone end-to-end clips after the latest live-session hardening.

@@ -1,0 +1,18 @@
+Observable: the six locked Notion-authored cases are executable through the integrated NodeAgent runtime and durable evaluation receipts remain bounded and owner-scoped.
+
+After implementation:
+- `yarn test --runInBand`: 40 suites passed, 215 tests passed.
+- `yarn test:convex`: 2 files passed, 29 tests passed, including 121-run retention, replay safety, owner isolation, and adversarial bounds.
+- `yarn typecheck`: passed.
+- `yarn build` with temporary process-level non-secret validation values: passed; `/api/query/evals` appears in the production route manifest.
+- `npx convex deploy --yes`: schema validation complete and functions deployed to the existing production deployment.
+
+What did not change:
+- The evaluation endpoint does not call graph apply/update mutations and reports `graphMutated: false` only after the evaluation receipt persists.
+- Existing Ask, Agent, Organize, proposal, apply, and Undo behavior remains on the same `executeWorkflowAgent` engine.
+- The full pre-existing Jest suite remains green; only the three new scorer tests increase its count from 212 to 215.
+
+Still required for the named proof:
+- Deploy the Next.js route to production.
+- Execute all six cases through an authenticated production Chrome session.
+- Capture returned receipts and independently query the durable owner-scoped records.

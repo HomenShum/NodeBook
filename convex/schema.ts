@@ -279,6 +279,32 @@ export default defineSchema({
   })
     .index("by_model", ["modelId"])
     .index("by_tested", ["testedAtMs"]),
+  agentRuntimeEvaluations: defineTable({
+    ownerId: v.string(),
+    evalId: v.string(),
+    caseId: v.string(),
+    benchmarkVersion: v.string(),
+    provider: v.union(v.literal("openai"), v.literal("openrouter")),
+    model: v.string(),
+    mode: v.union(v.literal("ask"), v.literal("agent"), v.literal("organize")),
+    disposition: v.union(v.literal("read_only"), v.literal("auto_apply"), v.literal("approval_required"), v.literal("preview_only")),
+    passed: v.boolean(),
+    reasons: v.array(v.string()),
+    toolOrder: v.array(v.string()),
+    operationKinds: v.array(v.string()),
+    selectedNodeIds: v.array(v.string()),
+    sourceBindings: v.array(v.object({ sourceId: v.string(), version: v.number(), digest: v.string() })),
+    proposalDigest: v.optional(v.string()),
+    inputTokens: v.union(v.number(), v.null()),
+    outputTokens: v.union(v.number(), v.null()),
+    totalTokens: v.union(v.number(), v.null()),
+    latencyMs: v.number(),
+    startedAtMs: v.number(),
+    completedAtMs: v.number(),
+  })
+    .index("by_owner_eval", ["ownerId", "evalId"])
+    .index("by_owner_created", ["ownerId", "completedAtMs"])
+    .index("by_owner_case_created", ["ownerId", "caseId", "completedAtMs"]),
   agentSteps: defineTable({
     ownerId: v.string(),
     runId: v.string(),

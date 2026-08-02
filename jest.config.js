@@ -22,6 +22,7 @@ module.exports = {
   moduleNameMapper: {
     '\\.css$': 'identity-obj-proxy',
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@evals/(.*)$': '<rootDir>/evals/$1',
   },
   testEnvironment: 'jsdom',
   testMatch: [

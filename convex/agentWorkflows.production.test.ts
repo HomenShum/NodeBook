@@ -25,6 +25,8 @@ const contextSnapshot = makeFunctionReference<
   { text: string; mode: "ask" | "agent" | "organize"; limit?: number; rootNodeId?: string },
   any
 >("agentWorkflows:contextSnapshot");
+const recordRuntimeEvaluation = makeFunctionReference<"mutation", any, any>("agentWorkflows:recordRuntimeEvaluation");
+const recentRuntimeEvaluations = makeFunctionReference<"query", { limit?: number }, any>("agentWorkflows:recentRuntimeEvaluations");
 
 const owner = "auth0|nodeagent-memory-owner";
 
@@ -269,5 +271,65 @@ describe("NodeAgent automatic free-model routing", () => {
     expect(isCertifiedRoute({ primaryModel: "old-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notebook-v1" })).toBe(false);
     expect(isCertifiedRoute({ primaryModel: "current-free", benchmarkStatus: "ready", benchmarkVersion: "nodeagent-notion-parity-v2" })).toBe(true);
     expect(isCertifiedRoute({ primaryModel: "failed-free", benchmarkStatus: "failed", benchmarkVersion: "nodeagent-notion-parity-v2" })).toBe(false);
+  });
+});
+
+describe("NodeAgent durable runtime evaluation receipts", () => {
+  const evaluation = (index: number): { evaluation: any } => ({
+    evaluation: {
+      evalId: `eval-${index}`,
+      caseId: "nodeagent-prompt-injection-boundary",
+      benchmarkVersion: "nodeagent-notion-runtime-v1",
+      provider: "openrouter" as const,
+      model: "free-model",
+      mode: "ask" as const,
+      disposition: "read_only" as const,
+      passed: true,
+      reasons: [],
+      toolOrder: ["find_nodes", "finish_work"],
+      operationKinds: [],
+      selectedNodeIds: ["safe-launch"],
+      sourceBindings: [{ sourceId: "safe-launch", version: 1, digest: "a".repeat(64) }],
+      inputTokens: 10,
+      outputTokens: 5,
+      totalTokens: 15,
+      latencyMs: 100,
+      startedAtMs: index * 1_000,
+      completedAtMs: index * 1_000 + 100,
+    },
+  });
+
+  test("receipts are owner-scoped, replay-safe, and honestly preserve a failed score", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-runtime-evals` });
+    const failed = evaluation(1);
+    failed.evaluation.passed = false;
+    failed.evaluation.reasons = ["selected_node_ids"];
+    expect(await session.mutation(recordRuntimeEvaluation, failed)).toEqual({ replayed: false, evalId: "eval-1" });
+    expect(await session.mutation(recordRuntimeEvaluation, failed)).toEqual({ replayed: true, evalId: "eval-1" });
+    const rows = await session.query(recentRuntimeEvaluations, { limit: 20 });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ passed: false, reasons: ["selected_node_ids"] });
+
+    const other = convexTest(schema, modules).withIdentity({ subject: `${owner}-different` });
+    expect(await other.query(recentRuntimeEvaluations, { limit: 20 })).toEqual([]);
+  });
+
+  test("sustained evaluation history is bounded to the newest 100 receipts", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-runtime-retention` });
+    for (let index = 0; index < 121; index += 1) await session.mutation(recordRuntimeEvaluation, evaluation(index));
+    const rows = await session.query(recentRuntimeEvaluations, { limit: 100 });
+    expect(rows).toHaveLength(100);
+    expect(rows[0].evalId).toBe("eval-120");
+    expect(rows.at(-1)?.evalId).toBe("eval-21");
+  });
+
+  test("adversarial oversized and invalid-digest receipts fail closed", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-runtime-invalid` });
+    const oversized = evaluation(1);
+    oversized.evaluation.selectedNodeIds = Array.from({ length: 201 }, (_, index) => `node-${index}`);
+    await expect(session.mutation(recordRuntimeEvaluation, oversized)).rejects.toThrow("RUNTIME_EVAL_COLLECTION_LIMIT_EXCEEDED");
+    const badDigest = evaluation(2);
+    badDigest.evaluation.sourceBindings[0].digest = "not-a-digest";
+    await expect(session.mutation(recordRuntimeEvaluation, badDigest)).rejects.toThrow("RUNTIME_EVAL_BINDING_INVALID");
   });
 });

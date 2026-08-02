@@ -16,6 +16,8 @@ const MAX_RETRIEVAL_CANDIDATES = 200;
 const MAX_RETRIEVAL_RELATIONS = 1_000;
 const MAX_RETRIEVAL_TOKENS = 24;
 const MAX_SOURCE_BINDINGS = 200;
+const MAX_RUNTIME_EVALUATIONS_PER_OWNER = 100;
+const MAX_RUNTIME_EVAL_LIST = 100;
 
 function retrievalTokens(value: string) {
   return [...new Set(value
@@ -304,6 +306,58 @@ export const recordResult = mutation({
     }
     await pruneOwnerHistory(ctx, ownerId);
     return { replayed: false, runId: args.run.runId };
+  },
+});
+
+const runtimeEvaluationArgs = {
+  evalId: v.string(),
+  caseId: v.string(),
+  benchmarkVersion: v.string(),
+  provider: v.union(v.literal("openai"), v.literal("openrouter")),
+  model: v.string(),
+  mode: v.union(v.literal("ask"), v.literal("agent"), v.literal("organize")),
+  disposition: v.union(v.literal("read_only"), v.literal("auto_apply"), v.literal("approval_required"), v.literal("preview_only")),
+  passed: v.boolean(),
+  reasons: v.array(v.string()),
+  toolOrder: v.array(v.string()),
+  operationKinds: v.array(v.string()),
+  selectedNodeIds: v.array(v.string()),
+  sourceBindings: v.array(v.object({ sourceId: v.string(), version: v.number(), digest: v.string() })),
+  proposalDigest: v.optional(v.string()),
+  inputTokens: v.union(v.number(), v.null()),
+  outputTokens: v.union(v.number(), v.null()),
+  totalTokens: v.union(v.number(), v.null()),
+  latencyMs: v.number(),
+  startedAtMs: v.number(),
+  completedAtMs: v.number(),
+};
+
+export const recordRuntimeEvaluation = mutation({
+  args: { evaluation: v.object(runtimeEvaluationArgs) },
+  handler: async (ctx, args) => {
+    const ownerId = await authenticatedOwner(ctx);
+    const value = args.evaluation;
+    if (value.evalId.length > 100 || value.caseId.length > 100 || value.benchmarkVersion.length > 100 || value.model.length > 200) throw new Error("RUNTIME_EVAL_STRING_LIMIT_EXCEEDED");
+    if (value.reasons.length > 20 || value.toolOrder.length > 20 || value.operationKinds.length > 30 || value.selectedNodeIds.length > 200 || value.sourceBindings.length > MAX_SOURCE_BINDINGS) throw new Error("RUNTIME_EVAL_COLLECTION_LIMIT_EXCEEDED");
+    if (value.reasons.some((reason) => reason.length > 1_000) || value.toolOrder.some((tool) => tool.length > 100) || value.operationKinds.some((kind) => kind.length > 100) || value.selectedNodeIds.some((id) => id.length > 200)) throw new Error("RUNTIME_EVAL_ITEM_LIMIT_EXCEEDED");
+    if (value.sourceBindings.some((binding) => binding.sourceId.length > 200 || !Number.isInteger(binding.version) || binding.version < 0 || !/^[a-f0-9]{64}$/i.test(binding.digest))) throw new Error("RUNTIME_EVAL_BINDING_INVALID");
+    if (value.proposalDigest && !/^[a-f0-9]{64}$/i.test(value.proposalDigest)) throw new Error("RUNTIME_EVAL_DIGEST_INVALID");
+    if (![value.latencyMs, value.startedAtMs, value.completedAtMs].every(Number.isFinite) || value.latencyMs < 0 || value.completedAtMs < value.startedAtMs) throw new Error("RUNTIME_EVAL_TIME_INVALID");
+    const existing = await ctx.db.query("agentRuntimeEvaluations").withIndex("by_owner_eval", (q) => q.eq("ownerId", ownerId).eq("evalId", value.evalId)).unique();
+    if (existing) return { replayed: true, evalId: existing.evalId };
+    await ctx.db.insert("agentRuntimeEvaluations", { ownerId, ...value });
+    const overflow = await ctx.db.query("agentRuntimeEvaluations").withIndex("by_owner_created", (q) => q.eq("ownerId", ownerId)).order("desc").take(MAX_RUNTIME_EVALUATIONS_PER_OWNER + 20);
+    for (const expired of overflow.slice(MAX_RUNTIME_EVALUATIONS_PER_OWNER)) await ctx.db.delete(expired._id);
+    return { replayed: false, evalId: value.evalId };
+  },
+});
+
+export const recentRuntimeEvaluations = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const ownerId = await authenticatedOwner(ctx);
+    const limit = Math.min(Math.max(Math.trunc(args.limit ?? 20), 1), MAX_RUNTIME_EVAL_LIST);
+    return ctx.db.query("agentRuntimeEvaluations").withIndex("by_owner_created", (q) => q.eq("ownerId", ownerId)).order("desc").take(limit);
   },
 });
 

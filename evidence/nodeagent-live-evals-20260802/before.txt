@@ -1,0 +1,8 @@
+Named proof: each locked Notion-authored case must execute through `executeWorkflowAgent` with its documented fixture, then persist an honest owner-scoped evaluation receipt without applying synthetic operations to the user's graph.
+
+Observed before implementation:
+- `evals/nodeagent-notion-parity.json` contains the six locked cases and their Notion provenance.
+- `convex/modelRouting.ts` sends a compact parity prompt directly to candidate models and scores their described disposition/tool/order output.
+- The benchmark never invokes `executeWorkflowAgent`, its planner loop, semantic validator, risk classifier, exact source bindings, or proposal digest.
+- No authenticated one-case live-eval endpoint or durable runtime-evaluation table exists.
+- Therefore the existing benchmark proves model compatibility only; it does not prove behavioral parity of the integrated NodeAgent runtime.
