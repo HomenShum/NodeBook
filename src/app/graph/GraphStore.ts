@@ -1988,7 +1988,7 @@ export class GraphStore {
         relation.from.pinnedRelationsList.delete(relation.id);
         relation.from.noteContentRelationsList.delete(relation.id);
       }
-      relation.update({ from: newFrom, version: relation.version });
+      relation.update({ from: newFrom, version: relation.version + 1 });
 
       relation.from.allRelationsList.add(relation, after);
       if (relation.from.canonicalRelationId === null) {
@@ -2062,7 +2062,7 @@ export class GraphStore {
         relation.to.pinnedRelationsList.delete(relation.id);
         relation.to.noteContentRelationsList.delete(relation.id);
       }
-      relation.update({ to: newTo, version: relation.version });
+      relation.update({ to: newTo, version: relation.version + 1 });
 
       if (!retainRelationCount) {
         if (newTo instanceof GraphNode) {

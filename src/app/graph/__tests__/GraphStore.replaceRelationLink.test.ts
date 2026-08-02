@@ -47,6 +47,7 @@ describe("GraphStore.replaceRelationLink", () => {
     });
 
     expect(relationAB.from).toBe(nodeC);
+    expect(relationAB.version).toBe(2);
     expect(nodeA.relations).toHaveLength(1);
     expect(nodeA.relations).not.toEqual(expect.arrayContaining([relationAB]));
     expect(nodeC.relations).toHaveLength(3);
