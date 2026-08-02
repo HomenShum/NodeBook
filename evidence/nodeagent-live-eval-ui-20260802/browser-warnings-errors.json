@@ -1,0 +1,74 @@
+[
+  {
+    "level": "warn",
+    "message": "MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 close listeners added. Use emitter.setMaxListeners() to increase limit",
+    "timestamp": "2026-08-02T04:34:13.523Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 end listeners added. Use emitter.setMaxListeners() to increase limit",
+    "timestamp": "2026-08-02T04:34:13.524Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "ObjectMultiplex - orphaned data for stream \"app-init-liveness\"",
+    "timestamp": "2026-08-02T04:34:13.524Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "ObjectMultiplex - orphaned data for stream \"app-init-liveness\"",
+    "timestamp": "2026-08-02T04:34:13.524Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "ObjectMultiplex - orphaned data for stream \"background-liveness\"",
+    "timestamp": "2026-08-02T04:34:13.524Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "ObjectMultiplex - orphaned data for stream \"background-liveness\"",
+    "timestamp": "2026-08-02T04:34:13.524Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 close listeners added. Use emitter.setMaxListeners() to increase limit",
+    "timestamp": "2026-08-02T04:34:14.805Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 end listeners added. Use emitter.setMaxListeners() to increase limit",
+    "timestamp": "2026-08-02T04:34:14.805Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "ObjectMultiplex - orphaned data for stream \"app-init-liveness\"",
+    "timestamp": "2026-08-02T04:34:14.874Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "ObjectMultiplex - orphaned data for stream \"app-init-liveness\"",
+    "timestamp": "2026-08-02T04:34:14.878Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "ObjectMultiplex - orphaned data for stream \"background-liveness\"",
+    "timestamp": "2026-08-02T04:34:14.878Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  },
+  {
+    "level": "warn",
+    "message": "ObjectMultiplex - orphaned data for stream \"background-liveness\"",
+    "timestamp": "2026-08-02T04:34:14.878Z",
+    "url": "chrome-extension://nkbihfbeogaeaoehlefnkodbefgpgknn/scripts/contentscript.js"
+  }
+]
