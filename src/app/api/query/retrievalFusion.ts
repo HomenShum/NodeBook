@@ -15,7 +15,13 @@ export function fuseRetrievedContext(
 ) {
   const boundedLimit = Math.min(Math.max(Math.trunc(limit), 1), 200);
   const merged = new Map<string, AgentContextNode & { semanticScore?: number }>();
-  for (const node of primary) merged.set(node.sourceId, { ...node, retrievalSignals: [...new Set(node.retrievalSignals ?? [])].sort() });
+  for (const node of primary) {
+    const existing = merged.get(node.sourceId);
+    merged.set(node.sourceId, {
+      ...(existing ?? node),
+      retrievalSignals: [...new Set([...(existing?.retrievalSignals ?? []), ...(node.retrievalSignals ?? [])])].sort(),
+    });
+  }
   for (const node of semantic.nodes) {
     const existing = merged.get(node.sourceId);
     merged.set(node.sourceId, {
@@ -28,7 +34,7 @@ export function fuseRetrievedContext(
   const lexicalAnchors = primary
     .filter((node) => (node.retrievalSignals ?? []).some((signal) => signal === "current_node" || signal === "full_text"))
     .slice(0, 16);
-  const workflowAnchors = primary
+  const workflowAnchors = [...merged.values()]
     .filter((node) => (node.retrievalSignals ?? []).includes("semantic_cluster"))
     .slice(0, 12);
   const orderedIds = [...workflowAnchors, ...lexicalAnchors, ...semantic.nodes, ...primary].map((node) => node.sourceId);

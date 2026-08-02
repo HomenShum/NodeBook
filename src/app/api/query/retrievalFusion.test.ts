@@ -55,6 +55,7 @@ describe("NodeAgent hybrid retrieval fusion", () => {
       node("large-lexical-anchor", ["full_text"]),
       node("cluster-a", ["semantic_cluster"]),
       node("cluster-b", ["semantic_cluster"]),
+      node("cluster-a", ["lexical"]),
     ], semantic, 40);
 
     expect(rows.map((row) => row.sourceId)).toEqual([
@@ -63,6 +64,7 @@ describe("NodeAgent hybrid retrieval fusion", () => {
       "large-lexical-anchor",
       "semantic-general",
     ]);
+    expect(rows[0].retrievalSignals).toEqual(["lexical", "semantic_cluster"]);
   });
 
   test("a noisy sustained notebook cannot expand provider context beyond the mode bound", () => {
