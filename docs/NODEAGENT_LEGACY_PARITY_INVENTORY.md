@@ -11,7 +11,7 @@ The earlier ledger used **Replaced** too broadly. A generic instruction or adjac
 | Prior claim | Correct current state |
 |---|---|
 | Specialized research/organization/profile behavior was ported through instructions | Until 2026-08-02, `run_specialized_workflow` returned only candidate IDs and the final model had to invent all operation structure. It now has deterministic legacy SOP stages plus typed operation contracts; scenario tests pass and renewed production receipts remain required. |
-| `create_knowledge_map` was replaced by the connect workflow | **Missing.** A two-node connection is not semantic embedding, clustering, and knowledge-map materialization. The React Flow verification map is evidence UI, not a replacement for this workflow. |
+| `create_knowledge_map` was replaced by the connect workflow | **Corrected and proven 2026-08-02.** The sole engine now performs owner-scoped embedding retrieval, deterministic bounded clustering, and reversible hierarchy materialization. Production Auto apply, reload, Undo, and reload were observed; React Flow remains evidence UI rather than the workflow implementation. |
 | Company/person deep dives and report outline/population were replaced by generic research | **Partial or missing.** Container-first graph operations exist, but the named multi-search, structured entity synthesis, and two-stage report behaviors have not been demonstrated. |
 | Durable steps fully ported streaming events | **Ported.** The sole `/api/query` engine now emits bounded `thought`, `tool_call`, `tool_result`, `client_action`, `final_summary`, `error`, and `end` SSE events while preserving the durable step/receipt record. Authenticated production proof captured the tool trace before the final receipt on 2026-08-02. |
 | Typed memory fully replaced legacy memory UX | **Partial.** Bounded owner-scoped typed records exist, but visible graph projections plus complete inspect/pin/forget user flows remain unfinished. |
@@ -57,7 +57,7 @@ Disposition meanings:
 | `get_company_profile` | Google | Replaced | Existing-note retrieval and exact-node inspection supersede a domain-specific getter. |
 | `get_person_profile` | Google | Replaced | Existing-note retrieval and exact-node inspection supersede a domain-specific getter. |
 | `research_and_create_notes` | Google | Replaced / proof pending | Research workflow emits typed container/child operations. |
-| `create_knowledge_map` | Both | Deferred / missing | No integrated embedding, clustering, and hierarchy-materialization workflow exists. |
+| `create_knowledge_map` | Both | Ported and live-proven | Owner-scoped `text-embedding-3-small` vectors feed deterministic 2–5 cluster construction over at most 12 notes. The sole workflow emits one bounded typed create/move contract; production proved 12 evidence nodes, 2 clusters, 15 operations, durable Auto apply, reload, Undo, and clean reload. |
 | `analyze_and_reorganize_notes` | Google internal | Replaced / proof pending | Organization workflow operates on a bounded index; meeting-note live case remains pending. |
 | `find_and_intelligently_clone_nodes` | Google | Replaced / proof pending | Search/reuse policy plus typed `clone_node_hierarchy`; existing-profile live case remains pending. |
 | `batch_clone_nodes` | Google internal | Replaced | One bounded typed operation list and whole-run checkpoint replace an unbounded batch helper. |
@@ -83,7 +83,7 @@ Disposition meanings:
 
 | Legacy workflow | Required preserved behavior | Current state |
 |---|---|---|
-| Search broadly → inspect clues → traverse graph → specialize → finish | Iterative, bounded, notebook-first sensemaking | Deterministic stage enforcement now prevents repeated searches from exhausting the four-step budget; production trace proof pending. |
+| Search broadly → inspect clues → traverse graph → specialize → finish | Iterative, bounded, notebook-first sensemaking | Live production trace proved `find_nodes → semantic_retrieval → find_related_nodes_via_graph → create_knowledge_map → finish_investigation → synthesize_from_notebook → validate_proposal → finish_work`. Specialized evidence is signal-preserving and prioritized within the same 40-node/byte bounds. |
 | SOP A: hybrid synthesis | Combine multiple existing notes without duplication | Live in production: lexical/current-root anchors, vector similarity, graph expansion, recency/scope fusion, exact citations, and a durable semantic-retrieval receipt. Signed Notion-derived case matched 4 semantic notes and refreshed 24 owner-scoped embeddings on 2026-08-02. |
 | SOP B: deep knowledge organization | Create one container before children and preserve hierarchy | Typed specialized operation contract implemented; live Notion proof pending. |
 | SOP C: multi-entity research | Reuse existing entity profiles and research only gaps | Typed clone/create operation contract implemented; live Notion proof pending. |
