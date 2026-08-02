@@ -1,5 +1,10 @@
 # NodeAgent runtime verification
 
+## 2026-08-02 — Replace the graph spike with React Flow
+Remove the hand-authored SVG renderer and use the MIT-licensed React Flow 12 node, edge, viewport, fit-view, focus, and accessibility primitives. Keep the graph read-only and bounded to seven nodes and six receipt-derived edges.
+**Commit**: `this commit`. **Author**: Codex.
+**Touches**: `evidence/nodeagent-live-eval-ui-20260802/graph-library-decision.md`
+
 ## 2026-08-02 — Keep SVG evidence legible in NodeBook themes
 Use NodeBook's defined gray scale for idle node fills and the NodeAgent core label so the relationship map does not fall back to black-on-black SVG defaults.
 **Commit**: `this commit`. **Author**: Codex.

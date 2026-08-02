@@ -43,6 +43,7 @@
     "@sentry/nextjs": "^8",
     "@tanstack/react-virtual": "^3.13.0",
     "@tweenjs/tween.js": "^25.0.0",
+    "@xyflow/react": "12.11.2",
     "add": "^2.0.6",
     "ahooks": "^3.8.4",
     "ai": "^4.3.0",

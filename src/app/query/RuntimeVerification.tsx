@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, Check, ChevronRight, Loader2, Play, RotateCcw, Square } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/app/components/UIPrimitives/Button";
 import { getAuthFetch } from "@/app/util";
@@ -56,6 +56,7 @@ export default function RuntimeVerification() {
   const summary = runtimeEvalSummary(receipts, history?.cases.length ?? 6);
   const byCase = useMemo(() => receiptMap(receipts), [receipts]);
   const models = [...new Set(receipts.map((receipt) => `${receipt.provider} · ${receipt.model}`))];
+  const statusForCase = useCallback((caseId: string) => runtimeCaseStatus(caseId, receipts, currentCase?.caseId ?? null), [currentCase?.caseId, receipts]);
 
   const fetchCase = async (caseId: string, activeSuiteId: string) => {
     const response = await getAuthFetch()("/api/query/evals", {
@@ -110,7 +111,7 @@ export default function RuntimeVerification() {
     <div className={styles.runtimeVerificationBody} aria-live="polite">
       <p>Six locked legacy-parity cases run through the production NodeAgent engine using synthetic fixtures. They never apply graph changes.</p>
       {history && <>
-        <RuntimeSynapseMap cases={history.cases} statusForCase={(caseId) => runtimeCaseStatus(caseId, receipts, currentCase?.caseId ?? null)} />
+        <RuntimeSynapseMap cases={history.cases} statusForCase={statusForCase} />
         <dl className={styles.runtimeMetrics} aria-label="Runtime verification summary">
           <div><dt>Passed</dt><dd>{summary.passed}</dd></div>
           <div><dt>Failed</dt><dd>{summary.failed}</dd></div>

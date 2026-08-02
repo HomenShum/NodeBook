@@ -1,16 +1,18 @@
-import React from "react";
+import { Edge, Node, ReactFlow } from "@xyflow/react";
+import React, { useMemo } from "react";
 
 import { RuntimeCaseStatus, RuntimeEvalCase } from "./runtimeVerificationState";
 
+import "@xyflow/react/dist/base.css";
 import styles from "./page.module.css";
 
 const POSITIONS = [
-  { x: 48, y: 38 },
-  { x: 160, y: 22 },
-  { x: 272, y: 38 },
-  { x: 272, y: 142 },
-  { x: 160, y: 158 },
-  { x: 48, y: 142 },
+  { x: 16, y: 22 },
+  { x: 144, y: 2 },
+  { x: 272, y: 22 },
+  { x: 272, y: 126 },
+  { x: 144, y: 146 },
+  { x: 16, y: 126 },
 ] as const;
 
 export default function RuntimeSynapseMap({
@@ -20,28 +22,76 @@ export default function RuntimeSynapseMap({
   cases: RuntimeEvalCase[];
   statusForCase: (caseId: string) => RuntimeCaseStatus;
 }) {
-  const statusSummary = cases.map((testCase) => `${testCase.title}: ${statusForCase(testCase.caseId)}`).join("; ");
+  const graph = useMemo(() => {
+    const visibleCases = cases.slice(0, POSITIONS.length);
+    const nodes: Node[] = [
+      {
+        id: "nodeagent",
+        type: "group",
+        position: { x: 132, y: 61 },
+        data: { label: <><span>NODE</span><span>AGENT</span></> },
+        className: `${styles.runtimeFlowNode} ${styles.runtimeFlowNodeCore}`,
+        draggable: false,
+        selectable: false,
+        focusable: true,
+        ariaLabel: "NodeAgent",
+        ariaRole: "img",
+      },
+      ...visibleCases.map((testCase, index): Node => {
+        const status = statusForCase(testCase.caseId);
+        const stateClass = status === "idle" ? "" : styles[`runtimeFlowNode_${status}`];
+        return {
+          id: `case-${testCase.caseId}`,
+          type: "group",
+          position: POSITIONS[index],
+          data: { label: index + 1 },
+          className: `${styles.runtimeFlowNode} ${stateClass}`,
+          draggable: false,
+          selectable: false,
+          focusable: true,
+          ariaLabel: `${testCase.title}: ${status}`,
+          ariaRole: "img",
+        };
+      }),
+    ];
+    const edges: Edge[] = visibleCases.map((testCase) => {
+      const status = statusForCase(testCase.caseId);
+      const stateClass = status === "idle" ? "" : styles[`runtimeFlowEdge_${status}`];
+      return {
+        id: `nodeagent-${testCase.caseId}`,
+        source: "nodeagent",
+        target: `case-${testCase.caseId}`,
+        type: "straight",
+        className: `${styles.runtimeFlowEdge} ${stateClass}`,
+        focusable: false,
+        selectable: false,
+        ariaLabel: `${testCase.title} connection: ${status}`,
+      };
+    });
+    return { nodes, edges };
+  }, [cases, statusForCase]);
 
   return <figure className={styles.runtimeMap} data-testid="runtime-eval-map">
-    <svg viewBox="0 0 320 180" role="img" aria-labelledby="runtime-map-title runtime-map-description">
-      <title id="runtime-map-title">NodeAgent legacy-parity runtime map</title>
-      <desc id="runtime-map-description">NodeAgent connects to six locked cases. {statusSummary}</desc>
-      {cases.slice(0, POSITIONS.length).map((testCase, index) => {
-        const position = POSITIONS[index];
-        const status = statusForCase(testCase.caseId);
-        const edgeStateClass = status === "idle" ? "" : styles[`runtimeMapEdge_${status}`];
-        const nodeStateClass = status === "idle" ? "" : styles[`runtimeMapNode_${status}`];
-        return <g key={testCase.caseId} data-status={status}>
-          <line className={`${styles.runtimeMapEdge} ${edgeStateClass}`} x1="160" y1="90" x2={position.x} y2={position.y} />
-          <circle className={`${styles.runtimeMapNode} ${nodeStateClass}`} cx={position.x} cy={position.y} r="13" />
-          <text className={styles.runtimeMapIndex} x={position.x} y={position.y + 4} textAnchor="middle">{index + 1}</text>
-        </g>;
-      })}
-      <circle className={styles.runtimeMapCoreHalo} cx="160" cy="90" r="29" />
-      <circle className={styles.runtimeMapCore} cx="160" cy="90" r="22" />
-      <text className={styles.runtimeMapCoreLabel} x="160" y="87" textAnchor="middle">NODE</text>
-      <text className={styles.runtimeMapCoreLabel} x="160" y="99" textAnchor="middle">AGENT</text>
-    </svg>
+    <div className={styles.runtimeFlowCanvas}>
+      <ReactFlow
+        aria-label="NodeAgent legacy-parity runtime map"
+        nodes={graph.nodes}
+        edges={graph.edges}
+        fitView
+        fitViewOptions={{ padding: 0.12, minZoom: 0.8, maxZoom: 1.35 }}
+        nodesDraggable={false}
+        nodesConnectable={false}
+        elementsSelectable={false}
+        edgesFocusable={false}
+        panOnDrag={false}
+        zoomOnScroll={false}
+        zoomOnPinch={false}
+        zoomOnDoubleClick={false}
+        preventScrolling={false}
+        autoPanOnNodeFocus={false}
+        proOptions={{ hideAttribution: true }}
+      />
+    </div>
     <figcaption><span><i data-status="running" />Running</span><span><i data-status="passed" />Pass</span><span><i data-status="failed" />Fail</span><span><i data-status="idle" />Not run</span></figcaption>
   </figure>;
 }
