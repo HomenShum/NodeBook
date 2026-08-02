@@ -88,27 +88,6 @@ export const searchNodesReference = makeFunctionReference<
   { text: string; limit?: number },
   string[]
 >("graph:searchNodes");
-export const recordAgentRunReference = makeFunctionReference<
-  "mutation",
-  {
-    runId: string;
-    traceId?: string;
-    status: "completed" | "failed";
-    provider: "openai" | "openrouter";
-    model: string;
-    mode: "read-only";
-    query: string;
-    sourceNodeIds: string[];
-    inputTokens: number | null;
-    outputTokens: number | null;
-    totalTokens: number | null;
-    error?: string;
-    startedAt: string;
-    completedAt: string;
-    startedAtMs: number;
-  },
-  any
->("agentRuns:record");
 export const agentContextSnapshotReference = makeFunctionReference<
   "query",
   { text: string; mode: "ask" | "agent" | "organize"; limit?: number; rootNodeId?: string },

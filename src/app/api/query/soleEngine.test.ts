@@ -45,4 +45,15 @@ describe("NodeAgent sole-engine gate", () => {
     expect(legacyClasses).toEqual([]);
     expect(duplicateRoutes).toEqual([]);
   });
+
+  test("the integrated workflow mutation is the only durable agent-run writer", () => {
+    const convexRoot = path.resolve(process.cwd(), "convex");
+    const writers = sourceFiles(convexRoot)
+      .filter((file) => readFileSync(file, "utf8").includes('ctx.db.insert("agentRuns"'))
+      .map((file) => path.relative(convexRoot, file).replaceAll("\\", "/"))
+      .sort();
+
+    expect(writers).toEqual(["agentWorkflows.ts"]);
+    expect(() => statSync(path.join(convexRoot, "agentRuns.ts"))).toThrow();
+  });
 });

@@ -242,14 +242,24 @@ describe("NodeAgent typed memory", () => {
     for (let index = 0; index < 225; index += 1) {
       await session.mutation(recordResult, result(`run-${index}`, "completed", "ask"));
     }
-    const count = await session.run(async (ctx) => (await ctx.db.query("agentMemories").collect()).length);
-    const oldest = await session.run(async (ctx) => ctx.db
-      .query("agentMemories")
-      .withIndex("by_owner_created", (q) => q.eq("ownerId", `${owner}-sustained`))
-      .order("asc")
-      .first());
-    expect(count).toBe(200);
-    expect(oldest?.runId).toBe("run-25");
+    const retained = await session.run(async (ctx) => ({
+      memories: await ctx.db.query("agentMemories").collect(),
+      runs: await ctx.db.query("agentRuns").collect(),
+      oldestMemory: await ctx.db
+        .query("agentMemories")
+        .withIndex("by_owner_created", (q) => q.eq("ownerId", `${owner}-sustained`))
+        .order("asc")
+        .first(),
+      oldestRun: await ctx.db
+        .query("agentRuns")
+        .withIndex("by_owner_started", (q) => q.eq("ownerId", `${owner}-sustained`))
+        .order("asc")
+        .first(),
+    }));
+    expect(retained.memories).toHaveLength(200);
+    expect(retained.runs).toHaveLength(200);
+    expect(retained.oldestMemory?.runId).toBe("run-25");
+    expect(retained.oldestRun?.runId).toBe("run-25");
   }, 15_000);
 });
 

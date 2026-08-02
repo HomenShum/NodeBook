@@ -26,8 +26,6 @@ const recentTransactions = makeFunctionReference<
   { ownerCursor: string; publicCursor: string; limit?: number },
   any
 >("graph:recentTransactions");
-const recordAgentRun = makeFunctionReference<"mutation", any, any>("agentRuns:record");
-const recentAgentRuns = makeFunctionReference<"query", { limit?: number }, any[]>("agentRuns:recent");
 const beginChunkedNodeUpdate = makeFunctionReference<"mutation", any, any>("chunkedNodeUpdates:begin");
 const uploadChunkedNodePart = makeFunctionReference<"mutation", any, any>("chunkedNodeUpdates:uploadPart");
 const finalizeChunkedNodeUpdate = makeFunctionReference<"mutation", any, any>("chunkedNodeUpdates:finalize");
@@ -582,44 +580,4 @@ describe("NodeBook Convex production contract", () => {
     expect(survivingOwners).toEqual([otherOwner]);
   });
 
-  test("a sustained agent user retains a bounded private receipt ledger with idempotent run IDs", async () => {
-    const database = convexTest(schema, modules);
-    const ownerSession = database.withIdentity({ subject: owner });
-    const record = (index: number) => ({
-      runId: `run-${index}`,
-      status: "completed" as const,
-      provider: "openai" as const,
-      model: "gpt-5-mini",
-      mode: "read-only" as const,
-      query: `Question ${index}`,
-      sourceNodeIds: [`node-${index}`],
-      inputTokens: 10,
-      outputTokens: 5,
-      totalTokens: 15,
-      startedAt: new Date(index).toISOString(),
-      completedAt: new Date(index + 1).toISOString(),
-      startedAtMs: index,
-    });
-    await database.run(async (ctx) => {
-      for (let index = 0; index < 200; index++) {
-        await ctx.db.insert("agentRuns", { ownerId: owner, ...record(index) });
-      }
-    });
-    await ownerSession.mutation(recordAgentRun, record(200));
-    await ownerSession.mutation(recordAgentRun, record(200));
-
-    const recent = await ownerSession.query(recentAgentRuns, { limit: 50 });
-    expect(recent).toHaveLength(50);
-    expect(recent[0].runId).toBe("run-200");
-    const retained = await database.run(async (ctx) =>
-      ctx.db
-        .query("agentRuns")
-        .withIndex("by_owner_started", (q) => q.eq("ownerId", owner))
-        .collect(),
-    );
-    expect(retained).toHaveLength(200);
-    expect(retained.some((run) => run.runId === "run-0")).toBe(false);
-    const otherSession = database.withIdentity({ subject: otherOwner });
-    expect(await otherSession.query(recentAgentRuns, { limit: 50 })).toEqual([]);
-  });
 });
