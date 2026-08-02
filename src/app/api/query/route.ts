@@ -20,6 +20,7 @@ import {
 } from "@/lib/convexServer";
 
 import { runOpenAI, runOpenAIEmbeddings } from "./openAIProvider";
+import { chunkEmbeddingWrites } from "./embeddingBoundary";
 import { fuseRetrievedContext, SemanticContextResult } from "./retrievalFusion";
 import {
   AgentMode,
@@ -95,11 +96,15 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
         input: [parsed.data.query, ...embeddingWork.map((item) => item.contentText)],
         timeoutMs: 8_000,
       });
-      const stored = embeddingWork.length > 0
-        ? await convex.mutation(storeAgentEmbeddingsReference, {
-          items: embeddingWork.map((item, index) => ({ ...item, embedding: embeddingResult.embeddings[index + 1] })),
-        })
-        : { stored: 0 };
+      const embeddingWrites = embeddingWork.map((item, index) => ({
+        ...item,
+        embedding: embeddingResult.embeddings[index + 1],
+      }));
+      let storedCount = 0;
+      for (const items of chunkEmbeddingWrites(embeddingWrites)) {
+        const stored = await convex.mutation(storeAgentEmbeddingsReference, { items });
+        storedCount += stored.stored;
+      }
       const semanticNodes = await convex.action(agentSemanticContextReference, {
         queryEmbedding: embeddingResult.embeddings[0],
         limit: 12,
@@ -107,7 +112,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       semanticContext = {
         status: "ready",
         model: embeddingResult.model,
-        indexedCount: stored.stored,
+        indexedCount: storedCount,
         nodes: semanticNodes,
       };
     } catch (error) {

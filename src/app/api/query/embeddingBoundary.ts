@@ -1,5 +1,14 @@
 export const OPENAI_EMBEDDING_MODEL = "text-embedding-3-small";
 export const OPENAI_EMBEDDING_DIMENSIONS = 1536;
+export const EMBEDDING_STORE_CHUNK_SIZE = 4;
+
+export function chunkEmbeddingWrites<T>(items: T[]) {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += EMBEDDING_STORE_CHUNK_SIZE) {
+    chunks.push(items.slice(index, index + EMBEDDING_STORE_CHUNK_SIZE));
+  }
+  return chunks;
+}
 
 export function parseEmbeddingResponse(body: unknown, expectedCount: number) {
   const rows = Array.isArray((body as { data?: unknown[] })?.data)
