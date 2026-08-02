@@ -214,6 +214,11 @@ export const getAgentModelStepReference = makeFunctionReference<
   { traceId: string; stepKey: string; inputDigest: string },
   { responseJson: string; outputDigest: string; replayed: true } | null
 >("agentStepJournal:get");
+export const claimAgentModelStepReference = makeFunctionReference<
+  "mutation",
+  { traceId: string; stepKey: string; inputDigest: string; provider: "openai" | "openrouter"; model: string; nowMs: number; leaseMs: number },
+  { status: "claimed" | "in_progress" | "replayed"; responseJson?: string }
+>("agentStepJournal:claim");
 export const recordAgentModelStepReference = makeFunctionReference<
   "mutation",
   {
@@ -228,6 +233,11 @@ export const recordAgentModelStepReference = makeFunctionReference<
   },
   { responseJson: string; outputDigest: string; replayed: boolean }
 >("agentStepJournal:record");
+export const releaseAgentModelStepReference = makeFunctionReference<
+  "mutation",
+  { traceId: string; stepKey: string; inputDigest: string },
+  { released: boolean }
+>("agentStepJournal:release");
 export const recentAgentRuntimeEvaluationsReference = makeFunctionReference<
   "query",
   { limit?: number },

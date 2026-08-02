@@ -33,7 +33,9 @@ const contextSnapshot = makeFunctionReference<
 const recordRuntimeEvaluation = makeFunctionReference<"mutation", any, any>("agentWorkflows:recordRuntimeEvaluation");
 const recentRuntimeEvaluations = makeFunctionReference<"query", { limit?: number }, any>("agentWorkflows:recentRuntimeEvaluations");
 const getJournalStep = makeFunctionReference<"query", any, any>("agentStepJournal:get");
+const claimJournalStep = makeFunctionReference<"mutation", any, any>("agentStepJournal:claim");
 const recordJournalStep = makeFunctionReference<"mutation", any, any>("agentStepJournal:record");
+const releaseJournalStep = makeFunctionReference<"mutation", any, any>("agentStepJournal:release");
 
 const owner = "auth0|nodeagent-memory-owner";
 
@@ -531,6 +533,25 @@ describe("NodeAgent exactly-once provider journal", () => {
     expect(await session.query(getJournalStep, { traceId: first.traceId, stepKey: first.stepKey, inputDigest: first.inputDigest }))
       .toMatchObject({ replayed: true, responseJson: first.responseJson });
     expect(await other.query(getJournalStep, { traceId: first.traceId, stepKey: first.stepKey, inputDigest: first.inputDigest })).toBeNull();
+  });
+
+  test("a durable lease permits one simultaneous provider caller and replays after completion", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-journal-lease` });
+    const first = entry(1);
+    const claim = { traceId: first.traceId, stepKey: first.stepKey, inputDigest: first.inputDigest, provider: first.provider, model: first.model, nowMs: 1_000, leaseMs: 30_000 };
+    expect(await session.mutation(claimJournalStep, claim)).toEqual({ status: "claimed" });
+    expect(await session.mutation(claimJournalStep, { ...claim, nowMs: 2_000 })).toEqual({ status: "in_progress" });
+    expect(await session.mutation(recordJournalStep, first)).toMatchObject({ replayed: false });
+    expect(await session.mutation(claimJournalStep, { ...claim, nowMs: 3_000 })).toMatchObject({ status: "replayed", responseJson: first.responseJson });
+  });
+
+  test("a provider failure releases its lease so an immediate retry can claim the step", async () => {
+    const session = convexTest(schema, modules).withIdentity({ subject: `${owner}-journal-release` });
+    const first = entry(1);
+    const claim = { traceId: first.traceId, stepKey: first.stepKey, inputDigest: first.inputDigest, provider: first.provider, model: first.model, nowMs: 1_000, leaseMs: 30_000 };
+    await session.mutation(claimJournalStep, claim);
+    expect(await session.mutation(releaseJournalStep, { traceId: first.traceId, stepKey: first.stepKey, inputDigest: first.inputDigest })).toEqual({ released: true });
+    expect(await session.mutation(claimJournalStep, { ...claim, nowMs: 2_000 })).toEqual({ status: "claimed" });
   });
 
   test("a sustained trace cannot grow beyond 100 provider steps", async () => {

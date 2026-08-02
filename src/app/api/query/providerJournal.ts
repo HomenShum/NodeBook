@@ -58,6 +58,15 @@ export async function runJournaledProvider(args: {
   traceId: string;
   providerInput: JournaledProviderInput;
   read: (identity: { traceId: string; stepKey: string; inputDigest: string }) => Promise<{ responseJson: string } | null>;
+  claim: (entry: {
+    traceId: string;
+    stepKey: string;
+    inputDigest: string;
+    provider: "openai" | "openrouter";
+    model: string;
+    nowMs: number;
+    leaseMs: number;
+  }) => Promise<{ status: "claimed" | "in_progress" | "replayed"; responseJson?: string }>;
   run: () => Promise<JournaledProviderResponse>;
   record: (entry: {
     traceId: string;
@@ -69,21 +78,37 @@ export async function runJournaledProvider(args: {
     responseJson: string;
     createdAtMs: number;
   }) => Promise<{ responseJson: string }>;
+  release: (identity: { traceId: string; stepKey: string; inputDigest: string }) => Promise<unknown>;
 }) {
   const identity = { traceId: args.traceId, ...providerJournalIdentity(args.providerInput) };
   const replay = await args.read(identity);
   if (replay) return parseResponse(replay.responseJson);
 
-  const fresh = JournaledProviderResponseSchema.parse(await args.run()) as JournaledProviderResponse;
-  const responseJson = JSON.stringify(fresh);
-  if (Buffer.byteLength(responseJson, "utf8") > MAX_JOURNAL_RESPONSE_BYTES) throw new Error("Journaled provider response exceeded the size limit");
-  const canonical = await args.record({
+  const claim = await args.claim({
     ...identity,
-    outputDigest: digest(fresh),
     provider: args.providerInput.provider,
-    model: fresh.actualModel,
-    responseJson,
-    createdAtMs: Date.now(),
+    model: args.providerInput.model,
+    nowMs: Date.now(),
+    leaseMs: Math.min(Math.max(args.providerInput.timeoutMs + 5_000, 1_000), 120_000),
   });
-  return parseResponse(canonical.responseJson);
+  if (claim.status === "replayed" && claim.responseJson) return parseResponse(claim.responseJson);
+  if (claim.status === "in_progress") throw new Error("JOURNAL_STEP_IN_PROGRESS");
+
+  try {
+    const fresh = JournaledProviderResponseSchema.parse(await args.run()) as JournaledProviderResponse;
+    const responseJson = JSON.stringify(fresh);
+    if (Buffer.byteLength(responseJson, "utf8") > MAX_JOURNAL_RESPONSE_BYTES) throw new Error("Journaled provider response exceeded the size limit");
+    const canonical = await args.record({
+      ...identity,
+      outputDigest: digest(fresh),
+      provider: args.providerInput.provider,
+      model: fresh.actualModel,
+      responseJson,
+      createdAtMs: Date.now(),
+    });
+    return parseResponse(canonical.responseJson);
+  } catch (error) {
+    try { await args.release(identity); } catch { /* Preserve the provider failure; the lease remains bounded. */ }
+    throw error;
+  }
 }

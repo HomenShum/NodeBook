@@ -15,11 +15,13 @@ import {
   agentMemoryContextReference,
   agentModelRouteReference,
   agentSemanticContextReference,
+  claimAgentModelStepReference,
   getAgentModelStepReference,
   getAgentRunIdentityReference,
   getBearerToken,
   getConvexClient,
   recordAgentModelStepReference,
+  releaseAgentModelStepReference,
   recordAgentWorkflowReference,
   reportAgentModelOutcomeReference,
   storeAgentEmbeddingsReference,
@@ -167,8 +169,10 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
           traceId: runId,
           providerInput,
           read: (identity) => convex.query(getAgentModelStepReference, identity),
+          claim: (entry) => convex.mutation(claimAgentModelStepReference, entry),
           run: () => runOpenAI(providerInput),
           record: (entry) => convex.mutation(recordAgentModelStepReference, entry),
+          release: (identity) => convex.mutation(releaseAgentModelStepReference, identity),
         });
       };
       const result = await executeWorkflowAgent(
@@ -316,7 +320,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       console.error("NodeBook agent run failed", error);
       captureException(error, { user: { id: request.userId } });
       const knowledgeMapFailure = message.startsWith("KNOWLEDGE_MAP_INSUFFICIENT_NODES");
-      const requestConflict = /RUN_ID_REUSE_CONFLICT|JOURNAL_INPUT_MISMATCH/.test(message);
+      const requestConflict = /RUN_ID_REUSE_CONFLICT|JOURNAL_INPUT_MISMATCH|JOURNAL_STEP_IN_PROGRESS/.test(message);
       return {
         status: requestConflict ? 409 as const : knowledgeMapFailure ? 422 as const : 502 as const,
         body: {

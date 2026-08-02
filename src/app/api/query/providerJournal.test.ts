@@ -24,8 +24,10 @@ describe("NodeAgent provider step journal", () => {
       traceId: "trace-retry",
       providerInput,
       read: async () => ({ responseJson: JSON.stringify(response) }),
+      claim: async () => ({ status: "claimed" }),
       run,
       record,
+      release: async () => undefined,
     });
 
     expect(replayed).toEqual(response);
@@ -39,8 +41,10 @@ describe("NodeAgent provider step journal", () => {
       traceId: "trace-race",
       providerInput,
       read: async () => null,
+      claim: async () => ({ status: "claimed" }),
       run: async () => response,
       record: async () => ({ responseJson: JSON.stringify(canonical) }),
+      release: async () => undefined,
     });
 
     expect(observed).toEqual(canonical);
@@ -49,5 +53,19 @@ describe("NodeAgent provider step journal", () => {
   test("equivalent structured inputs produce one deterministic step key", () => {
     const reordered = { ...providerInput, outputSchema: { properties: { answer: { type: "string" } }, type: "object" } };
     expect(providerJournalIdentity(reordered)).toEqual(providerJournalIdentity(providerInput));
+  });
+
+  test("a simultaneous retry stops at the durable lease before calling the provider", async () => {
+    const run = jest.fn(async () => response);
+    await expect(runJournaledProvider({
+      traceId: "trace-leased",
+      providerInput,
+      read: async () => null,
+      claim: async () => ({ status: "in_progress" }),
+      run,
+      record: async () => ({ responseJson: JSON.stringify(response) }),
+      release: async () => undefined,
+    })).rejects.toThrow("JOURNAL_STEP_IN_PROGRESS");
+    expect(run).not.toHaveBeenCalled();
   });
 });

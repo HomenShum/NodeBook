@@ -325,10 +325,12 @@ export default defineSchema({
     traceId: v.string(),
     stepKey: v.string(),
     inputDigest: v.string(),
-    outputDigest: v.string(),
+    outputDigest: v.optional(v.string()),
     provider: v.union(v.literal("openai"), v.literal("openrouter")),
     model: v.string(),
-    responseJson: v.string(),
+    state: v.optional(v.union(v.literal("pending"), v.literal("completed"))),
+    responseJson: v.optional(v.string()),
+    leaseExpiresAtMs: v.optional(v.number()),
     createdAtMs: v.number(),
   })
     .index("by_owner_trace_step", ["ownerId", "traceId", "stepKey"])
