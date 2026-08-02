@@ -7,6 +7,8 @@ import { SyncDataSchema } from "@/app/graph/SyncData";
 import { applySyncReference, getBearerToken, getConvexClient } from "@/lib/convexServer";
 
 function syncConflictCode(error: unknown) {
+  const structured = (error as { data?: { code?: unknown } } | null)?.data?.code;
+  if (typeof structured === "string" && /^[A-Z_]{3,40}$/.test(structured)) return structured;
   const match = (error instanceof Error ? error.message : String(error)).match(/"code"\s*:\s*"([A-Z_]{3,40})"/);
   return match?.[1] ?? "UNKNOWN_CONFLICT";
 }

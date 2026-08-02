@@ -142,6 +142,15 @@ function isDerivedSameVersionUpdate(oldEntity: Entity, newEntity: Entity) {
   return true;
 }
 
+function nonDerivedDifferenceKeys(oldEntity: Entity, newEntity: Entity) {
+  const derivedKeys = new Set(["canonicalRelationId", "relationCount", "updatedAt"]);
+  return [...new Set([...Object.keys(oldEntity), ...Object.keys(newEntity)])]
+    .filter((key) => !derivedKeys.has(key))
+    .filter((key) => JSON.stringify((oldEntity as Record<string, unknown>)[key])
+      !== JSON.stringify((newEntity as Record<string, unknown>)[key]))
+    .sort();
+}
+
 function entityContentText(entity: Entity) {
   if (!Array.isArray(entity.content)) return "";
   return entity.content
@@ -229,7 +238,11 @@ async function updateEntity(
     updatesDerivedStateAtSameVersion
     && !isDerivedSameVersionUpdate(JSON.parse(current.document) as Entity, newEntity)
   ) {
-    fail("VERSION_CONFLICT", `${table} derived update conflicts with current entity content`);
+    const currentEntity = JSON.parse(current.document) as Entity;
+    fail(
+      "VERSION_CONFLICT",
+      `${table} ${oldEntity.id} derived update conflicts on ${nonDerivedDifferenceKeys(currentEntity, newEntity).join(",")}`,
+    );
   }
   await ctx.db.patch(current._id, {
     version: newEntity.version,
