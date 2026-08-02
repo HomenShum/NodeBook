@@ -98,7 +98,7 @@ export async function runOpenAI(args: {
       },
       body: JSON.stringify({
         model: args.model,
-        ...reasoningConfig(provider, args.model),
+        ...reasoningConfig(provider, args.model, args.webResearch),
         ...(provider === "openrouter" && args.fallbackModels?.length ? { models: args.fallbackModels.slice(0, 3) } : {}),
         store: false,
         max_output_tokens: args.maxOutputTokens ?? 2_500,
