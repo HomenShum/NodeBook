@@ -93,10 +93,10 @@ export const TOOL_DECISION_JSON_SCHEMA = {
   required: ["tool", "query", "nodeId", "workflow", "rationale"],
   properties: {
     tool: { type: "string", enum: ["find_nodes", "find_related_nodes_via_graph", "get_node_details", "run_specialized_workflow", "finish_investigation"] },
-    query: { type: ["string", "null"] },
-    nodeId: { type: ["string", "null"] },
+    query: { type: ["string", "null"], maxLength: 500 },
+    nodeId: { type: ["string", "null"], maxLength: 200 },
     workflow: { type: ["string", "null"], enum: ["research", "organize", "connect", "update", null] },
-    rationale: { type: "string" },
+    rationale: { type: "string", maxLength: 500 },
   },
 } as const;
 
@@ -108,6 +108,18 @@ const ToolDecisionSchema = z.object({
   rationale: z.string().min(1).max(500),
 });
 type ToolDecision = z.infer<typeof ToolDecisionSchema>;
+
+function parseBoundedToolDecision(value: unknown) {
+  if (!value || typeof value !== "object") return null;
+  const candidate = value as Record<string, unknown>;
+  const parsed = ToolDecisionSchema.safeParse({
+    ...candidate,
+    query: typeof candidate.query === "string" ? candidate.query.slice(0, 500) : candidate.query,
+    nodeId: typeof candidate.nodeId === "string" ? candidate.nodeId.slice(0, 200) : candidate.nodeId,
+    rationale: typeof candidate.rationale === "string" ? candidate.rationale.slice(0, 500) : candidate.rationale,
+  });
+  return parsed.success ? parsed.data : null;
+}
 
 export type AgentContextNode = {
   sourceId: string;
@@ -526,7 +538,21 @@ export async function executeWorkflowAgent(
         timeoutMs: 4_000,
       });
       plannerUsage.push(planned.usage);
-      const decision = ToolDecisionSchema.parse(planned.result);
+      const decision = parseBoundedToolDecision(planned.result);
+      if (!decision) {
+        const invalidAt = now().toISOString();
+        steps.push(makeStep(
+          steps.length + 1,
+          "checkpoint",
+          "failed",
+          { result: "invalid_tool_decision" },
+          { reason: "invalid_tool_decision" },
+          "Stopped an invalid planner decision at the bounded checkpoint.",
+          toolStartedAt,
+          invalidAt,
+        ));
+        break;
+      }
       const callDigest = digest(decision);
       if (seenCalls.has(callDigest)) {
         const repeatedAt = now().toISOString();

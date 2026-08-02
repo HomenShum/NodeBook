@@ -237,6 +237,27 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.steps).toContainEqual(expect.objectContaining({ tool: "checkpoint", status: "failed" }));
   });
 
+  test("an overlong planner rationale is bounded without crashing the signed-in agent run", async () => {
+    const planner = jest.fn().mockResolvedValue({
+      result: {
+        tool: "finish_investigation",
+        query: null,
+        nodeId: null,
+        workflow: null,
+        rationale: "Enough evidence. ".repeat(80),
+      },
+      usage,
+    });
+
+    const result = await executeWorkflowAgent(
+      { query: "Finish this bounded review", mode: "ask", rootNodeId: "root", webResearch: false, contextNodes: [node] },
+      { model: "gpt-5-mini", runProvider: async () => ({ result: baseResult, sources: [], usage }), runToolPlanner: planner, runId: () => "run-long-rationale" },
+    );
+
+    expect(result.steps.find((step) => step.tool === "finish_investigation")?.summary).toHaveLength(500);
+    expect(result.steps.at(-1)).toEqual(expect.objectContaining({ tool: "finish_work", status: "completed" }));
+  });
+
   test("a model that fabricates a citation ID is repaired to exact reviewed evidence", async () => {
     const provider = jest
       .fn()
