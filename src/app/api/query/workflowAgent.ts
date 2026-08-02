@@ -128,6 +128,17 @@ function normalizeOperationContent(result: ModelResult): ModelResult {
   };
 }
 
+function normalizeAutoExecutionNarrative(text: string) {
+  const cleaned = text
+    .replace(/\b(?:tell|ask) me to (?:apply|approve)[^.\n]*(?:\.|$)/gi, "")
+    .replace(/\b(?:I|we) (?:will|do) not (?:auto-)?apply[^.\n]*(?:\.|$)/gi, "")
+    .replace(/\b(?:the )?(?:operation contract|changes?) (?:is |are )?prepared \(?(?:but )?not applied\)?[^.\n]*(?:\.|$)/gi, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  const note = "Execution note: This safe reversible change is eligible for automatic application in Auto mode. The durable checkpoint receipt is authoritative; use Undo this run after application to revert it.";
+  return cleaned ? `${cleaned}\n\n${note}` : note;
+}
+
 export const TOOL_DECISION_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -1230,13 +1241,15 @@ export async function executeWorkflowAgent(
       : risk.requiresApproval
         ? "approval_required"
         : "auto_apply";
+  const publicResponse = executionDisposition === "auto_apply" ? normalizeAutoExecutionNarrative(parsed.response) : parsed.response;
+  const publicFinishSummary = executionDisposition === "auto_apply" ? normalizeAutoExecutionNarrative(parsed.finishSummary) : parsed.finishSummary;
   emitStep(makeStep(
     steps.length + 1,
     "finish_work",
     "completed",
     { runId, proposalId },
-    { summary: parsed.finishSummary },
-    parsed.finishSummary,
+    { summary: publicFinishSummary },
+    publicFinishSummary,
     providerFinishedAt,
     completedAt,
   ));
@@ -1247,8 +1260,8 @@ export async function executeWorkflowAgent(
     proposalDigest,
     understanding: parsed.understanding,
     plan: parsed.plan,
-    content: parsed.response,
-    finishSummary: parsed.finishSummary,
+    content: publicResponse,
+    finishSummary: publicFinishSummary,
     operations: parsed.operations,
     sourceNodeIds: [...new Set(parsed.selectedNodeIds)],
     sourceUrls: [...new Set([...deepResearchSources, ...provider.sources])].slice(0, 20),

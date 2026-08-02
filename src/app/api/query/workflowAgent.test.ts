@@ -320,7 +320,8 @@ describe("NodeBook durable agent scenarios", () => {
       return {
         result: {
           ...baseResult,
-          response: "Prepared a sourced company profile.",
+          response: "Prepared a sourced company profile. I will not auto-apply without your approval. Tell me to APPLY to execute those creates.",
+          finishSummary: "The operation contract is prepared (not applied). Ask me to approve it.",
           workProducts: draftTitles.map((title, index) => ({
             key: `company-section-${index + 1}`,
             parentKey: null,
@@ -368,6 +369,9 @@ describe("NodeBook durable agent scenarios", () => {
     expect(result.operations.slice(1).map((item) => item.content?.split("\n")[0])).toEqual(aspects);
     expect(result.operations.slice(1).every((item) => item.content?.includes("One bounded sourced company finding."))).toBe(true);
     expect(result.executionDisposition).toBe("auto_apply");
+    expect(result.content).not.toMatch(/will not auto-apply|tell me to apply/i);
+    expect(result.finishSummary).not.toMatch(/not applied|ask me to approve/i);
+    expect(result.content).toContain("The durable checkpoint receipt is authoritative");
   });
 
   test("a cautious organizer can choose Plan and receive the same typed operations without automatic execution", async () => {
