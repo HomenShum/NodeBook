@@ -252,12 +252,22 @@ export const knowledgeMap = query({
       args.requestedClusters,
     );
     if (!clusters.length) {
-      return { status: "insufficient_nodes" as const, model: EMBEDDING_MODEL, scannedCount: nodes.length, nodes: [], clusters: [] };
+      return {
+        status: "insufficient_nodes" as const,
+        model: EMBEDDING_MODEL,
+        scannedCount: nodes.length,
+        candidateCount: candidates.length,
+        selectedCount: selected.length,
+        nodes: [],
+        clusters: [],
+      };
     }
     return {
       status: "ready" as const,
       model: EMBEDDING_MODEL,
       scannedCount: nodes.length,
+      candidateCount: candidates.length,
+      selectedCount: selected.length,
       nodes: selected.map(({ node, document }) => ({
         sourceId: node.sourceId,
         version: node.version,

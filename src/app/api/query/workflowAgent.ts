@@ -161,6 +161,8 @@ export type KnowledgeMapPlan = {
   status: "ready" | "insufficient_nodes";
   model: string;
   scannedCount: number;
+  candidateCount?: number;
+  selectedCount?: number;
   nodes: AgentContextNode[];
   clusters: Array<{ clusterId: string; title: string; nodeIds: string[] }>;
 };
@@ -782,7 +784,7 @@ export async function executeWorkflowAgent(
   const startedAt = started.toISOString();
   const context = compactContext(args.contextNodes);
   if (legacyWorkflowKind(args.mode, args.query) === "knowledge_map" && args.knowledgeMap?.status !== "ready") {
-    throw new Error("KNOWLEDGE_MAP_INSUFFICIENT_NODES");
+    throw new Error(`KNOWLEDGE_MAP_INSUFFICIENT_NODES candidates=${args.knowledgeMap?.candidateCount ?? 0} selected=${args.knowledgeMap?.selectedCount ?? 0}`);
   }
   const reviewedBindings = context.map((node) => ({
     sourceId: node.id,

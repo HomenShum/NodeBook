@@ -295,7 +295,7 @@ export const POST = withAuth(async (request: NextAuthenticatedRequest) => {
       }
       console.error("NodeBook agent run failed", error);
       captureException(error, { user: { id: request.userId } });
-      const knowledgeMapFailure = message === "KNOWLEDGE_MAP_INSUFFICIENT_NODES";
+      const knowledgeMapFailure = message.startsWith("KNOWLEDGE_MAP_INSUFFICIENT_NODES");
       return {
         status: knowledgeMapFailure ? 422 as const : 502 as const,
         body: {
