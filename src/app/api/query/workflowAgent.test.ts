@@ -326,9 +326,18 @@ describe("NodeBook durable agent scenarios", () => {
     };
     const provider = jest
       .fn()
-      .mockResolvedValueOnce({ result: { ...baseResult, response: "I propose creating the note." }, sources: [], usage })
       .mockResolvedValueOnce({
-        result: { ...baseResult, response: "I prepared the machine proposal.", operations: [createOperation] },
+        result: { ...baseResult, response: "I propose creating the note.", selectedNodeIds: ["root"] },
+        sources: [],
+        usage,
+      })
+      .mockResolvedValueOnce({
+        result: {
+          ...baseResult,
+          response: "I prepared the machine proposal.",
+          selectedNodeIds: [],
+          operations: [createOperation],
+        },
         sources: [],
         usage,
       });
@@ -349,7 +358,10 @@ describe("NodeBook durable agent scenarios", () => {
     );
 
     expect(provider).toHaveBeenCalledTimes(2);
+    expect(provider.mock.calls[1][0].input).toContain("Agent mode must return machine operations");
+    expect(provider.mock.calls[1][0].input).toContain("Selected evidence references an unreviewed node (root)");
     expect(result.proposalId).toBe("proposal-write-repair");
+    expect(result.sourceNodeIds).toEqual([]);
     expect(result.operations).toEqual([createOperation]);
     expect(result.steps[2]).toEqual(expect.objectContaining({ tool: "repair_proposal", status: "repaired" }));
   });

@@ -418,6 +418,7 @@ First state your understanding, then a concrete plan, then finish explicitly wit
 Return selectedNodeIds containing only the exact reviewed notebook nodes that support the answer or proposed work. Do not cite a node merely because it was reviewed.
 Ask mode is read-only and operations MUST be empty.
 Agent and Organize modes return executable graph operations. The client decides whether to auto-apply or pause at a risk boundary, so never claim an operation was applied inside your model response.
+For an explicit write request, operations MUST be non-empty. CURRENT_ROOT may be used as an operation target such as parentId, but it MUST NOT appear in selectedNodeIds unless that exact ID is present in REVIEWED_CONTEXT; use an empty selectedNodeIds array when the write needs no notebook evidence.
 Prefer existing notes: inspect supplied node IDs before creating. Clone a relevant existing hierarchy instead of researching it again.
 For multi-part research, create one descriptive container under CURRENT_ROOT first, then put result nodes under that container.
 For informational work, search notebook evidence first, deepen through related graph context when clues are incomplete, then use web research only when enabled.
