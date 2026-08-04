@@ -8,6 +8,7 @@ import { useAuth } from "@/app/auth/useAuth";
 import CommandBar from "@/app/components/CommandBar/CommandBar";
 import { SidebarIcon } from "@/app/components/CustomIcons";
 import ImageViewer from "@/app/components/ImageViewer/ImageViewer";
+import { MotionRoot } from "@/app/components/Motion/motion";
 import OfflineWarning from "@/app/components/OfflineWarning/OfflineWarning";
 import PhoneHandoff from "@/app/components/PhoneHandoff/PhoneHandoff";
 import { ResizableSidebar } from "@/app/components/Sidebar/ResizableSidebar";
@@ -111,6 +112,7 @@ export default observer(function App({ children }: Props) {
     );
   } else {
     return (
+      <MotionRoot>
       <div className={styles.App}>
         <div className={styles.AppContainer}>
           <OfflineWarning />
@@ -141,6 +143,7 @@ export default observer(function App({ children }: Props) {
           </div>
         </div>
       </div>
+      </MotionRoot>
     );
   }
 });

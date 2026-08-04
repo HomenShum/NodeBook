@@ -28,6 +28,7 @@ import { QuickCaptureIcon } from "@/app/components/CustomIcons";
 import { ClearData } from "@/app/components/DataDialog/ClearData";
 import { ImportDialog } from "@/app/components/DataDialog/ImportDialog";
 import { HelpModal } from "@/app/components/HelpModal/HelpModal";
+import { Rise } from "@/app/components/Motion/motion";
 import { NotificationPane } from "@/app/components/Notifications/NotificationPane";
 import { LocalHashtagsTree } from "@/app/components/Sidebar/LocalHashtagsTree";
 import { LocalMentionsTree } from "@/app/components/Sidebar/LocalMentionsTree";
@@ -337,7 +338,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className={styles.TopContent}>
+          <Rise className={styles.TopContent} delay={300}>
             {!settingsStore.newUser && (
               <Button
                 variant="ghost"
@@ -530,7 +531,7 @@ export const ResizableSidebar = observer(function ResizableSidebar({
                 <span className={styles.ButtonText}>Voice Operations</span>
               </Button>
             )}
-          </div>
+          </Rise>
           <div
             className={cn(
               styles.ScrollableArea,
@@ -539,11 +540,21 @@ export const ResizableSidebar = observer(function ResizableSidebar({
             )}
             ref={scrollableRef}
           >
-            <MyFavoritesList />
-            <MyHashtagsTree />
-            <MyShortlinksTree />
-            <LocalHashtagsTree />
-            <LocalMentionsTree />
+            <Rise inView>
+              <MyFavoritesList />
+            </Rise>
+            <Rise inView>
+              <MyHashtagsTree />
+            </Rise>
+            <Rise inView>
+              <MyShortlinksTree />
+            </Rise>
+            <Rise inView>
+              <LocalHashtagsTree />
+            </Rise>
+            <Rise inView>
+              <LocalMentionsTree />
+            </Rise>
           </div>
           <div className={styles.BottomNav}>
             <Button

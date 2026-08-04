@@ -253,19 +253,13 @@
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition:
-    transform 0.2s ease,
-    background-color 0.2s ease;
+  transition: background-color 0.2s ease;
   z-index: 100;
 }
 
+/* Hover/press scale now handled by motion (PressButton) — CSS transform would fight its inline transform. */
 .FloatingActionButton:hover {
   background-color: var(--teal-10);
-  transform: scale(1.05);
-}
-
-.FloatingActionButton:active {
-  transform: scale(0.95);
 }
 
 .BreadcrumbContentForMiddleRow {

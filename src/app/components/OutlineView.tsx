@@ -21,6 +21,7 @@ import { ControlsBar } from "@/app/components/ControlsBar/ControlsBar";
 import { ExpandLineArrowsIcon, NotesIcon } from "@/app/components/CustomIcons";
 import GraphContainer from "@/app/components/GraphView/GraphContainer";
 import OutlineContent from "@/app/components/OutlineContent";
+import { PressButton, Rise } from "@/app/components/Motion/motion";
 import { PageTitleUpdater } from "@/app/components/PageTitleUpdater";
 import QuickCapture from "@/app/components/QuickCapture/QuickCapture";
 import RightSidePanel from "@/app/components/RightSidePanel/RightSidePanel";
@@ -168,7 +169,9 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
         <PageTitleUpdater tree={tree} />
         {!isLoading && <QuickCapture />}
         <div className={s.WindowNav}>
-          <Breadcrumbs treeNode={treeRoot} />
+          <Rise delay={0}>
+            <Breadcrumbs treeNode={treeRoot} />
+          </Rise>
           {isSmallScreen && (
             <div className={s.MiddleRow}>
               <div className={s.MiddleRowBlock}>
@@ -289,7 +292,9 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
               </div>
             </div>
           )}
-          <ControlsBar tree={tree} />
+          <Rise delay={60}>
+            <ControlsBar tree={tree} />
+          </Rise>
         </div>
         {isLoading ? (
           <Loader />
@@ -298,10 +303,13 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
         ) : (
           <div className={s.MainAndSidebarContainer} ref={ref}>
             <OutlineParentContext.Provider value="OutlineView">
-              <OutlineContent tree={tree} />
+              <Rise delay={140} style={{ flexGrow: 1, minWidth: 0 }}>
+                <OutlineContent tree={tree} />
+              </Rise>
               {(!user.isAnonymous || allowAnonymousAppend) && (
-                <button
+                <PressButton
                   className={s.FloatingActionButton}
+                  riseDelay={220}
                   onClick={(e) => {
                     e.preventDefault();
                     if (isMobileSize && viewStore.quickCaptureOpen) {
@@ -319,7 +327,7 @@ export const OutlineView = observer(function OutlineView({ tree }: Props) {
                   title="Create and zoom into new node"
                 >
                   <Plus size={24} />
-                </button>
+                </PressButton>
               )}
             </OutlineParentContext.Provider>
             <AiSearchSidebar />
