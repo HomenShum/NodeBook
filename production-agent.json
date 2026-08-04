@@ -70,22 +70,22 @@
   },
   "slos": [
     {
-      "metric": "model-promotion-parity-score",
+      "metric": "task-completion-rate",
       "comparator": "at-least",
-      "value": 1,
-      "rationale": "Enforced bound: convex/modelRouting.ts promotes only models passing all six parity cases."
+      "value": 0.9,
+      "rationale": "Declared target, measured on read by the goldenMetrics query (convex/goldenMetrics.ts) as non-failed runs / total agentRuns over the stored 200-run retention window; proposed/rejected/undone count as completions because they are user decisions on a delivered proposal."
     },
     {
-      "metric": "agent-total-tokens-per-run",
+      "metric": "tool-call-error-rate",
       "comparator": "at-most",
-      "value": 100000,
-      "rationale": "Enforced bound: MAX_AGENT_TOTAL_TOKENS fuse (src/app/api/query/route.ts:42) fails closed with AGENT_TOKEN_BUDGET_EXCEEDED."
+      "value": 0.05,
+      "rationale": "Declared target, measured on read by the goldenMetrics query as failed agentSteps / total agentSteps (genuine per-tool-call granularity; repaired steps recovered and do not count as errors) over the stored run window."
     },
     {
-      "metric": "provider-deadline-ms",
+      "metric": "p99-latency-ms",
       "comparator": "at-most",
-      "value": 110000,
-      "rationale": "Enforced bound: PROVIDER_DEADLINE_MS (route.ts:41) reserves ten seconds of the 120s platform budget for durable receipts and an honest failure response."
+      "value": 120000,
+      "rationale": "Measured on read by the goldenMetrics query as the nearest-rank 99th percentile of persisted agentRuntimeEvaluations.latencyMs; the bound is real because PROVIDER_DEADLINE_MS (src/app/api/query/route.ts:41, 110s) plus receipt time keeps every run inside the 120s platform budget."
     }
   ],
   "runtimeGuards": {
