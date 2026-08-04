@@ -1,0 +1,82 @@
+name: Production deploy + smoke + rollback
+
+# Two entry points, neither auto-deploys anything that did not before:
+# - workflow_dispatch: explicit operator-triggered `vercel deploy --prod`, then smoke.
+# - deployment_status: Vercel's git integration (the existing deploy path) reports a
+#   successful production deployment; we smoke-check it and roll back on failure.
+on:
+  workflow_dispatch:
+    inputs:
+      production_url:
+        description: "Production alias to smoke-check"
+        required: false
+        default: "https://nodebook-rho.vercel.app"
+  deployment_status:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Require Vercel credentials
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::error::VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID secrets are required to deploy"
+            exit 1
+          fi
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Deploy to Vercel production
+        run: |
+          npx vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+          npx vercel@latest deploy --prod --yes --token="$VERCEL_TOKEN"
+
+  smoke:
+    needs: deploy
+    # Run after our own dispatch deploy, or standalone when Vercel's git integration
+    # reports a successful production deployment. needs.deploy is skipped in the
+    # deployment_status case, so gate on "not failed" rather than "succeeded".
+    if: >-
+      !cancelled() && needs.deploy.result != 'failure' && needs.deploy.result != 'cancelled' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'deployment_status' &&
+        github.event.deployment_status.state == 'success' &&
+        contains(github.event.deployment.environment, 'roduction')))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      PRODUCTION_URL: ${{ github.event.inputs.production_url || vars.PRODUCTION_URL || 'https://nodebook-rho.vercel.app' }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Smoke-check the live production alias
+        run: node scripts/deploy-smoke.mjs
+      - name: Roll back the production deployment on smoke failure
+        if: failure()
+        run: |
+          echo "::error::SMOKE CHECK FAILED for $PRODUCTION_URL — rolling back the production deployment"
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::VERCEL_TOKEN secret is missing — CANNOT roll back automatically; roll back manually with 'vercel rollback'"
+            exit 1
+          fi
+          npx vercel@latest rollback --yes --token="$VERCEL_TOKEN"
+          echo "::error::Rollback issued. The failed deployment is no longer aliased, but this workflow stays red: investigate before redeploying."

@@ -107,6 +107,18 @@
       "trigger": "on-pr",
       "command": "yarn ci-tests (lint + typecheck + jest, including the rule-based judge suites: scoreParityResult in convex/modelRouting.ts and scoreLiveEval in src/app/api/query/evals/liveEval.ts)"
     },
+    "canary": {
+      "trafficPercent": 50,
+      "rollbackOn": [
+        {
+          "metric": "deploy-smoke-pass",
+          "comparator": "below",
+          "value": 1,
+          "rationale": "scripts/deploy-smoke.mjs must pass all three post-deploy checks against the live production alias — HTTP 200 within the poll budget, the server-rendered NodeBook signal (layout.tsx metadata title + description) present in raw HTML, and /api/notifications answering 401 unauthenticated. Any failure makes .github/workflows/deploy-production.yml run `vercel rollback` automatically and fail the workflow. trafficPercent 50 is the hard cap enforced by canaryPercent in src/lib/canary.ts on the cookie-sticky middleware split (src/middleware.ts); the actual slice is set per release via CANARY_PERCENT + CANARY_DEPLOYMENT_URL and defaults to 0 (off) — see production-agent.gaps.md."
+        }
+      ],
+      "rollbackMode": "automatic"
+    },
     "modelMigration": {
       "pinnedModel": "gpt-5-mini (env.AGENT_MODEL default, src/envBackend.ts:44; overridable only via the AGENT_MODEL environment variable)",
       "migrationEvalCommand": "convex internal action modelRouting:benchmarkFreeModels — runs the six NODEAGENT_PARITY_CASES against each candidate; promotion to primaryModel requires every case passing, otherwise the previous route is retained"

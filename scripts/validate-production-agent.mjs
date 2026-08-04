@@ -1,8 +1,9 @@
 // Validates production-agent.json against the copied checklist schema.
 // ajv in node_modules is v6 (draft-07 engine); every keyword this schema uses is
 // draft-07 compatible, so we strip the 2020-12 $schema marker before compiling.
-// Expected output (see production-agent.gaps.md): exactly one error — /release
-// missing required property canary, the honest declaration that no deploy canary exists.
+// Expected output (see production-agent.gaps.md): VALID with zero errors —
+// release.canary is declared, backed by the deploy smoke-check + automatic rollback
+// workflow and the env-gated cookie-sticky middleware split.
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
