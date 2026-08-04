@@ -1,0 +1,119 @@
+{
+  "schemaVersion": "production-agent/v1",
+  "application": "nodebook-nodeagent",
+  "declaredAt": "2026-08-04",
+  "goalTranslation": {
+    "businessGoal": "Answer, research, and organize a user's owner-scoped notebook with a bounded, approval-gated agent that reaches Notion-parity behavior on free routed models.",
+    "quantifiedTarget": {
+      "metric": "nodeagent-parity-benchmark-score",
+      "comparator": "at-least",
+      "value": 1,
+      "rationale": "convex/modelRouting.ts saveBenchmark promotes a model only when it passes all six NODEAGENT_PARITY_CASES (passedCases === totalCases)."
+    },
+    "decomposition": [
+      "semantic hydration: embed query and pending notes, fuse retrieved context (retrievalFusion.ts)",
+      "bounded investigation: at most four tool steps (workflowAgent.ts MAX_INVESTIGATION_STEPS)",
+      "final synthesis with structured output (RESULT_JSON_SCHEMA, strict json_schema)",
+      "proposal review: graph operations land as a pending proposal, never applied inline"
+    ]
+  },
+  "hitl": {
+    "tiers": [
+      {
+        "action": "ask-mode read-only answers over notebook context",
+        "risk": "low",
+        "mode": "auto"
+      },
+      {
+        "action": "auto-apply graph operations within the bounded operation budget (create_node, update_node_content, move_node, non-author add_relation)",
+        "risk": "low",
+        "mode": "auto"
+      },
+      {
+        "action": "delete_node, clone_node_hierarchy, author add_relation, or operation count above MAX_AUTO_OPERATIONS (workflowAgent.ts assessOperationRisk) — disposition approval_required; the run records a pending proposal with digest and riskReasons and stops",
+        "risk": "high",
+        "mode": "suspend-approve",
+        "resumeAfterApproval": true
+      },
+      {
+        "action": "plan executionMode — every operation set becomes preview_only regardless of risk",
+        "risk": "low",
+        "mode": "suspend-approve",
+        "resumeAfterApproval": true
+      }
+    ]
+  },
+  "toolFaultTolerance": {
+    "interception": {
+      "rawErrorsReachUser": false,
+      "how": "src/app/api/query/route.ts catches every failure, records a durable failed-run receipt (status failed, message truncated to 500 chars), reports model outcome, and returns a bounded generic message with an honest non-2xx status (409 conflict / 422 insufficient nodes / 502 otherwise)."
+    },
+    "retry": {
+      "maxAttempts": 3,
+      "backoff": "exponential",
+      "baseDelayMs": 1000,
+      "maxDelayMs": 30000,
+      "jitter": false
+    },
+    "fallback": {
+      "kind": "degraded-ui",
+      "description": "When embeddings fail, retrieval degrades to lexical context with an explicit retrievalStatus of degraded plus reason surfaced in the response; when the provider fails after retries, the user receives an honest failed status with a durable failed-run receipt instead of fabricated output."
+    },
+    "toolContract": {
+      "descriptionsUnambiguous": true,
+      "fewShotForComplexParams": false
+    }
+  },
+  "context": {
+    "strategies": ["retrieval-extraction"],
+    "tokenBudgetPerRun": 100000
+  },
+  "slos": [
+    {
+      "metric": "model-promotion-parity-score",
+      "comparator": "at-least",
+      "value": 1,
+      "rationale": "Enforced bound: convex/modelRouting.ts promotes only models passing all six parity cases."
+    },
+    {
+      "metric": "agent-total-tokens-per-run",
+      "comparator": "at-most",
+      "value": 100000,
+      "rationale": "Enforced bound: MAX_AGENT_TOTAL_TOKENS fuse (src/app/api/query/route.ts:42) fails closed with AGENT_TOKEN_BUDGET_EXCEEDED."
+    },
+    {
+      "metric": "provider-deadline-ms",
+      "comparator": "at-most",
+      "value": 110000,
+      "rationale": "Enforced bound: PROVIDER_DEADLINE_MS (route.ts:41) reserves ten seconds of the 120s platform budget for durable receipts and an honest failure response."
+    }
+  ],
+  "runtimeGuards": {
+    "loopBreaker": {
+      "maxIterations": 4,
+      "maxDepth": 1
+    },
+    "circuitBreaker": {
+      "errorRateThreshold": 1,
+      "onTrip": "Three consecutive provider failures (FAILURE_TRIGGER, convex/modelRouting.ts modelFailureTransition) automatically schedule a re-benchmark and re-route; reruns are rate-limited to once per hour (MIN_RERUN_INTERVAL_MS)."
+    },
+    "costFuse": {
+      "maxTokensPerRun": 100000,
+      "onTrip": "The run aborts with AGENT_TOKEN_BUDGET_EXCEEDED before the next provider call (workflowAgent.ts token accounting against maxTotalTokens), and the failure is recorded as a durable failed receipt — the fuse fails closed."
+    }
+  },
+  "release": {
+    "judgeRegression": {
+      "trigger": "on-pr",
+      "command": "yarn ci-tests (lint + typecheck + jest, including the rule-based judge suites: scoreParityResult in convex/modelRouting.ts and scoreLiveEval in src/app/api/query/evals/liveEval.ts)"
+    },
+    "modelMigration": {
+      "pinnedModel": "gpt-5-mini (env.AGENT_MODEL default, src/envBackend.ts:44; overridable only via the AGENT_MODEL environment variable)",
+      "migrationEvalCommand": "convex internal action modelRouting:benchmarkFreeModels — runs the six NODEAGENT_PARITY_CASES against each candidate; promotion to primaryModel requires every case passing, otherwise the previous route is retained"
+    },
+    "tracing": {
+      "traceIdPropagated": true,
+      "field": "runId (client requestId or fresh UUID; used as traceId through the provider step journal, workflow receipt, proposal id, and eval receipt)"
+    }
+  }
+}

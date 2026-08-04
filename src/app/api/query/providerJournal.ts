@@ -4,6 +4,35 @@ import { digest } from "./workflowAgent";
 
 const MAX_JOURNAL_RESPONSE_BYTES = 512 * 1024;
 
+// Timed exponential backoff for transient provider failures. Timeouts are
+// deliberately excluded: the route-level deadline already spent the budget, and
+// replaying a 110s wait would blow past PROVIDER_DEADLINE_MS.
+export const PROVIDER_RETRY = Object.freeze({ maxAttempts: 3, baseDelayMs: 1_000, factor: 2, maxDelayMs: 30_000 });
+
+export function transientRetryDelayMs(attempt: number) {
+  return Math.min(PROVIDER_RETRY.baseDelayMs * PROVIDER_RETRY.factor ** (attempt - 1), PROVIDER_RETRY.maxDelayMs);
+}
+
+export function isTransientProviderFailure(error: unknown) {
+  if (!(error instanceof Error)) return false;
+  // Provider rejections carry "(status:code)" from runOpenAI; 408/429/5xx are transient.
+  return /\((?:408|429|5\d\d):/.test(error.message) || error.message.includes("fetch failed");
+}
+
+export async function retryTransientProvider<T>(
+  run: () => Promise<T>,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+): Promise<T> {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      return await run();
+    } catch (error) {
+      if (attempt >= PROVIDER_RETRY.maxAttempts || !isTransientProviderFailure(error)) throw error;
+      await sleep(transientRetryDelayMs(attempt));
+    }
+  }
+}
+
 const JournaledProviderResponseSchema = z.object({
   result: z.unknown(),
   sources: z.array(z.string().max(2_048)).max(20),
@@ -79,6 +108,7 @@ export async function runJournaledProvider(args: {
     createdAtMs: number;
   }) => Promise<{ responseJson: string }>;
   release: (identity: { traceId: string; stepKey: string; inputDigest: string }) => Promise<unknown>;
+  sleep?: (ms: number) => Promise<void>;
 }) {
   const identity = { traceId: args.traceId, ...providerJournalIdentity(args.providerInput) };
   const replay = await args.read(identity);
@@ -95,7 +125,7 @@ export async function runJournaledProvider(args: {
   if (claim.status === "in_progress") throw new Error("JOURNAL_STEP_IN_PROGRESS");
 
   try {
-    const fresh = JournaledProviderResponseSchema.parse(await args.run()) as JournaledProviderResponse;
+    const fresh = JournaledProviderResponseSchema.parse(await retryTransientProvider(args.run, args.sleep)) as JournaledProviderResponse;
     const responseJson = JSON.stringify(fresh);
     if (Buffer.byteLength(responseJson, "utf8") > MAX_JOURNAL_RESPONSE_BYTES) throw new Error("Journaled provider response exceeded the size limit");
     const canonical = await args.record({
