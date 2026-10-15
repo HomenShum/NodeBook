@@ -1,6 +1,25 @@
 # NodeBook
 
-NodeBook is a node-native notebook built with Next.js, MobX, Lexical, Auth0, and Convex.
+NodeBook is a notebook for writing connected notes, browsing them as a graph, and
+asking NodeAgent to research or organize them. It uses Next.js, MobX, Lexical,
+Auth0, and Convex.
+
+## Find your starting point
+
+| Your task | Start here |
+| --- | --- |
+| Run a local development instance | [Local setup](#local-setup) |
+| Understand the graph, editor, persistence and API boundaries | [Repository guide](CLAUDE.md#architecture) |
+| Change notebook nodes or the rich-text editor | [Graph source](src/app/graph/) and [editor source](src/app/editor/) |
+| Change NodeAgent research, proposals, receipts or Undo | [Query engine](src/app/api/query/), [notebook tools](src/app/query/notebookTools.ts) and [legacy behavior inventory](docs/NODEAGENT_LEGACY_PARITY_INVENTORY.md) |
+| Change a visible or interactive surface | [Visual change contract](docs/FABLE_VISUAL_CHANGE_CONTRACT.md) |
+| Check recorded production evidence | [2026-08-02 audit](docs/NODEAGENT_COMPLETION_AUDIT.md) |
+
+The audit describes that dated deployment; it does not verify today's checkout.
+For a handoff, record your commit, the commands you ran, the results and any
+unverified behavior. Use the [verification commands](#verification) and
+[production checklist](#production-deployment) for the revision you intend to use.
+Surface changes are recorded in [the changelog](CHANGELOG/README.md).
 
 ## Local setup
 
@@ -45,6 +64,7 @@ yarn dev
 yarn typecheck
 yarn lint
 yarn test
+yarn test:convex
 yarn build
 ```
 
