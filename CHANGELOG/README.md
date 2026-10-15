@@ -6,3 +6,5 @@ Append-only history for maintainers. Current lanes:
 - `db/agent-runtime-evaluations.md`
 - `agent/nodeagent-provider-runtime.md`
 - `components/nodeagent-runtime-verification.md`
+- `scripts/dependency-install.md`
+- `components/query-style-declarations.md`
