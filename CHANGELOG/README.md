@@ -8,3 +8,4 @@ Append-only history for maintainers. Current lanes:
 - `components/nodeagent-runtime-verification.md`
 - `scripts/dependency-install.md`
 - `components/query-style-declarations.md`
+- [Developer entry routes](docs/developer-entry.md)
