@@ -20,8 +20,8 @@ declare const styles: {
   readonly "form": string;
   readonly "label": string;
   readonly "linkText": string;
-  readonly "loadingIcon": string;
   readonly "liveStatus": string;
+  readonly "loadingIcon": string;
   readonly "memory": string;
   readonly "memoryChevronExpanded": string;
   readonly "memoryDetails": string;
